@@ -4,25 +4,24 @@ import type {
   UpdateStatusPayload,
   UsbInternetStatusPayload,
 } from "../../transport/http_models";
-import type { InternetPanelDom } from "./internet_panel";
-import type { UpdatePanelDom } from "./update_panel";
+import type {
+  InternetPanelRenderModel,
+  InternetPanelView,
+  UpdateTransportChoiceCardRenderModel,
+} from "./internet_panel";
 import {
+  buildInternetStatusPanelModel,
   formatUsbInternetSummary,
-  renderInternetStatusPanel,
 } from "./internet_status_view";
-import { setChoiceCardState } from "../style_state";
-import {
-  renderMaintenanceReadinessPanel,
-  type MaintenanceReadinessPanelModel,
-} from "./maintenance_readiness_view";
+import type { MaintenanceReadinessPanelModel } from "./maintenance_readiness_view";
+import type {
+  UpdatePanelRenderModel,
+  UpdatePanelView,
+} from "./update_panel";
 import {
   buildUpdateStatusPanelViewModel,
   getUpdateFailureSummary,
 } from "./update_status_view_models";
-import {
-  renderUpdateOverviewPanel,
-  renderUpdateStatusPanel,
-} from "./update_status_view";
 
 export interface UpdateFeatureRenderState {
   internetStatus: UsbInternetStatusPayload;
@@ -40,6 +39,13 @@ export interface UpdateFeatureStartIntent {
   usbAvailable: boolean;
 }
 
+export interface UpdateFeatureFormSnapshot {
+  passwordInputValue: string;
+  passwordVisible: boolean;
+  selectedTransport: UpdateStartRequestPayload["transport"];
+  ssidInputValue: string;
+}
+
 interface UpdateFeatureActionSummary {
   canStart: boolean;
   panelModel: MaintenanceReadinessPanelModel;
@@ -47,11 +53,17 @@ interface UpdateFeatureActionSummary {
   transport: UpdateStartRequestPayload["transport"];
 }
 
+export interface UpdateFeaturePanelModels {
+  canStart: boolean;
+  internetPanel: InternetPanelRenderModel;
+  transport: UpdateStartRequestPayload["transport"];
+  updatePanel: UpdatePanelRenderModel;
+}
+
 export interface UpdateFeaturePresenterDeps {
-  dom: UpdatePanelDom;
-  internetDom: InternetPanelDom;
+  internetPanel: InternetPanelView;
+  panel: UpdatePanelView;
   t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
 }
 
 export interface UpdateFeaturePresenter {
@@ -62,359 +74,359 @@ export interface UpdateFeaturePresenter {
   clearPassword(): void;
 }
 
+function selectedTransport(
+  state: UpdateFeatureRenderState,
+  form: UpdateFeatureFormSnapshot,
+): UpdateStartRequestPayload["transport"] {
+  if (state.updateState === "running") {
+    return state.updateTransport;
+  }
+  if (state.internetStatus.usable && form.selectedTransport === "usb_internet") {
+    return "usb_internet";
+  }
+  return "wifi";
+}
+
+function hasBlockingHealthIssue(state: UpdateFeatureRenderState): boolean {
+  const health = state.healthStatus;
+  if (!health) {
+    return false;
+  }
+  return (
+    health.status === "degraded" ||
+    health.persistence.write_error != null ||
+    health.startup_error != null ||
+    health.db_corruption_detected === true
+  );
+}
+
+function buildActionSummary(
+  state: UpdateFeatureRenderState,
+  form: UpdateFeatureFormSnapshot,
+  t: (key: string, vars?: Record<string, unknown>) => string,
+): UpdateFeatureActionSummary {
+  const transport = selectedTransport(state, form);
+  const usingUsb = transport === "usb_internet";
+  const isRunning = state.updateState === "running";
+  const ssid = form.ssidInputValue.trim();
+  const usbInterface = state.internetStatus.interface_name;
+  const readinessItems = [
+    {
+      label: t("settings.update.readiness.item.source"),
+      detail: usingUsb
+        ? t("settings.update.readiness.item.source_usb")
+        : t("settings.update.readiness.item.source_wifi"),
+      state: "ready" as const,
+    },
+    usingUsb
+      ? {
+          label: t("settings.update.readiness.item.connection"),
+          detail: state.internetStatus.usable
+            ? t("settings.update.readiness.item.connection_usb_ready", {
+                interface: usbInterface || t("settings.update.transport.usb_title"),
+              })
+            : t("settings.update.readiness.item.connection_usb_blocked"),
+          state: state.internetStatus.usable
+            ? ("ready" as const)
+            : ("blocked" as const),
+        }
+      : {
+          label: t("settings.update.readiness.item.connection"),
+          detail: ssid
+            ? t("settings.update.readiness.item.connection_wifi_ready")
+            : t("settings.update.readiness.item.connection_wifi_blocked"),
+          state: ssid ? ("ready" as const) : ("blocked" as const),
+        },
+  ];
+  if (hasBlockingHealthIssue(state)) {
+    readinessItems.push({
+      label: t("settings.update.readiness.item.health"),
+      detail: t("settings.update.readiness.item.health_blocked"),
+      state: "blocked",
+    });
+  }
+  const hasBlockedItem = readinessItems.some((item) => item.state === "blocked");
+  const failure = state.updateStatus
+    ? getUpdateFailureSummary(state.updateStatus, t)
+    : null;
+  const isRecoveryState = failure !== null;
+  const stateLabel = isRecoveryState
+    ? hasBlockedItem
+      ? t("maintenance.readiness.blocked")
+      : t("settings.update.state.failed")
+    : isRunning
+      ? t("maintenance.readiness.running")
+      : hasBlockedItem
+        ? t("maintenance.readiness.blocked")
+        : t("maintenance.readiness.ready");
+  const items = failure
+    ? [
+        {
+          label: t("settings.update.recovery.item.failed_step"),
+          detail: failure.phaseLabel,
+          state: "attention" as const,
+        },
+        {
+          label: t("settings.update.recovery.item.captured_detail"),
+          detail: failure.message
+            ? failure.detail
+              ? `${failure.message} — ${failure.detail}`
+              : failure.message
+            : failure.detail || failure.phaseLabel,
+          state: "attention" as const,
+        },
+        {
+          label: t("settings.update.recovery.item.next_step"),
+          detail: hasBlockedItem
+            ? t("settings.update.recovery.item.next_step_blocked")
+            : `${failure.recoveryTitle} — ${failure.recoveryDetail}`,
+          state: hasBlockedItem
+            ? ("blocked" as const)
+            : ("attention" as const),
+        },
+      ]
+    : readinessItems;
+  return {
+    canStart: !isRunning && !hasBlockedItem,
+    startLabel: t(
+      isRecoveryState ? "settings.update.retry" : "settings.update.start",
+    ),
+    transport,
+    panelModel: {
+      title: t(
+        isRecoveryState
+          ? "settings.update.recovery.title"
+          : "settings.update.readiness.title",
+      ),
+      summary: t(
+        isRecoveryState
+          ? hasBlockedItem
+            ? "settings.update.recovery.summary_blocked"
+            : "settings.update.recovery.summary_retry"
+          : isRunning
+            ? "settings.update.readiness.summary_running"
+            : hasBlockedItem
+              ? "settings.update.readiness.summary_blocked"
+              : "settings.update.readiness.summary_ready",
+      ),
+      stateLabel,
+      stateVariant: isRecoveryState
+        ? "bad"
+        : isRunning
+          ? "warn"
+          : hasBlockedItem
+            ? "bad"
+            : "ok",
+      items,
+    },
+  };
+}
+
+function buildTransportChoiceModel(
+  t: (key: string, vars?: Record<string, unknown>) => string,
+  options: {
+    badgeSelected: boolean;
+    visuallyDisabled: boolean;
+  },
+): UpdateTransportChoiceCardRenderModel {
+  return {
+    badgeText: options.badgeSelected
+      ? t("settings.update.transport.selected_badge")
+      : null,
+    disabled: options.visuallyDisabled,
+    inputDisabled: false,
+    selected: options.badgeSelected,
+    state: options.badgeSelected ? "active" : null,
+    summaryText: "",
+  };
+}
+
+function buildUpdatePanelRenderModel(
+  state: UpdateFeatureRenderState,
+  actionSummary: UpdateFeatureActionSummary,
+  t: (key: string, vars?: Record<string, unknown>) => string,
+): UpdatePanelRenderModel {
+  const isRunning = state.updateState === "running";
+  const status =
+    state.updateStatus && state.healthStatus
+      ? buildUpdateStatusPanelViewModel(state.updateStatus, state.healthStatus, {
+          t,
+          selectedTransport: actionSummary.transport,
+        })
+      : null;
+  return {
+    cancelButtonDisabled: !isRunning,
+    cancelButtonHidden: !isRunning,
+    startButtonDisabled: isRunning || !actionSummary.canStart,
+    startButtonHidden: isRunning,
+    startButtonLabelText: actionSummary.startLabel,
+    status,
+  };
+}
+
+function buildInternetPanelRenderModel(
+  state: UpdateFeatureRenderState,
+  form: UpdateFeatureFormSnapshot,
+  actionSummary: UpdateFeatureActionSummary,
+  t: (key: string, vars?: Record<string, unknown>) => string,
+): InternetPanelRenderModel {
+  const usbAvailable = state.internetStatus.usable;
+  const controlsLocked = state.updateState === "running";
+  const usingUsb = actionSummary.transport === "usb_internet";
+  const wifiChoice = buildTransportChoiceModel(t, {
+    badgeSelected: !usingUsb,
+    visuallyDisabled: false,
+  });
+  const usbChoice = buildTransportChoiceModel(t, {
+    badgeSelected: usingUsb,
+    visuallyDisabled: !usbAvailable && !controlsLocked,
+  });
+  wifiChoice.inputDisabled = controlsLocked;
+  wifiChoice.summaryText = t("settings.update.transport.wifi_summary");
+  usbChoice.inputDisabled = controlsLocked || !usbAvailable;
+  usbChoice.summaryText = usbAvailable
+    ? formatUsbInternetSummary(state.internetStatus, t)
+    : t("settings.update.transport.usb_summary_unavailable");
+  return {
+    controlsLocked,
+    detailsCaptionText: t(
+      usingUsb
+        ? "settings.update.details_caption_usb"
+        : "settings.update.details_caption_wifi",
+    ),
+    internetStatus:
+      state.updateStatus && state.healthStatus
+        ? buildInternetStatusPanelModel(state.internetStatus, { t })
+        : null,
+    passwordInputType: form.passwordVisible ? "text" : "password",
+    passwordInputValue: form.passwordInputValue,
+    readiness: actionSummary.panelModel,
+    selectedTransport: actionSummary.transport,
+    ssidInputValue: form.ssidInputValue,
+    togglePasswordDisabled: controlsLocked,
+    togglePasswordLabelText: t(
+      form.passwordVisible
+        ? "settings.update.hide_password"
+        : "settings.update.show_password",
+    ),
+    transportChoices: {
+      usb_internet: usbChoice,
+      wifi: wifiChoice,
+    },
+    transportNoteText: t(
+      usingUsb
+        ? "settings.update.preflight_note_usb"
+        : "settings.update.preflight_note_wifi",
+    ),
+    wifiFieldsHidden: usingUsb,
+  };
+}
+
+export function buildUpdateFeaturePanelModels(
+  state: UpdateFeatureRenderState,
+  form: UpdateFeatureFormSnapshot,
+  deps: Pick<UpdateFeaturePresenterDeps, "t">,
+): UpdateFeaturePanelModels {
+  const actionSummary = buildActionSummary(state, form, deps.t);
+  return {
+    canStart: actionSummary.canStart,
+    internetPanel: buildInternetPanelRenderModel(state, form, actionSummary, deps.t),
+    transport: actionSummary.transport,
+    updatePanel: buildUpdatePanelRenderModel(state, actionSummary, deps.t),
+  };
+}
+
 export function createUpdateFeaturePresenter(
   ctx: UpdateFeaturePresenterDeps,
 ): UpdateFeaturePresenter {
-  const { dom: updateEls, internetDom, t, escapeHtml } = ctx;
+  const { internetPanel, panel, t } = ctx;
 
   let passwordVisible = false;
-  let lastActionSummary: UpdateFeatureActionSummary | null = null;
+  let lastPanelModels: UpdateFeaturePanelModels | null = null;
+  let lastRenderedState: UpdateFeatureRenderState | null = null;
   let hasHydratedPersistedWifiSettings = false;
 
-  function hydratePersistedWifiSettings(
-    state: UpdateFeatureRenderState,
-  ): void {
+  function readSsidInputValue(state: UpdateFeatureRenderState): string {
+    const currentValue = internetPanel.dom.updateSsidInput?.value ?? "";
     if (hasHydratedPersistedWifiSettings || state.updateStatus == null) {
-      return;
+      return currentValue;
     }
     hasHydratedPersistedWifiSettings = true;
     if (
-      state.updateStatus.transport !== "wifi" ||
-      !state.updateStatus.ssid ||
-      !internetDom.updateSsidInput
+      state.updateStatus.transport === "wifi" &&
+      state.updateStatus.ssid &&
+      currentValue.trim().length === 0
     ) {
-      return;
+      return state.updateStatus.ssid;
     }
-    if (internetDom.updateSsidInput.value.trim()) {
-      return;
-    }
-    internetDom.updateSsidInput.value = state.updateStatus.ssid;
+    return currentValue;
   }
 
-  function selectedTransport(
+  function readSelectedTransport(
     state: UpdateFeatureRenderState,
   ): UpdateStartRequestPayload["transport"] {
     if (state.updateState === "running") {
       return state.updateTransport;
     }
-    if (
-      state.internetStatus.usable &&
-      internetDom.updateTransportUsbRadio?.checked
-    ) {
-      return "usb_internet";
-    }
-    return "wifi";
+    return internetPanel.dom.updateTransportUsbRadio?.checked ? "usb_internet" : "wifi";
   }
 
-  function hasBlockingHealthIssue(state: UpdateFeatureRenderState): boolean {
-    const health = state.healthStatus;
-    if (!health) {
-      return false;
-    }
-    return (
-      health.status === "degraded" ||
-      health.persistence.write_error != null ||
-      health.startup_error != null ||
-      health.db_corruption_detected === true
-    );
-  }
-
-  function buildActionSummary(
+  function readFormSnapshot(
     state: UpdateFeatureRenderState,
-  ): UpdateFeatureActionSummary {
-    const transport = selectedTransport(state);
-    const usingUsb = transport === "usb_internet";
-    const isRunning = state.updateState === "running";
-    const ssid = internetDom.updateSsidInput?.value.trim() ?? "";
-    const usbInterface = state.internetStatus.interface_name;
-    const readinessItems = [
-      {
-        label: t("settings.update.readiness.item.source"),
-        detail: usingUsb
-          ? t("settings.update.readiness.item.source_usb")
-          : t("settings.update.readiness.item.source_wifi"),
-        state: "ready" as const,
-      },
-      usingUsb
-        ? {
-            label: t("settings.update.readiness.item.connection"),
-            detail: state.internetStatus.usable
-              ? t("settings.update.readiness.item.connection_usb_ready", {
-                  interface:
-                    usbInterface || t("settings.update.transport.usb_title"),
-                })
-              : t("settings.update.readiness.item.connection_usb_blocked"),
-            state: state.internetStatus.usable
-              ? ("ready" as const)
-              : ("blocked" as const),
-          }
-        : {
-            label: t("settings.update.readiness.item.connection"),
-            detail: ssid
-              ? t("settings.update.readiness.item.connection_wifi_ready")
-              : t("settings.update.readiness.item.connection_wifi_blocked"),
-            state: ssid ? ("ready" as const) : ("blocked" as const),
-          },
-    ];
-    if (hasBlockingHealthIssue(state)) {
-      readinessItems.push({
-        label: t("settings.update.readiness.item.health"),
-        detail: t("settings.update.readiness.item.health_blocked"),
-        state: "blocked",
-      });
-    }
-    const hasBlockedItem = readinessItems.some(
-      (item) => item.state === "blocked",
-    );
-    const failure = state.updateStatus
-      ? getUpdateFailureSummary(state.updateStatus, t)
-      : null;
-    const isRecoveryState = failure !== null;
-    const stateLabel = isRecoveryState
-      ? hasBlockedItem
-        ? t("maintenance.readiness.blocked")
-        : t("settings.update.state.failed")
-      : isRunning
-        ? t("maintenance.readiness.running")
-        : hasBlockedItem
-          ? t("maintenance.readiness.blocked")
-          : t("maintenance.readiness.ready");
-    const items = failure
-      ? [
-          {
-            label: t("settings.update.recovery.item.failed_step"),
-            detail: failure.phaseLabel,
-            state: "attention" as const,
-          },
-          {
-            label: t("settings.update.recovery.item.captured_detail"),
-            detail: failure.message
-              ? failure.detail
-                ? `${failure.message} — ${failure.detail}`
-                : failure.message
-              : failure.detail || failure.phaseLabel,
-            state: "attention" as const,
-          },
-          {
-            label: t("settings.update.recovery.item.next_step"),
-            detail: hasBlockedItem
-              ? t("settings.update.recovery.item.next_step_blocked")
-              : `${failure.recoveryTitle} — ${failure.recoveryDetail}`,
-            state: hasBlockedItem
-              ? ("blocked" as const)
-              : ("attention" as const),
-          },
-        ]
-      : readinessItems;
+  ): UpdateFeatureFormSnapshot {
     return {
-      canStart: !isRunning && !hasBlockedItem,
-      startLabel: t(
-        isRecoveryState ? "settings.update.retry" : "settings.update.start",
-      ),
-      transport,
-      panelModel: {
-        title: t(
-          isRecoveryState
-            ? "settings.update.recovery.title"
-            : "settings.update.readiness.title",
-        ),
-        summary: t(
-          isRecoveryState
-            ? hasBlockedItem
-              ? "settings.update.recovery.summary_blocked"
-              : "settings.update.recovery.summary_retry"
-            : isRunning
-              ? "settings.update.readiness.summary_running"
-              : hasBlockedItem
-                ? "settings.update.readiness.summary_blocked"
-                : "settings.update.readiness.summary_ready",
-        ),
-        stateLabel,
-        stateVariant: isRecoveryState
-          ? "bad"
-          : isRunning
-            ? "warn"
-            : hasBlockedItem
-              ? "bad"
-              : "ok",
-        items,
-      },
+      passwordInputValue: internetPanel.dom.updatePasswordInput?.value ?? "",
+      passwordVisible,
+      selectedTransport: readSelectedTransport(state),
+      ssidInputValue: readSsidInputValue(state),
     };
   }
 
-  function syncTransportUi(state: UpdateFeatureRenderState): void {
-    const usbAvailable = state.internetStatus.usable;
-    const controlsLocked = state.updateState === "running";
-    const usingUsb = selectedTransport(state) === "usb_internet";
-    if (internetDom.updateTransportOptions) {
-      internetDom.updateTransportOptions.hidden = false;
-    }
-    if (internetDom.updateUsbTransportSummary) {
-      internetDom.updateUsbTransportSummary.textContent = usbAvailable
-        ? formatUsbInternetSummary(state.internetStatus, t)
-        : t("settings.update.transport.usb_summary_unavailable");
-    }
-    if (!usbAvailable && !controlsLocked) {
-      if (internetDom.updateTransportWifiRadio) {
-        internetDom.updateTransportWifiRadio.checked = true;
-      }
-      if (internetDom.updateTransportUsbRadio) {
-        internetDom.updateTransportUsbRadio.checked = false;
-      }
-    }
-    if (internetDom.updateTransportWifiRadio) {
-      internetDom.updateTransportWifiRadio.disabled = controlsLocked;
-    }
-    if (internetDom.updateTransportUsbRadio) {
-      internetDom.updateTransportUsbRadio.disabled =
-        controlsLocked || !usbAvailable;
-    }
-    if (controlsLocked) {
-      if (internetDom.updateTransportWifiRadio) {
-        internetDom.updateTransportWifiRadio.checked = !usingUsb;
-      }
-      if (internetDom.updateTransportUsbRadio) {
-        internetDom.updateTransportUsbRadio.checked = usingUsb;
-      }
-    }
-    setChoiceCardState(internetDom.updateTransportChoiceWifi, {
-      selected: !usingUsb,
-      state: !usingUsb ? "active" : null,
-      badgeText: !usingUsb ? t("settings.update.transport.selected_badge") : null,
-    });
-    setChoiceCardState(internetDom.updateTransportChoiceUsb, {
-      selected: usingUsb,
-      disabled: !usbAvailable && !controlsLocked,
-      state: usingUsb ? "active" : null,
-      badgeText: usingUsb ? t("settings.update.transport.selected_badge") : null,
-    });
-    if (internetDom.updateWifiFields) {
-      internetDom.updateWifiFields.hidden = usingUsb;
-    }
-    if (internetDom.updateTransportNote) {
-      internetDom.updateTransportNote.textContent = t(
-        usingUsb
-          ? "settings.update.preflight_note_usb"
-          : "settings.update.preflight_note_wifi",
-      );
-    }
-    if (internetDom.updateDetailsCaption) {
-      internetDom.updateDetailsCaption.textContent = t(
-        usingUsb
-          ? "settings.update.details_caption_usb"
-          : "settings.update.details_caption_wifi",
-      );
-    }
-  }
-
-  function syncControls(
-    state: UpdateFeatureRenderState,
-    actionSummary: UpdateFeatureActionSummary,
-  ): void {
-    const isRunning = state.updateState === "running";
-    updateEls.updateStartBtn.textContent = actionSummary.startLabel;
-    updateEls.updateStartBtn.hidden = isRunning;
-    updateEls.updateStartBtn.disabled = isRunning || !actionSummary.canStart;
-    updateEls.updateCancelBtn.hidden = !isRunning;
-    updateEls.updateCancelBtn.disabled = !isRunning;
-    if (internetDom.updateSsidInput) {
-      internetDom.updateSsidInput.disabled = isRunning;
-    }
-    if (internetDom.updatePasswordInput) {
-      internetDom.updatePasswordInput.disabled = isRunning;
-    }
-    if (internetDom.updateTogglePasswordBtn) {
-      internetDom.updateTogglePasswordBtn.disabled = isRunning;
-    }
-  }
-
-  function renderPanels(
-    state: UpdateFeatureRenderState,
-    actionSummary: UpdateFeatureActionSummary,
-  ): void {
-    if (internetDom.updateReadinessSummary) {
-      internetDom.updateReadinessSummary.innerHTML =
-        renderMaintenanceReadinessPanel(actionSummary.panelModel, escapeHtml);
-    }
-    if (state.updateStatus && state.healthStatus) {
-      const viewModel = buildUpdateStatusPanelViewModel(
-        state.updateStatus,
-        state.healthStatus,
-        {
-          t,
-          selectedTransport: actionSummary.transport,
-        },
-      );
-      renderUpdateOverviewPanel(updateEls.updateOverviewPanel, viewModel);
-      renderUpdateStatusPanel(updateEls.updateStatusPanel, viewModel);
-    }
-    if (
-      internetDom.internetStatusPanel &&
-      state.updateStatus &&
-      state.healthStatus
-    ) {
-      renderInternetStatusPanel(
-        internetDom.internetStatusPanel,
-        state.internetStatus,
-        {
-          t,
-        },
-      );
-    }
-  }
-
   function render(state: UpdateFeatureRenderState): void {
-    hydratePersistedWifiSettings(state);
-    syncTransportUi(state);
-    const actionSummary = buildActionSummary(state);
-    lastActionSummary = actionSummary;
-    syncControls(state, actionSummary);
-    renderPanels(state, actionSummary);
+    lastRenderedState = state;
+    const panelModels = buildUpdateFeaturePanelModels(state, readFormSnapshot(state), {
+      t,
+    });
+    lastPanelModels = panelModels;
+    internetPanel.render(panelModels.internetPanel);
+    panel.render(panelModels.updatePanel);
   }
 
   function readStartIntent(
     state: UpdateFeatureRenderState,
   ): UpdateFeatureStartIntent {
-    const actionSummary = lastActionSummary ?? buildActionSummary(state);
+    const form = readFormSnapshot(state);
+    const panelModels = lastPanelModels ?? buildUpdateFeaturePanelModels(state, form, { t });
     return {
-      canStart: actionSummary.canStart,
-      password: internetDom.updatePasswordInput?.value ?? "",
-      ssid: internetDom.updateSsidInput?.value.trim() ?? "",
-      transport: actionSummary.transport,
+      canStart: panelModels.canStart,
+      password: form.passwordInputValue,
+      ssid: form.ssidInputValue.trim(),
+      transport: panelModels.transport,
       usbAvailable: state.internetStatus.usable,
     };
   }
 
-  function togglePassword(): void {
-    passwordVisible = !passwordVisible;
-    if (internetDom.updatePasswordInput) {
-      internetDom.updatePasswordInput.type = passwordVisible
-        ? "text"
-        : "password";
-    }
-    if (internetDom.updateTogglePasswordBtn) {
-      const span = internetDom.updateTogglePasswordBtn.querySelector("span");
-      if (span) {
-        span.textContent = t(
-          passwordVisible
-            ? "settings.update.hide_password"
-            : "settings.update.show_password",
-        );
-      }
+  function rerenderLastState(): void {
+    if (lastRenderedState) {
+      render(lastRenderedState);
     }
   }
 
   return {
     render,
     readStartIntent,
-    togglePassword,
+    togglePassword() {
+      passwordVisible = !passwordVisible;
+      rerenderLastState();
+    },
     focusSsidInput() {
-      internetDom.updateSsidInput?.focus();
+      internetPanel.dom.updateSsidInput?.focus();
     },
     clearPassword() {
-      if (internetDom.updatePasswordInput) {
-        internetDom.updatePasswordInput.value = "";
+      if (internetPanel.dom.updatePasswordInput) {
+        internetPanel.dom.updatePasswordInput.value = "";
       }
+      rerenderLastState();
     },
   };
 }
