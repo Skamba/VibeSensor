@@ -1,14 +1,20 @@
 import type { LiveWsPayload } from "./contracts/ws_payload_types";
+import { batchAppStateUpdates } from "./app/ui_app_state";
 
 export type WsUiState = "connecting" | "connected" | "reconnecting" | "stale" | "no_data";
+
+export interface WsTransportState {
+  wsState: WsUiState;
+  pendingPayload: unknown | null;
+  hasReceivedPayload: boolean;
+}
 
 export interface WsClientOptions {
   url: string;
   staleAfterMs?: number;
   reconnectDelayMs?: number;
   hasData?: (payload: unknown) => boolean;
-  onPayload: (payload: unknown) => void;
-  onStateChange: (state: WsUiState) => void;
+  transport: WsTransportState;
 }
 
 function hasSpectraClients(payload: unknown): boolean {
@@ -20,13 +26,12 @@ function hasSpectraClients(payload: unknown): boolean {
 }
 
 export class WsClient {
-  private readonly options: Required<Omit<WsClientOptions, "onPayload" | "onStateChange">> & {
-    onPayload: (payload: unknown) => void;
-    onStateChange: (state: WsUiState) => void;
+  private readonly options: Required<Omit<WsClientOptions, "transport">> & {
+    transport: WsTransportState;
   };
 
   private ws: WebSocket | null = null;
-  private state: WsUiState = "connecting";
+  private state: WsUiState;
   private reconnectTimer: number | null = null;
   private staleTimer: number | null = null;
   private lastMessageAtMs = 0;
@@ -42,6 +47,7 @@ export class WsClient {
       hasData: hasSpectraClients,
       ...options,
     };
+    this.state = this.options.transport.wsState;
   }
 
   connect(): void {
@@ -95,8 +101,11 @@ export class WsClient {
       this.lastMessageAtMs = receivedAt;
       this.hasData = this.hasData || this.options.hasData(payload);
       this.reconnectAttempt = 0;
-      this.setState(this.hasData ? "connected" : "no_data");
-      this.options.onPayload(payload);
+      batchAppStateUpdates(() => {
+        this.commitState(this.hasData ? "connected" : "no_data");
+        this.options.transport.hasReceivedPayload = true;
+        this.options.transport.pendingPayload = payload;
+      });
     };
 
     this.ws.onclose = () => {
@@ -142,8 +151,14 @@ export class WsClient {
   }
 
   private setState(next: WsUiState): void {
+    batchAppStateUpdates(() => {
+      this.commitState(next);
+    });
+  }
+
+  private commitState(next: WsUiState): void {
     if (this.state === next) return;
     this.state = next;
-    this.options.onStateChange(next);
+    this.options.transport.wsState = next;
   }
 }
