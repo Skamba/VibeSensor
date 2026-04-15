@@ -7,10 +7,12 @@ import type {
   EspFlashPanelRenderModel,
 } from "../src/app/views/esp_flash_panel";
 import type {
+  InternetPanelActionHandlers,
   InternetPanelDom,
   InternetPanelRenderModel,
 } from "../src/app/views/internet_panel";
 import type {
+  UpdatePanelActionHandlers,
   UpdatePanelDom,
   UpdatePanelRenderModel,
 } from "../src/app/views/update_panel";
@@ -703,12 +705,34 @@ function createUpdateDeps() {
   return {
     panel: {
       dom,
+      bindActions(handlers: UpdatePanelActionHandlers) {
+        dom.updateStartBtn.addEventListener("click", () => {
+          handlers.onStart();
+        });
+        dom.updateCancelBtn.addEventListener("click", () => {
+          handlers.onCancel();
+        });
+      },
       render(model: UpdatePanelRenderModel) {
         renderUpdatePanelDom(dom, model);
       },
     },
     internetPanel: {
       dom: internetDom,
+      bindActions(handlers: InternetPanelActionHandlers) {
+        internetDom.updateTogglePasswordBtn?.addEventListener("click", () => {
+          handlers.onTogglePassword();
+        });
+        internetDom.updateTransportWifiRadio?.addEventListener("change", () => {
+          handlers.onTransportChange("wifi");
+        });
+        internetDom.updateTransportUsbRadio?.addEventListener("change", () => {
+          handlers.onTransportChange("usb_internet");
+        });
+        internetDom.updateSsidInput?.addEventListener("input", () => {
+          handlers.onSsidInput(internetDom.updateSsidInput?.value ?? "");
+        });
+      },
       render(model: InternetPanelRenderModel) {
         renderInternetPanelDom(internetDom, model);
       },
