@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { createPollingController } from "../src/app/features/polling_controller";
+import { signal } from "../src/app/ui_signals";
 import { createDeferred, flushAsyncWork, installTimerHarness } from "./async_test_helpers";
 
 test.describe("createPollingController", () => {
@@ -73,6 +74,38 @@ test.describe("createPollingController", () => {
       controller.start();
       await flushAsyncWork();
       expect(timers.pendingDelays()).toEqual([3_000]);
+    } finally {
+      timers.restore();
+    }
+  });
+
+  test("enabled signals start and stop the poll loop without manual lifecycle calls", async () => {
+    const timers = installTimerHarness();
+    const enabled = signal(false);
+    let pollCalls = 0;
+
+    createPollingController({
+      enabled,
+      poll: async () => {
+        pollCalls += 1;
+        return 500;
+      },
+      onErrorDelayMs: 2_000,
+    });
+
+    try {
+      await flushAsyncWork();
+      expect(pollCalls).toBe(0);
+      expect(timers.pendingDelays()).toEqual([]);
+
+      enabled.value = true;
+      await flushAsyncWork();
+      expect(pollCalls).toBe(1);
+      expect(timers.pendingDelays()).toEqual([500]);
+
+      enabled.value = false;
+      await flushAsyncWork();
+      expect(timers.pendingDelays()).toEqual([]);
     } finally {
       timers.restore();
     }

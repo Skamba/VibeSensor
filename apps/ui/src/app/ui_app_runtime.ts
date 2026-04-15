@@ -65,6 +65,7 @@ function createUiAppFeatureRuntimePorts(deps: {
     panels,
     navigation: {
       activatePrimaryView: (viewId) => shell.setActiveView(viewId),
+      getActiveViewId: () => shell.getActiveViewId(),
       subscribeActiveViewChanges: (listener) =>
         shell.subscribeActiveViewChanges(listener),
     },

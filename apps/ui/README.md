@@ -95,14 +95,14 @@ source-of-truth export commands remain the only writers for those files.
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, and the reactive shell-chrome model that feeds header pills, feedback, and app-level banners |
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport coordinator that queues payloads through AppState, throttles live-session adaptation, and lets realtime, shell, and spectrum surfaces react from signal-backed state |
 | `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that wires overlay updates plus the extracted canvas, interaction, and panel modules |
-| `app/runtime/ui_startup_coordinator.ts` | Declarative startup-task runner that lets the shell own its initial bind/language/view boot while startup loads, polling, and transport start from a named sync/async plan |
-| `app/runtime/ui_startup_feature_ports.ts` | Narrow startup-only feature contract for initial refresh/load work and long-lived polling starts |
+| `app/runtime/ui_startup_coordinator.ts` | Declarative startup-task runner that lets the shell own its initial bind/language/view boot while startup loads and transport start from a named sync/async plan |
+| `app/runtime/ui_startup_feature_ports.ts` | Narrow startup-only feature contract for initial refresh/load work |
 | `app/runtime/spectrum_canvas_renderer.ts` | Spectrum frame preparation, plot lifecycle, tweening, and canvas draw plugin orchestration |
 | `app/runtime/spectrum_interaction_controller.ts` | Spectrum focus, band-toggle, cursor, and legend/isolation interaction state with explicit ports |
 | `app/runtime/spectrum_panel_view.ts` | Typed spectrum panel contract for the signal-backed legend, band legend, inspector, band-toggle, and chart-host refs |
 | `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
 | `app/features/` | Feature owners for state changes, API calls, shared polling control, and typed actions emitted from local view surfaces |
-| `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, and typed island action bridge together |
+| `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, typed island action bridge, and settings-view polling context together |
 | `app/features/esp_flash_feature_workflow.ts` | DOM-free ESP flash workflow/controller for port refreshes, flash status polling, log/history hydration, and start/cancel orchestration |
 | `app/features/cars_feature.ts` | Thin car-wizard facade that wires the DOM-free workflow plus island-owned wizard DOM adapter into typed wizard actions |
 | `app/features/cars_feature_transport.ts` | Car-library transport wrapper for loading wizard brands, types, and models through the UI API facade |
@@ -125,7 +125,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/cars_panel.tsx` | Signal-backed Preact owner for the full car-management surface; it renders saved-car guidance/list rows plus the full add-car wizard in JSX, owns wizard focus/return-focus/scroll lifecycle locally, and exposes typed list and wizard bridges |
 | `app/views/cars_feature_presenter.ts` | Thin car-wizard presenter that turns workflow state into typed wizard render models and delegates focus/manual-input access through the island bridge |
 | `app/views/car_wizard_view.ts` | Typed add-car wizard render-model builders for progress, option sections, selected specs, and summary rows reused by the Preact car-management island |
-| `app/features/update_feature.ts` | Thin update facade that binds typed island actions, delegates island render-model updates to the presenter, and delegates update commands to the workflow |
+| `app/features/update_feature.ts` | Thin update facade that binds typed island actions, delegates island render-model updates to the presenter, and derives update/internet polling context from the shell and settings tab state |
 | `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for update polling, internet-status normalization, and start/cancel command orchestration |
 | `app/features/history_feature.ts` | Single owner for history refresh, expanded-run/detail state, download/delete actions, collapsed-preview prefetch, and the typed panel render model |
 | `app/features/history_download.ts` | Focused blob-download helper for the history PDF/report flow |
@@ -185,8 +185,9 @@ cross-feature ports, and returns only the shell, transport, and startup
 contracts the runtime needs, while `ui_app_runtime.ts` uses local helper
 factories and constructor-time callbacks instead of late `attach*` calls.
 `ui_startup_coordinator.ts` then runs those
-startup-only ports from a small declarative sync/async plan instead of a
-handwritten boot call chain.
+startup-only load/refresh ports from a small declarative sync/async plan
+instead of a handwritten boot call chain, while long-lived update, ESP flash,
+and GPS-status polling now start and stop from feature-owned reactive context.
 
 The live UI architecture is now fully Preact for every page, tab, and
 feature surface.

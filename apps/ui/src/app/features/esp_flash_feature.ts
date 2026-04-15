@@ -1,10 +1,19 @@
+import { computed, effect, signal } from "../ui_signals";
 import type { FeatureServices } from "../feature_deps_base";
 import { createEspFlashFeatureWorkflow } from "./esp_flash_feature_workflow";
 import { createEspFlashFeaturePresenter } from "../views/esp_flash_feature_presenter";
 import type { EspFlashPanelView } from "../views/esp_flash_panel";
 
+interface EspFlashFeaturePorts {
+  getActiveSettingsTabId: () => string;
+  getActiveViewId: () => string;
+  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
+  subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
+}
+
 export interface EspFlashFeatureDeps {
   panel: EspFlashPanelView;
+  ports: EspFlashFeaturePorts;
   services: FeatureServices;
 }
 
@@ -14,10 +23,21 @@ export interface EspFlashFeature {
   stopPolling(): void;
 }
 
+function isEspFlashPollingContext(viewId: string, tabId: string): boolean {
+  return viewId === "settingsView" && tabId === "espFlashTab";
+}
+
 export function createEspFlashFeature(
   ctx: EspFlashFeatureDeps,
 ): EspFlashFeature {
-  const { panel, services } = ctx;
+  const { panel, ports, services } = ctx;
+  const handlersBound = signal(false);
+  const activeViewId = signal(ports.getActiveViewId());
+  const activeSettingsTabId = signal(ports.getActiveSettingsTabId());
+  const pollingEnabled = computed(() =>
+    handlersBound.value
+    && isEspFlashPollingContext(activeViewId.value, activeSettingsTabId.value)
+  );
   const presenter = createEspFlashFeaturePresenter({
     panel,
     t: services.t,
@@ -26,14 +46,30 @@ export function createEspFlashFeature(
     t: services.t,
     showError: services.showError,
     view: presenter,
+    pollingEnabled,
   });
-  let handlersBound = false;
+
+  ports.subscribePrimaryViewChanges((viewId) => {
+    activeViewId.value = viewId;
+  });
+  ports.subscribeSettingsTabChanges((tabId) => {
+    activeSettingsTabId.value = tabId;
+  });
+
+  let wasPollingEnabled = false;
+  effect(() => {
+    const enabled = pollingEnabled.value;
+    if (enabled && !wasPollingEnabled) {
+      void workflow.refreshPorts();
+    }
+    wasPollingEnabled = enabled;
+  });
 
   function bindHandlers(): void {
-    if (handlersBound) {
+    if (handlersBound.value) {
       return;
     }
-    handlersBound = true;
+    handlersBound.value = true;
     panel.bindActions({
       onStart: () => {
         void workflow.startFlash();

@@ -61,9 +61,6 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     renderCarList() {
       calls.push("settings.renderCarList");
     },
-    startGpsStatusPolling() {
-      calls.push("settings.startGpsStatusPolling");
-    },
   };
   const cars = {
     bindWizardHandlers() {
@@ -74,16 +71,10 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     bindUpdateHandlers() {
       calls.push("update.bindUpdateHandlers");
     },
-    startPolling() {
-      calls.push("update.startPolling");
-    },
   };
   const espFlash = {
     bindHandlers() {
       calls.push("espFlash.bindHandlers");
-    },
-    startPolling() {
-      calls.push("espFlash.startPolling");
     },
   };
 
@@ -117,9 +108,6 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
   await bundle.startup.settings.loadSpeedSourceFromServer();
   await bundle.startup.settings.loadAnalysisSettingsFromServer();
   await bundle.startup.settings.loadCarsFromServer();
-  bundle.startup.settings.startGpsStatusPolling();
-  bundle.startup.update.startPolling();
-  bundle.startup.espFlash.startPolling();
 
   expect(calls).toEqual([
     "history.refreshHistory",
@@ -138,8 +126,5 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     "settings.loadSpeedSourceFromServer",
     "settings.loadAnalysisSettingsFromServer",
     "settings.loadCarsFromServer",
-    "settings.startGpsStatusPolling",
-    "update.startPolling",
-    "espFlash.startPolling",
   ]);
 });

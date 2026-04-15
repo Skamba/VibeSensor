@@ -512,7 +512,46 @@ function renderEspFlashPanelDom(
   }
 }
 
+function createFeatureNavigationHarness(defaultTabId: string) {
+  let activeViewId = "settingsView";
+  let activeSettingsTabId = defaultTabId;
+  const primaryViewListeners = new Set<(viewId: string) => void>();
+  const settingsTabListeners = new Set<(tabId: string) => void>();
+
+  return {
+    ports: {
+      getActiveSettingsTabId: () => activeSettingsTabId,
+      getActiveViewId: () => activeViewId,
+      subscribePrimaryViewChanges(listener: (viewId: string) => void) {
+        primaryViewListeners.add(listener);
+        return () => {
+          primaryViewListeners.delete(listener);
+        };
+      },
+      subscribeSettingsTabChanges(listener: (tabId: string) => void) {
+        settingsTabListeners.add(listener);
+        return () => {
+          settingsTabListeners.delete(listener);
+        };
+      },
+    },
+    setActiveSettingsTabId(nextTabId: string) {
+      activeSettingsTabId = nextTabId;
+      for (const listener of settingsTabListeners) {
+        listener(nextTabId);
+      }
+    },
+    setActiveViewId(nextViewId: string) {
+      activeViewId = nextViewId;
+      for (const listener of primaryViewListeners) {
+        listener(nextViewId);
+      }
+    },
+  };
+}
+
 function createDeps() {
+  const navigation = createFeatureNavigationHarness("espFlashTab");
   const espFlashPortSelect = createSelect("__auto__");
   const espFlashRefreshPortsBtn = createButton();
   const espFlashStartBtn = createButton();
@@ -561,6 +600,7 @@ function createDeps() {
         renderEspFlashPanelDom(dom, model);
       },
     },
+    ports: navigation.ports,
     els: dom,
     espFlashPortSelect,
     espFlashRefreshPortsBtn,
@@ -573,6 +613,8 @@ function createDeps() {
       t: (key: string) => key,
       showError: () => {},
     },
+    setActiveSettingsTabId: navigation.setActiveSettingsTabId,
+    setActiveViewId: navigation.setActiveViewId,
   };
 }
 
@@ -674,6 +716,7 @@ function createHealthyUpdateStatus() {
 }
 
 function createUpdateDeps() {
+  const navigation = createFeatureNavigationHarness("updateTab");
   const internetStatusPanel = createPanel();
   const updateTransportOptions = createPanel();
   const updateTransportChoiceWifi = createPanel();
@@ -759,6 +802,7 @@ function createUpdateDeps() {
         },
       },
     },
+    ports: navigation.ports,
     els: dom,
     internetStatusPanel,
     updateTransportOptions,
@@ -779,6 +823,8 @@ function createUpdateDeps() {
       t: (key: string) => key,
       showError: () => {},
     },
+    setActiveSettingsTabId: navigation.setActiveSettingsTabId,
+    setActiveViewId: navigation.setActiveViewId,
   };
 }
 

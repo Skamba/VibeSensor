@@ -54,6 +54,7 @@ type SettingsShellTabId = (typeof SETTINGS_TABS)[number]["id"];
 
 export interface SettingsShellView {
   activateTab(tabId: string): void;
+  getActiveTabId(): string;
   subscribeActiveTabChanges(listener: (tabId: string) => void): ViewDisposer;
 }
 
@@ -193,6 +194,9 @@ export function mountSettingsShell(host: HTMLElement): SettingsShellView {
         return;
       }
       setActiveTab(tabId);
+    },
+    getActiveTabId(): string {
+      return activeTabId.value;
     },
     subscribeActiveTabChanges(listener: (tabId: string) => void): ViewDisposer {
       let initialized = false;

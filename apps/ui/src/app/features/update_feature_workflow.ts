@@ -19,6 +19,7 @@ import type {
   UpdateFeatureRenderState,
   UpdateFeatureStartIntent,
 } from "../views/update_feature_presenter";
+import type { ReadonlySignal } from "../ui_signals";
 import {
   createPollingController,
   type PollingController,
@@ -45,6 +46,7 @@ export interface UpdateFeatureWorkflowDeps {
   view: UpdateFeatureWorkflowViewPorts;
   api?: Partial<UpdateFeatureWorkflowApi>;
   createPollingController?: (options: PollingControllerOptions) => PollingController;
+  pollingEnabled?: ReadonlySignal<boolean>;
 }
 
 export interface UpdateFeatureWorkflow {
@@ -169,6 +171,7 @@ export function createUpdateFeatureWorkflow(
   }
 
   const polling = createPolling({
+    enabled: deps.pollingEnabled,
     poll: async () => {
       const snapshot = await fetchStatusSnapshot();
       applyStatusSnapshot(snapshot);

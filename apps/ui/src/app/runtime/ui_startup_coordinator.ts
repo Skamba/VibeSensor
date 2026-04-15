@@ -74,9 +74,6 @@ export class UiStartupCoordinator {
         () => this.shell.start(this.defaultViewId),
       ],
       finalSyncTasks: [
-        () => this.features.update.startPolling(),
-        () => this.features.espFlash.startPolling(),
-        () => this.features.settings.startGpsStatusPolling(),
         () => this.transport.startTransportMode(),
       ],
       asyncTasks: [
