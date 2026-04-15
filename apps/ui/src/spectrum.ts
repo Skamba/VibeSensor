@@ -130,7 +130,7 @@ export class SpectrumChart {
   }
 
   renderLegend(legendEl: HTMLElement, seriesMeta: SpectrumSeriesMeta[]): void {
-    legendEl.innerHTML = "";
+    legendEl.replaceChildren();
     for (const item of seriesMeta) {
       const row = document.createElement("div");
       row.className = "legend-item";
