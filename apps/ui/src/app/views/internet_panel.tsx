@@ -59,12 +59,20 @@ export interface InternetPanelRenderModel {
   wifiFieldsHidden: boolean;
 }
 
+export interface InternetPanelActionHandlers {
+  onSsidInput(value: string): void;
+  onTogglePassword(): void;
+  onTransportChange(transport: UpdateStartRequestPayload["transport"]): void;
+}
+
 export interface InternetPanelView {
   readonly dom: InternetPanelDom;
+  bindActions(handlers: InternetPanelActionHandlers): void;
   render(model: InternetPanelRenderModel): void;
 }
 
 type InternetPanelBridgeState = {
+  actions: InternetPanelActionHandlers | null;
   model: InternetPanelRenderModel;
 };
 
@@ -221,12 +229,13 @@ function UpdateTransportChoiceCard(props: {
   captionId?: string;
   choiceId: string;
   model: UpdateTransportChoiceCardRenderModel;
+  onSelect: ((transport: UpdateStartRequestPayload["transport"]) => void) | null;
   radioId: string;
   titleKey: string;
   titleText: string;
   value: UpdateStartRequestPayload["transport"];
 }) {
-  const { captionId, choiceId, model, radioId, titleKey, titleText, value } = props;
+  const { captionId, choiceId, model, onSelect, radioId, titleKey, titleText, value } = props;
   return (
     <label
       id={choiceId}
@@ -245,6 +254,7 @@ function UpdateTransportChoiceCard(props: {
         value={value}
         checked={model.selected}
         disabled={model.inputDisabled}
+        onChange={() => onSelect?.(value)}
       />
       <span class="speed-source-choice__title" data-i18n={titleKey}>
         {titleText}
@@ -257,9 +267,10 @@ function UpdateTransportChoiceCard(props: {
 }
 
 function InternetPanel(props: {
-  model: InternetPanelRenderModel;
+  state: InternetPanelBridgeState;
 }) {
-  const { model } = props;
+  const { state } = props;
+  const { model } = state;
   const t = useUiTranslation();
   return (
     <div class="maintenance-stack">
@@ -320,6 +331,7 @@ function InternetPanel(props: {
               <UpdateTransportChoiceCard
                 choiceId="updateTransportChoiceWifi"
                 model={model.transportChoices.wifi}
+                onSelect={state.actions?.onTransportChange ?? null}
                 radioId="updateTransportWifiRadio"
                 titleKey="settings.update.transport.wifi_title"
                 titleText={t("settings.update.transport.wifi_title", "Temporary Wi-Fi")}
@@ -329,6 +341,7 @@ function InternetPanel(props: {
                 captionId="updateUsbTransportSummary"
                 choiceId="updateTransportChoiceUsb"
                 model={model.transportChoices.usb_internet}
+                onSelect={state.actions?.onTransportChange ?? null}
                 radioId="updateTransportUsbRadio"
                 titleKey="settings.update.transport.usb_title"
                 titleText={t(
@@ -352,6 +365,8 @@ function InternetPanel(props: {
                 style="width:100%;max-width:20rem;"
                 value={model.ssidInputValue}
                 disabled={model.controlsLocked}
+                onInput={(event) =>
+                  state.actions?.onSsidInput(event.currentTarget.value)}
               />
             </div>
             <div class="form-group">
@@ -376,6 +391,7 @@ function InternetPanel(props: {
                   id="updateTogglePasswordBtn"
                   class="btn btn--small"
                   disabled={model.togglePasswordDisabled}
+                  onClick={() => state.actions?.onTogglePassword()}
                 >
                   <span>{model.togglePasswordLabelText}</span>
                 </button>
@@ -456,21 +472,26 @@ function createInternetPanelDom(host: HTMLElement): InternetPanelDom {
 }
 
 export function mountInternetPanel(host: HTMLElement): InternetPanelView {
-  const bridgeState: InternetPanelBridgeState = {
+  let state: InternetPanelBridgeState = {
+    actions: null,
     model: DEFAULT_INTERNET_PANEL_MODEL,
   };
   const mount = createUiPreactMount(host);
 
   function render(): void {
-    mount.render(<InternetPanel model={bridgeState.model} />);
+    mount.render(<InternetPanel state={state} />);
   }
 
   render();
 
   return {
     dom: createInternetPanelDom(host),
+    bindActions(handlers) {
+      state = { ...state, actions: handlers };
+      render();
+    },
     render(model) {
-      bridgeState.model = model;
+      state = { ...state, model };
       render();
     },
   };
