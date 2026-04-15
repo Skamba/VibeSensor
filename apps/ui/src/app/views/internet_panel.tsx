@@ -1,6 +1,17 @@
-import { h } from "preact";
+import { h, type ComponentChildren } from "preact";
 
+import type { UpdateStartRequestPayload } from "../../transport/http_models";
+import type { ChoiceCardState } from "../style_state";
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import type {
+  MaintenanceReadinessItem,
+  MaintenanceReadinessPanelModel,
+} from "./maintenance_readiness_view";
+import type { InternetStatusPanelModel } from "./internet_status_view";
+import type {
+  UpdateStatusBadgeModel,
+  UpdateStatusRowModel,
+} from "./update_status_view_models";
 
 export interface InternetPanelDom {
   internetStatusPanel: HTMLElement | null;
@@ -19,11 +30,235 @@ export interface InternetPanelDom {
   updateTogglePasswordBtn: HTMLButtonElement | null;
 }
 
-export interface InternetPanelView {
-  readonly dom: InternetPanelDom;
+export interface UpdateTransportChoiceCardRenderModel {
+  badgeText: string | null;
+  disabled: boolean;
+  inputDisabled: boolean;
+  selected: boolean;
+  state: ChoiceCardState | null;
+  summaryText: string;
 }
 
-function InternetPanel() {
+export interface InternetPanelRenderModel {
+  controlsLocked: boolean;
+  detailsCaptionText: string;
+  internetStatus: InternetStatusPanelModel | null;
+  passwordInputType: "password" | "text";
+  passwordInputValue: string;
+  readiness: MaintenanceReadinessPanelModel;
+  selectedTransport: UpdateStartRequestPayload["transport"];
+  ssidInputValue: string;
+  togglePasswordDisabled: boolean;
+  togglePasswordLabelText: string;
+  transportChoices: Record<
+    UpdateStartRequestPayload["transport"],
+    UpdateTransportChoiceCardRenderModel
+  >;
+  transportNoteText: string;
+  wifiFieldsHidden: boolean;
+}
+
+export interface InternetPanelView {
+  readonly dom: InternetPanelDom;
+  render(model: InternetPanelRenderModel): void;
+}
+
+type InternetPanelBridgeState = {
+  model: InternetPanelRenderModel;
+};
+
+const DEFAULT_INTERNET_PANEL_MODEL: InternetPanelRenderModel = {
+  controlsLocked: false,
+  detailsCaptionText: "",
+  internetStatus: null,
+  passwordInputType: "password",
+  passwordInputValue: "",
+  readiness: {
+    title: "Start readiness",
+    summary: "",
+    stateLabel: "",
+    stateVariant: "muted",
+    items: [],
+  },
+  selectedTransport: "wifi",
+  ssidInputValue: "",
+  togglePasswordDisabled: false,
+  togglePasswordLabelText: "Show",
+  transportChoices: {
+    usb_internet: {
+      badgeText: null,
+      disabled: true,
+      inputDisabled: true,
+      selected: false,
+      state: null,
+      summaryText: "USB internet is not ready yet.",
+    },
+    wifi: {
+      badgeText: "Selected",
+      disabled: false,
+      inputDisabled: false,
+      selected: true,
+      state: "active",
+      summaryText:
+        "Pause the hotspot, join a Wi-Fi network, install, then restore the hotspot.",
+    },
+  },
+  transportNoteText: "",
+  wifiFieldsHidden: false,
+};
+
+function UpdateBadge(props: { badge: UpdateStatusBadgeModel }) {
+  const { badge } = props;
+  return (
+    <span class="pill" data-variant={badge.variant}>
+      {badge.text}
+    </span>
+  );
+}
+
+function StatusGrid(props: { rows: readonly UpdateStatusRowModel[] }) {
+  const { rows } = props;
+  return (
+    <div class="status-grid">
+      {rows.map((row) => (
+        <div class="status-grid__row" key={`${row.labelText}:${row.valueText}`}>
+          <span class="status-grid__label">{row.labelText}</span>
+          <span>{row.valueText}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MaintenanceCard(props: {
+  badge?: UpdateStatusBadgeModel | null;
+  children: ComponentChildren;
+  subtitleText: string;
+  titleText: string;
+}) {
+  const { badge, children, subtitleText, titleText } = props;
+  return (
+    <section class="maintenance-card">
+      <div class="maintenance-card__header">
+        <div>
+          <div class="maintenance-card__title">{titleText}</div>
+          <div class="subtle">{subtitleText}</div>
+        </div>
+        {badge ? <UpdateBadge badge={badge} /> : null}
+      </div>
+      <div class="maintenance-card__body">{children}</div>
+    </section>
+  );
+}
+
+function MaintenanceReadinessItemRow(props: {
+  item: MaintenanceReadinessItem;
+}) {
+  const { item } = props;
+  const marker = item.state === "ready" ? "\u2713" : "!";
+  return (
+    <li
+      class="maintenance-readiness__item"
+      data-readiness-state={item.state}
+    >
+      <span class="maintenance-readiness__marker" aria-hidden="true">
+        {marker}
+      </span>
+      <div class="maintenance-readiness__body">
+        <div class="maintenance-readiness__label">{item.label}</div>
+        <div class="maintenance-readiness__detail">{item.detail}</div>
+      </div>
+    </li>
+  );
+}
+
+function MaintenanceReadinessPanel(props: {
+  model: MaintenanceReadinessPanelModel;
+}) {
+  const { model } = props;
+  return (
+    <section class="maintenance-readiness">
+      <div class="maintenance-readiness__header">
+        <div class="maintenance-readiness__heading">
+          <div class="maintenance-readiness__title">{model.title}</div>
+          <div class="maintenance-readiness__summary">{model.summary}</div>
+        </div>
+        {model.stateLabel ? (
+          <span class="pill" data-variant={model.stateVariant}>
+            {model.stateLabel}
+          </span>
+        ) : null}
+      </div>
+      <ul class="maintenance-readiness__list">
+        {model.items.map((item, index) => (
+          <MaintenanceReadinessItemRow
+            key={`${item.label}:${index}`}
+            item={item}
+          />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function InternetStatusCard(props: {
+  model: InternetStatusPanelModel;
+}) {
+  const { model } = props;
+  return (
+    <MaintenanceCard
+      badge={model.badge}
+      subtitleText={model.summaryText}
+      titleText={model.titleText}
+    >
+      <StatusGrid rows={model.rows} />
+    </MaintenanceCard>
+  );
+}
+
+function UpdateTransportChoiceCard(props: {
+  captionId?: string;
+  choiceId: string;
+  model: UpdateTransportChoiceCardRenderModel;
+  radioId: string;
+  titleKey: string;
+  titleText: string;
+  value: UpdateStartRequestPayload["transport"];
+}) {
+  const { captionId, choiceId, model, radioId, titleKey, titleText, value } = props;
+  return (
+    <label
+      id={choiceId}
+      class="speed-source-choice update-transport-choice"
+      data-update-transport-choice={value}
+      data-selected={model.selected ? "true" : undefined}
+      data-disabled={model.disabled ? "true" : undefined}
+      data-choice-state={model.state ?? undefined}
+      data-choice-badge={model.badgeText ?? undefined}
+    >
+      <input
+        class="speed-source-choice__radio"
+        type="radio"
+        id={radioId}
+        name="updateTransport"
+        value={value}
+        checked={model.selected}
+        disabled={model.inputDisabled}
+      />
+      <span class="speed-source-choice__title" data-i18n={titleKey}>
+        {titleText}
+      </span>
+      <span id={captionId} class="speed-source-choice__caption">
+        {model.summaryText}
+      </span>
+    </label>
+  );
+}
+
+function InternetPanel(props: {
+  model: InternetPanelRenderModel;
+}) {
+  const { model } = props;
   return (
     <div class="maintenance-stack">
       <div class="panel card">
@@ -38,7 +273,11 @@ function InternetPanel() {
           class="maintenance-stack"
           aria-live="polite"
           style="margin-top:1rem;"
-        ></div>
+        >
+          {model.internetStatus ? (
+            <InternetStatusCard model={model.internetStatus} />
+          ) : null}
+        </div>
       </div>
 
       <section class="maintenance-card">
@@ -71,59 +310,26 @@ function InternetPanel() {
               Internet source
             </div>
             <div class="speed-source-choice-grid">
-              <label
-                id="updateTransportChoiceWifi"
-                class="speed-source-choice update-transport-choice"
-                data-update-transport-choice="wifi"
-              >
-                <input
-                  class="speed-source-choice__radio"
-                  type="radio"
-                  id="updateTransportWifiRadio"
-                  name="updateTransport"
-                  value="wifi"
-                  checked
-                />
-                <span
-                  class="speed-source-choice__title"
-                  data-i18n="settings.update.transport.wifi_title"
-                >
-                  Temporary Wi-Fi
-                </span>
-                <span
-                  class="speed-source-choice__caption"
-                  data-i18n="settings.update.transport.wifi_summary"
-                >
-                  Pause the hotspot, join a Wi-Fi network, install, then restore
-                  the hotspot.
-                </span>
-              </label>
-              <label
-                id="updateTransportChoiceUsb"
-                class="speed-source-choice update-transport-choice"
-                data-update-transport-choice="usb_internet"
-              >
-                <input
-                  class="speed-source-choice__radio"
-                  type="radio"
-                  id="updateTransportUsbRadio"
-                  name="updateTransport"
-                  value="usb_internet"
-                />
-                <span
-                  class="speed-source-choice__title"
-                  data-i18n="settings.update.transport.usb_title"
-                >
-                  Existing USB internet
-                </span>
-                <span
-                  id="updateUsbTransportSummary"
-                  class="speed-source-choice__caption"
-                ></span>
-              </label>
+              <UpdateTransportChoiceCard
+                choiceId="updateTransportChoiceWifi"
+                model={model.transportChoices.wifi}
+                radioId="updateTransportWifiRadio"
+                titleKey="settings.update.transport.wifi_title"
+                titleText="Temporary Wi-Fi"
+                value="wifi"
+              />
+              <UpdateTransportChoiceCard
+                captionId="updateUsbTransportSummary"
+                choiceId="updateTransportChoiceUsb"
+                model={model.transportChoices.usb_internet}
+                radioId="updateTransportUsbRadio"
+                titleKey="settings.update.transport.usb_title"
+                titleText="Existing USB internet"
+                value="usb_internet"
+              />
             </div>
           </div>
-          <div id="updateWifiFields">
+          <div id="updateWifiFields" hidden={model.wifiFieldsHidden}>
             <div class="form-group">
               <label htmlFor="updateSsidInput" data-i18n="settings.update.ssid">
                 Wi-Fi SSID
@@ -134,6 +340,8 @@ function InternetPanel() {
                 autoComplete="off"
                 maxLength={64}
                 style="width:100%;max-width:20rem;"
+                value={model.ssidInputValue}
+                disabled={model.controlsLocked}
               />
             </div>
             <div class="form-group">
@@ -145,18 +353,21 @@ function InternetPanel() {
               </label>
               <div style="display:flex;gap:0.5rem;align-items:center;">
                 <input
-                  type="password"
+                  type={model.passwordInputType}
                   id="updatePasswordInput"
                   autoComplete="off"
                   maxLength={128}
                   style="width:100%;max-width:20rem;"
+                  value={model.passwordInputValue}
+                  disabled={model.controlsLocked}
                 />
                 <button
                   type="button"
                   id="updateTogglePasswordBtn"
                   class="btn btn--small"
+                  disabled={model.togglePasswordDisabled}
                 >
-                  <span data-i18n="settings.update.show_password">Show</span>
+                  <span>{model.togglePasswordLabelText}</span>
                 </button>
               </div>
             </div>
@@ -165,7 +376,9 @@ function InternetPanel() {
             id="updateReadinessSummary"
             class="maintenance-stack maintenance-stack--tight"
             aria-live="polite"
-          ></div>
+          >
+            <MaintenanceReadinessPanel model={model.readiness} />
+          </div>
           <details class="settings-help-disclosure settings-help-disclosure--inline">
             <summary class="settings-help-disclosure__summary">
               <span class="settings-help-disclosure__heading">
@@ -178,18 +391,14 @@ function InternetPanel() {
                 <span
                   id="updateDetailsCaption"
                   class="settings-help-disclosure__caption"
-                ></span>
+                >
+                  {model.detailsCaptionText}
+                </span>
               </span>
             </summary>
             <div class="settings-help-disclosure__body">
-              <div
-                id="updateTransportNote"
-                class="maintenance-note"
-                data-i18n="settings.update.preflight_note_wifi"
-              >
-                Starting a Wi-Fi update temporarily pauses hotspot access while
-                the Pi joins Wi-Fi, downloads the next release, and restores the
-                local web UI when the job is done.
+              <div id="updateTransportNote" class="maintenance-note">
+                {model.transportNoteText}
               </div>
             </div>
           </details>
@@ -215,9 +424,7 @@ function createInternetPanelDom(host: HTMLElement): InternetPanelDom {
     updateReadinessSummary: host.querySelector<HTMLElement>(
       "#updateReadinessSummary",
     ),
-    updateDetailsCaption: host.querySelector<HTMLElement>(
-      "#updateDetailsCaption",
-    ),
+    updateDetailsCaption: host.querySelector<HTMLElement>("#updateDetailsCaption"),
     updateTransportNote: host.querySelector<HTMLElement>("#updateTransportNote"),
     updateTransportWifiRadio: host.querySelector<HTMLInputElement>(
       "#updateTransportWifiRadio",
@@ -239,8 +446,22 @@ function createInternetPanelDom(host: HTMLElement): InternetPanelDom {
 }
 
 export function mountInternetPanel(host: HTMLElement): InternetPanelView {
-  createUiPreactMount(host).render(<InternetPanel />);
+  const bridgeState: InternetPanelBridgeState = {
+    model: DEFAULT_INTERNET_PANEL_MODEL,
+  };
+  const mount = createUiPreactMount(host);
+
+  function render(): void {
+    mount.render(<InternetPanel model={bridgeState.model} />);
+  }
+
+  render();
+
   return {
     dom: createInternetPanelDom(host),
+    render(model) {
+      bridgeState.model = model;
+      render();
+    },
   };
 }

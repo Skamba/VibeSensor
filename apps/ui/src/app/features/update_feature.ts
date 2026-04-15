@@ -17,10 +17,9 @@ export interface UpdateFeature {
 
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   const presenter = createUpdateFeaturePresenter({
-    dom: ctx.panel.dom,
-    internetDom: ctx.internetPanel.dom,
+    panel: ctx.panel,
+    internetPanel: ctx.internetPanel,
     t: ctx.t,
-    escapeHtml: ctx.escapeHtml,
   });
   const workflow = createUpdateFeatureWorkflow({
     t: ctx.t,

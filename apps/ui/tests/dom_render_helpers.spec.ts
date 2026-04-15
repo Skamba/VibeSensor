@@ -1,12 +1,10 @@
 import { expect, test } from "@playwright/test";
 
 import { createStatusGridRowElement } from "../src/app/views/dom_helpers";
-import { renderInternetStatusPanel } from "../src/app/views/internet_status_view";
+import { buildInternetStatusPanelModel } from "../src/app/views/internet_status_view";
 import {
   elementChildren,
-  FakeHTMLElement,
   installFakeDomGlobals,
-  findByClass,
 } from "./dom_render_test_support";
 import type { FakeElement } from "./dom_render_test_support";
 
@@ -36,10 +34,8 @@ test("createStatusGridRowElement builds semantic label and value nodes", () => {
   expect(spans[1].textContent).toBe("Yes");
 });
 
-test("renderInternetStatusPanel replaces children with a semantic maintenance card", () => {
-  const panel = new FakeHTMLElement("DIV");
-
-  renderInternetStatusPanel(panel as unknown as HTMLElement, {
+test("buildInternetStatusPanelModel returns semantic badge and status rows", () => {
+  const model = buildInternetStatusPanelModel({
     detected: true,
     usable: false,
     interface_name: "usb0",
@@ -72,36 +68,21 @@ test("renderInternetStatusPanel replaces children with a semantic maintenance ca
     })[key] ?? key,
   });
 
-  const cards = elementChildren(panel);
-  expect(cards).toHaveLength(1);
-  expect(cards[0].tagName).toBe("SECTION");
-  expect(cards[0].classList.contains("maintenance-card")).toBe(true);
-
-  const title = findByClass(panel, "maintenance-card__title");
-  expect(title).toHaveLength(1);
-  expect(title[0].textContent).toBe("USB internet");
-
-  const subtle = findByClass(panel, "subtle");
-  expect(subtle).toHaveLength(1);
-  expect(subtle[0].textContent).toBe("Adapter detected");
-
-  const pills = findByClass(panel, "pill");
-  expect(pills).toHaveLength(1);
-  expect(pills[0].getAttribute("data-variant")).toBe("warn");
-  expect(pills[0].textContent).toBe("Detected");
-
-  const rows = findByClass(panel, "status-grid__row");
-  expect(rows).toHaveLength(9);
-  expect(rows.map((row) => row.textContent)).toEqual([
-    "DetectedYes",
-    "UsableNo",
-    "Interfaceusb0",
-    "ConnectionUSB uplink",
-    "Drivercdc_ncm",
-    "Addresses192.168.8.2",
-    "Gateway192.168.8.1",
-    "Default routeYes",
-    "DiagnosticRoute ready",
+  expect(model.titleText).toBe("USB internet");
+  expect(model.summaryText).toBe("Adapter detected");
+  expect(model.badge).toEqual({
+    variant: "warn",
+    text: "Detected",
+  });
+  expect(model.rows).toEqual([
+    { labelText: "Detected", valueText: "Yes" },
+    { labelText: "Usable", valueText: "No" },
+    { labelText: "Interface", valueText: "usb0" },
+    { labelText: "Connection", valueText: "USB uplink" },
+    { labelText: "Driver", valueText: "cdc_ncm" },
+    { labelText: "Addresses", valueText: "192.168.8.2" },
+    { labelText: "Gateway", valueText: "192.168.8.1" },
+    { labelText: "Default route", valueText: "Yes" },
+    { labelText: "Diagnostic", valueText: "Route ready" },
   ]);
-  expect(rows[rows.length - 1].textContent).toBe("DiagnosticRoute ready");
 });
