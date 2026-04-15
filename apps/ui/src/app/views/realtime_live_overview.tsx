@@ -66,10 +66,10 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
     <>
       <div class="card__header card__header--stack">
         <div>
-          <div class="card__title" data-i18n="dashboard.live_overview">
+          <div class="card__title">
             {t("dashboard.live_overview", "Live overview")}
           </div>
-          <div class="card__subtle" data-i18n="dashboard.live_overview_hint">
+          <div class="card__subtle">
             {t(
               "dashboard.live_overview_hint",
               "Check readiness, current run state, and the strongest sensor level before reading the chart.",
@@ -88,7 +88,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
       </div>
       <div class="stat-grid live-overview__stats">
         <div id="liveConnectedSensors" class="stat">
-          <div class="stat__label" data-i18n="dashboard.connected_sensors">
+          <div class="stat__label">
             {t("dashboard.connected_sensors", "Sensors online")}
           </div>
           <div class="stat__value" data-value>
@@ -100,7 +100,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
           class="stat"
           data-variant={state.activeCar.warning ? "warn" : undefined}
         >
-          <div class="stat__label" data-i18n="dashboard.active_car">
+          <div class="stat__label">
             {t("dashboard.active_car", "Active car")}
           </div>
           <div
@@ -122,7 +122,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
           </div>
         </div>
         <div id="liveRecordingState" class="stat">
-          <div class="stat__label" data-i18n="dashboard.recording_state">
+          <div class="stat__label">
             {t("dashboard.recording_state", "Run state")}
           </div>
           <div class="stat__value" data-value>
@@ -130,7 +130,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
           </div>
         </div>
         <div id="liveDataFreshness" class="stat">
-          <div class="stat__label" data-i18n="dashboard.data_freshness">
+          <div class="stat__label">
             {t("dashboard.data_freshness", "Feed freshness")}
           </div>
           <div class="stat__value" data-value>
@@ -138,7 +138,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
           </div>
         </div>
         <div id="liveStrongestSignal" class="stat">
-          <div class="stat__label" data-i18n="dashboard.strongest_signal">
+          <div class="stat__label">
             {t("dashboard.strongest_signal", "Strongest signal")}
           </div>
           <div class="stat__value" data-value>
@@ -146,7 +146,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
           </div>
         </div>
         <div class="stat">
-          <div class="stat__label" data-i18n="dashboard.current_speed">
+          <div class="stat__label">
             {t("dashboard.current_speed", "Current speed")}
           </div>
           <div id="speed" class="stat__value speed" aria-live="polite">
@@ -155,7 +155,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
         </div>
       </div>
       <div class="live-sensor-roster__header">
-        <div class="mini-label" data-i18n="dashboard.sensor_coverage">
+        <div class="mini-label">
           {t("dashboard.sensor_coverage", "Sensor coverage")}
         </div>
       </div>
@@ -181,7 +181,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
             );
           })
           : (
-            <div class="subtle" data-i18n="settings.sensors.no_sensors">
+            <div class="subtle">
               {t("settings.sensors.no_sensors", "No sensors yet.")}
             </div>
           )}

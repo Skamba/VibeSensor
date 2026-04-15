@@ -126,10 +126,10 @@ function SensorsPanel(props: { state: ReadonlySignal<SensorsPanelBridgeState> })
   const t = useUiTranslation();
   return (
     <div class="panel card">
-      <strong data-i18n="settings.sensors.title">
+      <strong>
         {t("settings.sensors.title", "Sensors")}
       </strong>
-      <div class="subtle" data-i18n="settings.sensors.hint">
+      <div class="subtle">
         {t(
           "settings.sensors.hint",
           "Manage sensor names and locations. Default name is the MAC address.",
@@ -139,13 +139,13 @@ function SensorsPanel(props: { state: ReadonlySignal<SensorsPanelBridgeState> })
         <table class="clients-table settings-entity-table settings-entity-table--sensors">
           <thead>
             <tr>
-              <th data-i18n="settings.sensors.name">
+              <th>
                 {t("settings.sensors.name", "Name")}
               </th>
-              <th data-i18n="settings.sensors.location">
+              <th>
                 {t("settings.sensors.location", "Location")}
               </th>
-              <th data-i18n="settings.sensors.actions">
+              <th>
                 {t("settings.sensors.actions", "Actions")}
               </th>
             </tr>
