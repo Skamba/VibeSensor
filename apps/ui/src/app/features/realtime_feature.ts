@@ -4,11 +4,13 @@ import type {
   SettingsState,
   SpectrumState,
 } from "../ui_app_state";
+import { trackAppStateSlice } from "../ui_app_state";
 import type { LocationOption } from "../../transport/http_models";
 import type { AdaptedClient } from "../../transport/live_models";
 import type { RealtimeLoggingPanelBridge } from "../views/realtime_logging_panel";
 import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
 import type { SensorsPanelView } from "../views/sensors_panel";
+import { effect, untracked } from "../ui_signals";
 import { createRealtimeFeatureWorkflow } from "./realtime_feature_workflow";
 import { createRealtimeFeaturePresenter } from "../views/realtime_feature_presenter";
 
@@ -49,7 +51,6 @@ export interface RealtimeFeature {
   bindHandlers(): void;
   buildLocationOptions(codes: readonly string[]): LocationOption[];
   maybeRenderSensorsSettingsList(force?: boolean): void;
-  updateClientSelection(): void;
   renderStatus(clientRow?: AdaptedClient): void;
   renderLoggingStatus(): void;
   refreshLoggingStatus(): Promise<void>;
@@ -82,6 +83,16 @@ export function createRealtimeFeature(
     confirmRemoveClient: (message) => window.confirm(message),
   });
   let handlersBound = false;
+
+  effect(() => {
+    trackAppStateSlice(ctx.realtime);
+    trackAppStateSlice(ctx.settings);
+    trackAppStateSlice(ctx.spectrum);
+    untracked(() => {
+      presenter.maybeRenderSensorsSettingsList();
+      workflow.renderLoggingStatus();
+    });
+  });
 
   function bindHandlers(): void {
     if (handlersBound) {
@@ -135,7 +146,6 @@ export function createRealtimeFeature(
     buildLocationOptions: (codes) => presenter.buildLocationOptions(codes),
     maybeRenderSensorsSettingsList: (force) =>
       presenter.maybeRenderSensorsSettingsList(force),
-    updateClientSelection: () => workflow.updateClientSelection(),
     renderStatus: (clientRow) => presenter.renderStatus(clientRow),
     renderLoggingStatus: () => workflow.renderLoggingStatus(),
     refreshLoggingStatus: () => workflow.refreshLoggingStatus(),
