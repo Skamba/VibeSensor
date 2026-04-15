@@ -1,10 +1,6 @@
 import { expect, test } from "@playwright/test";
 
 import { bindCarsFeatureInteractions } from "../src/app/views/cars_feature_bindings";
-import {
-  bindSettingsSpeedSourceInteractions,
-  type SettingsSpeedSourceInteraction,
-} from "../src/app/views/settings_speed_source_bindings";
 
 type ElementGlobals = {
   Element?: typeof Element;
@@ -364,74 +360,4 @@ test("cars wizard bindings decode typed wizard actions and stop after disposal",
   dispose();
   addCarBtn.dispatch("click");
   expect(actions).toHaveLength(8);
-});
-
-test("speed-source bindings turn form events and OBD pairing clicks into typed actions", () => {
-  const speedSourceRadio = createInput({ value: "manual" });
-  const manualSpeedInput = createInput({ value: "80" });
-  const staleTimeoutInput = createInput({ value: "5" });
-  const saveSpeedSourceBtn = createButton();
-  const scanObdDevicesBtn = createButton();
-  const settingsTab = createContainer("button");
-  const shellMenuButton = createContainer("button");
-  const obdDeviceList = createContainer();
-  const pairButton = appendChild(obdDeviceList, createButton({
-    attrs: { "data-obd-pair-mac": "00:22:d9:00:1b:b1" },
-  }));
-
-  const actions: SettingsSpeedSourceInteraction[] = [];
-
-  const dispose = bindSettingsSpeedSourceInteractions(
-    {
-      speedSourceRadios: [speedSourceRadio as unknown as HTMLInputElement],
-      manualSpeedInput: manualSpeedInput as unknown as HTMLInputElement,
-      staleTimeoutInput: staleTimeoutInput as unknown as HTMLInputElement,
-      saveSpeedSourceBtn: saveSpeedSourceBtn as unknown as HTMLButtonElement,
-      scanObdDevicesBtn: scanObdDevicesBtn as unknown as HTMLButtonElement,
-      settingsTabs: [settingsTab as unknown as HTMLElement],
-      obdDeviceList: obdDeviceList as unknown as HTMLElement,
-    },
-    {
-      menuButtons: [shellMenuButton as unknown as HTMLElement],
-    },
-    {
-      onAction: (action) => {
-        actions.push(action);
-      },
-    },
-  );
-
-  speedSourceRadio.dispatch("change");
-  manualSpeedInput.dispatch("input");
-  staleTimeoutInput.dispatch("input");
-  saveSpeedSourceBtn.click();
-  scanObdDevicesBtn.click();
-  settingsTab.dispatch("keydown", { key: "ArrowRight" });
-  shellMenuButton.dispatch("keydown", { key: "Escape" });
-  shellMenuButton.dispatch("click");
-  obdDeviceList.dispatch("click", { target: pairButton as unknown as EventTarget });
-
-  expect(actions).toEqual([
-    { type: "speed-source-changed", mode: "manual" },
-    { type: "manual-speed-input", value: "80" },
-    { type: "stale-timeout-input", value: "5" },
-    { type: "save" },
-    { type: "scan-obd-devices" },
-    { type: "navigate-context" },
-    { type: "navigate-context" },
-    { type: "pair-obd-device", macAddress: "00:22:d9:00:1b:b1" },
-  ]);
-
-  dispose();
-  saveSpeedSourceBtn.click();
-  expect(actions).toEqual([
-    { type: "speed-source-changed", mode: "manual" },
-    { type: "manual-speed-input", value: "80" },
-    { type: "stale-timeout-input", value: "5" },
-    { type: "save" },
-    { type: "scan-obd-devices" },
-    { type: "navigate-context" },
-    { type: "navigate-context" },
-    { type: "pair-obd-device", macAddress: "00:22:d9:00:1b:b1" },
-  ]);
 });

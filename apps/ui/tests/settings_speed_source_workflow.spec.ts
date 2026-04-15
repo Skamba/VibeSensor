@@ -232,4 +232,56 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
     expect(appState.settings.obdDeviceName).toBe("OBDLink CX");
     expect(harness.errors).toEqual([]);
   });
+
+  test("background rescans react to navigation context changes without DOM bindings", async () => {
+    const harness = createHarness();
+    const appState = createAppState();
+    let pollingStarts = 0;
+    let pollingStops = 0;
+
+    const workflow = createSettingsSpeedSourceWorkflow({
+      createPollingController: () => ({
+        restart() {
+          /* no-op */
+        },
+        start() {
+          pollingStarts += 1;
+        },
+        stop() {
+          pollingStops += 1;
+        },
+      }),
+      renderSpeedReadout: () => undefined,
+      settings: appState.settings,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      t: createTranslator(),
+      transport: {
+        async scanObdDevices() {
+          return {
+            devices: [makeObdDevice()],
+          };
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    harness.contextVisible = true;
+    workflow.handleSpeedSourceChanged("obd2");
+    await workflow.scanObdDevices();
+
+    expect(pollingStarts).toBeGreaterThan(0);
+
+    harness.contextVisible = false;
+    workflow.handleNavigateContext();
+
+    expect(pollingStops).toBeGreaterThan(0);
+
+    harness.contextVisible = true;
+    workflow.handleNavigateContext();
+
+    expect(pollingStarts).toBeGreaterThan(1);
+    expect(harness.errors).toEqual([]);
+  });
 });
