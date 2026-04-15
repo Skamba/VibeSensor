@@ -32,18 +32,12 @@ function createCoordinatorHarness() {
 
   const coordinator = new UiStartupCoordinator({
     shell: {
-      bindUiEvents(): void {
-        calls.push("shell.bindUiEvents");
+      start(defaultViewId: string): void {
+        calls.push(`shell.start:${defaultViewId}`);
       },
       hydratePersistedPreferences(): Promise<void> {
         calls.push("shell.hydratePersistedPreferences");
         return hydrate.promise;
-      },
-      applyLanguage(forceReloadInsights = false): void {
-        calls.push(`shell.applyLanguage:${String(forceReloadInsights)}`);
-      },
-      setActiveView(viewId: string): void {
-        calls.push(`shell.setActiveView:${viewId}`);
       },
     },
     features: {
@@ -64,9 +58,6 @@ function createCoordinatorHarness() {
         },
       },
       settings: {
-        syncSettingsInputs(): void {
-          calls.push("settings.syncSettingsInputs");
-        },
         loadSpeedSourceFromServer(): Promise<void> {
           calls.push("settings.loadSpeedSourceFromServer");
           return loadSpeedSource.promise;
@@ -126,11 +117,8 @@ test.describe("UiStartupCoordinator", () => {
     harness.coordinator.start();
 
     expect(harness.calls).toEqual([
-      "shell.bindUiEvents",
-      "settings.syncSettingsInputs",
+      "shell.start:dashboardView",
       "shell.hydratePersistedPreferences",
-      "shell.applyLanguage:false",
-      "shell.setActiveView:dashboardView",
       "realtime.refreshLocationOptions",
       "settings.loadSpeedSourceFromServer",
       "settings.loadAnalysisSettingsFromServer",

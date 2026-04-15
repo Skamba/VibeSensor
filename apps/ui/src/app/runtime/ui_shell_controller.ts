@@ -210,8 +210,10 @@ export class UiShellController {
     );
   }
 
-  bindUiEvents(): void {
+  start(defaultViewId: string): void {
     this.bindFeatureEvents();
+    this.applyLanguage(false);
+    this.setActiveView(defaultViewId);
   }
 
   async hydratePersistedPreferences(): Promise<void> {

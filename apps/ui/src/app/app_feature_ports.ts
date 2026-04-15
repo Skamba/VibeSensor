@@ -100,7 +100,6 @@ export function createAppFeaturePorts(features: AppFeaturesForPorts): AppFeature
         refreshLoggingStatus: () => features.realtime.refreshLoggingStatus(),
       },
       settings: {
-        syncSettingsInputs: () => features.settings.syncSettingsInputs(),
         loadSpeedSourceFromServer: () => features.settings.loadSpeedSourceFromServer(),
         loadAnalysisSettingsFromServer: () => features.settings.loadAnalysisSettingsFromServer(),
         loadCarsFromServer: () => features.settings.loadCarsFromServer(),

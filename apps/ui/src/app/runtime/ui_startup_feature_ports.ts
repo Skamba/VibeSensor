@@ -9,7 +9,6 @@ export interface UiStartupFeaturePorts {
   realtime: Pick<RealtimeFeature, "refreshLocationOptions" | "refreshLoggingStatus">;
   settings: Pick<
     SettingsFeature,
-    | "syncSettingsInputs"
     | "loadSpeedSourceFromServer"
     | "loadAnalysisSettingsFromServer"
     | "loadCarsFromServer"
