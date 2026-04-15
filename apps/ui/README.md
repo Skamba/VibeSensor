@@ -127,8 +127,8 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/history_table_models.ts` | Typed row/detail/finding/heatmap view models that describe history table rendering without HTML fragments |
 | `app/views/history_table_presenters.ts` | Presenter builders that turn runs plus loaded insights/preview detail into typed history row and details models |
 | `app/views/history_panel.tsx` | Preact owner for the history panel shell that renders summary/toolbar chrome and binds typed row actions through a bridge |
-| `app/views/history_table_row_renderers.ts` | Focused history row/detail DOM builders that materialize typed history models into table rows and expanded evidence cards |
-| `app/views/history_table_view.ts` | Thin history-panel bridge and DOM row adapter that renders typed empty/table states for the Preact history island |
+| `app/views/history_table_content.tsx` | History island JSX renderer that turns typed row/detail models into empty state, table rows, expanded evidence cards, and action affordances |
+| `app/views/history_table_view.ts` | Thin history-panel bridge that defines the typed empty/table render contract consumed by the Preact history island |
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
 | `app/views/realtime_logging_panel.tsx` | Preact owner for the run-recording card that renders typed logging/readiness models and binds start/stop plus summary CTA actions through a bridge |
 | `app/views/settings_car_list_view.ts` | Thin settings-car table renderer and action decoder reused by the car-management island for the saved-car table body |
