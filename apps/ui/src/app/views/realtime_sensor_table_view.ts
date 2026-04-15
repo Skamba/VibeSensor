@@ -1,12 +1,10 @@
 import type { LocationOption } from "../../transport/http_models";
 import type { AdaptedClient } from "../../transport/live_models";
-import { closestFromTarget, renderTableEmptyRow } from "./dom_helpers";
 
 export interface RealtimeSensorTableViewParams {
   clients: AdaptedClient[];
   locationOptions: LocationOption[];
   t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
 }
 
 export interface RealtimeSensorTableClickAction {
@@ -19,109 +17,66 @@ export interface RealtimeSensorTableLocationChange {
   locationCode: string;
 }
 
-function locationOptionsMarkup(
-  locationOptions: LocationOption[],
-  selectedCode: string,
-  t: (key: string, vars?: Record<string, unknown>) => string,
-  escapeHtml: (value: unknown) => string,
-): string {
-  const opts = [`<option value="">${escapeHtml(t("settings.select_location"))}</option>`];
-  for (const loc of locationOptions) {
-    const selectedAttr = loc.code === selectedCode ? " selected" : "";
-    opts.push(`<option value="${escapeHtml(loc.code)}"${selectedAttr}>${escapeHtml(loc.label)}</option>`);
-  }
-  return opts.join("");
+export interface RealtimeSensorTableLocationOptionViewModel {
+  code: string;
+  label: string;
 }
 
-function renderSensorActionButtons(
-  clientId: string,
-  options: {
-    connected: boolean;
-    escapeHtml: (value: unknown) => string;
-    t: (key: string, vars?: Record<string, unknown>) => string;
-  },
-): string {
-  const { connected, escapeHtml, t } = options;
-  return `
-    <div class="settings-sensor-row__actions">
-      <button class="btn row-identify" data-client-id="${escapeHtml(clientId)}"${connected ? "" : " disabled"}>${escapeHtml(t("actions.identify"))}</button>
-      <button class="btn btn--danger-quiet row-remove" data-client-id="${escapeHtml(clientId)}">${escapeHtml(t("actions.remove"))}</button>
-    </div>
-  `;
+export interface RealtimeSensorTableRowViewModel {
+  clientId: string;
+  displayName: string;
+  statusText: string;
+  statusClass: "online" | "offline";
+  macAddress: string;
+  selectedLocationCode: string;
+  locationSelectLabel: string;
+  locationOptions: RealtimeSensorTableLocationOptionViewModel[];
+  identifyLabel: string;
+  identifyDisabled: boolean;
+  removeLabel: string;
 }
 
-export function renderRealtimeSensorTable(
-  container: HTMLElement,
+export type RealtimeSensorTableRenderModel =
+  | {
+      kind: "empty";
+      emptyText: string;
+    }
+  | {
+      kind: "rows";
+      rows: RealtimeSensorTableRowViewModel[];
+    };
+
+export function buildRealtimeSensorTableRenderModel(
   params: RealtimeSensorTableViewParams,
-): void {
-  const { clients, locationOptions, t, escapeHtml } = params;
+): RealtimeSensorTableRenderModel {
+  const { clients, locationOptions, t } = params;
   if (!clients.length) {
-    container.innerHTML = renderTableEmptyRow(
-      escapeHtml(t("settings.sensors.no_sensors")),
-      3,
-    );
-    return;
+    return {
+      kind: "empty",
+      emptyText: t("settings.sensors.no_sensors"),
+    };
   }
 
-  container.innerHTML = clients
-    .map((client) => {
-      const selectedCode = String(client.location_code || "").trim();
+  return {
+    kind: "rows",
+    rows: clients.map((client) => {
       const connected = Boolean(client.connected);
-      const statusText = connected ? t("status.online") : t("status.offline");
-      const statusClass = connected ? "online" : "offline";
-      const macAddress = client.mac_address || client.id;
-      return `
-        <tr data-client-id="${escapeHtml(client.id)}">
-          <td>
-            <div class="settings-sensor-row__identity">
-              <div class="settings-sensor-row__heading">
-                <strong>${escapeHtml(client.name || client.id)}</strong>
-                <span class="status-pill settings-entity-status ${statusClass}">${statusText}</span>
-              </div>
-              <div class="settings-sensor-row__meta">
-                <code>${escapeHtml(macAddress)}</code>
-              </div>
-            </div>
-          </td>
-          <td class="settings-sensor-row__location">
-            <select class="row-location-select" data-client-id="${escapeHtml(client.id)}">${locationOptionsMarkup(locationOptions, selectedCode, t, escapeHtml)}</select>
-          </td>
-          <td>${renderSensorActionButtons(client.id, { connected, escapeHtml, t })}</td>
-        </tr>
-      `;
-    })
-    .join("");
-}
-
-export function getRealtimeSensorTableClickAction(
-  target: EventTarget | null,
-): RealtimeSensorTableClickAction | null {
-  const button = closestFromTarget<HTMLButtonElement>(target, ".row-identify, .row-remove");
-  if (!button) {
-    return null;
-  }
-  const clientId = button.getAttribute("data-client-id");
-  if (!clientId) {
-    return null;
-  }
-  return {
-    type: button.classList.contains("row-identify") ? "identify" : "remove",
-    clientId,
-  };
-}
-
-export function getRealtimeSensorTableLocationChange(
-  target: EventTarget | null,
-): RealtimeSensorTableLocationChange | null {
-  if (!(target instanceof HTMLSelectElement) || !target.classList.contains("row-location-select")) {
-    return null;
-  }
-  const clientId = target.getAttribute("data-client-id");
-  if (!clientId) {
-    return null;
-  }
-  return {
-    clientId,
-    locationCode: target.value || "",
+      return {
+        clientId: client.id,
+        displayName: String(client.name || client.id),
+        statusText: connected ? t("status.online") : t("status.offline"),
+        statusClass: connected ? "online" : "offline",
+        macAddress: String(client.mac_address || client.id),
+        selectedLocationCode: String(client.location_code || "").trim(),
+        locationSelectLabel: t("settings.select_location"),
+        locationOptions: locationOptions.map((location) => ({
+          code: location.code,
+          label: location.label,
+        })),
+        identifyLabel: t("actions.identify"),
+        identifyDisabled: !connected,
+        removeLabel: t("actions.remove"),
+      };
+    }),
   };
 }

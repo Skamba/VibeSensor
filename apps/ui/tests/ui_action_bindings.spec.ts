@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 
 import { bindCarsFeatureInteractions } from "../src/app/views/cars_feature_bindings";
-import { bindRealtimeFeatureInteractions } from "../src/app/views/realtime_feature_bindings";
 import { bindSettingsCarListActions } from "../src/app/views/settings_car_list_view";
 import {
   bindSettingsSpeedSourceInteractions,
@@ -12,7 +11,6 @@ type ElementGlobals = {
   Element?: typeof Element;
   HTMLElement?: typeof HTMLElement;
   HTMLButtonElement?: typeof HTMLButtonElement;
-  HTMLSelectElement?: typeof HTMLSelectElement;
   HTMLInputElement?: typeof HTMLInputElement;
 };
 
@@ -170,14 +168,6 @@ class FakeHTMLButtonElement extends FakeHTMLElement {
   }
 }
 
-class FakeHTMLSelectElement extends FakeHTMLElement {
-  value = "";
-
-  constructor() {
-    super("select");
-  }
-}
-
 class FakeHTMLInputElement extends FakeHTMLElement {
   value = "";
 
@@ -198,19 +188,16 @@ function installFakeDomGlobals(): () => void {
     Element: globalRef.Element,
     HTMLElement: globalRef.HTMLElement,
     HTMLButtonElement: globalRef.HTMLButtonElement,
-    HTMLSelectElement: globalRef.HTMLSelectElement,
     HTMLInputElement: globalRef.HTMLInputElement,
   };
   globalRef.Element = FakeElement as unknown as typeof Element;
   globalRef.HTMLElement = FakeHTMLElement as unknown as typeof HTMLElement;
   globalRef.HTMLButtonElement = FakeHTMLButtonElement as unknown as typeof HTMLButtonElement;
-  globalRef.HTMLSelectElement = FakeHTMLSelectElement as unknown as typeof HTMLSelectElement;
   globalRef.HTMLInputElement = FakeHTMLInputElement as unknown as typeof HTMLInputElement;
   return () => {
     restoreGlobal(globalRef, "Element", originals.Element);
     restoreGlobal(globalRef, "HTMLElement", originals.HTMLElement);
     restoreGlobal(globalRef, "HTMLButtonElement", originals.HTMLButtonElement);
-    restoreGlobal(globalRef, "HTMLSelectElement", originals.HTMLSelectElement);
     restoreGlobal(globalRef, "HTMLInputElement", originals.HTMLInputElement);
   };
 }
@@ -250,22 +237,6 @@ function createContainer(tagName = "div"): FakeHTMLElement {
   return new FakeHTMLElement(tagName);
 }
 
-function createSelect(options: {
-  classes?: string[];
-  attrs?: Record<string, string>;
-  value?: string;
-} = {}): FakeHTMLSelectElement {
-  const select = new FakeHTMLSelectElement();
-  select.value = options.value ?? "";
-  for (const token of options.classes ?? []) {
-    select.classList.add(token);
-  }
-  for (const [name, value] of Object.entries(options.attrs ?? {})) {
-    select.setAttribute(name, value);
-  }
-  return select;
-}
-
 function createInput(options: {
   attrs?: Record<string, string>;
   value?: string;
@@ -287,52 +258,6 @@ test.beforeEach(() => {
 test.afterEach(() => {
   restoreDomGlobals();
   restoreDomGlobals = () => undefined;
-});
-
-test("realtime view bindings emit typed sensor actions and clean up listeners", () => {
-  const sensorsSettingsBody = createContainer("tbody");
-  const identifyButton = appendChild(sensorsSettingsBody, createButton({
-    classes: ["row-identify"],
-    attrs: { "data-client-id": "sensor-1" },
-  }));
-  const locationSelect = appendChild(sensorsSettingsBody, createSelect({
-    classes: ["row-location-select"],
-    attrs: { "data-client-id": "sensor-1" },
-    value: "front-left",
-  }));
-
-  const sensorActions: Array<{ type: string; clientId: string }> = [];
-  const locationChanges: Array<{ clientId: string; locationCode: string }> = [];
-
-  const dispose = bindRealtimeFeatureInteractions(
-    {
-      sensorsSettingsBody: sensorsSettingsBody as unknown as HTMLElement,
-    },
-    {
-      onSensorLocationChange: (change) => {
-        locationChanges.push(change);
-      },
-      onSensorTableAction: (action) => {
-        sensorActions.push(action);
-      },
-    },
-  );
-
-  sensorsSettingsBody.dispatch("click", {
-    target: identifyButton as unknown as EventTarget,
-  });
-  sensorsSettingsBody.dispatch("change", {
-    target: locationSelect as unknown as EventTarget,
-  });
-
-  expect(sensorActions).toEqual([{ type: "identify", clientId: "sensor-1" }]);
-  expect(locationChanges).toEqual([{ clientId: "sensor-1", locationCode: "front-left" }]);
-
-  dispose();
-  sensorsSettingsBody.dispatch("click", {
-    target: identifyButton as unknown as EventTarget,
-  });
-  expect(sensorActions).toEqual([{ type: "identify", clientId: "sensor-1" }]);
 });
 
 test("settings car-list bindings surface typed list actions and disposer stops delegated clicks", () => {

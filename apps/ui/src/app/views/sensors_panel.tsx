@@ -1,16 +1,123 @@
 import { h } from "preact";
 
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import type {
+  RealtimeSensorTableClickAction,
+  RealtimeSensorTableLocationChange,
+  RealtimeSensorTableRenderModel,
+  RealtimeSensorTableRowViewModel,
+} from "./realtime_sensor_table_view";
 
-export interface SensorsPanelDom {
-  sensorsSettingsBody: HTMLElement | null;
+export interface SensorsPanelRenderModel {
+  table: RealtimeSensorTableRenderModel | null;
+}
+
+export interface SensorsPanelActionHandlers {
+  onSensorLocationChange(change: RealtimeSensorTableLocationChange): void;
+  onSensorTableAction(action: RealtimeSensorTableClickAction): void;
 }
 
 export interface SensorsPanelView {
-  readonly dom: SensorsPanelDom;
+  render(model: SensorsPanelRenderModel): void;
+  bindActions(handlers: SensorsPanelActionHandlers): void;
 }
 
-function SensorsPanel() {
+type SensorsPanelBridgeState = {
+  actions: SensorsPanelActionHandlers | null;
+  model: SensorsPanelRenderModel;
+};
+
+function handleSensorAction(
+  event: h.JSX.TargetedMouseEvent<HTMLButtonElement>,
+  actions: SensorsPanelActionHandlers | null,
+  action: RealtimeSensorTableClickAction["type"],
+  clientId: string,
+): void {
+  event.preventDefault();
+  actions?.onSensorTableAction({ type: action, clientId });
+}
+
+function SensorsTableRow(props: {
+  actions: SensorsPanelActionHandlers | null;
+  row: RealtimeSensorTableRowViewModel;
+}) {
+  const { actions, row } = props;
+  return (
+    <tr data-client-id={row.clientId}>
+      <td>
+        <div class="settings-sensor-row__identity">
+          <div class="settings-sensor-row__heading">
+            <strong>{row.displayName}</strong>
+            <span class={`status-pill settings-entity-status ${row.statusClass}`}>{row.statusText}</span>
+          </div>
+          <div class="settings-sensor-row__meta">
+            <code>{row.macAddress}</code>
+          </div>
+        </div>
+      </td>
+      <td class="settings-sensor-row__location">
+        <select
+          class="row-location-select"
+          data-client-id={row.clientId}
+          value={row.selectedLocationCode}
+          onChange={(event) =>
+            actions?.onSensorLocationChange({
+              clientId: row.clientId,
+              locationCode: event.currentTarget.value || "",
+            })}
+        >
+          <option value="">{row.locationSelectLabel}</option>
+          {row.locationOptions.map((location) => (
+            <option key={location.code} value={location.code}>
+              {location.label}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td>
+        <div class="settings-sensor-row__actions">
+          <button
+            class="btn row-identify"
+            data-client-id={row.clientId}
+            type="button"
+            disabled={row.identifyDisabled}
+            onClick={(event) => handleSensorAction(event, actions, "identify", row.clientId)}
+          >
+            {row.identifyLabel}
+          </button>
+          <button
+            class="btn btn--danger-quiet row-remove"
+            data-client-id={row.clientId}
+            type="button"
+            onClick={(event) => handleSensorAction(event, actions, "remove", row.clientId)}
+          >
+            {row.removeLabel}
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function SensorsTableBody(props: {
+  actions: SensorsPanelActionHandlers | null;
+  table: RealtimeSensorTableRenderModel | null;
+}) {
+  const { actions, table } = props;
+  if (table === null || table.kind === "empty") {
+    return (
+      <tr>
+        <td colSpan={3}>{table?.emptyText ?? "No sensors detected yet."}</td>
+      </tr>
+    );
+  }
+  return table.rows.map((row) => (
+    <SensorsTableRow key={row.clientId} actions={actions} row={row} />
+  ));
+}
+
+function SensorsPanel(props: { state: SensorsPanelBridgeState }) {
+  const { state } = props;
   return (
     <div class="panel card">
       <strong data-i18n="settings.sensors.title">Sensors</strong>
@@ -27,9 +134,7 @@ function SensorsPanel() {
             </tr>
           </thead>
           <tbody id="sensorsSettingsBody">
-            <tr>
-              <td colSpan={3}>No sensors detected yet.</td>
-            </tr>
+            <SensorsTableBody actions={state.actions} table={state.model.table} />
           </tbody>
         </table>
       </div>
@@ -37,15 +142,22 @@ function SensorsPanel() {
   );
 }
 
-function createSensorsPanelDom(host: HTMLElement): SensorsPanelDom {
-  return {
-    sensorsSettingsBody: host.querySelector<HTMLElement>("#sensorsSettingsBody"),
-  };
-}
-
 export function mountSensorsPanel(host: HTMLElement): SensorsPanelView {
-  createUiPreactMount(host).render(<SensorsPanel />);
+  const bridgeState: SensorsPanelBridgeState = {
+    actions: null,
+    model: { table: null },
+  };
+  const mount = createUiPreactMount(host);
+  const render = () => mount.render(<SensorsPanel state={bridgeState} />);
+  render();
   return {
-    dom: createSensorsPanelDom(host),
+    render(model) {
+      bridgeState.model = model;
+      render();
+    },
+    bindActions(handlers) {
+      bridgeState.actions = handlers;
+      render();
+    },
   };
 }

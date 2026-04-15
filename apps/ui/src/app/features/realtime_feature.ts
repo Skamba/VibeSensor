@@ -6,7 +6,6 @@ import type {
 } from "../ui_app_state";
 import type { LocationOption } from "../../transport/http_models";
 import type { AdaptedClient } from "../../transport/live_models";
-import { bindRealtimeFeatureInteractions } from "../views/realtime_feature_bindings";
 import type { RealtimeLoggingPanelBridge } from "../views/realtime_logging_panel";
 import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
 import type { SensorsPanelView } from "../views/sensors_panel";
@@ -66,9 +65,8 @@ export function createRealtimeFeature(
     settings: ctx.settings,
     spectrum: ctx.spectrum,
     getLanguage: ctx.getLanguage,
-    sensorsDom: ctx.sensorsPanel.dom,
+    sensorsPanel: ctx.sensorsPanel,
     t: ctx.t,
-    escapeHtml: ctx.escapeHtml,
     formatInt: ctx.formatInt,
     chrome: ctx.chrome,
     navigation: ctx.navigation,
@@ -118,7 +116,7 @@ export function createRealtimeFeature(
       },
     });
     workflow.bindHandlers();
-    bindRealtimeFeatureInteractions(ctx.sensorsPanel.dom, {
+    ctx.sensorsPanel.bindActions({
       onSensorLocationChange: (change) => {
         void workflow.setClientLocation(change.clientId, change.locationCode);
       },
