@@ -111,7 +111,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
 | `app/views/analysis_panel.tsx` | Preact owner for the analysis-settings shell that mounts the full tab surface and exposes the typed bridge consumed by analysis and car-selection modules |
 | `app/views/settings_shell.tsx` | Preact owner for the shared settings tab chrome and tab-panel wrappers that mount the per-tab panel hosts and expose the settings navigation bridge |
-| `app/views/esp_flash_panel.tsx` | Preact owner for the ESP flash settings shell that mounts the controls, readiness, status, history, and log surface while exposing the bridge consumed by the ESP flash feature |
+| `app/views/esp_flash_panel.tsx` | Preact owner for the ESP flash settings shell and its typed render bridge for port selection, readiness, journey, history, and log surfaces |
 | `app/views/internet_panel.tsx` | Preact owner for the full internet settings surface that renders USB status, transport choices, Wi-Fi credentials, and readiness guidance through a typed bridge |
 | `app/views/update_panel.tsx` | Preact owner for the full update settings surface that renders the action row plus current status, health, journey, issues, latest attempt, and log cards through a typed bridge |
 | `app/views/sensors_panel.tsx` | Preact owner for the sensors settings shell that renders the full sensor table and exposes typed identify/remove/location callbacks to the realtime feature |
@@ -124,7 +124,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for update polling, internet-status normalization, and start/cancel command orchestration |
 | `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |
 | `app/views/esp_flash_feature_bindings.ts` | Feature-local ESP flash bindings for start/cancel/refresh/select actions without leaving raw DOM event parsing in the feature |
-| `app/views/esp_flash_feature_presenter.ts` | ESP flash presenter that owns readiness/banner/journey/history/log/select rendering through the island-owned ESP flash panel bridge |
+| `app/views/esp_flash_feature_presenter.ts` | ESP flash presenter that derives typed panel models for the island-owned ESP flash bridge while leaving workflow state in the feature workflow |
 | `app/views/history_table_models.ts` | Typed row/detail/finding/heatmap view models that describe history table rendering without HTML fragments |
 | `app/views/history_table_presenters.ts` | Presenter builders that turn runs plus loaded insights/preview detail into typed history row and details models |
 | `app/views/history_panel.tsx` | Preact owner for the history panel shell that renders summary/toolbar chrome and binds typed row actions through a bridge |
@@ -138,7 +138,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/update_feature_presenter.ts` | Update presenter that derives typed update/internet panel models from workflow state plus draft form inputs and toggles |
 | `app/views/internet_status_view.ts` | Pure USB-internet status model builder reused by the Preact internet panel |
 | `app/views/update_status_view_models.ts` | Typed update-status section builders for current status, journey, issues, attempt history, health, and log cards |
-| `app/views/maintenance_readiness_view.ts` | Shared maintenance-readiness model contract still reused by update and ESP flash readiness flows |
+| `app/views/maintenance_readiness_view.ts` | Shared maintenance-readiness model and Preact component contract reused by update and ESP flash readiness flows |
 | `app/views/` | Focused render-model builders, event-target decoding, and disposable delegated event binders for settings, cars wizard, realtime, history, and updater surfaces |
 | `app/views/realtime_feature_presenter.ts` | Realtime presenter that owns derived live/logging panel state, elapsed-timer sync, and cross-view navigation clicks |
 | `transport/` | UI-local HTTP / WS DTOs plus adapter helpers that isolate generated contract files from app state and feature code |

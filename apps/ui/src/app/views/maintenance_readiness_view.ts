@@ -1,3 +1,5 @@
+import { h } from "preact";
+
 export type MaintenanceReadinessItemState = "attention" | "blocked" | "ready";
 
 export interface MaintenanceReadinessItem {
@@ -14,33 +16,67 @@ export interface MaintenanceReadinessPanelModel {
   items: readonly MaintenanceReadinessItem[];
 }
 
-function renderItem(
-  item: MaintenanceReadinessItem,
-  escapeHtml: (value: unknown) => string,
-): string {
-  const marker = item.state === "ready" ? "✓" : "!";
-  return `<li class="maintenance-readiness__item" data-readiness-state="${item.state}">
-    <span class="maintenance-readiness__marker" aria-hidden="true">${marker}</span>
-    <div class="maintenance-readiness__body">
-      <div class="maintenance-readiness__label">${escapeHtml(item.label)}</div>
-      <div class="maintenance-readiness__detail">${escapeHtml(item.detail)}</div>
-    </div>
-  </li>`;
+function MaintenanceReadinessItemRow(props: {
+  item: MaintenanceReadinessItem;
+}) {
+  const { item } = props;
+  const marker = item.state === "ready" ? "\u2713" : "!";
+  return h(
+    "li",
+    {
+      class: "maintenance-readiness__item",
+      "data-readiness-state": item.state,
+    },
+    h(
+      "span",
+      {
+        "aria-hidden": "true",
+        class: "maintenance-readiness__marker",
+      },
+      marker,
+    ),
+    h(
+      "div",
+      { class: "maintenance-readiness__body" },
+      h("div", { class: "maintenance-readiness__label" }, item.label),
+      h("div", { class: "maintenance-readiness__detail" }, item.detail),
+    ),
+  );
 }
 
-export function renderMaintenanceReadinessPanel(
-  model: MaintenanceReadinessPanelModel,
-  escapeHtml: (value: unknown) => string,
-): string {
-  const items = model.items.map((item) => renderItem(item, escapeHtml)).join("");
-  return `<section class="maintenance-readiness">
-    <div class="maintenance-readiness__header">
-      <div class="maintenance-readiness__heading">
-        <div class="maintenance-readiness__title">${escapeHtml(model.title)}</div>
-        <div class="maintenance-readiness__summary">${escapeHtml(model.summary)}</div>
-      </div>
-      <span class="pill" data-variant="${model.stateVariant}">${escapeHtml(model.stateLabel)}</span>
-    </div>
-    <ul class="maintenance-readiness__list">${items}</ul>
-  </section>`;
+export function MaintenanceReadinessPanel(props: {
+  model: MaintenanceReadinessPanelModel;
+}) {
+  const { model } = props;
+  return h(
+    "section",
+    { class: "maintenance-readiness" },
+    h(
+      "div",
+      { class: "maintenance-readiness__header" },
+      h(
+        "div",
+        { class: "maintenance-readiness__heading" },
+        h("div", { class: "maintenance-readiness__title" }, model.title),
+        h("div", { class: "maintenance-readiness__summary" }, model.summary),
+      ),
+      model.stateLabel
+        ? h(
+            "span",
+            { class: "pill", "data-variant": model.stateVariant },
+            model.stateLabel,
+          )
+        : null,
+    ),
+    h(
+      "ul",
+      { class: "maintenance-readiness__list" },
+      model.items.map((item, index) =>
+        h(MaintenanceReadinessItemRow, {
+          item,
+          key: `${item.label}:${index}`,
+        }),
+      ),
+    ),
+  );
 }
