@@ -1,62 +1,505 @@
 import { h } from "preact";
 
+import type { DisplayedSpeedSourceMode } from "../speed_source_state";
+import type { ChoiceCardState } from "../style_state";
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import type { SettingsFeedbackMessage } from "./settings_feedback";
 
 export interface SettingsSpeedSourcePanelDom {
-  speedSourceRadios: HTMLInputElement[];
-  speedSourceCurrentSource: HTMLElement | null;
-  speedSourceEffectiveSpeed: HTMLElement | null;
-  speedSourceFallbackActive: HTMLElement | null;
-  speedSourceChoiceGps: HTMLElement | null;
-  speedSourceChoiceObd: HTMLElement | null;
-  speedSourceChoiceManual: HTMLElement | null;
-  manualSpeedConfig: HTMLElement | null;
   manualSpeedInput: HTMLInputElement | null;
-  manualSpeedFeedback: HTMLElement | null;
-  obdSpeedConfig: HTMLElement | null;
-  obdConfiguredDevice: HTMLElement | null;
-  scanObdDevicesBtn: HTMLButtonElement | null;
-  obdDeviceScanStatus: HTMLElement | null;
   obdDeviceList: HTMLElement | null;
+  obdSpeedConfig: HTMLElement | null;
   saveSpeedSourceBtn: HTMLButtonElement | null;
-  speedSourceSaveFeedback: HTMLElement | null;
-  speedSourceDiagnostics: HTMLDetailsElement | null;
-  gpsFallbackPanel: HTMLElement | null;
+  scanObdDevicesBtn: HTMLButtonElement | null;
+  speedSourceRadios: HTMLInputElement[];
   staleTimeoutInput: HTMLInputElement | null;
-  staleTimeoutFeedback: HTMLElement | null;
-  gpsStatusPanel: HTMLElement | null;
-  gpsStatusState: HTMLElement | null;
-  gpsStatusDevice: HTMLElement | null;
-  gpsStatusLastUpdate: HTMLElement | null;
-  gpsStatusRawSpeed: HTMLElement | null;
-  gpsStatusEffectiveSpeed: HTMLElement | null;
-  gpsStatusLastError: HTMLElement | null;
-  gpsStatusReconnect: HTMLElement | null;
-  gpsStatusFallback: HTMLElement | null;
-  obdStatusPanel: HTMLElement | null;
-  obdStatusConfiguredDevice: HTMLElement | null;
-  obdStatusPairing: HTMLElement | null;
-  obdStatusTrusted: HTMLElement | null;
-  obdStatusConnected: HTMLElement | null;
-  obdStatusRfcommChannel: HTMLElement | null;
-  obdStatusLastRpm: HTMLElement | null;
-  obdStatusRpmAge: HTMLElement | null;
-  obdStatusTargetCadence: HTMLElement | null;
-  obdStatusEffectiveCadence: HTMLElement | null;
-  obdStatusRequestRtt: HTMLElement | null;
-  obdStatusTimeouts: HTMLElement | null;
-  obdStatusErrors: HTMLElement | null;
-  obdStatusMode: HTMLElement | null;
-  obdStatusBackoff: HTMLElement | null;
-  obdStatusRawResponse: HTMLElement | null;
-  obdStatusDebugHint: HTMLElement | null;
+}
+
+export interface SpeedSourceChoiceCardRenderModel {
+  badgeText: string | null;
+  selected: boolean;
+  state: ChoiceCardState | null;
+}
+
+export interface SpeedSourceSummaryRenderModel {
+  currentSourceText: string;
+  effectiveSpeedText: string;
+  fallbackActiveText: string;
+}
+
+export interface SpeedSourceObdDeviceBadgeRenderModel {
+  active: boolean;
+  labelText: string;
+}
+
+export interface SpeedSourceObdDeviceRenderModel {
+  actionDisabled: boolean;
+  actionLabelText: string;
+  badges: readonly SpeedSourceObdDeviceBadgeRenderModel[];
+  macAddress: string;
+  primaryText: string;
+  secondaryText: string | null;
+}
+
+export interface SpeedSourcePanelRenderModel {
+  choiceCards: Record<DisplayedSpeedSourceMode, SpeedSourceChoiceCardRenderModel>;
+  diagnosticsShouldOpen: boolean;
+  manualConfigVisible: boolean;
+  manualSpeedFeedback: SettingsFeedbackMessage | null;
+  manualSpeedInputValue: string;
+  obdConfigVisible: boolean;
+  obdConfiguredDeviceText: string;
+  obdDevices: readonly SpeedSourceObdDeviceRenderModel[];
+  obdScanStatusText: string;
+  obdSelectionInvalid: boolean;
+  scanObdDevicesDisabled: boolean;
+  saveFeedback: SettingsFeedbackMessage | null;
+  selectedMode: DisplayedSpeedSourceMode;
+  showGpsFallbackPanel: boolean;
+  staleTimeoutFeedback: SettingsFeedbackMessage | null;
+  staleTimeoutInputValue: string;
+  summary: SpeedSourceSummaryRenderModel;
+}
+
+export interface SpeedSourceGpsStatusRenderModel {
+  deviceText: string;
+  effectiveSpeedText: string;
+  fallbackText: string;
+  lastErrorText: string;
+  lastUpdateText: string;
+  rawSpeedText: string;
+  reconnectText: string;
+  stateText: string;
+}
+
+export interface SpeedSourceObdStatusRenderModel {
+  backoffText: string;
+  configuredDeviceText: string;
+  connectedText: string;
+  debugHintText: string;
+  effectiveCadenceText: string;
+  errorsText: string;
+  lastRpmText: string;
+  modeText: string;
+  pairingText: string;
+  rawResponseText: string;
+  requestRttText: string;
+  rfcommChannelText: string;
+  rpmAgeText: string;
+  targetCadenceText: string;
+  timeoutsText: string;
+  trustedText: string;
+  visible: boolean;
+}
+
+export interface SpeedSourceDiagnosticsRenderModel {
+  gps: SpeedSourceGpsStatusRenderModel;
+  obd: SpeedSourceObdStatusRenderModel;
 }
 
 export interface SpeedSourcePanelView {
   readonly dom: SettingsSpeedSourcePanelDom;
+  focusManualSpeedInput(): void;
+  focusScanObdDevices(): void;
+  focusStaleTimeoutInput(): void;
+  isObdConfigVisible(): boolean;
+  render(model: SpeedSourcePanelRenderModel): void;
+  renderDiagnostics(model: SpeedSourceDiagnosticsRenderModel): void;
 }
 
-function SpeedSourcePanel() {
+type SpeedSourcePanelBridgeState = {
+  diagnostics: SpeedSourceDiagnosticsRenderModel;
+  diagnosticsDisclosureOpen: boolean;
+  model: SpeedSourcePanelRenderModel;
+};
+
+const SPEED_SOURCE_CHOICES = [
+  {
+    captionKey: "settings.speed.gps_caption",
+    captionText: "Use live GPS speed when it is healthy and available.",
+    id: "speedSourceChoiceGps",
+    mode: "gps",
+    titleKey: "settings.speed.gps",
+    titleText: "GPS",
+  },
+  {
+    captionKey: "settings.speed.obd_caption",
+    captionText:
+      "Use a paired Bluetooth OBD adapter on the Pi for live vehicle speed and RPM.",
+    id: "speedSourceChoiceObd",
+    mode: "obd2",
+    titleKey: "settings.speed.obd",
+    titleText: "OBD-II",
+  },
+  {
+    captionKey: "settings.speed.manual_caption",
+    captionText: "Use a fixed speed when you need a deliberate override.",
+    id: "speedSourceChoiceManual",
+    mode: "manual",
+    titleKey: "settings.speed.manual",
+    titleText: "Manual",
+  },
+] as const satisfies readonly {
+  captionKey: string;
+  captionText: string;
+  id: string;
+  mode: DisplayedSpeedSourceMode;
+  titleKey: string;
+  titleText: string;
+}[];
+
+const GPS_STATUS_ROWS = [
+  {
+    fallbackLabel: "Connection",
+    id: "gpsStatusState",
+    labelKey: "settings.speed.connection_state",
+    valueKey: "stateText",
+  },
+  {
+    fallbackLabel: "Device",
+    id: "gpsStatusDevice",
+    labelKey: "settings.speed.device",
+    valueKey: "deviceText",
+  },
+  {
+    fallbackLabel: "Last update",
+    id: "gpsStatusLastUpdate",
+    labelKey: "settings.speed.last_update",
+    valueKey: "lastUpdateText",
+  },
+  {
+    fallbackLabel: "Raw speed",
+    id: "gpsStatusRawSpeed",
+    labelKey: "settings.speed.raw_speed",
+    valueKey: "rawSpeedText",
+  },
+  {
+    fallbackLabel: "Effective speed",
+    id: "gpsStatusEffectiveSpeed",
+    labelKey: "settings.speed.effective_speed",
+    valueKey: "effectiveSpeedText",
+  },
+  {
+    fallbackLabel: "Last error",
+    id: "gpsStatusLastError",
+    labelKey: "settings.speed.last_error",
+    valueKey: "lastErrorText",
+  },
+  {
+    fallbackLabel: "Reconnect in",
+    id: "gpsStatusReconnect",
+    labelKey: "settings.speed.reconnect_in",
+    valueKey: "reconnectText",
+  },
+  {
+    fallbackLabel: "Fallback active",
+    id: "gpsStatusFallback",
+    labelKey: "settings.speed.fallback_active",
+    valueKey: "fallbackText",
+  },
+] as const satisfies readonly {
+  fallbackLabel: string;
+  id: string;
+  labelKey: string;
+  valueKey: keyof SpeedSourceGpsStatusRenderModel;
+}[];
+
+const OBD_STATUS_ROWS = [
+  {
+    fallbackLabel: "Configured adapter",
+    id: "obdStatusConfiguredDevice",
+    labelKey: "settings.speed.obd_configured_device",
+    valueKey: "configuredDeviceText",
+  },
+  {
+    fallbackLabel: "Paired",
+    id: "obdStatusPairing",
+    labelKey: "settings.speed.obd_paired",
+    valueKey: "pairingText",
+  },
+  {
+    fallbackLabel: "Trusted",
+    id: "obdStatusTrusted",
+    labelKey: "settings.speed.obd_trusted",
+    valueKey: "trustedText",
+  },
+  {
+    fallbackLabel: "Bluetooth connected",
+    id: "obdStatusConnected",
+    labelKey: "settings.speed.obd_connected",
+    valueKey: "connectedText",
+  },
+  {
+    fallbackLabel: "RFCOMM channel",
+    id: "obdStatusRfcommChannel",
+    labelKey: "settings.speed.obd_rfcomm_channel",
+    valueKey: "rfcommChannelText",
+  },
+  {
+    fallbackLabel: "Last RPM",
+    id: "obdStatusLastRpm",
+    labelKey: "settings.speed.obd_last_rpm",
+    valueKey: "lastRpmText",
+  },
+  {
+    fallbackLabel: "RPM age",
+    id: "obdStatusRpmAge",
+    labelKey: "settings.speed.obd_rpm_age",
+    valueKey: "rpmAgeText",
+  },
+  {
+    fallbackLabel: "Target cadence",
+    id: "obdStatusTargetCadence",
+    labelKey: "settings.speed.obd_target_cadence",
+    valueKey: "targetCadenceText",
+  },
+  {
+    fallbackLabel: "Effective cadence",
+    id: "obdStatusEffectiveCadence",
+    labelKey: "settings.speed.obd_effective_cadence",
+    valueKey: "effectiveCadenceText",
+  },
+  {
+    fallbackLabel: "Avg request RTT",
+    id: "obdStatusRequestRtt",
+    labelKey: "settings.speed.obd_request_rtt",
+    valueKey: "requestRttText",
+  },
+  {
+    fallbackLabel: "Timeouts",
+    id: "obdStatusTimeouts",
+    labelKey: "settings.speed.obd_timeouts",
+    valueKey: "timeoutsText",
+  },
+  {
+    fallbackLabel: "Errors",
+    id: "obdStatusErrors",
+    labelKey: "settings.speed.obd_errors",
+    valueKey: "errorsText",
+  },
+  {
+    fallbackLabel: "Monitor mode",
+    id: "obdStatusMode",
+    labelKey: "settings.speed.obd_mode",
+    valueKey: "modeText",
+  },
+  {
+    fallbackLabel: "Backoff active",
+    id: "obdStatusBackoff",
+    labelKey: "settings.speed.obd_backoff_active",
+    valueKey: "backoffText",
+  },
+  {
+    fallbackLabel: "Last raw response",
+    id: "obdStatusRawResponse",
+    labelKey: "settings.speed.obd_raw_response",
+    valueKey: "rawResponseText",
+  },
+  {
+    fallbackLabel: "Debug hint",
+    id: "obdStatusDebugHint",
+    labelKey: "settings.speed.obd_debug_hint",
+    valueKey: "debugHintText",
+  },
+] as const satisfies readonly {
+  fallbackLabel: string;
+  id: string;
+  labelKey: string;
+  valueKey: Exclude<keyof SpeedSourceObdStatusRenderModel, "visible">;
+}[];
+
+const DEFAULT_SPEED_SOURCE_PANEL_MODEL: SpeedSourcePanelRenderModel = {
+  choiceCards: {
+    gps: { badgeText: null, selected: false, state: null },
+    manual: { badgeText: null, selected: false, state: null },
+    obd2: { badgeText: null, selected: false, state: null },
+  },
+  diagnosticsShouldOpen: false,
+  manualConfigVisible: false,
+  manualSpeedFeedback: null,
+  manualSpeedInputValue: "",
+  obdConfigVisible: false,
+  obdConfiguredDeviceText: "--",
+  obdDevices: [],
+  obdScanStatusText: "Scan to discover nearby Bluetooth OBD adapters.",
+  obdSelectionInvalid: false,
+  scanObdDevicesDisabled: false,
+  saveFeedback: null,
+  selectedMode: "gps",
+  showGpsFallbackPanel: false,
+  staleTimeoutFeedback: null,
+  staleTimeoutInputValue: "10",
+  summary: {
+    currentSourceText: "--",
+    effectiveSpeedText: "--",
+    fallbackActiveText: "--",
+  },
+};
+
+const DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL: SpeedSourceDiagnosticsRenderModel = {
+  gps: {
+    deviceText: "--",
+    effectiveSpeedText: "--",
+    fallbackText: "--",
+    lastErrorText: "--",
+    lastUpdateText: "--",
+    rawSpeedText: "--",
+    reconnectText: "--",
+    stateText: "--",
+  },
+  obd: {
+    backoffText: "--",
+    configuredDeviceText: "--",
+    connectedText: "--",
+    debugHintText: "--",
+    effectiveCadenceText: "--",
+    errorsText: "--",
+    lastRpmText: "--",
+    modeText: "--",
+    pairingText: "--",
+    rawResponseText: "--",
+    requestRttText: "--",
+    rfcommChannelText: "--",
+    rpmAgeText: "--",
+    targetCadenceText: "--",
+    timeoutsText: "--",
+    trustedText: "--",
+    visible: false,
+  },
+};
+
+function feedbackClassName(message: SettingsFeedbackMessage): string {
+  const tone = message.tone ?? "info";
+  const classNames = ["settings-feedback", `settings-feedback--${tone}`];
+  if (message.compact) {
+    classNames.push("settings-feedback--compact");
+  }
+  return classNames.join(" ");
+}
+
+function SettingsFeedbackBlock(props: {
+  message: SettingsFeedbackMessage;
+}) {
+  const { message } = props;
+  return (
+    <div
+      class={feedbackClassName(message)}
+      aria-live={message.tone === "error" ? "assertive" : "polite"}
+    >
+      {message.title ? (
+        <strong class="settings-feedback__title">{message.title}</strong>
+      ) : null}
+      <span class="settings-feedback__body">{message.body}</span>
+      {message.detail ? (
+        <span class="settings-feedback__detail">{message.detail}</span>
+      ) : null}
+    </div>
+  );
+}
+
+function SettingsFeedbackSlot(props: {
+  className: string;
+  id: string;
+  message: SettingsFeedbackMessage | null;
+}) {
+  const { className, id, message } = props;
+  return (
+    <div id={id} class={className} hidden={message === null}>
+      {message ? <SettingsFeedbackBlock message={message} /> : null}
+    </div>
+  );
+}
+
+function SpeedSourceChoiceCard(props: {
+  choice: (typeof SPEED_SOURCE_CHOICES)[number];
+  model: SpeedSourcePanelRenderModel;
+}) {
+  const { choice, model } = props;
+  const choiceState = model.choiceCards[choice.mode];
+  return (
+    <label
+      id={choice.id}
+      class="speed-source-choice"
+      data-speed-source-choice={choice.mode}
+      data-selected={choiceState.selected ? "true" : undefined}
+      data-choice-state={choiceState.state ?? undefined}
+      data-choice-badge={choiceState.badgeText ?? undefined}
+    >
+      <input
+        class="speed-source-choice__radio"
+        type="radio"
+        name="speedSourceRadio"
+        value={choice.mode}
+        checked={model.selectedMode === choice.mode}
+        aria-invalid={
+          choice.mode === "obd2" && model.obdSelectionInvalid ? "true" : undefined
+        }
+      />
+      <span class="speed-source-choice__title" data-i18n={choice.titleKey}>
+        {choice.titleText}
+      </span>
+      <span class="speed-source-choice__caption" data-i18n={choice.captionKey}>
+        {choice.captionText}
+      </span>
+    </label>
+  );
+}
+
+function SpeedSourceObdDeviceRow(props: {
+  device: SpeedSourceObdDeviceRenderModel;
+}) {
+  const { device } = props;
+  return (
+    <div class="speed-source-device">
+      <div class="speed-source-device__header">
+        <div class="speed-source-device__identity">
+          <div class="speed-source-device__name">{device.primaryText}</div>
+          {device.secondaryText ? (
+            <div class="speed-source-device__mac">{device.secondaryText}</div>
+          ) : null}
+        </div>
+        <div class="speed-source-device__badges">
+          {device.badges.map((badge) => (
+            <span
+              key={`${device.macAddress}-${badge.labelText}`}
+              class="speed-source-device__badge"
+              data-active={badge.active ? "true" : undefined}
+            >
+              {badge.labelText}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div class="speed-source-device__actions">
+        <button
+          class="btn btn--secondary"
+          type="button"
+          disabled={device.actionDisabled}
+          data-obd-pair-mac={device.macAddress}
+        >
+          {device.actionLabelText}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SpeedSourcePanel(props: {
+  manualInputRef: (element: HTMLInputElement | null) => void;
+  obdConfigRef: (element: HTMLElement | null) => void;
+  onDiagnosticsToggle: (event: Event) => void;
+  scanButtonRef: (element: HTMLButtonElement | null) => void;
+  staleTimeoutInputRef: (element: HTMLInputElement | null) => void;
+  state: SpeedSourcePanelBridgeState;
+}) {
+  const {
+    manualInputRef,
+    obdConfigRef,
+    onDiagnosticsToggle,
+    scanButtonRef,
+    staleTimeoutInputRef,
+    state,
+  } = props;
   return (
     <>
       <div class="panel card">
@@ -87,7 +530,7 @@ function SpeedSourcePanel() {
                 id="speedSourceCurrentSource"
                 class="speed-source-summary__value"
               >
-                --
+                {state.model.summary.currentSourceText}
               </div>
             </div>
             <div class="speed-source-summary__stat">
@@ -101,7 +544,7 @@ function SpeedSourcePanel() {
                 id="speedSourceEffectiveSpeed"
                 class="speed-source-summary__value"
               >
-                --
+                {state.model.summary.effectiveSpeedText}
               </div>
             </div>
             <div class="speed-source-summary__stat">
@@ -115,88 +558,25 @@ function SpeedSourcePanel() {
                 id="speedSourceFallbackActive"
                 class="speed-source-summary__value"
               >
-                --
+                {state.model.summary.fallbackActiveText}
               </div>
             </div>
           </div>
         </div>
         <div class="speed-source-choice-grid">
-          <label
-            id="speedSourceChoiceGps"
-            class="speed-source-choice"
-            data-speed-source-choice="gps"
-          >
-            <input
-              class="speed-source-choice__radio"
-              type="radio"
-              name="speedSourceRadio"
-              value="gps"
-              checked
+          {SPEED_SOURCE_CHOICES.map((choice) => (
+            <SpeedSourceChoiceCard
+              key={choice.mode}
+              choice={choice}
+              model={state.model}
             />
-            <span
-              class="speed-source-choice__title"
-              data-i18n="settings.speed.gps"
-            >
-              GPS
-            </span>
-            <span
-              class="speed-source-choice__caption"
-              data-i18n="settings.speed.gps_caption"
-            >
-              Use live GPS speed when it is healthy and available.
-            </span>
-          </label>
-          <label
-            id="speedSourceChoiceObd"
-            class="speed-source-choice"
-            data-speed-source-choice="obd2"
-          >
-            <input
-              class="speed-source-choice__radio"
-              type="radio"
-              name="speedSourceRadio"
-              value="obd2"
-            />
-            <span
-              class="speed-source-choice__title"
-              data-i18n="settings.speed.obd"
-            >
-              OBD-II
-            </span>
-            <span
-              class="speed-source-choice__caption"
-              data-i18n="settings.speed.obd_caption"
-            >
-              Use a paired Bluetooth OBD adapter on the Pi for live vehicle
-              speed and RPM.
-            </span>
-          </label>
-          <label
-            id="speedSourceChoiceManual"
-            class="speed-source-choice"
-            data-speed-source-choice="manual"
-          >
-            <input
-              class="speed-source-choice__radio"
-              type="radio"
-              name="speedSourceRadio"
-              value="manual"
-            />
-            <span
-              class="speed-source-choice__title"
-              data-i18n="settings.speed.manual"
-            >
-              Manual
-            </span>
-            <span
-              class="speed-source-choice__caption"
-              data-i18n="settings.speed.manual_caption"
-            >
-              Use a fixed speed when you need a deliberate override.
-            </span>
-          </label>
+          ))}
         </div>
-        <div id="manualSpeedConfig" class="speed-source-config" hidden>
+        <div
+          id="manualSpeedConfig"
+          class="speed-source-config"
+          hidden={!state.model.manualConfigVisible}
+        >
           <div class="subtle" data-i18n="settings.speed.manual_intro">
             Set a fixed speed for manual mode and as the live-source fallback
             when GPS or OBD-II data goes stale.
@@ -208,15 +588,33 @@ function SpeedSourcePanel() {
             >
               Manual Speed (km/h)
             </label>
-            <input id="manualSpeedInput" type="number" step="0.1" min="0" />
+            <input
+              id="manualSpeedInput"
+              ref={manualInputRef}
+              type="number"
+              step="0.1"
+              min="0"
+              value={state.model.manualSpeedInputValue}
+              aria-invalid={
+                state.model.manualSpeedFeedback ? "true" : undefined
+              }
+              aria-describedby={
+                state.model.manualSpeedFeedback ? "manualSpeedFeedback" : undefined
+              }
+            />
           </div>
-          <div
+          <SettingsFeedbackSlot
             id="manualSpeedFeedback"
-            class="settings-feedback-slot settings-feedback-slot--compact"
-            hidden
-          ></div>
+            className="settings-feedback-slot settings-feedback-slot--compact"
+            message={state.model.manualSpeedFeedback}
+          />
         </div>
-        <div id="obdSpeedConfig" class="speed-source-config" hidden>
+        <div
+          id="obdSpeedConfig"
+          ref={obdConfigRef}
+          class="speed-source-config"
+          hidden={!state.model.obdConfigVisible}
+        >
           <div class="subtle" data-i18n="settings.speed.obd_intro">
             Pair a Bluetooth OBD adapter with the Pi, then save OBD-II as the
             selected live source.
@@ -230,28 +628,37 @@ function SpeedSourcePanel() {
                 Configured adapter
               </div>
               <div id="obdConfiguredDevice" class="speed-source-summary__value">
-                --
+                {state.model.obdConfiguredDeviceText}
               </div>
             </div>
             <button
               id="scanObdDevicesBtn"
+              ref={scanButtonRef}
               class="btn btn--secondary"
               type="button"
+              disabled={state.model.scanObdDevicesDisabled}
               data-i18n="settings.speed.obd_scan"
             >
               Scan for adapters
             </button>
           </div>
-          <div
-            id="obdDeviceScanStatus"
-            class="subtle"
-            data-i18n="settings.speed.obd_scan_idle"
-          >
-            Scan to discover nearby Bluetooth OBD adapters.
+          <div id="obdDeviceScanStatus" class="subtle">
+            {state.model.obdScanStatusText}
           </div>
-          <div id="obdDeviceList" class="speed-source-device-list"></div>
+          <div id="obdDeviceList" class="speed-source-device-list">
+            {state.model.obdDevices.map((device) => (
+              <SpeedSourceObdDeviceRow
+                key={device.macAddress}
+                device={device}
+              />
+            ))}
+          </div>
         </div>
-        <div id="gpsFallbackPanel" class="speed-source-config" hidden>
+        <div
+          id="gpsFallbackPanel"
+          class="speed-source-config"
+          hidden={!state.model.showGpsFallbackPanel}
+        >
           <div class="subtle" data-i18n="settings.speed.gps_intro">
             Choose how long stale live-source data can remain usable before the
             manual fallback takes over.
@@ -265,24 +672,38 @@ function SpeedSourcePanel() {
             </label>
             <input
               id="staleTimeoutInput"
+              ref={staleTimeoutInputRef}
               type="number"
               step="1"
               min="3"
               max="120"
-              value="10"
+              value={state.model.staleTimeoutInputValue}
+              aria-invalid={
+                state.model.staleTimeoutFeedback ? "true" : undefined
+              }
+              aria-describedby={
+                state.model.staleTimeoutFeedback
+                  ? "staleTimeoutFeedback"
+                  : undefined
+              }
             />
           </div>
-          <div
+          <SettingsFeedbackSlot
             id="staleTimeoutFeedback"
-            class="settings-feedback-slot settings-feedback-slot--compact"
-            hidden
-          ></div>
+            className="settings-feedback-slot settings-feedback-slot--compact"
+            message={state.model.staleTimeoutFeedback}
+          />
         </div>
-        <div id="speedSourceSaveFeedback" class="settings-feedback-slot" hidden></div>
+        <SettingsFeedbackSlot
+          id="speedSourceSaveFeedback"
+          className="settings-feedback-slot"
+          message={state.model.saveFeedback}
+        />
         <div class="settings-actions settings-actions--sticky">
           <button
             id="saveSpeedSourceBtn"
             class="btn btn--primary"
+            type="button"
             data-i18n="settings.speed.save"
           >
             Save Speed Source
@@ -293,6 +714,8 @@ function SpeedSourcePanel() {
       <details
         id="speedSourceDiagnostics"
         class="settings-help-disclosure speed-source-diagnostics"
+        open={state.diagnosticsDisclosureOpen}
+        onToggle={onDiagnosticsToggle}
       >
         <summary class="settings-help-disclosure__summary">
           <span class="settings-help-disclosure__heading">
@@ -314,122 +737,26 @@ function SpeedSourcePanel() {
         <div class="settings-help-disclosure__body">
           <table class="kv-table" id="gpsStatusPanel">
             <tbody>
-              <tr>
-                <td data-i18n="settings.speed.connection_state">Connection</td>
-                <td id="gpsStatusState">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.device">Device</td>
-                <td id="gpsStatusDevice">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.last_update">Last update</td>
-                <td id="gpsStatusLastUpdate">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.raw_speed">Raw speed</td>
-                <td id="gpsStatusRawSpeed">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.effective_speed">
-                  Effective speed
-                </td>
-                <td id="gpsStatusEffectiveSpeed">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.last_error">Last error</td>
-                <td id="gpsStatusLastError">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.reconnect_in">Reconnect in</td>
-                <td id="gpsStatusReconnect">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.fallback_active">Fallback active</td>
-                <td id="gpsStatusFallback">--</td>
-              </tr>
+              {GPS_STATUS_ROWS.map((row) => (
+                <tr key={row.id}>
+                  <td data-i18n={row.labelKey}>{row.fallbackLabel}</td>
+                  <td id={row.id}>{state.diagnostics.gps[row.valueKey]}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
-          <table class="kv-table" id="obdStatusPanel" hidden>
+          <table
+            class="kv-table"
+            id="obdStatusPanel"
+            hidden={!state.diagnostics.obd.visible}
+          >
             <tbody>
-              <tr>
-                <td data-i18n="settings.speed.obd_configured_device">
-                  Configured adapter
-                </td>
-                <td id="obdStatusConfiguredDevice">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_paired">Paired</td>
-                <td id="obdStatusPairing">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_trusted">Trusted</td>
-                <td id="obdStatusTrusted">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_connected">
-                  Bluetooth connected
-                </td>
-                <td id="obdStatusConnected">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_rfcomm_channel">
-                  RFCOMM channel
-                </td>
-                <td id="obdStatusRfcommChannel">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_last_rpm">Last RPM</td>
-                <td id="obdStatusLastRpm">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_rpm_age">RPM age</td>
-                <td id="obdStatusRpmAge">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_target_cadence">
-                  Target cadence
-                </td>
-                <td id="obdStatusTargetCadence">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_effective_cadence">
-                  Effective cadence
-                </td>
-                <td id="obdStatusEffectiveCadence">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_request_rtt">Avg request RTT</td>
-                <td id="obdStatusRequestRtt">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_timeouts">Timeouts</td>
-                <td id="obdStatusTimeouts">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_errors">Errors</td>
-                <td id="obdStatusErrors">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_mode">Monitor mode</td>
-                <td id="obdStatusMode">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_backoff_active">
-                  Backoff active
-                </td>
-                <td id="obdStatusBackoff">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_raw_response">
-                  Last raw response
-                </td>
-                <td id="obdStatusRawResponse">--</td>
-              </tr>
-              <tr>
-                <td data-i18n="settings.speed.obd_debug_hint">Debug hint</td>
-                <td id="obdStatusDebugHint">--</td>
-              </tr>
+              {OBD_STATUS_ROWS.map((row) => (
+                <tr key={row.id}>
+                  <td data-i18n={row.labelKey}>{row.fallbackLabel}</td>
+                  <td id={row.id}>{state.diagnostics.obd[row.valueKey]}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -443,61 +770,89 @@ function createSpeedSourcePanelDom(host: HTMLElement): SettingsSpeedSourcePanelD
     host.querySelector<T>(`#${id}`);
 
   return {
+    manualSpeedInput: queryById<HTMLInputElement>("manualSpeedInput"),
+    obdDeviceList: queryById<HTMLElement>("obdDeviceList"),
+    obdSpeedConfig: queryById<HTMLElement>("obdSpeedConfig"),
+    saveSpeedSourceBtn: queryById<HTMLButtonElement>("saveSpeedSourceBtn"),
+    scanObdDevicesBtn: queryById<HTMLButtonElement>("scanObdDevicesBtn"),
     speedSourceRadios: Array.from(
       host.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]'),
     ),
-    speedSourceCurrentSource: queryById<HTMLElement>("speedSourceCurrentSource"),
-    speedSourceEffectiveSpeed: queryById<HTMLElement>("speedSourceEffectiveSpeed"),
-    speedSourceFallbackActive: queryById<HTMLElement>("speedSourceFallbackActive"),
-    speedSourceChoiceGps: queryById<HTMLElement>("speedSourceChoiceGps"),
-    speedSourceChoiceObd: queryById<HTMLElement>("speedSourceChoiceObd"),
-    speedSourceChoiceManual: queryById<HTMLElement>("speedSourceChoiceManual"),
-    manualSpeedConfig: queryById<HTMLElement>("manualSpeedConfig"),
-    manualSpeedInput: queryById<HTMLInputElement>("manualSpeedInput"),
-    manualSpeedFeedback: queryById<HTMLElement>("manualSpeedFeedback"),
-    obdSpeedConfig: queryById<HTMLElement>("obdSpeedConfig"),
-    obdConfiguredDevice: queryById<HTMLElement>("obdConfiguredDevice"),
-    scanObdDevicesBtn: queryById<HTMLButtonElement>("scanObdDevicesBtn"),
-    obdDeviceScanStatus: queryById<HTMLElement>("obdDeviceScanStatus"),
-    obdDeviceList: queryById<HTMLElement>("obdDeviceList"),
-    saveSpeedSourceBtn: queryById<HTMLButtonElement>("saveSpeedSourceBtn"),
-    speedSourceSaveFeedback: queryById<HTMLElement>("speedSourceSaveFeedback"),
-    speedSourceDiagnostics: queryById<HTMLDetailsElement>("speedSourceDiagnostics"),
-    gpsFallbackPanel: queryById<HTMLElement>("gpsFallbackPanel"),
     staleTimeoutInput: queryById<HTMLInputElement>("staleTimeoutInput"),
-    staleTimeoutFeedback: queryById<HTMLElement>("staleTimeoutFeedback"),
-    gpsStatusPanel: queryById<HTMLElement>("gpsStatusPanel"),
-    gpsStatusState: queryById<HTMLElement>("gpsStatusState"),
-    gpsStatusDevice: queryById<HTMLElement>("gpsStatusDevice"),
-    gpsStatusLastUpdate: queryById<HTMLElement>("gpsStatusLastUpdate"),
-    gpsStatusRawSpeed: queryById<HTMLElement>("gpsStatusRawSpeed"),
-    gpsStatusEffectiveSpeed: queryById<HTMLElement>("gpsStatusEffectiveSpeed"),
-    gpsStatusLastError: queryById<HTMLElement>("gpsStatusLastError"),
-    gpsStatusReconnect: queryById<HTMLElement>("gpsStatusReconnect"),
-    gpsStatusFallback: queryById<HTMLElement>("gpsStatusFallback"),
-    obdStatusPanel: queryById<HTMLElement>("obdStatusPanel"),
-    obdStatusConfiguredDevice: queryById<HTMLElement>("obdStatusConfiguredDevice"),
-    obdStatusPairing: queryById<HTMLElement>("obdStatusPairing"),
-    obdStatusTrusted: queryById<HTMLElement>("obdStatusTrusted"),
-    obdStatusConnected: queryById<HTMLElement>("obdStatusConnected"),
-    obdStatusRfcommChannel: queryById<HTMLElement>("obdStatusRfcommChannel"),
-    obdStatusLastRpm: queryById<HTMLElement>("obdStatusLastRpm"),
-    obdStatusRpmAge: queryById<HTMLElement>("obdStatusRpmAge"),
-    obdStatusTargetCadence: queryById<HTMLElement>("obdStatusTargetCadence"),
-    obdStatusEffectiveCadence: queryById<HTMLElement>("obdStatusEffectiveCadence"),
-    obdStatusRequestRtt: queryById<HTMLElement>("obdStatusRequestRtt"),
-    obdStatusTimeouts: queryById<HTMLElement>("obdStatusTimeouts"),
-    obdStatusErrors: queryById<HTMLElement>("obdStatusErrors"),
-    obdStatusMode: queryById<HTMLElement>("obdStatusMode"),
-    obdStatusBackoff: queryById<HTMLElement>("obdStatusBackoff"),
-    obdStatusRawResponse: queryById<HTMLElement>("obdStatusRawResponse"),
-    obdStatusDebugHint: queryById<HTMLElement>("obdStatusDebugHint"),
   };
 }
 
 export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
-  createUiPreactMount(host).render(<SpeedSourcePanel />);
+  const bridgeState: SpeedSourcePanelBridgeState = {
+    diagnostics: DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL,
+    diagnosticsDisclosureOpen: false,
+    model: DEFAULT_SPEED_SOURCE_PANEL_MODEL,
+  };
+  let manualSpeedInput: HTMLInputElement | null = null;
+  let obdConfig: HTMLElement | null = null;
+  let scanObdDevicesBtn: HTMLButtonElement | null = null;
+  let staleTimeoutInput: HTMLInputElement | null = null;
+  const mount = createUiPreactMount(host);
+
+  function render(): void {
+    if (bridgeState.model.diagnosticsShouldOpen) {
+      bridgeState.diagnosticsDisclosureOpen = true;
+    }
+    mount.render(
+      <SpeedSourcePanel
+        manualInputRef={(element) => {
+          manualSpeedInput = element;
+        }}
+        obdConfigRef={(element) => {
+          obdConfig = element;
+        }}
+        onDiagnosticsToggle={(event) => {
+          bridgeState.diagnosticsDisclosureOpen =
+            (event.currentTarget as HTMLDetailsElement | null)?.open ?? false;
+        }}
+        scanButtonRef={(element) => {
+          scanObdDevicesBtn = element;
+        }}
+        staleTimeoutInputRef={(element) => {
+          staleTimeoutInput = element;
+        }}
+        state={bridgeState}
+      />,
+    );
+  }
+
+  render();
+  const dom = createSpeedSourcePanelDom(host);
+
   return {
-    dom: createSpeedSourcePanelDom(host),
+    dom,
+    focusManualSpeedInput(): void {
+      manualSpeedInput?.focus();
+    },
+    focusScanObdDevices(): void {
+      scanObdDevicesBtn?.focus();
+    },
+    focusStaleTimeoutInput(): void {
+      staleTimeoutInput?.focus();
+    },
+    isObdConfigVisible(): boolean {
+      if (!obdConfig || obdConfig.hidden) {
+        return false;
+      }
+      const activePanel = obdConfig.closest<HTMLElement>(".settings-tab-panel");
+      if (!activePanel || activePanel.hidden) {
+        return false;
+      }
+      const activeView = activePanel.closest<HTMLElement>(".view");
+      return activeView == null || !activeView.hidden;
+    },
+    render(model): void {
+      bridgeState.model = model;
+      render();
+    },
+    renderDiagnostics(model): void {
+      bridgeState.diagnostics = model;
+      render();
+    },
   };
 }
