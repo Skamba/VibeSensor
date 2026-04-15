@@ -281,7 +281,7 @@ export function createRealtimeFeaturePresenter(
   }
 
   function renderSensorsSettingsList(): void {
-    sensorsPanel.render({
+    sensorsPanel.setModel({
       table: buildRealtimeSensorTableRenderModel({
         clients: realtime.clients,
         locationOptions: realtime.locationOptions,

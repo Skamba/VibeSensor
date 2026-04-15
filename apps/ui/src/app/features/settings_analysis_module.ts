@@ -265,8 +265,8 @@ export function createSettingsAnalysisModule(
     };
   }
 
-  function renderPanel(): void {
-    panel.render(buildPanelModel());
+  function syncPanelModel(): void {
+    panel.setModel(buildPanelModel());
   }
 
   function clearFieldValidationState(): void {
@@ -279,7 +279,7 @@ export function createSettingsAnalysisModule(
 
   function markFieldInvalid(field: AnalysisFieldConfig, message: string): void {
     fieldErrorMessages.set(field.key, message);
-    renderPanel();
+    syncPanelModel();
     panel.focusField(field.key);
     openAnalysisGuidance();
   }
@@ -316,7 +316,7 @@ export function createSettingsAnalysisModule(
     }
     clearFieldValidationState();
     saveFeedback = null;
-    renderPanel();
+    syncPanelModel();
     void syncAnalysisSettingsToServer({
       wheel_bandwidth_pct: defaultVehicleSettings.wheel_bandwidth_pct,
       driveshaft_bandwidth_pct: defaultVehicleSettings.driveshaft_bandwidth_pct,
@@ -336,7 +336,7 @@ export function createSettingsAnalysisModule(
     draftValues = buildDraftValues(settings);
     clearFieldValidationState();
     saveFeedback = null;
-    renderPanel();
+    syncPanelModel();
   }
 
   function applyAnalysisSettingsPayload(
@@ -367,7 +367,7 @@ export function createSettingsAnalysisModule(
           error instanceof Error ? error.message : t("settings.save_failed"),
         detail: t("settings.analysis.save_failed_detail"),
       };
-      renderPanel();
+      syncPanelModel();
       ctx.onSaveError(error);
     }
   }
@@ -471,7 +471,7 @@ export function createSettingsAnalysisModule(
     };
     fieldErrorMessages.delete(action.field);
     saveFeedback = null;
-    renderPanel();
+    syncPanelModel();
   }
 
   function bindHandlers(): void {
@@ -480,7 +480,7 @@ export function createSettingsAnalysisModule(
       onReset: resetAnalysisToDefaults,
       onSave: saveAnalysisFromInputs,
     });
-    renderPanel();
+    syncPanelModel();
   }
 
   return {

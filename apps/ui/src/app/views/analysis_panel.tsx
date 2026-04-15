@@ -1,7 +1,9 @@
 import type { JSX } from "preact";
+import { useEffect, useRef } from "preact/hooks";
 
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import type {
   SettingsAnalysisGuidanceRenderModel,
 } from "./settings_analysis_guidance";
@@ -47,7 +49,7 @@ export interface AnalysisPanelView {
   bindActions(handlers: AnalysisPanelActionHandlers): void;
   focusField(field: AnalysisPanelFieldKey): void;
   openGuidance(): void;
-  render(model: AnalysisPanelRenderModel): void;
+  setModel(model: AnalysisPanelRenderModel): void;
   setCarAvailability(state: AnalysisPanelCarAvailability): void;
 }
 
@@ -64,6 +66,11 @@ type AnalysisPanelBridgeState = {
   actions: AnalysisPanelActionHandlers | null;
   availability: AnalysisPanelCarAvailability;
   model: AnalysisPanelRenderModel;
+};
+
+type AnalysisFieldFocusRequest = {
+  field: AnalysisPanelFieldKey;
+  token: number;
 };
 
 const EMPTY_GUIDANCE_MODEL: SettingsAnalysisGuidanceRenderModel = {
@@ -284,15 +291,43 @@ function AnalysisField(props: {
 }
 
 function AnalysisPanel(props: {
-  guidanceHelpRef: (element: HTMLDetailsElement | null) => void;
-  inputRef: (
-    field: AnalysisPanelFieldKey,
-    element: HTMLInputElement | null,
-  ) => void;
-  state: AnalysisPanelBridgeState;
+  guidanceOpenRequest: ReadonlySignal<number>;
+  inputFocusRequest: ReadonlySignal<AnalysisFieldFocusRequest | null>;
+  state: ReadonlySignal<AnalysisPanelBridgeState>;
 }) {
-  const { guidanceHelpRef, inputRef, state } = props;
+  const state = props.state.value;
+  const guidanceOpenRequest = props.guidanceOpenRequest.value;
+  const inputFocusRequest = props.inputFocusRequest.value;
   const t = useUiTranslation();
+  const guidanceHelpRef = useRef<HTMLDetailsElement | null>(null);
+  const inputRefs = useRef<Record<AnalysisPanelFieldKey, HTMLInputElement | null>>({
+    wheel_bandwidth_pct: null,
+    driveshaft_bandwidth_pct: null,
+    engine_bandwidth_pct: null,
+    speed_uncertainty_pct: null,
+    tire_diameter_uncertainty_pct: null,
+    final_drive_uncertainty_pct: null,
+    gear_uncertainty_pct: null,
+    min_abs_band_hz: null,
+    max_band_half_width_pct: null,
+  });
+
+  useEffect(() => {
+    if (!inputFocusRequest) {
+      return;
+    }
+    inputRefs.current[inputFocusRequest.field]?.focus();
+  }, [inputFocusRequest]);
+
+  useEffect(() => {
+    if (guidanceOpenRequest <= 0) {
+      return;
+    }
+    if (guidanceHelpRef.current) {
+      guidanceHelpRef.current.open = true;
+    }
+  }, [guidanceOpenRequest]);
+
   const noCarSelected = !state.availability.hasActiveCar && !state.availability.isLoading;
   return (
     <div class="panel card settings-layout">
@@ -387,7 +422,9 @@ function AnalysisPanel(props: {
                 key={field.key}
                 actions={state.actions}
                 model={state.model.fields[field.key]}
-                onInputRef={(element) => inputRef(field.key, element)}
+                onInputRef={(element) => {
+                  inputRefs.current[field.key] = element;
+                }}
                 spec={field}
               />
             ))}
@@ -436,7 +473,9 @@ function AnalysisPanel(props: {
                 key={field.key}
                 actions={state.actions}
                 model={state.model.fields[field.key]}
-                onInputRef={(element) => inputRef(field.key, element)}
+                onInputRef={(element) => {
+                  inputRefs.current[field.key] = element;
+                }}
                 spec={field}
               />
             ))}
@@ -478,62 +517,40 @@ function AnalysisPanel(props: {
   );
 }
 
-function createInputRefs(): Record<AnalysisPanelFieldKey, HTMLInputElement | null> {
-  return {
-    wheel_bandwidth_pct: null,
-    driveshaft_bandwidth_pct: null,
-    engine_bandwidth_pct: null,
-    speed_uncertainty_pct: null,
-    tire_diameter_uncertainty_pct: null,
-    final_drive_uncertainty_pct: null,
-    gear_uncertainty_pct: null,
-    min_abs_band_hz: null,
-    max_band_half_width_pct: null,
-  };
-}
-
 export function mountAnalysisPanel(host: HTMLElement): AnalysisPanelView {
-  const bridgeState: AnalysisPanelBridgeState = {
+  const bridgeState = signal<AnalysisPanelBridgeState>({
     actions: null,
     availability: DEFAULT_ANALYSIS_CAR_AVAILABILITY,
     model: DEFAULT_ANALYSIS_PANEL_MODEL,
-  };
-  const inputRefs = createInputRefs();
-  let guidanceHelp: HTMLDetailsElement | null = null;
+  });
+  const inputFocusRequest = signal<AnalysisFieldFocusRequest | null>(null);
+  const guidanceOpenRequest = signal(0);
+  let focusRequestToken = 0;
   const mount = createUiPreactMount(host);
-  const render = () => mount.render(
+  mount.render(
     <AnalysisPanel
-      guidanceHelpRef={(element) => {
-        guidanceHelp = element;
-      }}
-      inputRef={(field, element) => {
-        inputRefs[field] = element;
-      }}
+      guidanceOpenRequest={guidanceOpenRequest}
+      inputFocusRequest={inputFocusRequest}
       state={bridgeState}
     />,
   );
-  render();
 
   return {
     bindActions(handlers) {
-      bridgeState.actions = handlers;
-      render();
+      bridgeState.value = { ...bridgeState.value, actions: handlers };
     },
     focusField(field) {
-      inputRefs[field]?.focus();
+      focusRequestToken += 1;
+      inputFocusRequest.value = { field, token: focusRequestToken };
     },
     openGuidance() {
-      if (guidanceHelp) {
-        guidanceHelp.open = true;
-      }
+      guidanceOpenRequest.value += 1;
     },
-    render(model) {
-      bridgeState.model = model;
-      render();
+    setModel(model) {
+      bridgeState.value = { ...bridgeState.value, model };
     },
     setCarAvailability(state) {
-      bridgeState.availability = state;
-      render();
+      bridgeState.value = { ...bridgeState.value, availability: state };
     },
   };
 }
