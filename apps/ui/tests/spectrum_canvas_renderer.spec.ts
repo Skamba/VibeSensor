@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import type { UiSpectrumDom } from "../src/app/dom/spectrum_dom";
 import { SpectrumCanvasRenderer } from "../src/app/runtime/spectrum_canvas_renderer";
+import type { SpectrumPanelChartDom } from "../src/app/runtime/spectrum_panel_view";
 import { createAppState } from "../src/app/ui_app_state";
 import type { AdaptedClient } from "../src/transport/live_models";
 import { installWindowGlobal } from "./async_test_helpers";
@@ -76,7 +76,7 @@ test.describe("SpectrumCanvasRenderer", () => {
         dom: {
           specChart: createElementStub("div"),
           specChartWrap: createElementStub("div"),
-        } as unknown as Pick<UiSpectrumDom, "specChart" | "specChartWrap">,
+        } as unknown as SpectrumPanelChartDom,
         t: (key) => key,
         getBandsVisible: () => false,
         getChartBands: () => [],
