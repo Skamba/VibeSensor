@@ -113,9 +113,7 @@
   padding: 0;
 }
 
-.wrap[data-active-view="dashboardView"] .site-header__status {
-  display: none;
-}
+.site-header__status[hidden] { display: none; }
 
 .site-header__status-pills {
   display: flex;

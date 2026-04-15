@@ -319,7 +319,7 @@ function UiShellChrome(props: UiShellChromeProps) {
             </label>
           </div>
         </div>
-        <div class="site-header__status">
+        <div class="site-header__status" hidden={model.activeViewId === "dashboardView"}>
           <div class="site-header__status-pills">
             <div
               id="linkState"
