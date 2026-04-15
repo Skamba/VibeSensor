@@ -4,7 +4,6 @@ import type { AppState } from "./ui_app_state";
 
 type DemoDeps = {
   state: Pick<AppState, "transport" | "settings">;
-  renderWsState: () => void;
   applyPayload: (payload: unknown) => void;
 };
 
@@ -15,12 +14,11 @@ declare global {
 }
 
 export function runDemoMode(deps: DemoDeps): void {
-  const { state, renderWsState, applyPayload } = deps;
+  const { state, applyPayload } = deps;
 
   batchAppStateUpdates(() => {
     state.transport.wsState = "connected";
   });
-  renderWsState();
 
   const demoClients = [
     {

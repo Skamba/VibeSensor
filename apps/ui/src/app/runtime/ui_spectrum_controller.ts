@@ -1,4 +1,5 @@
-import type { AppState } from "../ui_app_state";
+import { trackAppStateSlice, type AppState } from "../ui_app_state";
+import { effect, untracked } from "../ui_signals";
 import { SpectrumCanvasRenderer } from "./spectrum_canvas_renderer";
 import { SpectrumInteractionController } from "./spectrum_interaction_controller";
 import type { SpectrumPanelView } from "./spectrum_panel_view";
@@ -41,6 +42,8 @@ export class UiSpectrumController {
       setSeriesIsolation: (seriesIndex) => this.canvas.setSeriesIsolation(seriesIndex),
       requestPlotRefresh: () => this.canvas.refreshDecorations(),
     });
+    this.updateSpectrumOverlay();
+    this.bindReactiveTransportSync();
   }
 
   private get state(): AppState {
@@ -97,5 +100,45 @@ export class UiSpectrumController {
 
   private setSpectrumOverlay(message: string | null): void {
     this.panel.renderOverlay(message);
+  }
+
+  private bindReactiveTransportSync(): void {
+    let previousSpectra = this.state.spectrum.spectra;
+    let previousWsState = this.state.transport.wsState;
+    let previousPayloadError = this.state.transport.payloadError;
+    let previousHasReceivedPayload = this.state.transport.hasReceivedPayload;
+    let initialized = false;
+    effect(() => {
+      trackAppStateSlice(this.state.spectrum);
+      trackAppStateSlice(this.state.transport);
+      const nextSpectra = this.state.spectrum.spectra;
+      const nextWsState = this.state.transport.wsState;
+      const nextPayloadError = this.state.transport.payloadError;
+      const nextHasReceivedPayload = this.state.transport.hasReceivedPayload;
+      if (!initialized) {
+        initialized = true;
+        previousSpectra = nextSpectra;
+        previousWsState = nextWsState;
+        previousPayloadError = nextPayloadError;
+        previousHasReceivedPayload = nextHasReceivedPayload;
+        return;
+      }
+      const spectraChanged = nextSpectra !== previousSpectra;
+      const transportChanged =
+        nextWsState !== previousWsState
+        || nextPayloadError !== previousPayloadError
+        || nextHasReceivedPayload !== previousHasReceivedPayload;
+      previousSpectra = nextSpectra;
+      previousWsState = nextWsState;
+      previousPayloadError = nextPayloadError;
+      previousHasReceivedPayload = nextHasReceivedPayload;
+      if (spectraChanged) {
+        untracked(() => this.renderSpectrum());
+        return;
+      }
+      if (transportChanged) {
+        untracked(() => this.updateSpectrumOverlay());
+      }
+    });
   }
 }

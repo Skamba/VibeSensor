@@ -51,15 +51,36 @@ test.describe("UiSpectrumController", () => {
       state.transport.hasReceivedPayload = false;
       const panel = createPanelStub();
 
-      const controller = new UiSpectrumController({
+      new UiSpectrumController({
         state,
         panel: panel.panel,
         t: (key) => key,
       });
 
-      controller.updateSpectrumOverlay();
-
       expect(panel.lastOverlayMessage).toBe("spectrum.loading");
+    } finally {
+      restoreDocument();
+    }
+  });
+
+  test("reacts to transport state changes without explicit overlay callbacks", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const UiSpectrumController = await importUiSpectrumController();
+      const state = createAppState();
+      state.transport.wsState = "connecting";
+      state.transport.hasReceivedPayload = false;
+      const panel = createPanelStub();
+
+      new UiSpectrumController({
+        state,
+        panel: panel.panel,
+        t: (key) => key,
+      });
+
+      state.transport.wsState = "stale";
+
+      expect(panel.lastOverlayMessage).toBe("spectrum.stale");
     } finally {
       restoreDocument();
     }
