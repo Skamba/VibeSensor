@@ -1,26 +1,27 @@
 import type { UiShellErrorBannerModel } from "./ui_shell_chrome";
+import { signal, type ReadonlySignal } from "../ui_signals";
 
 type UiShellNotificationDeps = {
-  onChanged?: () => void;
   window: Pick<Window, "clearTimeout" | "setTimeout">;
 };
 
 export interface UiShellNotificationModule {
+  readonly bannerModel: ReadonlySignal<UiShellErrorBannerModel>;
   clearError(): void;
-  getBannerModel(): UiShellErrorBannerModel;
   showError(message: string): void;
 }
+
+const HIDDEN_BANNER_MODEL: UiShellErrorBannerModel = {
+  hidden: true,
+  text: "",
+  variant: null,
+};
 
 export function createUiShellNotificationModule(
   deps: UiShellNotificationDeps,
 ): UiShellNotificationModule {
   let hideBannerTimer: ReturnType<typeof setTimeout> | null = null;
-  let bannerText = "";
-  let bannerVisible = false;
-
-  function notifyChanged(): void {
-    deps.onChanged?.();
-  }
+  const bannerModel = signal<UiShellErrorBannerModel>(HIDDEN_BANNER_MODEL);
 
   function clearScheduledHide(): void {
     if (hideBannerTimer !== null) {
@@ -31,30 +32,22 @@ export function createUiShellNotificationModule(
 
   function clearError(): void {
     clearScheduledHide();
-    bannerVisible = false;
-    bannerText = "";
-    notifyChanged();
+    bannerModel.value = HIDDEN_BANNER_MODEL;
   }
 
   return {
+    bannerModel,
     clearError,
-    getBannerModel() {
-      return {
-        hidden: !bannerVisible,
-        text: bannerText,
-        variant: bannerVisible ? "bad" : null,
-      };
-    },
     showError(message) {
       clearScheduledHide();
-      bannerText = message;
-      bannerVisible = true;
-      notifyChanged();
+      bannerModel.value = {
+        hidden: false,
+        text: message,
+        variant: "bad",
+      };
       hideBannerTimer = deps.window.setTimeout(() => {
-        bannerVisible = false;
-        bannerText = "";
+        bannerModel.value = HIDDEN_BANNER_MODEL;
         hideBannerTimer = null;
-        notifyChanged();
       }, 5000);
     },
   };
