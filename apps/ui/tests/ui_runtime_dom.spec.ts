@@ -5,6 +5,7 @@ import { getUiCarsPanelHost } from "../src/app/dom/cars_dom";
 import { getUiEspFlashPanelHost } from "../src/app/dom/esp_flash_dom";
 import { getUiHistoryPanelHost } from "../src/app/dom/history_dom";
 import { getUiInternetPanelHost } from "../src/app/dom/internet_dom";
+import { requiredById } from "../src/app/dom/dom_query";
 import { getUiSensorsPanelHost } from "../src/app/dom/sensors_dom";
 import { getUiSettingsShellHost } from "../src/app/dom/settings_shell_dom";
 import { getUiSpeedSourcePanelHost } from "../src/app/dom/speed_source_dom";
@@ -13,10 +14,6 @@ import {
   getUiLiveOverviewHost,
   getUiLoggingPanelHost,
 } from "../src/app/dom/realtime_dom";
-import {
-  createUiSpectrumDom,
-  getUiSpectrumPanelHost,
-} from "../src/app/dom/spectrum_dom";
 import { getUiShellChromeHost } from "../src/app/runtime/ui_shell_chrome";
 
 type SelectorFixture = {
@@ -45,7 +42,6 @@ function createBaseFixture(): SelectorFixture {
       appShellChromeRoot: stubElement("appShellChromeRoot"),
       loggingPanelRoot: stubElement("loggingPanelRoot"),
       spectrumPanelRoot: stubElement("spectrumPanelRoot"),
-      specChart: stubElement("specChart"),
       liveOverviewRoot: stubElement("liveOverviewRoot"),
       historyPanelRoot: stubElement("historyPanelRoot"),
       settingsShellRoot: stubElement("settingsShellRoot"),
@@ -107,11 +103,11 @@ function installDomFixture(
   };
 }
 
-test("shell and spectrum startup locators resolve the remaining runtime anchors", () => {
+test("shell and spectrum startup locators resolve the remaining island hosts", () => {
   const restore = installDomFixture();
   try {
     expect(getUiShellChromeHost().id).toBe("appShellChromeRoot");
-    expect(createUiSpectrumDom().specChart.id).toBe("specChart");
+    expect(requiredById<HTMLElement>("spectrumPanelRoot", "Spectrum UI").id).toBe("spectrumPanelRoot");
   } finally {
     restore();
   }
@@ -135,10 +131,10 @@ test("getUiLoggingPanelHost resolves the logging island host", () => {
   }
 });
 
-test("getUiSpectrumPanelHost resolves the spectrum island host", () => {
+test("requiredById resolves the spectrum island host", () => {
   const restore = installDomFixture();
   try {
-    expect(getUiSpectrumPanelHost().id).toBe("spectrumPanelRoot");
+    expect(requiredById<HTMLElement>("spectrumPanelRoot", "Spectrum UI").id).toBe("spectrumPanelRoot");
   } finally {
     restore();
   }
@@ -237,21 +233,10 @@ test.describe("runtime locator missing required feature anchors", () => {
     }
   });
 
-  test("fails at the spectrum boundary when the chart host is missing", () => {
-    const restore = installDomFixture({ missingId: "specChart" });
-    try {
-      expect(() => createUiSpectrumDom()).toThrow(
-        "Spectrum UI requires #specChart",
-      );
-    } finally {
-      restore();
-    }
-  });
-
   test("fails when the spectrum panel host is missing", () => {
     const restore = installDomFixture({ missingId: "spectrumPanelRoot" });
     try {
-      expect(() => getUiSpectrumPanelHost()).toThrow(
+      expect(() => requiredById<HTMLElement>("spectrumPanelRoot", "Spectrum UI")).toThrow(
         "Spectrum UI requires #spectrumPanelRoot",
       );
     } finally {

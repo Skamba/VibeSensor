@@ -1,5 +1,6 @@
 import "uplot/dist/uPlot.min.css";
 import "../styles/app.css";
+import { requiredById } from "./dom/dom_query";
 import { getUiAnalysisPanelHost } from "./dom/analysis_dom";
 import { getUiCarsPanelHost } from "./dom/cars_dom";
 import { getUiEspFlashPanelHost } from "./dom/esp_flash_dom";
@@ -13,7 +14,6 @@ import {
   getUiLiveOverviewHost,
   getUiLoggingPanelHost,
 } from "./dom/realtime_dom";
-import { getUiSpectrumPanelHost } from "./dom/spectrum_dom";
 import { createAppState } from "./ui_app_state";
 import { UiAppRuntime } from "./ui_app_runtime";
 import { mountAnalysisPanel } from "./views/analysis_panel";
@@ -37,7 +37,9 @@ import {
 export function startUiApp(): void {
   const state = createAppState();
   const shellChromeActions = createUiShellChromeActionBridge();
-  const spectrumPanel = mountSpectrumPanel(getUiSpectrumPanelHost());
+  const spectrumPanel = mountSpectrumPanel(
+    requiredById<HTMLElement>("spectrumPanelRoot", "Spectrum UI"),
+  );
   const liveOverview = mountRealtimeLiveOverview(getUiLiveOverviewHost());
   const loggingPanel = mountRealtimeLoggingPanel(getUiLoggingPanelHost());
   const historyPanel = mountHistoryPanel(getUiHistoryPanelHost());
@@ -60,7 +62,6 @@ export function startUiApp(): void {
     sensorsPanel,
     speedSourcePanel,
     espFlashPanel,
-    undefined,
     state,
     shellChromeActions,
     liveOverview,

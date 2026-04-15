@@ -1,4 +1,3 @@
-import type { UiSpectrumDom } from "../dom/spectrum_dom";
 import type { AppState } from "../ui_app_state";
 import { SpectrumCanvasRenderer } from "./spectrum_canvas_renderer";
 import { SpectrumInteractionController } from "./spectrum_interaction_controller";
@@ -6,7 +5,6 @@ import { createNullSpectrumPanelView, type SpectrumPanelView } from "./spectrum_
 
 type UiSpectrumControllerDeps = {
   state: AppState;
-  dom: UiSpectrumDom;
   panel?: SpectrumPanelView;
   t: (key: string, vars?: Record<string, unknown>) => string;
 };
@@ -24,7 +22,7 @@ export class UiSpectrumController {
     this.panel = this.deps.panel ?? createNullSpectrumPanelView();
     this.canvas = new SpectrumCanvasRenderer({
       state: this.state,
-      dom: this.els,
+      dom: this.panel.chartDom,
       t: this.t,
       getBandsVisible: () => this.interaction.getBandsVisible(),
       getChartBands: () => this.interaction.getChartBands(),
@@ -47,10 +45,6 @@ export class UiSpectrumController {
 
   private get state(): AppState {
     return this.deps.state;
-  }
-
-  private get els(): UiSpectrumDom {
-    return this.deps.dom;
   }
 
   private get t(): (key: string, vars?: Record<string, unknown>) => string {

@@ -3,7 +3,6 @@ import {
   createAppFeatureBundle,
   type AppFeatureBundle,
 } from "./app_feature_bundle";
-import { createUiSpectrumDom, type UiSpectrumDom } from "./dom/spectrum_dom";
 import type { AppState } from "./ui_app_state";
 import { createAppState } from "./ui_app_state";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
@@ -42,8 +41,6 @@ import type { SettingsShellView } from "./views/settings_shell";
 import type { UpdatePanelView } from "./views/update_panel";
 
 export class UiAppRuntime {
-  private readonly spectrumDom: UiSpectrumDom;
-
   private readonly state: AppState;
 
   private readonly featurePorts: AppFeatureBundle;
@@ -66,7 +63,6 @@ export class UiAppRuntime {
     sensorsPanel: SensorsPanelView,
     speedSourcePanel: SpeedSourcePanelView,
     espFlashPanel: EspFlashPanelView,
-    spectrumDom: UiSpectrumDom = createUiSpectrumDom(),
     state: AppState = createAppState(),
     shellChromeActions: UiShellChromeActionBridge = createUiShellChromeActionBridge(),
     liveOverview: RealtimeLiveOverviewBridge = createNullRealtimeLiveOverviewBridge(),
@@ -74,7 +70,6 @@ export class UiAppRuntime {
     loggingPanel: RealtimeLoggingPanelBridge = createNullRealtimeLoggingPanelBridge(),
     historyPanel: HistoryPanelView = createNullHistoryPanelView(),
   ) {
-    this.spectrumDom = spectrumDom;
     this.state = state;
     this.shell = new UiShellController({
       state: this.state,
@@ -84,7 +79,6 @@ export class UiAppRuntime {
     });
     this.spectrum = new UiSpectrumController({
       state: this.state,
-      dom: this.spectrumDom,
       panel: spectrumPanel,
       t: (key, vars) => this.shell.t(key, vars),
     });

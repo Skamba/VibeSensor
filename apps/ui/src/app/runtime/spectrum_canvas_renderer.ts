@@ -3,9 +3,9 @@ import type uPlot from "uplot";
 import { SPECTRUM_TWEEN_DURATION_MS } from "../../config";
 import { convertSpectrumAmplitudesToDbInPlace, SpectrumChart } from "../../spectrum";
 import { chartSeriesPalette, orderBandFills } from "../../theme";
-import type { UiSpectrumDom } from "../dom/spectrum_dom";
 import { areHeavyFramesCompatible, interpolateHeavyFrame, type SpectrumHeavyFrame } from "../spectrum_animation";
 import type { AppState, ChartBand } from "../ui_app_state";
+import type { SpectrumPanelChartDom } from "./spectrum_panel_view";
 import { closestFrequencyIndex, freqGridsMatch, type SpectrumFocusMarker, type SpectrumSeriesEntry } from "./spectrum_shared";
 
 const bandKeyPresentation: Record<string, { color: string; labelKey: string }> = {
@@ -30,7 +30,7 @@ export interface SpectrumPreparedRenderData {
 
 export interface SpectrumCanvasRendererDeps {
   state: AppState;
-  dom: Pick<UiSpectrumDom, "specChart" | "specChartWrap">;
+  dom: SpectrumPanelChartDom;
   t: (key: string, vars?: Record<string, unknown>) => string;
   getBandsVisible: () => boolean;
   getChartBands: () => readonly ChartBand[];

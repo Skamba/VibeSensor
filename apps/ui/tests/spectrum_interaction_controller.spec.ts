@@ -6,6 +6,7 @@ import type {
   SpectrumPanelView,
   SpectrumSensorLegendModel,
 } from "../src/app/runtime/spectrum_panel_view";
+import { createElementStub } from "./spectrum_test_support";
 
 function createPanelStub(): {
   panel: SpectrumPanelView;
@@ -36,6 +37,10 @@ function createPanelStub(): {
 
   return {
     panel: {
+      chartDom: {
+        specChartWrap: createElementStub("div"),
+        specChart: createElementStub("div"),
+      },
       bindBandToggle() {},
       renderHeader() {},
       renderOverlay() {},

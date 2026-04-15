@@ -169,8 +169,8 @@ The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
 composition root instead of becoming a single-file owner for transport, shell,
 chart behavior, or page-wide DOM state. Startup mounts the live Preact owner
 surfaces first — shell chrome, dashboard/history shells, the shared settings
-shell, and the per-settings-tab panel hosts — then resolves only the spectrum
-chart DOM surface directly through `app/dom/spectrum_dom.ts`.
+shell, and the per-settings-tab panel hosts. The spectrum island now owns the
+chart host refs internally and passes that typed bridge to the runtime.
 `app_feature_bundle.ts` creates the concrete features, wires explicit
 cross-feature ports, and returns only the shell, transport, and startup
 contracts the runtime needs.
@@ -182,9 +182,9 @@ shared settings tab strip and panel wrappers; and the individual page/settings
 panel islands own their local chrome plus typed bridges. The remaining
 imperative paths are deliberate seams: the shell controller still owns
 app-level status/preference state, the spectrum controller still owns the
-uPlot/canvas lifecycle behind `specChart`, and a few feature-local presenters
-still materialize structured wizard or status surfaces behind island-owned
-hosts.
+uPlot/canvas lifecycle through island-owned chart refs, and a few feature-local
+presenters still materialize structured wizard or status surfaces behind
+island-owned hosts.
 
 Realtime follows that same split explicitly: `realtime_feature.ts` is the thin
 facade, `realtime_feature_workflow.ts` owns the controller-style polling and
