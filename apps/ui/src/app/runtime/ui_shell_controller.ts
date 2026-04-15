@@ -11,11 +11,8 @@ import {
   type ReadonlySignal,
 } from "../ui_signals";
 import {
-  bindUiShellFeatureEvents,
-  type UiShellFeaturePorts,
-} from "./ui_shell_feature_ports";
-import {
   createUiShellLanguageRefreshModule,
+  type UiShellLanguageRefreshFeaturePorts,
   type UiShellLanguageRefreshModule,
 } from "./ui_shell_language_refresh_module";
 import {
@@ -48,9 +45,10 @@ import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview
 import type { VisualVariant } from "../view_style_types";
 
 type UiShellControllerDeps = {
+  bindFeatureHandlers: () => void;
   chrome: UiShellChromeView;
   chromeActions: UiShellChromeActionBridge;
-  featurePorts: () => UiShellFeaturePorts;
+  languageRefreshPorts: () => UiShellLanguageRefreshFeaturePorts;
   liveOverview: RealtimeLiveOverviewBridge;
   renderSpectrum: () => void;
   state: AppState;
@@ -86,7 +84,9 @@ export class UiShellController {
 
   private readonly activeViewListeners = new Set<(viewId: string) => void>();
 
-  private readonly getFeaturePorts: () => UiShellFeaturePorts;
+  private readonly bindFeatureHandlers: () => void;
+
+  private readonly getLanguageRefreshPorts: () => UiShellLanguageRefreshFeaturePorts;
 
   private readonly liveStatusBadge = signal<UiShellBadgeModel>({
     text: "No live signal",
@@ -99,7 +99,8 @@ export class UiShellController {
     this.chrome = deps.chrome;
     this.appShellWrap = queryOne<HTMLElement>(".wrap");
     this.liveOverview = deps.liveOverview;
-    this.getFeaturePorts = deps.featurePorts;
+    this.bindFeatureHandlers = deps.bindFeatureHandlers;
+    this.getLanguageRefreshPorts = deps.languageRefreshPorts;
     this.navigation = createUiShellNavigationModule({
       shell: this.state.shell,
       viewIds: SHELL_NAV_ITEMS.map((item) => item.viewId),
@@ -197,23 +198,19 @@ export class UiShellController {
   applyLanguage(forceReloadInsights = false): void {
     setUiLanguage(this.state.shell.lang);
     this.languageRefresh.applyLanguage(
-      this.getFeaturePorts().languageRefresh,
+      this.getLanguageRefreshPorts(),
       forceReloadInsights,
     );
   }
 
   start(defaultViewId: string): void {
-    this.bindFeatureEvents();
+    this.bindFeatureHandlers();
     this.applyLanguage(false);
     this.setActiveView(defaultViewId);
   }
 
   async hydratePersistedPreferences(): Promise<void> {
     await this.preferences.hydratePersistedPreferences();
-  }
-
-  private bindFeatureEvents(): void {
-    bindUiShellFeatureEvents(this.getFeaturePorts());
   }
 
   private bindReactiveStatusSync(): void {
