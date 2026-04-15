@@ -4,7 +4,10 @@ import type { DisplayedSpeedSourceMode } from "../speed_source_state";
 import type { ChoiceCardState } from "../style_state";
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
-import type { SettingsFeedbackMessage } from "./settings_feedback";
+import {
+  settingsFeedbackClassName,
+  type SettingsFeedbackMessage,
+} from "./settings_feedback";
 
 export interface SettingsSpeedSourcePanelDom {
   manualSpeedInput: HTMLInputElement | null;
@@ -369,22 +372,13 @@ const DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL: SpeedSourceDiagnosticsRenderModel 
   },
 };
 
-function feedbackClassName(message: SettingsFeedbackMessage): string {
-  const tone = message.tone ?? "info";
-  const classNames = ["settings-feedback", `settings-feedback--${tone}`];
-  if (message.compact) {
-    classNames.push("settings-feedback--compact");
-  }
-  return classNames.join(" ");
-}
-
 function SettingsFeedbackBlock(props: {
   message: SettingsFeedbackMessage;
 }) {
   const { message } = props;
   return (
     <div
-      class={feedbackClassName(message)}
+      class={settingsFeedbackClassName(message)}
       aria-live={message.tone === "error" ? "assertive" : "polite"}
     >
       {message.title ? (

@@ -1,7 +1,10 @@
 import { h, type JSX } from "preact";
 
 import { requiredById } from "../dom/dom_query";
-import type { SettingsFeedbackMessage } from "../views/settings_feedback";
+import {
+  settingsFeedbackClassName,
+  type SettingsFeedbackMessage,
+} from "../views/settings_feedback";
 import type { VisualVariant } from "../style_state";
 import { createUiPreactMount } from "./ui_preact_mount";
 
@@ -140,15 +143,6 @@ function normalizeMenuIndex(index: number): number {
   return ((index % SHELL_NAV_ITEMS.length) + SHELL_NAV_ITEMS.length) % SHELL_NAV_ITEMS.length;
 }
 
-function feedbackClassName(message: SettingsFeedbackMessage): string {
-  const tone = message.tone ?? "info";
-  const classNames = ["settings-feedback", `settings-feedback--${tone}`];
-  if (message.compact) {
-    classNames.push("settings-feedback--compact");
-  }
-  return classNames.join(" ");
-}
-
 function focusMenuButton(
   event: JSX.TargetedKeyboardEvent<HTMLButtonElement>,
   nextIndex: number,
@@ -174,7 +168,7 @@ function SettingsFeedbackSlot(props: {
       aria-live={message ? (message.tone === "error" ? "assertive" : "polite") : undefined}
     >
       {message ? (
-        <div class={feedbackClassName(message)}>
+        <div class={settingsFeedbackClassName(message)}>
           {message.title ? (
             <strong class="settings-feedback__title">{message.title}</strong>
           ) : null}
