@@ -1,12 +1,14 @@
 /**
- * Shared base interface for UI feature dependency injection.
- *
- * All feature Deps interfaces extend this base to avoid duplicating
- * the common non-DOM fields (i18n translation, HTML escaping)
- * across every feature module.
+ * Minimal shared utilities that feature factories still consume after the
+ * signal-backed state migration removed most of the older constructor plumbing.
  */
-export interface FeatureDepsBase {
+export interface FeatureServices {
   t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
   showError: (message: string) => void;
+}
+
+export interface FeatureFormatting {
+  fmt: (n: number, digits?: number) => string;
+  fmtTs: (iso: string) => string;
+  formatInt: (value: number) => string;
 }

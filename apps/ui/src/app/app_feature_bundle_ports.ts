@@ -1,3 +1,6 @@
+import { createUiRecordingHistoryRefresh } from "./runtime/ui_recording_history_refresh";
+import type { UiShellFeaturePorts } from "./runtime/ui_shell_feature_ports";
+import type { UiStartupFeaturePorts } from "./runtime/ui_startup_feature_ports";
 import type { CarsFeature } from "./features/cars_feature";
 import type { EspFlashFeature } from "./features/esp_flash_feature";
 import type { HistoryFeature } from "./features/history_feature";
@@ -10,16 +13,13 @@ import type {
   SettingsFeatureRealtimePorts,
 } from "./features/settings_feature";
 import type { UpdateFeature } from "./features/update_feature";
-import { createUiRecordingHistoryRefresh } from "./runtime/ui_recording_history_refresh";
-import type { UiShellFeaturePorts } from "./runtime/ui_shell_feature_ports";
-import type { UiStartupFeaturePorts } from "./runtime/ui_startup_feature_ports";
 
 export interface AppFeatureBundle {
   shell: UiShellFeaturePorts;
   startup: UiStartupFeaturePorts;
 }
 
-export interface AppFeaturesForPorts {
+interface AppFeatureBundlePortSources {
   history: Pick<
     HistoryFeature,
     "bindHandlers" | "renderHistoryTable" | "reloadExpandedRunOnLanguageChange" | "refreshHistory"
@@ -67,7 +67,9 @@ export function createRealtimeFeatureRecordingPorts(
   };
 }
 
-export function createAppFeaturePorts(features: AppFeaturesForPorts): AppFeatureBundle {
+export function createAppFeatureBundlePorts(
+  features: AppFeatureBundlePortSources,
+): AppFeatureBundle {
   return {
     shell: {
       bindSettingsHandlers: () => features.settings.bindHandlers(),
@@ -78,13 +80,15 @@ export function createAppFeaturePorts(features: AppFeaturesForPorts): AppFeature
       bindEspFlashHandlers: () => features.espFlash.bindHandlers(),
       languageRefresh: {
         realtime: {
-          maybeRenderSensorsSettingsList: (force) => features.realtime.maybeRenderSensorsSettingsList(force),
+          maybeRenderSensorsSettingsList: (force) =>
+            features.realtime.maybeRenderSensorsSettingsList(force),
           renderLoggingStatus: () => features.realtime.renderLoggingStatus(),
           renderStatus: () => features.realtime.renderStatus(),
         },
         history: {
           renderHistoryTable: () => features.history.renderHistoryTable(),
-          reloadExpandedRunOnLanguageChange: () => features.history.reloadExpandedRunOnLanguageChange(),
+          reloadExpandedRunOnLanguageChange: () =>
+            features.history.reloadExpandedRunOnLanguageChange(),
         },
         settings: {
           syncSettingsInputs: () => features.settings.syncSettingsInputs(),
@@ -101,7 +105,8 @@ export function createAppFeaturePorts(features: AppFeaturesForPorts): AppFeature
       },
       settings: {
         loadSpeedSourceFromServer: () => features.settings.loadSpeedSourceFromServer(),
-        loadAnalysisSettingsFromServer: () => features.settings.loadAnalysisSettingsFromServer(),
+        loadAnalysisSettingsFromServer: () =>
+          features.settings.loadAnalysisSettingsFromServer(),
         loadCarsFromServer: () => features.settings.loadCarsFromServer(),
         startGpsStatusPolling: () => features.settings.startGpsStatusPolling(),
       },

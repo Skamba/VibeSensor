@@ -1,6 +1,6 @@
-import type { FeatureDepsBase } from "../feature_deps_base";
+import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarSelectionDerivedState } from "../car_selection_state";
-import type { SettingsState } from "../ui_app_state";
+import type { SettingsState, ShellState } from "../ui_app_state";
 import type { CarsPayload } from "../../transport/http_models";
 import {
   createSettingsAnalysisModule,
@@ -23,18 +23,31 @@ import type { AnalysisPanelView } from "../views/analysis_panel";
 import type { SettingsShellView } from "../views/settings_shell";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 
-export interface SettingsFeatureDeps extends FeatureDepsBase {
+interface SettingsFeatureStateDeps {
   settings: SettingsState;
-  getSpeedUnit: () => string;
-  fmt: (n: number, digits?: number) => string;
-  openCarWizard: () => void;
-  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
+  shell: Pick<ShellState, "speedUnit">;
+}
+
+interface SettingsFeaturePanelDeps {
   settingsShell: SettingsShellView;
   carsPanel: CarsListPanelView;
   analysisPanel: AnalysisPanelView;
   speedSourcePanel: SpeedSourcePanelView;
+}
+
+interface SettingsFeaturePortDeps {
+  openCarWizard: () => void;
+  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
   view: SettingsFeatureViewPorts;
   realtime: SettingsFeatureRealtimePorts;
+}
+
+export interface SettingsFeatureDeps {
+  state: SettingsFeatureStateDeps;
+  panels: SettingsFeaturePanelDeps;
+  ports: SettingsFeaturePortDeps;
+  services: FeatureServices;
+  formatting: Pick<FeatureFormatting, "fmt">;
 }
 
 export interface SettingsFeatureViewPorts {
@@ -66,73 +79,78 @@ export interface SettingsFeature {
 export function createSettingsFeature(
   ctx: SettingsFeatureDeps,
 ): SettingsFeature {
-  const { settings, t, escapeHtml, fmt } = ctx;
+  const { services, formatting } = ctx;
+  const settings = ctx.state.settings;
   const carSelection = createCarSelectionDerivedState(settings);
   let handlersBound = false;
   let carsModule!: SettingsCarsModule;
 
   function showSettingsSaveError(error: unknown): void {
-    ctx.showError(
-      error instanceof Error ? error.message : t("settings.save_failed"),
+    services.showError(
+      error instanceof Error ? error.message : services.t("settings.save_failed"),
     );
   }
 
   function openSettingsTab(tabId: string): void {
-    ctx.settingsShell.activateTab(tabId);
+    ctx.panels.settingsShell.activateTab(tabId);
   }
 
   const analysisModule: SettingsAnalysisModule = createSettingsAnalysisModule({
-    panel: ctx.analysisPanel,
-    t,
-    escapeHtml,
-    showError: ctx.showError,
+    panel: ctx.panels.analysisPanel,
     settings,
-    renderSpectrum: ctx.view.renderSpectrum,
+    services,
+    renderSpectrum: ctx.ports.view.renderSpectrum,
     hasValidActiveCar: () => carSelection.hasResolvedActiveCar.value,
     onMissingActiveCar: () => carsModule.renderCarList(),
     onSaveError: showSettingsSaveError,
   });
   const speedSourceModule: SettingsSpeedSourceModule =
     createSettingsSpeedSourceModule({
-      panel: ctx.speedSourcePanel,
-      t,
-      escapeHtml,
-      showError: ctx.showError,
+      panel: ctx.panels.speedSourcePanel,
       settings,
-      getSpeedUnit: ctx.getSpeedUnit,
-      fmt,
-      renderSpeedReadout: ctx.view.renderSpeedReadout,
-      subscribePrimaryViewChanges: ctx.subscribePrimaryViewChanges,
-      subscribeSettingsTabChanges: ctx.settingsShell.subscribeActiveTabChanges,
+      services,
+      formatting,
+      getSpeedUnit: () => ctx.state.shell.speedUnit,
+      ports: {
+        renderSpeedReadout: ctx.ports.view.renderSpeedReadout,
+        subscribePrimaryViewChanges: ctx.ports.subscribePrimaryViewChanges,
+        subscribeSettingsTabChanges:
+          ctx.panels.settingsShell.subscribeActiveTabChanges,
+      },
     });
   const gpsStatusModule: SettingsGpsStatusModule =
     createSettingsGpsStatusModule({
-      panel: ctx.speedSourcePanel,
-      t,
-      escapeHtml,
-      showError: ctx.showError,
+      panel: ctx.panels.speedSourcePanel,
       settings,
-      getSpeedUnit: ctx.getSpeedUnit,
-      fmt,
-      syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
-      renderSpeedReadout: ctx.view.renderSpeedReadout,
-  });
+      services: {
+        t: services.t,
+      },
+      formatting,
+      getSpeedUnit: () => ctx.state.shell.speedUnit,
+      ports: {
+        syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
+        renderSpeedReadout: ctx.ports.view.renderSpeedReadout,
+      },
+    });
   carsModule = createSettingsCarsModule({
-    analysisPanel: ctx.analysisPanel,
-    escapeHtml,
-    fmt,
-    openAnalysisTab: () => openSettingsTab("analysisTab"),
-    openCarWizard: ctx.openCarWizard,
-    renderRealtimeLoggingStatus: ctx.realtime.renderRealtimeLoggingStatus,
-    renderRealtimeStatus: ctx.realtime.renderRealtimeStatus,
-    renderSpectrum: ctx.view.renderSpectrum,
     settings,
-    subscribePrimaryViewChanges: ctx.subscribePrimaryViewChanges,
-    subscribeSettingsTabChanges: ctx.settingsShell.subscribeActiveTabChanges,
-    showError: ctx.showError,
-    syncAnalysisInputs: analysisModule.syncSettingsInputs,
-    panel: ctx.carsPanel,
-    t,
+    panels: {
+      analysisPanel: ctx.panels.analysisPanel,
+      panel: ctx.panels.carsPanel,
+    },
+    ports: {
+      openAnalysisTab: () => openSettingsTab("analysisTab"),
+      openCarWizard: ctx.ports.openCarWizard,
+      renderRealtimeLoggingStatus: ctx.ports.realtime.renderRealtimeLoggingStatus,
+      renderRealtimeStatus: ctx.ports.realtime.renderRealtimeStatus,
+      renderSpectrum: ctx.ports.view.renderSpectrum,
+      subscribePrimaryViewChanges: ctx.ports.subscribePrimaryViewChanges,
+      subscribeSettingsTabChanges:
+        ctx.panels.settingsShell.subscribeActiveTabChanges,
+      syncAnalysisInputs: analysisModule.syncSettingsInputs,
+    },
+    services,
+    formatting,
   });
 
   function bindHandlers(): void {

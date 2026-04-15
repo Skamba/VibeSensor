@@ -1,6 +1,6 @@
 import { getSettingsObdStatus, getSpeedSourceStatus } from "../../api";
 import { GPS_POLL_FAST_MS, GPS_POLL_SLOW_MS } from "../../config";
-import type { FeatureDepsBase } from "../feature_deps_base";
+import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import type { SettingsState } from "../ui_app_state";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 import {
@@ -9,13 +9,18 @@ import {
 } from "../views/settings_speed_source_presenter";
 import { createPollingController } from "./polling_controller";
 
-export interface SettingsGpsStatusModuleDeps extends FeatureDepsBase {
-  panel: SpeedSourcePanelView;
-  settings: SettingsState;
-  getSpeedUnit: () => string;
-  fmt: (n: number, digits?: number) => string;
+interface SettingsGpsStatusModulePorts {
   syncSpeedSourceSelectionUi: () => void;
   renderSpeedReadout: () => void;
+}
+
+export interface SettingsGpsStatusModuleDeps {
+  panel: SpeedSourcePanelView;
+  settings: SettingsState;
+  services: Pick<FeatureServices, "t">;
+  formatting: Pick<FeatureFormatting, "fmt">;
+  getSpeedUnit: () => string;
+  ports: SettingsGpsStatusModulePorts;
 }
 
 export interface SettingsGpsStatusModule {
@@ -28,9 +33,9 @@ export function createSettingsGpsStatusModule(
 ): SettingsGpsStatusModule {
   const { panel, settings } = ctx;
   const presenterDeps: SettingsSpeedSourcePresenterDeps = {
-    fmt: ctx.fmt,
+    fmt: ctx.formatting.fmt,
     getSpeedUnit: ctx.getSpeedUnit,
-    t: ctx.t,
+    t: ctx.services.t,
   };
 
   const polling = createPollingController({
@@ -47,8 +52,8 @@ export function createSettingsGpsStatusModule(
       panel.setDiagnostics(
         buildSpeedSourceDiagnosticsRenderModel(status, obdStatus, presenterDeps),
       );
-      ctx.syncSpeedSourceSelectionUi();
-      ctx.renderSpeedReadout();
+      ctx.ports.syncSpeedSourceSelectionUi();
+      ctx.ports.renderSpeedReadout();
       return status.connection_state === "connected"
         ? GPS_POLL_FAST_MS
         : GPS_POLL_SLOW_MS;

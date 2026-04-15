@@ -65,14 +65,15 @@ test("settings analysis module renders guidance and surfaces invalid input throu
 
   const module = createSettingsAnalysisModule({
     panel,
-    escapeHtml: (value) => String(value ?? ""),
     hasValidActiveCar: () => true,
     onMissingActiveCar: () => undefined,
     onSaveError: () => undefined,
     renderSpectrum: () => undefined,
     settings: state,
-    showError: () => undefined,
-    t: translate,
+    services: {
+      t: translate,
+      showError: () => undefined,
+    },
   });
 
   module.bindHandlers();

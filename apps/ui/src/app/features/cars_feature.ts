@@ -1,4 +1,4 @@
-import type { FeatureDepsBase } from "../feature_deps_base";
+import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarsFeaturePresenter } from "../views/cars_feature_presenter";
 import type {
   CarsFeatureInteraction,
@@ -6,7 +6,7 @@ import type {
 } from "../views/cars_panel";
 import { createCarsFeatureWorkflow } from "./cars_feature_workflow";
 
-export interface CarsFeatureDeps extends FeatureDepsBase {
+export interface CarsFeatureDeps {
   addCarFromWizard: (
     name: string,
     carType: string,
@@ -14,7 +14,8 @@ export interface CarsFeatureDeps extends FeatureDepsBase {
     variant?: string,
   ) => Promise<void>;
   panel: CarsWizardPanelBridge;
-  fmt: (n: number, digits?: number) => string;
+  services: Pick<FeatureServices, "t">;
+  formatting: Pick<FeatureFormatting, "fmt">;
 }
 
 export interface CarsFeature {
@@ -24,14 +25,14 @@ export interface CarsFeature {
 
 export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
   const presenter = createCarsFeaturePresenter({
-    fmt: ctx.fmt,
+    fmt: ctx.formatting.fmt,
     panel: ctx.panel,
-    t: ctx.t,
+    t: ctx.services.t,
   });
   const workflow = createCarsFeatureWorkflow({
     addCarFromWizard: ctx.addCarFromWizard,
-    fmt: ctx.fmt,
-    t: ctx.t,
+    fmt: ctx.formatting.fmt,
+    t: ctx.services.t,
     view: presenter,
   });
   let handlersBound = false;

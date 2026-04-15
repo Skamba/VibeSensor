@@ -1,4 +1,4 @@
-import type { FeatureDepsBase } from "../feature_deps_base";
+import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import {
   createCarSelectionDerivedState,
   type CarSelectionState,
@@ -6,9 +6,7 @@ import {
 } from "../car_selection_state";
 import type { SettingsState } from "../ui_app_state";
 import type { CarRecord, CarsPayload } from "../../transport/http_models";
-import type {
-  CarsListPanelView,
-} from "../views/cars_panel";
+import type { CarsListPanelView } from "../views/cars_panel";
 import type { AnalysisPanelView } from "../views/analysis_panel";
 import {
   buildCarsGuidanceRenderModel,
@@ -20,20 +18,29 @@ import {
   type SettingsCarsTransport,
 } from "./settings_cars_transport";
 
-export interface SettingsCarsModuleDeps extends FeatureDepsBase {
-  confirmDelete?: (message: string) => boolean;
+interface SettingsCarsModulePanels {
   analysisPanel: Pick<AnalysisPanelView, "setCarAvailability">;
-  fmt: (value: number, digits?: number) => string;
+  panel: CarsListPanelView;
+}
+
+interface SettingsCarsModulePorts {
   openAnalysisTab: () => void;
   openCarWizard: () => void;
   renderRealtimeLoggingStatus: () => void;
   renderRealtimeStatus: () => void;
   renderSpectrum: () => void;
-  settings: SettingsState;
   subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
   subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
   syncAnalysisInputs: () => void;
-  panel: CarsListPanelView;
+}
+
+export interface SettingsCarsModuleDeps {
+  confirmDelete?: (message: string) => boolean;
+  settings: SettingsState;
+  panels: SettingsCarsModulePanels;
+  ports: SettingsCarsModulePorts;
+  services: FeatureServices;
+  formatting: Pick<FeatureFormatting, "fmt">;
   transport?: Partial<SettingsCarsTransport>;
 }
 
@@ -65,7 +72,8 @@ function copyActiveCarAspects(
 export function createSettingsCarsModule(
   ctx: SettingsCarsModuleDeps,
 ): SettingsCarsModule {
-  const { settings, t } = ctx;
+  const { settings, services, formatting } = ctx;
+  const { t } = services;
   const confirmDelete =
     ctx.confirmDelete ?? ((message: string) => window.confirm(message));
   const transport = createSettingsCarsTransport(ctx.transport);
@@ -96,14 +104,14 @@ export function createSettingsCarsModule(
           activeCarId: settings.activeCarId,
           cars: settings.cars,
           highlightedCarId: highlightedCarFeedback?.carId ?? null,
-          fmt: ctx.fmt,
+          fmt: formatting.fmt,
           t,
         }),
     };
   }
 
   function syncAnalysisControls(carSelectionState: CarSelectionState): void {
-    ctx.analysisPanel.setCarAvailability({
+    ctx.panels.analysisPanel.setCarAvailability({
       hasActiveCar: carSelectionState.kind === "active",
       isLoading: carSelectionState.kind === "loading",
     });
@@ -112,7 +120,7 @@ export function createSettingsCarsModule(
   function renderCarList(): void {
     const carSelectionState = getCarSelectionState();
     syncAnalysisControls(carSelectionState);
-    ctx.panel.setModel(createPanelModel(carSelectionState));
+    ctx.panels.panel.setModel(createPanelModel(carSelectionState));
   }
 
   function clearHighlightedCarFeedback(): void {
@@ -142,8 +150,8 @@ export function createSettingsCarsModule(
       highlightedCarFeedback = null;
     }
     renderCarList();
-    ctx.renderRealtimeStatus();
-    ctx.renderRealtimeLoggingStatus();
+    ctx.ports.renderRealtimeStatus();
+    ctx.ports.renderRealtimeLoggingStatus();
   }
 
   function findCar(carId: string): CarRecord | null {
@@ -153,7 +161,7 @@ export function createSettingsCarsModule(
   function syncActiveCarToInputs(): void {
     copyActiveCarAspects(carSelection.activeCar.value, settings);
     if (hasValidActiveCar()) {
-      ctx.syncAnalysisInputs();
+      ctx.ports.syncAnalysisInputs();
     }
     renderCarList();
   }
@@ -176,7 +184,7 @@ export function createSettingsCarsModule(
       return;
     }
     if (!getCarCompleteness(car).isComplete) {
-      ctx.showError(t("settings.car.activate_incomplete"));
+      services.showError(t("settings.car.activate_incomplete"));
       return;
     }
     try {
@@ -184,9 +192,9 @@ export function createSettingsCarsModule(
       syncActiveCarToInputs();
       clearHighlightedCarFeedback();
       renderCarList();
-      ctx.renderSpectrum();
+      ctx.ports.renderSpectrum();
     } catch (_err) {
-      ctx.showError(t("settings.car.activate_failed"));
+      services.showError(t("settings.car.activate_failed"));
     }
   }
 
@@ -203,16 +211,16 @@ export function createSettingsCarsModule(
       if (car.id !== settings.activeCarId) {
         syncCarsPayload(await transport.activateCar(carId));
         syncActiveCarToInputs();
-        ctx.renderSpectrum();
+        ctx.ports.renderSpectrum();
         shouldRefreshAfterSelection = true;
       }
       clearHighlightedCarFeedback();
       if (shouldRefreshAfterSelection) {
         renderCarList();
       }
-      ctx.openAnalysisTab();
+      ctx.ports.openAnalysisTab();
     } catch (_err) {
-      ctx.showError(t("settings.car.activate_failed"));
+      services.showError(t("settings.car.activate_failed"));
     }
   }
 
@@ -232,9 +240,9 @@ export function createSettingsCarsModule(
       syncActiveCarToInputs();
       clearHighlightedCarFeedback();
       renderCarList();
-      ctx.renderSpectrum();
+      ctx.ports.renderSpectrum();
     } catch (_err) {
-      ctx.showError(t("settings.car.delete_failed"));
+      services.showError(t("settings.car.delete_failed"));
     }
   }
 
@@ -243,20 +251,20 @@ export function createSettingsCarsModule(
       return;
     }
     handlersBound = true;
-    ctx.subscribeSettingsTabChanges((tabId) => {
+    ctx.ports.subscribeSettingsTabChanges((tabId) => {
       if (tabId !== "carTab") {
         dismissHighlightedCarFeedback();
       }
     });
-    ctx.subscribePrimaryViewChanges((viewId) => {
+    ctx.ports.subscribePrimaryViewChanges((viewId) => {
       if (viewId !== "settingsView") {
         dismissHighlightedCarFeedback();
       }
     });
-    ctx.panel.bindActions({
+    ctx.panels.panel.bindActions({
       onAction: (action) => {
         if (action.type === "add") {
-          ctx.openCarWizard();
+          ctx.ports.openCarWizard();
           return;
         }
         if (action.type === "activate") {

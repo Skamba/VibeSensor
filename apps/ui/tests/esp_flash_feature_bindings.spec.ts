@@ -12,9 +12,10 @@ test("bindHandlers uses panel action surfaces instead of raw DOM bindings", () =
       },
       setModel() {},
     },
-    t: (key) => key,
-    escapeHtml: (value) => String(value ?? ""),
-    showError() {},
+    services: {
+      t: (key) => key,
+      showError() {},
+    },
   });
 
   expect(() => feature.bindHandlers()).not.toThrow();

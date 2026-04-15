@@ -24,19 +24,24 @@ test("bindHandlers uses typed panel actions and navigation subscriptions", () =>
       setModel() {},
       setDiagnostics() {},
     },
-    t: (key) => key,
-    escapeHtml: (value) => String(value ?? ""),
-    showError() {},
-    getSpeedUnit: () => "kmh",
-    fmt: (value) => String(value),
-    renderSpeedReadout() {},
-    subscribePrimaryViewChanges(listener) {
-      primaryViewListener = listener;
-      return () => undefined;
+    services: {
+      t: (key) => key,
+      showError() {},
     },
-    subscribeSettingsTabChanges(listener) {
-      settingsTabListener = listener;
-      return () => undefined;
+    formatting: {
+      fmt: (value) => String(value),
+    },
+    getSpeedUnit: () => "kmh",
+    ports: {
+      renderSpeedReadout() {},
+      subscribePrimaryViewChanges(listener) {
+        primaryViewListener = listener;
+        return () => undefined;
+      },
+      subscribeSettingsTabChanges(listener) {
+        settingsTabListener = listener;
+        return () => undefined;
+      },
     },
   });
 

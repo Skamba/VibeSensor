@@ -215,15 +215,18 @@ function createFeatureHarness(
       },
     },
     history: state.history,
-    getLanguage: () => state.shell.lang,
-    t: testTranslation,
-    escapeHtml: (value) => String(value ?? ""),
-    showError: overrides.showError ?? ((message) => {
-      errors.push(message);
-    }),
-    fmt: (value, digits = 0) => Number(value).toFixed(digits),
-    fmtTs: (iso) => iso,
-    formatInt: (value) => String(value),
+    shell: state.shell,
+    services: {
+      t: testTranslation,
+      showError: overrides.showError ?? ((message) => {
+        errors.push(message);
+      }),
+    },
+    formatting: {
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      fmtTs: (iso) => iso,
+      formatInt: (value) => String(value),
+    },
   });
   return {
     feature,
