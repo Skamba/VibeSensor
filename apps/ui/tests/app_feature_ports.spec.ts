@@ -130,7 +130,6 @@ test("feature port helpers expose explicit shell and startup contracts without a
   await bundle.startup.history.refreshHistory();
   await bundle.startup.realtime.refreshLocationOptions();
   await bundle.startup.realtime.refreshLoggingStatus();
-  bundle.startup.settings.syncSettingsInputs();
   await bundle.startup.settings.loadSpeedSourceFromServer();
   await bundle.startup.settings.loadAnalysisSettingsFromServer();
   await bundle.startup.settings.loadCarsFromServer();
@@ -157,7 +156,6 @@ test("feature port helpers expose explicit shell and startup contracts without a
     "history.refreshHistory",
     "realtime.refreshLocationOptions",
     "realtime.refreshLoggingStatus",
-    "settings.syncSettingsInputs",
     "settings.loadSpeedSourceFromServer",
     "settings.loadAnalysisSettingsFromServer",
     "settings.loadCarsFromServer",
