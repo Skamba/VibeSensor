@@ -250,41 +250,15 @@ test.describe("createUpdateFeaturePresenter", () => {
     let focusCalls = 0;
     const presenter = createUpdateFeaturePresenter({
       internetPanel: {
-        dom: {
-          internetStatusPanel: null,
-          updateTransportOptions: null,
-          updateTransportChoiceWifi: null,
-          updateTransportChoiceUsb: null,
-          updateWifiFields: null,
-          updateReadinessSummary: null,
-          updateDetailsCaption: null,
-          updateTransportNote: null,
-          updateTransportWifiRadio: { checked: false } as HTMLInputElement,
-          updateTransportUsbRadio: { checked: true } as HTMLInputElement,
-          updateUsbTransportSummary: null,
-          updateSsidInput: {
-            focus() {
-              focusCalls += 1;
-            },
-            value: "dom-ssid",
-          } as HTMLInputElement,
-          updatePasswordInput: {
-            value: "dom-password",
-          } as HTMLInputElement,
-          updateTogglePasswordBtn: null,
-        },
         bindActions() {},
+        focusSsidInput() {
+          focusCalls += 1;
+        },
         setModel(model) {
           latestInternetPanel = model;
         },
       },
       panel: {
-        dom: {
-          updateOverviewPanel: null,
-          updateStartBtn: {} as HTMLButtonElement,
-          updateCancelBtn: {} as HTMLButtonElement,
-          updateStatusPanel: {} as HTMLElement,
-        },
         bindActions() {},
         setModel(model) {
           latestUpdatePanel = model;
