@@ -82,8 +82,6 @@ export class UiShellController {
 
   private readonly chromeRenderModel: ReadonlySignal<UiShellChromeRenderModel>;
 
-  private readonly activeViewListeners = new Set<(viewId: string) => void>();
-
   private readonly bindFeatureHandlers: () => void;
 
   private readonly getLanguageRefreshPorts: () => UiShellLanguageRefreshFeaturePorts;
@@ -174,25 +172,12 @@ export class UiShellController {
     };
   }
 
-  subscribeActiveViewChanges(listener: (viewId: string) => void): () => void {
-    this.activeViewListeners.add(listener);
-    return () => {
-      this.activeViewListeners.delete(listener);
-    };
-  }
-
-  getActiveViewId(): string {
-    return this.state.shell.activeViewId;
+  get activeViewId(): ReadonlySignal<string> {
+    return this.navigation.activeViewId;
   }
 
   setActiveView(viewId: string): void {
-    const previousViewId = this.state.shell.activeViewId;
     this.navigation.setActiveView(viewId);
-    if (this.state.shell.activeViewId !== previousViewId) {
-      for (const listener of this.activeViewListeners) {
-        listener(this.state.shell.activeViewId);
-      }
-    }
   }
 
   applyLanguage(forceReloadInsights = false): void {

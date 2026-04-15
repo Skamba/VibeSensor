@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { createUpdateFeature } from "../src/app/features/update_feature";
+import { signal } from "../src/app/ui_signals";
 import type {
   InternetPanelActionHandlers,
   InternetPanelDom,
@@ -32,8 +33,7 @@ test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners
     },
     ports: {
       getActiveSettingsTabId: () => "updateTab",
-      getActiveViewId: () => "settingsView",
-      subscribePrimaryViewChanges: () => () => undefined,
+      activeViewId: signal("settingsView"),
       subscribeSettingsTabChanges: () => () => undefined,
     },
     panels: {
