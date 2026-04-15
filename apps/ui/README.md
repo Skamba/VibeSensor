@@ -88,7 +88,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/ui_panel_host_registry.ts` | Centralized host registry for dashboard, history, and settings panel mount points so startup and tests stop depending on one host getter module per panel |
 | `app/ui_panel_bootstrap.ts` | Centralized host registry and panel-mount bootstrap for dashboard, history, and settings islands so startup/runtime stop wiring one host getter per panel |
 | `app/dom/` | Focused DOM lookup helpers that remain after the panel bootstrap cleanup, including `requiredById` and other non-panel runtime locators |
-| `app/ui_app_runtime.ts` | UI composition root that wires state, focused runtime controllers, explicit feature port bundles, and the startup coordinator |
+| `app/ui_app_runtime.ts` | Thin UI composition root that creates the shell, spectrum, transport, feature bundle, and startup coordinator from local helper wiring instead of deferred attachment seams |
 | `app/ui_app_state.ts` | Canonical AppState shape plus reactive slice helpers that keep object-style reads/writes working while shared shell/transport/realtime/history/settings/spectrum state becomes signal-observable |
 | `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
 | `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, app-level error banner, and the top-level dashboard/history/settings view containers plus the typed shell bridge |
@@ -182,7 +182,9 @@ shell, and the per-settings-tab panel hosts. The spectrum island now owns the
 chart host refs internally and passes that typed bridge to the runtime.
 `app_feature_bundle.ts` creates the concrete features, wires explicit
 cross-feature ports, and returns only the shell, transport, and startup
-contracts the runtime needs. `ui_startup_coordinator.ts` then runs those
+contracts the runtime needs, while `ui_app_runtime.ts` uses local helper
+factories and constructor-time callbacks instead of late `attach*` calls.
+`ui_startup_coordinator.ts` then runs those
 startup-only ports from a small declarative sync/async plan instead of a
 handwritten boot call chain.
 

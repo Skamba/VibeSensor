@@ -50,8 +50,11 @@ import type { VisualVariant } from "../view_style_types";
 type UiShellControllerDeps = {
   chrome: UiShellChromeView;
   chromeActions: UiShellChromeActionBridge;
+  featurePorts: () => UiShellFeaturePorts;
   liveOverview: RealtimeLiveOverviewBridge;
+  renderSpectrum: () => void;
   state: AppState;
+  updateSpectrumOverlay: () => void;
 };
 
 function normalizeBadgeVariant(variant: string): VisualVariant {
@@ -83,11 +86,7 @@ export class UiShellController {
 
   private readonly activeViewListeners = new Set<(viewId: string) => void>();
 
-  private ports: UiShellFeaturePorts | null = null;
-
-  private renderSpectrumChart: (() => void) | null = null;
-
-  private updateSpectrumOverlayState: (() => void) | null = null;
+  private readonly getFeaturePorts: () => UiShellFeaturePorts;
 
   private readonly liveStatusBadge = signal<UiShellBadgeModel>({
     text: "No live signal",
@@ -100,6 +99,7 @@ export class UiShellController {
     this.chrome = deps.chrome;
     this.appShellWrap = queryOne<HTMLElement>(".wrap");
     this.liveOverview = deps.liveOverview;
+    this.getFeaturePorts = deps.featurePorts;
     this.navigation = createUiShellNavigationModule({
       shell: this.state.shell,
       viewIds: SHELL_NAV_ITEMS.map((item) => item.viewId),
@@ -133,23 +133,11 @@ export class UiShellController {
       state: this.state,
       renderSpeedReadout: () => this.renderSpeedReadout(),
       renderWsState: () => this.renderWsState(),
-      renderSpectrum: () => this.renderSpectrumChart?.(),
-      updateSpectrumOverlay: () => this.updateSpectrumOverlayState?.(),
+      renderSpectrum: () => deps.renderSpectrum(),
+      updateSpectrumOverlay: () => deps.updateSpectrumOverlay(),
     });
     this.chromeRenderModel = this.createChromeRenderModel();
     this.bindReactiveStatusSync();
-  }
-
-  attachPorts(ports: UiShellFeaturePorts): void {
-    this.ports = ports;
-  }
-
-  attachSpectrumHooks(deps: {
-    renderSpectrum: () => void;
-    updateSpectrumOverlay: () => void;
-  }): void {
-    this.renderSpectrumChart = deps.renderSpectrum;
-    this.updateSpectrumOverlayState = deps.updateSpectrumOverlay;
   }
 
   t(key: string, vars?: Record<string, unknown>): string {
@@ -205,7 +193,7 @@ export class UiShellController {
   applyLanguage(forceReloadInsights = false): void {
     setUiLanguage(this.state.shell.lang);
     this.languageRefresh.applyLanguage(
-      this.requirePorts().languageRefresh,
+      this.getFeaturePorts().languageRefresh,
       forceReloadInsights,
     );
   }
@@ -221,7 +209,7 @@ export class UiShellController {
   }
 
   private bindFeatureEvents(): void {
-    bindUiShellFeatureEvents(this.requirePorts());
+    bindUiShellFeatureEvents(this.getFeaturePorts());
   }
 
   private bindReactiveStatusSync(): void {
@@ -271,12 +259,5 @@ export class UiShellController {
         wsLinkState: this.status.wsLinkState.value,
       };
     });
-  }
-
-  private requirePorts(): UiShellFeaturePorts {
-    if (this.ports === null) {
-      throw new Error("UiShellController ports used before initialization");
-    }
-    return this.ports;
   }
 }
