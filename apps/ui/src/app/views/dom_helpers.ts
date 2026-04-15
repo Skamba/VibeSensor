@@ -22,16 +22,6 @@ export function inlineStateActionClass(variant: InlineStateActionVariant | undef
   }
 }
 
-export function closestFromTarget<T extends Element>(
-  target: EventTarget | null,
-  selector: string,
-): T | null {
-  if (!(target instanceof Element)) {
-    return null;
-  }
-  return target.closest<T>(selector);
-}
-
 export function formatEpochTimestamp(epoch: number | null | undefined): string {
   if (epoch === null || epoch === undefined || !Number.isFinite(epoch)) {
     return "—";
