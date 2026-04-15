@@ -1,196 +1,221 @@
 import { expect, test } from "@playwright/test";
 
+import type {
+  CarLibraryGearbox,
+  CarLibraryModel,
+  CarLibraryTireOption,
+} from "../src/transport/http_models";
+import type {
+  CarsFeatureOptionsState,
+  CarsFeatureRenderState,
+} from "../src/app/features/cars_feature_workflow";
 import {
-  renderWizardGearboxOptions,
-  renderWizardModelOptions,
-  renderWizardSummary,
-  renderWizardTireOptions,
-  syncCarWizardStepState,
-  writeCarWizardTireInputs,
+  buildCarsWizardRenderModel,
+  createClosedCarsWizardRenderModel,
 } from "../src/app/views/car_wizard_view";
 
-type ClassListStub = {
-  add(name: string): void;
-  remove(name: string): void;
-  toggle(name: string, force?: boolean): void;
-  contains(name: string): boolean;
-};
-
-type ElementStub = HTMLElement & {
-  classList: ClassListStub;
-  getAttribute(name: string): string | null;
-  setAttribute(name: string, value: string): void;
-  removeAttribute(name: string): void;
-};
-
-function createClassList(initial: string[] = []): ClassListStub {
-  const active = new Set(initial);
-  return {
-    add(name: string): void {
-      active.add(name);
-    },
-    remove(name: string): void {
-      active.delete(name);
-    },
-    toggle(name: string, force?: boolean): void {
-      if (typeof force === "boolean") {
-        if (force) active.add(name);
-        else active.delete(name);
-        return;
-      }
-      if (active.has(name)) active.delete(name);
-      else active.add(name);
-    },
-    contains(name: string): boolean {
-      return active.has(name);
-    },
+function createTranslator(): (key: string, vars?: Record<string, unknown>) => string {
+  return (key, vars) => {
+    if (vars?.current && vars?.total && vars?.step) {
+      return `${key}:${vars.current}/${vars.total}:${String(vars.step)}`;
+    }
+    return key;
   };
 }
 
-function createElement(attributes: Record<string, string> = {}): ElementStub {
-  const activeAttributes = { ...attributes };
+function createOptionsState<TOption>(
+  options: readonly TOption[],
+  status: CarsFeatureOptionsState<TOption>["status"] = "ready",
+  message: string | null = null,
+): CarsFeatureOptionsState<TOption> {
   return {
-    classList: createClassList(),
-    getAttribute(name: string): string | null {
-      return activeAttributes[name] ?? null;
-    },
-    setAttribute(name: string, value: string): void {
-      activeAttributes[name] = value;
-    },
-    removeAttribute(name: string): void {
-      delete activeAttributes[name];
-    },
-  } as unknown as ElementStub;
+    message,
+    options,
+    status,
+  };
 }
 
-function createInput(): HTMLInputElement {
+function makeGearbox(overrides: Partial<CarLibraryGearbox> = {}): CarLibraryGearbox {
   return {
-    value: "",
-  } as unknown as HTMLInputElement;
+    final_drive_ratio: 3.91,
+    name: "6-speed",
+    top_gear_ratio: 0.82,
+    ...overrides,
+  };
 }
 
-test.describe("car wizard view helpers", () => {
-  test("syncCarWizardStepState updates step, dot, and back-button state", () => {
-    const wizardSteps = Array.from({ length: 5 }, () => createElement());
-    const wizardStepDots = Array.from({ length: 5 }, (_, index) =>
-      createElement({ "data-step": String(index) }));
-    const wizardBackBtn = {
-      style: { display: "" },
-    } as unknown as HTMLButtonElement;
+function makeTireOption(overrides: Partial<CarLibraryTireOption> = {}): CarLibraryTireOption {
+  return {
+    name: "Sport",
+    rim_in: 18,
+    tire_aspect_pct: 40,
+    tire_width_mm: 245,
+    ...overrides,
+  };
+}
 
-    syncCarWizardStepState({ wizardSteps, wizardStepDots, wizardBackBtn }, 3);
+function makeModel(overrides: Partial<CarLibraryModel> = {}): CarLibraryModel {
+  return {
+    gearboxes: [],
+    model: "Roadster",
+    rim_in: 18,
+    tire_aspect_pct: 40,
+    tire_options: [],
+    tire_width_mm: 245,
+    variants: [],
+    ...overrides,
+  };
+}
 
-    expect(wizardSteps[3].classList.contains("active")).toBe(true);
-    expect(wizardSteps[2].classList.contains("active")).toBe(false);
-    expect(wizardStepDots[3].classList.contains("active")).toBe(true);
-    expect(wizardStepDots[2].classList.contains("done")).toBe(true);
-    expect(wizardStepDots[3].getAttribute("aria-current")).toBe("step");
-    expect(wizardBackBtn.style.display).toBe("");
-
-    syncCarWizardStepState({ wizardSteps, wizardStepDots, wizardBackBtn }, 0);
-    expect(wizardSteps[0].classList.contains("active")).toBe(true);
-    expect(wizardStepDots[0].classList.contains("active")).toBe(true);
-    expect(wizardStepDots[1].classList.contains("done")).toBe(false);
-    expect(wizardStepDots[0].getAttribute("aria-current")).toBe("step");
-    expect(wizardStepDots[3].getAttribute("aria-current")).toBeNull();
-    expect(wizardBackBtn.style.display).toBe("none");
-  });
-
-  test("renderWizardSummary stages summary rows until they become relevant", () => {
-    const escapeHtml = (value: unknown) => String(value ?? "");
-    const labels: Record<string, string> = {
-      "settings.car.wizard_summary_pending": "Not selected yet",
-      "settings.car.wizard_summary_name": "Profile preview",
-      "settings.car.wizard_summary_brand": "Brand",
-      "settings.car.wizard_summary_type": "Type",
-      "settings.car.wizard_summary_model": "Model",
-      "settings.car.wizard_summary_variant": "Variant",
-      "settings.car.wizard_summary_tire": "Tires",
-      "settings.car.wizard_summary_gearbox": "Gearbox",
-    };
-    const t = (key: string) => labels[key] ?? key;
-
-    const earlyHtml = renderWizardSummary({
-      currentStep: 1,
+function createRenderState(overrides: Partial<CarsFeatureRenderState> = {}): CarsFeatureRenderState {
+  return {
+    actionHint: "",
+    brandOptions: createOptionsState(["BMW"]),
+    canFinish: false,
+    gearboxOptions: [],
+    isOpen: true,
+    manualInputs: {
+      finalDrive: "3.08",
+      rim: "18",
+      tireAspect: "45",
+      tireWidth: "225",
+      topGear: "0.64",
+    },
+    modelOptions: createOptionsState([makeModel()]),
+    noGearboxesMessage: null,
+    resolvedSpecBranch: null,
+    selectedGearbox: null,
+    selectedTire: null,
+    step: 0,
+    summaryData: {
+      currentStep: 0,
       profileName: null,
-      brand: "BMW",
+      brand: null,
       carType: null,
       model: null,
       variant: null,
       tire: null,
       gearbox: null,
-    }, { t, escapeHtml });
-    expect(earlyHtml).toContain("BMW");
-    expect(earlyHtml).not.toContain("Gearbox");
-    expect(earlyHtml).not.toContain("Tires");
+    },
+    tireOptions: [],
+    typeOptions: createOptionsState(["SUV"]),
+    variantOptions: [],
+    ...overrides,
+  };
+}
 
-    const html = renderWizardSummary({
-      currentStep: 4,
-      profileName: "BMW X5 M60i",
-      brand: "BMW",
-      carType: "SUV",
-      model: "X5 M60i",
-      variant: null,
-      tire: null,
-      gearbox: "8-speed",
-    }, { t, escapeHtml });
+test.describe("car wizard view helpers", () => {
+  test("createClosedCarsWizardRenderModel preserves the manual-spec defaults before the first open", () => {
+    const model = createClosedCarsWizardRenderModel();
 
-    expect(html).toContain("Profile preview");
-    expect(html).toContain("BMW X5 M60i");
-    expect(html).toContain("SUV");
-    expect(html).toContain("8-speed");
-    expect(html).toContain("Not selected yet");
+    expect(model.isOpen).toBe(false);
+    expect(model.manualInputs).toEqual({
+      finalDrive: "3.08",
+      rim: "18",
+      tireAspect: "45",
+      tireWidth: "225",
+      topGear: "0.64",
+    });
+    expect(model.finishVisible).toBe(false);
   });
 
-  test("render helpers produce the expected wizard option markup", () => {
-    const escapeHtml = (value: unknown) => String(value ?? "");
-    const fmt = (value: number, digits = 0) => Number(value).toFixed(digits);
-    const models: Parameters<typeof renderWizardModelOptions>[0] = [{
-      model: "Roadster",
-      tire_width_mm: 245,
-      tire_aspect_pct: 40,
-      rim_in: 18,
-      variants: [],
-      gearboxes: [],
-      tire_options: [],
-    }];
-    const tireOptions: Parameters<typeof renderWizardTireOptions>[0] = [{
-      name: "Sport",
-      tire_width_mm: 245,
-      tire_aspect_pct: 40,
-      rim_in: 18,
-    }];
-    const gearboxes: Parameters<typeof renderWizardGearboxOptions>[0] = [{
-      name: "6-speed",
-      final_drive_ratio: 3.91,
-      top_gear_ratio: 0.82,
-    }];
+  test("buildCarsWizardRenderModel converts option state and progress metadata into typed sections", () => {
+    const model = buildCarsWizardRenderModel(createRenderState({
+      brandOptions: createOptionsState(["BMW", "Volvo"]),
+      modelOptions: createOptionsState([], "loading", "Loading models"),
+      step: 2,
+      summaryData: {
+        currentStep: 2,
+        profileName: null,
+        brand: "BMW",
+        carType: "SUV",
+        model: null,
+        variant: null,
+        tire: null,
+        gearbox: null,
+      },
+      typeOptions: createOptionsState([], "error", "Types offline"),
+    }), {
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      t: createTranslator(),
+    });
 
-    expect(renderWizardModelOptions(models, escapeHtml)).toContain('data-idx="0"');
-    expect(renderWizardModelOptions(models, escapeHtml)).toContain("245/40R18");
-    expect(renderWizardTireOptions(tireOptions, escapeHtml)).toContain("selected");
-    expect(renderWizardGearboxOptions(gearboxes, { escapeHtml, fmt }, 0)).toContain("selected");
-    expect(renderWizardGearboxOptions(gearboxes, { escapeHtml, fmt }, 0)).toContain("FD: 3.91");
-    expect(renderWizardGearboxOptions(gearboxes, { escapeHtml, fmt }, 0)).toContain("Top Gear: 0.82");
+    expect(model.backVisible).toBe(true);
+    expect(model.progressText).toBe("settings.car.wizard_progress:3/5:settings.car.step_model_short");
+    expect(model.brandOptions.options.map((option) => option.value)).toEqual(["BMW", "Volvo"]);
+    expect(model.typeOptions.messageText).toBe("Types offline");
+    expect(model.modelOptions.messageText).toBe("Loading models");
+    expect(model.summary.rows).toEqual([
+      {
+        labelText: "settings.car.wizard_summary_brand",
+        valueText: "BMW",
+      },
+      {
+        labelText: "settings.car.wizard_summary_type",
+        valueText: "SUV",
+      },
+    ]);
   });
 
-  test("writeCarWizardTireInputs syncs the selected tire dimensions into manual inputs", () => {
-    const els: Parameters<typeof writeCarWizardTireInputs>[0] = {
-      wizTireWidthInput: createInput(),
-      wizTireAspectInput: createInput(),
-      wizRimInput: createInput(),
-    };
-    const tire: Parameters<typeof writeCarWizardTireInputs>[1] = {
-      name: "Touring",
-      tire_width_mm: 225,
-      tire_aspect_pct: 50,
-      rim_in: 17,
-    };
+  test("buildCarsWizardRenderModel formats selected library specs and pending summary rows", () => {
+    const tire = makeTireOption();
+    const gearbox = makeGearbox();
 
-    writeCarWizardTireInputs(els, tire);
+    const model = buildCarsWizardRenderModel(createRenderState({
+      actionHint: "Library path selected",
+      canFinish: true,
+      gearboxOptions: [gearbox],
+      resolvedSpecBranch: "library",
+      selectedGearbox: gearbox,
+      selectedTire: tire,
+      step: 4,
+      summaryData: {
+        currentStep: 4,
+        profileName: "BMW Roadster",
+        brand: "BMW",
+        carType: "Coupe",
+        model: "Roadster",
+        variant: null,
+        tire: "245/40R18",
+        gearbox: "6-speed",
+      },
+      tireOptions: [tire],
+      variantOptions: [{
+        drivetrain: "AWD",
+        engine: "V8",
+        name: "Competition",
+      }],
+    }), {
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      t: createTranslator(),
+    });
 
-    expect(els.wizTireWidthInput?.value).toBe("225");
-    expect(els.wizTireAspectInput?.value).toBe("50");
-    expect(els.wizRimInput?.value).toBe("17");
+    expect(model.finishVisible).toBe(true);
+    expect(model.finishEnabled).toBe(true);
+    expect(model.specBranch).toBe("library");
+    expect(model.actionHintText).toBe("Library path selected");
+    expect(model.tireOptions.options).toEqual([{
+      detailText: "245/40R18",
+      labelText: "Sport",
+      selected: true,
+      value: "0",
+    }]);
+    expect(model.gearboxOptions.options).toEqual([{
+      detailText: "FD: 3.91 · Top Gear: 0.82",
+      labelText: "6-speed",
+      selected: true,
+      value: "0",
+    }]);
+    expect(model.variantOptions.options).toEqual([{
+      detailText: "AWD · V8",
+      labelText: "Competition",
+      selected: false,
+      value: "0",
+    }]);
+    expect(model.summary.profileNameValueText).toBe("BMW Roadster");
+    expect(model.summary.rows.at(-1)).toEqual({
+      labelText: "settings.car.wizard_summary_gearbox",
+      valueText: "6-speed",
+    });
   });
 });

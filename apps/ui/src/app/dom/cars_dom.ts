@@ -10,13 +10,8 @@ export interface UiCarsDom {
   addCarBtn: HTMLButtonElement;
   wizardBackdrop: HTMLElement | null;
   addCarWizard: HTMLElement;
-  wizardProgressText: HTMLElement | null;
   wizardCloseBtn: HTMLButtonElement | null;
   wizardBackBtn: HTMLButtonElement | null;
-  wizardSteps: Array<HTMLElement | null>;
-  wizardStepDots: HTMLElement[];
-  wizardSummaryPanel: HTMLElement | null;
-  wizardActionHint: HTMLElement | null;
   wizardBrandList: HTMLElement | null;
   wizardTypeList: HTMLElement | null;
   wizardModelList: HTMLElement | null;
