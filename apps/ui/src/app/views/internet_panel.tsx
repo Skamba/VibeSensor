@@ -257,7 +257,7 @@ function UpdateTransportChoiceCard(props: {
         disabled={model.inputDisabled}
         onChange={() => onSelect?.(value)}
       />
-      <span class="speed-source-choice__title" data-i18n={titleKey}>
+      <span class="speed-source-choice__title">
         {titleText}
       </span>
       <span id={captionId} class="speed-source-choice__caption">
@@ -276,10 +276,10 @@ function InternetPanel(props: {
   return (
     <div class="maintenance-stack">
       <div class="panel card">
-        <strong data-i18n="settings.internet.title">
+        <strong>
           {t("settings.internet.title", "Internet")}
         </strong>
-        <div class="subtle" data-i18n="settings.internet.hint">
+        <div class="subtle">
           {t(
             "settings.internet.hint",
             "USB internet is optional. When a compatible phone or USB network device is detected, the Pi can keep its hotspot active while using USB as the upstream connection.",
@@ -302,13 +302,13 @@ function InternetPanel(props: {
           <div>
             <div
               class="maintenance-card__title"
-              data-i18n="settings.update.controls_title"
+
             >
               {t("settings.update.controls_title", "Update connection")}
             </div>
             <div
               class="subtle"
-              data-i18n="settings.update.controls_intro"
+
             >
               {t(
                 "settings.update.controls_intro",
@@ -324,7 +324,7 @@ function InternetPanel(props: {
           >
             <div
               class="subtle"
-              data-i18n="settings.update.transport_label"
+
             >
               {t("settings.update.transport_label", "Internet source")}
             </div>
@@ -355,7 +355,7 @@ function InternetPanel(props: {
           </div>
           <div id="updateWifiFields" hidden={model.wifiFieldsHidden}>
             <div class="form-group">
-              <label htmlFor="updateSsidInput" data-i18n="settings.update.ssid">
+              <label htmlFor="updateSsidInput">
                 {t("settings.update.ssid", "Wi-Fi SSID")}
               </label>
               <input
@@ -373,7 +373,7 @@ function InternetPanel(props: {
             <div class="form-group">
               <label
                 htmlFor="updatePasswordInput"
-                data-i18n="settings.update.password"
+
               >
                 {t("settings.update.password", "Wi-Fi Password")}
               </label>
@@ -413,7 +413,7 @@ function InternetPanel(props: {
               <span class="settings-help-disclosure__heading">
                 <span
                   class="settings-help-disclosure__title"
-                  data-i18n="settings.update.details_title"
+
                 >
                   {t("settings.update.details_title", "What happens next")}
                 </span>

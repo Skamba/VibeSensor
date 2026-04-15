@@ -329,13 +329,13 @@ function EspFlashPanel(props: {
               <div>
                 <div
                   class="maintenance-card__title"
-                  data-i18n="settings.esp_flash.title"
+
                 >
                   {t("settings.esp_flash.title", "ESP Flash")}
                 </div>
                 <div
                   class="subtle"
-                  data-i18n="settings.esp_flash.hint"
+
                 >
                   {t(
                     "settings.esp_flash.hint",
@@ -355,7 +355,7 @@ function EspFlashPanel(props: {
               <div class="manual-speed-row">
                 <label
                   htmlFor="espFlashPortSelect"
-                  data-i18n="settings.esp_flash.port"
+
                 >
                   {t("settings.esp_flash.port", "Serial Port")}
                 </label>
@@ -376,7 +376,7 @@ function EspFlashPanel(props: {
                   type="button"
                   id="espFlashRefreshPortsBtn"
                   class="btn btn--muted"
-                  data-i18n="settings.esp_flash.refresh_ports"
+
                   disabled={model.refreshPortsDisabled}
                   onClick={() => state.actions?.onRefreshPorts()}
                 >
@@ -402,13 +402,13 @@ function EspFlashPanel(props: {
                   <span class="settings-help-disclosure__heading">
                     <span
                       class="settings-help-disclosure__title"
-                      data-i18n="settings.esp_flash.details_title"
+
                     >
                       {t("settings.esp_flash.details_title", "What happens next")}
                     </span>
                     <span
                       class="settings-help-disclosure__caption"
-                      data-i18n="settings.esp_flash.details_caption"
+
                     >
                       {t(
                         "settings.esp_flash.details_caption",
@@ -420,7 +420,7 @@ function EspFlashPanel(props: {
                 <div class="settings-help-disclosure__body">
                   <div
                     class="maintenance-note"
-                    data-i18n="settings.esp_flash.preflight_note"
+
                   >
                     {t(
                       "settings.esp_flash.preflight_note",
@@ -444,7 +444,7 @@ function EspFlashPanel(props: {
                   type="button"
                   id="espFlashCancelBtn"
                   class="btn btn--danger"
-                  data-i18n="settings.esp_flash.cancel"
+
                   hidden={model.cancelButtonHidden}
                   disabled={model.cancelButtonDisabled}
                   onClick={() => state.actions?.onCancel()}
@@ -461,7 +461,7 @@ function EspFlashPanel(props: {
                 <div>
                   <div
                     class="maintenance-card__title"
-                    data-i18n="settings.esp_flash.journey_title"
+
                   >
                     {t("settings.esp_flash.journey_title", "Expected stages")}
                   </div>
@@ -480,13 +480,13 @@ function EspFlashPanel(props: {
                 <div>
                   <div
                     class="maintenance-card__title"
-                    data-i18n="settings.esp_flash.logs_title"
+
                   >
                     {t("settings.esp_flash.logs_title", "Live flash output")}
                   </div>
                   <div
                     class="subtle"
-                    data-i18n="settings.esp_flash.logs_intro"
+
                   >
                     {t(
                       "settings.esp_flash.logs_intro",
@@ -515,13 +515,13 @@ function EspFlashPanel(props: {
               <div>
                 <div
                   class="maintenance-card__title"
-                  data-i18n="settings.esp_flash.history"
+
                   >
                     {t("settings.esp_flash.history", "Recent attempts")}
                   </div>
                 <div
                   class="subtle"
-                  data-i18n="settings.esp_flash.history_intro"
+
                   >
                     {t(
                       "settings.esp_flash.history_intro",

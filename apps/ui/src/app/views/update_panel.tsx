@@ -341,10 +341,10 @@ function UpdatePanel(props: {
         <section class="maintenance-card maintenance-card--hero">
           <div class="maintenance-card__header">
             <div>
-              <div class="maintenance-card__title" data-i18n="settings.update.title">
+              <div class="maintenance-card__title">
                 {t("settings.update.title", "System Update")}
               </div>
-              <div class="subtle" data-i18n="settings.update.hint">
+              <div class="subtle">
                 {t(
                   "settings.update.hint",
                   "Use either temporary Wi-Fi credentials or an already-connected USB internet uplink to update from GitHub. The hotspot only pauses for the Wi-Fi path.",
@@ -353,7 +353,7 @@ function UpdatePanel(props: {
             </div>
           </div>
           <div class="maintenance-card__body maintenance-card__body--hero">
-            <div class="maintenance-note" data-i18n="settings.update.reconnect_note">
+            <div class="maintenance-note">
               {t(
                 "settings.update.reconnect_note",
                 "Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.",
