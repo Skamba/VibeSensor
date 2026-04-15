@@ -7,7 +7,7 @@ import type {
   TransportState,
 } from "../ui_app_state";
 import { trackAppStateSlice } from "../ui_app_state";
-import type { VisualVariant } from "../style_state";
+import type { VisualVariant } from "../view_style_types";
 import { computed, type ReadonlySignal } from "../ui_signals";
 import type { UiShellBadgeModel } from "./ui_shell_chrome";
 

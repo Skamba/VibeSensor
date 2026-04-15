@@ -46,7 +46,7 @@ import {
   SPEED_UNIT_OPTIONS,
 } from "./ui_shell_chrome";
 import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
-import type { VisualVariant } from "../style_state";
+import type { VisualVariant } from "../view_style_types";
 
 type UiShellControllerDeps = {
   chrome: UiShellChromeView;

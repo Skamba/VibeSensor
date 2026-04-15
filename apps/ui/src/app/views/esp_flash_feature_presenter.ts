@@ -3,7 +3,7 @@ import type {
   EspFlashStatusPayload,
   EspSerialPortPayload,
 } from "../../transport/http_models";
-import type { VisualVariant } from "../style_state";
+import type { VisualVariant } from "../view_style_types";
 import { formatEpochTimestamp } from "./dom_helpers";
 import type { MaintenanceReadinessPanelModel } from "./maintenance_readiness_view";
 import type {
