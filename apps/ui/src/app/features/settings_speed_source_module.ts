@@ -1,29 +1,20 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
 import {
-  bindSettingsSpeedSourceInteractions,
-  type SettingsSpeedSourceInteraction,
-} from "../views/settings_speed_source_bindings";
-import {
   buildSettingsSpeedSourcePanelModel,
   type SettingsSpeedSourcePresenterDeps,
 } from "../views/settings_speed_source_presenter";
-import type { SettingsShellDom } from "../views/settings_shell";
-import type {
-  SettingsSpeedSourcePanelDom,
-  SpeedSourcePanelView,
-} from "../views/speed_source_panel";
+import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 import type { SettingsState } from "../ui_app_state";
 import { createSettingsSpeedSourceWorkflow } from "./settings_speed_source_workflow";
-import type { UiShellChromeDom } from "../runtime/ui_shell_chrome";
 
 export interface SettingsSpeedSourceModuleDeps extends FeatureDepsBase {
-  dom: Pick<SettingsShellDom, "settingsTabs"> & SettingsSpeedSourcePanelDom;
   panel: SpeedSourcePanelView;
-  shellDom: Pick<UiShellChromeDom, "menuButtons">;
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
   renderSpeedReadout: () => void;
+  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
+  subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
 }
 
 export interface SettingsSpeedSourceModule {
@@ -37,7 +28,7 @@ export interface SettingsSpeedSourceModule {
 export function createSettingsSpeedSourceModule(
   ctx: SettingsSpeedSourceModuleDeps,
 ): SettingsSpeedSourceModule {
-  const { settings, dom: els, shellDom, t } = ctx;
+  const { settings, t } = ctx;
   const presenterDeps: SettingsSpeedSourcePresenterDeps = {
     fmt: ctx.fmt,
     getSpeedUnit: ctx.getSpeedUnit,
@@ -65,35 +56,33 @@ export function createSettingsSpeedSourceModule(
       return;
     }
     handlersBound = true;
-    bindSettingsSpeedSourceInteractions(els, shellDom, {
-      onAction: (action: SettingsSpeedSourceInteraction) => {
-        if (action.type === "speed-source-changed") {
-          workflow.handleSpeedSourceChanged(action.mode);
-          return;
-        }
-        if (action.type === "manual-speed-input") {
-          workflow.handleManualSpeedInput(action.value);
-          return;
-        }
-        if (action.type === "stale-timeout-input") {
-          workflow.handleStaleTimeoutInput(action.value);
-          return;
-        }
-        if (action.type === "save") {
-          void workflow.saveSpeedSource();
-          return;
-        }
-        if (action.type === "scan-obd-devices") {
-          void workflow.scanObdDevices();
-          return;
-        }
-        if (action.type === "navigate-context") {
-          workflow.handleNavigateContext();
-          return;
-        }
-        void workflow.pairObdDevice(action.macAddress);
+    ctx.subscribeSettingsTabChanges(() => {
+      workflow.handleNavigateContext();
+    });
+    ctx.subscribePrimaryViewChanges(() => {
+      workflow.handleNavigateContext();
+    });
+    ctx.panel.bindActions({
+      onManualSpeedInput(value): void {
+        workflow.handleManualSpeedInput(value);
+      },
+      onPairObdDevice(macAddress): void {
+        void workflow.pairObdDevice(macAddress);
+      },
+      onSave(): void {
+        void workflow.saveSpeedSource();
+      },
+      onScanObdDevices(): void {
+        void workflow.scanObdDevices();
+      },
+      onSpeedSourceChanged(mode): void {
+        workflow.handleSpeedSourceChanged(mode);
+      },
+      onStaleTimeoutInput(value): void {
+        workflow.handleStaleTimeoutInput(value);
       },
     });
+    workflow.handleNavigateContext();
   }
 
   return {

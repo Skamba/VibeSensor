@@ -108,7 +108,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/settings_cars_module.ts` | Settings-side car controller that owns list loading, activation/deletion flows, highlight feedback, and typed tab/view-driven feedback dismissal plus the explicit open-wizard port |
 | `app/features/settings_cars_transport.ts` | Settings-car transport wrapper over load/activate/delete API calls |
 | `app/features/settings_analysis_module.ts` | Analysis-settings behavior owner for validation, save/reset orchestration, field guidance, and spectrum refreshes behind the typed analysis-panel bridge |
-| `app/features/settings_speed_source_module.ts` | Thin speed-source settings facade that wires the transport seam, DOM-free workflow, pure presenter, and typed bindings into the shared panel bridge |
+| `app/features/settings_speed_source_module.ts` | Thin speed-source settings facade that wires the transport seam, DOM-free workflow, pure presenter, typed panel actions, and typed navigation subscriptions into the shared panel bridge |
 | `app/features/settings_speed_source_transport.ts` | Speed-source settings transport wrapper over the UI-local settings and OBD APIs |
 | `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
 | `app/views/analysis_panel.tsx` | Preact owner for the analysis-settings shell that mounts the full tab surface and exposes the typed bridge consumed by analysis and car-selection modules |
@@ -117,7 +117,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/internet_panel.tsx` | Preact owner for the full internet settings surface that renders USB status, transport choices, Wi-Fi credentials, and readiness guidance through a typed bridge |
 | `app/views/update_panel.tsx` | Preact owner for the full update settings surface that renders the action row plus current status, health, journey, issues, latest attempt, and log cards through a typed bridge |
 | `app/views/sensors_panel.tsx` | Preact owner for the sensors settings shell that renders the full sensor table and exposes typed identify/remove/location callbacks to the realtime feature |
-| `app/views/speed_source_panel.tsx` | Preact owner for the speed-source shell that renders the full tab plus live diagnostics in JSX and exposes the shared bridge consumed by the speed-source and GPS-status modules |
+| `app/views/speed_source_panel.tsx` | Preact owner for the speed-source shell that renders the full tab plus live diagnostics in JSX, owns typed save/scan/select/input callbacks, and exposes the shared bridge consumed by the speed-source and GPS-status modules |
 | `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that renders saved-car guidance/list rows plus the full add-car wizard internals in JSX and exposes typed list and wizard bridges |
 | `app/views/cars_feature_bindings.ts` | Typed car-wizard bindings reused as the thin wizard interaction adapter behind the car-management island |
 | `app/views/cars_feature_presenter.ts` | Thin car-wizard presenter that turns workflow state into typed wizard render models and delegates focus/manual-input access through the island bridge |
@@ -133,7 +133,6 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
 | `app/views/realtime_logging_panel.tsx` | Preact owner for the run-recording card that renders typed logging/readiness models and binds start/stop plus summary CTA actions through a bridge |
 | `app/views/settings_car_list_view.ts` | Typed saved-car list and guidance view-model builders reused by the car-management island for row, empty-state, and highlight rendering |
-| `app/views/settings_speed_source_bindings.ts` | Typed speed-source form bindings that decode radio/input/navigation/device actions away from the workflow |
 | `app/views/settings_speed_source_presenter.ts` | Pure speed-source presenter that turns typed workflow state and live status payloads into panel and diagnostics render models |
 | `app/views/update_feature_presenter.ts` | Update presenter that derives typed update/internet panel models from workflow state plus draft form inputs and toggles |
 | `app/views/internet_status_view.ts` | Pure USB-internet status model builder reused by the Preact internet panel |

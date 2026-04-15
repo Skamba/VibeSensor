@@ -22,10 +22,8 @@ import type { CarsListPanelView } from "../views/cars_panel";
 import type { AnalysisPanelView } from "../views/analysis_panel";
 import type { SettingsShellView } from "../views/settings_shell";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
-import type { UiShellChromeDom } from "../runtime/ui_shell_chrome";
 
 export interface SettingsFeatureDeps extends FeatureDepsBase {
-  shellDom: Pick<UiShellChromeDom, "menuButtons">;
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
@@ -68,13 +66,9 @@ export interface SettingsFeature {
 export function createSettingsFeature(
   ctx: SettingsFeatureDeps,
 ): SettingsFeature {
-  const { settings, shellDom, t, escapeHtml, fmt } = ctx;
+  const { settings, t, escapeHtml, fmt } = ctx;
   let handlersBound = false;
   let carsModule!: SettingsCarsModule;
-  const speedSourceDom = {
-    ...ctx.speedSourcePanel.dom,
-    settingsTabs: ctx.settingsShell.dom.settingsTabs,
-  };
 
   function showSettingsSaveError(error: unknown): void {
     ctx.showError(
@@ -99,9 +93,7 @@ export function createSettingsFeature(
   });
   const speedSourceModule: SettingsSpeedSourceModule =
     createSettingsSpeedSourceModule({
-      dom: speedSourceDom,
       panel: ctx.speedSourcePanel,
-      shellDom,
       t,
       escapeHtml,
       showError: ctx.showError,
@@ -109,6 +101,8 @@ export function createSettingsFeature(
       getSpeedUnit: ctx.getSpeedUnit,
       fmt,
       renderSpeedReadout: ctx.view.renderSpeedReadout,
+      subscribePrimaryViewChanges: ctx.subscribePrimaryViewChanges,
+      subscribeSettingsTabChanges: ctx.settingsShell.subscribeActiveTabChanges,
     });
   const gpsStatusModule: SettingsGpsStatusModule =
     createSettingsGpsStatusModule({
