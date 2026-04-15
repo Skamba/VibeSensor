@@ -52,10 +52,3 @@ export interface HistoryPanelView {
   render(model: HistoryPanelRenderModel): void;
   bindActions(handlers: HistoryPanelActionHandlers): void;
 }
-
-export function createNullHistoryPanelView(): HistoryPanelView {
-  return {
-    render() {},
-    bindActions() {},
-  };
-}

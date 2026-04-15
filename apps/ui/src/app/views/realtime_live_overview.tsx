@@ -190,13 +190,6 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
   );
 }
 
-export function createNullRealtimeLiveOverviewBridge(): RealtimeLiveOverviewBridge {
-  return {
-    render() {},
-    setSpeedText() {},
-  };
-}
-
 export function mountRealtimeLiveOverview(host: HTMLElement): RealtimeLiveOverviewBridge {
   const mount = createUiPreactMount(host);
   const state = signal<RealtimeLiveOverviewBridgeState>({ ...DEFAULT_OVERVIEW_STATE });
