@@ -1,13 +1,12 @@
-import { deriveCarSelectionState } from "../car_selection_state";
 import { classifyDataFreshness } from "../features/data_freshness";
 import { createRealtimeSensorState } from "../features/realtime_sensor_state";
 import type { RealtimeFeatureNavigationPorts } from "../features/realtime_feature";
 import type {
   RealtimeState,
   SettingsState,
+  ShellState,
   SpectrumState,
 } from "../ui_app_state";
-import type { LocationOption } from "../../transport/http_models";
 import type { AdaptedClient } from "../../transport/live_models";
 import {
   buildRealtimeLoggingPanelViewModel,
@@ -39,7 +38,7 @@ export interface RealtimeFeaturePresenterDeps {
   realtime: RealtimeState;
   spectrum: SpectrumState;
   settings: SettingsState;
-  getLanguage: () => string;
+  shell: Pick<ShellState, "lang">;
   t: (key: string, vars?: Record<string, unknown>) => string;
   formatInt: (value: number) => string;
   chrome: {
@@ -51,7 +50,6 @@ export interface RealtimeFeaturePresenterDeps {
 }
 
 export interface RealtimeFeaturePresenter {
-  buildLocationOptions(codes: readonly string[]): LocationOption[];
   locationCodeForClient(client: AdaptedClient): string;
   maybeRenderSensorsSettingsList(force?: boolean): void;
   renderStatus(clientRow?: AdaptedClient): void;
@@ -72,6 +70,7 @@ export function createRealtimeFeaturePresenter(
     sensorsPanel,
     realtime,
     settings,
+    shell,
     spectrum,
     t,
     formatInt,
@@ -86,25 +85,31 @@ export function createRealtimeFeaturePresenter(
   const sensorState = createRealtimeSensorState({
     realtime,
     settings,
+    shell,
     spectrum,
-    getLanguage: ctx.getLanguage,
+    captureReadinessSummaryText: (readiness) =>
+      captureReadinessSummaryText(readiness, {
+        t,
+        formatInt,
+      }),
     t,
     formatInt,
   });
   const {
+    activeCarSelection,
     activeCarDisplayState,
     assignedClientCount,
-    buildLocationOptions,
-    computeLiveHealth,
     connectedClients,
+    liveHealth,
     locationCodeForClient,
+    locationOptions,
     strongestSignal,
     strongestSignalText,
   } = sensorState;
   let renderedSensorsSettingsSignature = "";
 
   function dataFreshnessText(): string {
-    const connected = connectedClients();
+    const connected = connectedClients.value;
     const ages = connected
       .map((client) => client.last_seen_age_ms)
       .filter(
@@ -145,12 +150,7 @@ export function createRealtimeFeaturePresenter(
   }
 
   function computeCurrentLiveHealth() {
-    return computeLiveHealth((readiness) =>
-      captureReadinessSummaryText(readiness, {
-        t,
-        formatInt,
-      }),
-    );
+    return liveHealth.value;
   }
 
   function liveSensorOverviewLabel(client: AdaptedClient): string {
@@ -160,7 +160,7 @@ export function createRealtimeFeaturePresenter(
         client.name || client.id || t("dashboard.sensor_unassigned"),
       ).trim();
     }
-    const option = realtime.locationOptions.find(
+    const option = locationOptions.value.find(
       (location) => location.code === code,
     );
     return option?.label ?? code;
@@ -169,20 +169,20 @@ export function createRealtimeFeaturePresenter(
   function buildLiveOverviewModel(
     phaseText: string,
   ): RealtimeLiveOverviewRenderModel {
-    const signal = strongestSignal();
+    const signal = strongestSignal.value;
     const health = computeCurrentLiveHealth();
     const totalClients = realtime.clients.length;
-    const activeCar = activeCarDisplayState();
+    const activeCar = activeCarDisplayState.value;
     const setupBlockReason = selectionBlockReason();
     return {
-      connectedSensorsText: `${formatInt(connectedClients().length)} / ${formatInt(totalClients)}`,
+      connectedSensorsText: `${formatInt(connectedClients.value.length)} / ${formatInt(totalClients)}`,
       activeCar: {
         text: activeCar.text,
         warning: setupBlockReason === null && activeCar.isWarning,
       },
       recordingStateText: phaseText,
       dataFreshnessText: dataFreshnessText(),
-      strongestSignalText: strongestSignalText(signal),
+      strongestSignalText: strongestSignalText.value,
       runHealth: {
         hidden: !health.showOverviewPill,
         text: health.text,
@@ -199,7 +199,7 @@ export function createRealtimeFeaturePresenter(
   }
 
   function selectionBlockReason(): "no_cars" | "no_active" | null {
-    const selection = deriveCarSelectionState(settings);
+    const selection = activeCarSelection.value;
     if (selection.kind === "active") {
       return null;
     }
@@ -214,8 +214,8 @@ export function createRealtimeFeaturePresenter(
       pendingLoggingAction,
       selectionBlockReason: selectionBlockReason(),
       liveHealth: computeCurrentLiveHealth(),
-      connectedCountText: formatInt(connectedClients().length),
-      assignedCountText: formatInt(assignedClientCount()),
+      connectedCountText: formatInt(connectedClients.value.length),
+      assignedCountText: formatInt(assignedClientCount.value),
       runIdText: recordingRunIdText(realtime.loggingStatus),
       elapsedText: realtime.loggingStatus.enabled
         ? formatElapsed(realtime.loggingStatus.start_time_utc)
@@ -267,7 +267,7 @@ export function createRealtimeFeaturePresenter(
         return `${client.id}|${client.name || ""}|${client.mac_address || ""}|${connected}|${client.location_code || ""}`;
       })
       .join("||");
-    const locationPart = realtime.locationOptions
+    const locationPart = locationOptions.value
       .map((loc) => `${loc.code}|${loc.label}`)
       .join("||");
     return `${clientPart}##${locationPart}`;
@@ -284,7 +284,7 @@ export function createRealtimeFeaturePresenter(
     sensorsPanel.setModel({
       table: buildRealtimeSensorTableRenderModel({
         clients: realtime.clients,
-        locationOptions: realtime.locationOptions,
+        locationOptions: locationOptions.value,
         t,
       }),
     });
@@ -458,7 +458,6 @@ export function createRealtimeFeaturePresenter(
   }
 
   return {
-    buildLocationOptions,
     locationCodeForClient,
     maybeRenderSensorsSettingsList,
     renderStatus,

@@ -3,8 +3,12 @@ import type uPlot from "uplot";
 import { SPECTRUM_TWEEN_DURATION_MS } from "../../config";
 import { convertSpectrumAmplitudesToDbInPlace, SpectrumChart } from "../../spectrum";
 import { chartSeriesPalette, orderBandFills } from "../../theme";
-import { areHeavyFramesCompatible, interpolateHeavyFrame, type SpectrumHeavyFrame } from "../spectrum_animation";
+import {
+  createSpectrumTweenDerivedState,
+  type SpectrumHeavyFrame,
+} from "../spectrum_animation";
 import type { AppState, ChartBand } from "../ui_app_state";
+import { signal } from "../ui_signals";
 import type { SpectrumPanelChartDom } from "./spectrum_panel_view";
 import { closestFrequencyIndex, freqGridsMatch, type SpectrumFocusMarker, type SpectrumSeriesEntry } from "./spectrum_shared";
 
@@ -46,6 +50,18 @@ export class SpectrumCanvasRenderer {
   private spectrumTweenRaf: number | null = null;
 
   private spectrumLastFrame: SpectrumHeavyFrame | null = null;
+
+  private readonly tweenAlpha = signal(1);
+
+  private readonly tweenFromFrame = signal<SpectrumHeavyFrame | null>(null);
+
+  private readonly tweenToFrame = signal<SpectrumHeavyFrame | null>(null);
+
+  private readonly tweenState = createSpectrumTweenDerivedState(
+    this.tweenFromFrame,
+    this.tweenToFrame,
+    this.tweenAlpha,
+  );
 
   private currentEntries: readonly SpectrumSeriesEntry[] = [];
 
@@ -163,20 +179,24 @@ export class SpectrumCanvasRenderer {
     }
 
     const nextFrame = prepared.frame;
-    const canTween = this.deps.state.transport.wsState === "connected"
-      && areHeavyFramesCompatible(this.spectrumLastFrame, nextFrame);
+    this.tweenFromFrame.value = this.spectrumLastFrame;
+    this.tweenToFrame.value = nextFrame;
     this.stopSpectrumTween();
+    const canTween = this.deps.state.transport.wsState === "connected"
+      && this.tweenState.canTween.value;
     if (!canTween || !this.spectrumLastFrame) {
       this.setSpectrumDataFromFrame(nextFrame);
       return;
     }
 
-    const tweenFrom = this.spectrumLastFrame;
     const startedAt = performance.now();
     const animate = (now: number): void => {
-      const alpha = Math.min(1, Math.max(0, (now - startedAt) / SPECTRUM_TWEEN_DURATION_MS));
-      this.setSpectrumDataFromFrame(interpolateHeavyFrame(tweenFrom, nextFrame, alpha));
-      if (alpha >= 1) {
+      this.tweenAlpha.value = Math.min(1, Math.max(0, (now - startedAt) / SPECTRUM_TWEEN_DURATION_MS));
+      const frame = this.tweenState.frame.value;
+      if (frame) {
+        this.setSpectrumDataFromFrame(frame);
+      }
+      if (this.tweenAlpha.value >= 1) {
         this.spectrumTweenRaf = null;
         this.setSpectrumDataFromFrame(nextFrame);
         return;

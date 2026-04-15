@@ -1,5 +1,5 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import { hasResolvedActiveCar } from "../car_selection_state";
+import { createCarSelectionDerivedState } from "../car_selection_state";
 import type { SettingsState } from "../ui_app_state";
 import type { CarsPayload } from "../../transport/http_models";
 import {
@@ -67,6 +67,7 @@ export function createSettingsFeature(
   ctx: SettingsFeatureDeps,
 ): SettingsFeature {
   const { settings, t, escapeHtml, fmt } = ctx;
+  const carSelection = createCarSelectionDerivedState(settings);
   let handlersBound = false;
   let carsModule!: SettingsCarsModule;
 
@@ -87,7 +88,7 @@ export function createSettingsFeature(
     showError: ctx.showError,
     settings,
     renderSpectrum: ctx.view.renderSpectrum,
-    hasValidActiveCar: () => hasResolvedActiveCar(settings),
+    hasValidActiveCar: () => carSelection.hasResolvedActiveCar.value,
     onMissingActiveCar: () => carsModule.renderCarList(),
     onSaveError: showSettingsSaveError,
   });

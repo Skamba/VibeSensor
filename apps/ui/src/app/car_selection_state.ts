@@ -1,5 +1,7 @@
 import type { CarRecord } from "../transport/http_models";
 import type { SettingsState } from "./ui_app_state";
+import { trackAppStateSlice } from "./ui_app_state";
+import { computed, type ReadonlySignal } from "./ui_signals";
 
 const REQUIRED_CAR_ASPECT_KEYS = [
   "tire_width_mm",
@@ -22,6 +24,12 @@ export type CarSelectionState =
   | { kind: "no_cars" }
   | { kind: "no_active_car" }
   | { kind: "active"; car: CarRecord };
+
+export interface CarSelectionDerivedState {
+  activeCar: ReadonlySignal<CarRecord | null>;
+  hasResolvedActiveCar: ReadonlySignal<boolean>;
+  selection: ReadonlySignal<CarSelectionState>;
+}
 
 export interface CarCompleteness {
   isComplete: boolean;
@@ -55,6 +63,38 @@ export function deriveCarSelectionState(settings: CarSelectionStateSource): CarS
 
 export function hasResolvedActiveCar(settings: CarSelectionStateSource): boolean {
   return deriveCarSelectionState(settings).kind === "active";
+}
+
+export function createCarSelectionDerivedState(
+  settings: CarSelectionStateSource,
+): CarSelectionDerivedState {
+  const activeCar = computed(() => {
+    trackAppStateSlice(settings);
+    return resolveActiveCar(settings);
+  });
+  const selection = computed<CarSelectionState>(() => {
+    trackAppStateSlice(settings);
+    if (!settings.carsLoaded) {
+      return { kind: "loading" };
+    }
+    if (!settings.cars.length) {
+      return { kind: "no_cars" };
+    }
+    const resolvedCar = activeCar.value;
+    if (resolvedCar) {
+      return { kind: "active", car: resolvedCar };
+    }
+    return { kind: "no_active_car" };
+  });
+  const hasResolvedActiveCarSignal = computed(
+    () => selection.value.kind === "active",
+  );
+
+  return {
+    activeCar,
+    hasResolvedActiveCar: hasResolvedActiveCarSignal,
+    selection,
+  };
 }
 
 export function getCarCompleteness(car: CarRecord): CarCompleteness {

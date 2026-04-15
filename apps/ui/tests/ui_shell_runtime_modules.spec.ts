@@ -401,10 +401,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
         },
       },
       realtime: {
-        buildLocationOptions(codes) {
-          portCalls.push("buildLocationOptions");
-          return codes.map((code) => ({ code, label: `${code}-label` }));
-        },
         maybeRenderSensorsSettingsList(force = false) {
           portCalls.push(`maybeRenderSensorsSettingsList:${String(force)}`);
         },
@@ -429,11 +425,7 @@ test.describe("createUiShellLanguageRefreshModule", () => {
     }
 
     expect(documentHarness.documentElement.lang).toBe("nl");
-    expect(state.realtime.locationOptions).toEqual([
-      { code: "front_left_wheel", label: "front_left_wheel-label" },
-    ]);
     expect(portCalls).toEqual([
-      "buildLocationOptions",
       "syncSettingsInputs",
       "maybeRenderSensorsSettingsList:true",
       "renderLoggingStatus",
@@ -480,10 +472,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
           },
         },
         realtime: {
-          buildLocationOptions(codes) {
-            portCalls.push("buildLocationOptions");
-            return codes.map((code) => ({ code, label: code }));
-          },
           maybeRenderSensorsSettingsList(force = false) {
             portCalls.push(`maybeRenderSensorsSettingsList:${String(force)}`);
           },
@@ -505,7 +493,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
     }
 
     expect(portCalls).toEqual([
-      "buildLocationOptions",
       "syncSettingsInputs",
       "maybeRenderSensorsSettingsList:true",
       "renderLoggingStatus",
@@ -545,7 +532,6 @@ test.describe("bindUiShellFeatureEvents", () => {
           renderHistoryTable: () => undefined,
         },
         realtime: {
-          buildLocationOptions: () => [],
           maybeRenderSensorsSettingsList: () => undefined,
           renderLoggingStatus: () => undefined,
           renderStatus: () => undefined,
