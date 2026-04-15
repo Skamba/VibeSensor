@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import { createUpdateFeature } from "../src/app/features/update_feature";
 import type {
+  EspFlashPanelActionHandlers,
   EspFlashPanelDom,
   EspFlashPanelRenderModel,
 } from "../src/app/views/esp_flash_panel";
@@ -542,12 +543,27 @@ function createDeps() {
 
   return {
     panel: {
-      dom,
+      bindActions(handlers: EspFlashPanelActionHandlers) {
+        dom.espFlashStartBtn.addEventListener("click", () => {
+          handlers.onStart();
+        });
+        dom.espFlashCancelBtn?.addEventListener("click", () => {
+          handlers.onCancel();
+        });
+        dom.espFlashRefreshPortsBtn?.addEventListener("click", () => {
+          handlers.onRefreshPorts();
+        });
+        dom.espFlashPortSelect?.addEventListener("change", () => {
+          handlers.onSelectPort(dom.espFlashPortSelect?.value || "__auto__");
+        });
+      },
       render(model: EspFlashPanelRenderModel) {
         renderEspFlashPanelDom(dom, model);
       },
     },
     els: dom,
+    espFlashPortSelect,
+    espFlashRefreshPortsBtn,
     espFlashStartBtn,
     espFlashCancelBtn,
     espFlashStartSummary,

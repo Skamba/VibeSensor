@@ -98,7 +98,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/runtime/spectrum_panel_view.ts` | Spectrum legend, band legend, inspector, and band-toggle DOM rendering with button reuse |
 | `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
 | `app/features/` | Feature owners for state changes, API calls, shared polling control, and typed actions emitted from local view binders |
-| `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, and feature-local bindings together |
+| `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, and typed island action bridge together |
 | `app/features/esp_flash_feature_workflow.ts` | DOM-free ESP flash workflow/controller for port refreshes, flash status polling, log/history hydration, and start/cancel orchestration |
 | `app/features/cars_feature.ts` | Thin car-wizard facade that wires the DOM-free workflow plus island-owned wizard DOM adapter into typed wizard actions |
 | `app/features/cars_feature_transport.ts` | Car-library transport wrapper for loading wizard brands, types, and models through the UI API facade |
@@ -113,7 +113,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
 | `app/views/analysis_panel.tsx` | Preact owner for the analysis-settings shell that mounts the full tab surface and exposes the typed bridge consumed by analysis and car-selection modules |
 | `app/views/settings_shell.tsx` | Preact owner for the shared settings tab chrome and tab-panel wrappers that mount the per-tab panel hosts and expose the settings navigation bridge |
-| `app/views/esp_flash_panel.tsx` | Preact owner for the ESP flash settings shell and its typed render bridge for port selection, readiness, journey, history, and log surfaces |
+| `app/views/esp_flash_panel.tsx` | Preact owner for the ESP flash settings shell, typed flash actions, and log-autoscroll lifecycle alongside the render bridge for port selection, readiness, journey, history, and logs |
 | `app/views/internet_panel.tsx` | Preact owner for the full internet settings surface that renders USB status, transport choices, Wi-Fi credentials, and readiness guidance through a typed bridge |
 | `app/views/update_panel.tsx` | Preact owner for the full update settings surface that renders the action row plus current status, health, journey, issues, latest attempt, and log cards through a typed bridge |
 | `app/views/sensors_panel.tsx` | Preact owner for the sensors settings shell that renders the full sensor table and exposes typed identify/remove/location callbacks to the realtime feature |
@@ -122,9 +122,8 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/cars_feature_bindings.ts` | Typed car-wizard bindings reused as the thin wizard interaction adapter behind the car-management island |
 | `app/views/cars_feature_presenter.ts` | Thin car-wizard presenter that turns workflow state into typed wizard render models and delegates focus/manual-input access through the island bridge |
 | `app/views/car_wizard_view.ts` | Typed add-car wizard render-model builders for progress, option sections, selected specs, and summary rows reused by the Preact car-management island |
-| `app/features/update_feature.ts` | Thin update facade that binds explicit DOM events, delegates island render-model updates to the presenter, and delegates update commands to the workflow |
+| `app/features/update_feature.ts` | Thin update facade that binds typed island actions, delegates island render-model updates to the presenter, and delegates update commands to the workflow |
 | `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for update polling, internet-status normalization, and start/cancel command orchestration |
-| `app/views/esp_flash_feature_bindings.ts` | Feature-local ESP flash bindings for start/cancel/refresh/select actions without leaving raw DOM event parsing in the feature |
 | `app/views/esp_flash_feature_presenter.ts` | ESP flash presenter that derives typed panel models for the island-owned ESP flash bridge while leaving workflow state in the feature workflow |
 | `app/views/history_table_models.ts` | Typed row/detail/finding/heatmap view models that describe history table rendering without HTML fragments |
 | `app/views/history_table_presenters.ts` | Presenter builders that turn runs plus loaded insights/preview detail into typed history row and details models |
