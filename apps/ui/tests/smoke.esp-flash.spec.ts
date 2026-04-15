@@ -42,6 +42,13 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="espFlashTab"]').click();
+  await expect(page.locator("#espFlashPortSelect option")).toHaveCount(2);
+  await expect(page.locator("#espFlashPortSelect option").first()).toHaveText(
+    "Auto-detect",
+  );
+  await expect(page.locator("#espFlashPortSelect option").nth(1)).toHaveText(
+    "/dev/ttyUSB0 — USB UART",
+  );
   await expect(page.locator("#espFlashStartBtn")).toBeEnabled();
   await expect(page.locator("#espFlashCancelBtn")).toBeHidden();
   await expect(page.locator("#espFlashStartSummary")).toContainText(

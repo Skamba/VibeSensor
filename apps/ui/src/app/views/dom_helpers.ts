@@ -163,13 +163,6 @@ export function formatEpochTimestamp(epoch: number | null | undefined): string {
   return new Date(epoch * 1000).toLocaleString();
 }
 
-export function renderStatusGridRow(
-  labelHtml: string,
-  valueHtml: string,
-): string {
-  return `<div class="status-grid__row"><span class="status-grid__label">${labelHtml}</span><span>${valueHtml}</span></div>`;
-}
-
 export function createStatusGridRowElement(
   labelText: string,
   valueText: string,
