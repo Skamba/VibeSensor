@@ -68,4 +68,5 @@ test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners
   expect(() => feature.bindUpdateHandlers()).not.toThrow();
   expect(updateHandlers).not.toBeNull();
   expect(internetHandlers).not.toBeNull();
+  expect(typeof internetHandlers?.onPasswordInput).toBe("function");
 });

@@ -67,6 +67,9 @@ export interface UpdateFeaturePresenterDeps {
 }
 
 export interface UpdateFeaturePresenter {
+  setPasswordInput(value: string): void;
+  setSelectedTransport(transport: UpdateStartRequestPayload["transport"]): void;
+  setSsidInput(value: string): void;
   render(state: UpdateFeatureRenderState): void;
   readStartIntent(state: UpdateFeatureRenderState): UpdateFeatureStartIntent;
   togglePassword(): void;
@@ -341,45 +344,38 @@ export function createUpdateFeaturePresenter(
 ): UpdateFeaturePresenter {
   const { internetPanel, panel, t } = ctx;
 
-  let passwordVisible = false;
+  let formState: UpdateFeatureFormSnapshot = {
+    passwordInputValue: "",
+    passwordVisible: false,
+    selectedTransport: "wifi",
+    ssidInputValue: "",
+  };
   let lastPanelModels: UpdateFeaturePanelModels | null = null;
   let lastRenderedState: UpdateFeatureRenderState | null = null;
   let hasHydratedPersistedWifiSettings = false;
 
-  function readSsidInputValue(state: UpdateFeatureRenderState): string {
-    const currentValue = internetPanel.dom.updateSsidInput?.value ?? "";
+  function syncHydratedWifiSettings(state: UpdateFeatureRenderState): void {
     if (hasHydratedPersistedWifiSettings || state.updateStatus == null) {
-      return currentValue;
+      return;
     }
     hasHydratedPersistedWifiSettings = true;
     if (
       state.updateStatus.transport === "wifi" &&
       state.updateStatus.ssid &&
-      currentValue.trim().length === 0
+      formState.ssidInputValue.trim().length === 0
     ) {
-      return state.updateStatus.ssid;
+      formState = { ...formState, ssidInputValue: state.updateStatus.ssid };
     }
-    return currentValue;
-  }
-
-  function readSelectedTransport(
-    state: UpdateFeatureRenderState,
-  ): UpdateStartRequestPayload["transport"] {
-    if (state.updateState === "running") {
-      return state.updateTransport;
-    }
-    return internetPanel.dom.updateTransportUsbRadio?.checked ? "usb_internet" : "wifi";
   }
 
   function readFormSnapshot(
     state: UpdateFeatureRenderState,
   ): UpdateFeatureFormSnapshot {
-    return {
-      passwordInputValue: internetPanel.dom.updatePasswordInput?.value ?? "",
-      passwordVisible,
-      selectedTransport: readSelectedTransport(state),
-      ssidInputValue: readSsidInputValue(state),
-    };
+    syncHydratedWifiSettings(state);
+    if (state.updateState === "running" && formState.selectedTransport !== state.updateTransport) {
+      formState = { ...formState, selectedTransport: state.updateTransport };
+    }
+    return formState;
   }
 
   function render(state: UpdateFeatureRenderState): void {
@@ -413,19 +409,26 @@ export function createUpdateFeaturePresenter(
   }
 
   return {
+    setPasswordInput(value) {
+      formState = { ...formState, passwordInputValue: value };
+    },
+    setSelectedTransport(transport) {
+      formState = { ...formState, selectedTransport: transport };
+    },
+    setSsidInput(value) {
+      formState = { ...formState, ssidInputValue: value };
+    },
     render,
     readStartIntent,
     togglePassword() {
-      passwordVisible = !passwordVisible;
+      formState = { ...formState, passwordVisible: !formState.passwordVisible };
       rerenderLastState();
     },
     focusSsidInput() {
       internetPanel.dom.updateSsidInput?.focus();
     },
     clearPassword() {
-      if (internetPanel.dom.updatePasswordInput) {
-        internetPanel.dom.updatePasswordInput.value = "";
-      }
+      formState = { ...formState, passwordInputValue: "" };
       rerenderLastState();
     },
   };
