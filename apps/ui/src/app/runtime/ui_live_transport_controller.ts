@@ -1,5 +1,5 @@
 import { adaptServerPayload } from "../../server_payload";
-import type { AdaptedClient, AdaptedPayload } from "../../transport/live_models";
+import type { AdaptedPayload } from "../../transport/live_models";
 import { runDemoMode } from "../demo_mode";
 import { WsClient } from "../../ws";
 import {
@@ -16,17 +16,8 @@ type UiLiveTransportControllerDeps = {
   payloadErrorMessage: () => string;
 };
 
-export interface UiTransportFeaturePorts {
-  updateClientSelection(): void;
-  maybeRenderSensorsSettingsList(force?: boolean): void;
-  renderLoggingStatus(): void;
-  renderStatus(clientRow: AdaptedClient | undefined): void;
-}
-
 export class UiLiveTransportController {
   private readonly state: AppState;
-
-  private ports: UiTransportFeaturePorts | null = null;
 
   private readonly payloadErrorMessage: () => string;
 
@@ -34,10 +25,6 @@ export class UiLiveTransportController {
     this.state = deps.state;
     this.payloadErrorMessage = deps.payloadErrorMessage;
     this.bindTransportSignalSync();
-  }
-
-  attachPorts(ports: UiTransportFeaturePorts): void {
-    this.ports = ports;
   }
 
   sendSelection(): void {
@@ -119,7 +106,6 @@ export class UiLiveTransportController {
   }
 
   private applyPayload(payload: unknown): void {
-    const ports = this.requirePorts();
     let adapted: AdaptedPayload;
     try {
       adapted = adaptServerPayload(payload);
@@ -138,15 +124,11 @@ export class UiLiveTransportController {
         realtime: this.state.realtime,
         spectrum: this.state.spectrum,
         adaptedPayload: adapted,
-        updateClientSelection: () => ports.updateClientSelection(),
       });
     });
-    ports.maybeRenderSensorsSettingsList();
-    ports.renderLoggingStatus();
     if (update.hasSelectedClientChanged) {
       this.sendSelection();
     }
-    ports.renderStatus(update.selectedClient);
   }
 
   private connectWs(): void {
@@ -156,12 +138,5 @@ export class UiLiveTransportController {
       transport: this.state.transport,
     });
     this.state.transport.ws.connect();
-  }
-
-  private requirePorts(): UiTransportFeaturePorts {
-    if (this.ports === null) {
-      throw new Error("UiLiveTransportController ports used before initialization");
-    }
-    return this.ports;
   }
 }

@@ -42,7 +42,6 @@ export function createUiShellLanguageRefreshModule(
       deps.state.realtime.locationOptions = features.realtime.buildLocationOptions(
         deps.state.realtime.locationCodes,
       );
-      deps.state.realtime.sensorsSettingsSignature = "";
       features.settings.syncSettingsInputs();
       features.realtime.maybeRenderSensorsSettingsList(true);
       deps.renderSpeedReadout();

@@ -10,14 +10,12 @@ import type {
   SettingsFeatureRealtimePorts,
 } from "./features/settings_feature";
 import type { UpdateFeature } from "./features/update_feature";
-import type { UiTransportFeaturePorts } from "./runtime/ui_live_transport_controller";
 import { createUiRecordingHistoryRefresh } from "./runtime/ui_recording_history_refresh";
 import type { UiShellFeaturePorts } from "./runtime/ui_shell_feature_ports";
 import type { UiStartupFeaturePorts } from "./runtime/ui_startup_feature_ports";
 
 export interface AppFeatureBundle {
   shell: UiShellFeaturePorts;
-  transport: UiTransportFeaturePorts;
   startup: UiStartupFeaturePorts;
 }
 
@@ -33,7 +31,6 @@ export interface AppFeaturesForPorts {
     | "maybeRenderSensorsSettingsList"
     | "renderLoggingStatus"
     | "renderStatus"
-    | "updateClientSelection"
     | "refreshLocationOptions"
     | "refreshLoggingStatus"
   >;
@@ -95,12 +92,6 @@ export function createAppFeaturePorts(features: AppFeaturesForPorts): AppFeature
           syncSettingsInputs: () => features.settings.syncSettingsInputs(),
         },
       },
-    },
-    transport: {
-      updateClientSelection: () => features.realtime.updateClientSelection(),
-      maybeRenderSensorsSettingsList: (force) => features.realtime.maybeRenderSensorsSettingsList(force),
-      renderLoggingStatus: () => features.realtime.renderLoggingStatus(),
-      renderStatus: (clientRow) => features.realtime.renderStatus(clientRow),
     },
     startup: {
       history: {

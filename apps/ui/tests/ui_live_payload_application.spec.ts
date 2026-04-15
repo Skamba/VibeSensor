@@ -54,9 +54,6 @@ test.describe("applyLivePayloadUpdate", () => {
           },
         },
       }),
-      updateClientSelection: () => {
-        state.realtime.selectedClientId = state.realtime.clients[0]?.id ?? null;
-      },
     });
 
     expect(state.realtime.clients.map((client) => client.id)).toEqual(["client-1"]);
@@ -97,9 +94,6 @@ test.describe("applyLivePayloadUpdate", () => {
         speed_mps: 14,
         spectra: null,
       }),
-      updateClientSelection: () => {
-        state.realtime.selectedClientId = "client-1";
-      },
     });
 
     expect(state.spectrum.spectra.clients["client-1"]?.freq).toEqual([1, 2, 3]);
