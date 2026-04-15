@@ -116,9 +116,10 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/update_panel.tsx` | Preact owner for the update settings shell that mounts the update controls and status host while exposing the bridge consumed by the update feature |
 | `app/views/sensors_panel.tsx` | Preact owner for the sensors settings shell that renders the full sensor table and exposes typed identify/remove/location callbacks to the realtime feature |
 | `app/views/speed_source_panel.tsx` | Preact owner for the speed-source shell that mounts the full tab surface and exposes the shared typed bridge consumed by the speed-source and GPS-status modules |
-| `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that renders saved-car guidance/list rows in JSX, mounts the wizard chrome, and exposes typed list and wizard bridges |
+| `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that renders saved-car guidance/list rows plus the full add-car wizard internals in JSX and exposes typed list and wizard bridges |
 | `app/views/cars_feature_bindings.ts` | Typed car-wizard bindings reused as the thin wizard interaction adapter behind the car-management island |
-| `app/views/cars_feature_presenter.ts` | Car-wizard presenter reused as the thin wizard DOM adapter for dialog visibility, step rendering, summary updates, and focus targets |
+| `app/views/cars_feature_presenter.ts` | Thin car-wizard presenter that turns workflow state into typed wizard render models and delegates focus/manual-input access through the island bridge |
+| `app/views/car_wizard_view.ts` | Typed add-car wizard render-model builders for progress, option sections, selected specs, and summary rows reused by the Preact car-management island |
 | `app/features/update_feature.ts` | Thin update facade that binds DOM events, delegates state rendering to the presenter, and delegates update commands to the workflow |
 | `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for update polling, internet-status normalization, and start/cancel command orchestration |
 | `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |

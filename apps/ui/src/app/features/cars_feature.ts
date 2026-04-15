@@ -22,9 +22,8 @@ export interface CarsFeature {
 
 export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
   const presenter = createCarsFeaturePresenter({
-    dom: ctx.panel.dom,
-    escapeHtml: ctx.escapeHtml,
     fmt: ctx.fmt,
+    panel: ctx.panel,
     t: ctx.t,
   });
   const workflow = createCarsFeatureWorkflow({
