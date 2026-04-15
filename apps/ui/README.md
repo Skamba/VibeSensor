@@ -7,6 +7,7 @@ server over HTTP (REST) and WebSocket (live data).
 ## Tech Stack
 
 - **TypeScript** — application logic
+- **Preact + @preact/signals** — UI rendering plus shared reactive state
 - **Vite** — build tool and dev server
 - **uPlot** — high-performance spectrum charts
 - **Playwright** — visual regression testing
@@ -86,6 +87,7 @@ source-of-truth export commands remain the only writers for those files.
 | `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact shell/page/settings islands, then constructs and starts the app runtime |
 | `app/dom/` | Island-host lookup modules plus focused runtime DOM locators such as the spectrum chart surface |
 | `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, focused runtime controllers, and explicit feature port bundles |
+| `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
 | `app/runtime/ui_preact_mount.ts` | Canonical helper for mounting and disposing incremental Preact islands inside existing DOM hosts |
 | `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, and app-level error banner plus the typed shell chrome bridge |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, connection pill/banner, and other chrome state |
@@ -183,8 +185,10 @@ panel islands own their local chrome plus typed bridges. The remaining
 imperative paths are deliberate runtime integrations rather than alternate UI
 renderers: the shell controller still owns app-level status/preference state,
 the spectrum controller still owns the uPlot/canvas lifecycle through
-island-owned chart refs, and a few feature-local presenters still materialize
-typed wizard or status models behind island-owned hosts.
+island-owned chart refs, and a few follow-up migration issues still materialize
+typed wizard or status models behind island-owned hosts. Those transitional
+bridge patterns should not be copied into new work now that the signals
+contract below is available.
 
 Realtime follows that same split explicitly: `realtime_feature.ts` is the thin
 facade, `realtime_feature_workflow.ts` owns the controller-style polling and
@@ -205,6 +209,19 @@ and `shell.css`, `components.css`, `maintenance.css`, `realtime.css`,
 Shared visual state conventions prefer stable data/ARIA selectors such as
 `data-variant`, `data-choice-state`, `data-selected`, and `data-step-state`
 instead of controller-side variant class interpolation.
+
+## Shared reactive state contract
+
+- Import shared reactive primitives from `app/ui_signals.ts` so runtime,
+  feature, presenter, and view code shares one documented signals entrypoint.
+- Use `signal()` for shared state that spans modules or needs to outlive a
+  single component render. Keep component-local transient state in hooks.
+- Use `computed()` for derived state instead of mirroring derived fields onto
+  mutable state bags or manual render-model caches.
+- Use `effect()` only for narrow imperative integrations such as timers,
+  persistence, canvas/uPlot bridges, or other external-library coordination.
+- Existing mutable app-state objects and manual bridge rerenders are follow-up
+  migration residue, not the default pattern for new frontend work.
 
 ## Architecture guardrails
 
