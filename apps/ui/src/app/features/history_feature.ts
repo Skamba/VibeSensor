@@ -108,7 +108,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   }
 
   function renderHistoryTable(): void {
-    panel.render(buildPanelRenderModel());
+    panel.setModel(buildPanelRenderModel());
   }
 
   async function loadRunPreview(runId: string, force = false): Promise<void> {

@@ -49,6 +49,6 @@ export interface HistoryPanelActionHandlers {
 }
 
 export interface HistoryPanelView {
-  render(model: HistoryPanelRenderModel): void;
+  setModel(model: HistoryPanelRenderModel): void;
   bindActions(handlers: HistoryPanelActionHandlers): void;
 }

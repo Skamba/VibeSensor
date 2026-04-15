@@ -1,7 +1,7 @@
-import { h, type ComponentChildren } from "preact";
+import { h, render, type ComponentChildren } from "preact";
 
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import type {
   UpdateCurrentStatusSectionModel,
   UpdateHealthSectionModel,
@@ -41,7 +41,7 @@ export interface UpdatePanelActionHandlers {
 export interface UpdatePanelView {
   readonly dom: UpdatePanelDom;
   bindActions(handlers: UpdatePanelActionHandlers): void;
-  render(model: UpdatePanelRenderModel): void;
+  setModel(model: UpdatePanelRenderModel): void;
 }
 
 type UpdatePanelBridgeState = {
@@ -330,9 +330,9 @@ function UpdateStatusContent(props: {
 }
 
 function UpdatePanel(props: {
-  state: UpdatePanelBridgeState;
+  state: ReadonlySignal<UpdatePanelBridgeState>;
 }) {
-  const { state } = props;
+  const state = props.state.value;
   const { model } = state;
   const t = useUiTranslation();
   return (
@@ -424,27 +424,19 @@ function createUpdatePanelDom(host: HTMLElement): UpdatePanelDom {
 }
 
 export function mountUpdatePanel(host: HTMLElement): UpdatePanelView {
-  let state: UpdatePanelBridgeState = {
+  const state = signal<UpdatePanelBridgeState>({
     actions: null,
     model: DEFAULT_UPDATE_PANEL_MODEL,
-  };
-  const mount = createUiPreactMount(host);
-
-  function render(): void {
-    mount.render(<UpdatePanel state={state} />);
-  }
-
-  render();
+  });
+  render(<UpdatePanel state={state} />, host);
 
   return {
     dom: createUpdatePanelDom(host),
     bindActions(handlers) {
-      state = { ...state, actions: handlers };
-      render();
+      state.value = { ...state.value, actions: handlers };
     },
-    render(model) {
-      state = { ...state, model };
-      render();
+    setModel(model) {
+      state.value = { ...state.value, model };
     },
   };
 }

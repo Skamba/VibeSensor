@@ -231,7 +231,7 @@ test.describe("createEspFlashFeaturePresenter", () => {
     const presenter = createEspFlashFeaturePresenter({
       panel: {
         bindActions() {},
-        render(model) {
+        setModel(model) {
           latestModel = model;
         },
       },

@@ -1,5 +1,6 @@
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { render } from "preact";
 import { useUiTranslation } from "../ui_i18n";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import { HistoryTableBody } from "./history_table_content";
 import type {
   HistoryPanelActionHandlers,
@@ -18,8 +19,8 @@ const DEFAULT_PANEL_STATE: HistoryPanelBridgeState = {
   actions: null,
 };
 
-function HistoryPanel(props: { state: HistoryPanelBridgeState }) {
-  const { state } = props;
+function HistoryPanel(props: { state: ReadonlySignal<HistoryPanelBridgeState> }) {
+  const state = props.state.value;
   const t = useUiTranslation();
 
   return (
@@ -72,23 +73,15 @@ function HistoryPanel(props: { state: HistoryPanelBridgeState }) {
 }
 
 export function mountHistoryPanel(host: HTMLElement): HistoryPanelView {
-  const mount = createUiPreactMount(host);
-  let state: HistoryPanelBridgeState = { ...DEFAULT_PANEL_STATE };
-
-  function render(): void {
-    mount.render(<HistoryPanel state={state} />);
-  }
-
-  render();
+  const state = signal<HistoryPanelBridgeState>({ ...DEFAULT_PANEL_STATE });
+  render(<HistoryPanel state={state} />, host);
 
   return {
-    render(model: HistoryPanelRenderModel): void {
-      state = { ...state, ...model };
-      render();
+    setModel(model: HistoryPanelRenderModel): void {
+      state.value = { ...state.value, ...model };
     },
     bindActions(handlers: HistoryPanelActionHandlers): void {
-      state = { ...state, actions: handlers };
-      render();
+      state.value = { ...state.value, actions: handlers };
     },
   };
 }

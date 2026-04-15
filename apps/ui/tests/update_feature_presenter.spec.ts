@@ -274,7 +274,7 @@ test.describe("createUpdateFeaturePresenter", () => {
           updateTogglePasswordBtn: null,
         },
         bindActions() {},
-        render(model) {
+        setModel(model) {
           latestInternetPanel = model;
         },
       },
@@ -286,7 +286,7 @@ test.describe("createUpdateFeaturePresenter", () => {
           updateStatusPanel: {} as HTMLElement,
         },
         bindActions() {},
-        render(model) {
+        setModel(model) {
           latestUpdatePanel = model;
         },
       },

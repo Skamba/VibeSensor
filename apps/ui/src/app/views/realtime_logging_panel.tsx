@@ -1,4 +1,5 @@
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { render } from "preact";
+
 import { useUiTranslation } from "../ui_i18n";
 import { signal, type ReadonlySignal } from "../ui_signals";
 import { inlineStateActionClass } from "./dom_helpers";
@@ -37,7 +38,7 @@ interface RealtimeLoggingPanelBridgeState extends RealtimeLoggingPanelRenderMode
 }
 
 export interface RealtimeLoggingPanelBridge {
-  render(model: RealtimeLoggingPanelRenderModel): void;
+  setModel(model: RealtimeLoggingPanelRenderModel): void;
   bindActions(handlers: RealtimeLoggingPanelActionHandlers): void;
 }
 
@@ -238,12 +239,11 @@ function RealtimeLoggingPanel(props: {
 }
 
 export function mountRealtimeLoggingPanel(host: HTMLElement): RealtimeLoggingPanelBridge {
-  const mount = createUiPreactMount(host);
   const state = signal<RealtimeLoggingPanelBridgeState>({ ...DEFAULT_PANEL_STATE });
-  mount.render(<RealtimeLoggingPanel state={state} />);
+  render(<RealtimeLoggingPanel state={state} />, host);
 
   return {
-    render(model: RealtimeLoggingPanelRenderModel): void {
+    setModel(model: RealtimeLoggingPanelRenderModel): void {
       state.value = { ...state.value, ...model };
     },
     bindActions(handlers: RealtimeLoggingPanelActionHandlers): void {

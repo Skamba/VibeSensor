@@ -45,7 +45,7 @@ export function createSettingsSpeedSourceModule(
       focusStaleTimeoutInput: ctx.panel.focusStaleTimeoutInput,
       isObdConfigVisible: ctx.panel.isObdConfigVisible,
       render(state): void {
-        ctx.panel.render(buildSettingsSpeedSourcePanelModel(state, presenterDeps));
+        ctx.panel.setModel(buildSettingsSpeedSourcePanelModel(state, presenterDeps));
       },
     },
   });

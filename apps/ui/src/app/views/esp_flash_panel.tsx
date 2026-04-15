@@ -1,8 +1,8 @@
-import { h } from "preact";
+import { h, render } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 
-import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import type { VisualVariant } from "../style_state";
 import {
   MaintenanceReadinessPanel,
@@ -113,7 +113,7 @@ export interface EspFlashPanelActionHandlers {
 
 export interface EspFlashPanelView {
   bindActions(handlers: EspFlashPanelActionHandlers): void;
-  render(model: EspFlashPanelRenderModel): void;
+  setModel(model: EspFlashPanelRenderModel): void;
 }
 
 type EspFlashPanelBridgeState = {
@@ -305,9 +305,9 @@ function EspFlashHistoryContent(props: {
 }
 
 function EspFlashPanel(props: {
-  state: EspFlashPanelBridgeState;
+  state: ReadonlySignal<EspFlashPanelBridgeState>;
 }) {
-  const { state } = props;
+  const state = props.state.value;
   const { model } = state;
   const t = useUiTranslation();
   const logPanelRef = useRef<HTMLDivElement | null>(null);
@@ -544,26 +544,18 @@ function EspFlashPanel(props: {
 }
 
 export function mountEspFlashPanel(host: HTMLElement): EspFlashPanelView {
-  let state: EspFlashPanelBridgeState = {
+  const state = signal<EspFlashPanelBridgeState>({
     actions: null,
     model: DEFAULT_ESP_FLASH_PANEL_MODEL,
-  };
-  const mount = createUiPreactMount(host);
-
-  function render(): void {
-    mount.render(<EspFlashPanel state={state} />);
-  }
-
-  render();
+  });
+  render(<EspFlashPanel state={state} />, host);
 
   return {
     bindActions(handlers) {
-      state = { ...state, actions: handlers };
-      render();
+      state.value = { ...state.value, actions: handlers };
     },
-    render(model) {
-      state = { ...state, model };
-      render();
+    setModel(model) {
+      state.value = { ...state.value, model };
     },
   };
 }
