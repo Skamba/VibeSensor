@@ -6,13 +6,14 @@ import {
 } from "../../api/settings";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
 import type { ShellState } from "../ui_app_state";
+import { signal, type ReadonlySignal } from "../ui_signals";
 
 export interface UiShellPreferencesModule {
+  readonly languageFeedback: ReadonlySignal<SettingsFeedbackMessage | null>;
+  readonly selectedLanguage: ReadonlySignal<string>;
+  readonly selectedSpeedUnit: ReadonlySignal<string>;
+  readonly speedUnitFeedback: ReadonlySignal<SettingsFeedbackMessage | null>;
   clearPreferenceFeedback(): void;
-  getLanguageFeedback(): SettingsFeedbackMessage | null;
-  getSelectedLanguage(): string;
-  getSelectedSpeedUnit(): string;
-  getSpeedUnitFeedback(): SettingsFeedbackMessage | null;
   hydratePersistedPreferences(): Promise<void>;
   saveLanguage(lang: string): Promise<void>;
   saveSpeedUnit(unit: string): Promise<void>;
@@ -21,7 +22,6 @@ export interface UiShellPreferencesModule {
 type UiShellPreferencesDeps = {
   applyLanguage: (forceReloadInsights?: boolean) => void;
   normalizeLanguage: (value: string | null | undefined) => string;
-  onChanged?: () => void;
   renderSpeedReadout: () => void;
   shell: ShellState;
   t: (key: string, vars?: Record<string, unknown>) => string;
@@ -30,14 +30,10 @@ type UiShellPreferencesDeps = {
 export function createUiShellPreferencesModule(
   deps: UiShellPreferencesDeps,
 ): UiShellPreferencesModule {
-  let languageFeedback: SettingsFeedbackMessage | null = null;
-  let speedUnitFeedback: SettingsFeedbackMessage | null = null;
-  let selectedLanguage = deps.shell.lang;
-  let selectedSpeedUnit = deps.shell.speedUnit;
-
-  function notifyChanged(): void {
-    deps.onChanged?.();
-  }
+  const languageFeedback = signal<SettingsFeedbackMessage | null>(null);
+  const speedUnitFeedback = signal<SettingsFeedbackMessage | null>(null);
+  const selectedLanguage = signal(deps.shell.lang);
+  const selectedSpeedUnit = signal(deps.shell.speedUnit);
 
   function speedUnitLabel(value: string): string {
     return deps.t(value === "mps" ? "speed.unit.mps" : "speed.unit.kmh");
@@ -53,12 +49,12 @@ export function createUiShellPreferencesModule(
 
   function applyLanguageValue(rawLanguage: string): void {
     deps.shell.lang = deps.normalizeLanguage(rawLanguage);
-    selectedLanguage = deps.shell.lang;
+    selectedLanguage.value = deps.shell.lang;
   }
 
   function applySpeedUnitValue(rawUnit: string): void {
     deps.shell.speedUnit = normalizeSpeedUnit(rawUnit);
-    selectedSpeedUnit = deps.shell.speedUnit;
+    selectedSpeedUnit.value = deps.shell.speedUnit;
   }
 
   function buildSaveFailureFeedback(
@@ -78,22 +74,13 @@ export function createUiShellPreferencesModule(
   }
 
   return {
+    languageFeedback,
+    selectedLanguage,
+    selectedSpeedUnit,
+    speedUnitFeedback,
     clearPreferenceFeedback() {
-      languageFeedback = null;
-      speedUnitFeedback = null;
-      notifyChanged();
-    },
-    getLanguageFeedback() {
-      return languageFeedback;
-    },
-    getSelectedLanguage() {
-      return selectedLanguage;
-    },
-    getSelectedSpeedUnit() {
-      return selectedSpeedUnit;
-    },
-    getSpeedUnitFeedback() {
-      return speedUnitFeedback;
+      languageFeedback.value = null;
+      speedUnitFeedback.value = null;
     },
     async hydratePersistedPreferences() {
       try {
@@ -118,41 +105,37 @@ export function createUiShellPreferencesModule(
     async saveLanguage(lang) {
       const nextLanguage = deps.normalizeLanguage(lang);
       const previousLanguage = deps.shell.lang;
-      languageFeedback = null;
-      selectedLanguage = nextLanguage;
-      notifyChanged();
+      languageFeedback.value = null;
+      selectedLanguage.value = nextLanguage;
       try {
         const payload = await setSettingsLanguage(nextLanguage);
         applyLanguageValue(payload?.language || nextLanguage);
         deps.applyLanguage(true);
       } catch (error) {
-        selectedLanguage = previousLanguage;
-        languageFeedback = buildSaveFailureFeedback(
+        selectedLanguage.value = previousLanguage;
+        languageFeedback.value = buildSaveFailureFeedback(
           deps.t("settings.language"),
           languageLabel(previousLanguage),
           error,
         );
-        notifyChanged();
       }
     },
     async saveSpeedUnit(unit) {
       const nextUnit = normalizeSpeedUnit(unit);
       const previousUnit = deps.shell.speedUnit;
-      speedUnitFeedback = null;
-      selectedSpeedUnit = nextUnit;
-      notifyChanged();
+      speedUnitFeedback.value = null;
+      selectedSpeedUnit.value = nextUnit;
       try {
         const payload = await setSettingsSpeedUnit(nextUnit);
         applySpeedUnitValue(payload?.speed_unit || nextUnit);
         deps.renderSpeedReadout();
       } catch (error) {
-        selectedSpeedUnit = previousUnit;
-        speedUnitFeedback = buildSaveFailureFeedback(
+        selectedSpeedUnit.value = previousUnit;
+        speedUnitFeedback.value = buildSaveFailureFeedback(
           deps.t("speed.unit"),
           speedUnitLabel(previousUnit),
           error,
         );
-        notifyChanged();
       }
     },
   };
