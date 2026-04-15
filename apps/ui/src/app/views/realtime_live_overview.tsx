@@ -1,5 +1,6 @@
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
+import { signal, type ReadonlySignal } from "../ui_signals";
 
 export interface RealtimeLiveOverviewActiveCarModel {
   text: string;
@@ -57,8 +58,8 @@ const DEFAULT_OVERVIEW_STATE: RealtimeLiveOverviewBridgeState = {
   speedText: "--",
 };
 
-function RealtimeLiveOverview(props: { state: RealtimeLiveOverviewBridgeState }) {
-  const { state } = props;
+function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOverviewBridgeState> }) {
+  const state = props.state.value;
   const t = useUiTranslation();
 
   return (
@@ -198,22 +199,15 @@ export function createNullRealtimeLiveOverviewBridge(): RealtimeLiveOverviewBrid
 
 export function mountRealtimeLiveOverview(host: HTMLElement): RealtimeLiveOverviewBridge {
   const mount = createUiPreactMount(host);
-  let state: RealtimeLiveOverviewBridgeState = { ...DEFAULT_OVERVIEW_STATE };
-
-  function render(): void {
-    mount.render(<RealtimeLiveOverview state={state} />);
-  }
-
-  render();
+  const state = signal<RealtimeLiveOverviewBridgeState>({ ...DEFAULT_OVERVIEW_STATE });
+  mount.render(<RealtimeLiveOverview state={state} />);
 
   return {
     render(model: RealtimeLiveOverviewRenderModel): void {
-      state = { ...state, ...model };
-      render();
+      state.value = { ...state.value, ...model };
     },
     setSpeedText(text: string): void {
-      state = { ...state, speedText: text };
-      render();
+      state.value = { ...state.value, speedText: text };
     },
   };
 }
