@@ -2,10 +2,6 @@ import { expect, test } from "@playwright/test";
 
 import { createAppState } from "../src/app/ui_app_state";
 import {
-  createUiShellLanguageRefreshModule,
-  type UiShellLanguageRefreshFeaturePorts,
-} from "../src/app/runtime/ui_shell_language_refresh_module";
-import {
   DEFAULT_SHELL_VIEW_ID,
   createUiShellNavigationModule,
 } from "../src/app/runtime/ui_shell_navigation_module";
@@ -43,23 +39,6 @@ function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : key;
 }
 
-function installShellDocument() {
-  const originalDocument = (globalThis as { document?: Document }).document;
-  const documentElement = { lang: "" } as HTMLElement;
-  (globalThis as { document?: Document }).document = {
-    documentElement,
-    querySelectorAll() {
-      throw new Error("language refresh should not sweep [data-i18n] nodes");
-    },
-  } as unknown as Document;
-  return {
-    documentElement,
-    restore() {
-      (globalThis as { document?: Document }).document = originalDocument;
-    },
-  };
-}
-
 test.describe("createUiShellNavigationModule", () => {
   test("setActiveView updates signal-backed state and falls back to dashboard", () => {
     const state = createAppState();
@@ -94,19 +73,11 @@ test.describe("createUiShellPreferencesModule", () => {
   test("hydrates persisted language and speed unit from the server", async () => {
     const state = createAppState();
     const requests: string[] = [];
-    const applyLanguageCalls: boolean[] = [];
-    let renderSpeedReadoutCalls = 0;
 
     const module = createUiShellPreferencesModule({
       shell: state.shell,
       t: (key) => key,
       normalizeLanguage: (lang) => String(lang),
-      applyLanguage: (forceReloadInsights = false) => {
-        applyLanguageCalls.push(forceReloadInsights);
-      },
-      renderSpeedReadout: () => {
-        renderSpeedReadoutCalls += 1;
-      },
     });
 
     await withMockFetch(
@@ -134,23 +105,16 @@ test.describe("createUiShellPreferencesModule", () => {
     expect(state.shell.speedUnit).toBe("mps");
     expect(module.selectedLanguage.value).toBe("nl");
     expect(module.selectedSpeedUnit.value).toBe("mps");
-    expect(applyLanguageCalls).toEqual([true]);
-    expect(renderSpeedReadoutCalls).toBe(1);
   });
 
   test("keeps the pending language selection visible until the save resolves", async () => {
     const state = createAppState();
-    const applyLanguageCalls: boolean[] = [];
     let resolveResponse: ((response: Response) => void) | null = null;
 
     const module = createUiShellPreferencesModule({
       shell: state.shell,
       t: (key) => key,
       normalizeLanguage: (lang) => String(lang),
-      applyLanguage: (forceReloadInsights = false) => {
-        applyLanguageCalls.push(forceReloadInsights);
-      },
-      renderSpeedReadout: () => undefined,
     });
 
     await withMockFetch(
@@ -169,7 +133,6 @@ test.describe("createUiShellPreferencesModule", () => {
 
     expect(state.shell.lang).toBe("nl");
     expect(module.selectedLanguage.value).toBe("nl");
-    expect(applyLanguageCalls).toEqual([true]);
   });
 
   test("save failure restores the previous speed unit and reports inline field feedback", async () => {
@@ -179,8 +142,6 @@ test.describe("createUiShellPreferencesModule", () => {
       shell: state.shell,
       t: testTranslation,
       normalizeLanguage: (lang) => String(lang),
-      applyLanguage: () => undefined,
-      renderSpeedReadout: () => undefined,
     });
 
     await withMockFetch(
@@ -276,6 +237,29 @@ test.describe("createUiShellStatusModule", () => {
     });
   });
 
+  test("recomputes websocket badge copy when the shell language changes", () => {
+    const state = createAppState();
+    const module = createUiShellStatusModule({
+      realtime: state.realtime,
+      settings: state.settings,
+      shell: state.shell,
+      t: (key) => `${state.shell.lang}:${key}`,
+      transport: state.transport,
+    });
+
+    expect(module.wsLinkState.value).toEqual({
+      text: "en:ws.connecting",
+      variant: "muted",
+    });
+
+    state.shell.lang = "nl";
+
+    expect(module.wsLinkState.value).toEqual({
+      text: "nl:ws.connecting",
+      variant: "muted",
+    });
+  });
+
   test("renders speed override after car bootstrap resolves", () => {
     const state = createAppState();
     state.realtime.speedMps = 12;
@@ -315,125 +299,5 @@ test.describe("createUiShellStatusModule", () => {
 
     expect(module.speedReadoutText.value).toContain("speed.obd2");
     expect(module.speedReadoutText.value).toContain('"unit":"speed.unit.kmh"');
-  });
-});
-
-test.describe("createUiShellLanguageRefreshModule", () => {
-  test("applies the cross-feature language refresh sequence without a global i18n sweep", () => {
-    const state = createAppState();
-    state.shell.lang = "nl";
-    state.realtime.locationCodes = ["front_left_wheel"];
-    let destroyCalls = 0;
-    state.spectrum.spectrumPlot = {
-      destroy() {
-        destroyCalls += 1;
-      },
-    } as unknown as NonNullable<typeof state.spectrum.spectrumPlot>;
-
-    const documentHarness = installShellDocument();
-    let renderSpeedReadoutCalls = 0;
-    let renderWsStateCalls = 0;
-    let renderSpectrumCalls = 0;
-    let updateSpectrumOverlayCalls = 0;
-    const portCalls: string[] = [];
-
-    const module = createUiShellLanguageRefreshModule({
-      state,
-      renderSpeedReadout: () => {
-        renderSpeedReadoutCalls += 1;
-      },
-      renderWsState: () => {
-        renderWsStateCalls += 1;
-      },
-      renderSpectrum: () => {
-        renderSpectrumCalls += 1;
-      },
-      updateSpectrumOverlay: () => {
-        updateSpectrumOverlayCalls += 1;
-      },
-    });
-
-    const ports: UiShellLanguageRefreshFeaturePorts = {
-      history: {
-        reloadExpandedRunOnLanguageChange() {
-          portCalls.push("reloadExpandedRunOnLanguageChange");
-        },
-        renderHistoryTable() {
-          portCalls.push("renderHistoryTable");
-        },
-      },
-      settings: {
-        syncSettingsInputs() {
-          portCalls.push("syncSettingsInputs");
-        },
-      },
-    };
-
-    try {
-      module.applyLanguage(ports, true);
-    } finally {
-      documentHarness.restore();
-    }
-
-    expect(documentHarness.documentElement.lang).toBe("nl");
-    expect(portCalls).toEqual([
-      "syncSettingsInputs",
-      "renderHistoryTable",
-      "reloadExpandedRunOnLanguageChange",
-    ]);
-    expect(renderSpeedReadoutCalls).toBe(1);
-    expect(renderWsStateCalls).toBe(1);
-    expect(destroyCalls).toBe(1);
-    expect(state.spectrum.spectrumPlot).toBeNull();
-    expect(renderSpectrumCalls).toBe(1);
-    expect(updateSpectrumOverlayCalls).toBe(1);
-  });
-
-  test("skips spectrum rebuild and expanded-history reload when not needed", () => {
-    const state = createAppState();
-    state.realtime.locationCodes = ["rear_left_wheel"];
-    const documentHarness = installShellDocument();
-    let renderSpectrumCalls = 0;
-    let updateSpectrumOverlayCalls = 0;
-    const portCalls: string[] = [];
-
-    const module = createUiShellLanguageRefreshModule({
-      state,
-      renderSpeedReadout: () => undefined,
-      renderWsState: () => undefined,
-      renderSpectrum: () => {
-        renderSpectrumCalls += 1;
-      },
-      updateSpectrumOverlay: () => {
-        updateSpectrumOverlayCalls += 1;
-      },
-    });
-
-    try {
-      module.applyLanguage({
-        history: {
-          reloadExpandedRunOnLanguageChange() {
-            portCalls.push("reloadExpandedRunOnLanguageChange");
-          },
-          renderHistoryTable() {
-            portCalls.push("renderHistoryTable");
-          },
-        },
-        settings: {
-          syncSettingsInputs() {
-            portCalls.push("syncSettingsInputs");
-          },
-        },
-      });
-    } finally {
-      documentHarness.restore();
-    }
-
-    expect(portCalls).toEqual([
-      "syncSettingsInputs",
-      "renderHistoryTable",
-    ]);
-    expect(renderSpectrumCalls).toBe(0);
-    expect(updateSpectrumOverlayCalls).toBe(1);
   });
 });

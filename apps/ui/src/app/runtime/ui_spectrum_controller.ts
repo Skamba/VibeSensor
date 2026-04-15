@@ -42,8 +42,10 @@ export class UiSpectrumController {
       setSeriesIsolation: (seriesIndex) => this.canvas.setSeriesIsolation(seriesIndex),
       requestPlotRefresh: () => this.canvas.refreshDecorations(),
     });
+    this.renderSpectrumHeader();
     this.updateSpectrumOverlay();
     this.bindReactiveTransportSync();
+    this.bindReactiveLanguageSync();
   }
 
   private get state(): AppState {
@@ -58,11 +60,15 @@ export class UiSpectrumController {
     this.setSpectrumOverlay(this.spectrumOverlayMessage());
   }
 
-  renderSpectrum(): void {
+  private renderSpectrumHeader(): void {
     this.panel.renderHeader({
       titleText: this.t("chart.spectrum_title"),
       hintText: this.t("spectrum.controls_hint"),
     });
+  }
+
+  renderSpectrum(): void {
+    this.renderSpectrumHeader();
     const prepared = this.canvas.prepareFrame();
     this.state.spectrum.chartBands = prepared.chartBands;
     this.state.spectrum.hasSpectrumData = prepared.hasData;
@@ -100,6 +106,34 @@ export class UiSpectrumController {
 
   private setSpectrumOverlay(message: string | null): void {
     this.panel.renderOverlay(message);
+  }
+
+  private bindReactiveLanguageSync(): void {
+    let initialized = false;
+    let previousLanguage = this.state.shell.lang;
+    effect(() => {
+      trackAppStateSlice(this.state.shell);
+      const currentLanguage = this.state.shell.lang;
+      if (!initialized) {
+        initialized = true;
+        previousLanguage = currentLanguage;
+        return;
+      }
+      if (currentLanguage === previousLanguage) {
+        return;
+      }
+      previousLanguage = currentLanguage;
+      untracked(() => {
+        if (this.state.spectrum.spectrumPlot) {
+          this.state.spectrum.spectrumPlot.destroy();
+          this.state.spectrum.spectrumPlot = null;
+          this.renderSpectrum();
+          return;
+        }
+        this.renderSpectrumHeader();
+        this.updateSpectrumOverlay();
+      });
+    });
   }
 
   private bindReactiveTransportSync(): void {

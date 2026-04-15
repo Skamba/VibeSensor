@@ -12,12 +12,6 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     bindHandlers() {
       calls.push("history.bindHandlers");
     },
-    renderHistoryTable() {
-      calls.push("history.renderHistoryTable");
-    },
-    reloadExpandedRunOnLanguageChange() {
-      calls.push("history.reloadExpandedRunOnLanguageChange");
-    },
     async refreshHistory() {
       calls.push("history.refreshHistory");
     },
@@ -93,9 +87,6 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
   await recording.onRecordingStatusChanged();
 
   bundle.shell.bindHandlers();
-  bundle.shell.languageRefresh.history.renderHistoryTable();
-  bundle.shell.languageRefresh.history.reloadExpandedRunOnLanguageChange();
-  bundle.shell.languageRefresh.settings.syncSettingsInputs();
 
   await bundle.startup.history.refreshHistory();
   await bundle.startup.realtime.refreshLocationOptions();
@@ -112,9 +103,6 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     "history.bindHandlers",
     "update.bindUpdateHandlers",
     "espFlash.bindHandlers",
-    "history.renderHistoryTable",
-    "history.reloadExpandedRunOnLanguageChange",
-    "settings.syncSettingsInputs",
     "history.refreshHistory",
     "realtime.refreshLocationOptions",
     "realtime.refreshLoggingStatus",

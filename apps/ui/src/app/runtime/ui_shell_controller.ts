@@ -11,11 +11,6 @@ import {
   type ReadonlySignal,
 } from "../ui_signals";
 import {
-  createUiShellLanguageRefreshModule,
-  type UiShellLanguageRefreshFeaturePorts,
-  type UiShellLanguageRefreshModule,
-} from "./ui_shell_language_refresh_module";
-import {
   createUiShellNavigationModule,
   type UiShellNavigationModule,
 } from "./ui_shell_navigation_module";
@@ -48,11 +43,8 @@ type UiShellControllerDeps = {
   bindFeatureHandlers: () => void;
   chrome: UiShellChromeView;
   chromeActions: UiShellChromeActionBridge;
-  languageRefreshPorts: () => UiShellLanguageRefreshFeaturePorts;
   liveOverview: RealtimeLiveOverviewBridge;
-  renderSpectrum: () => void;
   state: AppState;
-  updateSpectrumOverlay: () => void;
 };
 
 function normalizeBadgeVariant(variant: string): VisualVariant {
@@ -78,13 +70,9 @@ export class UiShellController {
 
   private readonly status: UiShellStatusModule;
 
-  private readonly languageRefresh: UiShellLanguageRefreshModule;
-
   private readonly chromeRenderModel: ReadonlySignal<UiShellChromeRenderModel>;
 
   private readonly bindFeatureHandlers: () => void;
-
-  private readonly getLanguageRefreshPorts: () => UiShellLanguageRefreshFeaturePorts;
 
   private readonly liveStatusBadge = signal<UiShellBadgeModel>({
     text: "No live signal",
@@ -93,12 +81,10 @@ export class UiShellController {
 
   constructor(deps: UiShellControllerDeps) {
     this.state = deps.state;
-    setUiLanguage(this.state.shell.lang);
     this.chrome = deps.chrome;
     this.appShellWrap = queryOne<HTMLElement>(".wrap");
     this.liveOverview = deps.liveOverview;
     this.bindFeatureHandlers = deps.bindFeatureHandlers;
-    this.getLanguageRefreshPorts = deps.languageRefreshPorts;
     this.navigation = createUiShellNavigationModule({
       shell: this.state.shell,
       viewIds: SHELL_NAV_ITEMS.map((item) => item.viewId),
@@ -120,22 +106,14 @@ export class UiShellController {
       shell: this.state.shell,
       t: (key, vars) => this.t(key, vars),
       normalizeLanguage: (lang) => I18N.normalizeLang(lang ?? ""),
-      applyLanguage: (forceReloadInsights = false) => this.applyLanguage(forceReloadInsights),
-      renderSpeedReadout: () => this.renderSpeedReadout(),
     });
     deps.chromeActions.attach({
       activateView: (viewId) => this.setActiveView(viewId),
       saveLanguage: (lang) => this.preferences.saveLanguage(lang),
       saveSpeedUnit: (unit) => this.preferences.saveSpeedUnit(unit),
     });
-    this.languageRefresh = createUiShellLanguageRefreshModule({
-      state: this.state,
-      renderSpeedReadout: () => this.renderSpeedReadout(),
-      renderWsState: () => this.renderWsState(),
-      renderSpectrum: () => deps.renderSpectrum(),
-      updateSpectrumOverlay: () => deps.updateSpectrumOverlay(),
-    });
     this.chromeRenderModel = this.createChromeRenderModel();
+    this.bindReactiveLanguageSync();
     this.bindReactiveStatusSync();
   }
 
@@ -157,14 +135,6 @@ export class UiShellController {
     });
   }
 
-  renderWsState(): void {
-    untracked(() => {
-      if (this.appShellWrap) {
-        this.appShellWrap.dataset.connectionState = this.status.connectionState.value;
-      }
-    });
-  }
-
   setLiveStatus(variant: string, text: string): void {
     this.liveStatusBadge.value = {
       text,
@@ -180,22 +150,37 @@ export class UiShellController {
     this.navigation.setActiveView(viewId);
   }
 
-  applyLanguage(forceReloadInsights = false): void {
-    setUiLanguage(this.state.shell.lang);
-    this.languageRefresh.applyLanguage(
-      this.getLanguageRefreshPorts(),
-      forceReloadInsights,
-    );
-  }
-
   start(defaultViewId: string): void {
     this.bindFeatureHandlers();
-    this.applyLanguage(false);
     this.setActiveView(defaultViewId);
   }
 
   async hydratePersistedPreferences(): Promise<void> {
     await this.preferences.hydratePersistedPreferences();
+  }
+
+  private bindReactiveLanguageSync(): void {
+    let initialized = false;
+    let previousLanguage = this.state.shell.lang;
+    effect(() => {
+      trackAppStateSlice(this.state.shell);
+      const currentLanguage = this.state.shell.lang;
+      if (!initialized) {
+        initialized = true;
+        previousLanguage = currentLanguage;
+      } else if (currentLanguage === previousLanguage) {
+        return;
+      } else {
+        previousLanguage = currentLanguage;
+      }
+      untracked(() => {
+        setUiLanguage(currentLanguage);
+        const documentElement = globalThis.document?.documentElement;
+        if (documentElement) {
+          documentElement.lang = currentLanguage;
+        }
+      });
+    });
   }
 
   private bindReactiveStatusSync(): void {
