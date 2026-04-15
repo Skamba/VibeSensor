@@ -2,12 +2,13 @@ import { expect, test } from "@playwright/test";
 
 import { createSettingsSpeedSourceModule } from "../src/app/features/settings_speed_source_module";
 import { createAppState } from "../src/app/ui_app_state";
+import { signal } from "../src/app/ui_signals";
 import type { SpeedSourcePanelActionHandlers } from "../src/app/views/speed_source_panel";
 
 test("bindHandlers uses typed panel actions and navigation subscriptions", () => {
   let handlers: SpeedSourcePanelActionHandlers | null = null;
+  const activeViewId = signal("settingsView");
   let settingsTabListener: ((tabId: string) => void) | null = null;
-  let primaryViewListener: ((viewId: string) => void) | null = null;
 
   const module = createSettingsSpeedSourceModule({
     settings: createAppState().settings,
@@ -33,11 +34,8 @@ test("bindHandlers uses typed panel actions and navigation subscriptions", () =>
     },
     getSpeedUnit: () => "kmh",
     ports: {
+      activeViewId,
       renderSpeedReadout() {},
-      subscribePrimaryViewChanges(listener) {
-        primaryViewListener = listener;
-        return () => undefined;
-      },
       subscribeSettingsTabChanges(listener) {
         settingsTabListener = listener;
         return () => undefined;
@@ -54,13 +52,12 @@ test("bindHandlers uses typed panel actions and navigation subscriptions", () =>
   expect(typeof handlers?.onScanObdDevices).toBe("function");
   expect(typeof handlers?.onPairObdDevice).toBe("function");
   expect(settingsTabListener).not.toBeNull();
-  expect(primaryViewListener).not.toBeNull();
 
   expect(() => {
     handlers?.onSpeedSourceChanged("manual");
     handlers?.onManualSpeedInput("80");
     handlers?.onStaleTimeoutInput("5");
     settingsTabListener?.("analysisTab");
-    primaryViewListener?.("dashboardView");
+    activeViewId.value = "dashboardView";
   }).not.toThrow();
 });

@@ -1,6 +1,7 @@
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarSelectionDerivedState } from "../car_selection_state";
 import type { SettingsState, ShellState } from "../ui_app_state";
+import type { ReadonlySignal } from "../ui_signals";
 import type { CarsPayload } from "../../transport/http_models";
 import {
   createSettingsAnalysisModule,
@@ -37,8 +38,7 @@ interface SettingsFeaturePanelDeps {
 
 interface SettingsFeaturePortDeps {
   openCarWizard: () => void;
-  getActiveViewId: () => string;
-  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
+  activeViewId: ReadonlySignal<string>;
   view: SettingsFeatureViewPorts;
 }
 
@@ -105,8 +105,8 @@ export function createSettingsFeature(
       formatting,
       getSpeedUnit: () => ctx.state.shell.speedUnit,
       ports: {
+        activeViewId: ctx.ports.activeViewId,
         renderSpeedReadout: ctx.ports.view.renderSpeedReadout,
-        subscribePrimaryViewChanges: ctx.ports.subscribePrimaryViewChanges,
         subscribeSettingsTabChanges:
           ctx.panels.settingsShell.subscribeActiveTabChanges,
       },
@@ -122,10 +122,9 @@ export function createSettingsFeature(
       getSpeedUnit: () => ctx.state.shell.speedUnit,
       ports: {
         getActiveSettingsTabId: () => ctx.panels.settingsShell.getActiveTabId(),
-        getActiveViewId: ctx.ports.getActiveViewId,
+        activeViewId: ctx.ports.activeViewId,
         syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
         renderSpeedReadout: ctx.ports.view.renderSpeedReadout,
-        subscribePrimaryViewChanges: ctx.ports.subscribePrimaryViewChanges,
         subscribeSettingsTabChanges:
           ctx.panels.settingsShell.subscribeActiveTabChanges,
       },
@@ -139,8 +138,8 @@ export function createSettingsFeature(
     ports: {
       openAnalysisTab: () => openSettingsTab("analysisTab"),
       openCarWizard: ctx.ports.openCarWizard,
+      activeViewId: ctx.ports.activeViewId,
       renderSpectrum: ctx.ports.view.renderSpectrum,
-      subscribePrimaryViewChanges: ctx.ports.subscribePrimaryViewChanges,
       subscribeSettingsTabChanges:
         ctx.panels.settingsShell.subscribeActiveTabChanges,
       syncAnalysisInputs: analysisModule.syncSettingsInputs,

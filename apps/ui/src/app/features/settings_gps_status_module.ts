@@ -2,7 +2,11 @@ import { getSettingsObdStatus, getSpeedSourceStatus } from "../../api";
 import { GPS_POLL_FAST_MS, GPS_POLL_SLOW_MS } from "../../config";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import type { SettingsState } from "../ui_app_state";
-import { computed, signal } from "../ui_signals";
+import {
+  computed,
+  signal,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 import {
   buildSpeedSourceDiagnosticsRenderModel,
@@ -12,10 +16,9 @@ import { createPollingController } from "./polling_controller";
 
 interface SettingsGpsStatusModulePorts {
   getActiveSettingsTabId: () => string;
-  getActiveViewId: () => string;
+  activeViewId: ReadonlySignal<string>;
   syncSpeedSourceSelectionUi: () => void;
   renderSpeedReadout: () => void;
-  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
   subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
 }
 
@@ -39,7 +42,6 @@ export function createSettingsGpsStatusModule(
   const { panel, settings } = ctx;
   const handlersBound = signal(false);
   const startupReady = signal(false);
-  const activeViewId = signal(ctx.ports.getActiveViewId());
   const activeSettingsTabId = signal(ctx.ports.getActiveSettingsTabId());
   const presenterDeps: SettingsSpeedSourcePresenterDeps = {
     fmt: ctx.formatting.fmt,
@@ -50,17 +52,14 @@ export function createSettingsGpsStatusModule(
     handlersBound.value
     && startupReady.value
     && (
-      activeViewId.value === "dashboardView"
+      ctx.ports.activeViewId.value === "dashboardView"
       || (
-        activeViewId.value === "settingsView"
+        ctx.ports.activeViewId.value === "settingsView"
         && activeSettingsTabId.value === "speedSourceTab"
       )
     )
   );
 
-  ctx.ports.subscribePrimaryViewChanges((viewId) => {
-    activeViewId.value = viewId;
-  });
   ctx.ports.subscribeSettingsTabChanges((tabId) => {
     activeSettingsTabId.value = tabId;
   });

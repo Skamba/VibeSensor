@@ -26,6 +26,7 @@ import {
 } from "./async_test_helpers";
 import type { TimerHarness } from "./async_test_helpers";
 import { createPanel, installFakeDomGlobals } from "./dom_render_test_support";
+import { signal } from "../src/app/ui_signals";
 
 type ClickListener = (() => void) | null;
 
@@ -513,21 +514,14 @@ function renderEspFlashPanelDom(
 }
 
 function createFeatureNavigationHarness(defaultTabId: string) {
-  let activeViewId = "settingsView";
+  const activeViewId = signal("settingsView");
   let activeSettingsTabId = defaultTabId;
-  const primaryViewListeners = new Set<(viewId: string) => void>();
   const settingsTabListeners = new Set<(tabId: string) => void>();
 
   return {
     ports: {
       getActiveSettingsTabId: () => activeSettingsTabId,
-      getActiveViewId: () => activeViewId,
-      subscribePrimaryViewChanges(listener: (viewId: string) => void) {
-        primaryViewListeners.add(listener);
-        return () => {
-          primaryViewListeners.delete(listener);
-        };
-      },
+      activeViewId,
       subscribeSettingsTabChanges(listener: (tabId: string) => void) {
         settingsTabListeners.add(listener);
         return () => {
@@ -542,10 +536,7 @@ function createFeatureNavigationHarness(defaultTabId: string) {
       }
     },
     setActiveViewId(nextViewId: string) {
-      activeViewId = nextViewId;
-      for (const listener of primaryViewListeners) {
-        listener(nextViewId);
-      }
+      activeViewId.value = nextViewId;
     },
   };
 }

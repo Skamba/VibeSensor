@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { createSettingsCarsModule } from "../src/app/features/settings_cars_module";
+import { signal } from "../src/app/ui_signals";
 import type { CarsListRenderModel, CarsListPanelView } from "../src/app/views/cars_panel";
 import { createAppState } from "../src/app/ui_app_state";
 import type { CarsPayload } from "../src/transport/http_models";
@@ -16,8 +17,8 @@ function lastRender(renders: CarsListRenderModel[]): CarsListRenderModel {
 test("settings cars module dismisses transient creation feedback through typed tab and view callbacks", () => {
   const state = createAppState().settings;
   const renders: CarsListRenderModel[] = [];
+  const activeViewId = signal("settingsView");
   let settingsTabListener: ((tabId: string) => void) | null = null;
-  let primaryViewListener: ((viewId: string) => void) | null = null;
 
   const panel: CarsListPanelView = {
     bindActions() {},
@@ -37,17 +38,10 @@ test("settings cars module dismisses transient creation feedback through typed t
       panel,
     },
     ports: {
+      activeViewId,
       openAnalysisTab: () => undefined,
       openCarWizard: () => undefined,
       renderSpectrum: () => undefined,
-      subscribePrimaryViewChanges(listener) {
-        primaryViewListener = listener;
-        return () => {
-          if (primaryViewListener === listener) {
-            primaryViewListener = null;
-          }
-        };
-      },
       subscribeSettingsTabChanges(listener) {
         settingsTabListener = listener;
         return () => {
@@ -117,7 +111,7 @@ test("settings cars module dismisses transient creation feedback through typed t
   expect(dismissedByTab.table.rows[0].highlightedStatusText).toBeNull();
 
   module.showCarCreationSuccess("car-1", "Track Demo");
-  primaryViewListener?.("dashboardView");
+  activeViewId.value = "dashboardView";
 
   const dismissedByView = lastRender(renders);
   expect(dismissedByView.guidance).toBeNull();
