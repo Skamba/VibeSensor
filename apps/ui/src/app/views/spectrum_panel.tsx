@@ -90,7 +90,7 @@ function SpectrumPanel(props: {
   return (
     <>
       <div class="card__header">
-        <div class="card__title" data-i18n="chart.spectrum_title">
+        <div class="card__title">
           {t("chart.spectrum_title", state.header.titleText)}
         </div>
       </div>
@@ -113,7 +113,7 @@ function SpectrumPanel(props: {
       </div>
       <div class="spectrum-controls-panel">
         <div class="spectrum-toolbar">
-          <div class="card__subtle spectrum-toolbar__hint" data-i18n="spectrum.controls_hint">
+          <div class="card__subtle spectrum-toolbar__hint">
             {t("spectrum.controls_hint", state.header.hintText)}
           </div>
           <div class="spectrum-toolbar__bands">

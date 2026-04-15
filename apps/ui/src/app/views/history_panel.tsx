@@ -35,7 +35,7 @@ function HistoryPanel(props: { state: HistoryPanelBridgeState }) {
             id="refreshHistoryBtn"
             class="btn btn--muted"
             type="button"
-            data-i18n="history.refresh"
+
             onClick={() => state.actions?.onRefreshHistory()}
           >
             {t("history.refresh", "Refresh History")}
@@ -44,7 +44,7 @@ function HistoryPanel(props: { state: HistoryPanelBridgeState }) {
             id="deleteAllRunsBtn"
             class="btn btn--danger-quiet"
             type="button"
-            data-i18n="history.delete_all"
+
             disabled={state.deleteAllRunsDisabled}
             onClick={() => state.actions?.onDeleteAllRuns()}
           >
@@ -55,12 +55,12 @@ function HistoryPanel(props: { state: HistoryPanelBridgeState }) {
       <table class="history-table">
         <thead>
           <tr>
-            <th data-i18n="history.table.file">{t("history.table.file", "Run")}</th>
-            <th data-i18n="history.table.updated">{t("history.table.updated", "Started")}</th>
-            <th class="numeric" data-i18n="history.table.size">
+            <th>{t("history.table.file", "Run")}</th>
+            <th>{t("history.table.updated", "Started")}</th>
+            <th class="numeric">
               {t("history.table.size", "Samples")}
             </th>
-            <th data-i18n="history.table.actions">{t("history.table.actions", "Actions")}</th>
+            <th>{t("history.table.actions", "Actions")}</th>
           </tr>
         </thead>
         <tbody id="historyTableBody">

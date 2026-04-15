@@ -221,6 +221,8 @@ instead of controller-side variant class interpolation.
   mutable state bags or manual render-model caches.
 - Use `effect()` only for narrow imperative integrations such as timers,
   persistence, canvas/uPlot bridges, or other external-library coordination.
+- Preact-rendered copy comes from `useUiTranslation()`. Do not leave
+  `data-i18n` attributes in JSX unless a non-Preact consumer still reads them.
 - Existing mutable app-state objects and manual bridge rerenders are follow-up
   migration residue, not the default pattern for new frontend work.
 
