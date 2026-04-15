@@ -720,6 +720,9 @@ function createUpdateDeps() {
     internetPanel: {
       dom: internetDom,
       bindActions(handlers: InternetPanelActionHandlers) {
+        internetDom.updatePasswordInput?.addEventListener("input", () => {
+          handlers.onPasswordInput(internetDom.updatePasswordInput?.value ?? "");
+        });
         internetDom.updateTogglePasswordBtn?.addEventListener("click", () => {
           handlers.onTogglePassword();
         });
@@ -749,6 +752,7 @@ function createUpdateDeps() {
     updateTransportWifiRadio,
     updateTransportUsbRadio,
     updateUsbTransportSummary,
+    updateSsidInput,
     updatePasswordInput,
     updateStartBtn,
     updateCancelBtn,
@@ -1251,6 +1255,9 @@ test.describe("createUpdateFeature polling", () => {
       const deps = createUpdateDeps();
       const feature = createUpdateFeature(deps);
 
+      feature.bindUpdateHandlers();
+      deps.updateSsidInput.value = "MyWiFi";
+      deps.updateSsidInput.dispatchEvent(new Event("input"));
       feature.startPolling();
       await flushAsyncWork();
 
@@ -1454,9 +1461,11 @@ test.describe("createUpdateFeature polling", () => {
 
     try {
       const deps = createUpdateDeps();
-      deps.internetPanel.dom.updateSsidInput.value = "Driver-entered Wi-Fi";
       const feature = createUpdateFeature(deps);
 
+      feature.bindUpdateHandlers();
+      deps.updateSsidInput.value = "Driver-entered Wi-Fi";
+      deps.updateSsidInput.dispatchEvent(new Event("input"));
       feature.startPolling();
       await flushAsyncWork();
 
@@ -1498,6 +1507,9 @@ test.describe("createUpdateFeature polling", () => {
       const deps = createUpdateDeps();
       const feature = createUpdateFeature(deps);
 
+      feature.bindUpdateHandlers();
+      deps.updateSsidInput.value = "MyWiFi";
+      deps.updateSsidInput.dispatchEvent(new Event("input"));
       feature.startPolling();
       await flushAsyncWork();
 
@@ -1558,6 +1570,10 @@ test.describe("createUpdateFeature polling", () => {
       feature.bindUpdateHandlers();
       feature.startPolling();
       await expectTimerDelays(timers, [10_000]);
+      deps.updatePasswordInput.value = "secret";
+      deps.updatePasswordInput.dispatchEvent(new Event("input"));
+      deps.updateSsidInput.value = "MyWiFi";
+      deps.updateSsidInput.dispatchEvent(new Event("input"));
 
       deps.updateStartBtn.click();
       await expectTimerDelays(timers, [10_000]);
@@ -1617,6 +1633,8 @@ test.describe("createUpdateFeature polling", () => {
       feature.bindUpdateHandlers();
       feature.startPolling();
       await flushAsyncWork();
+      deps.updatePasswordInput.value = "secret";
+      deps.updatePasswordInput.dispatchEvent(new Event("input"));
       deps.updateTransportWifiRadio.checked = false;
       deps.updateTransportUsbRadio.checked = true;
       deps.updateTransportUsbRadio.dispatchEvent(new Event("change"));

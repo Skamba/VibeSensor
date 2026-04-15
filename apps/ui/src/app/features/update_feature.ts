@@ -45,13 +45,18 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       },
     });
     ctx.internetPanel.bindActions({
+      onPasswordInput: (value) => {
+        presenter.setPasswordInput(value);
+      },
       onTogglePassword: () => {
         presenter.togglePassword();
       },
-      onTransportChange: () => {
+      onTransportChange: (transport) => {
+        presenter.setSelectedTransport(transport);
         workflow.renderCurrentState();
       },
-      onSsidInput: () => {
+      onSsidInput: (value) => {
+        presenter.setSsidInput(value);
         workflow.renderCurrentState();
       },
     });
