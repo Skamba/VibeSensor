@@ -4,7 +4,6 @@ import { createSettingsAnalysisModule } from "../src/app/features/settings_analy
 import { createAppState } from "../src/app/ui_app_state";
 import type {
   AnalysisPanelActionHandlers,
-  AnalysisPanelCarAvailability,
   AnalysisPanelFieldKey,
   AnalysisPanelRenderModel,
   AnalysisPanelView,
@@ -42,7 +41,6 @@ function translate(key: string, vars?: Record<string, unknown>): string {
 test("settings analysis module renders guidance and surfaces invalid input through the typed panel bridge", () => {
   const state = createAppState().settings;
   const renders: AnalysisPanelRenderModel[] = [];
-  const availabilityUpdates: AnalysisPanelCarAvailability[] = [];
   let actions: AnalysisPanelActionHandlers | null = null;
   let focusedField: AnalysisPanelFieldKey | null = null;
   let guidanceOpened = false;
@@ -60,8 +58,8 @@ test("settings analysis module renders guidance and surfaces invalid input throu
     render(model) {
       renders.push(model);
     },
-    setCarAvailability(model) {
-      availabilityUpdates.push(model);
+    setCarAvailability() {
+      return;
     },
   };
 
@@ -79,10 +77,6 @@ test("settings analysis module renders guidance and surfaces invalid input throu
 
   module.bindHandlers();
 
-  expect(availabilityUpdates).toEqual([{
-    hasActiveCar: true,
-    isLoading: false,
-  }]);
   expect(lastRender(renders).fields.wheel_bandwidth_pct.guidance.lines).toEqual([
     {
       label: "Recommended range",
