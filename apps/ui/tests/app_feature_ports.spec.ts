@@ -27,10 +27,6 @@ test("feature port helpers expose explicit shell and startup contracts without a
     bindHandlers() {
       calls.push("realtime.bindHandlers");
     },
-    buildLocationOptions(codes: readonly string[]) {
-      calls.push(`realtime.buildLocationOptions:${codes.join(",")}`);
-      return codes.map((code) => ({ code, label: code }));
-    },
     maybeRenderSensorsSettingsList(force?: boolean) {
       calls.push(`realtime.maybeRenderSensorsSettingsList:${String(force)}`);
     },
@@ -124,7 +120,6 @@ test("feature port helpers expose explicit shell and startup contracts without a
   bundle.shell.bindHistoryHandlers();
   bundle.shell.bindUpdateHandlers();
   bundle.shell.bindEspFlashHandlers();
-  bundle.shell.languageRefresh.realtime.buildLocationOptions(["front-left", "front-right"]);
   bundle.shell.languageRefresh.realtime.maybeRenderSensorsSettingsList(true);
   bundle.shell.languageRefresh.realtime.renderLoggingStatus();
   bundle.shell.languageRefresh.realtime.renderStatus();
@@ -153,7 +148,6 @@ test("feature port helpers expose explicit shell and startup contracts without a
     "history.bindHandlers",
     "update.bindUpdateHandlers",
     "espFlash.bindHandlers",
-    "realtime.buildLocationOptions:front-left,front-right",
     "realtime.maybeRenderSensorsSettingsList:true",
     "realtime.renderLoggingStatus",
     "realtime.renderStatus",

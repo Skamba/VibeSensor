@@ -1,11 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  createSpeedSourceDerivedState,
   deriveDisplayedSpeedSourceMode,
   deriveSpeedReadoutLabelKey,
   isManualEffectiveSpeedSource,
   resolveEffectiveSpeedSource,
 } from "../src/app/speed_source_state";
+import { createAppState } from "../src/app/ui_app_state";
+import { signal } from "../src/app/ui_signals";
 
 test.describe("speed source state helpers", () => {
   test("prefers the resolved fallback-manual source over gps configuration", () => {
@@ -71,5 +74,28 @@ test.describe("speed source state helpers", () => {
     expect(deriveSpeedReadoutLabelKey(settings)).toBe("speed.obd2");
     expect(resolveEffectiveSpeedSource(settings)).toBe("obd2");
     expect(isManualEffectiveSpeedSource(settings)).toBe(false);
+  });
+
+  test("reactively updates derived signals when settings and runtime source change", () => {
+    const state = createAppState();
+    const runtimeSpeedSource = signal<string | null>(null);
+    const derived = createSpeedSourceDerivedState(
+      state.settings,
+      runtimeSpeedSource,
+    );
+
+    expect(derived.displayedMode.value).toBe("gps");
+    expect(derived.speedReadoutLabelKey.value).toBe("speed.gps");
+    expect(derived.isManualEffective.value).toBe(false);
+
+    runtimeSpeedSource.value = "fallback_manual";
+    expect(derived.displayedMode.value).toBe("manual");
+    expect(derived.speedReadoutLabelKey.value).toBe("speed.override");
+    expect(derived.isManualEffective.value).toBe(true);
+
+    state.settings.resolvedSpeedSource = "obd2";
+    expect(derived.effectiveSource.value).toBe("obd2");
+    expect(derived.displayedMode.value).toBe("obd2");
+    expect(derived.speedReadoutLabelKey.value).toBe("speed.obd2");
   });
 });

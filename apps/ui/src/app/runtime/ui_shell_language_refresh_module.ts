@@ -10,7 +10,6 @@ export interface UiShellLanguageRefreshFeaturePorts {
   >;
   realtime: Pick<
     RealtimeFeature,
-    | "buildLocationOptions"
     | "maybeRenderSensorsSettingsList"
     | "renderLoggingStatus"
     | "renderStatus"
@@ -39,9 +38,6 @@ export function createUiShellLanguageRefreshModule(
   return {
     applyLanguage(features, forceReloadInsights = false) {
       document.documentElement.lang = deps.state.shell.lang;
-      deps.state.realtime.locationOptions = features.realtime.buildLocationOptions(
-        deps.state.realtime.locationCodes,
-      );
       features.settings.syncSettingsInputs();
       features.realtime.maybeRenderSensorsSettingsList(true);
       deps.renderSpeedReadout();

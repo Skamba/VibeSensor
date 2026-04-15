@@ -8,7 +8,6 @@ import { createAppState } from "../src/app/ui_app_state";
 import { defaultLocationCodes } from "../src/constants";
 import type {
   ClientLocationsResponse,
-  LocationOption,
   LoggingStatusPayload,
 } from "../src/transport/http_models";
 import type { AdaptedClient } from "../src/transport/live_models";
@@ -22,7 +21,6 @@ type WorkflowHarness = {
   state: ReturnType<typeof createAppState>;
   viewCalls: string[];
   renderStates: RenderLoggingState[];
-  buildLocationOptionsCalls: readonly string[][];
   selectionCalls: string[];
   recordingCalls: string[];
   confirmMessages: string[];
@@ -48,7 +46,6 @@ function createHarness(): WorkflowHarness {
     state: createAppState(),
     viewCalls: [],
     renderStates: [],
-    buildLocationOptionsCalls: [],
     selectionCalls: [],
     recordingCalls: [],
     confirmMessages: [],
@@ -58,10 +55,6 @@ function createHarness(): WorkflowHarness {
 
 function createViewPorts(harness: WorkflowHarness): RealtimeFeatureWorkflowViewPorts {
   return {
-    buildLocationOptions(codes: readonly string[]): LocationOption[] {
-      harness.buildLocationOptionsCalls.push([...codes]);
-      return codes.map((code) => ({ code, label: code }));
-    },
     maybeRenderSensorsSettingsList(force?: boolean): void {
       harness.viewCalls.push(`maybeRenderSensorsSettingsList:${String(force)}`);
     },
@@ -181,11 +174,6 @@ test.describe("createRealtimeFeatureWorkflow", () => {
     await workflow.refreshLocationOptions();
 
     expect(harness.state.realtime.locationCodes).toEqual(defaultLocationCodes);
-    expect(harness.state.realtime.locationOptions).toEqual(defaultLocationCodes.map((code) => ({
-      code,
-      label: code,
-    })));
-    expect(harness.buildLocationOptionsCalls).toEqual([defaultLocationCodes]);
     expect(harness.viewCalls).toEqual([
       "maybeRenderSensorsSettingsList:true",
       "renderStatus:none",

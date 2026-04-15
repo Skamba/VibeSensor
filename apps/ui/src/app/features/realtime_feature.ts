@@ -2,10 +2,10 @@ import type { FeatureDepsBase } from "../feature_deps_base";
 import type {
   RealtimeState,
   SettingsState,
+  ShellState,
   SpectrumState,
 } from "../ui_app_state";
 import { trackAppStateSlice } from "../ui_app_state";
-import type { LocationOption } from "../../transport/http_models";
 import type { AdaptedClient } from "../../transport/live_models";
 import type { RealtimeLoggingPanelBridge } from "../views/realtime_logging_panel";
 import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
@@ -18,7 +18,7 @@ export interface RealtimeFeatureDeps extends FeatureDepsBase {
   realtime: RealtimeState;
   spectrum: SpectrumState;
   settings: SettingsState;
-  getLanguage: () => string;
+  shell: Pick<ShellState, "lang">;
   formatInt: (value: number) => string;
   chrome: RealtimeFeatureChromePorts;
   sensorsPanel: SensorsPanelView;
@@ -49,7 +49,6 @@ export interface RealtimeFeatureRecordingPorts {
 
 export interface RealtimeFeature {
   bindHandlers(): void;
-  buildLocationOptions(codes: readonly string[]): LocationOption[];
   maybeRenderSensorsSettingsList(force?: boolean): void;
   renderStatus(clientRow?: AdaptedClient): void;
   renderLoggingStatus(): void;
@@ -64,8 +63,8 @@ export function createRealtimeFeature(
   const presenter = createRealtimeFeaturePresenter({
     realtime: ctx.realtime,
     settings: ctx.settings,
+    shell: ctx.shell,
     spectrum: ctx.spectrum,
-    getLanguage: ctx.getLanguage,
     sensorsPanel: ctx.sensorsPanel,
     t: ctx.t,
     formatInt: ctx.formatInt,
@@ -143,7 +142,6 @@ export function createRealtimeFeature(
 
   return {
     bindHandlers,
-    buildLocationOptions: (codes) => presenter.buildLocationOptions(codes),
     maybeRenderSensorsSettingsList: (force) =>
       presenter.maybeRenderSensorsSettingsList(force),
     renderStatus: (clientRow) => presenter.renderStatus(clientRow),
