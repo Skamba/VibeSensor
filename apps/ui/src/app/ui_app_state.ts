@@ -1,5 +1,5 @@
 import type { SpectrumChart } from "../spectrum";
-import type { WsClient } from "../ws";
+import type { WsClient, WsUiState } from "../ws";
 import type {
   AdaptedClient,
   AdaptedPayload,
@@ -250,7 +250,7 @@ export interface ShellState {
 
 export interface TransportState {
   ws: WsClient | null;
-  wsState: string;
+  wsState: WsUiState;
   pendingPayload: unknown | null;
   renderQueued: boolean;
   lastRenderTsMs: number;

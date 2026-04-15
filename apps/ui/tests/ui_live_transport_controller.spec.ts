@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { EXPECTED_SCHEMA_VERSION, type LiveWsPayload } from "../src/contracts/ws_payload_types";
 import { UiLiveTransportController, type UiTransportFeaturePorts } from "../src/app/runtime/ui_live_transport_controller";
 import { createAppState } from "../src/app/ui_app_state";
+import { flushAsyncWork, installWindowGlobal } from "./async_test_helpers";
 
 function makeLivePayload(overrides: Partial<LiveWsPayload> = {}): LiveWsPayload {
   return {
@@ -35,8 +36,33 @@ function applyPayload(controller: UiLiveTransportController, payload: LiveWsPayl
   (controller as unknown as { applyPayload(nextPayload: LiveWsPayload): void }).applyPayload(payload);
 }
 
+function installRafHarness() {
+  const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
+  const callbacks: FrameRequestCallback[] = [];
+  globalThis.requestAnimationFrame = ((callback: FrameRequestCallback) => {
+    callbacks.push(callback);
+    return callbacks.length as unknown as number;
+  }) as typeof requestAnimationFrame;
+  return {
+    flushNext(): void {
+      const callback = callbacks.shift();
+      if (!callback) {
+        throw new Error("No pending animation frame");
+      }
+      callback(Date.now());
+    },
+    restore(): void {
+      globalThis.requestAnimationFrame = originalRequestAnimationFrame;
+    },
+  };
+}
+
 test.describe("UiLiveTransportController", () => {
-  test("applies payloads through narrow transport ports without an AppFeatureBundle", () => {
+  test.beforeEach(() => {
+    installWindowGlobal();
+  });
+
+  test("applies queued transport payloads through narrow transport ports without an AppFeatureBundle", async () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
     state.transport.ws = {
@@ -45,26 +71,9 @@ test.describe("UiLiveTransportController", () => {
       },
     } as unknown as typeof state.transport.ws;
 
-    let renderWsStateCalls = 0;
-    let renderSpeedReadoutCalls = 0;
-    let renderSpectrumCalls = 0;
-    let updateSpectrumOverlayCalls = 0;
-
     const controller = new UiLiveTransportController({
       state,
       payloadErrorMessage: () => "payload error",
-      renderWsState: () => {
-        renderWsStateCalls += 1;
-      },
-      renderSpeedReadout: () => {
-        renderSpeedReadoutCalls += 1;
-      },
-      renderSpectrum: () => {
-        renderSpectrumCalls += 1;
-      },
-      updateSpectrumOverlay: () => {
-        updateSpectrumOverlayCalls += 1;
-      },
     });
 
     const portCalls: string[] = [];
@@ -86,37 +95,65 @@ test.describe("UiLiveTransportController", () => {
       },
     } satisfies UiTransportFeaturePorts;
 
-    controller.attachPorts(ports);
-    applyPayload(controller, makeLivePayload({
-      clients: [makeClient("client-1")],
-      speed_mps: 12,
-    }));
+    const raf = installRafHarness();
+    try {
+      controller.attachPorts(ports);
+      state.transport.pendingPayload = makeLivePayload({
+        clients: [makeClient("client-1")],
+        speed_mps: 12,
+      });
+      await flushAsyncWork();
+      raf.flushNext();
 
-    expect(state.realtime.clients.map((client) => client.id)).toEqual(["client-1"]);
-    expect(state.realtime.selectedClientId).toBe("client-1");
-    expect(state.realtime.speedMps).toBe(12);
-    expect(portCalls).toEqual([
-      "updateClientSelection",
-      "maybeRenderSensorsSettingsList",
-      "renderLoggingStatus",
-      "renderStatus",
+      expect(state.transport.pendingPayload).toBeNull();
+      expect(state.realtime.clients.map((client) => client.id)).toEqual(["client-1"]);
+      expect(state.realtime.selectedClientId).toBe("client-1");
+      expect(state.realtime.speedMps).toBe(12);
+      expect(portCalls).toEqual([
+        "updateClientSelection",
+        "maybeRenderSensorsSettingsList",
+        "renderLoggingStatus",
+        "renderStatus",
+      ]);
+      expect(renderedStatusIds).toEqual(["client-1"]);
+      expect(sentSelections).toEqual([{ client_id: "client-1" }]);
+    } finally {
+      raf.restore();
+    }
+  });
+
+  test("sends the current client selection when websocket state becomes ready", async () => {
+    const state = createAppState();
+    const sentSelections: Array<{ client_id: string | null }> = [];
+    state.transport.ws = {
+      send(selection: { client_id: string | null }) {
+        sentSelections.push(selection);
+      },
+    } as unknown as typeof state.transport.ws;
+    state.realtime.selectedClientId = "client-7";
+
+    new UiLiveTransportController({
+      state,
+      payloadErrorMessage: () => "payload error",
+    });
+
+    state.transport.wsState = "no_data";
+    await flushAsyncWork();
+    state.transport.wsState = "connected";
+    await flushAsyncWork();
+    state.transport.wsState = "stale";
+    await flushAsyncWork();
+
+    expect(sentSelections).toEqual([
+      { client_id: "client-7" },
+      { client_id: "client-7" },
     ]);
-    expect(renderedStatusIds).toEqual(["client-1"]);
-    expect(renderWsStateCalls).toBe(1);
-    expect(renderSpeedReadoutCalls).toBe(1);
-    expect(renderSpectrumCalls).toBe(0);
-    expect(updateSpectrumOverlayCalls).toBe(1);
-    expect(sentSelections).toEqual([{ client_id: "client-1" }]);
   });
 
   test("throws a clear error when payloads arrive before ports are attached", () => {
     const controller = new UiLiveTransportController({
       state: createAppState(),
       payloadErrorMessage: () => "payload error",
-      renderWsState: () => undefined,
-      renderSpeedReadout: () => undefined,
-      renderSpectrum: () => undefined,
-      updateSpectrumOverlay: () => undefined,
     });
 
     expect(() => applyPayload(controller, makeLivePayload())).toThrow(

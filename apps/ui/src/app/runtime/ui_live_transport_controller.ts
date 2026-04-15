@@ -5,17 +5,15 @@ import { WsClient } from "../../ws";
 import {
   applyLivePayloadUpdate,
   batchAppStateUpdates,
+  trackAppStateSlice,
   type AppState,
   unwrapAppStateValue,
 } from "../ui_app_state";
+import { effect, untracked } from "../ui_signals";
 
 type UiLiveTransportControllerDeps = {
   state: AppState;
   payloadErrorMessage: () => string;
-  renderWsState: () => void;
-  renderSpeedReadout: () => void;
-  renderSpectrum: () => void;
-  updateSpectrumOverlay: () => void;
 };
 
 export interface UiTransportFeaturePorts {
@@ -32,21 +30,10 @@ export class UiLiveTransportController {
 
   private readonly payloadErrorMessage: () => string;
 
-  private readonly renderWsState: () => void;
-
-  private readonly renderSpeedReadout: () => void;
-
-  private readonly renderSpectrum: () => void;
-
-  private readonly updateSpectrumOverlay: () => void;
-
   constructor(deps: UiLiveTransportControllerDeps) {
     this.state = deps.state;
     this.payloadErrorMessage = deps.payloadErrorMessage;
-    this.renderWsState = deps.renderWsState;
-    this.renderSpeedReadout = deps.renderSpeedReadout;
-    this.renderSpectrum = deps.renderSpectrum;
-    this.updateSpectrumOverlay = deps.updateSpectrumOverlay;
+    this.bindTransportSignalSync();
   }
 
   attachPorts(ports: UiTransportFeaturePorts): void {
@@ -59,9 +46,44 @@ export class UiLiveTransportController {
     }
   }
 
-  private refreshWsChrome(): void {
-    this.renderWsState();
-    this.updateSpectrumOverlay();
+  private bindTransportSignalSync(): void {
+    let previousPendingPayload = unwrapAppStateValue(this.state.transport.pendingPayload);
+    let pendingPayloadInitialized = false;
+    effect(() => {
+      trackAppStateSlice(this.state.transport);
+      const nextPendingPayload = unwrapAppStateValue(this.state.transport.pendingPayload);
+      if (!pendingPayloadInitialized) {
+        pendingPayloadInitialized = true;
+        previousPendingPayload = nextPendingPayload;
+        return;
+      }
+      if (nextPendingPayload === previousPendingPayload) {
+        return;
+      }
+      previousPendingPayload = nextPendingPayload;
+      if (nextPendingPayload !== null) {
+        untracked(() => this.queueRender());
+      }
+    });
+
+    let previousWsState = this.state.transport.wsState;
+    let wsStateInitialized = false;
+    effect(() => {
+      trackAppStateSlice(this.state.transport);
+      const nextWsState = this.state.transport.wsState;
+      if (!wsStateInitialized) {
+        wsStateInitialized = true;
+        previousWsState = nextWsState;
+        return;
+      }
+      if (nextWsState === previousWsState) {
+        return;
+      }
+      previousWsState = nextWsState;
+      if (nextWsState === "connected" || nextWsState === "no_data") {
+        untracked(() => this.sendSelection());
+      }
+    });
   }
 
   startTransportMode(): void {
@@ -69,7 +91,6 @@ export class UiLiveTransportController {
     if (isDemoMode) {
       runDemoMode({
         state: this.state,
-        renderWsState: this.renderWsState,
         applyPayload: (payload) => this.applyPayload(payload),
       });
       return;
@@ -108,7 +129,6 @@ export class UiLiveTransportController {
           error instanceof Error ? error.message : this.payloadErrorMessage();
         this.state.spectrum.hasSpectrumData = false;
       });
-      this.refreshWsChrome();
       return;
     }
 
@@ -121,17 +141,10 @@ export class UiLiveTransportController {
         updateClientSelection: () => ports.updateClientSelection(),
       });
     });
-    this.renderWsState();
     ports.maybeRenderSensorsSettingsList();
     ports.renderLoggingStatus();
     if (update.hasSelectedClientChanged) {
       this.sendSelection();
-    }
-    this.renderSpeedReadout();
-    if (update.hasNewSpectrumFrame) {
-      this.renderSpectrum();
-    } else {
-      this.updateSpectrumOverlay();
     }
     ports.renderStatus(update.selectedClient);
   }
@@ -140,20 +153,7 @@ export class UiLiveTransportController {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     this.state.transport.ws = new WsClient({
       url: `${protocol}//${window.location.host}/ws`,
-      onPayload: (payload) => {
-        batchAppStateUpdates(() => {
-          this.state.transport.hasReceivedPayload = true;
-          this.state.transport.pendingPayload = payload;
-        });
-        this.queueRender();
-      },
-      onStateChange: (nextState) => {
-        this.state.transport.wsState = nextState;
-        this.refreshWsChrome();
-        if (nextState === "connected" || nextState === "no_data") {
-          this.sendSelection();
-        }
-      },
+      transport: this.state.transport,
     });
     this.state.transport.ws.connect();
   }

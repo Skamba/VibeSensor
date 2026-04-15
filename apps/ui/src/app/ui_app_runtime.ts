@@ -59,10 +59,6 @@ export class UiAppRuntime {
     this.transport = new UiLiveTransportController({
       state: this.state,
       payloadErrorMessage: () => this.shell.t("ws.payload_error"),
-      renderWsState: () => this.shell.renderWsState(),
-      renderSpeedReadout: () => this.shell.renderSpeedReadout(),
-      renderSpectrum: () => this.spectrum.renderSpectrum(),
-      updateSpectrumOverlay: () => this.spectrum.updateSpectrumOverlay(),
     });
     this.featurePorts = createAppFeatureBundle({
       state: this.state,
