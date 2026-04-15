@@ -7,8 +7,6 @@ import {
 import { createCarsFeature, type CarsFeature } from "./features/cars_feature";
 import { createEspFlashFeature } from "./features/esp_flash_feature";
 import { createHistoryFeature } from "./features/history_feature";
-import type { CarsPanelView } from "./views/cars_panel";
-import type { HistoryPanelView } from "./views/history_table_view";
 import {
   createRealtimeFeature,
   type RealtimeFeatureChromePorts,
@@ -22,13 +20,7 @@ import {
 import { createUpdateFeature } from "./features/update_feature";
 import type { AppState } from "./ui_app_state";
 import { createUiCarCreationCommand } from "./runtime/ui_car_creation_command";
-import type { AnalysisPanelView } from "./views/analysis_panel";
-import type { EspFlashPanelView } from "./views/esp_flash_panel";
-import type { InternetPanelView } from "./views/internet_panel";
-import type { SensorsPanelView } from "./views/sensors_panel";
-import type { SpeedSourcePanelView } from "./views/speed_source_panel";
-import type { SettingsShellView } from "./views/settings_shell";
-import type { UpdatePanelView } from "./views/update_panel";
+import type { UiMountedPanels } from "./ui_panel_bootstrap";
 
 export type { AppFeatureBundle } from "./app_feature_ports";
 
@@ -42,20 +34,12 @@ export interface AppFeatureBundleSharedDeps {
 }
 
 export interface AppFeatureBundleRuntimePorts {
-  settingsShell: SettingsShellView;
-  analysisPanel: AnalysisPanelView;
-  carsPanel: CarsPanelView;
-  internetPanel: InternetPanelView;
-  sensorsPanel: SensorsPanelView;
-  speedSourcePanel: SpeedSourcePanelView;
-  updatePanel: UpdatePanelView;
-  espFlashPanel: EspFlashPanelView;
+  panels: UiMountedPanels;
   navigation: {
     activatePrimaryView(viewId: string): void;
     subscribeActiveViewChanges(listener: (viewId: string) => void): () => void;
   };
-  realtimeChrome: RealtimeFeatureChromePorts;
-  historyPanel: HistoryPanelView;
+  realtimeChrome: Pick<RealtimeFeatureChromePorts, "setShellLiveStatus">;
   transport: RealtimeFeatureSelectionPorts;
   view: SettingsFeatureViewPorts;
 }
@@ -74,11 +58,12 @@ export function createAppFeatureBundle(
     shared: { t, escapeHtml, showError, fmt, fmtTs, formatInt },
     runtime,
   } = deps;
+  const { panels } = runtime;
 
   const history = createHistoryFeature({
     history: state.history,
     getLanguage: () => state.shell.lang,
-    panel: runtime.historyPanel,
+    panel: panels.history,
     navigation: runtime.navigation,
     t,
     escapeHtml,
@@ -98,11 +83,15 @@ export function createAppFeatureBundle(
     escapeHtml,
     showError,
     formatInt,
-    chrome: runtime.realtimeChrome,
-    sensorsPanel: runtime.sensorsPanel,
+    chrome: {
+      ...runtime.realtimeChrome,
+      liveOverview: panels.dashboard.liveOverview,
+      loggingPanel: panels.dashboard.logging,
+    },
+    sensorsPanel: panels.settings.sensors,
     navigation: {
       activatePrimaryView: runtime.navigation.activatePrimaryView,
-      activateSettingsTab: (tabId) => runtime.settingsShell.activateTab(tabId),
+      activateSettingsTab: (tabId) => panels.settingsShell.activateTab(tabId),
       openCarWizard: () => {
         carsFeature?.openWizard();
       },
@@ -114,10 +103,10 @@ export function createAppFeatureBundle(
   const settings: SettingsFeature = createSettingsFeature({
     settings: state.settings,
     getSpeedUnit: () => state.shell.speedUnit,
-    settingsShell: runtime.settingsShell,
-    analysisPanel: runtime.analysisPanel,
-    carsPanel: runtime.carsPanel.list,
-    speedSourcePanel: runtime.speedSourcePanel,
+    settingsShell: panels.settingsShell,
+    analysisPanel: panels.settings.analysis,
+    carsPanel: panels.settings.cars.list,
+    speedSourcePanel: panels.settings.speedSource,
     openCarWizard: () => {
       carsFeature?.openWizard();
     },
@@ -141,7 +130,7 @@ export function createAppFeatureBundle(
   });
 
   const cars: CarsFeature = createCarsFeature({
-    panel: runtime.carsPanel.wizard,
+    panel: panels.settings.cars.wizard,
     t,
     escapeHtml,
     showError,
@@ -152,14 +141,14 @@ export function createAppFeatureBundle(
   carsFeature = cars;
 
   const update = createUpdateFeature({
-    panel: runtime.updatePanel,
-    internetPanel: runtime.internetPanel,
+    panel: panels.settings.update,
+    internetPanel: panels.settings.internet,
     t,
     escapeHtml,
     showError,
   });
   const espFlash = createEspFlashFeature({
-    panel: runtime.espFlashPanel,
+    panel: panels.settings.espFlash,
     t,
     escapeHtml,
     showError,
