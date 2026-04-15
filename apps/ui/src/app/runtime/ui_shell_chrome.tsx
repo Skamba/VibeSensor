@@ -1,4 +1,4 @@
-import { h, render, type JSX } from "preact";
+import { Component, h, render, type ComponentChildren, type JSX } from "preact";
 
 import { requiredById } from "../dom/dom_query";
 import { signal, type ReadonlySignal } from "../ui_signals";
@@ -98,6 +98,13 @@ type UiShellChromeProps = {
   model: ReadonlySignal<UiShellChromeRenderModel>;
 };
 
+type ShellViewSectionProps = {
+  activeViewId: string;
+  ariaLabelledBy: string;
+  children: ComponentChildren;
+  viewId: string;
+};
+
 const DEFAULT_SHELL_CHROME_MODEL: UiShellChromeRenderModel = {
   activeViewId: "dashboardView",
   appErrorBanner: {
@@ -177,6 +184,57 @@ function SettingsFeedbackSlot(props: {
   );
 }
 
+class DashboardViewHosts extends Component {
+  override shouldComponentUpdate(): boolean {
+    return false;
+  }
+
+  override render() {
+    return (
+      <div class="dashboard-grid">
+        <div id="liveOverviewRoot" class="panel card dashboard-grid__overview"></div>
+        <div id="spectrumPanelRoot" class="panel card dashboard-grid__main"></div>
+        <div id="loggingPanelRoot" class="panel card dashboard-grid__controls"></div>
+      </div>
+    );
+  }
+}
+
+class HistoryViewHosts extends Component {
+  override shouldComponentUpdate(): boolean {
+    return false;
+  }
+
+  override render() {
+    return <div id="historyPanelRoot" class="panel card"></div>;
+  }
+}
+
+class SettingsViewHosts extends Component {
+  override shouldComponentUpdate(): boolean {
+    return false;
+  }
+
+  override render() {
+    return <div id="settingsShellRoot"></div>;
+  }
+}
+
+function ShellViewSection(props: ShellViewSectionProps) {
+  const { activeViewId, ariaLabelledBy, children, viewId } = props;
+  return (
+    <section
+      id={viewId}
+      class="view"
+      role="tabpanel"
+      aria-labelledby={ariaLabelledBy}
+      hidden={activeViewId !== viewId}
+    >
+      {children}
+    </section>
+  );
+}
+
 function UiShellChrome(props: UiShellChromeProps) {
   const { bridge } = props;
   const model = props.model.value;
@@ -223,7 +281,7 @@ function UiShellChrome(props: UiShellChromeProps) {
   }
 
   return (
-    <>
+    <div class="wrap">
       <header class="site-header">
         <div class="site-header__main">
           <div class="site-header__nav">
@@ -347,7 +405,31 @@ function UiShellChrome(props: UiShellChromeProps) {
       >
         {model.appErrorBanner.text}
       </div>
-    </>
+
+      <ShellViewSection
+        activeViewId={model.activeViewId}
+        ariaLabelledBy="tab-dashboard"
+        viewId="dashboardView"
+      >
+        <DashboardViewHosts />
+      </ShellViewSection>
+
+      <ShellViewSection
+        activeViewId={model.activeViewId}
+        ariaLabelledBy="tab-history"
+        viewId="historyView"
+      >
+        <HistoryViewHosts />
+      </ShellViewSection>
+
+      <ShellViewSection
+        activeViewId={model.activeViewId}
+        ariaLabelledBy="tab-settings"
+        viewId="settingsView"
+      >
+        <SettingsViewHosts />
+      </ShellViewSection>
+    </div>
   );
 }
 

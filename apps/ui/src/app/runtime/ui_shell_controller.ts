@@ -1,6 +1,6 @@
 import * as I18N from "../../i18n";
 import { formatIntLocale } from "../../format";
-import { queryOne, queryRequiredAll } from "../dom/dom_query";
+import { queryOne } from "../dom/dom_query";
 import { setUiLanguage } from "../ui_i18n";
 import { trackAppStateSlice, type AppState } from "../ui_app_state";
 import {
@@ -22,7 +22,6 @@ import {
   createUiShellNavigationModule,
   type UiShellNavigationModule,
 } from "./ui_shell_navigation_module";
-import { createUiShellViewVisibilityModule } from "./ui_shell_view_visibility_module";
 import {
   createUiShellNotificationModule,
   type UiShellNotificationModule,
@@ -101,17 +100,12 @@ export class UiShellController {
     this.chrome = deps.chrome;
     this.appShellWrap = queryOne<HTMLElement>(".wrap");
     this.liveOverview = deps.liveOverview;
-    const views = queryRequiredAll<HTMLElement>(".view", "UI shell views");
     this.navigation = createUiShellNavigationModule({
       shell: this.state.shell,
-      viewIds: views.map((view) => view.id),
+      viewIds: SHELL_NAV_ITEMS.map((item) => item.viewId),
       onDashboardViewActivated: () => {
         this.state.spectrum.spectrumPlot?.resize();
       },
-    });
-    createUiShellViewVisibilityModule({
-      activeViewId: this.navigation.activeViewId,
-      views,
     });
     this.notifications = createUiShellNotificationModule({
       window,

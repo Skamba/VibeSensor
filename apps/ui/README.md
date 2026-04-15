@@ -84,14 +84,14 @@ source-of-truth export commands remain the only writers for those files.
 | File | Purpose |
 |------|---------|
 | `main.ts` | Thin Vite entry that boots the UI runtime |
-| `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact shell chrome, resolves and mounts the centralized panel bootstrap, then constructs and starts the app runtime |
+| `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact shell first, resolves and mounts the centralized panel bootstrap from shell-rendered hosts, then constructs and starts the app runtime |
 | `app/ui_panel_host_registry.ts` | Centralized host registry for dashboard, history, and settings panel mount points so startup and tests stop depending on one host getter module per panel |
 | `app/ui_panel_bootstrap.ts` | Centralized host registry and panel-mount bootstrap for dashboard, history, and settings islands so startup/runtime stop wiring one host getter per panel |
 | `app/dom/` | Focused DOM lookup helpers that remain after the panel bootstrap cleanup, including `requiredById` and other non-panel runtime locators |
 | `app/ui_app_runtime.ts` | UI composition root that wires state, feature-scoped DOM locators, focused runtime controllers, and explicit feature port bundles |
 | `app/ui_app_state.ts` | Canonical AppState shape plus reactive slice helpers that keep object-style reads/writes working while shared shell/transport/realtime/history/settings/spectrum state becomes signal-observable |
 | `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
-| `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, and app-level error banner plus the typed shell chrome bridge |
+| `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, app-level error banner, and the top-level dashboard/history/settings view containers plus the typed shell bridge |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, and the reactive shell-chrome model that feeds header pills, feedback, and app-level banners |
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport coordinator that queues payloads through AppState, throttles live-session adaptation, and lets realtime, shell, and spectrum surfaces react from signal-backed state |
 | `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that wires overlay updates plus the extracted canvas, interaction, and panel modules |
@@ -172,8 +172,10 @@ source-of-truth export commands remain the only writers for those files.
 
 The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
 composition root instead of becoming a single-file owner for transport, shell,
-chart behavior, or page-wide DOM state. Startup mounts the live Preact owner
-surfaces first — shell chrome, dashboard/history shells, the shared settings
+chart behavior, or page-wide DOM state. Startup now mounts the top-level shell
+first so it can render the shared header plus dashboard/history/settings
+container frames, then resolves those shell-owned hosts for the centralized
+panel bootstrap that mounts the dashboard/history shells, the shared settings
 shell, and the per-settings-tab panel hosts. The spectrum island now owns the
 chart host refs internally and passes that typed bridge to the runtime.
 `app_feature_bundle.ts` creates the concrete features, wires explicit
@@ -183,9 +185,10 @@ contracts the runtime needs.
 The live UI architecture is now fully Preact for every page, tab, and
 feature surface.
 `app/runtime/ui_shell_chrome.tsx` owns the primary navigation, header
-preferences, pills, and app banner; `app/views/settings_shell.tsx` owns the
-shared settings tab strip and panel wrappers; and the individual page/settings
-panel islands own their local chrome plus typed bridges. The remaining
+preferences, pills, app banner, and the top-level view containers;
+`app/views/settings_shell.tsx` owns the shared settings tab strip and panel
+wrappers; and the individual page/settings panel islands own their local chrome
+plus typed bridges. The remaining
 imperative paths are deliberate runtime integrations rather than alternate UI
 renderers: the shell controller still owns app-level status/preference state,
 the spectrum controller still owns the uPlot/canvas lifecycle through
