@@ -1,5 +1,4 @@
 import type { HistoryFeature } from "../features/history_feature";
-import type { RealtimeFeature } from "../features/realtime_feature";
 import type { SettingsFeature } from "../features/settings_feature";
 import type { AppState } from "../ui_app_state";
 
@@ -7,12 +6,6 @@ export interface UiShellLanguageRefreshFeaturePorts {
   history: Pick<
     HistoryFeature,
     "reloadExpandedRunOnLanguageChange" | "renderHistoryTable"
-  >;
-  realtime: Pick<
-    RealtimeFeature,
-    | "maybeRenderSensorsSettingsList"
-    | "renderLoggingStatus"
-    | "renderStatus"
   >;
   settings: Pick<SettingsFeature, "syncSettingsInputs">;
 }
@@ -39,10 +32,7 @@ export function createUiShellLanguageRefreshModule(
     applyLanguage(features, forceReloadInsights = false) {
       document.documentElement.lang = deps.state.shell.lang;
       features.settings.syncSettingsInputs();
-      features.realtime.maybeRenderSensorsSettingsList(true);
       deps.renderSpeedReadout();
-      features.realtime.renderLoggingStatus();
-      features.realtime.renderStatus();
       features.history.renderHistoryTable();
       deps.renderWsState();
       if (deps.state.spectrum.spectrumPlot) {

@@ -33,16 +33,17 @@ export interface RealtimeLoggingPanelActionHandlers {
   onSummaryAction: (action: RealtimeLoggingSummaryAction) => void;
 }
 
-interface RealtimeLoggingPanelBridgeState extends RealtimeLoggingPanelRenderModel {
+interface RealtimeLoggingPanelBridgeState {
   actions: RealtimeLoggingPanelActionHandlers | null;
+  model: ReadonlySignal<RealtimeLoggingPanelRenderModel> | null;
 }
 
 export interface RealtimeLoggingPanelBridge {
-  setModel(model: RealtimeLoggingPanelRenderModel): void;
+  bindModel(model: ReadonlySignal<RealtimeLoggingPanelRenderModel>): void;
   bindActions(handlers: RealtimeLoggingPanelActionHandlers): void;
 }
 
-const DEFAULT_PANEL_STATE: RealtimeLoggingPanelBridgeState = {
+const DEFAULT_PANEL_MODEL: RealtimeLoggingPanelRenderModel = {
   pillVariant: "muted",
   pillText: "Stopped",
   showPill: true,
@@ -58,7 +59,11 @@ const DEFAULT_PANEL_STATE: RealtimeLoggingPanelBridgeState = {
   startDisabled: false,
   stopDisabled: true,
   setupMode: false,
+};
+
+const DEFAULT_PANEL_STATE: RealtimeLoggingPanelBridgeState = {
   actions: null,
+  model: null,
 };
 
 function RealtimeLoggingSummary(props: {
@@ -142,20 +147,21 @@ function RealtimeLoggingPanel(props: {
   state: ReadonlySignal<RealtimeLoggingPanelBridgeState>;
 }) {
   const state = props.state.value;
+  const model = state.model?.value ?? DEFAULT_PANEL_MODEL;
   const t = useUiTranslation();
-  const loggingRowHidden = !state.showPill && state.runIdText === "";
-  const showProgressSection = !state.setupMode || state.checklist !== null;
+  const loggingRowHidden = !model.showPill && model.runIdText === "";
+  const showProgressSection = !model.setupMode || model.checklist !== null;
 
   return (
-    <div class="realtime-logging-shell" data-layout={state.setupMode ? "setup" : undefined}>
+    <div class="realtime-logging-shell" data-layout={model.setupMode ? "setup" : undefined}>
       <div class="card__header card__header--stack">
         <div>
           <div class="card__title">
             {t("dashboard.run_recording", "Run Recording")}
           </div>
           <RealtimeLoggingSummary
-            summaryText={state.summaryText}
-            summaryPanel={state.summaryPanel}
+            summaryText={model.summaryText}
+            summaryPanel={model.summaryPanel}
             onAction={state.actions?.onSummaryAction ?? null}
           />
         </div>
@@ -164,14 +170,14 @@ function RealtimeLoggingPanel(props: {
         <span
           id="loggingStatus"
           class="pill"
-          data-variant={state.pillVariant}
-          hidden={!state.showPill}
+          data-variant={model.pillVariant}
+          hidden={!model.showPill}
           aria-live="polite"
         >
-          {state.pillText}
+          {model.pillText}
         </span>
-        <span id="loggingRunId" class="subtle" hidden={state.runIdText === ""}>
-          {state.runIdText}
+        <span id="loggingRunId" class="subtle" hidden={model.runIdText === ""}>
+          {model.runIdText}
         </span>
       </div>
       {showProgressSection
@@ -186,7 +192,7 @@ function RealtimeLoggingPanel(props: {
                   {t("dashboard.recording_phase", "Run phase")}
                 </div>
                 <div class="stat__value" data-value>
-                  {state.phaseText}
+                  {model.phaseText}
                 </div>
               </div>
               <div id="loggingElapsed" class="stat stat--compact">
@@ -194,7 +200,7 @@ function RealtimeLoggingPanel(props: {
                   {t("dashboard.recording_elapsed", "Elapsed")}
                 </div>
                 <div class="stat__value" data-value>
-                  {state.elapsedText}
+                  {model.elapsedText}
                 </div>
               </div>
               <div id="loggingSamples" class="stat stat--compact">
@@ -202,11 +208,11 @@ function RealtimeLoggingPanel(props: {
                   {t("dashboard.recording_samples", "Samples recorded")}
                 </div>
                 <div class="stat__value" data-value>
-                  {state.samplesText}
+                  {model.samplesText}
                 </div>
               </div>
             </div>
-            <RealtimeLoggingChecklist checklist={state.checklist} />
+            <RealtimeLoggingChecklist checklist={model.checklist} />
           </>
         )
         : null}
@@ -216,8 +222,8 @@ function RealtimeLoggingPanel(props: {
           class="btn btn--primary"
           type="button"
 
-          hidden={!state.showStart}
-          disabled={state.startDisabled}
+          hidden={!model.showStart}
+          disabled={model.startDisabled}
           onClick={() => state.actions?.onStartLogging()}
         >
           {t("dashboard.start_recording", "Start Recording")}
@@ -227,8 +233,8 @@ function RealtimeLoggingPanel(props: {
           class="btn btn--danger-quiet"
           type="button"
 
-          hidden={!state.showStop}
-          disabled={state.stopDisabled}
+          hidden={!model.showStop}
+          disabled={model.stopDisabled}
           onClick={() => state.actions?.onStopLogging()}
         >
           {t("dashboard.stop_recording", "Stop Recording")}
@@ -243,8 +249,8 @@ export function mountRealtimeLoggingPanel(host: HTMLElement): RealtimeLoggingPan
   render(<RealtimeLoggingPanel state={state} />, host);
 
   return {
-    setModel(model: RealtimeLoggingPanelRenderModel): void {
-      state.value = { ...state.value, ...model };
+    bindModel(model: ReadonlySignal<RealtimeLoggingPanelRenderModel>): void {
+      state.value = { ...state.value, model };
     },
     bindActions(handlers: RealtimeLoggingPanelActionHandlers): void {
       state.value = { ...state.value, actions: handlers };
