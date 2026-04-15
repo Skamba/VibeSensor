@@ -1,9 +1,19 @@
 import type { UiCarsDom } from "../dom/cars_dom";
+import type {
+  CarsFeatureFocusTarget,
+  CarsFeatureManualInputState,
+} from "../features/cars_feature_workflow";
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import {
   bindCarsFeatureInteractions,
   type CarsFeatureInteractionHandlers,
 } from "./cars_feature_bindings";
+import {
+  createClosedCarsWizardRenderModel,
+  type CarsWizardOptionItem,
+  type CarsWizardOptionsRenderModel,
+  type CarsWizardRenderModel,
+} from "./car_wizard_view";
 import type { ViewDisposer } from "./dom_event_bindings";
 import {
   inlineStateActionClass,
@@ -28,6 +38,11 @@ export interface CarsListPanelView {
 export interface CarsWizardPanelBridge {
   readonly dom: UiCarsDom;
   bindActions(handlers: CarsFeatureInteractionHandlers): void;
+  captureReturnFocusTarget(): HTMLElement | null;
+  focus(target: CarsFeatureFocusTarget): void;
+  readManualInputs(): CarsFeatureManualInputState;
+  render(model: CarsWizardRenderModel): void;
+  restoreFocus(target: HTMLElement | null): void;
 }
 
 export interface CarsPanelView {
@@ -39,9 +54,19 @@ type CarsListPanelActionHandlers = {
   onAction(action: CarsListAction): void;
 };
 
+type CarsWizardOptionRefs = {
+  brandOption: HTMLButtonElement | null;
+  gearboxOption: HTMLButtonElement | null;
+  modelOption: HTMLButtonElement | null;
+  tireOption: HTMLButtonElement | null;
+  typeOption: HTMLButtonElement | null;
+  variantOption: HTMLButtonElement | null;
+};
+
 type CarsPanelBridgeState = {
   actions: CarsListPanelActionHandlers | null;
   model: CarsListRenderModel;
+  wizardModel: CarsWizardRenderModel;
 };
 
 const DEFAULT_CARS_PANEL_MODEL: CarsListRenderModel = {
@@ -49,11 +74,23 @@ const DEFAULT_CARS_PANEL_MODEL: CarsListRenderModel = {
   table: null,
 };
 
+const WIZARD_STEP_LABELS = [
+  { key: "settings.car.step_brand_short", fallback: "Brand" },
+  { key: "settings.car.step_type_short", fallback: "Type" },
+  { key: "settings.car.step_model_short", fallback: "Model" },
+  { key: "settings.car.step_variant_short", fallback: "Variant" },
+  { key: "settings.car.step_specs_short", fallback: "Specs" },
+] as const;
+
 function handleCarsListAction(
   actions: CarsListPanelActionHandlers | null,
   action: CarsListAction,
 ): void {
   actions?.onAction(action);
+}
+
+function focusElement(target: HTMLElement | null | undefined): void {
+  target?.focus();
 }
 
 function CarsInlineStatePanel(props: {
@@ -215,8 +252,105 @@ function CarsTableBody(props: {
   ));
 }
 
-function CarsPanel(props: { state: CarsPanelBridgeState }) {
-  const { state } = props;
+function wizardStepState(stepIndex: number, currentStep: number): "active" | "done" | "upcoming" {
+  if (stepIndex === currentStep) {
+    return "active";
+  }
+  return stepIndex < currentStep ? "done" : "upcoming";
+}
+
+function wizardOptionAttributeProps(
+  attribute: CarsWizardOptionsRenderModel["attribute"],
+  value: string,
+): Record<string, string> {
+  switch (attribute) {
+    case "data-idx":
+      return { "data-idx": value };
+    case "data-tire-idx":
+      return { "data-tire-idx": value };
+    default:
+      return { "data-value": value };
+  }
+}
+
+function WizardOptionButton(props: {
+  item: CarsWizardOptionItem;
+  attribute: CarsWizardOptionsRenderModel["attribute"];
+  optionRef?: (element: HTMLButtonElement | null) => void;
+}) {
+  const { attribute, item, optionRef } = props;
+  return (
+    <button
+      type="button"
+      class="wiz-opt"
+      data-selected={item.selected ? "true" : undefined}
+      aria-pressed={item.selected ? "true" : "false"}
+      ref={optionRef}
+      {...wizardOptionAttributeProps(attribute, item.value)}
+    >
+      <span>{item.labelText}</span>
+      {item.detailText ? <span class="wiz-opt-detail">{item.detailText}</span> : null}
+    </button>
+  );
+}
+
+function WizardOptions(props: {
+  firstOptionRef?: (element: HTMLButtonElement | null) => void;
+  id: string;
+  section: CarsWizardOptionsRenderModel;
+}) {
+  const { firstOptionRef, id, section } = props;
+  const className = section.layout === "list"
+    ? "wizard-options wizard-options--list"
+    : "wizard-options";
+  return (
+    <div class={className} id={id}>
+      {section.messageText ? <em>{section.messageText}</em> : null}
+      {section.options.map((item, index) => (
+        <WizardOptionButton
+          key={`${section.attribute}-${item.value}`}
+          attribute={section.attribute}
+          item={item}
+          optionRef={index === 0 ? firstOptionRef : undefined}
+        />
+      ))}
+    </div>
+  );
+}
+
+function WizardSummaryPanel(props: { summary: CarsWizardRenderModel["summary"] }) {
+  const { summary } = props;
+  return (
+    <div id="wizardSummaryPanel">
+      <div class="wizard-summary-preview">
+        <div class="wizard-summary-preview__label">{summary.profileNameLabelText}</div>
+        <div class="wizard-summary-preview__value">{summary.profileNameValueText}</div>
+      </div>
+      <dl class="wizard-summary-list">
+        {summary.rows.map((row) => (
+          <div key={row.labelText} class="wizard-summary-item">
+            <dt>{row.labelText}</dt>
+            <dd>{row.valueText}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+function CarsPanel(props: {
+  optionRefs: {
+    setBrandOption(element: HTMLButtonElement | null): void;
+    setGearboxOption(element: HTMLButtonElement | null): void;
+    setModelOption(element: HTMLButtonElement | null): void;
+    setTireOption(element: HTMLButtonElement | null): void;
+    setTypeOption(element: HTMLButtonElement | null): void;
+    setVariantOption(element: HTMLButtonElement | null): void;
+  };
+  state: CarsPanelBridgeState;
+}) {
+  const { optionRefs, state } = props;
+  const wizardModel = state.wizardModel;
   return (
     <>
       <div class="panel card">
@@ -251,251 +385,292 @@ function CarsPanel(props: { state: CarsPanelBridgeState }) {
         </div>
       </div>
 
-      <div id="wizardBackdrop" class="wizard-backdrop" hidden />
-      <div
-        id="addCarWizard"
-        class="panel card add-car-wizard"
-        hidden
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="wizardTitle"
-      >
-        <div class="wizard-header">
-          <div class="wizard-header__text">
-            <strong id="wizardTitle" data-i18n="settings.car.add_title">
-              Add a Car
-            </strong>
-            <div class="subtle" data-i18n="settings.car.wizard_intro">
-              Use the library when it fits, or branch into manual specs without losing your place.
+      <div class="wizard-modal-layer" hidden={!wizardModel.isOpen}>
+        <div id="wizardBackdrop" class="wizard-backdrop" hidden={!wizardModel.isOpen} />
+        <div
+          id="addCarWizard"
+          class="panel card add-car-wizard"
+          hidden={!wizardModel.isOpen}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="wizardTitle"
+          data-spec-branch={wizardModel.specBranch ?? undefined}
+        >
+          <div class="wizard-header">
+            <div class="wizard-header__text">
+              <strong id="wizardTitle" data-i18n="settings.car.add_title">
+                Add a Car
+              </strong>
+              <div class="subtle" data-i18n="settings.car.wizard_intro">
+                Use the library when it fits, or branch into manual specs without losing your place.
+              </div>
+              <div id="wizardProgressText" class="wizard-progress-text">
+                {wizardModel.progressText}
+              </div>
             </div>
-            <div id="wizardProgressText" class="wizard-progress-text">
-              Step 1 of 5 · Brand
-            </div>
+            <button
+              id="wizardCloseBtn"
+              class="btn btn--muted wizard-close"
+              aria-label="Close wizard"
+            >
+              {"\u00d7"}
+            </button>
           </div>
-          <button id="wizardCloseBtn" class="btn btn--muted wizard-close" aria-label="Close wizard">
-            {"\u00d7"}
-          </button>
-        </div>
-        <div class="wizard-shell">
-          <div class="wizard-main">
-            <div class="wizard-steps">
-              <div class="wizard-step-indicators" aria-label="Add car progress">
-                <span class="wizard-step-dot active" data-step="0">
-                  <span class="wizard-step-dot__number">1</span>
-                  <span class="wizard-step-dot__label" data-i18n="settings.car.step_brand_short">
-                    Brand
-                  </span>
-                </span>
-                <span class="wizard-step-dot" data-step="1">
-                  <span class="wizard-step-dot__number">2</span>
-                  <span class="wizard-step-dot__label" data-i18n="settings.car.step_type_short">
-                    Type
-                  </span>
-                </span>
-                <span class="wizard-step-dot" data-step="2">
-                  <span class="wizard-step-dot__number">3</span>
-                  <span class="wizard-step-dot__label" data-i18n="settings.car.step_model_short">
-                    Model
-                  </span>
-                </span>
-                <span class="wizard-step-dot" data-step="3">
-                  <span class="wizard-step-dot__number">4</span>
-                  <span class="wizard-step-dot__label" data-i18n="settings.car.step_variant_short">
-                    Variant
-                  </span>
-                </span>
-                <span class="wizard-step-dot" data-step="4">
-                  <span class="wizard-step-dot__number">5</span>
-                  <span class="wizard-step-dot__label" data-i18n="settings.car.step_specs_short">
-                    Specs
-                  </span>
-                </span>
-              </div>
+          <div class="wizard-shell">
+            <div class="wizard-main">
+              <div class="wizard-steps">
+                <div class="wizard-step-indicators" aria-label="Add car progress">
+                  {WIZARD_STEP_LABELS.map((label, index) => (
+                    <span
+                      key={label.key}
+                      class="wizard-step-dot"
+                      data-step={String(index)}
+                      data-step-state={wizardStepState(index, wizardModel.step)}
+                      aria-current={index === wizardModel.step ? "step" : undefined}
+                    >
+                      <span class="wizard-step-dot__number">{index + 1}</span>
+                      <span class="wizard-step-dot__label" data-i18n={label.key}>
+                        {label.fallback}
+                      </span>
+                    </span>
+                  ))}
+                </div>
 
-              <div id="wizardStep0" class="wizard-step active">
-                <h3 data-i18n="settings.car.step_brand">Select Brand</h3>
-                <div class="wizard-options" id="wizardBrandList" />
-                <div class="wizard-custom">
-                  <label data-i18n="settings.car.or_custom_brand">Or type a custom brand:</label>
-                  <input
-                    id="wizardCustomBrand"
-                    type="text"
-                    maxLength={32}
-                    placeholder="e.g. Mercedes-Benz"
+                <div id="wizardStep0" class="wizard-step" hidden={wizardModel.step !== 0}>
+                  <h3 data-i18n="settings.car.step_brand">Select Brand</h3>
+                  <WizardOptions
+                    id="wizardBrandList"
+                    section={wizardModel.brandOptions}
+                    firstOptionRef={optionRefs.setBrandOption}
                   />
-                  <button
-                    id="wizardCustomBrandBtn"
-                    class="btn btn--primary"
-                    data-i18n="settings.car.use_custom"
-                  >
-                    Use Custom
-                  </button>
-                </div>
-              </div>
-
-              <div id="wizardStep1" class="wizard-step">
-                <h3 data-i18n="settings.car.step_type">Select Type</h3>
-                <div class="wizard-options" id="wizardTypeList" />
-                <div class="wizard-custom">
-                  <label data-i18n="settings.car.or_custom_type">Or type a custom type:</label>
-                  <input id="wizardCustomType" type="text" maxLength={32} placeholder="e.g. Van" />
-                  <button
-                    id="wizardCustomTypeBtn"
-                    class="btn btn--primary"
-                    data-i18n="settings.car.use_custom"
-                  >
-                    Use Custom
-                  </button>
-                </div>
-              </div>
-
-              <div id="wizardStep2" class="wizard-step">
-                <h3 data-i18n="settings.car.step_model">Select Model</h3>
-                <div class="wizard-options wizard-options--list" id="wizardModelList" />
-                <div class="wizard-custom wizard-custom--branch">
-                  <strong class="wizard-branch-label" data-i18n="settings.car.manual_branch_title">
-                    Manual specs branch
-                  </strong>
-                  <div class="subtle wizard-branch-note" data-i18n="settings.car.manual_model_note">
-                    Skip library variants and finish with your own wheel and gearbox values.
+                  <div class="wizard-custom">
+                    <label data-i18n="settings.car.or_custom_brand">Or type a custom brand:</label>
+                    <input
+                      id="wizardCustomBrand"
+                      type="text"
+                      maxLength={32}
+                      placeholder="e.g. Mercedes-Benz"
+                    />
+                    <button
+                      id="wizardCustomBrandBtn"
+                      class="btn btn--primary"
+                      data-i18n="settings.car.use_custom"
+                    >
+                      Use Custom
+                    </button>
                   </div>
-                  <label data-i18n="settings.car.or_custom_model">Or type a custom model:</label>
-                  <input
-                    id="wizardCustomModel"
-                    type="text"
-                    maxLength={64}
-                    placeholder="e.g. C-Class W205"
+                </div>
+
+                <div id="wizardStep1" class="wizard-step" hidden={wizardModel.step !== 1}>
+                  <h3 data-i18n="settings.car.step_type">Select Type</h3>
+                  <WizardOptions
+                    id="wizardTypeList"
+                    section={wizardModel.typeOptions}
+                    firstOptionRef={optionRefs.setTypeOption}
                   />
-                  <button
-                    id="wizardCustomModelBtn"
-                    class="btn btn--primary"
-                    data-i18n="settings.car.use_custom"
-                  >
-                    Use Custom
-                  </button>
-                </div>
-              </div>
-
-              <div id="wizardStep3" class="wizard-step">
-                <h3 data-i18n="settings.car.step_variant">Select Variant</h3>
-                <div class="wizard-options wizard-options--list" id="wizardVariantList" />
-              </div>
-
-              <div id="wizardStep4" class="wizard-step">
-                <div class="wizard-branch-card wizard-branch-card--library">
-                  <div class="wizard-branch-card__header">
-                    <strong class="wizard-branch-label" data-i18n="settings.car.library_branch_title">
-                      Library-matched specs
-                    </strong>
-                    <div class="subtle wizard-branch-note" data-i18n="settings.car.library_branch_note">
-                      Choose the tire and gearbox that match this car. Finish stays pinned below.
-                    </div>
+                  <div class="wizard-custom">
+                    <label data-i18n="settings.car.or_custom_type">Or type a custom type:</label>
+                    <input id="wizardCustomType" type="text" maxLength={32} placeholder="e.g. Van" />
+                    <button
+                      id="wizardCustomTypeBtn"
+                      class="btn btn--primary"
+                      data-i18n="settings.car.use_custom"
+                    >
+                      Use Custom
+                    </button>
                   </div>
-                  <h3 data-i18n="settings.car.step_wheels">Select Wheels</h3>
-                  <div class="wizard-options" id="wizardTireList" />
-                  <h3 data-i18n="settings.car.step_gearbox" class="wizard-section-title">
-                    Select Gearbox
-                  </h3>
-                  <div class="wizard-options wizard-options--list" id="wizardGearboxList" />
                 </div>
-                <div class="wizard-branch-divider">
-                  <span data-i18n="settings.car.branch_divider">Or switch to the manual branch</span>
-                </div>
-                <div class="wizard-branch-card wizard-branch-card--manual wizard-custom-specs">
-                  <div class="wizard-branch-card__header">
+
+                <div id="wizardStep2" class="wizard-step" hidden={wizardModel.step !== 2}>
+                  <h3 data-i18n="settings.car.step_model">Select Model</h3>
+                  <WizardOptions
+                    id="wizardModelList"
+                    section={wizardModel.modelOptions}
+                    firstOptionRef={optionRefs.setModelOption}
+                  />
+                  <div class="wizard-custom wizard-custom--branch">
                     <strong class="wizard-branch-label" data-i18n="settings.car.manual_branch_title">
                       Manual specs branch
                     </strong>
-                    <div
-                      class="subtle wizard-custom-specs__note"
-                      data-i18n="settings.car.manual_specs_note"
+                    <div class="subtle wizard-branch-note" data-i18n="settings.car.manual_model_note">
+                      Skip library variants and finish with your own wheel and gearbox values.
+                    </div>
+                    <label data-i18n="settings.car.or_custom_model">Or type a custom model:</label>
+                    <input
+                      id="wizardCustomModel"
+                      type="text"
+                      maxLength={64}
+                      placeholder="e.g. C-Class W205"
+                    />
+                    <button
+                      id="wizardCustomModelBtn"
+                      class="btn btn--primary"
+                      data-i18n="settings.car.use_custom"
                     >
-                      Use this branch when the library stops short or you already know the wheel and
-                      gearbox measurements.
-                    </div>
+                      Use Custom
+                    </button>
                   </div>
-                  <div class="settings-subgrid">
-                    <div class="field">
-                      <label htmlFor="wizTireWidth" data-i18n="settings.tire_width">
-                        Tire Width (mm)
-                      </label>
-                      <input id="wizTireWidth" type="number" min="100" step="1" defaultValue="225" />
+                </div>
+
+                <div id="wizardStep3" class="wizard-step" hidden={wizardModel.step !== 3}>
+                  <h3 data-i18n="settings.car.step_variant">Select Variant</h3>
+                  <WizardOptions
+                    id="wizardVariantList"
+                    section={wizardModel.variantOptions}
+                    firstOptionRef={optionRefs.setVariantOption}
+                  />
+                </div>
+
+                <div id="wizardStep4" class="wizard-step" hidden={wizardModel.step !== 4}>
+                  <div class="wizard-branch-card wizard-branch-card--library">
+                    <div class="wizard-branch-card__header">
+                      <strong class="wizard-branch-label" data-i18n="settings.car.library_branch_title">
+                        Library-matched specs
+                      </strong>
+                      <div class="subtle wizard-branch-note" data-i18n="settings.car.library_branch_note">
+                        Choose the tire and gearbox that match this car. Finish stays pinned below.
+                      </div>
                     </div>
-                    <div class="field">
-                      <label htmlFor="wizTireAspect" data-i18n="settings.tire_aspect">
-                        Tire Aspect (%)
-                      </label>
-                      <input id="wizTireAspect" type="number" min="20" step="1" defaultValue="45" />
+                    <h3 data-i18n="settings.car.step_wheels">Select Wheels</h3>
+                    <WizardOptions
+                      id="wizardTireList"
+                      section={wizardModel.tireOptions}
+                      firstOptionRef={optionRefs.setTireOption}
+                    />
+                    <h3 data-i18n="settings.car.step_gearbox" class="wizard-section-title">
+                      Select Gearbox
+                    </h3>
+                    <WizardOptions
+                      id="wizardGearboxList"
+                      section={wizardModel.gearboxOptions}
+                      firstOptionRef={optionRefs.setGearboxOption}
+                    />
+                  </div>
+                  <div class="wizard-branch-divider">
+                    <span data-i18n="settings.car.branch_divider">Or switch to the manual branch</span>
+                  </div>
+                  <div class="wizard-branch-card wizard-branch-card--manual wizard-custom-specs">
+                    <div class="wizard-branch-card__header">
+                      <strong class="wizard-branch-label" data-i18n="settings.car.manual_branch_title">
+                        Manual specs branch
+                      </strong>
+                      <div
+                        class="subtle wizard-custom-specs__note"
+                        data-i18n="settings.car.manual_specs_note"
+                      >
+                        Use this branch when the library stops short or you already know the wheel and
+                        gearbox measurements.
+                      </div>
                     </div>
-                    <div class="field">
-                      <label htmlFor="wizRim" data-i18n="settings.rim_size">
-                        Rim Size (in)
-                      </label>
-                      <input id="wizRim" type="number" min="10" step="0.5" defaultValue="18" />
-                    </div>
-                    <div class="field">
-                      <label htmlFor="wizFinalDrive" data-i18n="settings.final_drive_ratio">
-                        Final Drive Ratio
-                      </label>
-                      <input
-                        id="wizFinalDrive"
-                        type="number"
-                        step="0.01"
-                        min="0.1"
-                        defaultValue="3.08"
-                      />
-                    </div>
-                    <div class="field">
-                      <label htmlFor="wizGearRatio" data-i18n="settings.top_gear_ratio">
-                        Top Gear Ratio
-                      </label>
-                      <input
-                        id="wizGearRatio"
-                        type="number"
-                        step="0.01"
-                        min="0.1"
-                        defaultValue="0.64"
-                      />
+                    <div class="settings-subgrid">
+                      <div class="field">
+                        <label htmlFor="wizTireWidth" data-i18n="settings.tire_width">
+                          Tire Width (mm)
+                        </label>
+                        <input
+                          id="wizTireWidth"
+                          type="number"
+                          min="100"
+                          step="1"
+                          value={wizardModel.manualInputs.tireWidth}
+                        />
+                      </div>
+                      <div class="field">
+                        <label htmlFor="wizTireAspect" data-i18n="settings.tire_aspect">
+                          Tire Aspect (%)
+                        </label>
+                        <input
+                          id="wizTireAspect"
+                          type="number"
+                          min="20"
+                          step="1"
+                          value={wizardModel.manualInputs.tireAspect}
+                        />
+                      </div>
+                      <div class="field">
+                        <label htmlFor="wizRim" data-i18n="settings.rim_size">
+                          Rim Size (in)
+                        </label>
+                        <input
+                          id="wizRim"
+                          type="number"
+                          min="10"
+                          step="0.5"
+                          value={wizardModel.manualInputs.rim}
+                        />
+                      </div>
+                      <div class="field">
+                        <label htmlFor="wizFinalDrive" data-i18n="settings.final_drive_ratio">
+                          Final Drive Ratio
+                        </label>
+                        <input
+                          id="wizFinalDrive"
+                          type="number"
+                          step="0.01"
+                          min="0.1"
+                          value={wizardModel.manualInputs.finalDrive}
+                        />
+                      </div>
+                      <div class="field">
+                        <label htmlFor="wizGearRatio" data-i18n="settings.top_gear_ratio">
+                          Top Gear Ratio
+                        </label>
+                        <input
+                          id="wizGearRatio"
+                          type="number"
+                          step="0.01"
+                          min="0.1"
+                          value={wizardModel.manualInputs.topGear}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div class="wizard-nav">
-              <div id="wizardActionHint" class="subtle wizard-nav__status" aria-live="polite" />
-              <div class="wizard-nav__actions">
-                <button id="wizardBackBtn" class="btn btn--muted" data-i18n="settings.car.back">
-                  Back
-                </button>
-                <button
-                  id="wizardManualAddBtn"
-                  class="btn btn--success"
-                  hidden
-                  data-i18n="settings.car.finish_add"
-                >
-                  Add Car
-                </button>
+              <div class="wizard-nav">
+                <div id="wizardActionHint" class="subtle wizard-nav__status" aria-live="polite">
+                  {wizardModel.actionHintText}
+                </div>
+                <div class="wizard-nav__actions">
+                  <button
+                    id="wizardBackBtn"
+                    class="btn btn--muted"
+                    hidden={!wizardModel.backVisible}
+                    data-i18n="settings.car.back"
+                  >
+                    Back
+                  </button>
+                  <button
+                    id="wizardManualAddBtn"
+                    class="btn btn--success"
+                    hidden={!wizardModel.finishVisible}
+                    disabled={!wizardModel.finishEnabled}
+                    data-i18n="settings.car.finish_add"
+                  >
+                    Add Car
+                  </button>
+                </div>
               </div>
             </div>
+
+            <aside class="wizard-summary-card" aria-live="polite">
+              <div class="wizard-task-callout">
+                <strong data-i18n="settings.car.wizard_task_title">Guided setup</strong>
+                <div class="subtle" data-i18n="settings.car.wizard_task_intro">
+                  This flow pauses the rest of Settings so you can build the next analysis profile step
+                  by step without losing your place.
+                </div>
+              </div>
+              <div class="wizard-summary-card__title" data-i18n="settings.car.wizard_summary_title">
+                Current selection
+              </div>
+              <div class="subtle" data-i18n="settings.car.wizard_summary_intro">
+                Your choices stay visible here while the profile comes together.
+              </div>
+              <WizardSummaryPanel summary={wizardModel.summary} />
+            </aside>
           </div>
-
-          <aside class="wizard-summary-card" aria-live="polite">
-            <div class="wizard-task-callout">
-              <strong data-i18n="settings.car.wizard_task_title">Guided setup</strong>
-              <div class="subtle" data-i18n="settings.car.wizard_task_intro">
-                This flow pauses the rest of Settings so you can build the next analysis profile step
-                by step without losing your place.
-              </div>
-            </div>
-            <div class="wizard-summary-card__title" data-i18n="settings.car.wizard_summary_title">
-              Current selection
-            </div>
-            <div class="subtle" data-i18n="settings.car.wizard_summary_intro">
-              Your choices stay visible here while the profile comes together.
-            </div>
-            <div id="wizardSummaryPanel" />
-          </aside>
         </div>
       </div>
     </>
@@ -519,15 +694,8 @@ function createCarsPanelDom(host: HTMLElement): UiCarsDom {
     addCarBtn: requireInHost<HTMLButtonElement>(host, "#addCarBtn"),
     wizardBackdrop: queryInHost<HTMLElement>(host, "#wizardBackdrop"),
     addCarWizard: requireInHost<HTMLElement>(host, "#addCarWizard"),
-    wizardProgressText: queryInHost<HTMLElement>(host, "#wizardProgressText"),
     wizardCloseBtn: queryInHost<HTMLButtonElement>(host, "#wizardCloseBtn"),
     wizardBackBtn: queryInHost<HTMLButtonElement>(host, "#wizardBackBtn"),
-    wizardSteps: [0, 1, 2, 3, 4].map((index) =>
-      queryInHost<HTMLElement>(host, `#wizardStep${index}`)
-    ),
-    wizardStepDots: Array.from(host.querySelectorAll<HTMLElement>(".wizard-step-dot")),
-    wizardSummaryPanel: queryInHost<HTMLElement>(host, "#wizardSummaryPanel"),
-    wizardActionHint: queryInHost<HTMLElement>(host, "#wizardActionHint"),
     wizardBrandList: queryInHost<HTMLElement>(host, "#wizardBrandList"),
     wizardTypeList: queryInHost<HTMLElement>(host, "#wizardTypeList"),
     wizardModelList: queryInHost<HTMLElement>(host, "#wizardModelList"),
@@ -553,13 +721,100 @@ export function mountCarsPanel(host: HTMLElement): CarsPanelView {
   const bridgeState: CarsPanelBridgeState = {
     actions: null,
     model: DEFAULT_CARS_PANEL_MODEL,
+    wizardModel: createClosedCarsWizardRenderModel(),
+  };
+  const optionRefs: CarsWizardOptionRefs = {
+    brandOption: null,
+    gearboxOption: null,
+    modelOption: null,
+    tireOption: null,
+    typeOption: null,
+    variantOption: null,
   };
   const mount = createUiPreactMount(host);
-  const render = () => mount.render(<CarsPanel state={bridgeState} />);
+  const render = () => mount.render(
+    <CarsPanel
+      optionRefs={{
+        setBrandOption: (element) => {
+          optionRefs.brandOption = element;
+        },
+        setGearboxOption: (element) => {
+          optionRefs.gearboxOption = element;
+        },
+        setModelOption: (element) => {
+          optionRefs.modelOption = element;
+        },
+        setTireOption: (element) => {
+          optionRefs.tireOption = element;
+        },
+        setTypeOption: (element) => {
+          optionRefs.typeOption = element;
+        },
+        setVariantOption: (element) => {
+          optionRefs.variantOption = element;
+        },
+      }}
+      state={bridgeState}
+    />,
+  );
   render();
 
   const dom = createCarsPanelDom(host);
+  let lastWizardOpenState = false;
   let wizardDisposer: ViewDisposer | null = null;
+
+  function focus(target: CarsFeatureFocusTarget): void {
+    switch (target) {
+      case "brand-option":
+        focusElement(optionRefs.brandOption ?? dom.wizardCustomBrandInput);
+        return;
+      case "close":
+        focusElement(dom.wizardCloseBtn);
+        return;
+      case "custom-brand":
+        focusElement(dom.wizardCustomBrandInput);
+        return;
+      case "custom-model":
+        focusElement(dom.wizardCustomModelInput);
+        return;
+      case "custom-type":
+        focusElement(dom.wizardCustomTypeInput);
+        return;
+      case "finish":
+        focusElement(dom.wizardManualAddBtn);
+        return;
+      case "gearbox-option":
+        focusElement(optionRefs.gearboxOption ?? dom.wizardManualAddBtn);
+        return;
+      case "manual-final-drive":
+        focusElement(dom.wizFinalDriveInput);
+        return;
+      case "manual-rim":
+        focusElement(dom.wizRimInput);
+        return;
+      case "manual-tire-aspect":
+        focusElement(dom.wizTireAspectInput);
+        return;
+      case "manual-tire-width":
+        focusElement(dom.wizTireWidthInput);
+        return;
+      case "manual-top-gear":
+        focusElement(dom.wizGearRatioInput);
+        return;
+      case "model-option":
+        focusElement(optionRefs.modelOption ?? dom.wizardCustomModelInput);
+        return;
+      case "spec-selection":
+        focusElement(optionRefs.tireOption ?? optionRefs.gearboxOption ?? dom.wizTireWidthInput);
+        return;
+      case "type-option":
+        focusElement(optionRefs.typeOption ?? dom.wizardCustomTypeInput);
+        return;
+      case "variant-option":
+        focusElement(optionRefs.variantOption);
+        return;
+    }
+  }
 
   return {
     list: {
@@ -577,6 +832,31 @@ export function mountCarsPanel(host: HTMLElement): CarsPanelView {
       bindActions(handlers): void {
         wizardDisposer?.();
         wizardDisposer = bindCarsFeatureInteractions(dom, handlers);
+      },
+      captureReturnFocusTarget(): HTMLElement | null {
+        return document.activeElement instanceof HTMLElement ? document.activeElement : dom.addCarBtn;
+      },
+      focus,
+      readManualInputs(): CarsFeatureManualInputState {
+        return {
+          finalDrive: dom.wizFinalDriveInput?.value ?? "",
+          rim: dom.wizRimInput?.value ?? "",
+          tireAspect: dom.wizTireAspectInput?.value ?? "",
+          tireWidth: dom.wizTireWidthInput?.value ?? "",
+          topGear: dom.wizGearRatioInput?.value ?? "",
+        };
+      },
+      render(model): void {
+        bridgeState.wizardModel = model;
+        render();
+        if (model.isOpen && !lastWizardOpenState) {
+          dom.addCarWizard.scrollTop = 0;
+        }
+        lastWizardOpenState = model.isOpen;
+      },
+      restoreFocus(target): void {
+        const safeTarget = target && document.contains(target) ? target : dom.addCarBtn;
+        focusElement(safeTarget);
       },
     },
   };

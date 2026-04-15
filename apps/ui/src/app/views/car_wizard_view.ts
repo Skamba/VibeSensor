@@ -4,19 +4,24 @@ import type {
   CarLibraryTireOption,
   CarLibraryVariant,
 } from "../../transport/http_models";
-import type { UiCarsDom } from "../dom/cars_dom";
+import type {
+  CarsFeatureOptionsState,
+  CarsFeatureRenderState,
+} from "../features/cars_feature_workflow";
 
-type EscapeHtml = (value: unknown) => string;
 type FormatNumber = (value: number, digits?: number) => string;
 type Translate = (key: string, vars?: Record<string, unknown>) => string;
 
-interface WizardOptionSpec {
-  dataAttribute: string;
-  value: string;
-  label: string;
-  detail?: string;
-  selected?: boolean;
-}
+const WIZARD_STEP_LABEL_KEYS = [
+  "settings.car.step_brand_short",
+  "settings.car.step_type_short",
+  "settings.car.step_model_short",
+  "settings.car.step_variant_short",
+  "settings.car.step_specs_short",
+] as const;
+
+type WizardOptionAttribute = "data-value" | "data-idx" | "data-tire-idx";
+type WizardOptionLayout = "chips" | "list";
 
 export interface WizardSummaryData {
   currentStep: number;
@@ -29,181 +34,262 @@ export interface WizardSummaryData {
   gearbox: string | null;
 }
 
-function renderWizardOptions(
-  options: WizardOptionSpec[],
-  escapeHtml: EscapeHtml,
-): string {
-  return options
-    .map((option) => {
-      const detail = option.detail
-        ? `<span class="wiz-opt-detail">${escapeHtml(option.detail)}</span>`
-        : "";
-      const selectedAttrs = option.selected
-        ? ' data-selected="true" aria-pressed="true"'
-        : ' aria-pressed="false"';
-      return `<button type="button" class="wiz-opt"${selectedAttrs} data-${option.dataAttribute}="${escapeHtml(option.value)}"><span>${escapeHtml(option.label)}</span>${detail}</button>`;
-    })
-    .join("");
+export interface CarsWizardOptionItem {
+  detailText: string | null;
+  labelText: string;
+  selected: boolean;
+  value: string;
 }
 
-export function renderWizardMessage(
-  message: string,
-  escapeHtml: EscapeHtml,
-): string {
-  return `<em>${escapeHtml(message)}</em>`;
+export interface CarsWizardOptionsRenderModel {
+  attribute: WizardOptionAttribute;
+  layout: WizardOptionLayout;
+  messageText: string | null;
+  options: readonly CarsWizardOptionItem[];
 }
 
-export function renderWizardBrandOptions(
-  brands: string[],
-  escapeHtml: EscapeHtml,
-): string {
-  return renderWizardOptions(
-    brands.map((brand) => ({
-      dataAttribute: "value",
-      value: brand,
-      label: brand,
-    })),
-    escapeHtml,
-  );
+export interface CarsWizardSummaryRow {
+  labelText: string;
+  valueText: string;
 }
 
-export function renderWizardTypeOptions(
-  types: string[],
-  escapeHtml: EscapeHtml,
-): string {
-  return renderWizardOptions(
-    types.map((carType) => ({
-      dataAttribute: "value",
-      value: carType,
-      label: carType,
-    })),
-    escapeHtml,
-  );
+export interface CarsWizardSummaryRenderModel {
+  profileNameLabelText: string;
+  profileNameValueText: string;
+  rows: readonly CarsWizardSummaryRow[];
 }
 
-export function renderWizardModelOptions(
-  models: CarLibraryModel[],
-  escapeHtml: EscapeHtml,
-): string {
-  return renderWizardOptions(
-    models.map((model, index) => ({
-      dataAttribute: "idx",
+export interface CarsWizardRenderModel {
+  actionHintText: string;
+  backVisible: boolean;
+  brandOptions: CarsWizardOptionsRenderModel;
+  finishEnabled: boolean;
+  finishVisible: boolean;
+  gearboxOptions: CarsWizardOptionsRenderModel;
+  isOpen: boolean;
+  manualInputs: CarsFeatureRenderState["manualInputs"];
+  modelOptions: CarsWizardOptionsRenderModel;
+  progressText: string;
+  specBranch: "library" | "manual" | "pending" | null;
+  step: number;
+  summary: CarsWizardSummaryRenderModel;
+  tireOptions: CarsWizardOptionsRenderModel;
+  typeOptions: CarsWizardOptionsRenderModel;
+  variantOptions: CarsWizardOptionsRenderModel;
+}
+
+export function createClosedCarsWizardRenderModel(): CarsWizardRenderModel {
+  return {
+    actionHintText: "",
+    backVisible: false,
+    brandOptions: createOptionsModel("data-value"),
+    finishEnabled: false,
+    finishVisible: false,
+    gearboxOptions: createOptionsModel("data-idx", "list"),
+    isOpen: false,
+    manualInputs: {
+      finalDrive: "3.08",
+      rim: "18",
+      tireAspect: "45",
+      tireWidth: "225",
+      topGear: "0.64",
+    },
+    modelOptions: createOptionsModel("data-idx", "list"),
+    progressText: "",
+    specBranch: null,
+    step: 0,
+    summary: {
+      profileNameLabelText: "",
+      profileNameValueText: "",
+      rows: [],
+    },
+    tireOptions: createOptionsModel("data-tire-idx"),
+    typeOptions: createOptionsModel("data-value"),
+    variantOptions: createOptionsModel("data-idx", "list"),
+  };
+}
+
+function createOptionsModel(
+  attribute: WizardOptionAttribute,
+  layout: WizardOptionLayout = "chips",
+): CarsWizardOptionsRenderModel {
+  return {
+    attribute,
+    layout,
+    messageText: null,
+    options: [],
+  };
+}
+
+function buildOptionsModel<TOption>(
+  state: CarsFeatureOptionsState<TOption>,
+  attribute: WizardOptionAttribute,
+  buildItem: (option: TOption, index: number) => CarsWizardOptionItem,
+  layout: WizardOptionLayout = "chips",
+): CarsWizardOptionsRenderModel {
+  if (state.status === "loading" || state.status === "error") {
+    return {
+      attribute,
+      layout,
+      messageText: state.message ?? "",
+      options: [],
+    };
+  }
+  if (state.status !== "ready") {
+    return createOptionsModel(attribute, layout);
+  }
+  return {
+    attribute,
+    layout,
+    messageText: null,
+    options: state.options.map((option, index) => buildItem(option, index)),
+  };
+}
+
+function buildVariantOptionsModel(
+  variants: readonly CarLibraryVariant[],
+): CarsWizardOptionsRenderModel {
+  return {
+    attribute: "data-idx",
+    layout: "list",
+    messageText: null,
+    options: variants.map((variant, index) => ({
+      detailText: [variant.drivetrain, variant.engine].filter(Boolean).join(" · ") || null,
+      labelText: variant.name,
+      selected: false,
       value: String(index),
-      label: model.model,
-      detail: `${model.tire_width_mm}/${model.tire_aspect_pct}R${model.rim_in}`,
     })),
-    escapeHtml,
-  );
+  };
 }
 
-export function renderWizardVariantOptions(
-  variants: CarLibraryVariant[],
-  escapeHtml: EscapeHtml,
-): string {
-  return renderWizardOptions(
-    variants.map((variant, index) => ({
-      dataAttribute: "idx",
+function buildTireOptionsModel(
+  tireOptions: readonly CarLibraryTireOption[],
+  selectedTire: CarLibraryTireOption | null,
+): CarsWizardOptionsRenderModel {
+  return {
+    attribute: "data-tire-idx",
+    layout: "chips",
+    messageText: null,
+    options: tireOptions.map((tireOption, index) => ({
+      detailText: `${tireOption.tire_width_mm}/${tireOption.tire_aspect_pct}R${tireOption.rim_in}`,
+      labelText: tireOption.name,
+      selected: tireOption === selectedTire,
       value: String(index),
-      label: variant.name,
-      detail: [variant.drivetrain, variant.engine].filter(Boolean).join(" · "),
     })),
-    escapeHtml,
-  );
+  };
 }
 
-export function renderWizardTireOptions(
-  tireOptions: CarLibraryTireOption[],
-  escapeHtml: EscapeHtml,
-  selectedIndex = 0,
-): string {
-  return renderWizardOptions(
-    tireOptions.map((tireOption, index) => ({
-      dataAttribute: "tire-idx",
+function buildGearboxOptionsModel(
+  gearboxes: readonly CarLibraryGearbox[],
+  selectedGearbox: CarLibraryGearbox | null,
+  deps: { fmt: FormatNumber },
+  noGearboxesMessage: string | null,
+): CarsWizardOptionsRenderModel {
+  if (noGearboxesMessage) {
+    return {
+      attribute: "data-idx",
+      layout: "list",
+      messageText: noGearboxesMessage,
+      options: [],
+    };
+  }
+  return {
+    attribute: "data-idx",
+    layout: "list",
+    messageText: null,
+    options: gearboxes.map((gearbox, index) => ({
+      detailText: `FD: ${deps.fmt(gearbox.final_drive_ratio, 2)} · Top Gear: ${deps.fmt(gearbox.top_gear_ratio, 2)}`,
+      labelText: gearbox.name,
+      selected: gearbox === selectedGearbox,
       value: String(index),
-      label: tireOption.name,
-      detail: `${tireOption.tire_width_mm}/${tireOption.tire_aspect_pct}R${tireOption.rim_in}`,
-      selected: index === selectedIndex,
     })),
-    escapeHtml,
-  );
+  };
 }
 
-export function renderWizardGearboxOptions(
-  gearboxes: CarLibraryGearbox[],
-  deps: { escapeHtml: EscapeHtml; fmt: FormatNumber },
-  selectedIndex = -1,
-): string {
-  const { escapeHtml, fmt } = deps;
-  return renderWizardOptions(
-    gearboxes.map((gearbox, index) => ({
-      dataAttribute: "idx",
-      value: String(index),
-      label: gearbox.name,
-      detail: `FD: ${fmt(gearbox.final_drive_ratio, 2)} · Top Gear: ${fmt(gearbox.top_gear_ratio, 2)}`,
-      selected: index === selectedIndex,
-    })),
-    escapeHtml,
-  );
-}
-
-export function renderWizardSummary(
+function buildSummaryRows(
   summary: WizardSummaryData,
-  deps: { t: Translate; escapeHtml: EscapeHtml },
-): string {
-  const { t, escapeHtml } = deps;
+  t: Translate,
+): CarsWizardSummaryRow[] {
   const pending = t("settings.car.wizard_summary_pending");
   const rows = [
-    { label: t("settings.car.wizard_summary_brand"), value: summary.brand, visibleFromStep: 1 },
-    { label: t("settings.car.wizard_summary_type"), value: summary.carType, visibleFromStep: 2 },
-    { label: t("settings.car.wizard_summary_model"), value: summary.model, visibleFromStep: 3 },
-    { label: t("settings.car.wizard_summary_variant"), value: summary.variant, visibleFromStep: 4 },
-    { label: t("settings.car.wizard_summary_tire"), value: summary.tire, visibleFromStep: 4 },
-    { label: t("settings.car.wizard_summary_gearbox"), value: summary.gearbox, visibleFromStep: 4 },
-  ].filter((row) => row.value || summary.currentStep >= row.visibleFromStep);
-  return `
-    <div class="wizard-summary-preview">
-      <div class="wizard-summary-preview__label">${escapeHtml(t("settings.car.wizard_summary_name"))}</div>
-      <div class="wizard-summary-preview__value">${escapeHtml(summary.profileName || pending)}</div>
-    </div>
-    <dl class="wizard-summary-list">
-      ${rows.map(({ label, value }) => `
-        <div class="wizard-summary-item">
-          <dt>${escapeHtml(label)}</dt>
-          <dd>${escapeHtml(value || pending)}</dd>
-        </div>
-      `).join("")}
-    </dl>
-  `;
+    { labelText: t("settings.car.wizard_summary_brand"), valueText: summary.brand, visibleFromStep: 1 },
+    { labelText: t("settings.car.wizard_summary_type"), valueText: summary.carType, visibleFromStep: 2 },
+    { labelText: t("settings.car.wizard_summary_model"), valueText: summary.model, visibleFromStep: 3 },
+    { labelText: t("settings.car.wizard_summary_variant"), valueText: summary.variant, visibleFromStep: 4 },
+    { labelText: t("settings.car.wizard_summary_tire"), valueText: summary.tire, visibleFromStep: 4 },
+    { labelText: t("settings.car.wizard_summary_gearbox"), valueText: summary.gearbox, visibleFromStep: 4 },
+  ];
+  return rows
+    .filter((row) => row.valueText || summary.currentStep >= row.visibleFromStep)
+    .map((row) => ({
+      labelText: row.labelText,
+      valueText: row.valueText ?? pending,
+    }));
 }
 
-export function syncCarWizardStepState(
-  els: Pick<UiCarsDom, "wizardSteps" | "wizardStepDots" | "wizardBackBtn">,
-  step: number,
-): void {
-  els.wizardSteps.forEach((stepEl, index) => {
-    if (!stepEl) return;
-    stepEl.hidden = index !== step;
-  });
-  els.wizardStepDots.forEach((dot) => {
-    const dotStep = Number(dot.getAttribute("data-step"));
-    const stepState = dotStep === step ? "active" : dotStep < step ? "done" : "upcoming";
-    dot.setAttribute("data-step-state", stepState);
-    if (dotStep === step) {
-      dot.setAttribute("aria-current", "step");
-    } else {
-      dot.removeAttribute("aria-current");
-    }
-  });
-  if (els.wizardBackBtn) {
-    els.wizardBackBtn.style.display = step > 0 ? "" : "none";
-  }
-}
-
-export function writeCarWizardTireInputs(
-  els: Pick<UiCarsDom, "wizTireWidthInput" | "wizTireAspectInput" | "wizRimInput">,
-  tire: CarLibraryTireOption,
-): void {
-  if (els.wizTireWidthInput) els.wizTireWidthInput.value = String(tire.tire_width_mm);
-  if (els.wizTireAspectInput) els.wizTireAspectInput.value = String(tire.tire_aspect_pct);
-  if (els.wizRimInput) els.wizRimInput.value = String(tire.rim_in);
+export function buildCarsWizardRenderModel(
+  state: CarsFeatureRenderState,
+  deps: { fmt: FormatNumber; t: Translate },
+): CarsWizardRenderModel {
+  const { fmt, t } = deps;
+  const pending = t("settings.car.wizard_summary_pending");
+  return {
+    actionHintText: state.actionHint,
+    backVisible: state.step > 0,
+    brandOptions: buildOptionsModel(
+      state.brandOptions,
+      "data-value",
+      (brand) => ({
+        detailText: null,
+        labelText: brand,
+        selected: false,
+        value: brand,
+      }),
+    ),
+    finishEnabled: state.step === 4 && state.canFinish,
+    finishVisible: state.step === 4,
+    gearboxOptions: buildGearboxOptionsModel(
+      state.gearboxOptions,
+      state.selectedGearbox,
+      { fmt },
+      state.noGearboxesMessage,
+    ),
+    isOpen: state.isOpen,
+    manualInputs: { ...state.manualInputs },
+    modelOptions: buildOptionsModel(
+      state.modelOptions,
+      "data-idx",
+      (model, index) => ({
+        detailText: `${model.tire_width_mm}/${model.tire_aspect_pct}R${model.rim_in}`,
+        labelText: model.model,
+        selected: false,
+        value: String(index),
+      }),
+      "list",
+    ),
+    progressText: t("settings.car.wizard_progress", {
+      current: state.step + 1,
+      step: t(WIZARD_STEP_LABEL_KEYS[state.step] ?? WIZARD_STEP_LABEL_KEYS[0]),
+      total: WIZARD_STEP_LABEL_KEYS.length,
+    }),
+    specBranch: state.step === 4 ? state.resolvedSpecBranch ?? "pending" : null,
+    step: state.step,
+    summary: {
+      profileNameLabelText: t("settings.car.wizard_summary_name"),
+      profileNameValueText: state.summaryData.profileName ?? pending,
+      rows: buildSummaryRows(state.summaryData, t),
+    },
+    tireOptions: buildTireOptionsModel(state.tireOptions, state.selectedTire),
+    typeOptions: buildOptionsModel(
+      state.typeOptions,
+      "data-value",
+      (carType) => ({
+        detailText: null,
+        labelText: carType,
+        selected: false,
+        value: carType,
+      }),
+    ),
+    variantOptions: buildVariantOptionsModel(state.variantOptions),
+  };
 }
