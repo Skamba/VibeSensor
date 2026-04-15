@@ -137,6 +137,31 @@ test.describe("update status view models", () => {
       });
   });
 
+  test("marks the running stage current for usb-internet journeys", () => {
+    const model = buildUpdateJourneySectionModel(
+      makeStatus({
+        state: "running",
+        phase: "downloading",
+        transport: "usb_internet",
+      }),
+      {
+        ...deps,
+        selectedTransport: "usb_internet",
+      },
+    );
+
+    expect(model.stages.find((stage) => stage.phase === "connecting_usb_internet"))
+      .toMatchObject({
+        state: "done",
+        current: false,
+      });
+    expect(model.stages.find((stage) => stage.phase === "downloading"))
+      .toMatchObject({
+        state: "active",
+        current: true,
+      });
+  });
+
   test("builds the running empty-log state without forcing a log note", () => {
     const model = buildUpdateLogSectionModel(makeStatus({
       state: "running",
