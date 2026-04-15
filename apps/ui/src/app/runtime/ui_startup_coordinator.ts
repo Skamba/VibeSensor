@@ -1,10 +1,8 @@
 import type { UiStartupFeaturePorts } from "./ui_startup_feature_ports";
 
 type StartupShell = {
-  bindUiEvents(): void;
+  start(defaultViewId: string): void;
   hydratePersistedPreferences(): Promise<void>;
-  applyLanguage(forceReloadInsights?: boolean): void;
-  setActiveView(viewId: string): void;
 };
 
 type StartupTransport = {
@@ -19,6 +17,17 @@ type UiStartupCoordinatorDeps = {
   features: UiStartupFeaturePorts;
   defaultViewId: string;
   warn?: StartupWarn;
+};
+
+type UiStartupAsyncTask = {
+  name: string;
+  run: () => Promise<void>;
+};
+
+type UiStartupPlan = {
+  asyncTasks: readonly UiStartupAsyncTask[];
+  finalSyncTasks: ReadonlyArray<() => void>;
+  initialSyncTasks: ReadonlyArray<() => void>;
 };
 
 export class UiStartupCoordinator {
@@ -41,13 +50,16 @@ export class UiStartupCoordinator {
   }
 
   start(): void {
-    this.shell.bindUiEvents();
-    this.features.settings.syncSettingsInputs();
-    this.runAsyncTask("hydrate persisted preferences", () => this.shell.hydratePersistedPreferences());
-    this.shell.applyLanguage(false);
-    this.shell.setActiveView(this.defaultViewId);
-    this.startBackgroundActivity();
-    this.transport.startTransportMode();
+    const plan = this.createStartupPlan();
+    for (const task of plan.initialSyncTasks) {
+      task();
+    }
+    for (const task of plan.asyncTasks) {
+      this.runAsyncTask(task.name, task.run);
+    }
+    for (const task of plan.finalSyncTasks) {
+      task();
+    }
   }
 
   private runAsyncTask(taskName: string, task: () => Promise<void>): void {
@@ -56,17 +68,47 @@ export class UiStartupCoordinator {
     });
   }
 
-  private startBackgroundActivity(): void {
-    this.runAsyncTask("refresh location options", () => this.features.realtime.refreshLocationOptions());
-    this.runAsyncTask("load speed source", () => this.features.settings.loadSpeedSourceFromServer());
-    this.runAsyncTask("load analysis settings", () =>
-      this.features.settings.loadAnalysisSettingsFromServer(),
-    );
-    this.runAsyncTask("load cars", () => this.features.settings.loadCarsFromServer());
-    this.runAsyncTask("refresh logging status", () => this.features.realtime.refreshLoggingStatus());
-    this.runAsyncTask("refresh history", () => this.features.history.refreshHistory());
-    this.features.update.startPolling();
-    this.features.espFlash.startPolling();
-    this.features.settings.startGpsStatusPolling();
+  private createStartupPlan(): UiStartupPlan {
+    return {
+      initialSyncTasks: [
+        () => this.shell.start(this.defaultViewId),
+      ],
+      finalSyncTasks: [
+        () => this.features.update.startPolling(),
+        () => this.features.espFlash.startPolling(),
+        () => this.features.settings.startGpsStatusPolling(),
+        () => this.transport.startTransportMode(),
+      ],
+      asyncTasks: [
+        {
+          name: "hydrate persisted preferences",
+          run: () => this.shell.hydratePersistedPreferences(),
+        },
+        {
+          name: "refresh location options",
+          run: () => this.features.realtime.refreshLocationOptions(),
+        },
+        {
+          name: "load speed source",
+          run: () => this.features.settings.loadSpeedSourceFromServer(),
+        },
+        {
+          name: "load analysis settings",
+          run: () => this.features.settings.loadAnalysisSettingsFromServer(),
+        },
+        {
+          name: "load cars",
+          run: () => this.features.settings.loadCarsFromServer(),
+        },
+        {
+          name: "refresh logging status",
+          run: () => this.features.realtime.refreshLoggingStatus(),
+        },
+        {
+          name: "refresh history",
+          run: () => this.features.history.refreshHistory(),
+        },
+      ],
+    };
   }
 }
