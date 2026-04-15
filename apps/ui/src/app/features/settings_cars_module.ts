@@ -1,10 +1,8 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
 import {
+  createCarSelectionDerivedState,
   type CarSelectionState,
-  deriveCarSelectionState,
   getCarCompleteness,
-  hasResolvedActiveCar,
-  resolveActiveCar,
 } from "../car_selection_state";
 import type { SettingsState } from "../ui_app_state";
 import type { CarRecord, CarsPayload } from "../../transport/http_models";
@@ -71,15 +69,16 @@ export function createSettingsCarsModule(
   const confirmDelete =
     ctx.confirmDelete ?? ((message: string) => window.confirm(message));
   const transport = createSettingsCarsTransport(ctx.transport);
+  const carSelection = createCarSelectionDerivedState(settings);
   let handlersBound = false;
   let highlightedCarFeedback: CarsListHighlightedFeedback | null = null;
 
   function hasValidActiveCar(): boolean {
-    return hasResolvedActiveCar(settings);
+    return carSelection.hasResolvedActiveCar.value;
   }
 
   function getCarSelectionState(): CarSelectionState {
-    return deriveCarSelectionState(settings);
+    return carSelection.selection.value;
   }
 
   function createPanelModel(
@@ -152,7 +151,7 @@ export function createSettingsCarsModule(
   }
 
   function syncActiveCarToInputs(): void {
-    copyActiveCarAspects(resolveActiveCar(settings), settings);
+    copyActiveCarAspects(carSelection.activeCar.value, settings);
     if (hasValidActiveCar()) {
       ctx.syncAnalysisInputs();
     }
