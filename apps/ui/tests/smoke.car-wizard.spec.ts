@@ -125,6 +125,15 @@ test("uses the full mobile viewport and keeps the final action visible on short 
 
   expect(overflowMetrics.stepsOverflowY).toBe("auto");
   expect(overflowMetrics.wizardScrollHeight).toBeLessThanOrEqual(overflowMetrics.wizardClientHeight + 2);
+
+  await wizard.evaluate((wizardElement) => {
+    wizardElement.scrollTop = wizardElement.scrollHeight;
+  });
+  await activateWizardCloseButton(page);
+  await page.locator("#addCarBtn").click();
+
+  await expect(page.locator("#addCarWizard")).toBeVisible();
+  await expect(wizard.evaluate((wizardElement) => Math.round(wizardElement.scrollTop))).resolves.toBeLessThanOrEqual(1);
 });
 
 test("keeps the manual branch deliberate while summarizing selections and activating the new car", async ({ page }) => {
@@ -233,6 +242,7 @@ test("keeps the manual branch deliberate while summarizing selections and activa
   await expect.poll(() => createdCarName).toBe("BMW X5 M60i");
   await expect(page.locator("#addCarWizard")).toBeHidden();
   await expect(page.locator("#wizardBackdrop")).toBeHidden();
+  await expect(page.locator("#addCarBtn")).toBeFocused();
   const newRow = page.locator('#carListBody tr[data-car-id="car-2"]');
   await expect(newRow).toContainText("BMW X5 M60i");
   await expect(newRow).toContainText("245/45R18");
@@ -342,6 +352,7 @@ test("keeps the final Add Car action visible for the library branch until the us
 
   await expect.poll(() => createdCarName).toBe("BMW X5");
   await expect(page.locator("#addCarWizard")).toBeHidden();
+  await expect(page.locator("#addCarBtn")).toBeFocused();
   const newRow = page.locator('#carListBody tr[data-car-id="car-2"]');
   await expect(newRow).toContainText("BMW X5");
   await expect(newRow).toContainText("275/40R21");

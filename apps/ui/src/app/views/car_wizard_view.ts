@@ -1,6 +1,5 @@
 import type {
   CarLibraryGearbox,
-  CarLibraryModel,
   CarLibraryTireOption,
   CarLibraryVariant,
 } from "../../transport/http_models";
@@ -8,6 +7,7 @@ import type {
   CarsFeatureOptionsState,
   CarsFeatureRenderState,
 } from "../features/cars_feature_workflow";
+import { DEFAULT_CARS_WIZARD_MANUAL_INPUTS } from "../features/cars_wizard_state";
 
 type FormatNumber = (value: number, digits?: number) => string;
 type Translate = (key: string, vars?: Record<string, unknown>) => string;
@@ -87,13 +87,7 @@ export function createClosedCarsWizardRenderModel(): CarsWizardRenderModel {
     finishVisible: false,
     gearboxOptions: createOptionsModel("data-idx", "list"),
     isOpen: false,
-    manualInputs: {
-      finalDrive: "3.08",
-      rim: "18",
-      tireAspect: "45",
-      tireWidth: "225",
-      topGear: "0.64",
-    },
+    manualInputs: { ...DEFAULT_CARS_WIZARD_MANUAL_INPUTS },
     modelOptions: createOptionsModel("data-idx", "list"),
     progressText: "",
     specBranch: null,

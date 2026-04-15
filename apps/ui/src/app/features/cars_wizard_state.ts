@@ -31,6 +31,14 @@ export interface ManualGearboxValues {
   topGear: number;
 }
 
+export const DEFAULT_CARS_WIZARD_MANUAL_INPUTS = {
+  finalDrive: "3.08",
+  rim: "18",
+  tireAspect: "45",
+  tireWidth: "225",
+  topGear: "0.64",
+} as const;
+
 interface WizardTextDeps {
   fmt: (value: number, digits?: number) => string;
   t: (key: string, vars?: Record<string, unknown>) => string;
