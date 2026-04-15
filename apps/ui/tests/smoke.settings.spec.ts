@@ -46,8 +46,10 @@ test("spectrum title updates when switching language", async ({ page }) => {
   });
   await page.goto("/");
   await expect(page.locator("#dashboardView [data-i18n='chart.spectrum_title']")).toHaveText("Multi-Sensor Blended Spectrum");
+  await expect(page.locator("#languageSelect")).toHaveValue("en");
   await page.locator("#languageSelect").selectOption("nl");
   await expect(page.locator("#dashboardView [data-i18n='chart.spectrum_title']")).toHaveText("Gecombineerd spectrum van meerdere sensoren");
+  await expect(page.locator("#languageSelect")).toHaveValue("nl");
 });
 
 test("manual speed save uses settings endpoint only (no speed-override call)", async ({ page }) => {
