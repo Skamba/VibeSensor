@@ -60,6 +60,7 @@ export interface InternetPanelRenderModel {
 }
 
 export interface InternetPanelActionHandlers {
+  onPasswordInput(value: string): void;
   onSsidInput(value: string): void;
   onTogglePassword(): void;
   onTransportChange(transport: UpdateStartRequestPayload["transport"]): void;
@@ -385,6 +386,8 @@ function InternetPanel(props: {
                   style="width:100%;max-width:20rem;"
                   value={model.passwordInputValue}
                   disabled={model.controlsLocked}
+                  onInput={(event) =>
+                    state.actions?.onPasswordInput(event.currentTarget.value)}
                 />
                 <button
                   type="button"
