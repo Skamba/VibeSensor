@@ -3,7 +3,8 @@ import type { JSX } from "preact";
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
 import { useUiTranslation } from "../ui_i18n";
 import { effect, type ReadonlySignal, signal } from "../ui_signals";
-import type { ViewDisposer } from "./dom_event_bindings";
+
+type ViewDisposer = () => void;
 
 const SETTINGS_TABS = [
   {
