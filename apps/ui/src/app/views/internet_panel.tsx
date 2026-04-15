@@ -3,6 +3,7 @@ import { h, type ComponentChildren } from "preact";
 import type { UpdateStartRequestPayload } from "../../transport/http_models";
 import type { ChoiceCardState } from "../style_state";
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { useUiTranslation } from "../ui_i18n";
 import type {
   MaintenanceReadinessItem,
   MaintenanceReadinessPanelModel,
@@ -259,14 +260,18 @@ function InternetPanel(props: {
   model: InternetPanelRenderModel;
 }) {
   const { model } = props;
+  const t = useUiTranslation();
   return (
     <div class="maintenance-stack">
       <div class="panel card">
-        <strong data-i18n="settings.internet.title">Internet</strong>
+        <strong data-i18n="settings.internet.title">
+          {t("settings.internet.title", "Internet")}
+        </strong>
         <div class="subtle" data-i18n="settings.internet.hint">
-          USB internet is optional. When a compatible phone or USB network
-          device is detected, the Pi can keep its hotspot active while using USB
-          as the upstream connection.
+          {t(
+            "settings.internet.hint",
+            "USB internet is optional. When a compatible phone or USB network device is detected, the Pi can keep its hotspot active while using USB as the upstream connection.",
+          )}
         </div>
         <div
           id="internetStatusPanel"
@@ -287,14 +292,16 @@ function InternetPanel(props: {
               class="maintenance-card__title"
               data-i18n="settings.update.controls_title"
             >
-              Update connection
+              {t("settings.update.controls_title", "Update connection")}
             </div>
             <div
               class="subtle"
               data-i18n="settings.update.controls_intro"
             >
-              Use Wi-Fi credentials as before, or choose the existing USB
-              internet uplink when the Pi detects one.
+              {t(
+                "settings.update.controls_intro",
+                "Use Wi-Fi credentials as before, or choose the existing USB internet uplink when the Pi detects one.",
+              )}
             </div>
           </div>
         </div>
@@ -307,7 +314,7 @@ function InternetPanel(props: {
               class="subtle"
               data-i18n="settings.update.transport_label"
             >
-              Internet source
+              {t("settings.update.transport_label", "Internet source")}
             </div>
             <div class="speed-source-choice-grid">
               <UpdateTransportChoiceCard
@@ -315,7 +322,7 @@ function InternetPanel(props: {
                 model={model.transportChoices.wifi}
                 radioId="updateTransportWifiRadio"
                 titleKey="settings.update.transport.wifi_title"
-                titleText="Temporary Wi-Fi"
+                titleText={t("settings.update.transport.wifi_title", "Temporary Wi-Fi")}
                 value="wifi"
               />
               <UpdateTransportChoiceCard
@@ -324,7 +331,10 @@ function InternetPanel(props: {
                 model={model.transportChoices.usb_internet}
                 radioId="updateTransportUsbRadio"
                 titleKey="settings.update.transport.usb_title"
-                titleText="Existing USB internet"
+                titleText={t(
+                  "settings.update.transport.usb_title",
+                  "Existing USB internet",
+                )}
                 value="usb_internet"
               />
             </div>
@@ -332,7 +342,7 @@ function InternetPanel(props: {
           <div id="updateWifiFields" hidden={model.wifiFieldsHidden}>
             <div class="form-group">
               <label htmlFor="updateSsidInput" data-i18n="settings.update.ssid">
-                Wi-Fi SSID
+                {t("settings.update.ssid", "Wi-Fi SSID")}
               </label>
               <input
                 type="text"
@@ -349,7 +359,7 @@ function InternetPanel(props: {
                 htmlFor="updatePasswordInput"
                 data-i18n="settings.update.password"
               >
-                Wi-Fi Password
+                {t("settings.update.password", "Wi-Fi Password")}
               </label>
               <div style="display:flex;gap:0.5rem;align-items:center;">
                 <input
@@ -386,7 +396,7 @@ function InternetPanel(props: {
                   class="settings-help-disclosure__title"
                   data-i18n="settings.update.details_title"
                 >
-                  What happens next
+                  {t("settings.update.details_title", "What happens next")}
                 </span>
                 <span
                   id="updateDetailsCaption"

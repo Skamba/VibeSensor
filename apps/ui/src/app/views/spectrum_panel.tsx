@@ -1,4 +1,5 @@
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { useUiTranslation } from "../ui_i18n";
 import type {
   SpectrumBandLegendModel,
   SpectrumPanelHeaderModel,
@@ -50,12 +51,13 @@ const DEFAULT_PANEL_STATE: SpectrumPanelBridgeState = {
 
 function SpectrumPanel(props: { state: SpectrumPanelBridgeState }) {
   const { state } = props;
+  const t = useUiTranslation();
 
   return (
     <>
       <div class="card__header">
         <div class="card__title" data-i18n="chart.spectrum_title">
-          {state.header.titleText}
+          {t("chart.spectrum_title", state.header.titleText)}
         </div>
       </div>
       <div id="specChartWrap" class="spectrum-wrap">
@@ -67,7 +69,7 @@ function SpectrumPanel(props: { state: SpectrumPanelBridgeState }) {
       <div class="spectrum-controls-panel">
         <div class="spectrum-toolbar">
           <div class="card__subtle spectrum-toolbar__hint" data-i18n="spectrum.controls_hint">
-            {state.header.hintText}
+            {t("spectrum.controls_hint", state.header.hintText)}
           </div>
           <div class="spectrum-toolbar__bands">
             <button

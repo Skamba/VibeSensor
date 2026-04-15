@@ -1,4 +1,5 @@
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { useUiTranslation } from "../ui_i18n";
 
 export interface RealtimeLiveOverviewActiveCarModel {
   text: string;
@@ -58,17 +59,20 @@ const DEFAULT_OVERVIEW_STATE: RealtimeLiveOverviewBridgeState = {
 
 function RealtimeLiveOverview(props: { state: RealtimeLiveOverviewBridgeState }) {
   const { state } = props;
+  const t = useUiTranslation();
 
   return (
     <>
       <div class="card__header card__header--stack">
         <div>
           <div class="card__title" data-i18n="dashboard.live_overview">
-            Live overview
+            {t("dashboard.live_overview", "Live overview")}
           </div>
           <div class="card__subtle" data-i18n="dashboard.live_overview_hint">
-            Check readiness, current run state, and the strongest sensor level before reading the
-            chart.
+            {t(
+              "dashboard.live_overview_hint",
+              "Check readiness, current run state, and the strongest sensor level before reading the chart.",
+            )}
           </div>
         </div>
         <div
@@ -84,7 +88,7 @@ function RealtimeLiveOverview(props: { state: RealtimeLiveOverviewBridgeState })
       <div class="stat-grid live-overview__stats">
         <div id="liveConnectedSensors" class="stat">
           <div class="stat__label" data-i18n="dashboard.connected_sensors">
-            Sensors online
+            {t("dashboard.connected_sensors", "Sensors online")}
           </div>
           <div class="stat__value" data-value>
             {state.connectedSensorsText}
@@ -96,7 +100,7 @@ function RealtimeLiveOverview(props: { state: RealtimeLiveOverviewBridgeState })
           data-variant={state.activeCar.warning ? "warn" : undefined}
         >
           <div class="stat__label" data-i18n="dashboard.active_car">
-            Active car
+            {t("dashboard.active_car", "Active car")}
           </div>
           <div
             class="stat__value"
@@ -118,7 +122,7 @@ function RealtimeLiveOverview(props: { state: RealtimeLiveOverviewBridgeState })
         </div>
         <div id="liveRecordingState" class="stat">
           <div class="stat__label" data-i18n="dashboard.recording_state">
-            Run state
+            {t("dashboard.recording_state", "Run state")}
           </div>
           <div class="stat__value" data-value>
             {state.recordingStateText}
@@ -126,7 +130,7 @@ function RealtimeLiveOverview(props: { state: RealtimeLiveOverviewBridgeState })
         </div>
         <div id="liveDataFreshness" class="stat">
           <div class="stat__label" data-i18n="dashboard.data_freshness">
-            Feed freshness
+            {t("dashboard.data_freshness", "Feed freshness")}
           </div>
           <div class="stat__value" data-value>
             {state.dataFreshnessText}
@@ -134,7 +138,7 @@ function RealtimeLiveOverview(props: { state: RealtimeLiveOverviewBridgeState })
         </div>
         <div id="liveStrongestSignal" class="stat">
           <div class="stat__label" data-i18n="dashboard.strongest_signal">
-            Strongest sensor level
+            {t("dashboard.strongest_signal", "Strongest signal")}
           </div>
           <div class="stat__value" data-value>
             {state.strongestSignalText}
@@ -142,7 +146,7 @@ function RealtimeLiveOverview(props: { state: RealtimeLiveOverviewBridgeState })
         </div>
         <div class="stat">
           <div class="stat__label" data-i18n="dashboard.current_speed">
-            Current speed
+            {t("dashboard.current_speed", "Current speed")}
           </div>
           <div id="speed" class="stat__value speed" aria-live="polite">
             {state.speedText}
@@ -151,7 +155,7 @@ function RealtimeLiveOverview(props: { state: RealtimeLiveOverviewBridgeState })
       </div>
       <div class="live-sensor-roster__header">
         <div class="mini-label" data-i18n="dashboard.sensor_coverage">
-          Sensor coverage
+          {t("dashboard.sensor_coverage", "Sensor coverage")}
         </div>
       </div>
       <div id="liveSensorRoster" class="live-sensor-roster">
@@ -177,7 +181,7 @@ function RealtimeLiveOverview(props: { state: RealtimeLiveOverviewBridgeState })
           })
           : (
             <div class="subtle" data-i18n="settings.sensors.no_sensors">
-              No sensors yet.
+              {t("settings.sensors.no_sensors", "No sensors yet.")}
             </div>
           )}
       </div>

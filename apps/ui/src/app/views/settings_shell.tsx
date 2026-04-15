@@ -1,6 +1,7 @@
 import type { JSX } from "preact";
 
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { useUiTranslation } from "../ui_i18n";
 import type { ViewDisposer } from "./dom_event_bindings";
 
 const SETTINGS_TABS = [
@@ -87,6 +88,7 @@ function focusSettingsTab(
 
 function SettingsShell(props: SettingsShellProps) {
   const { activeTabId, onActivateTab } = props;
+  const t = useUiTranslation();
 
   function handleTabKeyDown(
     index: number,
@@ -143,7 +145,9 @@ function SettingsShell(props: SettingsShellProps) {
               onClick={() => onActivateTab(tab.id)}
               onKeyDown={(event) => handleTabKeyDown(index, event)}
             >
-              <span data-i18n={tab.labelKey}>{tab.fallbackLabel}</span>
+              <span data-i18n={tab.labelKey}>
+                {t(tab.labelKey, tab.fallbackLabel)}
+              </span>
             </button>
           );
         })}

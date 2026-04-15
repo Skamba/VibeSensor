@@ -1,6 +1,7 @@
 import * as I18N from "../../i18n";
 import { formatIntLocale } from "../../format";
-import type { UiShellDom } from "../dom/shell_dom";
+import { queryOne, queryRequiredAll } from "../dom/dom_query";
+import { setUiLanguage } from "../ui_i18n";
 import type { AppState } from "../ui_app_state";
 import {
   bindUiShellFeatureEvents,
@@ -26,21 +27,36 @@ import {
   createUiShellStatusModule,
   type UiShellStatusModule,
 } from "./ui_shell_status_module";
-import type { UiShellChromeActionBridge } from "./ui_shell_chrome";
-import { setVariantState } from "../style_state";
+import type {
+  UiShellBadgeModel,
+  UiShellChromeActionBridge,
+  UiShellChromeRenderModel,
+  UiShellChromeView,
+} from "./ui_shell_chrome";
+import {
+  SHELL_NAV_ITEMS,
+  SPEED_UNIT_OPTIONS,
+} from "./ui_shell_chrome";
 import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
+import type { VisualVariant } from "../style_state";
 
 type UiShellControllerDeps = {
-  state: AppState;
-  dom: UiShellDom;
+  chrome: UiShellChromeView;
   chromeActions: UiShellChromeActionBridge;
   liveOverview: RealtimeLiveOverviewBridge;
+  state: AppState;
 };
+
+function normalizeBadgeVariant(variant: string): VisualVariant {
+  return variant === "bad" || variant === "muted" || variant === "ok" || variant === "warn"
+    ? variant
+    : "muted";
+}
 
 export class UiShellController {
   private readonly state: AppState;
 
-  private readonly els: UiShellDom;
+  private readonly chrome: UiShellChromeView;
 
   private readonly navigation: UiShellNavigationModule;
 
@@ -60,37 +76,46 @@ export class UiShellController {
 
   private updateSpectrumOverlayState: (() => void) | null = null;
 
+  private liveStatusBadge: UiShellBadgeModel = {
+    text: "No live signal",
+    variant: "muted",
+  };
+
   constructor(deps: UiShellControllerDeps) {
     this.state = deps.state;
-    this.els = deps.dom;
+    setUiLanguage(this.state.shell.lang);
+    this.chrome = deps.chrome;
+    const appShellWrap = queryOne<HTMLElement>(".wrap");
     this.navigation = createUiShellNavigationModule({
       shell: this.state.shell,
-      dom: this.els,
+      dom: {
+        appShellWrap,
+        views: queryRequiredAll<HTMLElement>(".view", "UI shell views"),
+      },
       onDashboardViewActivated: () => {
         this.state.spectrum.spectrumPlot?.resize();
       },
     });
     this.notifications = createUiShellNotificationModule({
-      dom: this.els,
+      onChanged: () => this.renderChrome(),
+      window,
     });
     this.status = createUiShellStatusModule({
-      shell: this.state.shell,
-      transport: this.state.transport,
+      appShellWrap,
       realtime: this.state.realtime,
-      settings: this.state.settings,
-      dom: this.els,
-      t: (key, vars) => this.t(key, vars),
-      setPillState: (el, variant, text) => this.setPillState(el, variant, text),
       renderLiveOverviewSpeed: (text) => deps.liveOverview.setSpeedText(text),
+      settings: this.state.settings,
+      shell: this.state.shell,
+      t: (key, vars) => this.t(key, vars),
+      transport: this.state.transport,
     });
     this.preferences = createUiShellPreferencesModule({
       shell: this.state.shell,
-      dom: this.els,
       t: (key, vars) => this.t(key, vars),
-      normalizeLanguage: (lang) => I18N.normalizeLang(lang),
+      normalizeLanguage: (lang) => I18N.normalizeLang(lang ?? ""),
       applyLanguage: (forceReloadInsights = false) => this.applyLanguage(forceReloadInsights),
-      renderSpeedReadout: () => this.status.renderSpeedReadout(),
-      showError: (message) => this.showError(message),
+      renderSpeedReadout: () => this.renderSpeedReadout(),
+      onChanged: () => this.renderChrome(),
     });
     deps.chromeActions.attach({
       activateView: (viewId) => this.setActiveView(viewId),
@@ -99,13 +124,12 @@ export class UiShellController {
     });
     this.languageRefresh = createUiShellLanguageRefreshModule({
       state: this.state,
-      dom: this.els,
-      t: (key, vars) => this.t(key, vars),
       renderSpeedReadout: () => this.renderSpeedReadout(),
       renderWsState: () => this.renderWsState(),
       renderSpectrum: () => this.renderSpectrumChart?.(),
       updateSpectrumOverlay: () => this.updateSpectrumOverlayState?.(),
     });
+    this.renderChrome();
   }
 
   attachPorts(ports: UiShellFeaturePorts): void {
@@ -128,29 +152,26 @@ export class UiShellController {
     return formatIntLocale(value, this.state.shell.lang);
   }
 
-  setPillState(el: HTMLElement | null, variant: string, text: string): void {
-    if (!el) return;
-    el.className = "pill";
-    setVariantState(el, variant === "bad" || variant === "muted" || variant === "ok" || variant === "warn"
-      ? variant
-      : "muted");
-    el.textContent = text;
-  }
-
   showError(message: string): void {
     this.notifications.showError(message);
   }
 
   renderSpeedReadout(): void {
     this.status.renderSpeedReadout();
+    this.renderChrome();
   }
 
   renderWsState(): void {
-    this.status.renderWsState();
+    this.status.syncConnectionState();
+    this.renderChrome();
   }
 
   setLiveStatus(variant: string, text: string): void {
-    this.setPillState(this.els.shellLiveStatus, variant, text);
+    this.liveStatusBadge = {
+      text,
+      variant: normalizeBadgeVariant(variant),
+    };
+    this.renderChrome();
   }
 
   subscribeActiveViewChanges(listener: (viewId: string) => void): () => void {
@@ -163,6 +184,7 @@ export class UiShellController {
   setActiveView(viewId: string): void {
     const previousViewId = this.state.shell.activeViewId;
     this.navigation.setActiveView(viewId);
+    this.renderChrome();
     if (this.state.shell.activeViewId !== previousViewId) {
       for (const listener of this.activeViewListeners) {
         listener(this.state.shell.activeViewId);
@@ -171,7 +193,12 @@ export class UiShellController {
   }
 
   applyLanguage(forceReloadInsights = false): void {
-    this.languageRefresh.applyLanguage(this.requirePorts().languageRefresh, forceReloadInsights);
+    setUiLanguage(this.state.shell.lang);
+    this.languageRefresh.applyLanguage(
+      this.requirePorts().languageRefresh,
+      forceReloadInsights,
+    );
+    this.renderChrome();
   }
 
   bindUiEvents(): void {
@@ -180,10 +207,39 @@ export class UiShellController {
 
   async hydratePersistedPreferences(): Promise<void> {
     await this.preferences.hydratePersistedPreferences();
+    this.renderChrome();
   }
 
   private bindFeatureEvents(): void {
     bindUiShellFeatureEvents(this.requirePorts());
+  }
+
+  private buildRenderModel(): UiShellChromeRenderModel {
+    return {
+      activeViewId: this.state.shell.activeViewId,
+      appErrorBanner: this.notifications.getBannerModel(),
+      languageFeedback: this.preferences.getLanguageFeedback(),
+      languageLabelText: this.t("settings.language"),
+      navItems: SHELL_NAV_ITEMS.map((item) => ({
+        labelText: this.t(item.labelKey) || item.fallbackLabel,
+        tabId: item.tabId,
+        viewId: item.viewId,
+      })),
+      selectedLanguage: this.preferences.getSelectedLanguage(),
+      selectedSpeedUnit: this.preferences.getSelectedSpeedUnit(),
+      shellLiveStatus: this.liveStatusBadge,
+      speedUnitFeedback: this.preferences.getSpeedUnitFeedback(),
+      speedUnitLabelText: this.t("speed.unit"),
+      speedUnitOptionLabels: Object.fromEntries(
+        SPEED_UNIT_OPTIONS.map((option) => [option.value, this.t(option.labelKey) || option.fallbackLabel]),
+      ),
+      wsLinkState: this.status.getWsLinkState(),
+    };
+  }
+
+  private renderChrome(): void {
+    this.status.syncConnectionState();
+    this.chrome.render(this.buildRenderModel());
   }
 
   private requirePorts(): UiShellFeaturePorts {
