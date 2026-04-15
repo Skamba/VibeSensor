@@ -2,28 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import type { HistoryEntry, HistoryInsightsPayload } from "../src/transport/http_models";
 import type { RunDetail } from "../src/app/ui_app_state";
-import {
-  renderHistoryEmptyState,
-  renderHistoryTable,
-} from "../src/app/views/history_table_view";
-import {
-  findByAttribute,
-  findByClass,
-  installFakeDomGlobals,
-  type FakeElement,
-  FakeHTMLElement,
-} from "./dom_render_test_support";
-
-let restoreDom = () => undefined;
-
-test.beforeEach(() => {
-  restoreDom = installFakeDomGlobals();
-});
-
-test.afterEach(() => {
-  restoreDom();
-  restoreDom = () => undefined;
-});
+import { buildHistoryTableRowsViewModel } from "../src/app/views/history_table_presenters";
 
 function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : key;
@@ -101,35 +80,8 @@ function defaultDetail(detail: Partial<RunDetail>): RunDetail {
   };
 }
 
-function expectSingleByAttribute(
-  root: FakeElement,
-  attributeName: string,
-  expectedValue: string,
-): FakeElement {
-  const matches = findByAttribute(root, attributeName, expectedValue);
-  expect(matches, `Expected exactly one [${attributeName}="${expectedValue}"] element`).toHaveLength(1);
-  return matches[0];
-}
-
-test("renderHistoryEmptyState builds an actionable empty-state row", () => {
-  const container = new FakeHTMLElement("TBODY") as unknown as HTMLElement;
-
-  renderHistoryEmptyState(container, {
-    t: testTranslation,
-  });
-
-  const root = container as unknown as FakeElement;
-  expect(findByAttribute(root, "colspan", "4")).toHaveLength(1);
-  expect(findByClass(root, "empty-state")).toHaveLength(1);
-  expect(findByClass(root, "empty-state__title")[0].textContent).toBe("history.empty.title");
-  expect(findByClass(root, "empty-state__body")[0].textContent).toBe("history.empty.body");
-  expect(findByAttribute(root, "data-inline-state-action", "open-live")).toHaveLength(1);
-});
-
-test("renderHistoryTable builds rows and expanded details from typed history models", () => {
-  const container = new FakeHTMLElement("TBODY") as unknown as HTMLElement;
-
-  renderHistoryTable(container, {
+test("buildHistoryTableRowsViewModel builds rows and expanded details from typed history models", () => {
+  const rows = buildHistoryTableRowsViewModel({
     runs: [historyListRun("run-001")],
     expandedRunId: "run-001",
     runDetailsById: {
@@ -145,22 +97,45 @@ test("renderHistoryTable builds rows and expanded details from typed history mod
     historyExportUrl: (runId) => `/api/history/${runId}/export`,
   });
 
-  const root = container as unknown as FakeElement;
-  const row = expectSingleByAttribute(root, "data-run-row", "1");
-  const toggle = expectSingleByAttribute(root, "data-run-toggle", "details");
-  const zone = expectSingleByAttribute(root, "data-location-key", "front-right wheel");
-  const rawExport = expectSingleByAttribute(root, "data-run-action", "download-raw");
-  const mainColumn = findByClass(root, "history-main-column");
+  expect(rows).toHaveLength(1);
+  const row = rows[0];
 
-  expect(row.getAttribute("data-run")).toBe("run-001");
-  expect(toggle.getAttribute("aria-expanded")).toBe("true");
-  expect(findByClass(root, "history-details-row")).toHaveLength(1);
-  expect(mainColumn).toHaveLength(1);
-  expect(findByClass(mainColumn[0], "history-details-footer")).toHaveLength(1);
-  expect(findByClass(root, "history-warning-banner")).toHaveLength(1);
-  expect(zone.textContent).toContain("32.0 dB");
-  expect(findByClass(root, "history-findings-chip__label").map((label) => label.textContent))
+  expect(row.runId).toBe("run-001");
+  expect(row.isExpanded).toBe(true);
+  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.complete");
+  expect(row.toggleLabel).toBe("history.close_diagnosis");
+  expect(row.details?.warnings).toHaveLength(1);
+  expect(row.details?.heatmap.zones.find((zone) => zone.key === "front-right wheel")?.valueLabel)
+    .toBe("32.0 dB");
+  expect(row.details?.insights.primary?.chips.map((chip) => chip.label))
     .toContain("history.findings_signature");
-  expect(rawExport.getAttribute("href")).toBe("/api/history/run-001/export");
-  expect(rawExport.getAttribute("download")).toBe("run-001.zip");
+  expect(row.details?.footerEyebrow).toBe("history.run_actions_title");
+  expect(row.details?.exportLabel).toBe("history.export");
+  expect(row.details?.deleteLabel).toBe("history.delete");
+});
+
+test("buildHistoryTableRowsViewModel keeps collapsed quick-report context in the row summary", () => {
+  const rows = buildHistoryTableRowsViewModel({
+    runs: [historyListRun("run-001")],
+    expandedRunId: null,
+    runDetailsById: {
+      "run-001": defaultDetail({
+        preview: populatedInsights("run-001") as RunDetail["preview"],
+      }),
+    },
+    t: testTranslation,
+    fmt: (value, digits = 0) => Number(value).toFixed(digits),
+    fmtTs: (iso) => iso,
+    formatInt: (value) => String(value),
+    historyExportUrl: (runId) => `/api/history/${runId}/export`,
+  });
+
+  expect(rows).toHaveLength(1);
+  const row = rows[0];
+
+  expect(row.isExpanded).toBe(false);
+  expect(row.details).toBeNull();
+  expect(row.summaryHeadline).toBe("history.source.wheel_tire");
+  expect(row.summaryMeta?.includes("report.confidence")).toBe(true);
+  expect(row.collapsedAction.pdfLabel).toBe("history.generate_pdf");
 });

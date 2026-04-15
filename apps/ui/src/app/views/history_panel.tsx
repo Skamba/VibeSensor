@@ -1,18 +1,10 @@
-import { useLayoutEffect, useRef } from "preact/hooks";
-
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
-import { getTypedInlineStateAction } from "./dom_helpers";
-import {
-  getHistoryTableAction,
-  getHistoryTableRowRunId,
-  renderHistoryEmptyState,
-  renderHistoryTable,
-  type HistoryPanelActionHandlers,
-  type HistoryPanelRenderModel,
-  type HistoryPanelView,
+import { HistoryTableBody } from "./history_table_content";
+import type {
+  HistoryPanelActionHandlers,
+  HistoryPanelRenderModel,
+  HistoryPanelView,
 } from "./history_table_view";
-
-const HISTORY_INLINE_ACTIONS = ["open-live"] as const;
 
 interface HistoryPanelBridgeState extends HistoryPanelRenderModel {
   actions: HistoryPanelActionHandlers | null;
@@ -27,48 +19,6 @@ const DEFAULT_PANEL_STATE: HistoryPanelBridgeState = {
 
 function HistoryPanel(props: { state: HistoryPanelBridgeState }) {
   const { state } = props;
-  const tableBodyRef = useRef<HTMLTableSectionElement | null>(null);
-
-  useLayoutEffect(() => {
-    const tableBody = tableBodyRef.current;
-    if (!tableBody || state.table === null) {
-      return;
-    }
-    if (state.table.kind === "empty") {
-      renderHistoryEmptyState(tableBody, {
-        t: state.table.t,
-      });
-      return;
-    }
-    renderHistoryTable(tableBody, state.table.params);
-  }, [state.table]);
-
-  function handleTableClick(event: MouseEvent): void {
-    const inlineAction = getTypedInlineStateAction(event.target, HISTORY_INLINE_ACTIONS);
-    if (inlineAction) {
-      event.preventDefault();
-      event.stopPropagation();
-      state.actions?.onTableInteraction({ type: inlineAction });
-      return;
-    }
-    const action = getHistoryTableAction(event.target);
-    if (action) {
-      if (action.action !== "download-raw") {
-        event.preventDefault();
-      }
-      event.stopPropagation();
-      state.actions?.onTableInteraction({
-        type: "run-action",
-        action: action.action,
-        runId: action.runId,
-      });
-      return;
-    }
-    const runId = getHistoryTableRowRunId(event.target);
-    if (runId) {
-      state.actions?.onTableInteraction({ type: "toggle-run", runId });
-    }
-  }
 
   return (
     <>
@@ -109,14 +59,8 @@ function HistoryPanel(props: { state: HistoryPanelBridgeState }) {
             <th data-i18n="history.table.actions">Actions</th>
           </tr>
         </thead>
-        <tbody id="historyTableBody" ref={tableBodyRef} onClick={handleTableClick}>
-          {state.table === null
-            ? (
-              <tr>
-                <td colSpan={4}>No runs found.</td>
-              </tr>
-            )
-            : null}
+        <tbody id="historyTableBody">
+          <HistoryTableBody handlers={state.actions} table={state.table} />
         </tbody>
       </table>
     </>
