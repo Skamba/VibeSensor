@@ -112,15 +112,15 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/analysis_panel.tsx` | Preact owner for the analysis-settings shell that mounts the full tab surface and exposes the typed bridge consumed by analysis and car-selection modules |
 | `app/views/settings_shell.tsx` | Preact owner for the shared settings tab chrome and tab-panel wrappers that mount the per-tab panel hosts and expose the settings navigation bridge |
 | `app/views/esp_flash_panel.tsx` | Preact owner for the ESP flash settings shell that mounts the controls, readiness, status, history, and log surface while exposing the bridge consumed by the ESP flash feature |
-| `app/views/internet_panel.tsx` | Preact owner for the internet settings shell that mounts the USB-status plus transport/readiness surface and exposes the bridge consumed by the update feature |
-| `app/views/update_panel.tsx` | Preact owner for the update settings shell that mounts the update controls and status host while exposing the bridge consumed by the update feature |
+| `app/views/internet_panel.tsx` | Preact owner for the full internet settings surface that renders USB status, transport choices, Wi-Fi credentials, and readiness guidance through a typed bridge |
+| `app/views/update_panel.tsx` | Preact owner for the full update settings surface that renders the action row plus current status, health, journey, issues, latest attempt, and log cards through a typed bridge |
 | `app/views/sensors_panel.tsx` | Preact owner for the sensors settings shell that renders the full sensor table and exposes typed identify/remove/location callbacks to the realtime feature |
 | `app/views/speed_source_panel.tsx` | Preact owner for the speed-source shell that renders the full tab plus live diagnostics in JSX and exposes the shared bridge consumed by the speed-source and GPS-status modules |
 | `app/views/cars_panel.tsx` | Preact owner for the full car-management surface that renders saved-car guidance/list rows plus the full add-car wizard internals in JSX and exposes typed list and wizard bridges |
 | `app/views/cars_feature_bindings.ts` | Typed car-wizard bindings reused as the thin wizard interaction adapter behind the car-management island |
 | `app/views/cars_feature_presenter.ts` | Thin car-wizard presenter that turns workflow state into typed wizard render models and delegates focus/manual-input access through the island bridge |
 | `app/views/car_wizard_view.ts` | Typed add-car wizard render-model builders for progress, option sections, selected specs, and summary rows reused by the Preact car-management island |
-| `app/features/update_feature.ts` | Thin update facade that binds DOM events, delegates state rendering to the presenter, and delegates update commands to the workflow |
+| `app/features/update_feature.ts` | Thin update facade that binds explicit DOM events, delegates island render-model updates to the presenter, and delegates update commands to the workflow |
 | `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for update polling, internet-status normalization, and start/cancel command orchestration |
 | `app/views/dom_render.ts` | Shared low-level DOM render helper for fragments, element creation, text updates, and class-state toggles |
 | `app/views/esp_flash_feature_bindings.ts` | Feature-local ESP flash bindings for start/cancel/refresh/select actions without leaving raw DOM event parsing in the feature |
@@ -135,14 +135,11 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/settings_car_list_view.ts` | Typed saved-car list and guidance view-model builders reused by the car-management island for row, empty-state, and highlight rendering |
 | `app/views/settings_speed_source_bindings.ts` | Typed speed-source form bindings that decode radio/input/navigation/device actions away from the workflow |
 | `app/views/settings_speed_source_presenter.ts` | Pure speed-source presenter that turns typed workflow state and live status payloads into panel and diagnostics render models |
-| `app/views/update_feature_presenter.ts` | Update presenter that owns readiness derivation, transport/control DOM state, and typed handoff into the island-owned update and internet panel bridges |
-| `app/views/update_status_view.ts` | Thin update-status coordinator that assembles typed section models into the island-owned settings update panel |
+| `app/views/update_feature_presenter.ts` | Update presenter that derives typed update/internet panel models from workflow state plus draft form inputs and toggles |
+| `app/views/internet_status_view.ts` | Pure USB-internet status model builder reused by the Preact internet panel |
 | `app/views/update_status_view_models.ts` | Typed update-status section builders for current status, journey, issues, attempt history, health, and log cards |
-| `app/views/update_status_overview_view.ts` | Focused current-status and journey card renderers built from typed section inputs |
-| `app/views/update_status_history_view.ts` | Focused issues and latest-attempt card renderers for update history and failure context |
-| `app/views/update_status_health_view.ts` | Dedicated background-service health card renderer for the update panel |
-| `app/views/update_status_log_view.ts` | Dedicated updater log card renderer for empty, running, and populated log states |
-| `app/views/` | Focused DOM rendering, render-helper composition, event-target decoding, and disposable delegated event binders for settings, cars wizard, realtime, history, and update panels |
+| `app/views/maintenance_readiness_view.ts` | Shared maintenance-readiness model contract still reused by update and ESP flash readiness flows |
+| `app/views/` | Focused render-model builders, event-target decoding, and disposable delegated event binders for settings, cars wizard, realtime, history, and updater surfaces |
 | `app/views/realtime_feature_presenter.ts` | Realtime presenter that owns derived live/logging panel state, elapsed-timer sync, and cross-view navigation clicks |
 | `transport/` | UI-local HTTP / WS DTOs plus adapter helpers that isolate generated contract files from app state and feature code |
 | `api.ts` | REST API facade that returns local transport DTOs while `api/types.ts` stays the generated HTTP boundary |

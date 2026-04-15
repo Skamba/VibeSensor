@@ -3,7 +3,14 @@ import { expect, test } from "@playwright/test";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import { createUpdateFeature } from "../src/app/features/update_feature";
 import type { EspFlashPanelDom } from "../src/app/views/esp_flash_panel";
-import type { UpdatePanelDom } from "../src/app/views/update_panel";
+import type {
+  InternetPanelDom,
+  InternetPanelRenderModel,
+} from "../src/app/views/internet_panel";
+import type {
+  UpdatePanelDom,
+  UpdatePanelRenderModel,
+} from "../src/app/views/update_panel";
 import {
   createDeferred,
   flushAsyncWork,
@@ -144,6 +151,271 @@ function createInput(value = "", type = "text"): HTMLInputElement {
       return true;
     },
   } as unknown as HTMLInputElement;
+}
+
+function setOptionalAttribute(
+  element: { removeAttribute(name: string): void; setAttribute(name: string, value: string): void },
+  name: string,
+  value: string | null,
+): void {
+  if (value == null) {
+    element.removeAttribute(name);
+    return;
+  }
+  element.setAttribute(name, value);
+}
+
+function serializeBadge(
+  badge: { text: string; variant: string } | null,
+): string {
+  return badge
+    ? `<span class="pill" data-variant="${badge.variant}">${badge.text}</span>`
+    : "";
+}
+
+function serializeStatusGrid(
+  rows: readonly { labelText: string; valueText: string }[],
+): string {
+  return `<div class="status-grid">${rows.map((row) => `<div class="status-grid__row"><span class="status-grid__label">${row.labelText}</span><span>${row.valueText}</span></div>`).join("")}</div>`;
+}
+
+function serializeMaintenanceCard(options: {
+  badge?: { text: string; variant: string } | null;
+  bodyHtml: string;
+  subtitleText: string;
+  titleText: string;
+}): string {
+  return `<section class="maintenance-card"><div class="maintenance-card__header"><div><div class="maintenance-card__title">${options.titleText}</div><div class="subtle">${options.subtitleText}</div></div>${serializeBadge(options.badge ?? null)}</div><div class="maintenance-card__body">${options.bodyHtml}</div></section>`;
+}
+
+function serializeIssueDetail(text: string): string {
+  return `<div class="issue-detail">${text}</div>`;
+}
+
+function serializeCurrentStatusCard(
+  model: NonNullable<UpdatePanelRenderModel["status"]>["currentStatus"],
+): string {
+  const bodyHtml = model.rows.length > 0
+    ? serializeStatusGrid(model.rows)
+    : `<div class="maintenance-note">${model.emptyText ?? ""}</div>`;
+  return serializeMaintenanceCard({
+    badge: model.badge,
+    bodyHtml,
+    subtitleText: model.summaryText,
+    titleText: model.titleText,
+  });
+}
+
+function serializeHealthCard(
+  model: NonNullable<UpdatePanelRenderModel["status"]>["health"],
+): string {
+  return serializeMaintenanceCard({
+    badge: model.badge,
+    bodyHtml: serializeStatusGrid(model.rows),
+    subtitleText: model.summaryText,
+    titleText: model.titleText,
+  });
+}
+
+function serializeJourneyCard(
+  model: NonNullable<UpdatePanelRenderModel["status"]>["journey"],
+): string {
+  const failureHtml = model.failureNote
+    ? `<div class="maintenance-stack maintenance-stack--tight"><div class="maintenance-note maintenance-note--bad"><strong>${model.failureNote.summaryText}</strong>${model.failureNote.detailText ? serializeIssueDetail(model.failureNote.detailText) : ""}</div><div class="maintenance-note"><strong>${model.failureNote.recoveryTitleText}</strong>${serializeIssueDetail(model.failureNote.recoveryDetailText)}</div></div>`
+    : "";
+  const stagesHtml = model.stages.map((stage) => `<li class="maintenance-stage" data-stage-phase="${stage.phase}" data-stage-state="${stage.state}"${stage.current ? ' aria-current="step"' : ""}><span class="maintenance-stage__marker">${stage.markerText}</span><div class="maintenance-stage__body"><div class="maintenance-stage__title">${stage.titleText}</div><div class="maintenance-stage__detail">${stage.detailText}</div></div><span class="maintenance-stage__state">${stage.stateText}</span></li>`).join("");
+  return serializeMaintenanceCard({
+    bodyHtml: `<div class="maintenance-journey">${failureHtml}<ol class="maintenance-stage-list">${stagesHtml}</ol></div>`,
+    subtitleText: model.subtitleText,
+    titleText: model.titleText,
+  });
+}
+
+function serializeIssuesCard(
+  model: NonNullable<UpdatePanelRenderModel["status"]>["issues"],
+): string {
+  return serializeMaintenanceCard({
+    bodyHtml: `<ul class="issue-list">${model.items.map((item) => `<li class="issue-item"><div class="issue-phase">${item.phaseText}</div><div><strong>${item.messageText}</strong>${item.detailText ? serializeIssueDetail(item.detailText) : ""}</div></li>`).join("")}</ul>`,
+    subtitleText: model.subtitleText,
+    titleText: model.titleText,
+  });
+}
+
+function serializeLatestAttemptCard(
+  model: NonNullable<UpdatePanelRenderModel["status"]>["latestAttempt"],
+): string {
+  const failureHtml = model.failureNote
+    ? `<div class="maintenance-note maintenance-note--bad"><strong>${model.failureNote.summaryText}</strong>${model.failureNote.detailText ? serializeIssueDetail(model.failureNote.detailText) : ""}</div>`
+    : "";
+  return serializeMaintenanceCard({
+    badge: model.badge,
+    bodyHtml: `${serializeStatusGrid(model.rows)}${failureHtml}`,
+    subtitleText: model.subtitleText,
+    titleText: model.titleText,
+  });
+}
+
+function serializeLogCard(
+  model: NonNullable<UpdatePanelRenderModel["status"]>["log"],
+): string {
+  const bodyHtml = model.emptyState
+    ? `<div class="empty-state empty-state--inline"><strong class="empty-state__title">${model.emptyState.titleText}</strong><span class="empty-state__body">${model.emptyState.bodyText}</span></div>`
+    : `${model.noteText ? `<div class="maintenance-note">${model.noteText}</div>` : ""}<pre class="log-pre">${model.lines.map((line) => `${line}\n`).join("")}</pre>`;
+  return serializeMaintenanceCard({
+    bodyHtml,
+    subtitleText: model.subtitleText,
+    titleText: model.titleText,
+  });
+}
+
+function serializeUpdateOverview(
+  status: UpdatePanelRenderModel["status"],
+): string {
+  if (!status) {
+    return "";
+  }
+  return `<div class="maintenance-pair-grid maintenance-pair-grid--summary">${serializeCurrentStatusCard(status.currentStatus)}${serializeHealthCard(status.health)}</div>`;
+}
+
+function serializeUpdateStatus(
+  status: UpdatePanelRenderModel["status"],
+): string {
+  if (!status) {
+    return "";
+  }
+  return `<div class="maintenance-pair-grid maintenance-pair-grid--focus">${serializeJourneyCard(status.journey)}${serializeLogCard(status.log)}</div>${status.latestAttempt ? serializeLatestAttemptCard(status.latestAttempt) : ""}${status.issues ? serializeIssuesCard(status.issues) : ""}`;
+}
+
+function renderUpdatePanelDom(
+  dom: UpdatePanelDom,
+  model: UpdatePanelRenderModel,
+): void {
+  dom.updateStartBtn.textContent = model.startButtonLabelText;
+  dom.updateStartBtn.disabled = model.startButtonDisabled;
+  dom.updateStartBtn.hidden = model.startButtonHidden;
+  dom.updateCancelBtn.disabled = model.cancelButtonDisabled;
+  dom.updateCancelBtn.hidden = model.cancelButtonHidden;
+  if (dom.updateOverviewPanel) {
+    dom.updateOverviewPanel.innerHTML = serializeUpdateOverview(model.status);
+  }
+  dom.updateStatusPanel.innerHTML = serializeUpdateStatus(model.status);
+}
+
+function serializeReadinessPanel(
+  model: InternetPanelRenderModel["readiness"],
+): string {
+  const itemsHtml = model.items.map((item) => `<li class="maintenance-readiness__item" data-readiness-state="${item.state}"><span class="maintenance-readiness__marker" aria-hidden="true">${item.state === "ready" ? "✓" : "!"}</span><div class="maintenance-readiness__body"><div class="maintenance-readiness__label">${item.label}</div><div class="maintenance-readiness__detail">${item.detail}</div></div></li>`).join("");
+  const badgeHtml = model.stateLabel
+    ? `<span class="pill" data-variant="${model.stateVariant}">${model.stateLabel}</span>`
+    : "";
+  return `<section class="maintenance-readiness"><div class="maintenance-readiness__header"><div class="maintenance-readiness__heading"><div class="maintenance-readiness__title">${model.title}</div><div class="maintenance-readiness__summary">${model.summary}</div></div>${badgeHtml}</div><ul class="maintenance-readiness__list">${itemsHtml}</ul></section>`;
+}
+
+function serializeInternetStatusPanel(
+  model: InternetPanelRenderModel["internetStatus"],
+): string {
+  if (!model) {
+    return "";
+  }
+  return serializeMaintenanceCard({
+    badge: model.badge,
+    bodyHtml: serializeStatusGrid(model.rows),
+    subtitleText: model.summaryText,
+    titleText: model.titleText,
+  });
+}
+
+function renderInternetPanelDom(
+  dom: InternetPanelDom,
+  model: InternetPanelRenderModel,
+): void {
+  if (dom.internetStatusPanel) {
+    dom.internetStatusPanel.innerHTML = serializeInternetStatusPanel(model.internetStatus);
+  }
+  if (dom.updateTransportOptions) {
+    dom.updateTransportOptions.hidden = false;
+  }
+  if (dom.updateTransportChoiceWifi) {
+    setOptionalAttribute(
+      dom.updateTransportChoiceWifi,
+      "data-selected",
+      model.transportChoices.wifi.selected ? "true" : null,
+    );
+    setOptionalAttribute(
+      dom.updateTransportChoiceWifi,
+      "data-disabled",
+      model.transportChoices.wifi.disabled ? "true" : null,
+    );
+    setOptionalAttribute(
+      dom.updateTransportChoiceWifi,
+      "data-choice-state",
+      model.transportChoices.wifi.state,
+    );
+    setOptionalAttribute(
+      dom.updateTransportChoiceWifi,
+      "data-choice-badge",
+      model.transportChoices.wifi.badgeText,
+    );
+  }
+  if (dom.updateTransportChoiceUsb) {
+    setOptionalAttribute(
+      dom.updateTransportChoiceUsb,
+      "data-selected",
+      model.transportChoices.usb_internet.selected ? "true" : null,
+    );
+    setOptionalAttribute(
+      dom.updateTransportChoiceUsb,
+      "data-disabled",
+      model.transportChoices.usb_internet.disabled ? "true" : null,
+    );
+    setOptionalAttribute(
+      dom.updateTransportChoiceUsb,
+      "data-choice-state",
+      model.transportChoices.usb_internet.state,
+    );
+    setOptionalAttribute(
+      dom.updateTransportChoiceUsb,
+      "data-choice-badge",
+      model.transportChoices.usb_internet.badgeText,
+    );
+  }
+  if (dom.updateTransportWifiRadio) {
+    dom.updateTransportWifiRadio.checked = model.transportChoices.wifi.selected;
+    dom.updateTransportWifiRadio.disabled = model.transportChoices.wifi.inputDisabled;
+  }
+  if (dom.updateTransportUsbRadio) {
+    dom.updateTransportUsbRadio.checked = model.transportChoices.usb_internet.selected;
+    dom.updateTransportUsbRadio.disabled = model.transportChoices.usb_internet.inputDisabled;
+  }
+  if (dom.updateWifiFields) {
+    dom.updateWifiFields.hidden = model.wifiFieldsHidden;
+  }
+  if (dom.updateReadinessSummary) {
+    dom.updateReadinessSummary.innerHTML = serializeReadinessPanel(model.readiness);
+  }
+  if (dom.updateDetailsCaption) {
+    dom.updateDetailsCaption.textContent = model.detailsCaptionText;
+  }
+  if (dom.updateTransportNote) {
+    dom.updateTransportNote.textContent = model.transportNoteText;
+  }
+  if (dom.updateUsbTransportSummary) {
+    dom.updateUsbTransportSummary.textContent =
+      model.transportChoices.usb_internet.summaryText;
+  }
+  if (dom.updateSsidInput) {
+    dom.updateSsidInput.value = model.ssidInputValue;
+    dom.updateSsidInput.disabled = model.controlsLocked;
+  }
+  if (dom.updatePasswordInput) {
+    dom.updatePasswordInput.value = model.passwordInputValue;
+    dom.updatePasswordInput.type = model.passwordInputType;
+    dom.updatePasswordInput.disabled = model.controlsLocked;
+  }
+  if (dom.updateTogglePasswordBtn) {
+    dom.updateTogglePasswordBtn.disabled = model.togglePasswordDisabled;
+    dom.updateTogglePasswordBtn.textContent = model.togglePasswordLabelText;
+  }
 }
 
 function createDeps() {
@@ -325,7 +597,7 @@ function createUpdateDeps() {
     updateSsidInput,
     updatePasswordInput,
     updateTogglePasswordBtn,
-  };
+  } as InternetPanelDom;
 
   const dom = {
     updateOverviewPanel,
@@ -337,9 +609,15 @@ function createUpdateDeps() {
   return {
     panel: {
       dom,
+      render(model: UpdatePanelRenderModel) {
+        renderUpdatePanelDom(dom, model);
+      },
     },
     internetPanel: {
       dom: internetDom,
+      render(model: InternetPanelRenderModel) {
+        renderInternetPanelDom(internetDom, model);
+      },
     },
     els: dom,
     internetStatusPanel,

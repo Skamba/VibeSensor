@@ -1,107 +1,110 @@
 import type { UsbInternetStatusPayload } from "../../transport/http_models";
-import { createElementNode, renderChildren } from "./dom_render";
-import { createStatusGridRowElement } from "./dom_helpers";
+import type {
+  UpdateStatusBadgeModel,
+  UpdateStatusRowModel,
+} from "./update_status_view_models";
 
 export interface InternetStatusViewDeps {
   t: (key: string, vars?: Record<string, unknown>) => string;
 }
 
-function createBadgeElement(
+export interface InternetStatusPanelModel {
+  badge: UpdateStatusBadgeModel;
+  rows: readonly UpdateStatusRowModel[];
+  summaryText: string;
+  titleText: string;
+}
+
+function buildBadgeModel(
   status: UsbInternetStatusPayload,
   deps: InternetStatusViewDeps,
-): HTMLSpanElement {
-  const { t } = deps;
+): UpdateStatusBadgeModel {
   const variant = status.usable ? "ok" : status.detected ? "warn" : "muted";
   const key = status.usable
     ? "settings.internet.state.usable"
     : status.detected
       ? "settings.internet.state.detected"
       : "settings.internet.state.not_detected";
-  return createElementNode("span", {
-    className: "pill",
-    data: {
-      variant,
-    },
-    text: t(key),
-  });
+  return {
+    variant,
+    text: deps.t(key),
+  };
 }
 
-function renderSummary(status: UsbInternetStatusPayload, deps: InternetStatusViewDeps): string {
-  const { t } = deps;
+function buildSummaryText(
+  status: UsbInternetStatusPayload,
+  deps: InternetStatusViewDeps,
+): string {
   const key = status.usable
     ? "settings.internet.summary.usable"
     : status.detected
       ? "settings.internet.summary.detected"
       : "settings.internet.summary.not_detected";
-  return t(key);
+  return deps.t(key);
 }
 
-function createRows(
+function buildStatusRows(
   status: UsbInternetStatusPayload,
   deps: InternetStatusViewDeps,
-): HTMLDivElement[] {
+): UpdateStatusRowModel[] {
   const { t } = deps;
-  const rows = [
-    createStatusGridRowElement(
-      t("settings.internet.detected"),
-      t(status.detected ? "settings.internet.bool.yes" : "settings.internet.bool.no"),
-    ),
-    createStatusGridRowElement(
-      t("settings.internet.usable"),
-      t(status.usable ? "settings.internet.bool.yes" : "settings.internet.bool.no"),
-    ),
+  const rows: UpdateStatusRowModel[] = [
+    {
+      labelText: t("settings.internet.detected"),
+      valueText: t(
+        status.detected ? "settings.internet.bool.yes" : "settings.internet.bool.no",
+      ),
+    },
+    {
+      labelText: t("settings.internet.usable"),
+      valueText: t(
+        status.usable ? "settings.internet.bool.yes" : "settings.internet.bool.no",
+      ),
+    },
   ];
   if (status.interface_name) {
-    rows.push(
-      createStatusGridRowElement(
-        t("settings.internet.interface"),
-        status.interface_name,
-      ),
-    );
+    rows.push({
+      labelText: t("settings.internet.interface"),
+      valueText: status.interface_name,
+    });
   }
   if (status.connection_name) {
-    rows.push(
-      createStatusGridRowElement(
-        t("settings.internet.connection"),
-        status.connection_name,
-      ),
-    );
+    rows.push({
+      labelText: t("settings.internet.connection"),
+      valueText: status.connection_name,
+    });
   }
   if (status.driver) {
-    rows.push(
-      createStatusGridRowElement(
-        t("settings.internet.driver"),
-        status.driver,
-      ),
-    );
+    rows.push({
+      labelText: t("settings.internet.driver"),
+      valueText: status.driver,
+    });
   }
   if (status.ipv4_addresses.length) {
-    rows.push(
-      createStatusGridRowElement(
-        t("settings.internet.addresses"),
-        status.ipv4_addresses.join(", "),
-      ),
-    );
+    rows.push({
+      labelText: t("settings.internet.addresses"),
+      valueText: status.ipv4_addresses.join(", "),
+    });
   }
   if (status.gateway) {
-    rows.push(
-      createStatusGridRowElement(
-        t("settings.internet.gateway"),
-        status.gateway,
-      ),
-    );
+    rows.push({
+      labelText: t("settings.internet.gateway"),
+      valueText: status.gateway,
+    });
   }
   rows.push(
-    createStatusGridRowElement(
-      t("settings.internet.default_route"),
-      t(status.has_default_route ? "settings.internet.bool.yes" : "settings.internet.bool.no"),
-    ),
-  );
-  rows.push(
-    createStatusGridRowElement(
-      t("settings.internet.diagnostic"),
-      status.diagnostic,
-    ),
+    {
+      labelText: t("settings.internet.default_route"),
+      valueText: t(
+        status.has_default_route
+          ? "settings.internet.bool.yes"
+          : "settings.internet.bool.no",
+      ),
+    },
+    {
+      labelText: t("settings.internet.diagnostic"),
+      valueText: status.diagnostic,
+    },
   );
   return rows;
 }
@@ -121,44 +124,14 @@ export function formatUsbInternetSummary(
   return t("settings.update.transport.usb_summary");
 }
 
-export function renderInternetStatusPanel(
-  panel: HTMLElement,
+export function buildInternetStatusPanelModel(
   status: UsbInternetStatusPayload,
   deps: InternetStatusViewDeps,
-): void {
-  renderChildren(
-    panel,
-    createElementNode("section", {
-      className: "maintenance-card",
-      children: [
-        createElementNode("div", {
-          className: "maintenance-card__header",
-          children: [
-            createElementNode("div", {
-              children: [
-                createElementNode("div", {
-                  className: "maintenance-card__title",
-                  text: deps.t("settings.internet.card_title"),
-                }),
-                createElementNode("div", {
-                  className: "subtle",
-                  text: renderSummary(status, deps),
-                }),
-              ],
-            }),
-            createBadgeElement(status, deps),
-          ],
-        }),
-        createElementNode("div", {
-          className: "maintenance-card__body",
-          children: [
-            createElementNode("div", {
-              className: "status-grid",
-              children: createRows(status, deps),
-            }),
-          ],
-        }),
-      ],
-    }),
-  );
+): InternetStatusPanelModel {
+  return {
+    badge: buildBadgeModel(status, deps),
+    rows: buildStatusRows(status, deps),
+    summaryText: buildSummaryText(status, deps),
+    titleText: deps.t("settings.internet.card_title"),
+  };
 }
