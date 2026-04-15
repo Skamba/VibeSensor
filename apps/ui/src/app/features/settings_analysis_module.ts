@@ -9,10 +9,8 @@ import type {
   AnalysisPanelFieldKey,
   AnalysisPanelRenderModel,
   AnalysisPanelView,
+  SettingsAnalysisGuidanceRenderModel,
 } from "../views/analysis_panel";
-import {
-  buildSettingsAnalysisGuidanceRenderModel,
-} from "../views/settings_analysis_guidance";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
 
 export const ANALYSIS_SETTING_KEYS = [
@@ -248,20 +246,27 @@ export function createSettingsAnalysisModule(
   function buildFieldRenderModel(fieldKey: AnalysisPanelFieldKey) {
     const field = analysisFieldConfig(fieldKey);
     const errorMessage = fieldErrorMessages.get(field.key);
+    const guidance: SettingsAnalysisGuidanceRenderModel = {
+      error: errorMessage
+        ? {
+            body: errorMessage,
+            compact: true,
+            tone: "error",
+          }
+        : null,
+      lines: [
+        {
+          label: t("settings.analysis.recommended_range_label"),
+          value: formatRange(field.guidedMin, field.guidedMax, field.unit),
+        },
+        {
+          label: t("settings.analysis.default_label"),
+          value: `${formatSettingValue(field.defaultValue)}${field.unit}`,
+        },
+      ],
+    };
     return {
-      guidance: buildSettingsAnalysisGuidanceRenderModel({
-        lines: [
-          {
-            label: t("settings.analysis.recommended_range_label"),
-            value: formatRange(field.guidedMin, field.guidedMax, field.unit),
-          },
-          {
-            label: t("settings.analysis.default_label"),
-            value: `${formatSettingValue(field.defaultValue)}${field.unit}`,
-          },
-        ],
-        errorMessage,
-      }),
+      guidance,
       invalid: errorMessage !== undefined,
       value: draftValues[field.key],
     };

@@ -3,13 +3,20 @@ import { useEffect, useRef } from "preact/hooks";
 
 import { useUiTranslation } from "../ui_i18n";
 import { signal, type ReadonlySignal } from "../ui_signals";
-import type {
-  SettingsAnalysisGuidanceRenderModel,
-} from "./settings_analysis_guidance";
 import {
   settingsFeedbackClassName,
   type SettingsFeedbackMessage,
 } from "./settings_feedback";
+
+export interface SettingsAnalysisGuidanceLine {
+  label: string;
+  value: string;
+}
+
+export interface SettingsAnalysisGuidanceRenderModel {
+  error: SettingsFeedbackMessage | null;
+  lines: readonly SettingsAnalysisGuidanceLine[];
+}
 
 export type AnalysisPanelFieldKey =
   | "wheel_bandwidth_pct"

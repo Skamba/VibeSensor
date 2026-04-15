@@ -1,9 +1,9 @@
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
-import { createCarsFeaturePresenter } from "../views/cars_feature_presenter";
 import type {
   CarsFeatureInteraction,
   CarsWizardPanelBridge,
 } from "../views/cars_panel";
+import { buildCarsWizardRenderModel } from "../views/car_wizard_view";
 import { createCarsFeatureWorkflow } from "./cars_feature_workflow";
 
 export interface CarsFeatureDeps {
@@ -24,16 +24,23 @@ export interface CarsFeature {
 }
 
 export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
-  const presenter = createCarsFeaturePresenter({
-    fmt: ctx.formatting.fmt,
-    panel: ctx.panel,
-    t: ctx.services.t,
-  });
   const workflow = createCarsFeatureWorkflow({
     addCarFromWizard: ctx.addCarFromWizard,
     fmt: ctx.formatting.fmt,
     t: ctx.services.t,
-    view: presenter,
+    view: {
+      focus(target): void {
+        ctx.panel.focus(target);
+      },
+      render(state): void {
+        ctx.panel.setModel(
+          buildCarsWizardRenderModel(state, {
+            fmt: ctx.formatting.fmt,
+            t: ctx.services.t,
+          }),
+        );
+      },
+    },
   });
   let handlersBound = false;
 
