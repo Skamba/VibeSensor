@@ -480,10 +480,6 @@ export function createSettingsAnalysisModule(
       onReset: resetAnalysisToDefaults,
       onSave: saveAnalysisFromInputs,
     });
-    panel.setCarAvailability({
-      hasActiveCar: ctx.hasValidActiveCar(),
-      isLoading: false,
-    });
     renderPanel();
   }
 
