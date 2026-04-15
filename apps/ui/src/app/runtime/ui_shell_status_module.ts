@@ -8,7 +8,7 @@ import type {
 } from "../ui_app_state";
 import { trackAppStateSlice } from "../ui_app_state";
 import type { VisualVariant } from "../style_state";
-import { computed } from "../ui_signals";
+import { computed, type ReadonlySignal } from "../ui_signals";
 import type { UiShellBadgeModel } from "./ui_shell_chrome";
 
 const WS_KEY_BY_STATE: Record<string, string> = {
@@ -28,9 +28,7 @@ const WS_VARIANT_BY_STATE: Record<string, VisualVariant> = {
 };
 
 type UiShellStatusDeps = {
-  appShellWrap: HTMLElement | null;
   realtime: RealtimeState;
-  renderLiveOverviewSpeed: (text: string) => void;
   settings: SettingsState;
   shell: ShellState;
   t: (key: string, vars?: Record<string, unknown>) => string;
@@ -38,9 +36,9 @@ type UiShellStatusDeps = {
 };
 
 export interface UiShellStatusModule {
-  getWsLinkState(): UiShellBadgeModel;
-  renderSpeedReadout(): void;
-  syncConnectionState(): void;
+  readonly connectionState: ReadonlySignal<"degraded" | "live">;
+  readonly speedReadoutText: ReadonlySignal<string>;
+  readonly wsLinkState: ReadonlySignal<UiShellBadgeModel>;
 }
 
 export function createUiShellStatusModule(
@@ -103,16 +101,8 @@ export function createUiShellStatusModule(
   });
 
   return {
-    getWsLinkState() {
-      return wsLinkState.value;
-    },
-    renderSpeedReadout() {
-      deps.renderLiveOverviewSpeed(speedReadoutText.value);
-    },
-    syncConnectionState() {
-      if (deps.appShellWrap) {
-        deps.appShellWrap.dataset.connectionState = connectionState.value;
-      }
-    },
+    connectionState,
+    speedReadoutText,
+    wsLinkState,
   };
 }

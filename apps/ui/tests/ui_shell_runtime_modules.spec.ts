@@ -26,12 +26,6 @@ function createView(id: string): HTMLElement {
   } as unknown as HTMLElement;
 }
 
-function createWrap(): HTMLElement {
-  return {
-    dataset: {},
-  } as unknown as HTMLElement;
-}
-
 function jsonResponse(body: unknown): Response {
   return new Response(JSON.stringify(body), {
     headers: { "content-type": "application/json" },
@@ -176,8 +170,8 @@ test.describe("createUiShellPreferencesModule", () => {
     ]);
     expect(state.shell.lang).toBe("nl");
     expect(state.shell.speedUnit).toBe("mps");
-    expect(module.getSelectedLanguage()).toBe("nl");
-    expect(module.getSelectedSpeedUnit()).toBe("mps");
+    expect(module.selectedLanguage.value).toBe("nl");
+    expect(module.selectedSpeedUnit.value).toBe("mps");
     expect(applyLanguageCalls).toEqual([true]);
     expect(renderSpeedReadoutCalls).toBe(1);
   });
@@ -204,7 +198,7 @@ test.describe("createUiShellPreferencesModule", () => {
         })) as typeof fetch,
       async () => {
         const savePromise = module.saveLanguage("nl");
-        expect(module.getSelectedLanguage()).toBe("nl");
+        expect(module.selectedLanguage.value).toBe("nl");
         expect(state.shell.lang).toBe("en");
         resolveResponse?.(jsonResponse({ language: "nl" }));
         await savePromise;
@@ -212,7 +206,7 @@ test.describe("createUiShellPreferencesModule", () => {
     );
 
     expect(state.shell.lang).toBe("nl");
-    expect(module.getSelectedLanguage()).toBe("nl");
+    expect(module.selectedLanguage.value).toBe("nl");
     expect(applyLanguageCalls).toEqual([true]);
   });
 
@@ -237,20 +231,16 @@ test.describe("createUiShellPreferencesModule", () => {
     );
 
     expect(state.shell.speedUnit).toBe("kmh");
-    expect(module.getSelectedSpeedUnit()).toBe("kmh");
-    expect(module.getSpeedUnitFeedback()?.detail).toBe("save failed");
+    expect(module.selectedSpeedUnit.value).toBe("kmh");
+    expect(module.speedUnitFeedback.value?.detail).toBe("save failed");
   });
 });
 
 test.describe("createUiShellNotificationModule", () => {
-  test("shows and clears the shared error banner model", () => {
-    let onChangedCalls = 0;
+  test("shows and clears the shared error banner model signal", () => {
     let pendingHide: (() => void) | null = null;
 
     const module = createUiShellNotificationModule({
-      onChanged: () => {
-        onChangedCalls += 1;
-      },
       window: {
         clearTimeout: () => undefined,
         setTimeout: ((callback: TimerHandler) => {
@@ -261,71 +251,64 @@ test.describe("createUiShellNotificationModule", () => {
     });
 
     module.showError("save failed");
-    expect(module.getBannerModel()).toEqual({
+    expect(module.bannerModel.value).toEqual({
       hidden: false,
       text: "save failed",
       variant: "bad",
     });
 
     pendingHide?.();
-    expect(module.getBannerModel()).toEqual({
+    expect(module.bannerModel.value).toEqual({
       hidden: true,
       text: "",
       variant: null,
     });
-    expect(onChangedCalls).toBe(2);
   });
 });
 
 test.describe("createUiShellStatusModule", () => {
-  test("builds websocket badge state and degraded shell status without bootstrap wiring", () => {
+  test("builds websocket badge state and degraded shell status signals without bootstrap wiring", () => {
     const state = createAppState();
     state.transport.wsState = "stale";
-    const appShellWrap = createWrap();
 
     const module = createUiShellStatusModule({
-      appShellWrap,
       realtime: state.realtime,
-      renderLiveOverviewSpeed: () => undefined,
       settings: state.settings,
       shell: state.shell,
       t: testTranslation,
       transport: state.transport,
     });
 
-    expect(module.getWsLinkState()).toEqual({
+    expect(module.wsLinkState.value).toEqual({
       text: "ws.stale",
       variant: "bad",
     });
-    module.syncConnectionState();
-    expect(appShellWrap.dataset.connectionState).toBe("degraded");
+    expect(module.connectionState.value).toBe("degraded");
   });
 
   test("derives updated websocket badge state after transport mutations", () => {
     const state = createAppState();
     const module = createUiShellStatusModule({
-      appShellWrap: createWrap(),
       realtime: state.realtime,
-      renderLiveOverviewSpeed: () => undefined,
       settings: state.settings,
       shell: state.shell,
       t: testTranslation,
       transport: state.transport,
     });
 
-    expect(module.getWsLinkState()).toEqual({
+    expect(module.wsLinkState.value).toEqual({
       text: "ws.connecting",
       variant: "muted",
     });
 
     state.transport.wsState = "stale";
-    expect(module.getWsLinkState()).toEqual({
+    expect(module.wsLinkState.value).toEqual({
       text: "ws.stale",
       variant: "bad",
     });
 
     state.transport.payloadError = "bad frame";
-    expect(module.getWsLinkState()).toEqual({
+    expect(module.wsLinkState.value).toEqual({
       text: "ws.payload_error_pill",
       variant: "bad",
     });
@@ -340,24 +323,17 @@ test.describe("createUiShellStatusModule", () => {
     state.settings.carsLoaded = true;
     state.settings.cars = [];
     state.settings.activeCarId = null;
-    let renderedSpeedText = "";
 
     const module = createUiShellStatusModule({
-      appShellWrap: createWrap(),
       realtime: state.realtime,
-      renderLiveOverviewSpeed: (text) => {
-        renderedSpeedText = text;
-      },
       settings: state.settings,
       shell: state.shell,
       t: testTranslation,
       transport: state.transport,
     });
 
-    module.renderSpeedReadout();
-
-    expect(renderedSpeedText).toContain("speed.override");
-    expect(renderedSpeedText).toContain('"unit":"speed.unit.kmh"');
+    expect(module.speedReadoutText.value).toContain("speed.override");
+    expect(module.speedReadoutText.value).toContain('"unit":"speed.unit.kmh"');
   });
 
   test("renders OBD2 when OBD2 is the resolved speed source", () => {
@@ -366,24 +342,17 @@ test.describe("createUiShellStatusModule", () => {
     state.settings.speedSource = "obd2";
     state.settings.resolvedSpeedSource = "obd2";
     state.shell.speedUnit = "kmh";
-    let renderedSpeedText = "";
 
     const module = createUiShellStatusModule({
-      appShellWrap: createWrap(),
       realtime: state.realtime,
-      renderLiveOverviewSpeed: (text) => {
-        renderedSpeedText = text;
-      },
       settings: state.settings,
       shell: state.shell,
       t: testTranslation,
       transport: state.transport,
     });
 
-    module.renderSpeedReadout();
-
-    expect(renderedSpeedText).toContain("speed.obd2");
-    expect(renderedSpeedText).toContain('"unit":"speed.unit.kmh"');
+    expect(module.speedReadoutText.value).toContain("speed.obd2");
+    expect(module.speedReadoutText.value).toContain('"unit":"speed.unit.kmh"');
   });
 });
 
