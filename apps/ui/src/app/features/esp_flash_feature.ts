@@ -1,6 +1,5 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { createEspFlashFeatureWorkflow } from "./esp_flash_feature_workflow";
-import { bindEspFlashFeatureInteractions } from "../views/esp_flash_feature_bindings";
 import { createEspFlashFeaturePresenter } from "../views/esp_flash_feature_presenter";
 import type { EspFlashPanelView } from "../views/esp_flash_panel";
 
@@ -33,21 +32,18 @@ export function createEspFlashFeature(
       return;
     }
     handlersBound = true;
-    bindEspFlashFeatureInteractions(ctx.panel.dom, {
-      onAction(action) {
-        switch (action.type) {
-          case "start":
-            void workflow.startFlash();
-            return;
-          case "cancel":
-            void workflow.cancelFlash();
-            return;
-          case "refresh-ports":
-            void workflow.refreshPorts();
-            return;
-          case "select-port":
-            workflow.setSelectedPortValue(action.value);
-        }
+    ctx.panel.bindActions({
+      onStart: () => {
+        void workflow.startFlash();
+      },
+      onCancel: () => {
+        void workflow.cancelFlash();
+      },
+      onRefreshPorts: () => {
+        void workflow.refreshPorts();
+      },
+      onSelectPort: (value) => {
+        workflow.setSelectedPortValue(value);
       },
     });
     workflow.renderCurrentState();
