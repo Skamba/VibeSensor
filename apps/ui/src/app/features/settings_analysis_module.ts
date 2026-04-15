@@ -3,7 +3,7 @@ import type {
   AnalysisSettingsRequest,
 } from "../../transport/http_models";
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
-import type { FeatureDepsBase } from "../feature_deps_base";
+import type { FeatureServices } from "../feature_deps_base";
 import { defaultVehicleSettings, type SettingsState } from "../ui_app_state";
 import type {
   AnalysisPanelFieldKey,
@@ -33,9 +33,10 @@ export const ANALYSIS_SETTING_KEYS = [
   "tire_deflection_factor",
 ] as const satisfies readonly (keyof AnalysisSettingsPayload)[];
 
-export interface SettingsAnalysisModuleDeps extends FeatureDepsBase {
+export interface SettingsAnalysisModuleDeps {
   panel: AnalysisPanelView;
   settings: SettingsState;
+  services: FeatureServices;
   renderSpectrum: () => void;
   hasValidActiveCar: () => boolean;
   onMissingActiveCar: () => void;
@@ -209,7 +210,8 @@ function formatSettingValue(value: number): string {
 export function createSettingsAnalysisModule(
   ctx: SettingsAnalysisModuleDeps,
 ): SettingsAnalysisModule {
-  const { panel, settings, t } = ctx;
+  const { panel, settings, services } = ctx;
+  const { t } = services;
   let draftValues = buildDraftValues(settings);
   let saveFeedback: SettingsFeedbackMessage | null = null;
   const fieldErrorMessages = new Map<AnalysisPanelFieldKey, string>();

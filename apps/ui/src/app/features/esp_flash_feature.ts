@@ -1,10 +1,11 @@
-import type { FeatureDepsBase } from "../feature_deps_base";
+import type { FeatureServices } from "../feature_deps_base";
 import { createEspFlashFeatureWorkflow } from "./esp_flash_feature_workflow";
 import { createEspFlashFeaturePresenter } from "../views/esp_flash_feature_presenter";
 import type { EspFlashPanelView } from "../views/esp_flash_panel";
 
-export interface EspFlashFeatureDeps extends FeatureDepsBase {
+export interface EspFlashFeatureDeps {
   panel: EspFlashPanelView;
+  services: FeatureServices;
 }
 
 export interface EspFlashFeature {
@@ -16,13 +17,14 @@ export interface EspFlashFeature {
 export function createEspFlashFeature(
   ctx: EspFlashFeatureDeps,
 ): EspFlashFeature {
+  const { panel, services } = ctx;
   const presenter = createEspFlashFeaturePresenter({
-    panel: ctx.panel,
-    t: ctx.t,
+    panel,
+    t: services.t,
   });
   const workflow = createEspFlashFeatureWorkflow({
-    t: ctx.t,
-    showError: ctx.showError,
+    t: services.t,
+    showError: services.showError,
     view: presenter,
   });
   let handlersBound = false;
@@ -32,7 +34,7 @@ export function createEspFlashFeature(
       return;
     }
     handlersBound = true;
-    ctx.panel.bindActions({
+    panel.bindActions({
       onStart: () => {
         void workflow.startFlash();
       },

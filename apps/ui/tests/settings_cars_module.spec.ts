@@ -27,43 +27,53 @@ test("settings cars module dismisses transient creation feedback through typed t
   };
 
   const module = createSettingsCarsModule({
-    analysisPanel: {
-      setCarAvailability() {
-        return;
-      },
-    },
-    escapeHtml: (value) => String(value ?? ""),
-    fmt: (value, digits = 0) => Number(value).toFixed(digits),
-    openAnalysisTab: () => undefined,
-    openCarWizard: () => undefined,
-    panel,
     renderRealtimeLoggingStatus: () => undefined,
     renderRealtimeStatus: () => undefined,
     renderSpectrum: () => undefined,
     settings: state,
-    showError: () => undefined,
-    subscribePrimaryViewChanges(listener) {
-      primaryViewListener = listener;
-      return () => {
-        if (primaryViewListener === listener) {
-          primaryViewListener = null;
-        }
-      };
+    panels: {
+      analysisPanel: {
+        setCarAvailability() {
+          return;
+        },
+      },
+      panel,
     },
-    subscribeSettingsTabChanges(listener) {
-      settingsTabListener = listener;
-      return () => {
-        if (settingsTabListener === listener) {
-          settingsTabListener = null;
-        }
-      };
+    ports: {
+      openAnalysisTab: () => undefined,
+      openCarWizard: () => undefined,
+      renderRealtimeLoggingStatus: () => undefined,
+      renderRealtimeStatus: () => undefined,
+      renderSpectrum: () => undefined,
+      subscribePrimaryViewChanges(listener) {
+        primaryViewListener = listener;
+        return () => {
+          if (primaryViewListener === listener) {
+            primaryViewListener = null;
+          }
+        };
+      },
+      subscribeSettingsTabChanges(listener) {
+        settingsTabListener = listener;
+        return () => {
+          if (settingsTabListener === listener) {
+            settingsTabListener = null;
+          }
+        };
+      },
+      syncAnalysisInputs: () => undefined,
     },
-    syncAnalysisInputs: () => undefined,
-    t: (key, vars) => {
-      if (key === "settings.car.created_body") {
-        return `${vars?.name ?? "Unknown"} was added and selected for this setup.`;
-      }
-      return key;
+    services: {
+      t: (key, vars) => {
+        if (key === "settings.car.created_body") {
+          return `${vars?.name ?? "Unknown"} was added and selected for this setup.`;
+        }
+        return key;
+      },
+      showError: () => undefined,
+    },
+    formatting: {
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
     },
   });
 

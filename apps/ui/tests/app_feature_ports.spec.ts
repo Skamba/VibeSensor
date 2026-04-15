@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 
 import {
-  createAppFeaturePorts,
+  createAppFeatureBundlePorts,
   createRealtimeFeatureRecordingPorts,
   createSettingsFeatureRealtimePorts,
-} from "../src/app/app_feature_ports";
+} from "../src/app/app_feature_bundle_ports";
 
 test("feature port helpers expose explicit shell and startup contracts without a full app shell", async () => {
   const calls: string[] = [];
@@ -99,7 +99,7 @@ test("feature port helpers expose explicit shell and startup contracts without a
 
   const settingsRealtime = createSettingsFeatureRealtimePorts(realtime);
   const recording = createRealtimeFeatureRecordingPorts(history);
-  const bundle = createAppFeaturePorts({
+  const bundle = createAppFeatureBundlePorts({
     history,
     realtime,
     settings,

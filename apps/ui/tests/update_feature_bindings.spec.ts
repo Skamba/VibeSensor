@@ -26,42 +26,45 @@ test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners
   let internetHandlers: InternetPanelActionHandlers | null = null;
 
   const feature = createUpdateFeature({
-    t: (key) => key,
-    escapeHtml: (value) => String(value ?? ""),
-    showError: () => undefined,
-    panel: {
-      dom: {
-        updateOverviewPanel: null,
-        updateStartBtn: {} as HTMLButtonElement,
-        updateCancelBtn: {} as HTMLButtonElement,
-        updateStatusPanel: {} as HTMLElement,
-      } as UpdatePanelDom,
-      bindActions(handlers: UpdatePanelActionHandlers) {
-        updateHandlers = handlers;
-      },
-      setModel(_model: UpdatePanelRenderModel) {},
+    services: {
+      t: (key) => key,
+      showError: () => undefined,
     },
-    internetPanel: {
-      dom: {
-        internetStatusPanel: null,
-        updateTransportOptions: null,
-        updateTransportChoiceWifi: null,
-        updateTransportChoiceUsb: null,
-        updateWifiFields: null,
-        updateReadinessSummary: null,
-        updateDetailsCaption: null,
-        updateTransportNote: null,
-        updateTransportWifiRadio: createInputStub("", "radio"),
-        updateTransportUsbRadio: createInputStub("", "radio"),
-        updateUsbTransportSummary: null,
-        updateSsidInput: createInputStub("MyWiFi"),
-        updatePasswordInput: createInputStub("secret", "password"),
-        updateTogglePasswordBtn: {} as HTMLButtonElement,
-      } as InternetPanelDom,
-      bindActions(handlers: InternetPanelActionHandlers) {
-        internetHandlers = handlers;
+    panels: {
+      update: {
+        dom: {
+          updateOverviewPanel: null,
+          updateStartBtn: {} as HTMLButtonElement,
+          updateCancelBtn: {} as HTMLButtonElement,
+          updateStatusPanel: {} as HTMLElement,
+        } as UpdatePanelDom,
+        bindActions(handlers: UpdatePanelActionHandlers) {
+          updateHandlers = handlers;
+        },
+        setModel(_model: UpdatePanelRenderModel) {},
       },
-      setModel(_model: InternetPanelRenderModel) {},
+      internet: {
+        dom: {
+          internetStatusPanel: null,
+          updateTransportOptions: null,
+          updateTransportChoiceWifi: null,
+          updateTransportChoiceUsb: null,
+          updateWifiFields: null,
+          updateReadinessSummary: null,
+          updateDetailsCaption: null,
+          updateTransportNote: null,
+          updateTransportWifiRadio: createInputStub("", "radio"),
+          updateTransportUsbRadio: createInputStub("", "radio"),
+          updateUsbTransportSummary: null,
+          updateSsidInput: createInputStub("MyWiFi"),
+          updatePasswordInput: createInputStub("secret", "password"),
+          updateTogglePasswordBtn: {} as HTMLButtonElement,
+        } as InternetPanelDom,
+        bindActions(handlers: InternetPanelActionHandlers) {
+          internetHandlers = handlers;
+        },
+        setModel(_model: InternetPanelRenderModel) {},
+      },
     },
   });
 

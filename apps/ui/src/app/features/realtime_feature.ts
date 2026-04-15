@@ -1,4 +1,4 @@
-import type { FeatureDepsBase } from "../feature_deps_base";
+import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import type {
   RealtimeState,
   SettingsState,
@@ -14,17 +14,30 @@ import { effect, untracked } from "../ui_signals";
 import { createRealtimeFeatureWorkflow } from "./realtime_feature_workflow";
 import { createRealtimeFeaturePresenter } from "../views/realtime_feature_presenter";
 
-export interface RealtimeFeatureDeps extends FeatureDepsBase {
+interface RealtimeFeatureStateDeps {
   realtime: RealtimeState;
   spectrum: SpectrumState;
   settings: SettingsState;
   shell: Pick<ShellState, "lang">;
-  formatInt: (value: number) => string;
-  chrome: RealtimeFeatureChromePorts;
+}
+
+interface RealtimeFeaturePanelDeps {
   sensorsPanel: SensorsPanelView;
+}
+
+interface RealtimeFeaturePortDeps {
+  chrome: RealtimeFeatureChromePorts;
   navigation: RealtimeFeatureNavigationPorts;
   selection: RealtimeFeatureSelectionPorts;
   recording: RealtimeFeatureRecordingPorts;
+}
+
+export interface RealtimeFeatureDeps {
+  state: RealtimeFeatureStateDeps;
+  panels: RealtimeFeaturePanelDeps;
+  ports: RealtimeFeaturePortDeps;
+  services: FeatureServices;
+  formatting: Pick<FeatureFormatting, "formatInt">;
 }
 
 export interface RealtimeFeatureChromePorts {
@@ -59,34 +72,35 @@ export interface RealtimeFeature {
 export function createRealtimeFeature(
   ctx: RealtimeFeatureDeps,
 ): RealtimeFeature {
+  const { state, panels, ports, services, formatting } = ctx;
   const isDemoMode = new URLSearchParams(window.location.search).has("demo");
   const presenter = createRealtimeFeaturePresenter({
-    realtime: ctx.realtime,
-    settings: ctx.settings,
-    shell: ctx.shell,
-    spectrum: ctx.spectrum,
-    sensorsPanel: ctx.sensorsPanel,
-    t: ctx.t,
-    formatInt: ctx.formatInt,
-    chrome: ctx.chrome,
-    navigation: ctx.navigation,
+    realtime: state.realtime,
+    settings: state.settings,
+    shell: state.shell,
+    spectrum: state.spectrum,
+    sensorsPanel: panels.sensorsPanel,
+    t: services.t,
+    formatInt: formatting.formatInt,
+    chrome: ports.chrome,
+    navigation: ports.navigation,
   });
   const workflow = createRealtimeFeatureWorkflow({
-    realtime: ctx.realtime,
-    t: ctx.t,
-    showError: ctx.showError,
+    realtime: state.realtime,
+    t: services.t,
+    showError: services.showError,
     isDemoMode,
     view: presenter,
-    selection: ctx.selection,
-    recording: ctx.recording,
+    selection: ports.selection,
+    recording: ports.recording,
     confirmRemoveClient: (message) => window.confirm(message),
   });
   let handlersBound = false;
 
   effect(() => {
-    trackAppStateSlice(ctx.realtime);
-    trackAppStateSlice(ctx.settings);
-    trackAppStateSlice(ctx.spectrum);
+    trackAppStateSlice(state.realtime);
+    trackAppStateSlice(state.settings);
+    trackAppStateSlice(state.spectrum);
     untracked(() => {
       presenter.maybeRenderSensorsSettingsList();
       workflow.renderLoggingStatus();
@@ -98,7 +112,7 @@ export function createRealtimeFeature(
       return;
     }
     handlersBound = true;
-    ctx.chrome.loggingPanel.bindActions({
+    ports.chrome.loggingPanel.bindActions({
       onStartLogging: () => {
         void workflow.startLogging();
       },
@@ -126,7 +140,7 @@ export function createRealtimeFeature(
       },
     });
     workflow.bindHandlers();
-    ctx.sensorsPanel.bindActions({
+    panels.sensorsPanel.bindActions({
       onSensorLocationChange: (change) => {
         void workflow.setClientLocation(change.clientId, change.locationCode);
       },

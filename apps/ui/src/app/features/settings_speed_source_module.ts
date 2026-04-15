@@ -1,4 +1,4 @@
-import type { FeatureDepsBase } from "../feature_deps_base";
+import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import {
   buildSettingsSpeedSourcePanelModel,
   type SettingsSpeedSourcePresenterDeps,
@@ -7,14 +7,19 @@ import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 import type { SettingsState } from "../ui_app_state";
 import { createSettingsSpeedSourceWorkflow } from "./settings_speed_source_workflow";
 
-export interface SettingsSpeedSourceModuleDeps extends FeatureDepsBase {
-  panel: SpeedSourcePanelView;
-  settings: SettingsState;
-  getSpeedUnit: () => string;
-  fmt: (n: number, digits?: number) => string;
+interface SettingsSpeedSourceModulePorts {
   renderSpeedReadout: () => void;
   subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
   subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
+}
+
+export interface SettingsSpeedSourceModuleDeps {
+  panel: SpeedSourcePanelView;
+  settings: SettingsState;
+  services: FeatureServices;
+  formatting: Pick<FeatureFormatting, "fmt">;
+  getSpeedUnit: () => string;
+  ports: SettingsSpeedSourceModulePorts;
 }
 
 export interface SettingsSpeedSourceModule {
@@ -28,17 +33,17 @@ export interface SettingsSpeedSourceModule {
 export function createSettingsSpeedSourceModule(
   ctx: SettingsSpeedSourceModuleDeps,
 ): SettingsSpeedSourceModule {
-  const { settings, t } = ctx;
+  const { settings, services } = ctx;
   const presenterDeps: SettingsSpeedSourcePresenterDeps = {
-    fmt: ctx.fmt,
+    fmt: ctx.formatting.fmt,
     getSpeedUnit: ctx.getSpeedUnit,
-    t,
+    t: services.t,
   };
   const workflow = createSettingsSpeedSourceWorkflow({
-    renderSpeedReadout: ctx.renderSpeedReadout,
+    renderSpeedReadout: ctx.ports.renderSpeedReadout,
     settings,
-    showError: ctx.showError,
-    t,
+    showError: services.showError,
+    t: services.t,
     view: {
       focusManualSpeedInput: ctx.panel.focusManualSpeedInput,
       focusScanObdDevices: ctx.panel.focusScanObdDevices,
@@ -56,10 +61,10 @@ export function createSettingsSpeedSourceModule(
       return;
     }
     handlersBound = true;
-    ctx.subscribeSettingsTabChanges(() => {
+    ctx.ports.subscribeSettingsTabChanges(() => {
       workflow.handleNavigateContext();
     });
-    ctx.subscribePrimaryViewChanges(() => {
+    ctx.ports.subscribePrimaryViewChanges(() => {
       workflow.handleNavigateContext();
     });
     ctx.panel.bindActions({
