@@ -315,6 +315,26 @@ data for Live, History, Cars, Analysis, and Speed Source. Release CI publishes
 only these screenshot assets into the existing GitHub wiki; the wiki markdown
 pages are seeded manually.
 
+## Signal-driven island tests
+
+- Prefer `tests/dom_render_test_support.ts::mountSignalView()` for isolated
+  island tests. It installs an isolated DOM, mounts the Preact view once, and
+  returns a typed bridge plus deterministic cleanup.
+- Drive island state with `signal()` and `computed()` inputs instead of
+  rebuilding the old `render(model)` fixture pattern.
+  `tests/signal_view_reference_tests.ts` contains the reference panel coverage
+  for computed-driven output assertions.
+- Run `npm run test:signals` to execute the reference signal-view coverage
+  directly in Node with the same helper path used by future isolated island
+  tests.
+- Use `tests/async_test_helpers.ts::flushSignalUpdates()` after mutating signals
+  or when waiting on effect-owned side effects.
+  The same reference file also covers an effect-backed subscription seam through
+  `mountSettingsShell()`.
+- `createPanel()` and the raw fake-element builders remain only for legacy
+  bridge-style feature fixtures such as `tests/esp_flash_feature.spec.ts`.
+  Do not start new island tests from that pattern.
+
 ## Design Language
 
 The UI follows the design system documented in
