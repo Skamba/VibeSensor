@@ -5,8 +5,8 @@ import {
   historyExportUrl,
   historyReportPdfUrl,
 } from "../../api";
-import type { FeatureDepsBase } from "../feature_deps_base";
-import type { HistoryState, RunDetail } from "../ui_app_state";
+import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
+import type { HistoryState, RunDetail, ShellState } from "../ui_app_state";
 import type {
   HistoryPanelRenderModel,
   HistoryPanelView,
@@ -14,16 +14,15 @@ import type {
 } from "../views/history_table_view";
 import { downloadBlobFile } from "./history_download";
 
-export interface HistoryFeatureDeps extends FeatureDepsBase {
+export interface HistoryFeatureDeps {
   panel: HistoryPanelView;
   navigation: {
     activatePrimaryView(viewId: string): void;
   };
   history: HistoryState;
-  getLanguage: () => string;
-  fmt: (n: number, digits?: number) => string;
-  fmtTs: (iso: string) => string;
-  formatInt: (value: number) => string;
+  shell: Pick<ShellState, "lang">;
+  services: FeatureServices;
+  formatting: FeatureFormatting;
 }
 
 export interface HistoryFeature {
@@ -37,7 +36,7 @@ export interface HistoryFeature {
 }
 
 export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
-  const { history, panel } = ctx;
+  const { history, panel, shell, services, formatting } = ctx;
   let handlersBound = false;
   let previewPrefetchToken = 0;
 
@@ -74,22 +73,27 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (!history.runs.length) {
       collapseExpandedRun();
       return {
-        historySummaryText: ctx.t("history.none"),
+        historySummaryText: services.t("history.none"),
         deleteAllRunsDisabled,
         table: {
           kind: "empty",
-          t: ctx.t,
+          t: services.t,
         },
       };
     }
-    if (history.expandedRunId && !history.runs.some((row) => row.run_id === history.expandedRunId)) {
+    if (
+      history.expandedRunId &&
+      !history.runs.some((row) => row.run_id === history.expandedRunId)
+    ) {
       collapseExpandedRun();
     }
     for (const run of history.runs) {
       ensureRunDetail(run.run_id);
     }
     return {
-      historySummaryText: ctx.t("history.available_count", { count: history.runs.length }),
+      historySummaryText: services.t("history.available_count", {
+        count: history.runs.length,
+      }),
       deleteAllRunsDisabled,
       table: {
         kind: "rows",
@@ -97,10 +101,10 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
           runs: history.runs,
           expandedRunId: history.expandedRunId,
           runDetailsById: history.runDetailsById,
-          t: ctx.t,
-          fmt: ctx.fmt,
-          fmtTs: ctx.fmtTs,
-          formatInt: ctx.formatInt,
+          t: services.t,
+          fmt: formatting.fmt,
+          fmtTs: formatting.fmtTs,
+          formatInt: formatting.formatInt,
           historyExportUrl,
         },
       },
@@ -123,10 +127,12 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     detail.previewError = "";
     renderHistoryTable();
     try {
-      const response = await getHistoryInsights(runId, ctx.getLanguage());
+      const response = await getHistoryInsights(runId, shell.lang);
       detail.preview = response.status === "complete" ? response : null;
     } catch (err) {
-      detail.previewError = err instanceof Error ? err.message : ctx.t("report.unable_load_insights");
+      detail.previewError = err instanceof Error
+        ? err.message
+        : services.t("report.unable_load_insights");
     } finally {
       detail.previewLoading = false;
       renderHistoryTable();
@@ -145,10 +151,12 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     detail.insightsError = "";
     renderHistoryTable();
     try {
-      const response = await getHistoryInsights(runId, ctx.getLanguage());
+      const response = await getHistoryInsights(runId, shell.lang);
       detail.insights = response.status === "complete" ? response : null;
     } catch (err) {
-      detail.insightsError = err instanceof Error ? err.message : ctx.t("report.unable_load_insights");
+      detail.insightsError = err instanceof Error
+        ? err.message
+        : services.t("report.unable_load_insights");
     } finally {
       detail.insightsLoading = false;
       renderHistoryTable();
@@ -216,14 +224,16 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (!runId) {
       return;
     }
-    const ok = window.confirm(ctx.t("history.delete_confirm", { name: runId }));
+    const ok = window.confirm(services.t("history.delete_confirm", { name: runId }));
     if (!ok) {
       return;
     }
     try {
       await deleteHistoryRunApi(runId);
     } catch (err) {
-      ctx.showError(err instanceof Error ? err.message : ctx.t("history.delete_failed"));
+      services.showError(
+        err instanceof Error ? err.message : services.t("history.delete_failed"),
+      );
       return;
     }
     if (history.expandedRunId === runId) {
@@ -237,7 +247,9 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (!names.length) {
       return;
     }
-    const ok = window.confirm(ctx.t("history.delete_all_confirm", { count: names.length }));
+    const ok = window.confirm(
+      services.t("history.delete_all_confirm", { count: names.length }),
+    );
     if (!ok) {
       return;
     }
@@ -258,15 +270,21 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       } catch (err) {
         failed += 1;
         if (!firstError) {
-          firstError = err instanceof Error ? err.message : ctx.t("history.delete_failed");
+          firstError = err instanceof Error
+            ? err.message
+            : services.t("history.delete_failed");
         }
       }
     }
     history.deleteAllRunsInFlight = false;
     await refreshHistory();
     if (failed > 0) {
-      const summary = ctx.t("history.delete_all_partial", { deleted, total: names.length, failed });
-      ctx.showError(firstError ? `${summary}\n${firstError}` : summary);
+      const summary = services.t("history.delete_all_partial", {
+        deleted,
+        total: names.length,
+        failed,
+      });
+      services.showError(firstError ? `${summary}\n${firstError}` : summary);
     }
   }
 
@@ -279,16 +297,24 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     detail.pdfError = "";
     renderHistoryTable();
     try {
-      await downloadBlobFile(historyReportPdfUrl(runId, ctx.getLanguage()), `${runId}_report.pdf`);
+      await downloadBlobFile(
+        historyReportPdfUrl(runId, shell.lang),
+        `${runId}_report.pdf`,
+      );
     } catch (err) {
-      detail.pdfError = err instanceof Error ? err.message : ctx.t("history.pdf_failed");
+      detail.pdfError = err instanceof Error
+        ? err.message
+        : services.t("history.pdf_failed");
     } finally {
       detail.pdfLoading = false;
       renderHistoryTable();
     }
   }
 
-  async function onHistoryTableAction(action: HistoryRunAction, runId: string): Promise<void> {
+  async function onHistoryTableAction(
+    action: HistoryRunAction,
+    runId: string,
+  ): Promise<void> {
     if (!action || !runId) {
       return;
     }
@@ -323,7 +349,10 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
           return;
         }
         if (action.type === "run-action") {
-          void onHistoryTableAction(action.action, action.runId ?? history.expandedRunId ?? "");
+          void onHistoryTableAction(
+            action.action,
+            action.runId ?? history.expandedRunId ?? "",
+          );
           return;
         }
         toggleRunDetails(action.runId);

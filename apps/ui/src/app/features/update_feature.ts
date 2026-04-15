@@ -1,12 +1,17 @@
-import type { FeatureDepsBase } from "../feature_deps_base";
+import type { FeatureServices } from "../feature_deps_base";
 import { createUpdateFeatureWorkflow } from "./update_feature_workflow";
 import { createUpdateFeaturePresenter } from "../views/update_feature_presenter";
 import type { InternetPanelView } from "../views/internet_panel";
 import type { UpdatePanelView } from "../views/update_panel";
 
-export interface UpdateFeatureDeps extends FeatureDepsBase {
-  panel: UpdatePanelView;
-  internetPanel: InternetPanelView;
+interface UpdateFeaturePanels {
+  update: UpdatePanelView;
+  internet: InternetPanelView;
+}
+
+export interface UpdateFeatureDeps {
+  panels: UpdateFeaturePanels;
+  services: FeatureServices;
 }
 
 export interface UpdateFeature {
@@ -16,14 +21,15 @@ export interface UpdateFeature {
 }
 
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
+  const { panels, services } = ctx;
   const presenter = createUpdateFeaturePresenter({
-    panel: ctx.panel,
-    internetPanel: ctx.internetPanel,
-    t: ctx.t,
+    panel: panels.update,
+    internetPanel: panels.internet,
+    t: services.t,
   });
   const workflow = createUpdateFeatureWorkflow({
-    t: ctx.t,
-    showError: ctx.showError,
+    t: services.t,
+    showError: services.showError,
     view: presenter,
   });
   let handlersBound = false;
@@ -33,7 +39,7 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       return;
     }
     handlersBound = true;
-    ctx.panel.bindActions({
+    panels.update.bindActions({
       onStart: () => {
         workflow.renderCurrentState();
         void workflow.startUpdate(
@@ -44,7 +50,7 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
         void workflow.cancelUpdate();
       },
     });
-    ctx.internetPanel.bindActions({
+    panels.internet.bindActions({
       onPasswordInput: (value) => {
         presenter.setPasswordInput(value);
       },

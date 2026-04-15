@@ -1,4 +1,4 @@
-import { escapeHtml, fmt, fmtTs } from "../format";
+import { fmt, fmtTs } from "../format";
 import {
   createAppFeatureBundle,
   type AppFeatureBundle,
@@ -63,12 +63,15 @@ export class UiAppRuntime {
     this.featurePorts = createAppFeatureBundle({
       state: this.state,
       shared: {
-        t: (key, vars) => this.shell.t(key, vars),
-        escapeHtml,
-        showError: (message) => this.shell.showError(message),
-        fmt,
-        fmtTs,
-        formatInt: (value) => this.shell.localFormatInt(value),
+        services: {
+          t: (key, vars) => this.shell.t(key, vars),
+          showError: (message) => this.shell.showError(message),
+        },
+        formatting: {
+          fmt,
+          fmtTs,
+          formatInt: (value) => this.shell.localFormatInt(value),
+        },
       },
       runtime: {
         panels: deps.panels,

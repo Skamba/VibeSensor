@@ -569,9 +569,10 @@ function createDeps() {
     espFlashStartSummary,
     espFlashReadinessPanel,
     espFlashJourneyPanel,
-    t: (key: string) => key,
-    escapeHtml: (value: unknown) => String(value ?? ""),
-    showError: () => {},
+    services: {
+      t: (key: string) => key,
+      showError: () => {},
+    },
   };
 }
 
@@ -719,41 +720,43 @@ function createUpdateDeps() {
   } as UpdatePanelDom;
 
   return {
-    panel: {
-      dom,
-      bindActions(handlers: UpdatePanelActionHandlers) {
-        dom.updateStartBtn.addEventListener("click", () => {
-          handlers.onStart();
-        });
-        dom.updateCancelBtn.addEventListener("click", () => {
-          handlers.onCancel();
-        });
+    panels: {
+      update: {
+        dom,
+        bindActions(handlers: UpdatePanelActionHandlers) {
+          dom.updateStartBtn.addEventListener("click", () => {
+            handlers.onStart();
+          });
+          dom.updateCancelBtn.addEventListener("click", () => {
+            handlers.onCancel();
+          });
+        },
+        setModel(model: UpdatePanelRenderModel) {
+          renderUpdatePanelDom(dom, model);
+        },
       },
-      setModel(model: UpdatePanelRenderModel) {
-        renderUpdatePanelDom(dom, model);
-      },
-    },
-    internetPanel: {
-      dom: internetDom,
-      bindActions(handlers: InternetPanelActionHandlers) {
-        internetDom.updatePasswordInput?.addEventListener("input", () => {
-          handlers.onPasswordInput(internetDom.updatePasswordInput?.value ?? "");
-        });
-        internetDom.updateTogglePasswordBtn?.addEventListener("click", () => {
-          handlers.onTogglePassword();
-        });
-        internetDom.updateTransportWifiRadio?.addEventListener("change", () => {
-          handlers.onTransportChange("wifi");
-        });
-        internetDom.updateTransportUsbRadio?.addEventListener("change", () => {
-          handlers.onTransportChange("usb_internet");
-        });
-        internetDom.updateSsidInput?.addEventListener("input", () => {
-          handlers.onSsidInput(internetDom.updateSsidInput?.value ?? "");
-        });
-      },
-      setModel(model: InternetPanelRenderModel) {
-        renderInternetPanelDom(internetDom, model);
+      internet: {
+        dom: internetDom,
+        bindActions(handlers: InternetPanelActionHandlers) {
+          internetDom.updatePasswordInput?.addEventListener("input", () => {
+            handlers.onPasswordInput(internetDom.updatePasswordInput?.value ?? "");
+          });
+          internetDom.updateTogglePasswordBtn?.addEventListener("click", () => {
+            handlers.onTogglePassword();
+          });
+          internetDom.updateTransportWifiRadio?.addEventListener("change", () => {
+            handlers.onTransportChange("wifi");
+          });
+          internetDom.updateTransportUsbRadio?.addEventListener("change", () => {
+            handlers.onTransportChange("usb_internet");
+          });
+          internetDom.updateSsidInput?.addEventListener("input", () => {
+            handlers.onSsidInput(internetDom.updateSsidInput?.value ?? "");
+          });
+        },
+        setModel(model: InternetPanelRenderModel) {
+          renderInternetPanelDom(internetDom, model);
+        },
       },
     },
     els: dom,
@@ -772,9 +775,10 @@ function createUpdateDeps() {
     updatePasswordInput,
     updateStartBtn,
     updateCancelBtn,
-    t: (key: string) => key,
-    escapeHtml: (value: unknown) => String(value ?? ""),
-    showError: () => {},
+    services: {
+      t: (key: string) => key,
+      showError: () => {},
+    },
   };
 }
 
@@ -1440,13 +1444,13 @@ test.describe("createUpdateFeature polling", () => {
 
     try {
       const deps = createUpdateDeps();
-      deps.internetPanel.dom.updateSsidInput.value = "";
+      deps.panels.internet.dom.updateSsidInput.value = "";
       const feature = createUpdateFeature(deps);
 
       feature.startPolling();
       await flushAsyncWork();
 
-      expect(deps.internetPanel.dom.updateSsidInput.value).toBe("Workshop Wi-Fi");
+      expect(deps.panels.internet.dom.updateSsidInput.value).toBe("Workshop Wi-Fi");
       expect(deps.updateReadinessSummary.innerHTML).toContain(
         "settings.update.readiness.summary_ready",
       );
@@ -1485,7 +1489,7 @@ test.describe("createUpdateFeature polling", () => {
       feature.startPolling();
       await flushAsyncWork();
 
-      expect(deps.internetPanel.dom.updateSsidInput.value).toBe(
+      expect(deps.panels.internet.dom.updateSsidInput.value).toBe(
         "Driver-entered Wi-Fi",
       );
     } finally {
