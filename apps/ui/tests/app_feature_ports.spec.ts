@@ -6,7 +6,7 @@ import {
   createSettingsFeatureRealtimePorts,
 } from "../src/app/app_feature_ports";
 
-test("feature port helpers expose explicit shell, transport, and startup contracts without a full app shell", async () => {
+test("feature port helpers expose explicit shell and startup contracts without a full app shell", async () => {
   const calls: string[] = [];
 
   const history = {
@@ -33,9 +33,6 @@ test("feature port helpers expose explicit shell, transport, and startup contrac
     },
     maybeRenderSensorsSettingsList(force?: boolean) {
       calls.push(`realtime.maybeRenderSensorsSettingsList:${String(force)}`);
-    },
-    updateClientSelection() {
-      calls.push("realtime.updateClientSelection");
     },
     renderStatus() {
       calls.push("realtime.renderStatus");
@@ -115,7 +112,7 @@ test("feature port helpers expose explicit shell, transport, and startup contrac
     espFlash,
   });
 
-  expect(Object.keys(bundle).sort()).toEqual(["shell", "startup", "transport"]);
+  expect(Object.keys(bundle).sort()).toEqual(["shell", "startup"]);
 
   settingsRealtime.renderRealtimeStatus();
   settingsRealtime.renderRealtimeLoggingStatus();
@@ -134,11 +131,6 @@ test("feature port helpers expose explicit shell, transport, and startup contrac
   bundle.shell.languageRefresh.history.renderHistoryTable();
   bundle.shell.languageRefresh.history.reloadExpandedRunOnLanguageChange();
   bundle.shell.languageRefresh.settings.syncSettingsInputs();
-
-  bundle.transport.updateClientSelection();
-  bundle.transport.maybeRenderSensorsSettingsList(false);
-  bundle.transport.renderLoggingStatus();
-  bundle.transport.renderStatus(undefined);
 
   await bundle.startup.history.refreshHistory();
   await bundle.startup.realtime.refreshLocationOptions();
@@ -168,10 +160,6 @@ test("feature port helpers expose explicit shell, transport, and startup contrac
     "history.renderHistoryTable",
     "history.reloadExpandedRunOnLanguageChange",
     "settings.syncSettingsInputs",
-    "realtime.updateClientSelection",
-    "realtime.maybeRenderSensorsSettingsList:false",
-    "realtime.renderLoggingStatus",
-    "realtime.renderStatus",
     "history.refreshHistory",
     "realtime.refreshLocationOptions",
     "realtime.refreshLoggingStatus",

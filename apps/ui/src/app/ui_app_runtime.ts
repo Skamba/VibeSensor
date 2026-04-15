@@ -91,7 +91,6 @@ export class UiAppRuntime {
       },
     });
     this.shell.attachPorts(this.featurePorts.shell);
-    this.transport.attachPorts(this.featurePorts.transport);
     this.startup = new UiStartupCoordinator({
       shell: this.shell,
       transport: this.transport,

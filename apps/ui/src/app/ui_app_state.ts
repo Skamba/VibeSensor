@@ -187,7 +187,6 @@ export interface LivePayloadUpdateDeps {
   realtime: RealtimeState;
   spectrum: SpectrumState;
   adaptedPayload: AdaptedPayload;
-  updateClientSelection: () => void;
 }
 
 export interface LivePayloadUpdateResult {
@@ -219,9 +218,26 @@ export function applySpectrumTick(
   };
 }
 
+export function syncSelectedRealtimeClient(realtime: RealtimeState): void {
+  const firstConnected = realtime.clients.find((client) => Boolean(client.connected));
+  if (!realtime.selectedClientId && realtime.clients.length > 0) {
+    realtime.selectedClientId = firstConnected ? firstConnected.id : realtime.clients[0]?.id ?? null;
+  }
+  if (
+    realtime.selectedClientId
+    && !realtime.clients.some((client) => client.id === realtime.selectedClientId)
+  ) {
+    realtime.selectedClientId = firstConnected
+      ? firstConnected.id
+      : realtime.clients.length
+        ? realtime.clients[0]?.id ?? null
+        : null;
+  }
+}
+
 export function applyLivePayloadUpdate(deps: LivePayloadUpdateDeps): LivePayloadUpdateResult {
   return batchAppStateUpdates(() => {
-    const { realtime, spectrum, adaptedPayload, updateClientSelection } = deps;
+    const { realtime, spectrum, adaptedPayload } = deps;
     const previousSelectedClientId = realtime.selectedClientId;
     realtime.clients = adaptedPayload.clients;
     const spectrumTick = applySpectrumTick(
@@ -230,7 +246,7 @@ export function applyLivePayloadUpdate(deps: LivePayloadUpdateDeps): LivePayload
       adaptedPayload.spectra,
     );
     spectrum.spectra = spectrumTick.spectra;
-    updateClientSelection();
+    syncSelectedRealtimeClient(realtime);
     realtime.speedMps = adaptedPayload.speed_mps;
     realtime.rotationalSpeeds = adaptedPayload.rotational_speeds;
     spectrum.hasSpectrumData = spectrumTick.hasSpectrumData;
@@ -267,7 +283,6 @@ export interface RealtimeState {
   loggingStatus: LoggingStatusPayload;
   locationOptions: LocationOption[];
   locationCodes: string[];
-  sensorsSettingsSignature: string;
 }
 
 export interface HistoryState {
@@ -343,7 +358,6 @@ export function createAppState(): AppState {
       },
       locationOptions: [],
       locationCodes: defaultLocationCodes.slice(),
-      sensorsSettingsSignature: "",
     }),
     history: createReactiveStateSlice({
       runs: [],
