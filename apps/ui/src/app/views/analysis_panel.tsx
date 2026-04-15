@@ -1,6 +1,7 @@
 import type { JSX } from "preact";
 
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { useUiTranslation } from "../ui_i18n";
 import type {
   SettingsAnalysisGuidanceRenderModel,
 } from "./settings_analysis_guidance";
@@ -267,10 +268,11 @@ function AnalysisField(props: {
   spec: AnalysisFieldSpec;
 }) {
   const { actions, model, onInputRef, spec } = props;
+  const t = useUiTranslation();
   return (
     <div class="field">
       <label htmlFor={spec.inputId} data-i18n={spec.labelKey}>
-        {spec.fallbackLabel}
+        {t(spec.labelKey, spec.fallbackLabel)}
       </label>
       <input
         id={spec.inputId}
@@ -296,6 +298,7 @@ function AnalysisPanel(props: {
   state: AnalysisPanelBridgeState;
 }) {
   const { guidanceHelpRef, inputRef, state } = props;
+  const t = useUiTranslation();
   const noCarSelected = !state.availability.hasActiveCar && !state.availability.isLoading;
   return (
     <div class="panel card settings-layout">
@@ -310,14 +313,16 @@ function AnalysisPanel(props: {
               class="settings-help-disclosure__title"
               data-i18n="settings.analysis.guidance_title"
             >
-              Safe starting point
+              {t("settings.analysis.guidance_title", "Safe starting point")}
             </strong>
             <span
               class="settings-help-disclosure__caption"
               data-i18n="settings.analysis.guidance_summary"
             >
-              Keep the defaults unless the data is unusually noisy or the
-              vehicle specs are approximate.
+              {t(
+                "settings.analysis.guidance_summary",
+                "Keep the defaults unless the data is unusually noisy or the vehicle specs are approximate.",
+              )}
             </span>
           </span>
         </summary>
@@ -326,16 +331,19 @@ function AnalysisPanel(props: {
             class="subtle"
             data-i18n="settings.analysis.guidance_intro"
           >
-            Most users should keep the defaults. Use wider bands or higher
-            uncertainty only when your data is unusually noisy or your vehicle
-            specs are approximate.
+            {t(
+              "settings.analysis.guidance_intro",
+              "Most users should keep the defaults. Use wider bands or higher uncertainty only when your data is unusually noisy or your vehicle specs are approximate.",
+            )}
           </div>
           <div
             class="subtle"
             data-i18n="settings.analysis.guidance_guardrail"
           >
-            Values outside the guided range will ask for confirmation before
-            they are saved.
+            {t(
+              "settings.analysis.guidance_guardrail",
+              "Values outside the guided range will ask for confirmation before they are saved.",
+            )}
           </div>
         </div>
       </details>
@@ -345,12 +353,16 @@ function AnalysisPanel(props: {
         hidden={!noCarSelected}
         data-i18n="settings.analysis.no_car_selected"
       >
-        No car selected. Select or create a car in Settings → Car to save
-        analysis settings.
+        {t(
+          "settings.analysis.no_car_selected",
+          "No car selected. Select or create a car in Settings → Car to save analysis settings.",
+        )}
       </div>
       <div class="settings-groups">
         <section class="settings-group">
-          <h3 data-i18n="settings.group.order_band_widths">Order Band Widths</h3>
+          <h3 data-i18n="settings.group.order_band_widths">
+            {t("settings.group.order_band_widths", "Order Band Widths")}
+          </h3>
           <details
             id="analysisOrderBandHelp"
             class="settings-help-disclosure settings-help-disclosure--inline"
@@ -360,7 +372,7 @@ function AnalysisPanel(props: {
                 class="settings-help-disclosure__title"
                 data-i18n="settings.analysis.more_guidance"
               >
-                Why this matters
+                {t("settings.analysis.more_guidance", "Why this matters")}
               </span>
             </summary>
             <div class="settings-help-disclosure__body">
@@ -368,9 +380,10 @@ function AnalysisPanel(props: {
                 class="subtle"
                 data-i18n="settings.analysis.group.order_band_widths_help"
               >
-                These values control how far the app searches around each
-                expected order. Wider bands tolerate more speed drift but can
-                blend nearby faults together.
+                {t(
+                  "settings.analysis.group.order_band_widths_help",
+                  "These values control how far the app searches around each expected order. Wider bands tolerate more speed drift but can blend nearby faults together.",
+                )}
               </div>
             </div>
           </details>
@@ -388,7 +401,9 @@ function AnalysisPanel(props: {
         </section>
 
         <section class="settings-group">
-          <h3 data-i18n="settings.group.uncertainty_model">Uncertainty Model</h3>
+          <h3 data-i18n="settings.group.uncertainty_model">
+            {t("settings.group.uncertainty_model", "Uncertainty Model")}
+          </h3>
           <details
             id="analysisUncertaintyHelp"
             class="settings-help-disclosure settings-help-disclosure--inline"
@@ -398,23 +413,26 @@ function AnalysisPanel(props: {
                 class="settings-help-disclosure__title"
                 data-i18n="settings.analysis.more_guidance"
               >
-                Why this matters
+                {t("settings.analysis.more_guidance", "Why this matters")}
               </span>
             </summary>
             <div class="settings-help-disclosure__body">
               <div class="subtle">
                 <span data-i18n="settings.uncertainty_defaults">
-                  Defaults use tire wear from 10/32 in to 2/32 in plus safety
-                  margin.
+                  {t(
+                    "settings.uncertainty_defaults",
+                    "Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.",
+                  )}
                 </span>
               </div>
               <div
                 class="subtle"
                 data-i18n="settings.analysis.group.uncertainty_model_help"
               >
-                Use these only when vehicle data is approximate, modified, or
-                worn. Higher uncertainty makes matching more tolerant, but it
-                can lower specificity and confidence.
+                {t(
+                  "settings.analysis.group.uncertainty_model_help",
+                  "Use these only when vehicle data is approximate, modified, or worn. Higher uncertainty makes matching more tolerant, but it can lower specificity and confidence.",
+                )}
               </div>
             </div>
           </details>
@@ -449,7 +467,7 @@ function AnalysisPanel(props: {
           disabled={!state.availability.hasActiveCar}
           onClick={() => state.actions?.onReset()}
         >
-          Reset to defaults
+          {t("settings.analysis.reset", "Reset to defaults")}
         </button>
         <button
           id="saveAnalysisBtn"
@@ -459,7 +477,7 @@ function AnalysisPanel(props: {
           disabled={!state.availability.hasActiveCar}
           onClick={() => state.actions?.onSave()}
         >
-          Save Analysis Settings
+          {t("settings.analysis.save", "Save Analysis Settings")}
         </button>
       </div>
     </div>

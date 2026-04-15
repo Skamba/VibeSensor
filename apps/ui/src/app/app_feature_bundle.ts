@@ -1,4 +1,3 @@
-import type { UiShellDom } from "./dom/shell_dom";
 import {
   createAppFeaturePorts,
   createRealtimeFeatureRecordingPorts,
@@ -30,11 +29,12 @@ import type { SensorsPanelView } from "./views/sensors_panel";
 import type { SpeedSourcePanelView } from "./views/speed_source_panel";
 import type { SettingsShellView } from "./views/settings_shell";
 import type { UpdatePanelView } from "./views/update_panel";
+import type { UiShellChromeDom } from "./runtime/ui_shell_chrome";
 
 export type { AppFeatureBundle } from "./app_feature_ports";
 
 export interface AppFeatureBundleDom {
-  shell: UiShellDom;
+  shell: Pick<UiShellChromeDom, "menuButtons">;
 }
 
 export interface AppFeatureBundleSharedDeps {

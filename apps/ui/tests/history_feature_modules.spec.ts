@@ -8,8 +8,8 @@ import {
 } from "../src/app/features/history_download_delete_module";
 import { createHistoryListModule } from "../src/app/features/history_list_module";
 import type { UiHistoryDom } from "../src/app/dom/history_dom";
-import type { UiShellDom } from "../src/app/dom/shell_dom";
 import { createAppState, type RunDetail } from "../src/app/ui_app_state";
+import type { UiShellChromeDom } from "../src/app/runtime/ui_shell_chrome";
 import {
   type HistoryPanelRenderModel,
   type HistoryPanelView,
@@ -448,7 +448,7 @@ test("history feature preloads collapsed row context for completed runs", async 
   const feature = createHistoryFeature({
     dom,
     panel,
-    shellDom: { menuButtons: [] } as Pick<UiShellDom, "menuButtons">,
+    shellDom: { menuButtons: [] } as Pick<UiShellChromeDom, "menuButtons">,
     history: state.history,
     getLanguage: () => state.shell.lang,
     t: testTranslation,

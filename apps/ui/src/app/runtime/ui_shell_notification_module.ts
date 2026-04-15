@@ -1,57 +1,61 @@
-import type { UiShellDom } from "../dom/shell_dom";
-import { setVariantState } from "../style_state";
+import type { UiShellErrorBannerModel } from "./ui_shell_chrome";
 
-const ERROR_BANNER_VISIBLE_MS = 8_000;
-
-export interface UiShellNotificationModuleDeps {
-  dom: UiShellDom;
-}
+type UiShellNotificationDeps = {
+  onChanged?: () => void;
+  window: Pick<Window, "clearTimeout" | "setTimeout">;
+};
 
 export interface UiShellNotificationModule {
-  showError(message: string): void;
   clearError(): void;
+  getBannerModel(): UiShellErrorBannerModel;
+  showError(message: string): void;
 }
 
 export function createUiShellNotificationModule(
-  ctx: UiShellNotificationModuleDeps,
+  deps: UiShellNotificationDeps,
 ): UiShellNotificationModule {
-  let clearTimer: ReturnType<typeof setTimeout> | null = null;
+  let hideBannerTimer: ReturnType<typeof setTimeout> | null = null;
+  let bannerText = "";
+  let bannerVisible = false;
 
-  function clearPendingTimer(): void {
-    if (clearTimer === null) return;
-    clearTimeout(clearTimer);
-    clearTimer = null;
+  function notifyChanged(): void {
+    deps.onChanged?.();
+  }
+
+  function clearScheduledHide(): void {
+    if (hideBannerTimer !== null) {
+      deps.window.clearTimeout(hideBannerTimer);
+      hideBannerTimer = null;
+    }
   }
 
   function clearError(): void {
-    clearPendingTimer();
-    const banner = ctx.dom.appErrorBanner;
-    if (!banner) return;
-    banner.hidden = true;
-    banner.textContent = "";
-    banner.className = "connection-banner app-error-banner";
-    setVariantState(banner, null);
-  }
-
-  function showError(message: string): void {
-    clearPendingTimer();
-    const banner = ctx.dom.appErrorBanner;
-    if (!banner) {
-      console.warn("UI error banner unavailable", message);
-      return;
-    }
-    banner.hidden = false;
-    banner.textContent = message;
-    banner.className = "connection-banner app-error-banner";
-    setVariantState(banner, "bad");
-    clearTimer = setTimeout(() => {
-      clearTimer = null;
-      clearError();
-    }, ERROR_BANNER_VISIBLE_MS);
+    clearScheduledHide();
+    bannerVisible = false;
+    bannerText = "";
+    notifyChanged();
   }
 
   return {
-    showError,
     clearError,
+    getBannerModel() {
+      return {
+        hidden: !bannerVisible,
+        text: bannerText,
+        variant: bannerVisible ? "bad" : null,
+      };
+    },
+    showError(message) {
+      clearScheduledHide();
+      bannerText = message;
+      bannerVisible = true;
+      notifyChanged();
+      hideBannerTimer = deps.window.setTimeout(() => {
+        bannerVisible = false;
+        bannerText = "";
+        hideBannerTimer = null;
+        notifyChanged();
+      }, 5000);
+    },
   };
 }

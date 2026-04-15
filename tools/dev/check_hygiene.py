@@ -409,7 +409,7 @@ def check_frontend_dom_registry_guardrails() -> list[str]:
     if _UI_DOM_REGISTRY_PATH.exists():
         errors.append(
             "apps/ui/src/app/ui_dom_registry.ts must stay deleted; "
-            "DOM lookup belongs in app/dom/* locators plus ui_runtime_dom.ts."
+            "DOM lookup belongs in app/dom/* locators plus focused runtime/view helpers."
         )
     for path in _ui_source_files():
         rel = str(path.relative_to(ROOT))

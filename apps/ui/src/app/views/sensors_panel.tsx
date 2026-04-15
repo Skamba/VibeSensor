@@ -1,6 +1,7 @@
 import { h } from "preact";
 
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { useUiTranslation } from "../ui_i18n";
 import type {
   RealtimeSensorTableClickAction,
   RealtimeSensorTableLocationChange,
@@ -104,10 +105,13 @@ function SensorsTableBody(props: {
   table: RealtimeSensorTableRenderModel | null;
 }) {
   const { actions, table } = props;
+  const t = useUiTranslation();
   if (table === null || table.kind === "empty") {
     return (
       <tr>
-        <td colSpan={3}>{table?.emptyText ?? "No sensors detected yet."}</td>
+        <td colSpan={3}>
+          {table?.emptyText ?? t("settings.sensors.no_sensors", "No sensors detected yet.")}
+        </td>
       </tr>
     );
   }
@@ -118,19 +122,31 @@ function SensorsTableBody(props: {
 
 function SensorsPanel(props: { state: SensorsPanelBridgeState }) {
   const { state } = props;
+  const t = useUiTranslation();
   return (
     <div class="panel card">
-      <strong data-i18n="settings.sensors.title">Sensors</strong>
+      <strong data-i18n="settings.sensors.title">
+        {t("settings.sensors.title", "Sensors")}
+      </strong>
       <div class="subtle" data-i18n="settings.sensors.hint">
-        Manage sensor names and locations. Default name is the MAC address.
+        {t(
+          "settings.sensors.hint",
+          "Manage sensor names and locations. Default name is the MAC address.",
+        )}
       </div>
       <div class="settings-table-wrap">
         <table class="clients-table settings-entity-table settings-entity-table--sensors">
           <thead>
             <tr>
-              <th data-i18n="settings.sensors.name">Name</th>
-              <th data-i18n="settings.sensors.location">Location</th>
-              <th data-i18n="settings.sensors.actions">Actions</th>
+              <th data-i18n="settings.sensors.name">
+                {t("settings.sensors.name", "Name")}
+              </th>
+              <th data-i18n="settings.sensors.location">
+                {t("settings.sensors.location", "Location")}
+              </th>
+              <th data-i18n="settings.sensors.actions">
+                {t("settings.sensors.actions", "Actions")}
+              </th>
             </tr>
           </thead>
           <tbody id="sensorsSettingsBody">

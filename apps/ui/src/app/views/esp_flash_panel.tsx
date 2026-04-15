@@ -1,6 +1,7 @@
 import { h } from "preact";
 
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { useUiTranslation } from "../ui_i18n";
 import type { VisualVariant } from "../style_state";
 import {
   MaintenanceReadinessPanel,
@@ -298,6 +299,7 @@ function EspFlashPanel(props: {
   model: EspFlashPanelRenderModel;
 }) {
   const { model } = props;
+  const t = useUiTranslation();
   return (
     <div class="panel card">
       <div class="maintenance-layout maintenance-layout--compact">
@@ -309,13 +311,16 @@ function EspFlashPanel(props: {
                   class="maintenance-card__title"
                   data-i18n="settings.esp_flash.title"
                 >
-                  ESP Flash
+                  {t("settings.esp_flash.title", "ESP Flash")}
                 </div>
                 <div
                   class="subtle"
                   data-i18n="settings.esp_flash.hint"
                 >
-                  Flash ESP firmware from local source on this Pi.
+                  {t(
+                    "settings.esp_flash.hint",
+                    "Flash ESP firmware from local source on this Pi.",
+                  )}
                 </div>
               </div>
               <span
@@ -332,7 +337,7 @@ function EspFlashPanel(props: {
                   htmlFor="espFlashPortSelect"
                   data-i18n="settings.esp_flash.port"
                 >
-                  Serial Port
+                  {t("settings.esp_flash.port", "Serial Port")}
                 </label>
                 <select
                   id="espFlashPortSelect"
@@ -352,7 +357,7 @@ function EspFlashPanel(props: {
                   data-i18n="settings.esp_flash.refresh_ports"
                   disabled={model.refreshPortsDisabled}
                 >
-                  Refresh
+                  {t("settings.esp_flash.refresh_ports", "Refresh")}
                 </button>
               </div>
               <div
@@ -376,13 +381,16 @@ function EspFlashPanel(props: {
                       class="settings-help-disclosure__title"
                       data-i18n="settings.esp_flash.details_title"
                     >
-                      What happens next
+                      {t("settings.esp_flash.details_title", "What happens next")}
                     </span>
                     <span
                       class="settings-help-disclosure__caption"
                       data-i18n="settings.esp_flash.details_caption"
                     >
-                      Build, erase, and write the current firmware over USB.
+                      {t(
+                        "settings.esp_flash.details_caption",
+                        "Build, erase, and write the current firmware over USB.",
+                      )}
                     </span>
                   </span>
                 </summary>
@@ -391,9 +399,10 @@ function EspFlashPanel(props: {
                     class="maintenance-note"
                     data-i18n="settings.esp_flash.preflight_note"
                   >
-                    Starting a flash builds the latest firmware on this Pi, erases
-                    the selected board, and writes the new image over USB. Keep
-                    the board powered until the staged progress reaches Done.
+                    {t(
+                      "settings.esp_flash.preflight_note",
+                      "Starting a flash builds the latest firmware on this Pi, erases the selected board, and writes the new image over USB. Keep the board powered until the staged progress reaches Done.",
+                    )}
                   </div>
                 </div>
               </details>
@@ -415,7 +424,7 @@ function EspFlashPanel(props: {
                   hidden={model.cancelButtonHidden}
                   disabled={model.cancelButtonDisabled}
                 >
-                  Cancel
+                  {t("settings.esp_flash.cancel", "Cancel")}
                 </button>
               </div>
             </div>
@@ -429,7 +438,7 @@ function EspFlashPanel(props: {
                     class="maintenance-card__title"
                     data-i18n="settings.esp_flash.journey_title"
                   >
-                    Expected stages
+                    {t("settings.esp_flash.journey_title", "Expected stages")}
                   </div>
                 </div>
               </div>
@@ -448,14 +457,16 @@ function EspFlashPanel(props: {
                     class="maintenance-card__title"
                     data-i18n="settings.esp_flash.logs_title"
                   >
-                    Live flash output
+                    {t("settings.esp_flash.logs_title", "Live flash output")}
                   </div>
                   <div
                     class="subtle"
                     data-i18n="settings.esp_flash.logs_intro"
                   >
-                    Build, erase, and upload output appears here while the
-                    toolchain runs.
+                    {t(
+                      "settings.esp_flash.logs_intro",
+                      "Build, erase, and upload output appears here while the toolchain runs.",
+                    )}
                   </div>
                 </div>
               </div>
@@ -479,16 +490,18 @@ function EspFlashPanel(props: {
                 <div
                   class="maintenance-card__title"
                   data-i18n="settings.esp_flash.history"
-                >
-                  Recent attempts
-                </div>
+                  >
+                    {t("settings.esp_flash.history", "Recent attempts")}
+                  </div>
                 <div
                   class="subtle"
                   data-i18n="settings.esp_flash.history_intro"
-                >
-                  Recent flashes stay here so the next operator can see what
-                  happened last.
-                </div>
+                  >
+                    {t(
+                      "settings.esp_flash.history_intro",
+                      "Recent flashes stay here so the next operator can see what happened last.",
+                    )}
+                  </div>
               </div>
             </div>
             <div

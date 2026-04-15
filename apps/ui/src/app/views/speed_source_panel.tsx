@@ -3,6 +3,7 @@ import { h } from "preact";
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
 import type { ChoiceCardState } from "../style_state";
 import { createUiPreactMount } from "../runtime/ui_preact_mount";
+import { useUiTranslation } from "../ui_i18n";
 import type { SettingsFeedbackMessage } from "./settings_feedback";
 
 export interface SettingsSpeedSourcePanelDom {
@@ -500,23 +501,28 @@ function SpeedSourcePanel(props: {
     staleTimeoutInputRef,
     state,
   } = props;
+  const t = useUiTranslation();
   return (
     <>
       <div class="panel card">
-        <strong data-i18n="settings.speed.title">Speed Source</strong>
+        <strong data-i18n="settings.speed.title">
+          {t("settings.speed.title", "Speed Source")}
+        </strong>
         <div class="speed-source-summary">
           <div
             class="speed-source-summary__eyebrow"
             data-i18n="settings.speed.summary_title"
           >
-            Active right now
+            {t("settings.speed.summary_title", "Active right now")}
           </div>
           <div
             class="subtle speed-source-summary__caption"
             data-i18n="settings.speed.summary_caption"
           >
-            This source is currently driving the app. Changes below take effect
-            after save.
+            {t(
+              "settings.speed.summary_caption",
+              "This source is currently driving the app. Changes below take effect after save.",
+            )}
           </div>
           <div class="speed-source-summary__stats">
             <div class="speed-source-summary__stat">
@@ -524,7 +530,7 @@ function SpeedSourcePanel(props: {
                 class="speed-source-summary__label"
                 data-i18n="settings.speed.current_source"
               >
-                Current source
+                {t("settings.speed.current_source", "Current source")}
               </div>
               <div
                 id="speedSourceCurrentSource"
@@ -538,7 +544,7 @@ function SpeedSourcePanel(props: {
                 class="speed-source-summary__label"
                 data-i18n="settings.speed.effective_speed"
               >
-                Effective speed
+                {t("settings.speed.effective_speed", "Effective speed")}
               </div>
               <div
                 id="speedSourceEffectiveSpeed"
@@ -552,7 +558,7 @@ function SpeedSourcePanel(props: {
                 class="speed-source-summary__label"
                 data-i18n="settings.speed.fallback_active"
               >
-                Fallback active
+                {t("settings.speed.fallback_active", "Fallback active")}
               </div>
               <div
                 id="speedSourceFallbackActive"
@@ -578,15 +584,17 @@ function SpeedSourcePanel(props: {
           hidden={!state.model.manualConfigVisible}
         >
           <div class="subtle" data-i18n="settings.speed.manual_intro">
-            Set a fixed speed for manual mode and as the live-source fallback
-            when GPS or OBD-II data goes stale.
+            {t(
+              "settings.speed.manual_intro",
+              "Set a fixed speed for manual mode and as the live-source fallback when GPS or OBD-II data goes stale.",
+            )}
           </div>
           <div class="manual-speed-row">
             <label
               htmlFor="manualSpeedInput"
               data-i18n="settings.speed.manual_label"
             >
-              Manual Speed (km/h)
+              {t("settings.speed.manual_label", "Manual Speed (km/h)")}
             </label>
             <input
               id="manualSpeedInput"
@@ -616,8 +624,10 @@ function SpeedSourcePanel(props: {
           hidden={!state.model.obdConfigVisible}
         >
           <div class="subtle" data-i18n="settings.speed.obd_intro">
-            Pair a Bluetooth OBD adapter with the Pi, then save OBD-II as the
-            selected live source.
+            {t(
+              "settings.speed.obd_intro",
+              "Pair a Bluetooth OBD adapter with the Pi, then save OBD-II as the selected live source.",
+            )}
           </div>
           <div class="speed-source-obd-toolbar">
             <div class="speed-source-obd-toolbar__summary">
@@ -625,7 +635,7 @@ function SpeedSourcePanel(props: {
                 class="speed-source-summary__label"
                 data-i18n="settings.speed.obd_configured_device"
               >
-                Configured adapter
+                {t("settings.speed.obd_configured_device", "Configured adapter")}
               </div>
               <div id="obdConfiguredDevice" class="speed-source-summary__value">
                 {state.model.obdConfiguredDeviceText}
@@ -639,7 +649,7 @@ function SpeedSourcePanel(props: {
               disabled={state.model.scanObdDevicesDisabled}
               data-i18n="settings.speed.obd_scan"
             >
-              Scan for adapters
+              {t("settings.speed.obd_scan", "Scan for adapters")}
             </button>
           </div>
           <div id="obdDeviceScanStatus" class="subtle">
@@ -660,15 +670,17 @@ function SpeedSourcePanel(props: {
           hidden={!state.model.showGpsFallbackPanel}
         >
           <div class="subtle" data-i18n="settings.speed.gps_intro">
-            Choose how long stale live-source data can remain usable before the
-            manual fallback takes over.
+            {t(
+              "settings.speed.gps_intro",
+              "Choose how long stale live-source data can remain usable before the manual fallback takes over.",
+            )}
           </div>
           <div class="manual-speed-row">
             <label
               htmlFor="staleTimeoutInput"
               data-i18n="settings.speed.stale_timeout_label"
             >
-              Stale timeout (s)
+              {t("settings.speed.stale_timeout_label", "Stale timeout (s)")}
             </label>
             <input
               id="staleTimeoutInput"
@@ -706,7 +718,7 @@ function SpeedSourcePanel(props: {
             type="button"
             data-i18n="settings.speed.save"
           >
-            Save Speed Source
+            {t("settings.speed.save", "Save Speed Source")}
           </button>
         </div>
       </div>
@@ -723,14 +735,16 @@ function SpeedSourcePanel(props: {
               class="settings-help-disclosure__title"
               data-i18n="settings.speed.status_title"
             >
-              Live source status
+              {t("settings.speed.status_title", "Live source status")}
             </span>
             <span
               class="settings-help-disclosure__caption"
               data-i18n="settings.speed.status_caption"
             >
-              Connection, freshness, effective speed, fallback diagnostics, and
-              Bluetooth OBD detail when configured.
+              {t(
+                "settings.speed.status_caption",
+                "Connection, freshness, effective speed, fallback diagnostics, and Bluetooth OBD detail when configured.",
+              )}
             </span>
           </span>
         </summary>
@@ -739,7 +753,7 @@ function SpeedSourcePanel(props: {
             <tbody>
               {GPS_STATUS_ROWS.map((row) => (
                 <tr key={row.id}>
-                  <td data-i18n={row.labelKey}>{row.fallbackLabel}</td>
+                  <td data-i18n={row.labelKey}>{t(row.labelKey, row.fallbackLabel)}</td>
                   <td id={row.id}>{state.diagnostics.gps[row.valueKey]}</td>
                 </tr>
               ))}
@@ -753,7 +767,7 @@ function SpeedSourcePanel(props: {
             <tbody>
               {OBD_STATUS_ROWS.map((row) => (
                 <tr key={row.id}>
-                  <td data-i18n={row.labelKey}>{row.fallbackLabel}</td>
+                  <td data-i18n={row.labelKey}>{t(row.labelKey, row.fallbackLabel)}</td>
                   <td id={row.id}>{state.diagnostics.obd[row.valueKey]}</td>
                 </tr>
               ))}

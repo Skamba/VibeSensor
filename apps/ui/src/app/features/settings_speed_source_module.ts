@@ -1,4 +1,3 @@
-import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import {
   bindSettingsSpeedSourceInteractions,
@@ -15,11 +14,12 @@ import type {
 } from "../views/speed_source_panel";
 import type { SettingsState } from "../ui_app_state";
 import { createSettingsSpeedSourceWorkflow } from "./settings_speed_source_workflow";
+import type { UiShellChromeDom } from "../runtime/ui_shell_chrome";
 
 export interface SettingsSpeedSourceModuleDeps extends FeatureDepsBase {
   dom: Pick<SettingsShellDom, "settingsTabs"> & SettingsSpeedSourcePanelDom;
   panel: SpeedSourcePanelView;
-  shellDom: Pick<UiShellDom, "menuButtons">;
+  shellDom: Pick<UiShellChromeDom, "menuButtons">;
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
