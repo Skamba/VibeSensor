@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
 
 import { getCarCompleteness } from "../src/app/car_selection_state";
-import { renderSettingsCarList } from "../src/app/views/settings_car_list_view";
+import {
+  buildCarsGuidanceRenderModel,
+  buildSettingsCarListRenderModel,
+} from "../src/app/views/settings_car_list_view";
 import type { CarRecord } from "../src/transport/http_models";
 
 function makeCar(overrides: Partial<CarRecord> = {}): CarRecord {
@@ -35,14 +38,19 @@ const labels: Record<string, string> = {
   "settings.car.value_missing": "Not set",
   "settings.car.tires_missing": "Tire size not set",
   "settings.car.incomplete_detail": "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
+  "settings.car.created_title": "Car added",
+  "settings.car.created_body": "{name} was added and selected for this setup.",
+  "settings.car.created_detail": "Review the highlighted row below or open Analysis to confirm the setup before the next run.",
+  "settings.car.guidance.no_active_title": "Activate one car for this setup.",
+  "settings.car.guidance.no_active": "Activate a car from the list below or add a new one to unlock analysis settings.",
+  "settings.car.guidance.no_active_detail": "Use Activate on a ready row, or Finish setup on an incomplete row, to unlock the rest of Settings.",
 };
 
-function t(key: string): string {
+function t(key: string, vars?: Record<string, unknown>): string {
+  if (key === "settings.car.created_body") {
+    return `${vars?.name ?? "Unknown"} was added and selected for this setup.`;
+  }
   return labels[key] ?? key;
-}
-
-function escapeHtml(value: unknown): string {
-  return String(value ?? "");
 }
 
 function fmt(value: number, digits = 0): string {
@@ -75,10 +83,8 @@ test("getCarCompleteness reports whether the required car specs are present", ()
   ]);
 });
 
-test("renderSettingsCarList shows explicit readiness labels and completion actions", () => {
-  const container = { innerHTML: "" } as HTMLElement;
-
-  renderSettingsCarList(container, {
+test("buildSettingsCarListRenderModel produces typed row state for readiness, highlight, and actions", () => {
+  const model = buildSettingsCarListRenderModel({
     cars: [
       makeCar({
         id: "car-ready",
@@ -114,28 +120,120 @@ test("renderSettingsCarList shows explicit readiness labels and completion actio
     activeCarId: "car-ready",
     highlightedCarId: "car-new",
     t,
-    escapeHtml,
     fmt,
   });
 
-  expect(container.innerHTML).toContain('data-car-id="car-ready"');
-  expect(container.innerHTML).toContain('data-car-complete="true"');
-  expect(container.innerHTML).toContain("Active");
-  expect(container.innerHTML).toContain("Ready");
-  expect(container.innerHTML).toContain('data-car-id="car-ready-inactive"');
-  expect(container.innerHTML).toContain('data-car-action="activate"');
-  expect(container.innerHTML).toContain('data-car-id="car-new"');
-  expect(container.innerHTML).toContain('data-car-complete="false"');
-  expect(container.innerHTML).toContain("Inactive");
-  expect(container.innerHTML).toContain("Needs specs");
-  expect(container.innerHTML).toContain("Finish setup");
-  expect(container.innerHTML).toContain("Tire size not set");
-  expect(container.innerHTML).toContain("Not set");
-  expect(container.innerHTML).toContain("car-row__setup");
-  expect(container.innerHTML).toContain("Top Gear");
-  expect(container.innerHTML).toContain("Open Analysis to finish the missing tire and drivetrain specs before using this car.");
-  expect(container.innerHTML).toContain("car-list-row--highlighted");
-  expect(container.innerHTML).toContain("New");
-  expect(container.innerHTML).toContain("btn--danger-quiet");
-  expect(container.innerHTML).not.toContain("?");
+  expect(model.kind).toBe("rows");
+  if (model.kind !== "rows") {
+    return;
+  }
+
+  expect(model.rows).toHaveLength(3);
+  expect(model.rows[0]).toMatchObject({
+    activeState: "active",
+    activeStatusText: "Active",
+    carId: "car-ready",
+    completionDetailText: null,
+    displayName: "Ready Car",
+    highlightedStatusText: null,
+    isComplete: true,
+    isHighlighted: false,
+    primaryAction: null,
+    readinessState: "ready",
+    readinessStatusText: "Ready",
+  });
+  expect(model.rows[1].primaryAction).toEqual({
+    className: "btn car-activate-btn",
+    labelText: "Activate",
+    type: "activate",
+  });
+  expect(model.rows[2]).toMatchObject({
+    activeState: "inactive",
+    carId: "car-new",
+    completionDetailText: "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
+    highlightedStatusText: "New",
+    isComplete: false,
+    isHighlighted: true,
+    metaVariantText: "Project",
+    readinessState: "incomplete",
+    readinessStatusText: "Needs specs",
+  });
+  expect(model.rows[2].primaryAction).toEqual({
+    className: "btn btn--primary car-complete-btn",
+    labelText: "Finish setup",
+    type: "complete",
+  });
+  expect(model.rows[2].setupMetrics).toEqual([
+    { isCode: true, labelText: "Tires", valueText: "Tire size not set" },
+    { labelText: "Drive", valueText: "Not set" },
+    { labelText: "Top Gear", valueText: "Not set" },
+  ]);
+});
+
+test("buildSettingsCarListRenderModel produces the actionable empty state when no cars exist", () => {
+  const model = buildSettingsCarListRenderModel({
+    cars: [],
+    activeCarId: null,
+    t,
+    fmt,
+  });
+
+  expect(model).toEqual({
+    kind: "empty",
+    emptyState: {
+      action: {
+        labelText: "Add a car",
+        type: "add",
+        variant: "success",
+      },
+      bodyText: "Cars define the setup used for recording, saved runs, and analysis settings.",
+      detailText: "Start with the add-car wizard so the next recording has the right context.",
+      titleText: "Add the first car profile.",
+    },
+  });
+});
+
+test("buildCarsGuidanceRenderModel returns success, guidance, or hidden states based on selection", () => {
+  expect(
+    buildCarsGuidanceRenderModel({
+      carSelectionState: {
+        kind: "active",
+        car: makeCar({ id: "car-1", name: "Track Demo" }),
+      },
+      highlightedCarFeedback: {
+        carId: "car-1",
+        carName: "Track Demo",
+      },
+      t,
+    }),
+  ).toEqual({
+    bodyText: "Track Demo was added and selected for this setup.",
+    detailText: "Review the highlighted row below or open Analysis to confirm the setup before the next run.",
+    titleText: "Car added",
+    tone: "success",
+  });
+
+  expect(
+    buildCarsGuidanceRenderModel({
+      carSelectionState: { kind: "no_active_car" },
+      highlightedCarFeedback: null,
+      t,
+    }),
+  ).toEqual({
+    bodyText: "Activate a car from the list below or add a new one to unlock analysis settings.",
+    detailText: "Use Activate on a ready row, or Finish setup on an incomplete row, to unlock the rest of Settings.",
+    titleText: "Activate one car for this setup.",
+    tone: "default",
+  });
+
+  expect(
+    buildCarsGuidanceRenderModel({
+      carSelectionState: { kind: "loading" },
+      highlightedCarFeedback: {
+        carId: "car-1",
+        carName: "Track Demo",
+      },
+      t,
+    }),
+  ).toBeNull();
 });

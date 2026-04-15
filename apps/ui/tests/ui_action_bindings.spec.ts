@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 
 import { bindCarsFeatureInteractions } from "../src/app/views/cars_feature_bindings";
-import { bindSettingsCarListActions } from "../src/app/views/settings_car_list_view";
 import {
   bindSettingsSpeedSourceInteractions,
   type SettingsSpeedSourceInteraction,
@@ -258,47 +257,6 @@ test.beforeEach(() => {
 test.afterEach(() => {
   restoreDomGlobals();
   restoreDomGlobals = () => undefined;
-});
-
-test("settings car-list bindings surface typed list actions and disposer stops delegated clicks", () => {
-  const carListBody = createContainer("tbody");
-  const addCarButton = appendChild(carListBody, createButton({
-    attrs: { "data-inline-state-action": "add-car" },
-  }));
-  const activateCarButton = appendChild(carListBody, createButton({
-    attrs: {
-      "data-car-action": "activate",
-      "data-car-id": "car-1",
-    },
-  }));
-
-  const actions: Array<{ type: string; carId: string | null }> = [];
-
-  const dispose = bindSettingsCarListActions(
-    {
-      carListBody: carListBody as unknown as HTMLElement,
-    },
-    {
-      onAction: (action) => {
-        actions.push(action);
-      },
-    },
-  );
-
-  carListBody.dispatch("click", { target: addCarButton as unknown as EventTarget });
-  carListBody.dispatch("click", { target: activateCarButton as unknown as EventTarget });
-
-  expect(actions).toEqual([
-    { type: "add", carId: null },
-    { type: "activate", carId: "car-1" },
-  ]);
-
-  dispose();
-  carListBody.dispatch("click", { target: activateCarButton as unknown as EventTarget });
-  expect(actions).toEqual([
-    { type: "add", carId: null },
-    { type: "activate", carId: "car-1" },
-  ]);
 });
 
 test("cars wizard bindings decode typed wizard actions and stop after disposal", () => {

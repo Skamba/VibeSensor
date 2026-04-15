@@ -52,6 +52,8 @@ export class UiShellController {
 
   private readonly languageRefresh: UiShellLanguageRefreshModule;
 
+  private readonly activeViewListeners = new Set<(viewId: string) => void>();
+
   private ports: UiShellFeaturePorts | null = null;
 
   private renderSpectrumChart: (() => void) | null = null;
@@ -151,8 +153,21 @@ export class UiShellController {
     this.setPillState(this.els.shellLiveStatus, variant, text);
   }
 
+  subscribeActiveViewChanges(listener: (viewId: string) => void): () => void {
+    this.activeViewListeners.add(listener);
+    return () => {
+      this.activeViewListeners.delete(listener);
+    };
+  }
+
   setActiveView(viewId: string): void {
+    const previousViewId = this.state.shell.activeViewId;
     this.navigation.setActiveView(viewId);
+    if (this.state.shell.activeViewId !== previousViewId) {
+      for (const listener of this.activeViewListeners) {
+        listener(this.state.shell.activeViewId);
+      }
+    }
   }
 
   applyLanguage(forceReloadInsights = false): void {
