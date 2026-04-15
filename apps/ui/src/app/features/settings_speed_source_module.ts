@@ -5,11 +5,16 @@ import {
 } from "../views/settings_speed_source_presenter";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 import type { SettingsState } from "../ui_app_state";
+import {
+  effect,
+  untracked,
+  type ReadonlySignal,
+} from "../ui_signals";
 import { createSettingsSpeedSourceWorkflow } from "./settings_speed_source_workflow";
 
 interface SettingsSpeedSourceModulePorts {
+  activeViewId: ReadonlySignal<string>;
   renderSpeedReadout: () => void;
-  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
   subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
 }
 
@@ -61,10 +66,18 @@ export function createSettingsSpeedSourceModule(
       return;
     }
     handlersBound = true;
-    ctx.ports.subscribeSettingsTabChanges(() => {
-      workflow.handleNavigateContext();
+    let hasSeenInitialView = false;
+    effect(() => {
+      ctx.ports.activeViewId.value;
+      if (!hasSeenInitialView) {
+        hasSeenInitialView = true;
+        return;
+      }
+      untracked(() => {
+        workflow.handleNavigateContext();
+      });
     });
-    ctx.ports.subscribePrimaryViewChanges(() => {
+    ctx.ports.subscribeSettingsTabChanges(() => {
       workflow.handleNavigateContext();
     });
     ctx.panel.bindActions({

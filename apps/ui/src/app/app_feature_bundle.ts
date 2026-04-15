@@ -18,6 +18,7 @@ import {
 import { createUpdateFeature } from "./features/update_feature";
 import type { FeatureFormatting, FeatureServices } from "./feature_deps_base";
 import type { AppState } from "./ui_app_state";
+import type { ReadonlySignal } from "./ui_signals";
 import { createUiCarCreationCommand } from "./runtime/ui_car_creation_command";
 import type { UiMountedPanels } from "./ui_panel_bootstrap";
 import type { AppFeatureBundle } from "./app_feature_bundle_ports";
@@ -32,8 +33,7 @@ export interface AppFeatureBundleRuntimePorts {
   panels: UiMountedPanels;
   navigation: {
     activatePrimaryView(viewId: string): void;
-    getActiveViewId(): string;
-    subscribeActiveViewChanges(listener: (viewId: string) => void): () => void;
+    activeViewId: ReadonlySignal<string>;
   };
   realtimeChrome: Pick<RealtimeFeatureChromePorts, "setShellLiveStatus">;
   transport: RealtimeFeatureSelectionPorts;
@@ -113,8 +113,7 @@ export function createAppFeatureBundle(
       openCarWizard: () => {
         carsFeature?.openWizard();
       },
-      getActiveViewId: runtime.navigation.getActiveViewId,
-      subscribePrimaryViewChanges: runtime.navigation.subscribeActiveViewChanges,
+      activeViewId: runtime.navigation.activeViewId,
       view: runtime.view,
     },
     services,
@@ -153,8 +152,7 @@ export function createAppFeatureBundle(
     },
     ports: {
       getActiveSettingsTabId: () => panels.settingsShell.getActiveTabId(),
-      getActiveViewId: runtime.navigation.getActiveViewId,
-      subscribePrimaryViewChanges: runtime.navigation.subscribeActiveViewChanges,
+      activeViewId: runtime.navigation.activeViewId,
       subscribeSettingsTabChanges: panels.settingsShell.subscribeActiveTabChanges,
     },
     services,
@@ -163,8 +161,7 @@ export function createAppFeatureBundle(
     panel: panels.settings.espFlash,
     ports: {
       getActiveSettingsTabId: () => panels.settingsShell.getActiveTabId(),
-      getActiveViewId: runtime.navigation.getActiveViewId,
-      subscribePrimaryViewChanges: runtime.navigation.subscribeActiveViewChanges,
+      activeViewId: runtime.navigation.activeViewId,
       subscribeSettingsTabChanges: panels.settingsShell.subscribeActiveTabChanges,
     },
     services,

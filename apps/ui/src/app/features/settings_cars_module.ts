@@ -9,6 +9,11 @@ import type { CarRecord, CarsPayload } from "../../transport/http_models";
 import type { CarsListPanelView } from "../views/cars_panel";
 import type { AnalysisPanelView } from "../views/analysis_panel";
 import {
+  effect,
+  untracked,
+  type ReadonlySignal,
+} from "../ui_signals";
+import {
   buildCarsGuidanceRenderModel,
   buildSettingsCarListRenderModel,
   type CarsListHighlightedFeedback,
@@ -24,10 +29,10 @@ interface SettingsCarsModulePanels {
 }
 
 interface SettingsCarsModulePorts {
+  activeViewId: ReadonlySignal<string>;
   openAnalysisTab: () => void;
   openCarWizard: () => void;
   renderSpectrum: () => void;
-  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
   subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
   syncAnalysisInputs: () => void;
 }
@@ -247,13 +252,21 @@ export function createSettingsCarsModule(
       return;
     }
     handlersBound = true;
-    ctx.ports.subscribeSettingsTabChanges((tabId) => {
-      if (tabId !== "carTab") {
-        dismissHighlightedCarFeedback();
+    let hasSeenInitialView = false;
+    effect(() => {
+      const activeViewId = ctx.ports.activeViewId.value;
+      if (!hasSeenInitialView) {
+        hasSeenInitialView = true;
+        return;
+      }
+      if (activeViewId !== "settingsView") {
+        untracked(() => {
+          dismissHighlightedCarFeedback();
+        });
       }
     });
-    ctx.ports.subscribePrimaryViewChanges((viewId) => {
-      if (viewId !== "settingsView") {
+    ctx.ports.subscribeSettingsTabChanges((tabId) => {
+      if (tabId !== "carTab") {
         dismissHighlightedCarFeedback();
       }
     });

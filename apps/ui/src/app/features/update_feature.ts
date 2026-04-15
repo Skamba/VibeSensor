@@ -1,4 +1,8 @@
-import { computed, signal } from "../ui_signals";
+import {
+  computed,
+  signal,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type { FeatureServices } from "../feature_deps_base";
 import { createUpdateFeatureWorkflow } from "./update_feature_workflow";
 import { createUpdateFeaturePresenter } from "../views/update_feature_presenter";
@@ -12,8 +16,7 @@ interface UpdateFeaturePanels {
 
 interface UpdateFeaturePorts {
   getActiveSettingsTabId: () => string;
-  getActiveViewId: () => string;
-  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
+  activeViewId: ReadonlySignal<string>;
   subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
 }
 
@@ -36,11 +39,10 @@ function isUpdatePollingContext(viewId: string, tabId: string): boolean {
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   const { panels, ports, services } = ctx;
   const handlersBound = signal(false);
-  const activeViewId = signal(ports.getActiveViewId());
   const activeSettingsTabId = signal(ports.getActiveSettingsTabId());
   const pollingEnabled = computed(() =>
     handlersBound.value
-    && isUpdatePollingContext(activeViewId.value, activeSettingsTabId.value)
+    && isUpdatePollingContext(ports.activeViewId.value, activeSettingsTabId.value)
   );
   const presenter = createUpdateFeaturePresenter({
     panel: panels.update,
@@ -54,9 +56,6 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     pollingEnabled,
   });
 
-  ports.subscribePrimaryViewChanges((viewId) => {
-    activeViewId.value = viewId;
-  });
   ports.subscribeSettingsTabChanges((tabId) => {
     activeSettingsTabId.value = tabId;
   });

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
+import { signal } from "../src/app/ui_signals";
 import type { EspFlashPanelActionHandlers } from "../src/app/views/esp_flash_panel";
 
 test("bindHandlers uses panel action surfaces instead of raw DOM bindings", () => {
@@ -14,8 +15,7 @@ test("bindHandlers uses panel action surfaces instead of raw DOM bindings", () =
     },
     ports: {
       getActiveSettingsTabId: () => "espFlashTab",
-      getActiveViewId: () => "settingsView",
-      subscribePrimaryViewChanges: () => () => undefined,
+      activeViewId: signal("settingsView"),
       subscribeSettingsTabChanges: () => () => undefined,
     },
     services: {

@@ -1,4 +1,9 @@
-import { computed, effect, signal } from "../ui_signals";
+import {
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type { FeatureServices } from "../feature_deps_base";
 import { createEspFlashFeatureWorkflow } from "./esp_flash_feature_workflow";
 import { createEspFlashFeaturePresenter } from "../views/esp_flash_feature_presenter";
@@ -6,8 +11,7 @@ import type { EspFlashPanelView } from "../views/esp_flash_panel";
 
 interface EspFlashFeaturePorts {
   getActiveSettingsTabId: () => string;
-  getActiveViewId: () => string;
-  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
+  activeViewId: ReadonlySignal<string>;
   subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
 }
 
@@ -32,11 +36,10 @@ export function createEspFlashFeature(
 ): EspFlashFeature {
   const { panel, ports, services } = ctx;
   const handlersBound = signal(false);
-  const activeViewId = signal(ports.getActiveViewId());
   const activeSettingsTabId = signal(ports.getActiveSettingsTabId());
   const pollingEnabled = computed(() =>
     handlersBound.value
-    && isEspFlashPollingContext(activeViewId.value, activeSettingsTabId.value)
+    && isEspFlashPollingContext(ports.activeViewId.value, activeSettingsTabId.value)
   );
   const presenter = createEspFlashFeaturePresenter({
     panel,
@@ -49,9 +52,6 @@ export function createEspFlashFeature(
     pollingEnabled,
   });
 
-  ports.subscribePrimaryViewChanges((viewId) => {
-    activeViewId.value = viewId;
-  });
   ports.subscribeSettingsTabChanges((tabId) => {
     activeSettingsTabId.value = tabId;
   });
