@@ -1,18 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 import { createHistoryFeature } from "../src/app/features/history_feature";
-import { createHistoryDetailModule } from "../src/app/features/history_detail_module";
-import {
-  createHistoryDownloadDeleteModule,
-  downloadBlobFile,
-} from "../src/app/features/history_download_delete_module";
-import { createHistoryListModule } from "../src/app/features/history_list_module";
-import type { UiHistoryDom } from "../src/app/dom/history_dom";
+import { downloadBlobFile } from "../src/app/features/history_download";
 import { createAppState, type RunDetail } from "../src/app/ui_app_state";
-import type { UiShellChromeDom } from "../src/app/runtime/ui_shell_chrome";
-import {
-  type HistoryPanelRenderModel,
-  type HistoryPanelView,
+import type {
+  HistoryPanelActionHandlers,
+  HistoryPanelRenderModel,
+  HistoryPanelView,
 } from "../src/app/views/history_table_view";
 import { buildHistoryTableRowsViewModel } from "../src/app/views/history_table_presenters";
 import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
@@ -39,31 +33,41 @@ function createTextElement(): TextStub {
 }
 
 function createHistoryElements(): {
-  dom: UiHistoryDom;
   panel: HistoryPanelView;
   historySummary: TextStub;
   deleteAllRunsBtn: ButtonStub;
+  getLatestHandlers(): HistoryPanelActionHandlers | null;
   getLatestModel(): HistoryPanelRenderModel | null;
+  getRenderCount(): number;
 } {
   const historySummary = createTextElement();
   const deleteAllRunsBtn = createButton();
   let latestModel: HistoryPanelRenderModel | null = null;
+  let latestHandlers: HistoryPanelActionHandlers | null = null;
+  let renderCount = 0;
   const panel: HistoryPanelView = {
     render(model) {
+      renderCount += 1;
       latestModel = model;
       historySummary.textContent = model.historySummaryText;
       deleteAllRunsBtn.disabled = model.deleteAllRunsDisabled;
     },
-    bindActions() {},
+    bindActions(handlers) {
+      latestHandlers = handlers;
+    },
   };
-  const dom = {} as UiHistoryDom;
   return {
-    dom,
     panel,
     historySummary,
     deleteAllRunsBtn,
+    getLatestHandlers() {
+      return latestHandlers;
+    },
     getLatestModel() {
       return latestModel;
+    },
+    getRenderCount() {
+      return renderCount;
     },
   };
 }
@@ -137,16 +141,25 @@ function historyInsightsAnalyzingPayload(runId: string) {
   };
 }
 
-function historyListRun(runId: string) {
+function historyListRun(
+  runId: string,
+  overrides: Partial<{
+    car_name: string;
+    error_message: string | null;
+    sample_count: number;
+    start_time_utc: string;
+    status: "complete" | "analyzing" | "error";
+  }> = {},
+) {
   return {
     run_id: runId,
-    status: "complete" as const,
-    start_time_utc: "2026-01-01T00:00:00Z",
+    status: overrides.status ?? "complete",
+    start_time_utc: overrides.start_time_utc ?? "2026-01-01T00:00:00Z",
     end_time_utc: "2026-01-01T00:00:12Z",
     created_at: "2026-01-01T00:00:00Z",
-    sample_count: 42,
-    car_name: "Track Car",
-    error_message: null,
+    sample_count: overrides.sample_count ?? 42,
+    car_name: overrides.car_name ?? "Track Car",
+    error_message: overrides.error_message ?? null,
   };
 }
 
@@ -179,13 +192,54 @@ function latestRowModels(panel: { getLatestModel(): HistoryPanelRenderModel | nu
   return buildHistoryTableRowsViewModel(model.table.params);
 }
 
+function createFeatureHarness(
+  state = createAppState(),
+  overrides: {
+    panel?: HistoryPanelView;
+    showError?: (message: string) => void;
+    activatePrimaryView?: (viewId: string) => void;
+  } = {},
+) {
+  const panelElements = createHistoryElements();
+  const errors: string[] = [];
+  const primaryViewActivations: string[] = [];
+  const feature = createHistoryFeature({
+    panel: overrides.panel ?? panelElements.panel,
+    navigation: {
+      activatePrimaryView(viewId: string) {
+        if (overrides.activatePrimaryView) {
+          overrides.activatePrimaryView(viewId);
+          return;
+        }
+        primaryViewActivations.push(viewId);
+      },
+    },
+    history: state.history,
+    getLanguage: () => state.shell.lang,
+    t: testTranslation,
+    escapeHtml: (value) => String(value ?? ""),
+    showError: overrides.showError ?? ((message) => {
+      errors.push(message);
+    }),
+    fmt: (value, digits = 0) => Number(value).toFixed(digits),
+    fmtTs: (iso) => iso,
+    formatInt: (value) => String(value),
+  });
+  return {
+    feature,
+    state,
+    errors,
+    primaryViewActivations,
+    ...panelElements,
+  };
+}
+
 test.beforeEach(() => {
   installWindowGlobal();
 });
 
-test("history list module refreshes runs and renders an empty-state model when no runs exist", async () => {
-  const state = createAppState();
-  const { panel, historySummary, deleteAllRunsBtn, getLatestModel } = createHistoryElements();
+test("history feature refreshes runs and renders an empty-state model when no runs exist", async () => {
+  const { feature, historySummary, deleteAllRunsBtn, getLatestModel } = createFeatureHarness();
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
     const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
@@ -195,22 +249,8 @@ test("history list module refreshes runs and renders an empty-state model when n
     throw new Error(`Unexpected request: ${url}`);
   }) as typeof fetch;
 
-  const module = createHistoryListModule({
-    history: state.history,
-    panel,
-    t: testTranslation,
-    escapeHtml: (value) => String(value ?? ""),
-    fmt: (value, digits = 0) => Number(value).toFixed(digits),
-    fmtTs: (iso) => iso,
-    formatInt: (value) => String(value),
-    ensureRunDetail: (runId) => ensureRunDetail(state, runId),
-    collapseExpandedRun: () => {
-      state.history.expandedRunId = null;
-    },
-  });
-
   try {
-    await module.refreshHistory();
+    await feature.refreshHistory();
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -224,36 +264,22 @@ test("history list module refreshes runs and renders an empty-state model when n
   }
 });
 
-test("history list module refreshes runs and renders table state", async () => {
+test("history feature refreshes runs and renders table state through one owner", async () => {
   const state = createAppState();
-  const { panel, historySummary, deleteAllRunsBtn, getLatestModel } = createHistoryElements();
+  const { feature, historySummary, deleteAllRunsBtn, getLatestModel } = createFeatureHarness(state);
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
     const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
     if (url === "/api/history") {
       return jsonResponse({
-        runs: [historyListRun("run-001")],
+        runs: [historyListRun("run-001", { status: "analyzing" })],
       });
     }
     throw new Error(`Unexpected request: ${url}`);
   }) as typeof fetch;
 
-  const module = createHistoryListModule({
-    history: state.history,
-    panel,
-    t: testTranslation,
-    escapeHtml: (value) => String(value ?? ""),
-    fmt: (value, digits = 0) => Number(value).toFixed(digits),
-    fmtTs: (iso) => iso,
-    formatInt: (value) => String(value),
-    ensureRunDetail: (runId) => ensureRunDetail(state, runId),
-    collapseExpandedRun: () => {
-      state.history.expandedRunId = null;
-    },
-  });
-
   try {
-    await module.refreshHistory();
+    await feature.refreshHistory();
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -264,8 +290,8 @@ test("history list module refreshes runs and renders table state", async () => {
   const row = latestRowModels({ getLatestModel })[0];
   expect(row.runId).toBe("run-001");
   expect(row.isExpanded).toBe(false);
-  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.complete");
-  expect(row.summaryHeadline).toBe("history.row_summary_loading");
+  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.analyzing");
+  expect(row.summaryHeadline).toBe("history.row_status.analyzing");
   expect(row.carName).toBe("Track Car");
   expect(row.carLabel).toBe("history.car_label");
   expect(row.toggleLabel).toBe("history.open_diagnosis");
@@ -273,10 +299,21 @@ test("history list module refreshes runs and renders table state", async () => {
   expect(deleteAllRunsBtn.disabled).toBe(false);
 });
 
-test("history detail module loads preview and reloads expanded run on language change", async () => {
+test("history feature binds panel actions through the shared owner", () => {
+  const { feature, getLatestHandlers, primaryViewActivations } = createFeatureHarness();
+  feature.bindHandlers();
+
+  const handlers = getLatestHandlers();
+  expect(handlers).not.toBeNull();
+  handlers?.onTableInteraction({ type: "open-live" });
+
+  expect(primaryViewActivations).toEqual(["dashboardView"]);
+});
+
+test("history feature loads preview and reloads expanded run on language change", async () => {
   const state = createAppState();
-  state.history.expandedRunId = null;
-  createHistoryElements();
+  state.history.runs = [historyListRun("run-001")];
+  const { feature, getRenderCount } = createFeatureHarness(state);
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
@@ -291,40 +328,21 @@ test("history detail module loads preview and reloads expanded run on language c
     throw new Error(`Unexpected request: ${url}`);
   }) as typeof fetch;
 
-  let renderCalls = 0;
-  const module = createHistoryDetailModule({
-    history: state.history,
-    getLanguage: () => state.shell.lang,
-    t: testTranslation,
-    escapeHtml: (value) => String(value ?? ""),
-    ensureRunDetail: (runId) => ensureRunDetail(state, runId),
-    collapseExpandedRun: () => {
-      const previous = state.history.expandedRunId;
-      state.history.expandedRunId = null;
-      if (previous) {
-        delete state.history.runDetailsById[previous];
-      }
-    },
-    renderHistoryTable: () => {
-      renderCalls += 1;
-    },
-  });
-
   try {
-    module.toggleRunDetails("run-001");
+    feature.toggleRunDetails("run-001");
     await expect.poll(() => state.history.runDetailsById["run-001"]?.preview?.sensor_count_used ?? null).toBe(1);
-    await module.loadRunInsights("run-001", true);
+    await feature.onHistoryTableAction("load-insights", "run-001");
     expect(state.history.runDetailsById["run-001"]?.insights?.sensor_count_used).toBe(1);
 
     state.shell.lang = "nl";
-    module.reloadExpandedRunOnLanguageChange();
+    feature.reloadExpandedRunOnLanguageChange();
     await expect.poll(() => state.history.runDetailsById["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
     await expect.poll(() => state.history.runDetailsById["run-001"]?.insights?.sensor_count_used ?? null).toBe(2);
   } finally {
     globalThis.fetch = originalFetch;
   }
 
-  expect(renderCalls).toBeGreaterThanOrEqual(6);
+  expect(getRenderCount()).toBeGreaterThanOrEqual(6);
   expect(requests).toEqual([
     "/api/history/run-001/insights?lang=en",
     "/api/history/run-001/insights?lang=en",
@@ -333,9 +351,10 @@ test("history detail module loads preview and reloads expanded run on language c
   ]);
 });
 
-test("history detail module treats analyzing insights responses as not-yet-available", async () => {
+test("history feature treats analyzing insights responses as not-yet-available", async () => {
   const state = createAppState();
-  createHistoryElements();
+  state.history.runs = [historyListRun("run-001")];
+  const { feature, getRenderCount } = createFeatureHarness(state);
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
@@ -347,24 +366,10 @@ test("history detail module treats analyzing insights responses as not-yet-avail
     throw new Error(`Unexpected request: ${url}`);
   }) as typeof fetch;
 
-  let renderCalls = 0;
-  const module = createHistoryDetailModule({
-    history: state.history,
-    getLanguage: () => state.shell.lang,
-    t: testTranslation,
-    escapeHtml: (value) => String(value ?? ""),
-    ensureRunDetail: (runId) => ensureRunDetail(state, runId),
-    collapseExpandedRun: () => {
-      state.history.expandedRunId = null;
-    },
-    renderHistoryTable: () => {
-      renderCalls += 1;
-    },
-  });
-
   try {
-    await module.loadRunPreview("run-001");
-    await module.loadRunInsights("run-001", true);
+    feature.toggleRunDetails("run-001");
+    await expect.poll(() => state.history.runDetailsById["run-001"]?.previewLoading ?? false).toBe(false);
+    await feature.onHistoryTableAction("load-insights", "run-001");
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -373,14 +378,14 @@ test("history detail module treats analyzing insights responses as not-yet-avail
   expect(state.history.runDetailsById["run-001"]?.previewError).toBe("");
   expect(state.history.runDetailsById["run-001"]?.insights).toBeNull();
   expect(state.history.runDetailsById["run-001"]?.insightsError).toBe("");
-  expect(renderCalls).toBeGreaterThanOrEqual(4);
+  expect(getRenderCount()).toBeGreaterThanOrEqual(4);
   expect(requests).toEqual([
     "/api/history/run-001/insights?lang=en",
     "/api/history/run-001/insights?lang=en",
   ]);
 });
 
-test("history list rendering promotes loaded findings ahead of supporting statistics", () => {
+test("history feature rendering promotes loaded findings ahead of supporting statistics", () => {
   const state = createAppState();
   state.history.runs = [historyListRun("run-001")];
   state.history.expandedRunId = "run-001";
@@ -394,23 +399,9 @@ test("history list rendering promotes loaded findings ahead of supporting statis
     pdfLoading: false,
     pdfError: "",
   };
-  const { panel, getLatestModel } = createHistoryElements();
+  const { feature, getLatestModel } = createFeatureHarness(state);
 
-  const module = createHistoryListModule({
-    history: state.history,
-    panel,
-    t: testTranslation,
-    escapeHtml: (value) => String(value ?? ""),
-    fmt: (value, digits = 0) => Number(value).toFixed(digits),
-    fmtTs: (iso) => iso,
-    formatInt: (value) => String(value),
-    ensureRunDetail: (runId) => ensureRunDetail(state, runId),
-    collapseExpandedRun: () => {
-      state.history.expandedRunId = null;
-    },
-  });
-
-  module.renderHistoryTable();
+  feature.renderHistoryTable();
 
   const row = latestRowModels({ getLatestModel })[0];
   expect(row.details?.titleEyebrow).toBe("history.details_title");
@@ -430,7 +421,7 @@ test("history list rendering promotes loaded findings ahead of supporting statis
 
 test("history feature preloads collapsed row context for completed runs", async () => {
   const state = createAppState();
-  const { dom, panel, getLatestModel } = createHistoryElements();
+  const { feature, getLatestModel } = createFeatureHarness(state);
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
   globalThis.fetch = (async (input: string | URL | RequestInfo) => {
@@ -444,22 +435,6 @@ test("history feature preloads collapsed row context for completed runs", async 
     }
     throw new Error(`Unexpected request: ${url}`);
   }) as typeof fetch;
-
-  const feature = createHistoryFeature({
-    dom,
-    panel,
-    shellDom: { menuButtons: [] } as Pick<UiShellChromeDom, "menuButtons">,
-    history: state.history,
-    getLanguage: () => state.shell.lang,
-    t: testTranslation,
-    escapeHtml: (value) => String(value ?? ""),
-    showError: () => {
-      /* no-op */
-    },
-    fmt: (value, digits = 0) => Number(value).toFixed(digits),
-    fmtTs: (iso) => iso,
-    formatInt: (value) => String(value),
-  });
 
   try {
     await feature.refreshHistory();
@@ -552,20 +527,20 @@ test("downloadBlobFile downloads with decoded filename and revokes the blob URL"
   expect(revoked).toEqual(["blob:history-download-test"]);
 });
 
-test("history download/delete module reports partial delete failures without detail-loading deps", async () => {
+test("history feature reports partial delete failures without splitting render ownership", async () => {
   const state = createAppState();
   state.history.runs = [
-    { run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 },
-    { run_id: "run-002", start_time_utc: "2026-01-01T00:10:00Z", sample_count: 84 },
+    historyListRun("run-001"),
+    historyListRun("run-002"),
   ];
   state.history.expandedRunId = "run-001";
   ensureRunDetail(state, "run-001");
   ensureRunDetail(state, "run-002");
 
+  const { feature, errors, getRenderCount, getLatestModel } = createFeatureHarness(state);
   const originalFetch = globalThis.fetch;
   const originalConfirm = window.confirm;
   const deleteRequests: string[] = [];
-  const errors: string[] = [];
 
   globalThis.fetch = (async (input: string | URL | RequestInfo, init?: RequestInit) => {
     const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
@@ -577,40 +552,17 @@ test("history download/delete module reports partial delete failures without det
       deleteRequests.push(url);
       return jsonResponse({ detail: "delete failed" }, { status: 500 });
     }
+    if (url === "/api/history") {
+      return jsonResponse({
+        runs: [historyListRun("run-002", { status: "analyzing" })],
+      });
+    }
     throw new Error(`Unexpected request: ${url}`);
   }) as typeof fetch;
   window.confirm = (() => true) as typeof window.confirm;
 
-  let renderCalls = 0;
-  let refreshCalls = 0;
-  const module = createHistoryDownloadDeleteModule({
-    history: state.history,
-    getLanguage: () => state.shell.lang,
-    t: testTranslation,
-    showError: (message) => {
-      errors.push(message);
-    },
-    ensureRunDetail: (runId) => ensureRunDetail(state, runId),
-    collapseExpandedRun: () => {
-      const previous = state.history.expandedRunId;
-      state.history.expandedRunId = null;
-      if (previous) {
-        delete state.history.runDetailsById[previous];
-      }
-    },
-    renderHistoryTable: () => {
-      renderCalls += 1;
-    },
-    refreshHistory: async () => {
-      refreshCalls += 1;
-    },
-    loadRunInsights: async () => {
-      throw new Error("should not be called");
-    },
-  });
-
   try {
-    await module.deleteAllRuns();
+    await feature.deleteAllRuns();
   } finally {
     globalThis.fetch = originalFetch;
     window.confirm = originalConfirm;
@@ -619,9 +571,9 @@ test("history download/delete module reports partial delete failures without det
   expect(deleteRequests).toEqual(["/api/history/run-001", "/api/history/run-002"]);
   expect(state.history.deleteAllRunsInFlight).toBe(false);
   expect(state.history.expandedRunId).toBeNull();
-  expect(renderCalls).toBe(1);
-  expect(refreshCalls).toBe(1);
+  expect(getRenderCount()).toBeGreaterThanOrEqual(2);
   expect(errors).toHaveLength(1);
   expect(errors[0]).toContain("history.delete_all_partial");
   expect(errors[0]).toContain("delete failed");
+  expect(getLatestModel()?.table?.kind).toBe("rows");
 });
