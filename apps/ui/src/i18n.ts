@@ -1,5 +1,5 @@
-import enCatalog from "./i18n/catalogs/en.json";
-import nlCatalog from "./i18n/catalogs/nl.json";
+import enCatalog from "./i18n/catalogs/en.json" with { type: "json" };
+import nlCatalog from "./i18n/catalogs/nl.json" with { type: "json" };
 
 type Catalog = Record<string, string>;
 

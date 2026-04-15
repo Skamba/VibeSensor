@@ -66,3 +66,7 @@ export async function flushAsyncWork(rounds = 12): Promise<void> {
     });
   }
 }
+
+export async function flushSignalUpdates(rounds = 12): Promise<void> {
+  await flushAsyncWork(rounds);
+}
