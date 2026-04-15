@@ -55,7 +55,7 @@ test("settings analysis module renders guidance and surfaces invalid input throu
     openGuidance() {
       guidanceOpened = true;
     },
-    render(model) {
+    setModel(model) {
       renders.push(model);
     },
     setCarAvailability() {
