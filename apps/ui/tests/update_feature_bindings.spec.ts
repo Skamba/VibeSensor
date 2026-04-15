@@ -30,6 +30,12 @@ test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners
       t: (key) => key,
       showError: () => undefined,
     },
+    ports: {
+      getActiveSettingsTabId: () => "updateTab",
+      getActiveViewId: () => "settingsView",
+      subscribePrimaryViewChanges: () => () => undefined,
+      subscribeSettingsTabChanges: () => () => undefined,
+    },
     panels: {
       update: {
         dom: {

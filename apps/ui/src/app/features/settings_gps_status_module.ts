@@ -2,6 +2,7 @@ import { getSettingsObdStatus, getSpeedSourceStatus } from "../../api";
 import { GPS_POLL_FAST_MS, GPS_POLL_SLOW_MS } from "../../config";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import type { SettingsState } from "../ui_app_state";
+import { computed, signal } from "../ui_signals";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 import {
   buildSpeedSourceDiagnosticsRenderModel,
@@ -10,8 +11,12 @@ import {
 import { createPollingController } from "./polling_controller";
 
 interface SettingsGpsStatusModulePorts {
+  getActiveSettingsTabId: () => string;
+  getActiveViewId: () => string;
   syncSpeedSourceSelectionUi: () => void;
   renderSpeedReadout: () => void;
+  subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
+  subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
 }
 
 export interface SettingsGpsStatusModuleDeps {
@@ -24,21 +29,44 @@ export interface SettingsGpsStatusModuleDeps {
 }
 
 export interface SettingsGpsStatusModule {
-  startGpsStatusPolling(): void;
-  stopGpsStatusPolling(): void;
+  bindHandlers(): void;
+  markStartupReady(): void;
 }
 
 export function createSettingsGpsStatusModule(
   ctx: SettingsGpsStatusModuleDeps,
 ): SettingsGpsStatusModule {
   const { panel, settings } = ctx;
+  const handlersBound = signal(false);
+  const startupReady = signal(false);
+  const activeViewId = signal(ctx.ports.getActiveViewId());
+  const activeSettingsTabId = signal(ctx.ports.getActiveSettingsTabId());
   const presenterDeps: SettingsSpeedSourcePresenterDeps = {
     fmt: ctx.formatting.fmt,
     getSpeedUnit: ctx.getSpeedUnit,
     t: ctx.services.t,
   };
+  const pollingEnabled = computed(() =>
+    handlersBound.value
+    && startupReady.value
+    && (
+      activeViewId.value === "dashboardView"
+      || (
+        activeViewId.value === "settingsView"
+        && activeSettingsTabId.value === "speedSourceTab"
+      )
+    )
+  );
 
-  const polling = createPollingController({
+  ctx.ports.subscribePrimaryViewChanges((viewId) => {
+    activeViewId.value = viewId;
+  });
+  ctx.ports.subscribeSettingsTabChanges((tabId) => {
+    activeSettingsTabId.value = tabId;
+  });
+
+  createPollingController({
+    enabled: pollingEnabled,
     poll: async () => {
       const shouldLoadObdStatus =
         settings.speedSource === "obd2" || settings.obdDeviceMac != null;
@@ -61,16 +89,12 @@ export function createSettingsGpsStatusModule(
     onErrorDelayMs: GPS_POLL_SLOW_MS,
   });
 
-  function startGpsStatusPolling(): void {
-    polling.start();
-  }
-
-  function stopGpsStatusPolling(): void {
-    polling.stop();
-  }
-
   return {
-    startGpsStatusPolling,
-    stopGpsStatusPolling,
+    bindHandlers(): void {
+      handlersBound.value = true;
+    },
+    markStartupReady(): void {
+      startupReady.value = true;
+    },
   };
 }

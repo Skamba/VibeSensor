@@ -180,6 +180,10 @@ export class UiShellController {
     };
   }
 
+  getActiveViewId(): string {
+    return this.state.shell.activeViewId;
+  }
+
   setActiveView(viewId: string): void {
     const previousViewId = this.state.shell.activeViewId;
     this.navigation.setActiveView(viewId);

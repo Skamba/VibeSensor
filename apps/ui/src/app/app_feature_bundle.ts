@@ -32,6 +32,7 @@ export interface AppFeatureBundleRuntimePorts {
   panels: UiMountedPanels;
   navigation: {
     activatePrimaryView(viewId: string): void;
+    getActiveViewId(): string;
     subscribeActiveViewChanges(listener: (viewId: string) => void): () => void;
   };
   realtimeChrome: Pick<RealtimeFeatureChromePorts, "setShellLiveStatus">;
@@ -112,6 +113,7 @@ export function createAppFeatureBundle(
       openCarWizard: () => {
         carsFeature?.openWizard();
       },
+      getActiveViewId: runtime.navigation.getActiveViewId,
       subscribePrimaryViewChanges: runtime.navigation.subscribeActiveViewChanges,
       view: runtime.view,
     },
@@ -149,10 +151,22 @@ export function createAppFeatureBundle(
       update: panels.settings.update,
       internet: panels.settings.internet,
     },
+    ports: {
+      getActiveSettingsTabId: () => panels.settingsShell.getActiveTabId(),
+      getActiveViewId: runtime.navigation.getActiveViewId,
+      subscribePrimaryViewChanges: runtime.navigation.subscribeActiveViewChanges,
+      subscribeSettingsTabChanges: panels.settingsShell.subscribeActiveTabChanges,
+    },
     services,
   });
   const espFlash = createEspFlashFeature({
     panel: panels.settings.espFlash,
+    ports: {
+      getActiveSettingsTabId: () => panels.settingsShell.getActiveTabId(),
+      getActiveViewId: runtime.navigation.getActiveViewId,
+      subscribePrimaryViewChanges: runtime.navigation.subscribeActiveViewChanges,
+      subscribeSettingsTabChanges: panels.settingsShell.subscribeActiveTabChanges,
+    },
     services,
   });
 

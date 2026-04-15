@@ -18,6 +18,7 @@ import type {
   EspSerialPortPayload,
 } from "../../transport/http_models";
 import type { EspFlashFeatureRenderState } from "../views/esp_flash_feature_presenter";
+import type { ReadonlySignal } from "../ui_signals";
 import {
   createPollingController,
   type PollingController,
@@ -43,6 +44,7 @@ export interface EspFlashFeatureWorkflowDeps {
   view: EspFlashFeatureWorkflowViewPorts;
   api?: Partial<EspFlashFeatureWorkflowApi>;
   createPollingController?: (options: PollingControllerOptions) => PollingController;
+  pollingEnabled?: ReadonlySignal<boolean>;
 }
 
 export interface EspFlashFeatureWorkflow {
@@ -183,6 +185,7 @@ export function createEspFlashFeatureWorkflow(
   }
 
   const polling = createPolling({
+    enabled: deps.pollingEnabled,
     poll: async () => {
       await refreshStatus();
       return safeEspFlashState(latestStatus.state) === "running"

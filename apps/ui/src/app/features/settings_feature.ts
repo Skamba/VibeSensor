@@ -37,6 +37,7 @@ interface SettingsFeaturePanelDeps {
 
 interface SettingsFeaturePortDeps {
   openCarWizard: () => void;
+  getActiveViewId: () => string;
   subscribePrimaryViewChanges(listener: (viewId: string) => void): () => void;
   view: SettingsFeatureViewPorts;
 }
@@ -66,8 +67,6 @@ export interface SettingsFeature {
   showCarCreationSuccess(carId: string, carName: string): void;
   saveAnalysisFromInputs(): void;
   saveSpeedSourceFromInputs(): void;
-  startGpsStatusPolling(): void;
-  stopGpsStatusPolling(): void;
 }
 
 export function createSettingsFeature(
@@ -122,8 +121,13 @@ export function createSettingsFeature(
       formatting,
       getSpeedUnit: () => ctx.state.shell.speedUnit,
       ports: {
+        getActiveSettingsTabId: () => ctx.panels.settingsShell.getActiveTabId(),
+        getActiveViewId: ctx.ports.getActiveViewId,
         syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
         renderSpeedReadout: ctx.ports.view.renderSpeedReadout,
+        subscribePrimaryViewChanges: ctx.ports.subscribePrimaryViewChanges,
+        subscribeSettingsTabChanges:
+          ctx.panels.settingsShell.subscribeActiveTabChanges,
       },
     });
   carsModule = createSettingsCarsModule({
@@ -153,12 +157,21 @@ export function createSettingsFeature(
     carsModule.bindHandlers();
     analysisModule.bindHandlers();
     speedSourceModule.bindHandlers();
+    gpsStatusModule.bindHandlers();
+  }
+
+  async function loadSpeedSourceFromServer(): Promise<void> {
+    try {
+      await speedSourceModule.loadSpeedSourceFromServer();
+    } finally {
+      gpsStatusModule.markStartupReady();
+    }
   }
 
   return {
     bindHandlers,
     syncSettingsInputs: analysisModule.syncSettingsInputs,
-    loadSpeedSourceFromServer: speedSourceModule.loadSpeedSourceFromServer,
+    loadSpeedSourceFromServer,
     loadAnalysisSettingsFromServer:
       analysisModule.loadAnalysisSettingsFromServer,
     loadCarsFromServer: carsModule.loadCarsFromServer,
@@ -172,7 +185,5 @@ export function createSettingsFeature(
     },
     saveAnalysisFromInputs: analysisModule.saveAnalysisFromInputs,
     saveSpeedSourceFromInputs: speedSourceModule.saveSpeedSourceFromInputs,
-    startGpsStatusPolling: gpsStatusModule.startGpsStatusPolling,
-    stopGpsStatusPolling: gpsStatusModule.stopGpsStatusPolling,
   };
 }

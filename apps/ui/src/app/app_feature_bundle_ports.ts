@@ -31,11 +31,10 @@ interface AppFeatureBundlePortSources {
     | "loadSpeedSourceFromServer"
     | "loadAnalysisSettingsFromServer"
     | "loadCarsFromServer"
-    | "startGpsStatusPolling"
   >;
   cars: Pick<CarsFeature, "bindWizardHandlers">;
-  update: Pick<UpdateFeature, "bindUpdateHandlers" | "startPolling">;
-  espFlash: Pick<EspFlashFeature, "bindHandlers" | "startPolling">;
+  update: Pick<UpdateFeature, "bindUpdateHandlers">;
+  espFlash: Pick<EspFlashFeature, "bindHandlers">;
 }
 
 export function createRealtimeFeatureRecordingPorts(
@@ -84,13 +83,6 @@ export function createAppFeatureBundlePorts(
         loadAnalysisSettingsFromServer: () =>
           features.settings.loadAnalysisSettingsFromServer(),
         loadCarsFromServer: () => features.settings.loadCarsFromServer(),
-        startGpsStatusPolling: () => features.settings.startGpsStatusPolling(),
-      },
-      update: {
-        startPolling: () => features.update.startPolling(),
-      },
-      espFlash: {
-        startPolling: () => features.espFlash.startPolling(),
       },
     },
   };
