@@ -432,7 +432,6 @@ test.describe("createUiShellLanguageRefreshModule", () => {
     expect(state.realtime.locationOptions).toEqual([
       { code: "front_left_wheel", label: "front_left_wheel-label" },
     ]);
-    expect(state.realtime.sensorsSettingsSignature).toBe("");
     expect(portCalls).toEqual([
       "buildLocationOptions",
       "syncSettingsInputs",

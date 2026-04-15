@@ -101,6 +101,7 @@ export function createRealtimeFeaturePresenter(
     strongestSignal,
     strongestSignalText,
   } = sensorState;
+  let renderedSensorsSettingsSignature = "";
 
   function dataFreshnessText(): string {
     const connected = connectedClients();
@@ -274,10 +275,9 @@ export function createRealtimeFeaturePresenter(
 
   function maybeRenderSensorsSettingsList(force = false): void {
     const nextSig = sensorsSettingsSignature();
-    if (!force && nextSig === realtime.sensorsSettingsSignature) return;
-    realtime.sensorsSettingsSignature = nextSig;
+    if (!force && nextSig === renderedSensorsSettingsSignature) return;
+    renderedSensorsSettingsSignature = nextSig;
     renderSensorsSettingsList();
-    renderLiveOverview(buildLoggingPanelViewModel(null).phaseText);
   }
 
   function renderSensorsSettingsList(): void {

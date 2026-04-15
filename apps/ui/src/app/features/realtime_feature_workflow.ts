@@ -14,7 +14,10 @@ import type {
   LoggingStatusPayload,
 } from "../../transport/http_models";
 import type { AdaptedClient } from "../../transport/live_models";
-import type { RealtimeState } from "../ui_app_state";
+import {
+  syncSelectedRealtimeClient,
+  type RealtimeState,
+} from "../ui_app_state";
 import {
   createPollingController,
   type PollingController,
@@ -64,7 +67,6 @@ export interface RealtimeFeatureWorkflowDeps {
 
 export interface RealtimeFeatureWorkflow {
   bindHandlers(): void;
-  updateClientSelection(): void;
   renderLoggingStatus(): void;
   refreshLoggingStatus(): Promise<void>;
   startLogging(): Promise<void>;
@@ -130,18 +132,6 @@ export function createRealtimeFeatureWorkflow(
   function applyLocationCodes(codes: string[]): void {
     realtime.locationCodes = codes.length ? codes : defaultLocationCodes.slice();
     realtime.locationOptions = view.buildLocationOptions(realtime.locationCodes);
-  }
-
-  function updateClientSelection(): void {
-    const firstConnected = realtime.clients.find((client) => Boolean(client.connected));
-    if (!realtime.selectedClientId && realtime.clients.length > 0) {
-      realtime.selectedClientId = firstConnected ? firstConnected.id : realtime.clients[0].id;
-    }
-    if (realtime.selectedClientId && !realtime.clients.some((client) => client.id === realtime.selectedClientId)) {
-      realtime.selectedClientId = firstConnected
-        ? firstConnected.id
-        : realtime.clients.length ? realtime.clients[0].id : null;
-    }
   }
 
   function requestIdleCaptureReadinessRefresh(): void {
@@ -310,7 +300,7 @@ export function createRealtimeFeatureWorkflow(
     if (realtime.selectedClientId === clientId) {
       realtime.selectedClientId = null;
     }
-    updateClientSelection();
+    syncSelectedRealtimeClient(realtime);
     view.maybeRenderSensorsSettingsList();
     renderLoggingStatus();
     view.renderStatus();
@@ -321,7 +311,6 @@ export function createRealtimeFeatureWorkflow(
 
   return {
     bindHandlers,
-    updateClientSelection,
     renderLoggingStatus,
     refreshLoggingStatus,
     startLogging,

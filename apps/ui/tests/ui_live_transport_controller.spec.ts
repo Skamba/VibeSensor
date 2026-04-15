@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { EXPECTED_SCHEMA_VERSION, type LiveWsPayload } from "../src/contracts/ws_payload_types";
-import { UiLiveTransportController, type UiTransportFeaturePorts } from "../src/app/runtime/ui_live_transport_controller";
+import { UiLiveTransportController } from "../src/app/runtime/ui_live_transport_controller";
 import { createAppState } from "../src/app/ui_app_state";
 import { flushAsyncWork, installWindowGlobal } from "./async_test_helpers";
 
@@ -62,7 +62,7 @@ test.describe("UiLiveTransportController", () => {
     installWindowGlobal();
   });
 
-  test("applies queued transport payloads through narrow transport ports without an AppFeatureBundle", async () => {
+  test("applies queued transport payloads through shared state without transport ports", async () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
     state.transport.ws = {
@@ -71,51 +71,25 @@ test.describe("UiLiveTransportController", () => {
       },
     } as unknown as typeof state.transport.ws;
 
-    const controller = new UiLiveTransportController({
+    new UiLiveTransportController({
       state,
       payloadErrorMessage: () => "payload error",
     });
 
-    const portCalls: string[] = [];
-    const renderedStatusIds: Array<string | null> = [];
-    const ports = {
-      updateClientSelection(): void {
-        portCalls.push("updateClientSelection");
-        state.realtime.selectedClientId = state.realtime.clients[0]?.id ?? null;
-      },
-      maybeRenderSensorsSettingsList(): void {
-        portCalls.push("maybeRenderSensorsSettingsList");
-      },
-      renderLoggingStatus(): void {
-        portCalls.push("renderLoggingStatus");
-      },
-      renderStatus(clientRow): void {
-        portCalls.push("renderStatus");
-        renderedStatusIds.push(clientRow?.id ?? null);
-      },
-    } satisfies UiTransportFeaturePorts;
-
     const raf = installRafHarness();
     try {
-      controller.attachPorts(ports);
       state.transport.pendingPayload = makeLivePayload({
         clients: [makeClient("client-1")],
         speed_mps: 12,
       });
       await flushAsyncWork();
       raf.flushNext();
+      await flushAsyncWork();
 
       expect(state.transport.pendingPayload).toBeNull();
       expect(state.realtime.clients.map((client) => client.id)).toEqual(["client-1"]);
       expect(state.realtime.selectedClientId).toBe("client-1");
       expect(state.realtime.speedMps).toBe(12);
-      expect(portCalls).toEqual([
-        "updateClientSelection",
-        "maybeRenderSensorsSettingsList",
-        "renderLoggingStatus",
-        "renderStatus",
-      ]);
-      expect(renderedStatusIds).toEqual(["client-1"]);
       expect(sentSelections).toEqual([{ client_id: "client-1" }]);
     } finally {
       raf.restore();
@@ -150,14 +124,14 @@ test.describe("UiLiveTransportController", () => {
     ]);
   });
 
-  test("throws a clear error when payloads arrive before ports are attached", () => {
+  test("applies payloads without requiring feature-port attachment", () => {
+    const state = createAppState();
     const controller = new UiLiveTransportController({
-      state: createAppState(),
+      state,
       payloadErrorMessage: () => "payload error",
     });
 
-    expect(() => applyPayload(controller, makeLivePayload())).toThrow(
-      "UiLiveTransportController ports used before initialization",
-    );
+    expect(() => applyPayload(controller, makeLivePayload())).not.toThrow();
+    expect(state.realtime.speedMps).toBe(10);
   });
 });
