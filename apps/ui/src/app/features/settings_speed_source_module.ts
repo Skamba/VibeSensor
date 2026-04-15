@@ -4,20 +4,26 @@ import {
   bindSettingsSpeedSourceInteractions,
   type SettingsSpeedSourceInteraction,
 } from "../views/settings_speed_source_bindings";
-import { createSettingsSpeedSourcePresenter } from "../views/settings_speed_source_presenter";
+import {
+  buildSettingsSpeedSourcePanelModel,
+  type SettingsSpeedSourcePresenterDeps,
+} from "../views/settings_speed_source_presenter";
 import type { SettingsShellDom } from "../views/settings_shell";
-import type { SettingsSpeedSourcePanelDom } from "../views/speed_source_panel";
+import type {
+  SettingsSpeedSourcePanelDom,
+  SpeedSourcePanelView,
+} from "../views/speed_source_panel";
 import type { SettingsState } from "../ui_app_state";
 import { createSettingsSpeedSourceWorkflow } from "./settings_speed_source_workflow";
 
 export interface SettingsSpeedSourceModuleDeps extends FeatureDepsBase {
   dom: Pick<SettingsShellDom, "settingsTabs"> & SettingsSpeedSourcePanelDom;
+  panel: SpeedSourcePanelView;
   shellDom: Pick<UiShellDom, "menuButtons">;
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;
   renderSpeedReadout: () => void;
-  onSaveError: (error: unknown) => void;
 }
 
 export interface SettingsSpeedSourceModule {
@@ -32,18 +38,25 @@ export function createSettingsSpeedSourceModule(
   ctx: SettingsSpeedSourceModuleDeps,
 ): SettingsSpeedSourceModule {
   const { settings, dom: els, shellDom, t } = ctx;
-  const presenter = createSettingsSpeedSourcePresenter({
-    dom: els,
+  const presenterDeps: SettingsSpeedSourcePresenterDeps = {
     fmt: ctx.fmt,
     getSpeedUnit: ctx.getSpeedUnit,
     t,
-  });
+  };
   const workflow = createSettingsSpeedSourceWorkflow({
     renderSpeedReadout: ctx.renderSpeedReadout,
     settings,
     showError: ctx.showError,
     t,
-    view: presenter,
+    view: {
+      focusManualSpeedInput: ctx.panel.focusManualSpeedInput,
+      focusScanObdDevices: ctx.panel.focusScanObdDevices,
+      focusStaleTimeoutInput: ctx.panel.focusStaleTimeoutInput,
+      isObdConfigVisible: ctx.panel.isObdConfigVisible,
+      render(state): void {
+        ctx.panel.render(buildSettingsSpeedSourcePanelModel(state, presenterDeps));
+      },
+    },
   });
   let handlersBound = false;
 
