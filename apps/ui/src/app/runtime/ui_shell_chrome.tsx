@@ -1,37 +1,42 @@
-import type { JSX } from "preact";
+import { h, type JSX } from "preact";
 
-import type { ShellState } from "../ui_app_state";
+import { requiredById } from "../dom/dom_query";
+import type { SettingsFeedbackMessage } from "../views/settings_feedback";
+import type { VisualVariant } from "../style_state";
 import { createUiPreactMount } from "./ui_preact_mount";
 
-const SHELL_NAV_ITEMS = [
+const SHELL_OWNER = "UI shell";
+const SHELL_CHROME_HOST_ID = "appShellChromeRoot";
+
+export const SHELL_NAV_ITEMS = [
   {
-    viewId: "dashboardView",
-    tabId: "tab-dashboard",
-    labelKey: "nav.live",
     fallbackLabel: "Live",
+    labelKey: "nav.live",
+    tabId: "tab-dashboard",
+    viewId: "dashboardView",
   },
   {
-    viewId: "historyView",
-    tabId: "tab-history",
-    labelKey: "nav.history",
     fallbackLabel: "History",
+    labelKey: "nav.history",
+    tabId: "tab-history",
+    viewId: "historyView",
   },
   {
-    viewId: "settingsView",
-    tabId: "tab-settings",
-    labelKey: "nav.settings",
     fallbackLabel: "Settings",
+    labelKey: "nav.settings",
+    tabId: "tab-settings",
+    viewId: "settingsView",
   },
 ] as const;
 
-const SPEED_UNIT_OPTIONS = [
-  { value: "kmh", labelKey: "speed.unit.kmh", fallbackLabel: "km/h" },
-  { value: "mps", labelKey: "speed.unit.mps", fallbackLabel: "m/s" },
+export const SPEED_UNIT_OPTIONS = [
+  { fallbackLabel: "km/h", labelKey: "speed.unit.kmh", value: "kmh" },
+  { fallbackLabel: "m/s", labelKey: "speed.unit.mps", value: "mps" },
 ] as const;
 
-const LANGUAGE_OPTIONS = [
-  { value: "en", label: "🇺🇸 English" },
-  { value: "nl", label: "🇳🇱 Nederlands" },
+export const LANGUAGE_OPTIONS = [
+  { label: "🇺🇸 English", value: "en" },
+  { label: "🇳🇱 Nederlands", value: "nl" },
 ] as const;
 
 export interface UiShellChromeActions {
@@ -45,9 +50,86 @@ export interface UiShellChromeActionBridge {
   attach(actions: UiShellChromeActions): void;
 }
 
+export interface UiShellBadgeModel {
+  text: string;
+  variant: VisualVariant;
+}
+
+export interface UiShellErrorBannerModel {
+  hidden: boolean;
+  text: string;
+  variant: "bad" | null;
+}
+
+export interface UiShellChromeNavItemModel {
+  labelText: string;
+  tabId: string;
+  viewId: string;
+}
+
+export interface UiShellChromeRenderModel {
+  activeViewId: string;
+  appErrorBanner: UiShellErrorBannerModel;
+  languageFeedback: SettingsFeedbackMessage | null;
+  languageLabelText: string;
+  navItems: readonly UiShellChromeNavItemModel[];
+  selectedLanguage: string;
+  selectedSpeedUnit: string;
+  shellLiveStatus: UiShellBadgeModel;
+  speedUnitFeedback: SettingsFeedbackMessage | null;
+  speedUnitLabelText: string;
+  speedUnitOptionLabels: Record<string, string>;
+  wsLinkState: UiShellBadgeModel;
+}
+
+export interface UiShellChromeDom {
+  menuButtons: HTMLButtonElement[];
+}
+
+export interface UiShellChromeView {
+  readonly dom: UiShellChromeDom;
+  render(model: UiShellChromeRenderModel): void;
+}
+
 type UiShellChromeProps = {
   bridge: UiShellChromeActionBridge;
-  initialShellState: Pick<ShellState, "activeViewId" | "lang" | "speedUnit">;
+  model: UiShellChromeRenderModel;
+};
+
+type UiShellChromeBridgeState = {
+  model: UiShellChromeRenderModel;
+};
+
+const DEFAULT_SHELL_CHROME_MODEL: UiShellChromeRenderModel = {
+  activeViewId: "dashboardView",
+  appErrorBanner: {
+    hidden: true,
+    text: "",
+    variant: null,
+  },
+  languageFeedback: null,
+  languageLabelText: "Language",
+  navItems: SHELL_NAV_ITEMS.map((item) => ({
+    labelText: item.fallbackLabel,
+    tabId: item.tabId,
+    viewId: item.viewId,
+  })),
+  selectedLanguage: "en",
+  selectedSpeedUnit: "kmh",
+  shellLiveStatus: {
+    text: "No live signal",
+    variant: "muted",
+  },
+  speedUnitFeedback: null,
+  speedUnitLabelText: "Unit",
+  speedUnitOptionLabels: {
+    kmh: "km/h",
+    mps: "m/s",
+  },
+  wsLinkState: {
+    text: "Connecting...",
+    variant: "muted",
+  },
 };
 
 function noop(): void {
@@ -58,7 +140,19 @@ function normalizeMenuIndex(index: number): number {
   return ((index % SHELL_NAV_ITEMS.length) + SHELL_NAV_ITEMS.length) % SHELL_NAV_ITEMS.length;
 }
 
-function focusMenuButton(event: JSX.TargetedKeyboardEvent<HTMLButtonElement>, nextIndex: number): void {
+function feedbackClassName(message: SettingsFeedbackMessage): string {
+  const tone = message.tone ?? "info";
+  const classNames = ["settings-feedback", `settings-feedback--${tone}`];
+  if (message.compact) {
+    classNames.push("settings-feedback--compact");
+  }
+  return classNames.join(" ");
+}
+
+function focusMenuButton(
+  event: JSX.TargetedKeyboardEvent<HTMLButtonElement>,
+  nextIndex: number,
+): void {
   const menu = event.currentTarget.closest(".menu");
   if (!(menu instanceof HTMLElement)) {
     return;
@@ -67,8 +161,35 @@ function focusMenuButton(event: JSX.TargetedKeyboardEvent<HTMLButtonElement>, ne
   buttons[normalizeMenuIndex(nextIndex)]?.focus();
 }
 
+function SettingsFeedbackSlot(props: {
+  id: string;
+  message: SettingsFeedbackMessage | null;
+}) {
+  const { id, message } = props;
+  return (
+    <div
+      id={id}
+      class="settings-feedback-slot settings-feedback-slot--compact"
+      hidden={!message}
+      aria-live={message ? (message.tone === "error" ? "assertive" : "polite") : undefined}
+    >
+      {message ? (
+        <div class={feedbackClassName(message)}>
+          {message.title ? (
+            <strong class="settings-feedback__title">{message.title}</strong>
+          ) : null}
+          <span class="settings-feedback__body">{message.body}</span>
+          {message.detail ? (
+            <span class="settings-feedback__detail">{message.detail}</span>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function UiShellChrome(props: UiShellChromeProps) {
-  const { bridge, initialShellState } = props;
+  const { bridge, model } = props;
 
   function activateView(viewId: string): void {
     bridge.current.activateView(viewId);
@@ -80,33 +201,33 @@ function UiShellChrome(props: UiShellChromeProps) {
   ): void {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      activateView(SHELL_NAV_ITEMS[index].viewId);
+      activateView(model.navItems[index].viewId);
       return;
     }
     if (event.key === "ArrowRight") {
       event.preventDefault();
       const nextIndex = normalizeMenuIndex(index + 1);
-      activateView(SHELL_NAV_ITEMS[nextIndex].viewId);
+      activateView(model.navItems[nextIndex].viewId);
       focusMenuButton(event, nextIndex);
       return;
     }
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       const nextIndex = normalizeMenuIndex(index - 1);
-      activateView(SHELL_NAV_ITEMS[nextIndex].viewId);
+      activateView(model.navItems[nextIndex].viewId);
       focusMenuButton(event, nextIndex);
       return;
     }
     if (event.key === "Home") {
       event.preventDefault();
-      activateView(SHELL_NAV_ITEMS[0].viewId);
+      activateView(model.navItems[0].viewId);
       focusMenuButton(event, 0);
       return;
     }
     if (event.key === "End") {
       event.preventDefault();
-      const nextIndex = SHELL_NAV_ITEMS.length - 1;
-      activateView(SHELL_NAV_ITEMS[nextIndex].viewId);
+      const nextIndex = model.navItems.length - 1;
+      activateView(model.navItems[nextIndex].viewId);
       focusMenuButton(event, nextIndex);
     }
   }
@@ -131,8 +252,8 @@ function UiShellChrome(props: UiShellChromeProps) {
               </picture>
             </h1>
             <nav class="menu" aria-label="Primary" role="tablist">
-              {SHELL_NAV_ITEMS.map((item, index) => {
-                const isActive = item.viewId === initialShellState.activeViewId;
+              {model.navItems.map((item, index) => {
+                const isActive = item.viewId === model.activeViewId;
                 return (
                   <button
                     key={item.viewId}
@@ -147,7 +268,7 @@ function UiShellChrome(props: UiShellChromeProps) {
                     onClick={() => activateView(item.viewId)}
                     onKeyDown={(event) => handleMenuKeyDown(index, event)}
                   >
-                    <span data-i18n={item.labelKey}>{item.fallbackLabel}</span>
+                    <span>{item.labelText}</span>
                   </button>
                 );
               })}
@@ -155,39 +276,38 @@ function UiShellChrome(props: UiShellChromeProps) {
           </div>
           <div class="site-header__preferences">
             <label class="header-select" htmlFor="speedUnitSelect">
-              <span class="mini-label" data-i18n="speed.unit">
-                Unit
-              </span>
+              <span class="mini-label">{model.speedUnitLabelText}</span>
               <select
                 id="speedUnitSelect"
                 class="unit-picker"
-                aria-label="Speed unit"
-                defaultValue={initialShellState.speedUnit}
+                aria-label={model.speedUnitLabelText}
+                aria-describedby={model.speedUnitFeedback ? "speedUnitFeedback" : undefined}
+                aria-invalid={model.speedUnitFeedback?.tone === "error" ? "true" : undefined}
+                value={model.selectedSpeedUnit}
                 onChange={(event) => {
                   void bridge.current.saveSpeedUnit(event.currentTarget.value);
                 }}
               >
                 {SPEED_UNIT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value} data-i18n={option.labelKey}>
-                    {option.fallbackLabel}
+                  <option key={option.value} value={option.value}>
+                    {model.speedUnitOptionLabels[option.value] ?? option.fallbackLabel}
                   </option>
                 ))}
               </select>
-              <div
+              <SettingsFeedbackSlot
                 id="speedUnitFeedback"
-                class="settings-feedback-slot settings-feedback-slot--compact"
-                hidden
+                message={model.speedUnitFeedback}
               />
             </label>
             <label class="header-select" htmlFor="languageSelect">
-              <span class="mini-label" data-i18n="settings.language">
-                Language
-              </span>
+              <span class="mini-label">{model.languageLabelText}</span>
               <select
                 id="languageSelect"
                 class="lang-picker"
-                aria-label="Language"
-                defaultValue={initialShellState.lang}
+                aria-label={model.languageLabelText}
+                aria-describedby={model.languageFeedback ? "languageFeedback" : undefined}
+                aria-invalid={model.languageFeedback?.tone === "error" ? "true" : undefined}
+                value={model.selectedLanguage}
                 onChange={(event) => {
                   void bridge.current.saveLanguage(event.currentTarget.value);
                 }}
@@ -198,21 +318,30 @@ function UiShellChrome(props: UiShellChromeProps) {
                   </option>
                 ))}
               </select>
-              <div
+              <SettingsFeedbackSlot
                 id="languageFeedback"
-                class="settings-feedback-slot settings-feedback-slot--compact"
-                hidden
+                message={model.languageFeedback}
               />
             </label>
           </div>
         </div>
         <div class="site-header__status">
           <div class="site-header__status-pills">
-            <div id="linkState" class="pill pill--muted" aria-live="polite">
-              Connecting...
+            <div
+              id="linkState"
+              class="pill"
+              data-variant={model.wsLinkState.variant}
+              aria-live="polite"
+            >
+              {model.wsLinkState.text}
             </div>
-            <div id="shellLiveStatus" class="pill pill--muted" aria-live="polite">
-              No live signal
+            <div
+              id="shellLiveStatus"
+              class="pill"
+              data-variant={model.shellLiveStatus.variant}
+              aria-live="polite"
+            >
+              {model.shellLiveStatus.text}
             </div>
           </div>
         </div>
@@ -221,10 +350,13 @@ function UiShellChrome(props: UiShellChromeProps) {
       <div
         id="appErrorBanner"
         class="connection-banner app-error-banner"
-        hidden
+        hidden={model.appErrorBanner.hidden}
+        data-variant={model.appErrorBanner.variant ?? undefined}
         aria-live="assertive"
         role="alert"
-      />
+      >
+        {model.appErrorBanner.text}
+      </div>
     </>
   );
 }
@@ -245,11 +377,36 @@ export function createUiShellChromeActionBridge(): UiShellChromeActionBridge {
   };
 }
 
+export function getUiShellChromeHost(): HTMLElement {
+  return requiredById<HTMLElement>(SHELL_CHROME_HOST_ID, SHELL_OWNER);
+}
+
+function createUiShellChromeDom(host: HTMLElement): UiShellChromeDom {
+  return {
+    menuButtons: Array.from(host.querySelectorAll<HTMLButtonElement>(".menu-btn")),
+  };
+}
+
 export function mountUiShellChrome(
   host: HTMLElement,
   bridge: UiShellChromeActionBridge,
-  initialShellState: Pick<ShellState, "activeViewId" | "lang" | "speedUnit">,
-): void {
+): UiShellChromeView {
+  const bridgeState: UiShellChromeBridgeState = {
+    model: DEFAULT_SHELL_CHROME_MODEL,
+  };
   const mount = createUiPreactMount(host);
-  mount.render(<UiShellChrome bridge={bridge} initialShellState={initialShellState} />);
+
+  function render(): void {
+    mount.render(<UiShellChrome bridge={bridge} model={bridgeState.model} />);
+  }
+
+  render();
+
+  return {
+    dom: createUiShellChromeDom(host),
+    render(model) {
+      bridgeState.model = model;
+      render();
+    },
+  };
 }

@@ -1,4 +1,3 @@
-import type { UiShellDom } from "../dom/shell_dom";
 import type { FeatureDepsBase } from "../feature_deps_base";
 import { hasResolvedActiveCar } from "../car_selection_state";
 import type { SettingsState } from "../ui_app_state";
@@ -23,9 +22,10 @@ import type { CarsListPanelView } from "../views/cars_panel";
 import type { AnalysisPanelView } from "../views/analysis_panel";
 import type { SettingsShellView } from "../views/settings_shell";
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
+import type { UiShellChromeDom } from "../runtime/ui_shell_chrome";
 
 export interface SettingsFeatureDeps extends FeatureDepsBase {
-  shellDom: Pick<UiShellDom, "menuButtons">;
+  shellDom: Pick<UiShellChromeDom, "menuButtons">;
   settings: SettingsState;
   getSpeedUnit: () => string;
   fmt: (n: number, digits?: number) => string;

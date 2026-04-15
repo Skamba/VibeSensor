@@ -13,8 +13,11 @@ import {
   getUiLiveOverviewHost,
   getUiLoggingPanelHost,
 } from "../src/app/dom/realtime_dom";
-import { getUiSpectrumPanelHost } from "../src/app/dom/spectrum_dom";
-import { createUiRuntimeDom } from "../src/app/ui_runtime_dom";
+import {
+  createUiSpectrumDom,
+  getUiSpectrumPanelHost,
+} from "../src/app/dom/spectrum_dom";
+import { getUiShellChromeHost } from "../src/app/runtime/ui_shell_chrome";
 
 type SelectorFixture = {
   ids?: Record<string, HTMLElement>;
@@ -39,6 +42,7 @@ function stubElement(id = ""): HTMLElement {
 function createBaseFixture(): SelectorFixture {
   return {
     ids: {
+      appShellChromeRoot: stubElement("appShellChromeRoot"),
       loggingPanelRoot: stubElement("loggingPanelRoot"),
       spectrumPanelRoot: stubElement("spectrumPanelRoot"),
       specChart: stubElement("specChart"),
@@ -57,8 +61,6 @@ function createBaseFixture(): SelectorFixture {
       ".wrap": stubElement("wrap"),
     },
     selectorAll: {
-      ".menu-btn": [stubElement("tab-dashboard"), stubElement("tab-history")],
-      ".view": [stubElement("dashboardView"), stubElement("historyView")],
       ".wizard-step-dot": [
         stubElement(),
         stubElement(),
@@ -105,12 +107,11 @@ function installDomFixture(
   };
 }
 
-test("createUiRuntimeDom returns the feature-scoped startup bundle when required anchors exist", () => {
+test("shell and spectrum startup locators resolve the remaining runtime anchors", () => {
   const restore = installDomFixture();
   try {
-    const dom = createUiRuntimeDom();
-    expect(dom.shell.menuButtons).toHaveLength(2);
-    expect(dom.spectrum.specChart.id).toBe("specChart");
+    expect(getUiShellChromeHost().id).toBe("appShellChromeRoot");
+    expect(createUiSpectrumDom().specChart.id).toBe("specChart");
   } finally {
     restore();
   }
@@ -224,11 +225,13 @@ test("getUiSpeedSourcePanelHost resolves the speed-source island host", () => {
   }
 });
 
-test.describe("createUiRuntimeDom missing required feature anchors", () => {
-  test("fails at the shell boundary when menu tabs are missing", () => {
-    const restore = installDomFixture({ missingSelector: ".menu-btn" });
+test.describe("runtime locator missing required feature anchors", () => {
+  test("fails at the shell boundary when the chrome host is missing", () => {
+    const restore = installDomFixture({ missingId: "appShellChromeRoot" });
     try {
-      expect(() => createUiRuntimeDom()).toThrow("UI shell requires .menu-btn");
+      expect(() => getUiShellChromeHost()).toThrow(
+        "UI shell requires #appShellChromeRoot",
+      );
     } finally {
       restore();
     }
@@ -237,7 +240,7 @@ test.describe("createUiRuntimeDom missing required feature anchors", () => {
   test("fails at the spectrum boundary when the chart host is missing", () => {
     const restore = installDomFixture({ missingId: "specChart" });
     try {
-      expect(() => createUiRuntimeDom()).toThrow(
+      expect(() => createUiSpectrumDom()).toThrow(
         "Spectrum UI requires #specChart",
       );
     } finally {
