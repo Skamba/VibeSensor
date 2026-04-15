@@ -1,5 +1,4 @@
 import { createUiRecordingHistoryRefresh } from "./runtime/ui_recording_history_refresh";
-import type { UiShellLanguageRefreshFeaturePorts } from "./runtime/ui_shell_language_refresh_module";
 import type { UiStartupFeaturePorts } from "./runtime/ui_startup_feature_ports";
 import type { CarsFeature } from "./features/cars_feature";
 import type { EspFlashFeature } from "./features/esp_flash_feature";
@@ -10,7 +9,6 @@ import type { UpdateFeature } from "./features/update_feature";
 
 export interface AppShellFeatureBindings {
   bindHandlers(): void;
-  languageRefresh: UiShellLanguageRefreshFeaturePorts;
 }
 
 export interface AppFeatureBundle {
@@ -19,10 +17,7 @@ export interface AppFeatureBundle {
 }
 
 interface AppFeatureBundlePortSources {
-  history: Pick<
-    HistoryFeature,
-    "bindHandlers" | "renderHistoryTable" | "reloadExpandedRunOnLanguageChange" | "refreshHistory"
-  >;
+  history: Pick<HistoryFeature, "bindHandlers" | "refreshHistory">;
   realtime: Pick<
     RealtimeFeature,
     | "bindHandlers"
@@ -65,16 +60,6 @@ export function createAppFeatureBundlePorts(
         features.history.bindHandlers();
         features.update.bindUpdateHandlers();
         features.espFlash.bindHandlers();
-      },
-      languageRefresh: {
-        history: {
-          renderHistoryTable: () => features.history.renderHistoryTable(),
-          reloadExpandedRunOnLanguageChange: () =>
-            features.history.reloadExpandedRunOnLanguageChange(),
-        },
-        settings: {
-          syncSettingsInputs: () => features.settings.syncSettingsInputs(),
-        },
       },
     },
     startup: {

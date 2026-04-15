@@ -20,9 +20,7 @@ export interface UiShellPreferencesModule {
 }
 
 type UiShellPreferencesDeps = {
-  applyLanguage: (forceReloadInsights?: boolean) => void;
   normalizeLanguage: (value: string | null | undefined) => string;
-  renderSpeedReadout: () => void;
   shell: ShellState;
   t: (key: string, vars?: Record<string, unknown>) => string;
 };
@@ -87,7 +85,6 @@ export function createUiShellPreferencesModule(
         const languageResponse = await getSettingsLanguage();
         if (languageResponse?.language) {
           applyLanguageValue(languageResponse.language);
-          deps.applyLanguage(true);
         }
       } catch (error) {
         console.warn("Failed to load persisted language", error);
@@ -96,7 +93,6 @@ export function createUiShellPreferencesModule(
         const speedUnitResponse = await getSettingsSpeedUnit();
         if (speedUnitResponse?.speed_unit) {
           applySpeedUnitValue(speedUnitResponse.speed_unit);
-          deps.renderSpeedReadout();
         }
       } catch (error) {
         console.warn("Failed to load persisted speed unit", error);
@@ -110,7 +106,6 @@ export function createUiShellPreferencesModule(
       try {
         const payload = await setSettingsLanguage(nextLanguage);
         applyLanguageValue(payload?.language || nextLanguage);
-        deps.applyLanguage(true);
       } catch (error) {
         selectedLanguage.value = previousLanguage;
         languageFeedback.value = buildSaveFailureFeedback(
@@ -128,7 +123,6 @@ export function createUiShellPreferencesModule(
       try {
         const payload = await setSettingsSpeedUnit(nextUnit);
         applySpeedUnitValue(payload?.speed_unit || nextUnit);
-        deps.renderSpeedReadout();
       } catch (error) {
         selectedSpeedUnit.value = previousUnit;
         speedUnitFeedback.value = buildSaveFailureFeedback(

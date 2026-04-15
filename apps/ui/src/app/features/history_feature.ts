@@ -6,7 +6,13 @@ import {
   historyReportPdfUrl,
 } from "../../api";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
-import type { HistoryState, RunDetail, ShellState } from "../ui_app_state";
+import {
+  trackAppStateSlice,
+  type HistoryState,
+  type RunDetail,
+  type ShellState,
+} from "../ui_app_state";
+import { effect, untracked } from "../ui_signals";
 import type {
   HistoryPanelRenderModel,
   HistoryPanelView,
@@ -27,12 +33,10 @@ export interface HistoryFeatureDeps {
 
 export interface HistoryFeature {
   bindHandlers(): void;
-  renderHistoryTable(): void;
   refreshHistory(): Promise<void>;
   deleteAllRuns(): Promise<void>;
   onHistoryTableAction(action: HistoryRunAction, runId: string): Promise<void>;
   toggleRunDetails(runId: string): void;
-  reloadExpandedRunOnLanguageChange(): void;
 }
 
 export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
@@ -190,6 +194,31 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       if (shouldReloadInsights) {
         void loadRunInsights(runId, true);
       }
+    });
+  }
+
+  function bindReactiveLanguageSync(): void {
+    let initialized = false;
+    let previousLanguage = shell.lang;
+    effect(() => {
+      trackAppStateSlice(shell);
+      const currentLanguage = shell.lang;
+      if (!initialized) {
+        initialized = true;
+        previousLanguage = currentLanguage;
+        untracked(() => {
+          renderHistoryTable();
+        });
+        return;
+      }
+      if (currentLanguage === previousLanguage) {
+        return;
+      }
+      previousLanguage = currentLanguage;
+      untracked(() => {
+        renderHistoryTable();
+        reloadExpandedRunOnLanguageChange();
+      });
     });
   }
 
@@ -360,13 +389,13 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     });
   }
 
+  bindReactiveLanguageSync();
+
   return {
     bindHandlers,
-    renderHistoryTable,
     refreshHistory,
     deleteAllRuns,
     onHistoryTableAction,
     toggleRunDetails,
-    reloadExpandedRunOnLanguageChange,
   };
 }
