@@ -1,0 +1,119 @@
+.speed-source-summary {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(124, 58, 237, 0.08), rgba(124, 58, 237, 0.03));
+}
+.speed-source-summary__eyebrow {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand-700);
+  font-weight: 700;
+}
+.speed-source-summary__caption {
+  margin: 0;
+  line-height: 1.45;
+}
+.speed-source-summary__stats {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.speed-source-summary__stat {
+  display: grid;
+  gap: 0.3rem;
+}
+.speed-source-summary__label {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 700;
+}
+.speed-source-summary__value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.speed-source-config {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.speed-source-config[hidden] {
+  display: none !important;
+}
+.speed-source-diagnostics {
+  margin-top: var(--space-3);
+}
+.speed-source-diagnostics .kv-table {
+  width: 100%;
+}
+.speed-source-obd-toolbar {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.speed-source-obd-toolbar__summary {
+  display: grid;
+  gap: 0.3rem;
+}
+.speed-source-device-list {
+  display: grid;
+  gap: var(--space-2);
+}
+.speed-source-device {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.speed-source-device__header {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+  align-items: start;
+  flex-wrap: wrap;
+}
+.speed-source-device__identity {
+  display: grid;
+  gap: 0.25rem;
+}
+.speed-source-device__name {
+  font-weight: 700;
+}
+.speed-source-device__mac {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+}
+.speed-source-device__badges {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.speed-source-device__badge {
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: var(--pill-muted-bg);
+  color: var(--pill-muted-text);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.speed-source-device__badge[data-active="true"] {
+  background: var(--pill-ok-bg);
+  color: var(--pill-ok-text);
+}
+.speed-source-device__actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
