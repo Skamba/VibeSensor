@@ -308,20 +308,26 @@ export function createRealtimeFeatureViewState(
   const loggingPanelBaseModel = computed(() => {
     trackAppStateSlice(realtime);
     trackAppStateSlice(shell);
-    const elapsedText = realtime.loggingStatus.enabled
-      ? formatElapsed(realtime.loggingStatus.start_time_utc, elapsedNowMs.value)
-      : lastCompletedElapsedText.value;
+    const loggingStatus = realtime.loggingStatus;
+    const pendingLoggingAction = workflow.pendingLoggingAction.value;
+    const liveHealth = sensorState.liveHealth.value;
+    const connectedClients = sensorState.connectedClients.value;
+    const assignedClientCount = sensorState.assignedClientCount.value;
+    const completedElapsedText = lastCompletedElapsedText.value;
+    const elapsedText = loggingStatus.enabled
+      ? formatElapsed(loggingStatus.start_time_utc, elapsedNowMs.value)
+      : completedElapsedText;
     return buildRealtimeLoggingPanelViewModel({
-      status: realtime.loggingStatus,
-      pendingLoggingAction: workflow.pendingLoggingAction.value,
+      status: loggingStatus,
+      pendingLoggingAction,
       selectionBlockReason: selectionBlockReason(),
-      liveHealth: sensorState.liveHealth.value,
-      connectedCountText: formatInt(sensorState.connectedClients.value.length),
-      assignedCountText: formatInt(sensorState.assignedClientCount.value),
-      runIdText: recordingRunIdText(realtime.loggingStatus),
+      liveHealth,
+      connectedCountText: formatInt(connectedClients.length),
+      assignedCountText: formatInt(assignedClientCount),
+      runIdText: recordingRunIdText(loggingStatus),
       elapsedText,
-      samplesText: formatInt(realtime.loggingStatus.samples_written ?? 0),
-      lastCompletedElapsedText: lastCompletedElapsedText.value,
+      samplesText: formatInt(loggingStatus.samples_written ?? 0),
+      lastCompletedElapsedText: completedElapsedText,
       t,
       formatInt,
     });
@@ -330,29 +336,33 @@ export function createRealtimeFeatureViewState(
   const liveOverviewModel = computed<RealtimeLiveOverviewRenderModel>(() => {
     trackAppStateSlice(realtime);
     trackAppStateSlice(shell);
-    const signal = sensorState.strongestSignal.value;
+    const connectedClients = sensorState.connectedClients.value;
+    const strongestSignal = sensorState.strongestSignal.value;
+    const strongestSignalText = sensorState.strongestSignalText.value;
+    const liveHealth = sensorState.liveHealth.value;
     const activeCar = sensorState.activeCarDisplayState.value;
     const setupBlock = selectionBlockReason();
+    const recordingStateText = loggingPanelBaseModel.value.phaseText;
     return {
-      connectedSensorsText: `${formatInt(sensorState.connectedClients.value.length)} / ${formatInt(realtime.clients.length)}`,
+      connectedSensorsText: `${formatInt(connectedClients.length)} / ${formatInt(realtime.clients.length)}`,
       activeCar: {
         text: activeCar.text,
         warning: setupBlock === null && activeCar.isWarning,
       },
-      recordingStateText: loggingPanelBaseModel.value.phaseText,
+      recordingStateText,
       dataFreshnessText: dataFreshnessText(),
-      strongestSignalText: sensorState.strongestSignalText.value,
+      strongestSignalText,
       runHealth: {
-        hidden: !sensorState.liveHealth.value.showOverviewPill,
-        text: sensorState.liveHealth.value.text,
-        variant: sensorState.liveHealth.value.variant,
+        hidden: !liveHealth.showOverviewPill,
+        text: liveHealth.text,
+        variant: liveHealth.variant,
       },
       sensorCards: realtime.clients.map((client) => ({
         id: client.id,
         label: liveSensorOverviewLabel(client),
         connected: Boolean(client.connected),
         statusText: client.connected ? t("status.online") : t("status.offline"),
-        strongest: signal?.client.id === client.id,
+        strongest: strongestSignal?.client.id === client.id,
       })),
     };
   });
