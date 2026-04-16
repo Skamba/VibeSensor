@@ -129,22 +129,6 @@ export class SpectrumChart {
     return this.plot ? this.plot.series.length : 0;
   }
 
-  renderLegend(legendEl: HTMLElement, seriesMeta: SpectrumSeriesMeta[]): void {
-    legendEl.replaceChildren();
-    for (const item of seriesMeta) {
-      const row = document.createElement("div");
-      row.className = "legend-item";
-      const swatch = document.createElement("span");
-      swatch.className = "swatch";
-      swatch.style.setProperty("--swatch-color", item.color);
-      const labelSpan = document.createElement("span");
-      labelSpan.textContent = item.label;
-      row.appendChild(swatch);
-      row.appendChild(labelSpan);
-      legendEl.appendChild(row);
-    }
-  }
-
   destroy(): void {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
