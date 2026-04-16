@@ -5,6 +5,7 @@ import {
   computed,
   signal,
   useComputed,
+  useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
 import type {
@@ -35,6 +36,15 @@ export interface UpdatePanelActionHandlers {
   onCancel(): void;
   onStart(): void;
 }
+
+const UPDATE_PANEL_MODEL_KEYS = [
+  "cancelButtonDisabled",
+  "cancelButtonHidden",
+  "startButtonDisabled",
+  "startButtonHidden",
+  "startButtonLabelText",
+  "status",
+] as const;
 
 export interface UpdatePanelView {
   bindActions(handlers: UpdatePanelActionHandlers): void;
@@ -336,12 +346,14 @@ function UpdatePanel(props: {
   );
   const cancelLabel = useUiText("settings.update.cancel", "Cancel Update");
   const actions = useComputed(() => props.actions.value);
-  const status = useComputed(() => props.model.value.status);
-  const startButtonHidden = useComputed(() => props.model.value.startButtonHidden);
-  const startButtonDisabled = useComputed(() => props.model.value.startButtonDisabled);
-  const startButtonLabelText = useComputed(() => props.model.value.startButtonLabelText);
-  const cancelButtonHidden = useComputed(() => props.model.value.cancelButtonHidden);
-  const cancelButtonDisabled = useComputed(() => props.model.value.cancelButtonDisabled);
+  const {
+    cancelButtonDisabled,
+    cancelButtonHidden,
+    startButtonDisabled,
+    startButtonHidden,
+    startButtonLabelText,
+    status,
+  } = useSignalProperties(props.model, UPDATE_PANEL_MODEL_KEYS);
   const handleStart = () => {
     actions.value?.onStart();
   };

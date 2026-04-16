@@ -3,6 +3,7 @@ import { getUiText } from "../ui_i18n";
 import {
   signal,
   useComputed,
+  useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
 import type {
@@ -23,6 +24,8 @@ type MutableSpectrumPanelChartDom = {
   specChartWrap: HTMLElement | null;
   specChart: HTMLElement | null;
 };
+
+const SPECTRUM_BAND_TOGGLE_KEYS = ["bandsVisible", "hasBands", "text"] as const;
 
 function requireSpectrumElement<T extends HTMLElement>(
   element: T | null,
@@ -50,12 +53,14 @@ function SpectrumPanel(props: {
   const hintText = useComputed(() => getUiText("spectrum.controls_hint", props.header.value.hintText));
   const overlayHidden = useComputed(() => props.overlayMessage.value === null);
   const overlayText = useComputed(() => props.overlayMessage.value ?? "Waiting for sensor data...");
-  const bandToggleHasBands = useComputed(() => props.bandToggle.value.hasBands);
-  const bandToggleBandsVisible = useComputed(() => props.bandToggle.value.bandsVisible);
+  const {
+    bandsVisible: bandToggleBandsVisible,
+    hasBands: bandToggleHasBands,
+    text: bandToggleText,
+  } = useSignalProperties(props.bandToggle, SPECTRUM_BAND_TOGGLE_KEYS);
   const bandTogglePressed = useComputed(() =>
     bandToggleHasBands.value && bandToggleBandsVisible.value ? "true" : "false"
   );
-  const bandToggleText = useComputed(() => props.bandToggle.value.text);
   const bandToggleHidden = useComputed(() => !bandToggleHasBands.value);
   const bandLegendHidden = useComputed(() => !props.bandLegend.value.visible);
   const bandLegend = props.bandLegend.value;

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { computed, signal } from "../src/app/ui_signals";
+import { computed, signal, useSignalProperties } from "../src/app/ui_signals";
 import type {
   RealtimeLiveOverviewRenderModel,
   RealtimeLiveOverviewSensorCardModel,
@@ -150,6 +150,66 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
   }
 }
 
+async function runSignalPropertiesHelperReferenceTest(): Promise<void> {
+  const badgeText = signal("Idle");
+  const hidden = signal(true);
+  const tone = signal<"muted" | "ok">("muted");
+  const model = computed(() => ({
+    hidden: hidden.value,
+    text: badgeText.value,
+    tone: tone.value,
+  }));
+  let renderCount = 0;
+
+  const harness = await mountSignalView(async () => {
+    const { h, render } = await import("preact");
+    return (host) => {
+      function SignalPropertiesView() {
+        renderCount += 1;
+        const { hidden, text, tone } = useSignalProperties(model, ["hidden", "text", "tone"] as const);
+        return h(
+          "div",
+          {},
+          h(
+            "span",
+            {
+              "data-variant": tone,
+              hidden,
+              id: "signalPropertiesBadge",
+            },
+            text,
+          ),
+        );
+      }
+
+      render(h(SignalPropertiesView, {}), host);
+      return {};
+    };
+  });
+
+  try {
+    await harness.flush();
+
+    const badge = requireElement<HTMLElement>(harness.host, "#signalPropertiesBadge");
+    assert.equal(renderCount, 1);
+    assert.equal(badge.textContent, "Idle");
+    assert.equal(badge.getAttribute("data-variant"), "muted");
+    assert.equal(badge.hidden, true);
+
+    badgeText.value = "Ready";
+    hidden.value = false;
+    tone.value = "ok";
+    await harness.flush();
+
+    assert.equal(renderCount, 1);
+    assert.equal(badge.textContent, "Ready");
+    assert.equal(badge.getAttribute("data-variant"), "ok");
+    assert.equal(badge.hidden, false);
+  } finally {
+    harness.cleanup();
+  }
+}
+
 async function runSettingsShellReferenceTest(): Promise<void> {
   const harness = await mountSignalView(async () => {
     const { mountSettingsShell } = await import("../src/app/views/settings_shell");
@@ -198,6 +258,10 @@ const referenceTests = [
   {
     name: "realtime live overview computed-driven output",
     run: runRealtimeLiveOverviewReferenceTest,
+  },
+  {
+    name: "useSignalProperties returns direct binding signals",
+    run: runSignalPropertiesHelperReferenceTest,
   },
   {
     name: "settings shell effect-backed subscription seam",
