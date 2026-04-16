@@ -29,6 +29,10 @@ export class UiSpectrumController {
       getChartBands: () => this.interaction.getChartBands(),
       getFocusMarker: () => this.interaction.getFocusMarker(),
       onCursorDataIndexChange: (cursorDataIdx) => this.interaction.setCursorDataIndex(cursorDataIdx),
+      onAsyncChartUpdate: () => {
+        this.interaction.applyPlotSelection();
+        this.updateSpectrumOverlay();
+      },
     });
     this.interaction = new SpectrumInteractionController({
       panel: this.panel,
@@ -83,6 +87,11 @@ export class UiSpectrumController {
   }
 
   private spectrumOverlayMessage(): string | null {
+    if (this.state.spectrum.chartLoadErrorDetail) {
+      return this.t("spectrum.chart_load_error", {
+        message: this.state.spectrum.chartLoadErrorDetail,
+      });
+    }
     if (this.state.transport.payloadError) {
       return this.state.transport.payloadError;
     }
@@ -97,6 +106,9 @@ export class UiSpectrumController {
     }
     if (this.state.transport.wsState === "stale") {
       return this.t("spectrum.stale");
+    }
+    if (this.state.spectrum.chartLoading && this.state.spectrum.hasSpectrumData) {
+      return this.t("spectrum.loading");
     }
     if (!this.state.spectrum.hasSpectrumData) {
       return this.t("spectrum.empty");

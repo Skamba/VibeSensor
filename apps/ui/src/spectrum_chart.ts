@@ -1,0 +1,151 @@
+import "uplot/dist/uPlot.min.css";
+
+import uPlot from "uplot";
+
+import { SPECTRUM_DB_MAX, SPECTRUM_DB_MIN } from "./config";
+import { getSpectrumCssVars } from "./spectrum_css_vars";
+
+export interface SpectrumSeriesMeta {
+  label: string;
+  color: string;
+}
+
+export interface SpectrumText {
+  title: string;
+  axisHz: string;
+  axisAmplitude: string;
+}
+
+export class SpectrumChart {
+  private static readonly FIXED_Y_RANGE: [number, number] = [SPECTRUM_DB_MIN, SPECTRUM_DB_MAX];
+
+  private plot: uPlot | null = null;
+  private readonly hostEl: HTMLElement;
+  private readonly measureEl: HTMLElement;
+  private readonly height: number;
+  private resizeObserver: ResizeObserver | null = null;
+  private resizeRaf: number | null = null;
+
+  constructor(hostEl: HTMLElement, height = 360, measureEl?: HTMLElement | null) {
+    this.hostEl = hostEl;
+    this.measureEl = measureEl || hostEl;
+    this.height = height;
+    this.startResizeObserver();
+  }
+
+  ensurePlot(seriesMeta: SpectrumSeriesMeta[], text: SpectrumText, plugins: uPlot.Plugin[] = []): void {
+    if (this.plot && this.plot.series.length === seriesMeta.length + 1) {
+      return;
+    }
+    const cssVars = getSpectrumCssVars();
+
+    this.destroyPlot();
+    const series: uPlot.Series[] = [{ label: "Hz" }];
+    for (const item of seriesMeta) {
+      series.push({ label: item.label, stroke: item.color, width: 2 });
+    }
+
+    this.plot = new uPlot(
+      {
+        title: "",
+        width: this.computeWidth(),
+        height: this.height,
+        focus: { alpha: 0.16 },
+        cursor: {
+          x: true,
+          y: true,
+          focus: { prox: 24 },
+          hover: { prox: 18 },
+          points: {
+            one: true,
+            size: 7,
+            width: 2,
+            fill: cssVars.surface,
+          },
+        },
+        scales: {
+          x: { time: false },
+          y: {
+            range: SpectrumChart.FIXED_Y_RANGE as uPlot.Range.MinMax,
+          },
+        },
+        axes: [
+          {
+            label: text.axisHz,
+            stroke: cssVars.muted,
+            grid: { stroke: cssVars.border, width: 1 },
+          },
+          {
+            label: text.axisAmplitude,
+            stroke: cssVars.muted,
+            grid: { stroke: cssVars.border, width: 1 },
+          },
+        ],
+        series,
+        plugins,
+      },
+      [[]],
+      this.hostEl,
+    );
+  }
+
+  setData(data: uPlot.AlignedData): void {
+    if (!this.plot) return;
+    this.plot.setData(data);
+  }
+
+  setSeriesIsolation(seriesIdx: number | null): void {
+    const plot = this.plot;
+    if (!plot) return;
+    plot.batch(() => {
+      for (let index = 1; index < plot.series.length; index += 1) {
+        plot.setSeries(index, { show: seriesIdx === null || index === seriesIdx }, false);
+      }
+    });
+  }
+
+  resize(): void {
+    if (!this.plot) return;
+    this.plot.setSize({ width: this.computeWidth(), height: this.height });
+  }
+
+  getSeriesCount(): number {
+    return this.plot ? this.plot.series.length : 0;
+  }
+
+  destroy(): void {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+    if (this.resizeRaf !== null) {
+      window.cancelAnimationFrame(this.resizeRaf);
+      this.resizeRaf = null;
+    }
+    this.destroyPlot();
+  }
+
+  private destroyPlot(): void {
+    if (this.plot) {
+      this.plot.destroy();
+      this.plot = null;
+    }
+  }
+
+  private startResizeObserver(): void {
+    this.resizeObserver = new ResizeObserver(() => {
+      if (this.resizeRaf !== null) {
+        window.cancelAnimationFrame(this.resizeRaf);
+      }
+      this.resizeRaf = window.requestAnimationFrame(() => {
+        this.resizeRaf = null;
+        this.resize();
+      });
+    });
+    this.resizeObserver.observe(this.measureEl);
+  }
+
+  private computeWidth(): number {
+    return Math.max(320, Math.floor(this.measureEl.getBoundingClientRect().width));
+  }
+}

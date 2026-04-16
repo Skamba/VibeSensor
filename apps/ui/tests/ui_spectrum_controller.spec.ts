@@ -93,6 +93,57 @@ test.describe("UiSpectrumController", () => {
     }
   });
 
+  test("shows the loading overlay while the chart chunk is still loading", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const UiSpectrumController = await importUiSpectrumController();
+      const state = createAppState();
+      state.transport.wsState = "connected";
+      state.transport.hasReceivedPayload = true;
+      state.spectrum.hasSpectrumData = true;
+      state.spectrum.chartLoading = true;
+      const panel = createPanelStub();
+
+      new UiSpectrumController({
+        state,
+        panel: panel.panel,
+        t: (key) => key,
+      });
+
+      expect(panel.lastOverlayMessage).toBe("spectrum.loading");
+    } finally {
+      restoreDocument();
+    }
+  });
+
+  test("shows chart load errors through the overlay", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const UiSpectrumController = await importUiSpectrumController();
+      const state = createAppState();
+      state.transport.wsState = "connected";
+      state.transport.hasReceivedPayload = true;
+      state.spectrum.hasSpectrumData = true;
+      state.spectrum.chartLoadErrorDetail = "chunk timeout";
+      const panel = createPanelStub();
+
+      new UiSpectrumController({
+        state,
+        panel: panel.panel,
+        t: (key, vars) => {
+          if (key === "spectrum.chart_load_error") {
+            return `chart load failed: ${String(vars?.message)}`;
+          }
+          return key;
+        },
+      });
+
+      expect(panel.lastOverlayMessage).toBe("chart load failed: chunk timeout");
+    } finally {
+      restoreDocument();
+    }
+  });
+
   test("updates spectrum header and overlay when the language changes", async () => {
     const restoreDocument = installDocumentStub();
     try {
