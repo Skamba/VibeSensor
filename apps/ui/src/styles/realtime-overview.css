@@ -1,0 +1,124 @@
+.dashboard-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.95fr);
+  grid-template-areas:
+    "overview overview"
+    "main controls";
+}
+.dashboard-grid__overview { grid-area: overview; min-width: 0; }
+.dashboard-grid__main { grid-area: main; min-width: 0; }
+.dashboard-grid__controls { grid-area: controls; min-width: 0; align-self: start; }
+.dashboard-grid__controls .card__header > :first-child { width: 100%; }
+.dashboard-grid__controls .card__subtle { text-align: left; }
+
+.live-overview__stats {
+  margin-bottom: var(--space-3);
+}
+
+.live-overview__stats .stat {
+  min-width: 0;
+}
+
+.live-overview__stats .stat__value {
+  line-height: 1.25;
+}
+
+.stat[data-variant="warn"] {
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-sm);
+  background: var(--warning-surface);
+  padding-inline: var(--space-3);
+}
+
+.stat[data-variant="warn"] .stat__label {
+  color: var(--warning-text);
+}
+
+.live-sensor-roster__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.live-sensor-roster {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.live-sensor-card {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: var(--space-3);
+}
+
+.live-sensor-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.live-sensor-card__header strong {
+  min-width: 0;
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+.live-sensor-card__status-dot {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  border: 1px solid rgba(20, 32, 51, 0.15);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65);
+}
+
+.live-sensor-card__status-dot--online {
+  background: var(--pill-ok-text);
+}
+
+.live-sensor-card__status-dot--offline {
+  background: var(--pill-bad-text);
+}
+
+.live-sensor-card--strongest {
+  border-color: rgba(124, 58, 237, 0.35);
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.08), var(--surface-2));
+}
+
+.live-sensor-card--strongest::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: var(--brand-500);
+}
+
+.live-sensor-card--strongest .live-sensor-card__header strong {
+  color: var(--brand-700);
+}
+
+.speed {
+  min-width: 0;
+  text-align: left;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 1180px) {
+  .live-overview__stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
