@@ -410,6 +410,20 @@
   padding: var(--space-3);
 }
 
+.log-pre {
+  margin: 0;
+  max-height: 15rem;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: var(--space-3);
+  white-space: pre-wrap;
+}
+
 .issue-list,
 .maintenance-attempt-list {
   list-style: none;

@@ -104,6 +104,17 @@ button.warn {
   border-color: var(--danger-700);
   color: var(--on-fill);
 }
+.btn--danger-quiet {
+  background: var(--button-danger-quiet-surface);
+  border-color: var(--button-danger-quiet-border);
+  color: var(--button-danger-quiet-text);
+}
+.btn--danger-quiet:hover {
+  background: var(--button-danger-quiet-hover-surface);
+  border-color: var(--button-danger-quiet-hover-border);
+  color: var(--button-danger-quiet-text);
+  filter: none;
+}
 
 button:disabled,
 .btn:disabled {
@@ -175,6 +186,66 @@ button[hidden],
 .card__subtle,
 .subtle,
 .mini-label { color: var(--muted); font-size: 0.86rem; }
+
+.empty-state {
+  position: absolute;
+  inset: 18% var(--space-4) auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(248, 249, 251, 0.94);
+  color: var(--muted);
+  padding: var(--space-4);
+}
+.empty-state::before {
+  content: "";
+  width: 34px;
+  height: 34px;
+  opacity: 0.75;
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%235a6b82' stroke-width='1.8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3 5h18M6 8v8m4-5v5m4-9v9m4-6v6M4 19h16'/%3E%3C/svg%3E");
+}
+.empty-state--inline {
+  position: static;
+  inset: auto;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  margin: var(--space-3) 0;
+  background: var(--surface-2);
+}
+.empty-state--actionable {
+  gap: var(--space-2);
+}
+.empty-state__title {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.empty-state__body {
+  color: var(--text);
+  line-height: 1.45;
+}
+.empty-state__detail {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+.empty-state__actions .btn {
+  width: auto;
+  min-width: 0;
+}
+.empty-state[hidden] { display: none !important; }
 
 .stat-grid {
   display: grid;

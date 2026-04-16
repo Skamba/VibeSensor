@@ -224,8 +224,9 @@ surfaces for reusable multi-action panels.
 need to import `api/types.ts` or generated WS contract files directly. Styling
 follows the same ownership split: `styles/app.css` is only the import
 aggregator, `tokens.css`/`theme.css` own global token and color-mode concerns,
-and `shell.css`, `components.css`, `maintenance.css`, `realtime.css`,
-`history.css`, and `settings.css` own the shared and feature-specific surfaces.
+`realtime.css` and `history.css` are thin manifests over their feature partials,
+and `shell.css`, `components.css`, `maintenance.css`, `realtime*.css`,
+`history*.css`, and `settings.css` own the shared and feature-specific surfaces.
 Shared visual state conventions prefer stable data/ARIA selectors such as
 `data-variant`, `data-choice-state`, `data-selected`, and `data-step-state`
 instead of controller-side variant class interpolation.
