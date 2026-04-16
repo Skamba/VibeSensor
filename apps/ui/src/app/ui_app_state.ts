@@ -1,4 +1,4 @@
-import type { SpectrumChart } from "../spectrum";
+import type { SpectrumChart } from "../spectrum_chart";
 import type { WsClient, WsUiState } from "../ws";
 import type {
   AdaptedClient,
@@ -309,6 +309,8 @@ export interface SpectrumState {
   spectra: { clients: Record<string, SpectrumClientData> };
   chartBands: ChartBand[];
   hasSpectrumData: boolean;
+  chartLoading: boolean;
+  chartLoadErrorDetail: string | null;
 }
 
 export interface AppState {
@@ -380,6 +382,8 @@ export function createAppState(): AppState {
       spectra: { clients: {} },
       chartBands: [],
       hasSpectrumData: false,
+      chartLoading: false,
+      chartLoadErrorDetail: null,
     }),
   };
 }

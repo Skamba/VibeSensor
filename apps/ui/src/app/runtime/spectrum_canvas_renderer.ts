@@ -1,7 +1,7 @@
 import type uPlot from "uplot";
 
 import { SPECTRUM_TWEEN_DURATION_MS } from "../../config";
-import { convertSpectrumAmplitudesToDbInPlace, SpectrumChart } from "../../spectrum";
+import { convertSpectrumAmplitudesToDbInPlace } from "../../spectrum";
 import { getSpectrumCssVars } from "../../spectrum_css_vars";
 import { chartSeriesPalette, orderBandFills } from "../../theme";
 import {
@@ -12,6 +12,8 @@ import type { AppState, ChartBand } from "../ui_app_state";
 import { signal } from "../ui_signals";
 import type { SpectrumPanelChartDom } from "./spectrum_panel_view";
 import { closestFrequencyIndex, freqGridsMatch, type SpectrumFocusMarker, type SpectrumSeriesEntry } from "./spectrum_shared";
+
+type SpectrumChartModule = Pick<typeof import("../../spectrum_chart"), "SpectrumChart">;
 
 const bandKeyPresentation: Record<string, { color: string; labelKey: string }> = {
   wheel_1x: { color: orderBandFills.wheel1, labelKey: "bands.wheel_1x" },
@@ -41,14 +43,21 @@ export interface SpectrumCanvasRendererDeps {
   getChartBands: () => readonly ChartBand[];
   getFocusMarker: () => SpectrumFocusMarker | null;
   onCursorDataIndexChange: (cursorDataIdx: number | null) => void;
+  onAsyncChartUpdate?: () => void;
+  loadChartModule?: () => Promise<SpectrumChartModule>;
 }
 
 export class SpectrumCanvasRenderer {
   private readonly spectrumBandPlugin: uPlot.Plugin;
+  private readonly onAsyncChartUpdate: () => void;
+  private readonly loadChartModule: () => Promise<SpectrumChartModule>;
 
   private spectrumTweenRaf: number | null = null;
+  private chartLoadPromise: Promise<void> | null = null;
 
   private spectrumLastFrame: SpectrumHeavyFrame | null = null;
+  private pendingPreparedFrame: SpectrumPreparedRenderData | null = null;
+  private chartModule: SpectrumChartModule | null = null;
 
   private readonly tweenAlpha = signal(1);
 
@@ -70,6 +79,8 @@ export class SpectrumCanvasRenderer {
     private readonly deps: SpectrumCanvasRendererDeps,
   ) {
     this.spectrumBandPlugin = this.createBandPlugin();
+    this.onAsyncChartUpdate = deps.onAsyncChartUpdate ?? (() => undefined);
+    this.loadChartModule = deps.loadChartModule ?? loadSpectrumChartModule;
   }
 
   prepareFrame(): SpectrumPreparedRenderData {
@@ -157,22 +168,21 @@ export class SpectrumCanvasRenderer {
   }
 
   renderPreparedFrame(prepared: SpectrumPreparedRenderData): void {
+    this.pendingPreparedFrame = prepared;
     this.currentEntries = prepared.entries;
     this.currentFreqAxis = prepared.freqAxis;
-
-    if (
-      !this.deps.state.spectrum.spectrumPlot
-      || this.deps.state.spectrum.spectrumPlot.getSeriesCount() !== prepared.entries.length + 1
-    ) {
-      this.recreateSpectrumPlot(prepared.entries);
-    }
 
     if (!prepared.frame) {
       this.stopSpectrumTween();
       this.currentEntries = [];
       this.currentFreqAxis = [];
       this.spectrumLastFrame = null;
+      this.pendingPreparedFrame = null;
       this.deps.state.spectrum.spectrumPlot?.setData([[], ...prepared.entries.map(() => [] as number[])]);
+      return;
+    }
+
+    if (!this.ensureSpectrumPlot(prepared.entries)) {
       return;
     }
 
@@ -344,14 +354,17 @@ export class SpectrumCanvasRenderer {
     };
   }
 
-  private recreateSpectrumPlot(seriesMeta: readonly SpectrumSeriesEntry[]): void {
+  private recreateSpectrumPlot(
+    seriesMeta: readonly SpectrumSeriesEntry[],
+    chartModule: SpectrumChartModule,
+  ): void {
     this.stopSpectrumTween();
     this.spectrumLastFrame = null;
     if (this.deps.state.spectrum.spectrumPlot) {
       this.deps.state.spectrum.spectrumPlot.destroy();
       this.deps.state.spectrum.spectrumPlot = null;
     }
-    this.deps.state.spectrum.spectrumPlot = new SpectrumChart(
+    this.deps.state.spectrum.spectrumPlot = new chartModule.SpectrumChart(
       this.deps.dom.specChart,
       360,
       this.deps.dom.specChartWrap,
@@ -367,9 +380,72 @@ export class SpectrumCanvasRenderer {
     );
   }
 
+  private ensureSpectrumPlot(seriesMeta: readonly SpectrumSeriesEntry[]): boolean {
+    if (
+      this.deps.state.spectrum.spectrumPlot
+      && this.deps.state.spectrum.spectrumPlot.getSeriesCount() === seriesMeta.length + 1
+    ) {
+      this.deps.state.spectrum.chartLoadErrorDetail = null;
+      return true;
+    }
+    if (this.chartModule) {
+      this.deps.state.spectrum.chartLoading = false;
+      this.deps.state.spectrum.chartLoadErrorDetail = null;
+      this.recreateSpectrumPlot(seriesMeta, this.chartModule);
+      return this.deps.state.spectrum.spectrumPlot !== null;
+    }
+    if (this.chartLoadPromise) {
+      return false;
+    }
+
+    this.deps.state.spectrum.chartLoading = true;
+    this.deps.state.spectrum.chartLoadErrorDetail = null;
+    this.chartLoadPromise = this.loadChartModule()
+      .then((module) => {
+        this.chartModule = module;
+        const latestPrepared = this.pendingPreparedFrame;
+        if (!latestPrepared?.frame) {
+          return;
+        }
+        this.recreateSpectrumPlot(latestPrepared.entries, module);
+        const rerender = latestPrepared;
+        this.pendingPreparedFrame = null;
+        this.renderPreparedFrame(rerender);
+      })
+      .catch((error: unknown) => {
+        this.deps.state.spectrum.chartLoadErrorDetail = getChartLoadErrorDetail(error);
+      })
+      .finally(() => {
+        this.deps.state.spectrum.chartLoading = false;
+        this.chartLoadPromise = null;
+        this.onAsyncChartUpdate();
+      });
+
+    return false;
+  }
+
   private formatHz(value: number): string {
     return value >= 100 ? value.toFixed(0) : value.toFixed(1);
   }
+}
+
+let spectrumChartModulePromise: Promise<SpectrumChartModule> | null = null;
+
+function loadSpectrumChartModule(): Promise<SpectrumChartModule> {
+  if (!spectrumChartModulePromise) {
+    spectrumChartModulePromise = import("../../spectrum_chart");
+  }
+  return spectrumChartModulePromise;
+}
+
+function getChartLoadErrorDetail(error: unknown): string {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+  if (typeof error === "string" && error.trim().length > 0) {
+    return error;
+  }
+  return "Unknown error";
 }
 
 function interpolateToTarget(
