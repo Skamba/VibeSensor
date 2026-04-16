@@ -1,10 +1,10 @@
 import { render } from "preact";
-import { useEffect, useRef } from "preact/hooks";
+import { useRef } from "preact/hooks";
 
 import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
 import {
   signal,
-  useSignal,
+  useSignalEffect,
   type ReadonlySignal,
 } from "../ui_signals";
 import {
@@ -66,7 +66,6 @@ function CarsPanel(props: {
   wizardFocusRequest: ReadonlySignal<CarsWizardFocusRequest | null>;
 }) {
   const state = props.state.value;
-  const wizardFocusRequest = props.wizardFocusRequest.value;
   const model = state.model?.value ?? DEFAULT_CARS_PANEL_MODEL;
   const wizardModel = state.wizardModel?.value ?? createClosedCarsWizardRenderModel();
   const addCarBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -90,49 +89,62 @@ function CarsPanel(props: {
     variantOption: null,
   });
   const lastReturnFocusTargetRef = useRef<HTMLElement | null>(null);
-  const lastWizardOpenState = useSignal(wizardModel.isOpen);
+  const lastHandledFocusRequestTokenRef = useRef(0);
+  const lastWizardOpenStateRef = useRef(wizardModel.isOpen);
 
-  useEffect(() => {
-    const wasOpen = lastWizardOpenState.value;
-    if (wizardModel.isOpen && !wasOpen) {
+  useSignalEffect(() => {
+    const isOpen = props.state.value.wizardModel?.value.isOpen ?? false;
+    const wasOpen = lastWizardOpenStateRef.current;
+    if (isOpen && !wasOpen) {
       const activeElement = document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
       lastReturnFocusTargetRef.current =
         activeElement && activeElement !== document.body ? activeElement : addCarBtnRef.current;
-      if (addCarWizardRef.current) {
-        addCarWizardRef.current.scrollTop = 0;
-      }
+      queueMicrotask(() => {
+        if (addCarWizardRef.current) {
+          addCarWizardRef.current.scrollTop = 0;
+        }
+      });
     }
-    if (!wizardModel.isOpen && wasOpen) {
+    if (!isOpen && wasOpen) {
       const target = lastReturnFocusTargetRef.current;
-      const safeTarget = target && document.contains(target) ? target : addCarBtnRef.current;
-      focusElement(safeTarget);
       lastReturnFocusTargetRef.current = null;
+      queueMicrotask(() => {
+        const safeTarget = target && document.contains(target) ? target : addCarBtnRef.current;
+        focusElement(safeTarget);
+      });
     }
-    lastWizardOpenState.value = wizardModel.isOpen;
-  }, [wizardModel.isOpen]);
+    lastWizardOpenStateRef.current = isOpen;
+  });
 
-  useEffect(() => {
-    if (!wizardFocusRequest) {
+  useSignalEffect(() => {
+    const wizardFocusRequest = props.wizardFocusRequest.value;
+    if (
+      !wizardFocusRequest ||
+      wizardFocusRequest.token === lastHandledFocusRequestTokenRef.current
+    ) {
       return;
     }
-    focusElement(
-      resolveWizardFocusTarget(wizardFocusRequest.target, {
-        closeButton: wizardCloseBtnRef.current,
-        customBrandInput: wizardCustomBrandInputRef.current,
-        customModelInput: wizardCustomModelInputRef.current,
-        customTypeInput: wizardCustomTypeInputRef.current,
-        finalDriveInput: wizFinalDriveInputRef.current,
-        manualAddButton: wizardManualAddBtnRef.current,
-        optionRefs: optionRefs.current,
-        rimInput: wizRimInputRef.current,
-        tireAspectInput: wizTireAspectInputRef.current,
-        tireWidthInput: wizTireWidthInputRef.current,
-        topGearInput: wizGearRatioInputRef.current,
-      }),
-    );
-  }, [wizardFocusRequest]);
+    lastHandledFocusRequestTokenRef.current = wizardFocusRequest.token;
+    queueMicrotask(() => {
+      focusElement(
+        resolveWizardFocusTarget(wizardFocusRequest.target, {
+          closeButton: wizardCloseBtnRef.current,
+          customBrandInput: wizardCustomBrandInputRef.current,
+          customModelInput: wizardCustomModelInputRef.current,
+          customTypeInput: wizardCustomTypeInputRef.current,
+          finalDriveInput: wizFinalDriveInputRef.current,
+          manualAddButton: wizardManualAddBtnRef.current,
+          optionRefs: optionRefs.current,
+          rimInput: wizRimInputRef.current,
+          tireAspectInput: wizTireAspectInputRef.current,
+          tireWidthInput: wizTireWidthInputRef.current,
+          topGearInput: wizGearRatioInputRef.current,
+        }),
+      );
+    });
+  });
 
   const wizardRefs: CarsWizardElementRefs = {
     addCarWizardRef,
