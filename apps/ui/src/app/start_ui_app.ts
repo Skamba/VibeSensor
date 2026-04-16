@@ -1,4 +1,3 @@
-import "uplot/dist/uPlot.min.css";
 import "../styles/app.css";
 import { mountUiPanels } from "./ui_panel_bootstrap";
 import { createAppState } from "./ui_app_state";

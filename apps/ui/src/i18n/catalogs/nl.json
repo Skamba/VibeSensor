@@ -487,6 +487,7 @@
   "spectrum.loading": "Spectrum laden...",
   "spectrum.stale": "Data is verouderd — wachten op nieuwe frames.",
   "spectrum.empty": "Verbonden, maar nog geen spectrumdata.",
+  "spectrum.chart_load_error": "Spectrumgrafiek laden mislukt: {message}",
   "spectrum.inspector_idle": "Beweeg over de grafiek of kies een spoor om de piek te bekijken.",
   "spectrum.inspector_hover": "{sensor} · {freq} Hz · {value} dB · {bands}",
   "spectrum.inspector_focus_selected": "Focus: {sensor} · {freq} Hz · {value} dB · {bands}",

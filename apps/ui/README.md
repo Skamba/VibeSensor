@@ -153,7 +153,8 @@ source-of-truth export commands remain the only writers for those files.
 | `ws.ts` | WebSocket client with auto-reconnect, stale detection, and direct writes into the signal-backed transport slice |
 | `config.ts` | Centralized UI tuning constants for polling intervals, spectrum ranges, and history heatmap positions |
 | `i18n.ts` | Internationalization dictionary (English, Dutch) |
-| `spectrum.ts` | uPlot chart wrapper for interactive spectrum visualization |
+| `spectrum.ts` | Shared spectrum math helpers such as amplitude-to-dB conversion that stay safe to import on the startup path |
+| `spectrum_chart.ts` | Lazy-loaded uPlot chart wrapper and stylesheet entry for interactive spectrum visualization |
 | `spectrum_css_vars.ts` | Shared cached spectrum CSS-variable snapshot for chart and canvas renderer colors |
 | `server_payload.ts` | Transport-boundary WebSocket payload adaptation and schema-version guardrails around the generated WS types |
 | `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
