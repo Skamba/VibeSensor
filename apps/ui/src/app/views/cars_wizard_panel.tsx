@@ -1,4 +1,5 @@
-import type { CarsFeatureFocusTarget, CarsFeatureManualInputState } from "../features/cars_feature_workflow";
+import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
+import type { CarsFeatureManualInputState } from "../features/cars_manual_input";
 import { useUiTranslation } from "../ui_i18n";
 import type {
   CarsWizardOptionItem,

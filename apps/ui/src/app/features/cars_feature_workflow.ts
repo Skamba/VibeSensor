@@ -4,17 +4,28 @@ import type {
   CarLibraryTireOption,
   CarLibraryVariant,
 } from "../../transport/http_models";
+import {
+  cloneManualInputs,
+  createCarsManualInputStore,
+  firstMissingManualInputField,
+  tireInputsFromOption,
+  type CarsFeatureManualInputState,
+} from "./cars_manual_input";
+import {
+  createErrorOptionsState,
+  createIdleOptionsState,
+  createLoadingOptionsState,
+  createReadyOptionsState,
+  type CarsFeatureOptionsState,
+} from "./cars_option_state";
 import type { WizardSummaryData } from "../views/car_wizard_view";
 import {
   buildWizardCarName,
   buildWizardSummaryData,
   canFinishWizard,
-  DEFAULT_CARS_WIZARD_MANUAL_INPUTS,
   createInitialWizardState,
   getResolvedWizardSpecBranch,
   getWizardActionHint,
-  readWizardManualGearboxValues,
-  readWizardManualTireValues,
   resolveGearboxes,
   resolveTireOptions,
   type WizardSpecBranch,
@@ -30,22 +41,6 @@ import {
   signal,
   type ReadonlySignal,
 } from "../ui_signals";
-
-export interface CarsFeatureManualInputState {
-  finalDrive: string;
-  rim: string;
-  tireAspect: string;
-  tireWidth: string;
-  topGear: string;
-}
-
-type CarsFeatureOptionsStatus = "idle" | "loading" | "error" | "ready";
-
-export interface CarsFeatureOptionsState<TOption> {
-  message: string | null;
-  options: readonly TOption[];
-  status: CarsFeatureOptionsStatus;
-}
 
 export type CarsFeatureFocusTarget =
   | "brand-option"
@@ -120,78 +115,22 @@ export interface CarsFeatureWorkflow {
   submitCustomType(value: string): Promise<void>;
 }
 
-function createIdleOptionsState<TOption>(): CarsFeatureOptionsState<TOption> {
-  return {
-    message: null,
-    options: [],
-    status: "idle",
-  };
-}
-
-function createErrorOptionsState<TOption>(message: string): CarsFeatureOptionsState<TOption> {
-  return {
-    message,
-    options: [],
-    status: "error",
-  };
-}
-
-function createLoadingOptionsState<TOption>(message: string): CarsFeatureOptionsState<TOption> {
-  return {
-    message,
-    options: [],
-    status: "loading",
-  };
-}
-
-function createReadyOptionsState<TOption>(options: readonly TOption[]): CarsFeatureOptionsState<TOption> {
-  return {
-    message: null,
-    options: [...options],
-    status: "ready",
-  };
-}
-
-function cloneManualInputs(inputs: CarsFeatureManualInputState): CarsFeatureManualInputState {
-  return { ...inputs };
-}
-
-function parsePositiveValue(value: string): number | null {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
+const MANUAL_INPUT_FOCUS_TARGETS: Record<
+  keyof CarsFeatureManualInputState,
+  CarsFeatureFocusTarget
+> = {
+  finalDrive: "manual-final-drive",
+  rim: "manual-rim",
+  tireAspect: "manual-tire-aspect",
+  tireWidth: "manual-tire-width",
+  topGear: "manual-top-gear",
+};
 
 function missingManualInputFocusTarget(
   inputs: CarsFeatureManualInputState,
 ): CarsFeatureFocusTarget | null {
-  if (parsePositiveValue(inputs.tireWidth) == null) {
-    return "manual-tire-width";
-  }
-  if (parsePositiveValue(inputs.tireAspect) == null) {
-    return "manual-tire-aspect";
-  }
-  if (parsePositiveValue(inputs.rim) == null) {
-    return "manual-rim";
-  }
-  if (parsePositiveValue(inputs.finalDrive) == null) {
-    return "manual-final-drive";
-  }
-  if (parsePositiveValue(inputs.topGear) == null) {
-    return "manual-top-gear";
-  }
-  return null;
-}
-
-function tireInputsFromOption(
-  option: CarLibraryTireOption,
-  current: CarsFeatureManualInputState,
-): CarsFeatureManualInputState {
-  return {
-    ...current,
-    rim: String(option.rim_in),
-    tireAspect: String(option.tire_aspect_pct),
-    tireWidth: String(option.tire_width_mm),
-  };
+  const missingField = firstMissingManualInputField(inputs);
+  return missingField ? MANUAL_INPUT_FOCUS_TARGETS[missingField] : null;
 }
 
 export function createCarsFeatureWorkflow(
@@ -200,11 +139,8 @@ export function createCarsFeatureWorkflow(
   const transport = createCarsFeatureTransport(deps.transport);
   const wizardState = signal<WizardState>(createInitialWizardState());
   const isOpen = signal(false);
-  const manualFinalDrive = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.finalDrive);
-  const manualRim = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.rim);
-  const manualTireAspect = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.tireAspect);
-  const manualTireWidth = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.tireWidth);
-  const manualTopGear = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.topGear);
+  const wizardStep = computed(() => wizardState.value.step);
+  const manualInputs = createCarsManualInputStore(wizardStep);
   const brandOptions = signal(createIdleOptionsState<string>());
   const typeOptions = signal(createIdleOptionsState<string>());
   const modelOptions = signal(createIdleOptionsState<CarLibraryModel>());
@@ -213,44 +149,13 @@ export function createCarsFeatureWorkflow(
   const gearboxOptions = signal<readonly CarLibraryGearbox[]>([]);
   const noGearboxesMessage = signal<string | null>(null);
 
-  function readManualInputs(): CarsFeatureManualInputState {
-    return {
-      finalDrive: manualFinalDrive.value,
-      rim: manualRim.value,
-      tireAspect: manualTireAspect.value,
-      tireWidth: manualTireWidth.value,
-      topGear: manualTopGear.value,
-    };
-  }
-
-  function writeManualInputs(inputs: CarsFeatureManualInputState): void {
-    manualFinalDrive.value = inputs.finalDrive;
-    manualRim.value = inputs.rim;
-    manualTireAspect.value = inputs.tireAspect;
-    manualTireWidth.value = inputs.tireWidth;
-    manualTopGear.value = inputs.topGear;
-  }
-
   function updateWizardState(mutator: (state: WizardState) => void): void {
     const nextState = { ...wizardState.value };
     mutator(nextState);
     wizardState.value = nextState;
   }
-
-  const manualGearbox = computed(() =>
-    readWizardManualGearboxValues(wizardState.value.step, {
-      finalDrive: manualFinalDrive.value,
-      topGear: manualTopGear.value,
-    })
-  );
-
-  const manualTire = computed(() =>
-    readWizardManualTireValues(wizardState.value.step, {
-      aspect: manualTireAspect.value,
-      rim: manualRim.value,
-      width: manualTireWidth.value,
-    })
-  );
+  const manualGearbox = manualInputs.manualGearbox;
+  const manualTire = manualInputs.manualTire;
 
   const resolvedSpecBranch = computed(() => getResolvedWizardSpecBranch(wizardState.value));
 
@@ -289,7 +194,7 @@ export function createCarsFeatureWorkflow(
 
   const renderState = computed<CarsFeatureRenderState>(() => {
     const state = wizardState.value;
-    const inputs = readManualInputs();
+    const inputs = manualInputs.read();
     const currentBrandOptions = brandOptions.value;
     const currentTypeOptions = typeOptions.value;
     const currentModelOptions = modelOptions.value;
@@ -437,7 +342,7 @@ export function createCarsFeatureWorkflow(
 
   function loadSpecsStep(): void {
     const state = wizardState.value;
-    const currentManualInputs = readManualInputs();
+    const currentManualInputs = manualInputs.read();
     const nextTireOptions = resolveTireOptions(state.selectedModel, state.selectedVariant);
     const nextGearboxOptions = resolveGearboxes(state.selectedModel, state.selectedVariant);
     const nextSelectedTire = nextTireOptions.length > 0
@@ -456,7 +361,7 @@ export function createCarsFeatureWorkflow(
       tireOptions.value = nextTireOptions;
       gearboxOptions.value = nextGearboxOptions;
       noGearboxesMessage.value = nextNoGearboxesMessage;
-      writeManualInputs(nextManualInputs);
+      manualInputs.write(nextManualInputs);
       updateWizardState((nextState) => {
         nextState.selectedTire = nextSelectedTire;
         if (!nextTireOptions.length) {
@@ -503,7 +408,7 @@ export function createCarsFeatureWorkflow(
 
     async finishWizard(): Promise<boolean> {
       const state = wizardState.value;
-      const inputs = readManualInputs();
+      const inputs = manualInputs.read();
       const resolvedBranch = getResolvedWizardSpecBranch(state);
       if (resolvedBranch === "library") {
         const tire = state.selectedTire;
@@ -572,7 +477,7 @@ export function createCarsFeatureWorkflow(
 
     handleManualInputsChanged(inputs: CarsFeatureManualInputState): void {
       batch(() => {
-        writeManualInputs(inputs);
+        manualInputs.write(inputs);
         if (isOpen.value && wizardState.value.step === 4) {
           updateWizardState((state) => {
             state.specBranch = "manual";
@@ -644,7 +549,7 @@ export function createCarsFeatureWorkflow(
         updateWizardState((state) => {
           state.selectedTire = selectedTire;
         });
-        writeManualInputs(tireInputsFromOption(selectedTire, readManualInputs()));
+        manualInputs.write(tireInputsFromOption(selectedTire, manualInputs.read()));
       });
     },
 
