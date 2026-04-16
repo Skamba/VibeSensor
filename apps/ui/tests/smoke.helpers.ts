@@ -69,13 +69,16 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
 export async function confirmPrompt(page: Page): Promise<void> {
   const dialog = page.locator(".confirmation-dialog");
   await expect(dialog).toBeVisible();
-  await dialog.locator(".btn--danger").click();
+  const confirmButton = dialog.locator(".btn--danger");
+  await expect(confirmButton).toBeFocused();
+  await confirmButton.click();
   await expect(dialog).toHaveCount(0);
 }
 
 export async function cancelPrompt(page: Page): Promise<void> {
   const dialog = page.locator(".confirmation-dialog");
   await expect(dialog).toBeVisible();
+  await expect(dialog.locator(".btn--danger")).toBeFocused();
   await dialog.locator("button:not(.btn--danger)").click();
   await expect(dialog).toHaveCount(0);
 }
