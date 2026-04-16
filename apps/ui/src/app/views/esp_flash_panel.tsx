@@ -113,12 +113,12 @@ export interface EspFlashPanelActionHandlers {
 
 export interface EspFlashPanelView {
   bindActions(handlers: EspFlashPanelActionHandlers): void;
-  setModel(model: EspFlashPanelRenderModel): void;
+  bindModel(model: ReadonlySignal<EspFlashPanelRenderModel>): void;
 }
 
 type EspFlashPanelBridgeState = {
   actions: EspFlashPanelActionHandlers | null;
-  model: EspFlashPanelRenderModel;
+  model: ReadonlySignal<EspFlashPanelRenderModel> | null;
 };
 
 const DEFAULT_ESP_FLASH_PANEL_MODEL: EspFlashPanelRenderModel = {
@@ -308,7 +308,7 @@ function EspFlashPanel(props: {
   state: ReadonlySignal<EspFlashPanelBridgeState>;
 }) {
   const state = props.state.value;
-  const { model } = state;
+  const model = state.model?.value ?? DEFAULT_ESP_FLASH_PANEL_MODEL;
   const t = useUiTranslation();
   const logPanelRef = useRef<HTMLDivElement | null>(null);
 
@@ -546,7 +546,7 @@ function EspFlashPanel(props: {
 export function mountEspFlashPanel(host: HTMLElement): EspFlashPanelView {
   const state = signal<EspFlashPanelBridgeState>({
     actions: null,
-    model: DEFAULT_ESP_FLASH_PANEL_MODEL,
+    model: null,
   });
   render(<EspFlashPanel state={state} />, host);
 
@@ -554,7 +554,7 @@ export function mountEspFlashPanel(host: HTMLElement): EspFlashPanelView {
     bindActions(handlers) {
       state.value = { ...state.value, actions: handlers };
     },
-    setModel(model) {
+    bindModel(model) {
       state.value = { ...state.value, model };
     },
   };

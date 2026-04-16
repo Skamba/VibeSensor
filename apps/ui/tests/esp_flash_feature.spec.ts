@@ -24,9 +24,15 @@ import {
 } from "./async_test_helpers";
 import type { TimerHarness } from "./async_test_helpers";
 import { createPanel, installFakeDomGlobals } from "./dom_render_test_support";
-import { signal } from "../src/app/ui_signals";
+import { effect, signal, type ReadonlySignal } from "../src/app/ui_signals";
 
 type ClickListener = (() => void) | null;
+
+function bindReactiveModel<T>(model: ReadonlySignal<T>, renderModel: (value: T) => void): void {
+  effect(() => {
+    renderModel(model.value);
+  });
+}
 
 function pendingPollDelays(timers: TimerHarness): number[] {
   return timers.pendingDelays().filter((delay) => delay !== 10_000);
@@ -609,8 +615,10 @@ function createDeps() {
           handlers.onSelectPort(dom.espFlashPortSelect?.value || "__auto__");
         });
       },
-      setModel(model: EspFlashPanelRenderModel) {
-        renderEspFlashPanelDom(dom, model);
+      bindModel(model) {
+        bindReactiveModel(model, (nextModel) => {
+          renderEspFlashPanelDom(dom, nextModel);
+        });
       },
     },
     ports: navigation.ports,
@@ -786,8 +794,10 @@ function createUpdateDeps() {
             handlers.onCancel();
           });
         },
-        setModel(model: UpdatePanelRenderModel) {
-          renderUpdatePanelDom(dom, model);
+        bindModel(model) {
+          bindReactiveModel(model, (nextModel) => {
+            renderUpdatePanelDom(dom, nextModel);
+          });
         },
       },
       internet: {
@@ -811,8 +821,10 @@ function createUpdateDeps() {
         focusSsidInput() {
           internetDom.updateSsidInput?.focus();
         },
-        setModel(model: InternetPanelRenderModel) {
-          renderInternetPanelDom(internetDom, model);
+        bindModel(model) {
+          bindReactiveModel(model, (nextModel) => {
+            renderInternetPanelDom(internetDom, nextModel);
+          });
         },
       },
     },

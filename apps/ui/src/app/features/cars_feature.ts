@@ -4,6 +4,7 @@ import type {
   CarsWizardPanelBridge,
 } from "../views/cars_panel";
 import { buildCarsWizardRenderModel } from "../views/car_wizard_view";
+import { computed } from "../ui_signals";
 import { createCarsFeatureWorkflow } from "./cars_feature_workflow";
 
 export interface CarsFeatureDeps {
@@ -32,16 +33,15 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       focus(target): void {
         ctx.panel.focus(target);
       },
-      render(state): void {
-        ctx.panel.setModel(
-          buildCarsWizardRenderModel(state, {
-            fmt: ctx.formatting.fmt,
-            t: ctx.services.t,
-          }),
-        );
-      },
     },
   });
+  const wizardModel = computed(() =>
+    buildCarsWizardRenderModel(workflow.renderState.value, {
+      fmt: ctx.formatting.fmt,
+      t: ctx.services.t,
+    })
+  );
+  ctx.panel.bindModel(wizardModel);
   let handlersBound = false;
 
   function openWizard(): void {

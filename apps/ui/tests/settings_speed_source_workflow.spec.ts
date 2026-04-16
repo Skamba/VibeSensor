@@ -10,13 +10,11 @@ import type {
   SpeedSourceRequest,
 } from "../src/transport/http_models";
 import { createAppState } from "../src/app/ui_app_state";
-import type { SettingsSpeedSourceRenderState } from "../src/app/views/settings_speed_source_presenter";
 
 type WorkflowHarness = {
   contextVisible: boolean;
   errors: string[];
   focuses: string[];
-  renderStates: SettingsSpeedSourceRenderState[];
 };
 
 function createHarness(): WorkflowHarness {
@@ -24,7 +22,6 @@ function createHarness(): WorkflowHarness {
     contextVisible: false,
     errors: [],
     focuses: [],
-    renderStates: [],
   };
 }
 
@@ -43,16 +40,6 @@ function createViewPorts(
     },
     isObdConfigVisible(): boolean {
       return harness.contextVisible;
-    },
-    render(state): void {
-      harness.renderStates.push({
-        ...state,
-        manualSpeedFeedback: state.manualSpeedFeedback ? { ...state.manualSpeedFeedback } : null,
-        saveFeedback: state.saveFeedback ? { ...state.saveFeedback } : null,
-        scannedDevices: [...state.scannedDevices],
-        settings: { ...state.settings },
-        staleTimeoutFeedback: state.staleTimeoutFeedback ? { ...state.staleTimeoutFeedback } : null,
-      });
     },
   };
 }
@@ -136,7 +123,7 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
       speed_source: "gps",
       stale_timeout_s: 5,
     });
-    expect(harness.renderStates.at(-1)?.selectedMode).toBe("gps");
+    expect(workflow.getRenderState().selectedMode).toBe("gps");
     expect(appState.settings.speedSource).toBe("gps");
     expect(appState.settings.manualSpeedKph).toBe(90);
     expect(harness.focuses).toEqual([]);
@@ -161,7 +148,7 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
     await workflow.saveSpeedSource();
 
     expect(harness.focuses).toEqual(["scan"]);
-    expect(harness.renderStates.at(-1)).toMatchObject({
+    expect(workflow.getRenderState()).toMatchObject({
       obdSelectionError: true,
       selectedMode: "obd2",
       saveFeedback: {
@@ -221,7 +208,7 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
     await workflow.scanObdDevices();
     await workflow.pairObdDevice(scannedDevice.mac_address);
 
-    expect(harness.renderStates.at(-1)?.scannedDevices).toEqual([{
+    expect(workflow.getRenderState().scannedDevices).toEqual([{
       ...scannedDevice,
       connected: true,
       paired: true,
@@ -282,6 +269,32 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
     workflow.handleNavigateContext();
 
     expect(pollingStarts).toBeGreaterThan(1);
+    expect(harness.errors).toEqual([]);
+  });
+
+  test("reflects polled effective speed updates in render state", () => {
+    const harness = createHarness();
+    const appState = createAppState();
+    const workflow = createSettingsSpeedSourceWorkflow({
+      createPollingController: () => ({
+        restart() {},
+        start() {},
+        stop() {},
+      }),
+      renderSpeedReadout: () => undefined,
+      settings: appState.settings,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      t: createTranslator(),
+      view: createViewPorts(harness),
+    });
+
+    appState.settings.speedSource = "obd2";
+    appState.settings.resolvedSpeedSource = "obd2";
+    appState.settings.gpsEffectiveSpeedKph = 81;
+
+    expect(workflow.getRenderState().settings.gpsEffectiveSpeedKph).toBe(81);
     expect(harness.errors).toEqual([]);
   });
 });

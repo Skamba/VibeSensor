@@ -22,8 +22,8 @@ test("bindHandlers uses typed panel actions and navigation subscriptions", () =>
       isObdConfigVisible() {
         return false;
       },
-      setModel() {},
-      setDiagnostics() {},
+      bindModel() {},
+      bindDiagnostics() {},
     },
     services: {
       t: (key) => key,

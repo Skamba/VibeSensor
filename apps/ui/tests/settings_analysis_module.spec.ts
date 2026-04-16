@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { createSettingsAnalysisModule } from "../src/app/features/settings_analysis_module";
 import { createAppState } from "../src/app/ui_app_state";
+import { effect } from "../src/app/ui_signals";
 import type {
   AnalysisPanelActionHandlers,
   AnalysisPanelFieldKey,
@@ -55,11 +56,13 @@ test("settings analysis module renders guidance and surfaces invalid input throu
     openGuidance() {
       guidanceOpened = true;
     },
-    setModel(model) {
-      renders.push(model);
-    },
-    setCarAvailability() {
+    bindCarAvailability() {
       return;
+    },
+    bindModel(model) {
+      effect(() => {
+        renders.push(model.value);
+      });
     },
   };
 

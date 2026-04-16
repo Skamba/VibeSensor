@@ -9,7 +9,16 @@ import {
   resolveEffectiveSpeedSource,
   type DisplayedSpeedSourceMode,
 } from "../speed_source_state";
-import type { SettingsState } from "../ui_app_state";
+import {
+  trackAppStateSlice,
+  type SettingsState,
+} from "../ui_app_state";
+import {
+  batch,
+  computed,
+  signal,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type { SettingsSpeedSourceRenderState } from "../views/settings_speed_source_presenter";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
 import {
@@ -29,7 +38,6 @@ export interface SettingsSpeedSourceWorkflowViewPorts {
   focusScanObdDevices(): void;
   focusStaleTimeoutInput(): void;
   isObdConfigVisible(): boolean;
-  render(state: SettingsSpeedSourceRenderState): void;
 }
 
 export interface SettingsSpeedSourceWorkflowDeps {
@@ -44,13 +52,13 @@ export interface SettingsSpeedSourceWorkflowDeps {
 
 export interface SettingsSpeedSourceWorkflow {
   getRenderState(): SettingsSpeedSourceRenderState;
+  readonly renderState: ReadonlySignal<SettingsSpeedSourceRenderState>;
   handleManualSpeedInput(value: string): void;
   handleNavigateContext(): void;
   handleSpeedSourceChanged(mode: DisplayedSpeedSourceMode): void;
   handleStaleTimeoutInput(value: string): void;
   loadSpeedSourceFromServer(): Promise<void>;
   pairObdDevice(macAddress: string): Promise<void>;
-  renderCurrentState(): void;
   saveSpeedSource(): Promise<void>;
   scanObdDevices(mode?: "manual" | "background"): Promise<void>;
   syncFromSettings(): void;
@@ -128,56 +136,61 @@ export function createSettingsSpeedSourceWorkflow(
   const transport = createSettingsSpeedSourceTransport(deps.transport);
   const createPolling = deps.createPollingController ?? createPollingController;
   const speedSourceState = createSpeedSourceDerivedState(deps.settings);
-
-  let speedSourceDraftDirty = false;
-  let selectedMode: DisplayedSpeedSourceMode = speedSourceState.displayedMode.value;
-  let manualSpeedInputValue = deps.settings.manualSpeedKph != null ? String(deps.settings.manualSpeedKph) : "";
-  let staleTimeoutInputValue = "";
+  const speedSourceDraftDirty = signal(false);
+  const selectedMode = signal<DisplayedSpeedSourceMode>(speedSourceState.displayedMode.value);
+  const manualSpeedInputValue = signal(
+    deps.settings.manualSpeedKph != null ? String(deps.settings.manualSpeedKph) : "",
+  );
+  const staleTimeoutInputValue = signal("");
   let speedSourceContextVisible = false;
   let backgroundRescanRequested = false;
-  let scannedDevices: ObdDevicePayload[] = [];
-  let scanInFlight = false;
-  let pairInFlightMac: string | null = null;
-  let obdScanStatusMessage: string | null = null;
-  let manualSpeedFeedback: SettingsFeedbackMessage | null = null;
-  let staleTimeoutFeedback: SettingsFeedbackMessage | null = null;
-  let saveFeedback: SettingsFeedbackMessage | null = null;
-  let obdSelectionError = false;
-  let diagnosticsOpen = false;
+  const scannedDevices = signal<readonly ObdDevicePayload[]>([]);
+  const scanInFlight = signal(false);
+  const pairInFlightMac = signal<string | null>(null);
+  const obdScanStatusMessage = signal<string | null>(null);
+  const manualSpeedFeedback = signal<SettingsFeedbackMessage | null>(null);
+  const staleTimeoutFeedback = signal<SettingsFeedbackMessage | null>(null);
+  const saveFeedback = signal<SettingsFeedbackMessage | null>(null);
+  const obdSelectionError = signal(false);
+  const diagnosticsOpen = signal(false);
+  const renderState = computed<SettingsSpeedSourceRenderState>(() => {
+    const trackedSettings = trackAppStateSlice(deps.settings);
+    return {
+      diagnosticsOpen: diagnosticsOpen.value,
+      draftDirty: speedSourceDraftDirty.value,
+      manualSpeedFeedback: cloneFeedback(manualSpeedFeedback.value),
+      manualSpeedInputValue: manualSpeedInputValue.value,
+      obdScanStatusMessage: obdScanStatusMessage.value,
+      obdSelectionError: obdSelectionError.value,
+      pairInFlightMac: pairInFlightMac.value,
+      saveFeedback: cloneFeedback(saveFeedback.value),
+      scannedDevices: [...scannedDevices.value],
+      scanInFlight: scanInFlight.value,
+      selectedMode: selectedMode.value,
+      settings: {
+        gpsFallbackActive: trackedSettings.gpsFallbackActive,
+        gpsEffectiveSpeedKph: trackedSettings.gpsEffectiveSpeedKph,
+        manualSpeedKph: trackedSettings.manualSpeedKph,
+        obdDeviceMac: trackedSettings.obdDeviceMac,
+        obdDeviceName: trackedSettings.obdDeviceName,
+        resolvedSpeedSource: trackedSettings.resolvedSpeedSource,
+        speedSource: trackedSettings.speedSource,
+      },
+      staleTimeoutFeedback: cloneFeedback(staleTimeoutFeedback.value),
+      staleTimeoutInputValue: staleTimeoutInputValue.value,
+    };
+  });
 
   function getRenderState(): SettingsSpeedSourceRenderState {
-    return {
-      diagnosticsOpen,
-      draftDirty: speedSourceDraftDirty,
-      manualSpeedFeedback: cloneFeedback(manualSpeedFeedback),
-      manualSpeedInputValue,
-      obdScanStatusMessage,
-      obdSelectionError,
-      pairInFlightMac,
-      saveFeedback: cloneFeedback(saveFeedback),
-      scannedDevices: [...scannedDevices],
-      scanInFlight,
-      selectedMode,
-      settings: {
-        gpsFallbackActive: deps.settings.gpsFallbackActive,
-        gpsEffectiveSpeedKph: deps.settings.gpsEffectiveSpeedKph,
-        manualSpeedKph: deps.settings.manualSpeedKph,
-        obdDeviceMac: deps.settings.obdDeviceMac,
-        obdDeviceName: deps.settings.obdDeviceName,
-        resolvedSpeedSource: deps.settings.resolvedSpeedSource,
-        speedSource: deps.settings.speedSource,
-      },
-      staleTimeoutFeedback: cloneFeedback(staleTimeoutFeedback),
-      staleTimeoutInputValue,
-    };
+    return renderState.value;
   }
 
   function shouldRunBackgroundRescan(): boolean {
     return backgroundRescanRequested
       && speedSourceContextVisible
-      && selectedMode === "obd2"
-      && !scanInFlight
-      && pairInFlightMac === null;
+      && selectedMode.value === "obd2"
+      && !scanInFlight.value
+      && pairInFlightMac.value === null;
   }
 
   function syncBackgroundRescan(): void {
@@ -193,49 +206,66 @@ export function createSettingsSpeedSourceWorkflow(
     syncBackgroundRescan();
   }
 
-  function renderCurrentState(): void {
-    deps.view.render(getRenderState());
-    syncContextVisibility();
+  let contextSyncScheduled = false;
+  function scheduleContextVisibilitySync(): void {
+    if (contextSyncScheduled) {
+      return;
+    }
+    contextSyncScheduled = true;
+    queueMicrotask(() => {
+      contextSyncScheduled = false;
+      syncContextVisibility();
+    });
   }
 
   function clearManualSpeedFeedback(): void {
-    manualSpeedFeedback = null;
-    saveFeedback = null;
+    batch(() => {
+      manualSpeedFeedback.value = null;
+      saveFeedback.value = null;
+    });
   }
 
   function clearStaleTimeoutFeedback(): void {
-    staleTimeoutFeedback = null;
-    saveFeedback = null;
+    batch(() => {
+      staleTimeoutFeedback.value = null;
+      saveFeedback.value = null;
+    });
   }
 
   function clearObdSelectionFeedback(): void {
-    obdSelectionError = false;
-    saveFeedback = null;
+    batch(() => {
+      obdSelectionError.value = false;
+      saveFeedback.value = null;
+    });
   }
 
   function clearAllFeedback(): void {
-    manualSpeedFeedback = null;
-    staleTimeoutFeedback = null;
-    saveFeedback = null;
-    obdSelectionError = false;
+    batch(() => {
+      manualSpeedFeedback.value = null;
+      staleTimeoutFeedback.value = null;
+      saveFeedback.value = null;
+      obdSelectionError.value = false;
+    });
   }
 
   function showSaveFeedback(message: string, detail: string): void {
-    saveFeedback = {
-      body: message,
-      detail,
-      title: deps.t("settings.speed.save_failed_title"),
-      tone: "error",
-    };
-    diagnosticsOpen = true;
+    batch(() => {
+      saveFeedback.value = {
+        body: message,
+        detail,
+        title: deps.t("settings.speed.save_failed_title"),
+        tone: "error",
+      };
+      diagnosticsOpen.value = true;
+    });
   }
 
   function setScannedDevices(devices: readonly ObdDevicePayload[]): void {
-    scannedDevices = [...devices].sort(compareScannedDevices);
+    scannedDevices.value = [...devices].sort(compareScannedDevices);
   }
 
   function mergeScannedDevices(devices: readonly ObdDevicePayload[]): void {
-    const merged = new Map(scannedDevices.map((device) => [device.mac_address, device]));
+    const merged = new Map(scannedDevices.value.map((device) => [device.mac_address, device]));
     devices.forEach((device) => {
       merged.set(device.mac_address, device);
     });
@@ -243,19 +273,30 @@ export function createSettingsSpeedSourceWorkflow(
   }
 
   function syncInputsFromSettings(): void {
-    speedSourceDraftDirty = false;
-    selectedMode = speedSourceState.displayedMode.value;
-    manualSpeedInputValue = deps.settings.manualSpeedKph != null ? String(deps.settings.manualSpeedKph) : "";
-    clearAllFeedback();
-    renderCurrentState();
+    batch(() => {
+      speedSourceDraftDirty.value = false;
+      selectedMode.value = speedSourceState.displayedMode.value;
+      manualSpeedInputValue.value = deps.settings.manualSpeedKph != null
+        ? String(deps.settings.manualSpeedKph)
+        : "";
+      manualSpeedFeedback.value = null;
+      staleTimeoutFeedback.value = null;
+      saveFeedback.value = null;
+      obdSelectionError.value = false;
+    });
+    scheduleContextVisibilitySync();
   }
 
   function syncFromSettings(): void {
-    if (!speedSourceDraftDirty) {
-      selectedMode = speedSourceState.displayedMode.value;
-      manualSpeedInputValue = deps.settings.manualSpeedKph != null ? String(deps.settings.manualSpeedKph) : "";
+    if (!speedSourceDraftDirty.value) {
+      batch(() => {
+        selectedMode.value = speedSourceState.displayedMode.value;
+        manualSpeedInputValue.value = deps.settings.manualSpeedKph != null
+          ? String(deps.settings.manualSpeedKph)
+          : "";
+      });
     }
-    renderCurrentState();
+    scheduleContextVisibilitySync();
   }
 
   function applyPayload(payload: SpeedSourcePayload): void {
@@ -264,7 +305,7 @@ export function createSettingsSpeedSourceWorkflow(
     deps.settings.obdDeviceMac = payload.obd_device_mac ?? null;
     deps.settings.obdDeviceName = payload.obd_device_name ?? null;
     deps.settings.resolvedSpeedSource = null;
-    staleTimeoutInputValue = String(payload.stale_timeout_s);
+    staleTimeoutInputValue.value = String(payload.stale_timeout_s);
     syncInputsFromSettings();
     deps.renderSpeedReadout();
   }
@@ -279,31 +320,33 @@ export function createSettingsSpeedSourceWorkflow(
   }
 
   function handleSpeedSourceChanged(mode: DisplayedSpeedSourceMode): void {
-    speedSourceDraftDirty = true;
-    selectedMode = mode;
-    clearAllFeedback();
-    renderCurrentState();
+    batch(() => {
+      speedSourceDraftDirty.value = true;
+      selectedMode.value = mode;
+      clearAllFeedback();
+    });
+    scheduleContextVisibilitySync();
   }
 
   function handleManualSpeedInput(value: string): void {
-    manualSpeedInputValue = value;
+    manualSpeedInputValue.value = value;
     clearManualSpeedFeedback();
-    renderCurrentState();
   }
 
   function handleStaleTimeoutInput(value: string): void {
-    staleTimeoutInputValue = value;
+    staleTimeoutInputValue.value = value;
     clearStaleTimeoutFeedback();
-    renderCurrentState();
   }
 
   async function saveSpeedSource(): Promise<void> {
     clearAllFeedback();
 
-    const source: SpeedSourceKind = speedSourceDraftDirty ? selectedMode : deps.settings.speedSource;
-    const manualInputValue = manualSpeedInputValue.trim();
+    const source: SpeedSourceKind = speedSourceDraftDirty.value
+      ? selectedMode.value
+      : deps.settings.speedSource;
+    const manualInputValue = manualSpeedInputValue.value.trim();
     const manualSpeedKph = parseManualSpeedKph(Number(manualInputValue));
-    const staleValueRaw = staleTimeoutInputValue.trim();
+    const staleValueRaw = staleTimeoutInputValue.value.trim();
     const staleValue = Number(staleValueRaw);
     const staleTimeoutInvalid = source !== "manual" && (
       staleValueRaw === ""
@@ -317,7 +360,7 @@ export function createSettingsSpeedSourceWorkflow(
     const activeSource = activeSourceLabel(deps.settings, deps.t);
 
     if (manualSpeedInvalid) {
-      manualSpeedFeedback = {
+      manualSpeedFeedback.value = {
         body: deps.t("settings.speed.manual_invalid"),
         compact: true,
         tone: "error",
@@ -326,13 +369,12 @@ export function createSettingsSpeedSourceWorkflow(
         deps.t("settings.speed.manual_invalid"),
         deps.t("settings.speed.validation_active_detail", { source: activeSource }),
       );
-      renderCurrentState();
       deps.view.focusManualSpeedInput();
       return;
     }
 
     if (staleTimeoutInvalid) {
-      staleTimeoutFeedback = {
+      staleTimeoutFeedback.value = {
         body: deps.t("settings.speed.stale_timeout_invalid"),
         compact: true,
         tone: "error",
@@ -341,18 +383,16 @@ export function createSettingsSpeedSourceWorkflow(
         deps.t("settings.speed.stale_timeout_invalid"),
         deps.t("settings.speed.validation_active_detail", { source: activeSource }),
       );
-      renderCurrentState();
       deps.view.focusStaleTimeoutInput();
       return;
     }
 
     if (source === "obd2" && !deps.settings.obdDeviceMac) {
-      obdSelectionError = true;
+      obdSelectionError.value = true;
       showSaveFeedback(
         deps.t("settings.speed.obd_missing_device_error"),
         deps.t("settings.speed.validation_active_detail", { source: activeSource }),
       );
-      renderCurrentState();
       deps.view.focusScanObdDevices();
       return;
     }
@@ -373,49 +413,47 @@ export function createSettingsSpeedSourceWorkflow(
         error instanceof Error ? error.message : deps.t("settings.save_failed"),
         deps.t("settings.speed.save_failed_detail", { source: activeSource }),
       );
-      renderCurrentState();
     }
   }
 
   async function scanObdDevices(mode: "manual" | "background" = "manual"): Promise<void> {
-    if (scanInFlight || pairInFlightMac !== null) {
+    if (scanInFlight.value || pairInFlightMac.value !== null) {
       return;
     }
-    scanInFlight = true;
+    scanInFlight.value = true;
     if (mode === "manual") {
       clearObdSelectionFeedback();
-      obdScanStatusMessage = deps.t("settings.speed.obd_scanning");
+      obdScanStatusMessage.value = deps.t("settings.speed.obd_scanning");
     }
-    renderCurrentState();
+    syncBackgroundRescan();
     try {
       const payload = await transport.scanObdDevices();
       if (mode === "manual") {
         setScannedDevices(payload.devices);
         backgroundRescanRequested = true;
-        obdScanStatusMessage = payload.devices.length > 0
+        obdScanStatusMessage.value = payload.devices.length > 0
           ? deps.t("settings.speed.obd_scan_found", { count: payload.devices.length })
           : deps.t("settings.speed.obd_scan_empty");
+        syncBackgroundRescan();
       } else {
         mergeScannedDevices(payload.devices);
       }
-      renderCurrentState();
     } catch (error) {
       if (mode === "manual") {
-        obdScanStatusMessage = deps.t("settings.speed.obd_scan_failed");
-        renderCurrentState();
+        obdScanStatusMessage.value = deps.t("settings.speed.obd_scan_failed");
         deps.showError(error instanceof Error ? error.message : deps.t("settings.speed.obd_scan_failed"));
       }
     } finally {
-      scanInFlight = false;
-      renderCurrentState();
+      scanInFlight.value = false;
+      syncBackgroundRescan();
     }
   }
 
   async function pairObdDevice(macAddress: string): Promise<void> {
     clearObdSelectionFeedback();
-    pairInFlightMac = macAddress;
-    obdScanStatusMessage = deps.t("settings.speed.obd_pairing");
-    renderCurrentState();
+    pairInFlightMac.value = macAddress;
+    obdScanStatusMessage.value = deps.t("settings.speed.obd_pairing");
+    syncBackgroundRescan();
     try {
       const payload = await transport.pairObdDevice(macAddress);
       deps.settings.obdDeviceMac = payload.configured_device_mac ?? null;
@@ -428,15 +466,13 @@ export function createSettingsSpeedSourceWorkflow(
         rfcomm_channel: payload.rfcomm_channel,
         trusted: payload.trusted,
       }]);
-      obdScanStatusMessage = deps.t("settings.speed.obd_pair_success");
-      renderCurrentState();
+      obdScanStatusMessage.value = deps.t("settings.speed.obd_pair_success");
     } catch (error) {
-      obdScanStatusMessage = deps.t("settings.speed.obd_pair_failed");
-      renderCurrentState();
+      obdScanStatusMessage.value = deps.t("settings.speed.obd_pair_failed");
       deps.showError(error instanceof Error ? error.message : deps.t("settings.speed.obd_pair_failed"));
     } finally {
-      pairInFlightMac = null;
-      renderCurrentState();
+      pairInFlightMac.value = null;
+      syncBackgroundRescan();
     }
   }
 
@@ -447,7 +483,7 @@ export function createSettingsSpeedSourceWorkflow(
   const obdBackgroundRescan = createPolling({
     onErrorDelayMs: OBD_BACKGROUND_RESCAN_DELAY_MS,
     poll: async () => {
-      if (!shouldRunBackgroundRescan() || scanInFlight || pairInFlightMac !== null) {
+      if (!shouldRunBackgroundRescan()) {
         return OBD_BACKGROUND_RESCAN_DELAY_MS;
       }
       await scanObdDevices("background");
@@ -457,13 +493,13 @@ export function createSettingsSpeedSourceWorkflow(
 
   return {
     getRenderState,
+    renderState,
     handleManualSpeedInput,
     handleNavigateContext,
     handleSpeedSourceChanged,
     handleStaleTimeoutInput,
     loadSpeedSourceFromServer,
     pairObdDevice,
-    renderCurrentState,
     saveSpeedSource,
     scanObdDevices,
     syncFromSettings,

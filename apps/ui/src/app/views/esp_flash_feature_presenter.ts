@@ -14,11 +14,14 @@ import type {
   EspFlashJourneyStageState,
   EspFlashLogPanelModel,
   EspFlashPanelRenderModel,
-  EspFlashPanelView,
   EspFlashReadinessPanelModel,
   EspFlashStatusBadgeModel,
   EspFlashStatusGridRowModel,
 } from "./esp_flash_panel";
+import {
+  computed,
+  type ReadonlySignal,
+} from "../ui_signals";
 
 const STATE_TO_VARIANT: Readonly<Record<string, VisualVariant>> = {
   failed: "bad",
@@ -74,12 +77,12 @@ export interface EspFlashFeatureRenderState {
 }
 
 export interface EspFlashFeaturePresenterDeps {
-  panel: EspFlashPanelView;
+  renderState: ReadonlySignal<EspFlashFeatureRenderState>;
   t: (key: string, vars?: Record<string, unknown>) => string;
 }
 
 export interface EspFlashFeaturePresenter {
-  render(state: EspFlashFeatureRenderState): void;
+  readonly model: ReadonlySignal<EspFlashPanelRenderModel>;
 }
 
 function safeEspFlashState(state: string | null | undefined): string {
@@ -596,10 +599,10 @@ export function buildEspFlashPanelRenderModel(
 export function createEspFlashFeaturePresenter(
   ctx: EspFlashFeaturePresenterDeps,
 ): EspFlashFeaturePresenter {
+  const model = computed(() =>
+    buildEspFlashPanelRenderModel(ctx.renderState.value, { t: ctx.t })
+  );
   return {
-    render(state) {
-      const model = buildEspFlashPanelRenderModel(state, { t: ctx.t });
-      ctx.panel.setModel(model);
-    },
+    model,
   };
 }

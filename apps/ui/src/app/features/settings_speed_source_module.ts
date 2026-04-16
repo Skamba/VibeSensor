@@ -6,6 +6,7 @@ import {
 import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 import type { SettingsState } from "../ui_app_state";
 import {
+  computed,
   effect,
   untracked,
   type ReadonlySignal,
@@ -54,11 +55,12 @@ export function createSettingsSpeedSourceModule(
       focusScanObdDevices: ctx.panel.focusScanObdDevices,
       focusStaleTimeoutInput: ctx.panel.focusStaleTimeoutInput,
       isObdConfigVisible: ctx.panel.isObdConfigVisible,
-      render(state): void {
-        ctx.panel.setModel(buildSettingsSpeedSourcePanelModel(state, presenterDeps));
-      },
     },
   });
+  const panelModel = computed(() =>
+    buildSettingsSpeedSourcePanelModel(workflow.renderState.value, presenterDeps)
+  );
+  ctx.panel.bindModel(panelModel);
   let handlersBound = false;
 
   function bindHandlers(): void {

@@ -19,7 +19,12 @@ import type {
   UpdateFeatureRenderState,
   UpdateFeatureStartIntent,
 } from "../views/update_feature_presenter";
-import type { ReadonlySignal } from "../ui_signals";
+import {
+  batch,
+  computed,
+  signal,
+  type ReadonlySignal,
+} from "../ui_signals";
 import {
   createPollingController,
   type PollingController,
@@ -35,7 +40,6 @@ export interface UpdateFeatureWorkflowApi {
 }
 
 export interface UpdateFeatureWorkflowViewPorts {
-  render(state: UpdateFeatureRenderState): void;
   focusSsidInput(): void;
   clearPassword(): void;
 }
@@ -52,8 +56,8 @@ export interface UpdateFeatureWorkflowDeps {
 export interface UpdateFeatureWorkflow {
   cancelUpdate(): Promise<void>;
   getRenderState(): UpdateFeatureRenderState;
+  readonly renderState: ReadonlySignal<UpdateFeatureRenderState>;
   refreshStatus(): Promise<void>;
-  renderCurrentState(): void;
   startPolling(): void;
   startUpdate(intent: UpdateFeatureStartIntent): Promise<void>;
   stopPolling(): void;
@@ -118,24 +122,21 @@ export function createUpdateFeatureWorkflow(
   };
   const createPolling = deps.createPollingController ?? createPollingController;
 
-  let latestInternetStatus: UsbInternetStatusPayload = fallbackInternetStatus(deps.t);
-  let latestHealthStatus: HealthStatusPayload | null = null;
-  let latestUpdateStatus: UpdateStatusPayload | null = null;
-  let latestUpdateState: UpdateStatusPayload["state"] = "idle";
-  let latestUpdateTransport: UpdateStartRequestPayload["transport"] = "wifi";
+  const latestInternetStatus = signal<UsbInternetStatusPayload>(fallbackInternetStatus(deps.t));
+  const latestHealthStatus = signal<HealthStatusPayload | null>(null);
+  const latestUpdateStatus = signal<UpdateStatusPayload | null>(null);
+  const latestUpdateState = signal<UpdateStatusPayload["state"]>("idle");
+  const latestUpdateTransport = signal<UpdateStartRequestPayload["transport"]>("wifi");
+  const renderState = computed<UpdateFeatureRenderState>(() => ({
+    internetStatus: latestInternetStatus.value,
+    healthStatus: latestHealthStatus.value,
+    updateStatus: latestUpdateStatus.value,
+    updateState: latestUpdateState.value,
+    updateTransport: latestUpdateTransport.value,
+  }));
 
   function getRenderState(): UpdateFeatureRenderState {
-    return {
-      internetStatus: latestInternetStatus,
-      healthStatus: latestHealthStatus,
-      updateStatus: latestUpdateStatus,
-      updateState: latestUpdateState,
-      updateTransport: latestUpdateTransport,
-    };
-  }
-
-  function renderCurrentState(): void {
-    deps.view.render(getRenderState());
+    return renderState.value;
   }
 
   async function fetchStatusSnapshot(): Promise<{
@@ -162,12 +163,13 @@ export function createUpdateFeatureWorkflow(
     internet: UsbInternetStatusPayload;
     status: UpdateStatusPayload;
   }): void {
-    latestUpdateStatus = snapshot.status;
-    latestHealthStatus = snapshot.health;
-    latestInternetStatus = snapshot.internet;
-    latestUpdateState = snapshot.status.state;
-    latestUpdateTransport = safeUpdateTransport(snapshot.status.transport);
-    renderCurrentState();
+    batch(() => {
+      latestUpdateStatus.value = snapshot.status;
+      latestHealthStatus.value = snapshot.health;
+      latestInternetStatus.value = snapshot.internet;
+      latestUpdateState.value = snapshot.status.state;
+      latestUpdateTransport.value = safeUpdateTransport(snapshot.status.transport);
+    });
   }
 
   const polling = createPolling({
@@ -240,8 +242,8 @@ export function createUpdateFeatureWorkflow(
   return {
     cancelUpdate,
     getRenderState,
+    renderState,
     refreshStatus,
-    renderCurrentState,
     startPolling() {
       polling.start();
     },

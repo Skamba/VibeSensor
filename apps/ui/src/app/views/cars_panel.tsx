@@ -30,7 +30,7 @@ export interface CarsListRenderModel {
 
 export interface CarsListPanelView {
   bindActions(handlers: { onAction(action: CarsListAction): void }): void;
-  setModel(model: CarsListRenderModel): void;
+  bindModel(model: ReadonlySignal<CarsListRenderModel>): void;
 }
 
 export type CarsFeatureInteraction =
@@ -56,7 +56,7 @@ export interface CarsFeatureInteractionHandlers {
 export interface CarsWizardPanelBridge {
   bindActions(handlers: CarsFeatureInteractionHandlers): void;
   focus(target: CarsFeatureFocusTarget): void;
-  setModel(model: CarsWizardRenderModel): void;
+  bindModel(model: ReadonlySignal<CarsWizardRenderModel>): void;
 }
 
 export interface CarsPanelView {
@@ -79,9 +79,9 @@ type CarsWizardOptionRefs = {
 
 type CarsPanelBridgeState = {
   actions: CarsListPanelActionHandlers | null;
-  model: CarsListRenderModel;
+  model: ReadonlySignal<CarsListRenderModel> | null;
   wizardActions: CarsFeatureInteractionHandlers | null;
-  wizardModel: CarsWizardRenderModel;
+  wizardModel: ReadonlySignal<CarsWizardRenderModel> | null;
 };
 
 type CarsWizardFocusRequest = {
@@ -429,7 +429,8 @@ function CarsPanel(props: {
   const state = props.state.value;
   const wizardFocusRequest = props.wizardFocusRequest.value;
   const t = useUiTranslation();
-  const wizardModel = state.wizardModel;
+  const model = state.model?.value ?? DEFAULT_CARS_PANEL_MODEL;
+  const wizardModel = state.wizardModel?.value ?? createClosedCarsWizardRenderModel();
   const addCarBtnRef = useRef<HTMLButtonElement | null>(null);
   const addCarWizardRef = useRef<HTMLDivElement | null>(null);
   const wizardCloseBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -548,9 +549,9 @@ function CarsPanel(props: {
             "Add cars from the library or enter specs manually. Activate a car to use it for analysis.",
           )}
         </div>
-        <div id="carSelectionGuidance" hidden={state.model.guidance === null}>
-          {state.model.guidance ? (
-            <CarsInlineStatePanel actions={state.actions} state={state.model.guidance} />
+        <div id="carSelectionGuidance" hidden={model.guidance === null}>
+          {model.guidance ? (
+            <CarsInlineStatePanel actions={state.actions} state={model.guidance} />
           ) : null}
         </div>
         <div class="settings-table-wrap">
@@ -569,7 +570,7 @@ function CarsPanel(props: {
               </tr>
             </thead>
             <tbody id="carListBody">
-              <CarsTableBody actions={state.actions} table={state.model.table} />
+              <CarsTableBody actions={state.actions} table={model.table} />
             </tbody>
           </table>
         </div>
@@ -1014,9 +1015,9 @@ function CarsPanel(props: {
 export function mountCarsPanel(host: HTMLElement): CarsPanelView {
   const bridgeState = signal<CarsPanelBridgeState>({
     actions: null,
-    model: DEFAULT_CARS_PANEL_MODEL,
+    model: null,
     wizardActions: null,
-    wizardModel: createClosedCarsWizardRenderModel(),
+    wizardModel: null,
   });
   const wizardFocusRequest = signal<CarsWizardFocusRequest | null>(null);
   let focusRequestToken = 0;
@@ -1033,7 +1034,7 @@ export function mountCarsPanel(host: HTMLElement): CarsPanelView {
       bindActions(handlers): void {
         bridgeState.value = { ...bridgeState.value, actions: handlers };
       },
-      setModel(model): void {
+      bindModel(model): void {
         bridgeState.value = { ...bridgeState.value, model };
       },
     },
@@ -1045,7 +1046,7 @@ export function mountCarsPanel(host: HTMLElement): CarsPanelView {
         focusRequestToken += 1;
         wizardFocusRequest.value = { target, token: focusRequestToken };
       },
-      setModel(model): void {
+      bindModel(model): void {
         bridgeState.value = { ...bridgeState.value, wizardModel: model };
       },
     },
