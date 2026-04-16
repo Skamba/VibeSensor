@@ -3,11 +3,23 @@ export function fmt(n: number, digits = 2): string {
   return n.toFixed(digits);
 }
 
+function formatDateTime(date: Date, invalidText: string): string {
+  if (Number.isNaN(date.getTime())) {
+    return invalidText;
+  }
+  return date.toLocaleString();
+}
+
 export function fmtTs(iso: string): string {
   if (!iso) return "--";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  return formatDateTime(new Date(iso), iso);
+}
+
+export function formatEpochTimestamp(epoch: number | null | undefined): string {
+  if (epoch === null || epoch === undefined || !Number.isFinite(epoch)) {
+    return "—";
+  }
+  return formatDateTime(new Date(epoch * 1000), "—");
 }
 
 const _defaultNumberFormat = new Intl.NumberFormat();

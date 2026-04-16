@@ -21,10 +21,3 @@ export function inlineStateActionClass(variant: InlineStateActionVariant | undef
       return "btn btn--primary";
   }
 }
-
-export function formatEpochTimestamp(epoch: number | null | undefined): string {
-  if (epoch === null || epoch === undefined || !Number.isFinite(epoch)) {
-    return "—";
-  }
-  return new Date(epoch * 1000).toLocaleString();
-}
