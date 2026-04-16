@@ -28,16 +28,3 @@ export function formatIntLocale(value: number, lang: string): string {
   }
   return fmt.format(Math.round(value));
 }
-
-const _HTML_ESCAPE_RE = /[&<>"']/g;
-const _HTML_ESCAPE_MAP: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-};
-
-export function escapeHtml(value: unknown): string {
-  return String(value).replace(_HTML_ESCAPE_RE, (ch) => _HTML_ESCAPE_MAP[ch]);
-}
