@@ -7,6 +7,7 @@ import {
 } from "../ui_signals";
 import type {
   SpectrumBandLegendModel,
+  SpectrumPanelBandToggleModel,
   SpectrumPanelChartDom,
   SpectrumPanelHeaderModel,
   SpectrumPanelView,
@@ -23,56 +24,6 @@ type MutableSpectrumPanelChartDom = {
   specChart: HTMLElement | null;
 };
 
-type SpectrumPanelBridgeState = {
-  header: SpectrumPanelHeaderModel;
-  overlayMessage: string | null;
-  bandToggle: {
-    hasBands: boolean;
-    bandsVisible: boolean;
-    text: string;
-  };
-  sensorLegend: SpectrumSensorLegendModel | null;
-  sensorLegendHandlers: SpectrumLegendHandlers | null;
-  bandLegend: SpectrumBandLegendModel;
-  inspectorText: string;
-  onBandToggle: (() => void) | null;
-};
-
-const DEFAULT_PANEL_STATE: SpectrumPanelBridgeState = {
-  header: {
-    titleText: "Multi-Sensor Blended Spectrum",
-    hintText: "Use the trace chips to isolate one sensor at a time. Turn on reference bands when you need order context.",
-  },
-  overlayMessage: null,
-  bandToggle: {
-    hasBands: false,
-    bandsVisible: false,
-    text: "Show reference bands",
-  },
-  sensorLegend: null,
-  sensorLegendHandlers: null,
-  bandLegend: {
-    visible: false,
-    items: [],
-    emptyText: "No reference band",
-  },
-  inspectorText: "Use the trace chips or hover the chart to inspect the current peak.",
-  onBandToggle: null,
-};
-
-function createDefaultPanelState(): SpectrumPanelBridgeState {
-  return {
-    header: { ...DEFAULT_PANEL_STATE.header },
-    overlayMessage: DEFAULT_PANEL_STATE.overlayMessage,
-    bandToggle: { ...DEFAULT_PANEL_STATE.bandToggle },
-    sensorLegend: DEFAULT_PANEL_STATE.sensorLegend,
-    sensorLegendHandlers: DEFAULT_PANEL_STATE.sensorLegendHandlers,
-    bandLegend: { ...DEFAULT_PANEL_STATE.bandLegend, items: [...DEFAULT_PANEL_STATE.bandLegend.items] },
-    inspectorText: DEFAULT_PANEL_STATE.inspectorText,
-    onBandToggle: DEFAULT_PANEL_STATE.onBandToggle,
-  };
-}
-
 function requireSpectrumElement<T extends HTMLElement>(
   element: T | null,
   target: string,
@@ -85,7 +36,7 @@ function requireSpectrumElement<T extends HTMLElement>(
 
 function SpectrumPanel(props: {
   bandLegend: ReadonlySignal<SpectrumBandLegendModel>;
-  bandToggle: ReadonlySignal<SpectrumPanelBridgeState["bandToggle"]>;
+  bandToggle: ReadonlySignal<SpectrumPanelBandToggleModel>;
   chartDom: MutableSpectrumPanelChartDom;
   header: ReadonlySignal<SpectrumPanelHeaderModel>;
   inspectorText: ReadonlySignal<string>;
@@ -225,15 +176,25 @@ function SpectrumPanel(props: {
 }
 
 export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
-  const defaultState = createDefaultPanelState();
-  const header = signal<SpectrumPanelHeaderModel>(defaultState.header);
-  const overlayMessage = signal<string | null>(defaultState.overlayMessage);
-  const bandToggle = signal(defaultState.bandToggle);
-  const sensorLegend = signal<SpectrumSensorLegendModel | null>(defaultState.sensorLegend);
-  const sensorLegendHandlers = signal<SpectrumLegendHandlers | null>(defaultState.sensorLegendHandlers);
-  const bandLegend = signal(defaultState.bandLegend);
-  const inspectorText = signal(defaultState.inspectorText);
-  const onBandToggle = signal<(() => void) | null>(defaultState.onBandToggle);
+  const header = signal<SpectrumPanelHeaderModel>({
+    titleText: "Multi-Sensor Blended Spectrum",
+    hintText: "Use the trace chips to isolate one sensor at a time. Turn on reference bands when you need order context.",
+  });
+  const overlayMessage = signal<string | null>(null);
+  const bandToggle = signal<SpectrumPanelBandToggleModel>({
+    hasBands: false,
+    bandsVisible: false,
+    text: "Show reference bands",
+  });
+  const sensorLegend = signal<SpectrumSensorLegendModel | null>(null);
+  const sensorLegendHandlers = signal<SpectrumLegendHandlers | null>(null);
+  const bandLegend = signal<SpectrumBandLegendModel>({
+    visible: false,
+    items: [],
+    emptyText: "No reference band",
+  });
+  const inspectorText = signal("Use the trace chips or hover the chart to inspect the current peak.");
+  const onBandToggle = signal<(() => void) | null>(null);
   const chartDom: MutableSpectrumPanelChartDom = {
     specChartWrap: null,
     specChart: null,
@@ -271,7 +232,7 @@ export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
     renderOverlay(message: string | null): void {
       overlayMessage.value = message;
     },
-    renderBandToggle(model: { hasBands: boolean; bandsVisible: boolean; text: string }): void {
+    renderBandToggle(model: SpectrumPanelBandToggleModel): void {
       bandToggle.value = model;
     },
     renderSensorLegend(

@@ -46,16 +46,18 @@ export interface SpectrumPanelChartDom {
   specChart: HTMLElement;
 }
 
+export interface SpectrumPanelBandToggleModel {
+  hasBands: boolean;
+  bandsVisible: boolean;
+  text: string;
+}
+
 export interface SpectrumPanelView {
   readonly chartDom: SpectrumPanelChartDom;
   bindBandToggle(onToggle: () => void): void;
   renderHeader(model: SpectrumPanelHeaderModel): void;
   renderOverlay(message: string | null): void;
-  renderBandToggle(model: {
-    hasBands: boolean;
-    bandsVisible: boolean;
-    text: string;
-  }): void;
+  renderBandToggle(model: SpectrumPanelBandToggleModel): void;
   renderSensorLegend(
     model: SpectrumSensorLegendModel | null,
     handlers?: {
