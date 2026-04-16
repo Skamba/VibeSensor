@@ -291,9 +291,8 @@ function InternetPanel(props: {
         </div>
         <div
           id="internetStatusPanel"
-          class="maintenance-stack"
+          class="maintenance-stack internet-panel__status"
           aria-live="polite"
-          style="margin-top:1rem;"
         >
           {model.internetStatus ? (
             <InternetStatusCard model={model.internetStatus} />
@@ -368,7 +367,7 @@ function InternetPanel(props: {
                 ref={ssidInputRef}
                 autoComplete="off"
                 maxLength={64}
-                style="width:100%;max-width:20rem;"
+                class="internet-panel__input"
                 value={model.ssidInputValue}
                 disabled={model.controlsLocked}
                 onInput={(event) =>
@@ -382,13 +381,13 @@ function InternetPanel(props: {
               >
                 {t("settings.update.password", "Wi-Fi Password")}
               </label>
-              <div style="display:flex;gap:0.5rem;align-items:center;">
+              <div class="internet-panel__input-row">
                 <input
                   type={model.passwordInputType}
                   id="updatePasswordInput"
                   autoComplete="off"
                   maxLength={128}
-                  style="width:100%;max-width:20rem;"
+                  class="internet-panel__input"
                   value={model.passwordInputValue}
                   disabled={model.controlsLocked}
                   onInput={(event) =>
