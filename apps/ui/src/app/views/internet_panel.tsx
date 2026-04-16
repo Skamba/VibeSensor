@@ -1,4 +1,4 @@
-import { h, render, type ComponentChildren } from "preact";
+import { render, type ComponentChildren } from "preact";
 import { useRef } from "preact/hooks";
 
 import type { UpdateStartRequestPayload } from "../../transport/http_models";

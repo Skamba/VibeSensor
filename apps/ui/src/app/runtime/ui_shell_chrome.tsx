@@ -1,4 +1,4 @@
-import { Component, h, render, type ComponentChildren, type JSX } from "preact";
+import { Component, render, type ComponentChildren, type JSX } from "preact";
 
 import { requiredById } from "../dom/dom_query";
 import {
