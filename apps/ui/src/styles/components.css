@@ -174,8 +174,7 @@ button[hidden],
 .card__title { margin: 0; font-size: 1rem; font-weight: 700; }
 .card__subtle,
 .subtle,
-.mini-label,
-.matrix-note { color: var(--muted); font-size: 0.86rem; }
+.mini-label { color: var(--muted); font-size: 0.86rem; }
 
 .stat-grid {
   display: grid;

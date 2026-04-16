@@ -54,14 +54,6 @@
     align-items: flex-start;
     flex-direction: column;
   }
-  .live-speed-row {
-    grid-template-columns: 1fr;
-  }
-  .live-speed-row input,
-  .live-speed-row .btn {
-    width: 100%;
-    min-width: 0;
-  }
   .history-details-preview { grid-template-columns: 1fr; }
   .history-toolbar {
     align-items: flex-start;

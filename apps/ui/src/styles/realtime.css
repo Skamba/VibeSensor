@@ -125,61 +125,6 @@
   color: var(--brand-700);
 }
 
-/* Spectrum + Car map split */
-.spectrum-split {
-  display: grid;
-  grid-template-columns: 1fr 200px;
-  gap: var(--space-4);
-  align-items: start;
-}
-.spectrum-split__chart { min-width: 0; }
-.spectrum-split__map { display: flex; align-items: flex-start; justify-content: center; }
-
-.car-map {
-  position: relative;
-  width: 200px;
-  aspect-ratio: 200 / 340;
-}
-.car-map__svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.car-map__body {
-  fill: var(--surface-2);
-  stroke: var(--border-strong);
-  stroke-width: 1.5;
-}
-.car-map__wheel {
-  fill: var(--muted);
-  opacity: 0.35;
-}
-.car-map__axle {
-  stroke: var(--border);
-  stroke-width: 1;
-  stroke-dasharray: 4 3;
-}
-.car-map__windshield {
-  fill: none;
-  stroke: var(--border);
-  stroke-width: 1;
-}
-.car-map__dots {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-@media (max-width: 980px) {
-  .spectrum-split {
-    grid-template-columns: 1fr;
-  }
-  .spectrum-split__map {
-    justify-content: center;
-  }
-  .car-map { width: 160px; }
-}
-
 @media (max-width: 720px) {
   .status-grid__row,
   .maintenance-action-row,
@@ -491,9 +436,7 @@
   border: 1px solid rgba(20, 32, 51, 0.2);
 }
 
-.logging-row,
-.live-speed-row,
-.live-speed-readout { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.logging-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .logging-row { justify-content: space-between; }
 .logging-row .subtle[hidden] { display: none; }
 .logging-actions {
@@ -533,23 +476,6 @@
 .logging-actions .btn[hidden] {
   display: none;
 }
-.live-speed-readout { margin-top: var(--space-3); }
-.live-speed-row {
-  margin-top: var(--space-3);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-2);
-}
-.live-speed-row label {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
-.live-speed-row input {
-  width: 9rem;
-}
-.live-speed-row .btn {
-  min-width: 9.5rem;
-}
 
 .speed {
   min-width: 0;
@@ -564,62 +490,3 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
-
-.rotational-speeds {
-  margin-top: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  padding: var(--space-3);
-  display: grid;
-  gap: var(--space-2);
-}
-
-.rotational-speeds__title {
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-  font-weight: 700;
-}
-
-.rotational-speed-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.rotational-speed-row__label {
-  color: var(--text);
-  font-size: 0.9rem;
-}
-
-.rotational-speed-row__value {
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.rotational-speed-row__mode {
-  height: 24px;
-  font-size: 0.72rem;
-  padding: 0 var(--space-2);
-  white-space: nowrap;
-}
-
-.rotational-speeds__basis,
-.rotational-speeds__reason {
-  margin-top: var(--space-1);
-}
-
-.rotational-speeds__assumptions { margin-top: var(--space-2); font-size: 0.78rem; color: var(--muted); }
-.rotational-speeds__assumptions summary { cursor: pointer; user-select: none; }
-.rotational-assumptions-body { padding: var(--space-1) 0 0 var(--space-3); line-height: 1.6; }
-
-.card__time-label { font-size: 0.72rem; color: var(--muted); margin-left: var(--space-2); }
-.strength-scale-toggle { font-size: 0.72rem; color: var(--muted); margin-left: auto; display: flex; align-items: center; gap: 4px; cursor: pointer; }
-
-.log-box { max-height: 230px; overflow: auto; font-size: 0.9rem; line-height: 1.35; }
-.log-row { padding: var(--space-2) 0; border-bottom: 1px solid var(--border); }
-.log-time { color: var(--muted); font-size: 0.78rem; }
