@@ -52,6 +52,15 @@ interface LoggingElapsedTickInputs {
   loggingStartTimeUtc: string | null;
 }
 
+function sameLoggingElapsedTickInputs(
+  left: LoggingElapsedTickInputs,
+  right: LoggingElapsedTickInputs,
+): boolean {
+  return left.handlersBound === right.handlersBound
+    && left.loggingEnabled === right.loggingEnabled
+    && left.loggingStartTimeUtc === right.loggingStartTimeUtc;
+}
+
 function formatElapsed(
   startTimeUtc: string | null | undefined,
   nowMs: number,
@@ -153,11 +162,42 @@ export function createRealtimeFeatureViewState(
     formatInt,
   });
   const elapsedNowMs = signal(Date.now());
-  const lastCompletedElapsedText = signal("--");
-  const loggingElapsedTickInputs = signal<LoggingElapsedTickInputs>({
+  let cachedLastCompletedElapsedText = "--";
+  let cachedLoggingElapsedTickInputs: LoggingElapsedTickInputs = {
     handlersBound: workflow.handlersBound.value,
     loggingEnabled: realtime.loggingStatus.enabled,
     loggingStartTimeUtc: realtime.loggingStatus.start_time_utc ?? null,
+  };
+  const loggingElapsedTickInputs = computed<LoggingElapsedTickInputs>(() => {
+    const handlersBound = workflow.handlersBound.value;
+    trackAppStateSlice(realtime);
+    const nextTickInputs = {
+      handlersBound,
+      loggingEnabled: realtime.loggingStatus.enabled,
+      loggingStartTimeUtc: realtime.loggingStatus.start_time_utc ?? null,
+    } satisfies LoggingElapsedTickInputs;
+    if (sameLoggingElapsedTickInputs(cachedLoggingElapsedTickInputs, nextTickInputs)) {
+      return cachedLoggingElapsedTickInputs;
+    }
+    cachedLoggingElapsedTickInputs = nextTickInputs;
+    return nextTickInputs;
+  });
+  const lastCompletedElapsedText = computed(() => {
+    trackAppStateSlice(realtime);
+    if (realtime.loggingStatus.enabled) {
+      cachedLastCompletedElapsedText = formatElapsed(
+        realtime.loggingStatus.start_time_utc,
+        elapsedNowMs.value,
+      );
+      return cachedLastCompletedElapsedText;
+    }
+    if (
+      !realtime.loggingStatus.analysis_in_progress
+      && !realtime.loggingStatus.last_completed_run_id
+    ) {
+      cachedLastCompletedElapsedText = "--";
+    }
+    return cachedLastCompletedElapsedText;
   });
   let loggingElapsedTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -168,25 +208,6 @@ export function createRealtimeFeatureViewState(
     clearInterval(loggingElapsedTimer);
     loggingElapsedTimer = null;
   }
-
-  effect(() => {
-    const handlersBound = workflow.handlersBound.value;
-    trackAppStateSlice(realtime);
-    const nextTickInputs = {
-      handlersBound,
-      loggingEnabled: realtime.loggingStatus.enabled,
-      loggingStartTimeUtc: realtime.loggingStatus.start_time_utc ?? null,
-    } satisfies LoggingElapsedTickInputs;
-    const currentTickInputs = loggingElapsedTickInputs.value;
-    if (
-      currentTickInputs.handlersBound === nextTickInputs.handlersBound
-      && currentTickInputs.loggingEnabled === nextTickInputs.loggingEnabled
-      && currentTickInputs.loggingStartTimeUtc === nextTickInputs.loggingStartTimeUtc
-    ) {
-      return;
-    }
-    loggingElapsedTickInputs.value = nextTickInputs;
-  });
 
   effect(() => {
     const {
@@ -208,23 +229,6 @@ export function createRealtimeFeatureViewState(
     return () => {
       clearLoggingElapsedTimer();
     };
-  });
-
-  effect(() => {
-    trackAppStateSlice(realtime);
-    if (realtime.loggingStatus.enabled) {
-      lastCompletedElapsedText.value = formatElapsed(
-        realtime.loggingStatus.start_time_utc,
-        elapsedNowMs.value,
-      );
-      return;
-    }
-    if (
-      !realtime.loggingStatus.analysis_in_progress
-      && !realtime.loggingStatus.last_completed_run_id
-    ) {
-      lastCompletedElapsedText.value = "--";
-    }
   });
 
   function selectionBlockReason(): "no_cars" | "no_active" | null {
