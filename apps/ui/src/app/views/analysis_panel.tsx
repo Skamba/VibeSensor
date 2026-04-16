@@ -1,11 +1,12 @@
 import { render, type JSX } from "preact";
-import { useEffect, useRef } from "preact/hooks";
+import { useRef } from "preact/hooks";
 
 import { useUiTranslation } from "../ui_i18n";
 import {
   effect,
   signal,
   untracked,
+  useSignalEffect,
   type ReadonlySignal,
 } from "../ui_signals";
 import {
@@ -307,8 +308,6 @@ function AnalysisPanel(props: {
   state: ReadonlySignal<AnalysisPanelBridgeState>;
 }) {
   const state = props.state.value;
-  const guidanceOpenRequest = props.guidanceOpenRequest.value;
-  const inputFocusRequest = props.inputFocusRequest.value;
   const t = useUiTranslation();
   const guidanceHelpRef = useRef<HTMLDetailsElement | null>(null);
   const inputRefs = useRef<Record<AnalysisPanelFieldKey, HTMLInputElement | null>>({
@@ -323,21 +322,23 @@ function AnalysisPanel(props: {
     max_band_half_width_pct: null,
   });
 
-  useEffect(() => {
+  useSignalEffect(() => {
+    const inputFocusRequest = props.inputFocusRequest.value;
     if (!inputFocusRequest) {
       return;
     }
     inputRefs.current[inputFocusRequest.field]?.focus();
-  }, [inputFocusRequest]);
+  });
 
-  useEffect(() => {
+  useSignalEffect(() => {
+    const guidanceOpenRequest = props.guidanceOpenRequest.value;
     if (guidanceOpenRequest <= 0) {
       return;
     }
     if (guidanceHelpRef.current) {
       guidanceHelpRef.current.open = true;
     }
-  }, [guidanceOpenRequest]);
+  });
 
   const noCarSelected = !state.availability.hasActiveCar && !state.availability.isLoading;
   return (

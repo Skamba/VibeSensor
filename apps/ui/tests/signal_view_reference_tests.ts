@@ -13,6 +13,57 @@ function requireElement<T extends Element = HTMLElement>(root: ParentNode, selec
   return element;
 }
 
+async function runDirectSignalBindingReferenceTest(): Promise<void> {
+  const buttonText = signal("Idle");
+  const variant = signal("muted");
+  const disabled = signal(true);
+  let renderCount = 0;
+
+  const harness = await mountSignalView(async () => {
+    const { h, render } = await import("preact");
+    return (host) => {
+      function SignalButton() {
+        renderCount += 1;
+        return h(
+          "button",
+          {
+            "data-variant": variant,
+            disabled,
+            id: "signalBindingButton",
+            type: "button",
+          },
+          buttonText,
+        );
+      }
+
+      render(h(SignalButton, {}), host);
+      return {};
+    };
+  });
+
+  try {
+    await harness.flush();
+
+    const button = requireElement<HTMLButtonElement>(harness.host, "#signalBindingButton");
+    assert.equal(renderCount, 1);
+    assert.equal(button.textContent, "Idle");
+    assert.equal(button.getAttribute("data-variant"), "muted");
+    assert.equal(button.disabled, true);
+
+    buttonText.value = "Running";
+    variant.value = "warn";
+    disabled.value = false;
+    await harness.flush();
+
+    assert.equal(renderCount, 1);
+    assert.equal(button.textContent, "Running");
+    assert.equal(button.getAttribute("data-variant"), "warn");
+    assert.equal(button.disabled, false);
+  } finally {
+    harness.cleanup();
+  }
+}
+
 async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
   const connectedSensorsText = signal("2 / 4");
   const activeCarText = signal("Roadster");
@@ -140,6 +191,10 @@ async function runSettingsShellReferenceTest(): Promise<void> {
 }
 
 const referenceTests = [
+  {
+    name: "direct signal jsx bindings update without rerender",
+    run: runDirectSignalBindingReferenceTest,
+  },
   {
     name: "realtime live overview computed-driven output",
     run: runRealtimeLiveOverviewReferenceTest,

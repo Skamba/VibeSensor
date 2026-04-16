@@ -1,7 +1,12 @@
 import { h, render, type ComponentChildren } from "preact";
 
-import { useUiTranslation } from "../ui_i18n";
-import { signal, type ReadonlySignal } from "../ui_signals";
+import { useUiText } from "../ui_i18n";
+import {
+  computed,
+  signal,
+  useComputed,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type {
   UpdateCurrentStatusSectionModel,
   UpdateHealthSectionModel,
@@ -35,11 +40,6 @@ export interface UpdatePanelView {
   bindActions(handlers: UpdatePanelActionHandlers): void;
   bindModel(model: ReadonlySignal<UpdatePanelRenderModel>): void;
 }
-
-type UpdatePanelBridgeState = {
-  actions: UpdatePanelActionHandlers | null;
-  model: ReadonlySignal<UpdatePanelRenderModel> | null;
-};
 
 const DEFAULT_UPDATE_PANEL_MODEL: UpdatePanelRenderModel = {
   cancelButtonDisabled: true,
@@ -322,11 +322,25 @@ function UpdateStatusContent(props: {
 }
 
 function UpdatePanel(props: {
-  state: ReadonlySignal<UpdatePanelBridgeState>;
+  actions: ReadonlySignal<UpdatePanelActionHandlers | null>;
+  model: ReadonlySignal<UpdatePanelRenderModel>;
 }) {
-  const state = props.state.value;
-  const model = state.model?.value ?? DEFAULT_UPDATE_PANEL_MODEL;
-  const t = useUiTranslation();
+  const titleText = useUiText("settings.update.title", "System Update");
+  const hintText = useUiText(
+    "settings.update.hint",
+    "Use either temporary Wi-Fi credentials or an already-connected USB internet uplink to update from GitHub. The hotspot only pauses for the Wi-Fi path.",
+  );
+  const reconnectNote = useUiText(
+    "settings.update.reconnect_note",
+    "Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.",
+  );
+  const cancelLabel = useUiText("settings.update.cancel", "Cancel Update");
+  const status = useComputed(() => props.model.value.status);
+  const startButtonHidden = useComputed(() => props.model.value.startButtonHidden);
+  const startButtonDisabled = useComputed(() => props.model.value.startButtonDisabled);
+  const startButtonLabelText = useComputed(() => props.model.value.startButtonLabelText);
+  const cancelButtonHidden = useComputed(() => props.model.value.cancelButtonHidden);
+  const cancelButtonDisabled = useComputed(() => props.model.value.cancelButtonDisabled);
   return (
     <div class="panel card">
       <div class="maintenance-layout maintenance-layout--compact">
@@ -334,50 +348,44 @@ function UpdatePanel(props: {
           <div class="maintenance-card__header">
             <div>
               <div class="maintenance-card__title">
-                {t("settings.update.title", "System Update")}
+                {titleText}
               </div>
               <div class="subtle">
-                {t(
-                  "settings.update.hint",
-                  "Use either temporary Wi-Fi credentials or an already-connected USB internet uplink to update from GitHub. The hotspot only pauses for the Wi-Fi path.",
-                )}
+                {hintText}
               </div>
             </div>
           </div>
           <div class="maintenance-card__body maintenance-card__body--hero">
             <div class="maintenance-note">
-              {t(
-                "settings.update.reconnect_note",
-                "Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.",
-              )}
+              {reconnectNote}
             </div>
             <div
               id="updateOverviewPanel"
               class="maintenance-stack maintenance-stack--tight"
               aria-live="polite"
             >
-              <UpdateOverviewContent status={model.status} />
+              <UpdateOverviewContent status={status.value} />
             </div>
             <div class="maintenance-action-row">
               <button
                 type="button"
                 id="updateStartBtn"
                 class="btn btn--success"
-                hidden={model.startButtonHidden}
-                disabled={model.startButtonDisabled}
-                onClick={() => state.actions?.onStart()}
+                hidden={startButtonHidden}
+                disabled={startButtonDisabled}
+                onClick={() => props.actions.value?.onStart()}
               >
-                {model.startButtonLabelText}
+                {startButtonLabelText}
               </button>
               <button
                 type="button"
                 id="updateCancelBtn"
                 class="btn btn--danger"
-                hidden={model.cancelButtonHidden}
-                disabled={model.cancelButtonDisabled}
-                onClick={() => state.actions?.onCancel()}
+                hidden={cancelButtonHidden}
+                disabled={cancelButtonDisabled}
+                onClick={() => props.actions.value?.onCancel()}
               >
-                {t("settings.update.cancel", "Cancel Update")}
+                {cancelLabel}
               </button>
             </div>
           </div>
@@ -388,7 +396,7 @@ function UpdatePanel(props: {
           class="maintenance-stack maintenance-stack--tight"
           aria-live="polite"
         >
-          <UpdateStatusContent status={model.status} />
+          <UpdateStatusContent status={status.value} />
         </div>
       </div>
     </div>
@@ -396,18 +404,17 @@ function UpdatePanel(props: {
 }
 
 export function mountUpdatePanel(host: HTMLElement): UpdatePanelView {
-  const state = signal<UpdatePanelBridgeState>({
-    actions: null,
-    model: null,
-  });
-  render(<UpdatePanel state={state} />, host);
+  const actions = signal<UpdatePanelActionHandlers | null>(null);
+  const modelSource = signal<ReadonlySignal<UpdatePanelRenderModel> | null>(null);
+  const model = computed<UpdatePanelRenderModel>(() => modelSource.value?.value ?? DEFAULT_UPDATE_PANEL_MODEL);
+  render(<UpdatePanel actions={actions} model={model} />, host);
 
   return {
     bindActions(handlers) {
-      state.value = { ...state.value, actions: handlers };
+      actions.value = handlers;
     },
     bindModel(model) {
-      state.value = { ...state.value, model };
+      modelSource.value = model;
     },
   };
 }

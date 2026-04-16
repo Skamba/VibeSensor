@@ -1,7 +1,12 @@
 import { render, type JSX } from "preact";
 
-import { useUiTranslation } from "../ui_i18n";
-import { effect, type ReadonlySignal, signal } from "../ui_signals";
+import { useUiText } from "../ui_i18n";
+import {
+  effect,
+  useComputed,
+  type ReadonlySignal,
+  signal,
+} from "../ui_signals";
 
 type ViewDisposer = () => void;
 
@@ -83,18 +88,25 @@ function focusSettingsTab(
   buttons[normalizeSettingsTabIndex(nextIndex)]?.focus();
 }
 
-function SettingsShell(props: SettingsShellProps) {
-  const activeTabId = props.activeTabId.value;
-  const { onActivateTab } = props;
-  const t = useUiTranslation();
+function SettingsShellTabButton(props: {
+  activeTabId: ReadonlySignal<SettingsShellTabId>;
+  index: number;
+  onActivateTab(tabId: SettingsShellTabId): void;
+  tab: (typeof SETTINGS_TABS)[number];
+}) {
+  const { index, onActivateTab, tab } = props;
+  const isActive = useComputed(() => tab.id === props.activeTabId.value);
+  const labelText = useUiText(tab.labelKey, tab.fallbackLabel);
+  const tabClass = useComputed(() => isActive.value ? "settings-tab active" : "settings-tab");
+  const ariaSelected = useComputed(() => isActive.value ? "true" : "false");
+  const tabIndex = useComputed(() => isActive.value ? 0 : -1);
 
   function handleTabKeyDown(
-    index: number,
     event: JSX.TargetedKeyboardEvent<HTMLButtonElement>,
   ): void {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      onActivateTab(SETTINGS_TABS[index].id);
+      onActivateTab(tab.id);
       return;
     }
     if (event.key === "ArrowRight") {
@@ -126,44 +138,63 @@ function SettingsShell(props: SettingsShellProps) {
   }
 
   return (
+    <button
+      type="button"
+      class={tabClass}
+      data-settings-tab={tab.id}
+      role="tab"
+      aria-controls={tab.id}
+      aria-selected={ariaSelected}
+      tabIndex={tabIndex}
+      onClick={() => onActivateTab(tab.id)}
+      onKeyDown={handleTabKeyDown}
+    >
+      <span>{labelText}</span>
+    </button>
+  );
+}
+
+function SettingsShellTabPanel(props: {
+  activeTabId: ReadonlySignal<SettingsShellTabId>;
+  tab: (typeof SETTINGS_TABS)[number];
+}) {
+  const isActive = useComputed(() => props.tab.id === props.activeTabId.value);
+  const panelClass = useComputed(() => isActive.value ? "settings-tab-panel active" : "settings-tab-panel");
+  const hidden = useComputed(() => !isActive.value);
+
+  return (
+    <div
+      id={props.tab.id}
+      class={panelClass}
+      role="tabpanel"
+      hidden={hidden}
+    >
+      <div id={props.tab.hostId} />
+    </div>
+  );
+}
+
+function SettingsShell(props: SettingsShellProps) {
+  const { onActivateTab } = props;
+
+  return (
     <>
       <nav class="settings-tabs" role="tablist">
         {SETTINGS_TABS.map((tab, index) => {
-          const isActive = tab.id === activeTabId;
           return (
-            <button
+            <SettingsShellTabButton
               key={tab.id}
-              type="button"
-              class={isActive ? "settings-tab active" : "settings-tab"}
-              data-settings-tab={tab.id}
-              role="tab"
-              aria-controls={tab.id}
-              aria-selected={isActive ? "true" : "false"}
-              tabIndex={isActive ? 0 : -1}
-              onClick={() => onActivateTab(tab.id)}
-              onKeyDown={(event) => handleTabKeyDown(index, event)}
-            >
-              <span>
-                {t(tab.labelKey, tab.fallbackLabel)}
-              </span>
-            </button>
+              activeTabId={props.activeTabId}
+              index={index}
+              onActivateTab={onActivateTab}
+              tab={tab}
+            />
           );
         })}
       </nav>
-      {SETTINGS_TABS.map((tab) => {
-        const isActive = tab.id === activeTabId;
-        return (
-          <div
-            key={tab.id}
-            id={tab.id}
-            class={isActive ? "settings-tab-panel active" : "settings-tab-panel"}
-            role="tabpanel"
-            hidden={!isActive}
-          >
-            <div id={tab.hostId} />
-          </div>
-        );
-      })}
+      {SETTINGS_TABS.map((tab) => (
+        <SettingsShellTabPanel key={tab.id} activeTabId={props.activeTabId} tab={tab} />
+      ))}
     </>
   );
 }
