@@ -565,7 +565,6 @@ test("history feature reports partial delete failures without splitting render o
 
   const { feature, errors, getRenderCount, getLatestModel } = createFeatureHarness(state);
   const originalFetch = globalThis.fetch;
-  const originalConfirm = window.confirm;
   const deleteRequests: string[] = [];
 
   globalThis.fetch = (async (input: string | URL | RequestInfo, init?: RequestInit) => {
@@ -585,13 +584,11 @@ test("history feature reports partial delete failures without splitting render o
     }
     throw new Error(`Unexpected request: ${url}`);
   }) as typeof fetch;
-  window.confirm = (() => true) as typeof window.confirm;
 
   try {
     await feature.deleteAllRuns();
   } finally {
     globalThis.fetch = originalFetch;
-    window.confirm = originalConfirm;
   }
 
   expect(deleteRequests).toEqual(["/api/history/run-001", "/api/history/run-002"]);
