@@ -299,30 +299,21 @@ export function createCarsFeatureWorkflow(
     const currentNoGearboxesMessage = noGearboxesMessage.value;
     return {
       actionHint: actionHint.value,
-      brandOptions: {
-        ...currentBrandOptions,
-        options: [...currentBrandOptions.options],
-      },
+      brandOptions: currentBrandOptions,
       canFinish: canFinish.value,
-      gearboxOptions: [...currentGearboxOptions],
+      gearboxOptions: currentGearboxOptions,
       isOpen: isOpen.value,
       manualInputs: cloneManualInputs(inputs),
-      modelOptions: {
-        ...currentModelOptions,
-        options: [...currentModelOptions.options],
-      },
+      modelOptions: currentModelOptions,
       noGearboxesMessage: currentNoGearboxesMessage,
       resolvedSpecBranch: resolvedSpecBranch.value,
       selectedGearbox: state.selectedGearbox,
       selectedTire: state.selectedTire,
       step: state.step,
       summaryData: summaryData.value,
-      tireOptions: [...currentTireOptions],
-      typeOptions: {
-        ...currentTypeOptions,
-        options: [...currentTypeOptions.options],
-      },
-      variantOptions: [...currentVariantOptions],
+      tireOptions: currentTireOptions,
+      typeOptions: currentTypeOptions,
+      variantOptions: currentVariantOptions,
     };
   });
 
