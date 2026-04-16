@@ -1,4 +1,4 @@
-import { h, render } from "preact";
+import { render } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 
 import { useUiText } from "../ui_i18n";

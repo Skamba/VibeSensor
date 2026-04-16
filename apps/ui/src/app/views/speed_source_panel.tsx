@@ -1,4 +1,4 @@
-import { h, render } from "preact";
+import { render } from "preact";
 
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
 import type { ChoiceCardState } from "../view_style_types";

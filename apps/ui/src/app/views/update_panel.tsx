@@ -1,4 +1,4 @@
-import { h, render, type ComponentChildren } from "preact";
+import { render, type ComponentChildren } from "preact";
 
 import { useUiText } from "../ui_i18n";
 import {
