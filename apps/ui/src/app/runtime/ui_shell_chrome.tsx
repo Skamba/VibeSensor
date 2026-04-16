@@ -1,7 +1,11 @@
 import { Component, h, render, type ComponentChildren, type JSX } from "preact";
 
 import { requiredById } from "../dom/dom_query";
-import { signal, type ReadonlySignal } from "../ui_signals";
+import {
+  signal,
+  useComputed,
+  type ReadonlySignal,
+} from "../ui_signals";
 import {
   settingsFeedbackClassName,
   type SettingsFeedbackMessage,
@@ -232,7 +236,26 @@ function ShellViewSection(props: ShellViewSectionProps) {
 
 function UiShellChrome(props: UiShellChromeProps) {
   const { bridge } = props;
-  const model = props.model.value;
+  const activeViewId = useComputed(() => props.model.value.activeViewId);
+  const appErrorBanner = useComputed(() => props.model.value.appErrorBanner);
+  const languageFeedback = useComputed(() => props.model.value.languageFeedback);
+  const languageLabelText = useComputed(() => props.model.value.languageLabelText);
+  const navItems = useComputed(() => props.model.value.navItems);
+  const selectedLanguage = useComputed(() => props.model.value.selectedLanguage);
+  const selectedSpeedUnit = useComputed(() => props.model.value.selectedSpeedUnit);
+  const shellLiveStatus = useComputed(() => props.model.value.shellLiveStatus);
+  const speedUnitFeedback = useComputed(() => props.model.value.speedUnitFeedback);
+  const speedUnitLabelText = useComputed(() => props.model.value.speedUnitLabelText);
+  const speedUnitOptionLabels = useComputed(() => props.model.value.speedUnitOptionLabels);
+  const wsLinkState = useComputed(() => props.model.value.wsLinkState);
+  const statusHidden = useComputed(() => activeViewId.value === "dashboardView");
+  const appErrorHidden = useComputed(() => appErrorBanner.value.hidden);
+  const appErrorVariant = useComputed(() => appErrorBanner.value.variant ?? undefined);
+  const appErrorText = useComputed(() => appErrorBanner.value.text);
+  const wsLinkVariant = useComputed(() => wsLinkState.value.variant);
+  const wsLinkText = useComputed(() => wsLinkState.value.text);
+  const shellLiveVariant = useComputed(() => shellLiveStatus.value.variant);
+  const shellLiveText = useComputed(() => shellLiveStatus.value.text);
 
   function activateView(viewId: string): void {
     bridge.current.activateView(viewId);
@@ -244,33 +267,33 @@ function UiShellChrome(props: UiShellChromeProps) {
   ): void {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      activateView(model.navItems[index].viewId);
+      activateView(navItems.value[index].viewId);
       return;
     }
     if (event.key === "ArrowRight") {
       event.preventDefault();
       const nextIndex = normalizeMenuIndex(index + 1);
-      activateView(model.navItems[nextIndex].viewId);
+      activateView(navItems.value[nextIndex].viewId);
       focusMenuButton(event, nextIndex);
       return;
     }
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       const nextIndex = normalizeMenuIndex(index - 1);
-      activateView(model.navItems[nextIndex].viewId);
+      activateView(navItems.value[nextIndex].viewId);
       focusMenuButton(event, nextIndex);
       return;
     }
     if (event.key === "Home") {
       event.preventDefault();
-      activateView(model.navItems[0].viewId);
+      activateView(navItems.value[0].viewId);
       focusMenuButton(event, 0);
       return;
     }
     if (event.key === "End") {
       event.preventDefault();
-      const nextIndex = model.navItems.length - 1;
-      activateView(model.navItems[nextIndex].viewId);
+      const nextIndex = navItems.value.length - 1;
+      activateView(navItems.value[nextIndex].viewId);
       focusMenuButton(event, nextIndex);
     }
   }
@@ -295,8 +318,8 @@ function UiShellChrome(props: UiShellChromeProps) {
               </picture>
             </h1>
             <nav class="menu" aria-label="Primary" role="tablist">
-              {model.navItems.map((item, index) => {
-                const isActive = item.viewId === model.activeViewId;
+              {navItems.value.map((item, index) => {
+                const isActive = item.viewId === activeViewId.value;
                 return (
                   <button
                     key={item.viewId}
@@ -319,38 +342,38 @@ function UiShellChrome(props: UiShellChromeProps) {
           </div>
           <div class="site-header__preferences">
             <label class="header-select" htmlFor="speedUnitSelect">
-              <span class="mini-label">{model.speedUnitLabelText}</span>
+              <span class="mini-label">{speedUnitLabelText}</span>
               <select
                 id="speedUnitSelect"
                 class="unit-picker"
-                aria-label={model.speedUnitLabelText}
-                aria-describedby={model.speedUnitFeedback ? "speedUnitFeedback" : undefined}
-                aria-invalid={model.speedUnitFeedback?.tone === "error" ? "true" : undefined}
-                value={model.selectedSpeedUnit}
+                aria-label={speedUnitLabelText}
+                aria-describedby={speedUnitFeedback.value ? "speedUnitFeedback" : undefined}
+                aria-invalid={speedUnitFeedback.value?.tone === "error" ? "true" : undefined}
+                value={selectedSpeedUnit}
                 onChange={(event) => {
                   void bridge.current.saveSpeedUnit(event.currentTarget.value);
                 }}
               >
                 {SPEED_UNIT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {model.speedUnitOptionLabels[option.value] ?? option.fallbackLabel}
+                    {speedUnitOptionLabels.value[option.value] ?? option.fallbackLabel}
                   </option>
                 ))}
               </select>
               <SettingsFeedbackSlot
                 id="speedUnitFeedback"
-                message={model.speedUnitFeedback}
+                message={speedUnitFeedback.value}
               />
             </label>
             <label class="header-select" htmlFor="languageSelect">
-              <span class="mini-label">{model.languageLabelText}</span>
+              <span class="mini-label">{languageLabelText}</span>
               <select
                 id="languageSelect"
                 class="lang-picker"
-                aria-label={model.languageLabelText}
-                aria-describedby={model.languageFeedback ? "languageFeedback" : undefined}
-                aria-invalid={model.languageFeedback?.tone === "error" ? "true" : undefined}
-                value={model.selectedLanguage}
+                aria-label={languageLabelText}
+                aria-describedby={languageFeedback.value ? "languageFeedback" : undefined}
+                aria-invalid={languageFeedback.value?.tone === "error" ? "true" : undefined}
+                value={selectedLanguage}
                 onChange={(event) => {
                   void bridge.current.saveLanguage(event.currentTarget.value);
                 }}
@@ -363,28 +386,28 @@ function UiShellChrome(props: UiShellChromeProps) {
               </select>
               <SettingsFeedbackSlot
                 id="languageFeedback"
-                message={model.languageFeedback}
+                message={languageFeedback.value}
               />
             </label>
           </div>
         </div>
-        <div class="site-header__status" hidden={model.activeViewId === "dashboardView"}>
+        <div class="site-header__status" hidden={statusHidden}>
           <div class="site-header__status-pills">
             <div
               id="linkState"
               class="pill"
-              data-variant={model.wsLinkState.variant}
+              data-variant={wsLinkVariant}
               aria-live="polite"
             >
-              {model.wsLinkState.text}
+              {wsLinkText}
             </div>
             <div
               id="shellLiveStatus"
               class="pill"
-              data-variant={model.shellLiveStatus.variant}
+              data-variant={shellLiveVariant}
               aria-live="polite"
             >
-              {model.shellLiveStatus.text}
+              {shellLiveText}
             </div>
           </div>
         </div>
@@ -393,16 +416,16 @@ function UiShellChrome(props: UiShellChromeProps) {
       <div
         id="appErrorBanner"
         class="connection-banner app-error-banner"
-        hidden={model.appErrorBanner.hidden}
-        data-variant={model.appErrorBanner.variant ?? undefined}
+        hidden={appErrorHidden}
+        data-variant={appErrorVariant}
         aria-live="assertive"
         role="alert"
       >
-        {model.appErrorBanner.text}
+        {appErrorText}
       </div>
 
       <ShellViewSection
-        activeViewId={model.activeViewId}
+        activeViewId={activeViewId.value}
         ariaLabelledBy="tab-dashboard"
         viewId="dashboardView"
       >
@@ -410,7 +433,7 @@ function UiShellChrome(props: UiShellChromeProps) {
       </ShellViewSection>
 
       <ShellViewSection
-        activeViewId={model.activeViewId}
+        activeViewId={activeViewId.value}
         ariaLabelledBy="tab-history"
         viewId="historyView"
       >
@@ -418,7 +441,7 @@ function UiShellChrome(props: UiShellChromeProps) {
       </ShellViewSection>
 
       <ShellViewSection
-        activeViewId={model.activeViewId}
+        activeViewId={activeViewId.value}
         ariaLabelledBy="tab-settings"
         viewId="settingsView"
       >

@@ -1,6 +1,11 @@
 import { render } from "preact";
-import { useUiTranslation } from "../ui_i18n";
-import { signal, type ReadonlySignal } from "../ui_signals";
+import { useUiText } from "../ui_i18n";
+import {
+  computed,
+  signal,
+  useComputed,
+  type ReadonlySignal,
+} from "../ui_signals";
 import { HistoryTableBody } from "./history_table_content";
 import type {
   HistoryPanelActionHandlers,
@@ -8,68 +13,65 @@ import type {
   HistoryPanelView,
 } from "./history_table_view";
 
-interface HistoryPanelBridgeState {
-  actions: HistoryPanelActionHandlers | null;
-  model: ReadonlySignal<HistoryPanelRenderModel> | null;
-}
-
-const DEFAULT_PANEL_STATE: HistoryPanelBridgeState = {
-  actions: null,
-  model: null,
+const DEFAULT_PANEL_MODEL: HistoryPanelRenderModel = {
+  deleteAllRunsDisabled: true,
+  historySummaryText: "No runs yet.",
+  table: null,
 };
 
-function HistoryPanel(props: { state: ReadonlySignal<HistoryPanelBridgeState> }) {
-  const state = props.state.value;
-  const model = state.model?.value ?? {
-    deleteAllRunsDisabled: true,
-    historySummaryText: "No runs yet.",
-    table: null,
-  };
-  const t = useUiTranslation();
+function HistoryPanel(props: {
+  actions: ReadonlySignal<HistoryPanelActionHandlers | null>;
+  model: ReadonlySignal<HistoryPanelRenderModel>;
+}) {
+  const refreshLabel = useUiText("history.refresh", "Refresh History");
+  const deleteAllLabel = useUiText("history.delete_all", "Delete All Runs");
+  const runLabel = useUiText("history.table.file", "Run");
+  const startedLabel = useUiText("history.table.updated", "Started");
+  const samplesLabel = useUiText("history.table.size", "Samples");
+  const actionsLabel = useUiText("history.table.actions", "Actions");
+  const deleteAllRunsDisabled = useComputed(() => props.model.value.deleteAllRunsDisabled);
+  const historySummaryText = useComputed(() => props.model.value.historySummaryText);
+  const table = useComputed(() => props.model.value.table);
 
   return (
     <>
       <div class="history-toolbar">
         <div class="history-toolbar__copy">
-            <div id="historySummary" class="history-toolbar__summary subtle">
-            {model.historySummaryText}
-            </div>
+          <div id="historySummary" class="history-toolbar__summary subtle">
+            {historySummaryText}
+          </div>
         </div>
         <div class="history-toolbar__actions">
           <button
             id="refreshHistoryBtn"
             class="btn btn--muted"
             type="button"
-
-            onClick={() => state.actions?.onRefreshHistory()}
+            onClick={() => props.actions.value?.onRefreshHistory()}
           >
-            {t("history.refresh", "Refresh History")}
+            {refreshLabel}
           </button>
           <button
             id="deleteAllRunsBtn"
             class="btn btn--danger-quiet"
             type="button"
-
-            disabled={model.deleteAllRunsDisabled}
-            onClick={() => state.actions?.onDeleteAllRuns()}
+            disabled={deleteAllRunsDisabled}
+            onClick={() => props.actions.value?.onDeleteAllRuns()}
           >
-            {t("history.delete_all", "Delete All Runs")}
+            {deleteAllLabel}
           </button>
         </div>
       </div>
       <table class="history-table">
         <thead>
           <tr>
-            <th>{t("history.table.file", "Run")}</th>
-            <th>{t("history.table.updated", "Started")}</th>
-            <th class="numeric">
-              {t("history.table.size", "Samples")}
-            </th>
-            <th>{t("history.table.actions", "Actions")}</th>
+            <th>{runLabel}</th>
+            <th>{startedLabel}</th>
+            <th class="numeric">{samplesLabel}</th>
+            <th>{actionsLabel}</th>
           </tr>
         </thead>
         <tbody id="historyTableBody">
-          <HistoryTableBody handlers={state.actions} table={model.table} />
+          <HistoryTableBody handlers={props.actions.value} table={table.value} />
         </tbody>
       </table>
     </>
@@ -77,15 +79,17 @@ function HistoryPanel(props: { state: ReadonlySignal<HistoryPanelBridgeState> })
 }
 
 export function mountHistoryPanel(host: HTMLElement): HistoryPanelView {
-  const state = signal<HistoryPanelBridgeState>({ ...DEFAULT_PANEL_STATE });
-  render(<HistoryPanel state={state} />, host);
+  const actions = signal<HistoryPanelActionHandlers | null>(null);
+  const modelSource = signal<ReadonlySignal<HistoryPanelRenderModel> | null>(null);
+  const model = computed<HistoryPanelRenderModel>(() => modelSource.value?.value ?? DEFAULT_PANEL_MODEL);
+  render(<HistoryPanel actions={actions} model={model} />, host);
 
   return {
     bindModel(model: ReadonlySignal<HistoryPanelRenderModel>): void {
-      state.value = { ...state.value, model };
+      modelSource.value = model;
     },
     bindActions(handlers: HistoryPanelActionHandlers): void {
-      state.value = { ...state.value, actions: handlers };
+      actions.value = handlers;
     },
   };
 }

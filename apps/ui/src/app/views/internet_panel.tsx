@@ -1,10 +1,14 @@
 import { h, render, type ComponentChildren } from "preact";
-import { useEffect, useRef } from "preact/hooks";
+import { useRef } from "preact/hooks";
 
 import type { UpdateStartRequestPayload } from "../../transport/http_models";
 import type { ChoiceCardState } from "../view_style_types";
 import { useUiTranslation } from "../ui_i18n";
-import { signal, type ReadonlySignal } from "../ui_signals";
+import {
+  signal,
+  useSignalEffect,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type {
   MaintenanceReadinessItem,
   MaintenanceReadinessPanelModel,
@@ -260,18 +264,18 @@ function InternetPanel(props: {
   focusRequest: ReadonlySignal<InternetPanelFocusRequest | null>;
   state: ReadonlySignal<InternetPanelBridgeState>;
 }) {
-  const focusRequest = props.focusRequest.value;
   const state = props.state.value;
   const model = state.model?.value ?? DEFAULT_INTERNET_PANEL_MODEL;
   const t = useUiTranslation();
   const ssidInputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
+  useSignalEffect(() => {
+    const focusRequest = props.focusRequest.value;
     if (!focusRequest) {
       return;
     }
     ssidInputRef.current?.focus();
-  }, [focusRequest]);
+  });
 
   return (
     <div class="maintenance-stack">

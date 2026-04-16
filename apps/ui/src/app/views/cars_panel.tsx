@@ -6,7 +6,11 @@ import type {
   CarsFeatureManualInputState,
 } from "../features/cars_feature_workflow";
 import { useUiTranslation } from "../ui_i18n";
-import { signal, type ReadonlySignal } from "../ui_signals";
+import {
+  signal,
+  useSignal,
+  type ReadonlySignal,
+} from "../ui_signals";
 import {
   createClosedCarsWizardRenderModel,
   type CarsWizardOptionItem,
@@ -452,10 +456,10 @@ function CarsPanel(props: {
     variantOption: null,
   });
   const lastReturnFocusTargetRef = useRef<HTMLElement | null>(null);
-  const lastWizardOpenStateRef = useRef(wizardModel.isOpen);
+  const lastWizardOpenState = useSignal(wizardModel.isOpen);
 
   useEffect(() => {
-    const wasOpen = lastWizardOpenStateRef.current;
+    const wasOpen = lastWizardOpenState.value;
     if (wizardModel.isOpen && !wasOpen) {
       const activeElement = document.activeElement instanceof HTMLElement
         ? document.activeElement
@@ -472,7 +476,7 @@ function CarsPanel(props: {
       focusElement(safeTarget);
       lastReturnFocusTargetRef.current = null;
     }
-    lastWizardOpenStateRef.current = wizardModel.isOpen;
+    lastWizardOpenState.value = wizardModel.isOpen;
   }, [wizardModel.isOpen]);
 
   useEffect(() => {
