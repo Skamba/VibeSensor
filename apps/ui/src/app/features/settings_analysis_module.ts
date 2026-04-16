@@ -313,12 +313,14 @@ export function createSettingsAnalysisModule(
     }, {});
   }
 
-  function resetAnalysisToDefaults(): void {
+  async function resetAnalysisToDefaults(): Promise<void> {
     if (!ctx.hasValidActiveCar()) {
       ctx.onMissingActiveCar();
       return;
     }
-    const ok = window.confirm(t("settings.analysis.reset_confirm"));
+    const ok = await ctx.services.requestConfirmation(
+      t("settings.analysis.reset_confirm"),
+    );
     if (!ok) {
       return;
     }
@@ -388,7 +390,7 @@ export function createSettingsAnalysisModule(
     }
   }
 
-  function saveAnalysisFromInputs(): void {
+  async function saveAnalysisFromInputsInternal(): Promise<void> {
     if (!ctx.hasValidActiveCar()) {
       ctx.onMissingActiveCar();
       return;
@@ -446,7 +448,7 @@ export function createSettingsAnalysisModule(
           unit: field.config.unit,
         }),
       );
-      const ok = window.confirm(
+      const ok = await ctx.services.requestConfirmation(
         [
           intro,
           ...details,
@@ -467,6 +469,10 @@ export function createSettingsAnalysisModule(
     void syncAnalysisSettingsToServer(payload);
   }
 
+  function saveAnalysisFromInputs(): void {
+    void saveAnalysisFromInputsInternal();
+  }
+
   function handleFieldInput(
     action: { field: AnalysisPanelFieldKey; value: string },
   ): void {
@@ -483,7 +489,9 @@ export function createSettingsAnalysisModule(
   function bindHandlers(): void {
     panel.bindActions({
       onFieldInput: handleFieldInput,
-      onReset: resetAnalysisToDefaults,
+      onReset: () => {
+        void resetAnalysisToDefaults();
+      },
       onSave: saveAnalysisFromInputs,
     });
   }

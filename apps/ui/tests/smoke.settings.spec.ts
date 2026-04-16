@@ -1,6 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-import { createSettingsHandlerFromMap, fulfillJson, gpsStatus, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
+import {
+  cancelPrompt,
+  confirmPrompt,
+  createSettingsHandlerFromMap,
+  fulfillJson,
+  gpsStatus,
+  installCommonRoutes,
+  installFakeWebSocket,
+  requestPath,
+} from "./smoke.helpers";
 
 test("gps status uses selected speed unit in settings panel", async ({ page }) => {
   await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "/api/settings/language": { language: "en" }, "/api/settings/speed-unit": { speed_unit: "mps" }, "/api/settings/speed-source/status": gpsStatus({ last_update_age_s: 0.333, raw_speed_kmh: 36 }) }) });
@@ -309,7 +318,7 @@ test("analysis tab adds guided helper copy and can reset tuning to defaults", as
     }
     await fulfillJson(route, lastAnalysisPayload);
   });
-  await installFakeWebSocket(page, { confirmResult: true });
+  await installFakeWebSocket(page);
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
@@ -342,6 +351,7 @@ test("analysis tab adds guided helper copy and can reset tuning to defaults", as
   await expect(page.locator("#wheelBandwidthGuidance")).not.toContainText("Allowed 0.1% to 100%");
 
   await page.locator("#resetAnalysisBtn").click();
+  await confirmPrompt(page);
   await expect.poll(() => analysisPutCalls).toBe(1);
   await expect(page.locator("#wheelBandwidthInput")).toHaveValue("5");
   await expect(page.locator("#maxBandHalfWidthInput")).toHaveValue("6");
@@ -371,19 +381,17 @@ test("analysis settings ask for confirmation before saving risky values", async 
     }
     await fulfillJson(route, {});
   });
-  await installFakeWebSocket(page, { confirmResult: false });
+  await installFakeWebSocket(page);
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
   await page.locator("#wheelBandwidthInput").fill("40");
   await page.locator("#saveAnalysisBtn").click();
-  await page.waitForTimeout(150);
+  await cancelPrompt(page);
   await expect.poll(() => analysisPutCalls).toBe(0);
 
-  await page.evaluate(() => {
-    window.confirm = () => true;
-  });
   await page.locator("#saveAnalysisBtn").click();
+  await confirmPrompt(page);
   await expect.poll(() => analysisPutCalls).toBe(1);
 });
 
@@ -548,7 +556,6 @@ test("sensor identify and remove actions stay wired through the Sensors panel", 
     await fulfillJson(route, {});
   });
   await installFakeWebSocket(page, {
-    confirmResult: true,
     payload: {
       server_time: new Date().toISOString(),
       clients: [
@@ -579,6 +586,7 @@ test("sensor identify and remove actions stay wired through the Sensors panel", 
   await expect.poll(() => identifyCalls).toBe(1);
 
   await row.locator(".row-remove").click();
+  await confirmPrompt(page);
   await expect.poll(() => removeCalls).toBe(1);
   await expect(page.locator('#sensorsSettingsBody tr[data-client-id="sensor-1"]')).toHaveCount(0);
 });

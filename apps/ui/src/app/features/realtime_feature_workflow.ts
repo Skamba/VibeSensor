@@ -77,7 +77,7 @@ export interface RealtimeFeatureWorkflowDeps {
   recording: {
     onRecordingStatusChanged(): Promise<void>;
   };
-  confirmRemoveClient: (message: string) => boolean;
+  confirmRemoveClient: (message: string) => Promise<boolean>;
   state?: RealtimeFeatureWorkflowState;
   api?: Partial<RealtimeFeatureWorkflowApi>;
   createPollingController?: (options: PollingControllerOptions) => PollingController;
@@ -335,7 +335,9 @@ export function createRealtimeFeatureWorkflow(
 
   async function removeClient(clientId: string): Promise<void> {
     if (!clientId) return;
-    const confirmed = confirmRemoveClient(t("actions.remove_client_confirm", { id: clientId }));
+    const confirmed = await confirmRemoveClient(
+      t("actions.remove_client_confirm", { id: clientId }),
+    );
     if (!confirmed) return;
     try {
       await api.removeClient(clientId);

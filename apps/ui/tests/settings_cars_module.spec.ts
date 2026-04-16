@@ -61,6 +61,7 @@ test("settings cars module dismisses transient creation feedback through typed t
         }
         return key;
       },
+      requestConfirmation: async () => true,
       showError: () => undefined,
     },
     formatting: {

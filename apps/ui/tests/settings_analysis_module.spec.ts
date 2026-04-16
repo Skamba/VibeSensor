@@ -75,6 +75,7 @@ test("settings analysis module renders guidance and surfaces invalid input throu
     settings: state,
     services: {
       t: translate,
+      requestConfirmation: async () => true,
       showError: () => undefined,
     },
   });

@@ -11,6 +11,10 @@ import {
   type ReadonlySignal,
 } from "../ui_signals";
 import {
+  createUiConfirmationModule,
+  type UiConfirmationModule,
+} from "./ui_confirmation_module";
+import {
   createUiShellNavigationModule,
   type UiShellNavigationModule,
 } from "./ui_shell_navigation_module";
@@ -70,6 +74,8 @@ export class UiShellController {
 
   private readonly status: UiShellStatusModule;
 
+  private readonly confirmation: UiConfirmationModule;
+
   private readonly chromeRenderModel: ReadonlySignal<UiShellChromeRenderModel>;
 
   private readonly bindFeatureHandlers: () => void;
@@ -102,6 +108,9 @@ export class UiShellController {
       t: (key, vars) => this.t(key, vars),
       transport: this.state.transport,
     });
+    this.confirmation = createUiConfirmationModule({
+      t: (key, vars) => this.t(key, vars),
+    });
     this.preferences = createUiShellPreferencesModule({
       shell: this.state.shell,
       t: (key, vars) => this.t(key, vars),
@@ -109,6 +118,8 @@ export class UiShellController {
     });
     deps.chromeActions.attach({
       activateView: (viewId) => this.setActiveView(viewId),
+      cancelConfirmation: () => this.confirmation.cancel(),
+      confirmConfirmation: () => this.confirmation.confirm(),
       saveLanguage: (lang) => this.preferences.saveLanguage(lang),
       saveSpeedUnit: (unit) => this.preferences.saveSpeedUnit(unit),
     });
@@ -127,6 +138,10 @@ export class UiShellController {
 
   showError(message: string): void {
     this.notifications.showError(message);
+  }
+
+  requestConfirmation(message: string): Promise<boolean> {
+    return this.confirmation.requestConfirmation(message);
   }
 
   renderSpeedReadout(): void {
@@ -209,6 +224,7 @@ export class UiShellController {
       return {
         activeViewId: this.state.shell.activeViewId,
         appErrorBanner: this.notifications.bannerModel.value,
+        confirmationDialog: this.confirmation.dialogModel.value,
         languageFeedback: this.preferences.languageFeedback.value,
         languageLabelText: this.t("settings.language"),
         navItems: SHELL_NAV_ITEMS.map((item) => ({
