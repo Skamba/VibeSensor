@@ -89,6 +89,7 @@ function CarsPanel(props: {
     variantOption: null,
   });
   const lastReturnFocusTargetRef = useRef<HTMLElement | null>(null);
+  const lastHandledFocusRequestTokenRef = useRef(0);
   const lastWizardOpenStateRef = useRef(wizardModel.isOpen);
 
   useSignalEffect(() => {
@@ -119,9 +120,13 @@ function CarsPanel(props: {
 
   useSignalEffect(() => {
     const wizardFocusRequest = props.wizardFocusRequest.value;
-    if (!wizardFocusRequest) {
+    if (
+      !wizardFocusRequest ||
+      wizardFocusRequest.token === lastHandledFocusRequestTokenRef.current
+    ) {
       return;
     }
+    lastHandledFocusRequestTokenRef.current = wizardFocusRequest.token;
     queueMicrotask(() => {
       focusElement(
         resolveWizardFocusTarget(wizardFocusRequest.target, {
