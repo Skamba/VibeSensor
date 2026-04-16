@@ -246,6 +246,9 @@ instead of controller-side variant class interpolation.
 - Inside Preact components, prefer `useComputed()`, `useSignal()`, and
   `useSignalEffect()` over ad-hoc local refs or render-time signal reads when a
   hook-scoped reactive owner is clearer.
+- When several JSX bindings unwrap stable properties from the same model signal,
+  prefer `useSignalProperties()` from `app/ui_signals.ts` over repeating one
+  `useComputed(() => model.value.foo)` line per property.
 - Use `effect()` only for narrow imperative integrations such as timers,
   persistence, canvas/uPlot bridges, or other external-library coordination.
 - Preact-rendered copy should come from `useUiTranslation()` or `useUiText()`.

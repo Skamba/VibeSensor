@@ -5,7 +5,7 @@ import { useUiText } from "../ui_i18n";
 import {
   computed,
   signal,
-  useComputed,
+  useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
 import type {
@@ -28,6 +28,8 @@ export interface SensorsPanelView {
   bindModel(model: ReadonlySignal<SensorsPanelRenderModel>): void;
   bindActions(handlers: SensorsPanelActionHandlers): void;
 }
+
+const SENSORS_PANEL_MODEL_KEYS = ["table"] as const;
 
 function handleSensorAction(
   event: JSX.TargetedMouseEvent<HTMLButtonElement>,
@@ -133,7 +135,7 @@ function SensorsPanel(props: {
   const nameLabel = useUiText("settings.sensors.name", "Name");
   const locationLabel = useUiText("settings.sensors.location", "Location");
   const actionsLabel = useUiText("settings.sensors.actions", "Actions");
-  const table = useComputed(() => props.model.value.table);
+  const { table } = useSignalProperties(props.model, SENSORS_PANEL_MODEL_KEYS);
   return (
     <div class="panel card">
       <strong>
