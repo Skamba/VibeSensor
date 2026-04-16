@@ -343,6 +343,14 @@ export function CarsWizardPanel(props: {
     });
   }
 
+  function handleWizardKeyDown(event: KeyboardEvent): void {
+    if (event.key !== "Escape") {
+      return;
+    }
+    event.preventDefault();
+    closeWizard();
+  }
+
   return (
     <div class="wizard-modal-layer" hidden={!wizardModel.isOpen}>
       <div
@@ -359,6 +367,8 @@ export function CarsWizardPanel(props: {
         aria-modal="true"
         aria-labelledby="wizardTitle"
         data-spec-branch={wizardModel.specBranch ?? undefined}
+        tabIndex={-1}
+        onKeyDown={handleWizardKeyDown}
         ref={refs.addCarWizardRef}
       >
         <div class="wizard-header">

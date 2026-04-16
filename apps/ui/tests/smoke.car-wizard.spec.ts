@@ -51,6 +51,41 @@ test("opens the add car wizard in a focused task container and restores focus wh
   await expect(page.locator("#addCarBtn")).toBeFocused();
 });
 
+test("closes the add car wizard from Escape on the focused input and restores focus", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "/api/settings/cars": {
+        cars: [{ id: "car-1", name: "Audit Demo Car", type: "sedan", aspects: {} }],
+        active_car_id: "car-1",
+      },
+    }),
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    const path = requestPath(route);
+    if (path === "/api/car-library/brands") {
+      await fulfillJson(route, { brands: ["BMW", "Volvo"] });
+      return;
+    }
+    await fulfillJson(route, { brands: [], types: [], models: [] });
+  });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="carTab"]').click();
+  await page.locator("#addCarBtn").click();
+
+  const customBrandInput = page.locator("#wizardCustomBrand");
+  await customBrandInput.click();
+  await expect(customBrandInput).toBeFocused();
+  await customBrandInput.press("Escape");
+
+  await expect(page.locator("#addCarWizard")).toBeHidden();
+  await expect(page.locator("#wizardBackdrop")).toBeHidden();
+  await expect(page.locator("#addCarBtn")).toBeFocused();
+});
+
 test("uses the full mobile viewport and keeps the final action visible on short screens", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 667 });
   await installCommonRoutes(page, {
