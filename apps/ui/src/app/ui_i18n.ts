@@ -1,5 +1,5 @@
 import { get as translate, normalizeLang } from "../i18n";
-import { signal } from "./ui_signals";
+import { signal, useComputed, type ReadonlySignal } from "./ui_signals";
 
 const currentLanguage = signal("en");
 
@@ -27,4 +27,12 @@ export function useUiTranslation() {
     fallback: string,
     vars?: Record<string, unknown>,
   ): string => translate(language, key, vars) || fallback;
+}
+
+export function useUiText(
+  key: string,
+  fallback: string,
+  vars?: Record<string, unknown>,
+): ReadonlySignal<string> {
+  return useComputed(() => translate(currentLanguage.value, key, vars) || fallback);
 }

@@ -1,6 +1,10 @@
 import { render } from "preact";
-import { useUiTranslation } from "../ui_i18n";
-import { signal, type ReadonlySignal } from "../ui_signals";
+import { getUiText } from "../ui_i18n";
+import {
+  signal,
+  useComputed,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type {
   SpectrumBandLegendModel,
   SpectrumPanelChartDom,
@@ -80,18 +84,38 @@ function requireSpectrumElement<T extends HTMLElement>(
 }
 
 function SpectrumPanel(props: {
-  state: ReadonlySignal<SpectrumPanelBridgeState>;
+  bandLegend: ReadonlySignal<SpectrumBandLegendModel>;
+  bandToggle: ReadonlySignal<SpectrumPanelBridgeState["bandToggle"]>;
   chartDom: MutableSpectrumPanelChartDom;
+  header: ReadonlySignal<SpectrumPanelHeaderModel>;
+  inspectorText: ReadonlySignal<string>;
+  onBandToggle: ReadonlySignal<(() => void) | null>;
+  overlayMessage: ReadonlySignal<string | null>;
+  sensorLegend: ReadonlySignal<SpectrumSensorLegendModel | null>;
+  sensorLegendHandlers: ReadonlySignal<SpectrumLegendHandlers | null>;
 }) {
-  const state = props.state.value;
   const { chartDom } = props;
-  const t = useUiTranslation();
+  const titleText = useComputed(() => getUiText("chart.spectrum_title", props.header.value.titleText));
+  const hintText = useComputed(() => getUiText("spectrum.controls_hint", props.header.value.hintText));
+  const overlayHidden = useComputed(() => props.overlayMessage.value === null);
+  const overlayText = useComputed(() => props.overlayMessage.value ?? "Waiting for sensor data...");
+  const bandToggleHasBands = useComputed(() => props.bandToggle.value.hasBands);
+  const bandToggleBandsVisible = useComputed(() => props.bandToggle.value.bandsVisible);
+  const bandTogglePressed = useComputed(() =>
+    bandToggleHasBands.value && bandToggleBandsVisible.value ? "true" : "false"
+  );
+  const bandToggleText = useComputed(() => props.bandToggle.value.text);
+  const bandToggleHidden = useComputed(() => !bandToggleHasBands.value);
+  const bandLegendHidden = useComputed(() => !props.bandLegend.value.visible);
+  const bandLegend = props.bandLegend.value;
+  const sensorLegend = props.sensorLegend.value;
+  const sensorLegendHandlers = props.sensorLegendHandlers.value;
 
   return (
     <>
       <div class="card__header">
         <div class="card__title">
-          {t("chart.spectrum_title", state.header.titleText)}
+          {titleText}
         </div>
       </div>
       <div
@@ -107,14 +131,14 @@ function SpectrumPanel(props: {
             chartDom.specChart = element;
           }}
         />
-        <div id="spectrumOverlay" class="empty-state" hidden={state.overlayMessage === null}>
-          {state.overlayMessage ?? "Waiting for sensor data..."}
+        <div id="spectrumOverlay" class="empty-state" hidden={overlayHidden}>
+          {overlayText}
         </div>
       </div>
       <div class="spectrum-controls-panel">
         <div class="spectrum-toolbar">
           <div class="card__subtle spectrum-toolbar__hint">
-            {t("spectrum.controls_hint", state.header.hintText)}
+            {hintText}
           </div>
           <div class="spectrum-toolbar__bands">
             <button
@@ -122,18 +146,18 @@ function SpectrumPanel(props: {
               class="btn spectrum-toolbar__toggle"
               type="button"
               aria-controls="bandLegend"
-              aria-pressed={state.bandToggle.hasBands && state.bandToggle.bandsVisible ? "true" : "false"}
-              aria-expanded={state.bandToggle.hasBands && state.bandToggle.bandsVisible ? "true" : "false"}
-              hidden={!state.bandToggle.hasBands}
-              disabled={!state.bandToggle.hasBands}
-              onClick={() => state.onBandToggle?.()}
+              aria-pressed={bandTogglePressed}
+              aria-expanded={bandTogglePressed}
+              hidden={bandToggleHidden}
+              disabled={bandToggleHidden}
+              onClick={() => props.onBandToggle.value?.()}
             >
-              {state.bandToggle.text}
+              {bandToggleText}
             </button>
-            <div id="bandLegend" class="legend band-legend" hidden={!state.bandLegend.visible}>
-              {state.bandLegend.visible
-                ? state.bandLegend.items.length
-                  ? state.bandLegend.items.map((item) => (
+            <div id="bandLegend" class="legend band-legend" hidden={bandLegendHidden}>
+              {bandLegend.visible
+                ? bandLegend.items.length
+                  ? bandLegend.items.map((item) => (
                     <div
                       key={item.labelText}
                       class="legend-item legend-item--band"
@@ -146,7 +170,7 @@ function SpectrumPanel(props: {
                   ))
                   : (
                     <div class="legend-item legend-item--band" data-band-state="empty">
-                      {state.bandLegend.emptyText}
+                      {bandLegend.emptyText}
                     </div>
                   )
                 : null}
@@ -154,24 +178,24 @@ function SpectrumPanel(props: {
           </div>
         </div>
         <div id="spectrumInspector" class="spectrum-inspector" aria-live="polite">
-          {state.inspectorText}
+          {props.inspectorText}
         </div>
         <div id="legend" class="legend">
-          {state.sensorLegend && state.sensorLegend.items.length > 0 && state.sensorLegendHandlers
+          {sensorLegend && sensorLegend.items.length > 0 && sensorLegendHandlers
             ? (
               <>
                 <button
                   type="button"
                   class="legend-item legend-item--interactive legend-item--reset"
-                  aria-pressed={state.sensorLegend.reset.ariaPressed ? "true" : "false"}
-                  title={state.sensorLegend.reset.titleText}
-                  aria-label={state.sensorLegend.reset.ariaLabel}
-                  data-legend-state={state.sensorLegend.reset.active ? "active" : undefined}
-                  onClick={() => state.sensorLegendHandlers?.onReset()}
+                  aria-pressed={sensorLegend.reset.ariaPressed ? "true" : "false"}
+                  title={sensorLegend.reset.titleText}
+                  aria-label={sensorLegend.reset.ariaLabel}
+                  data-legend-state={sensorLegend.reset.active ? "active" : undefined}
+                  onClick={() => sensorLegendHandlers?.onReset()}
                 >
-                  <span class="legend-item__label">{state.sensorLegend.reset.labelText}</span>
+                  <span class="legend-item__label">{sensorLegend.reset.labelText}</span>
                 </button>
-                {state.sensorLegend.items.map((item) => (
+                {sensorLegend.items.map((item) => (
                   <button
                     key={item.id}
                     type="button"
@@ -180,7 +204,7 @@ function SpectrumPanel(props: {
                     title={item.titleText}
                     aria-label={item.ariaLabel}
                     data-legend-state={item.active ? "active" : item.muted ? "muted" : undefined}
-                    onClick={() => state.sensorLegendHandlers?.onSelect(item.id)}
+                    onClick={() => sensorLegendHandlers?.onSelect(item.id)}
                   >
                     <span class="swatch" style={`--swatch-color: ${item.color}`} />
                     <span class="legend-item__text-group">
@@ -201,12 +225,33 @@ function SpectrumPanel(props: {
 }
 
 export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
-  const state = signal<SpectrumPanelBridgeState>(createDefaultPanelState());
+  const defaultState = createDefaultPanelState();
+  const header = signal<SpectrumPanelHeaderModel>(defaultState.header);
+  const overlayMessage = signal<string | null>(defaultState.overlayMessage);
+  const bandToggle = signal(defaultState.bandToggle);
+  const sensorLegend = signal<SpectrumSensorLegendModel | null>(defaultState.sensorLegend);
+  const sensorLegendHandlers = signal<SpectrumLegendHandlers | null>(defaultState.sensorLegendHandlers);
+  const bandLegend = signal(defaultState.bandLegend);
+  const inspectorText = signal(defaultState.inspectorText);
+  const onBandToggle = signal<(() => void) | null>(defaultState.onBandToggle);
   const chartDom: MutableSpectrumPanelChartDom = {
     specChartWrap: null,
     specChart: null,
   };
-  render(<SpectrumPanel state={state} chartDom={chartDom} />, host);
+  render(
+    <SpectrumPanel
+      bandLegend={bandLegend}
+      bandToggle={bandToggle}
+      chartDom={chartDom}
+      header={header}
+      inspectorText={inspectorText}
+      onBandToggle={onBandToggle}
+      overlayMessage={overlayMessage}
+      sensorLegend={sensorLegend}
+      sensorLegendHandlers={sensorLegendHandlers}
+    />,
+    host,
+  );
 
   return {
     chartDom: {
@@ -218,32 +263,29 @@ export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
       },
     } satisfies SpectrumPanelChartDom,
     bindBandToggle(onToggle: () => void): void {
-      state.value = { ...state.value, onBandToggle: onToggle };
+      onBandToggle.value = onToggle;
     },
     renderHeader(model: SpectrumPanelHeaderModel): void {
-      state.value = { ...state.value, header: model };
+      header.value = model;
     },
     renderOverlay(message: string | null): void {
-      state.value = { ...state.value, overlayMessage: message };
+      overlayMessage.value = message;
     },
     renderBandToggle(model: { hasBands: boolean; bandsVisible: boolean; text: string }): void {
-      state.value = { ...state.value, bandToggle: model };
+      bandToggle.value = model;
     },
     renderSensorLegend(
       model: SpectrumSensorLegendModel | null,
       handlers?: SpectrumLegendHandlers,
     ): void {
-      state.value = {
-        ...state.value,
-        sensorLegend: model,
-        sensorLegendHandlers: model && handlers ? handlers : null,
-      };
+      sensorLegend.value = model;
+      sensorLegendHandlers.value = model && handlers ? handlers : null;
     },
     renderBandLegend(model: SpectrumBandLegendModel): void {
-      state.value = { ...state.value, bandLegend: model };
+      bandLegend.value = model;
     },
     renderInspectorText(text: string): void {
-      state.value = { ...state.value, inspectorText: text };
+      inspectorText.value = text;
     },
   };
 }

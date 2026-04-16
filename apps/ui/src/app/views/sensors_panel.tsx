@@ -1,8 +1,13 @@
 import type { JSX } from "preact";
 
 import { render } from "preact";
-import { useUiTranslation } from "../ui_i18n";
-import { signal, type ReadonlySignal } from "../ui_signals";
+import { useUiText } from "../ui_i18n";
+import {
+  computed,
+  signal,
+  useComputed,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type {
   RealtimeSensorTableClickAction,
   RealtimeSensorTableLocationChange,
@@ -23,11 +28,6 @@ export interface SensorsPanelView {
   bindModel(model: ReadonlySignal<SensorsPanelRenderModel>): void;
   bindActions(handlers: SensorsPanelActionHandlers): void;
 }
-
-type SensorsPanelBridgeState = {
-  actions: SensorsPanelActionHandlers | null;
-  model: ReadonlySignal<SensorsPanelRenderModel> | null;
-};
 
 function handleSensorAction(
   event: JSX.TargetedMouseEvent<HTMLButtonElement>,
@@ -106,12 +106,12 @@ function SensorsTableBody(props: {
   table: RealtimeSensorTableRenderModel | null;
 }) {
   const { actions, table } = props;
-  const t = useUiTranslation();
+  const emptyText = useUiText("settings.sensors.no_sensors", "No sensors detected yet.");
   if (table === null || table.kind === "empty") {
     return (
       <tr>
         <td colSpan={3}>
-          {table?.emptyText ?? t("settings.sensors.no_sensors", "No sensors detected yet.")}
+          {table?.emptyText ?? emptyText}
         </td>
       </tr>
     );
@@ -121,38 +121,44 @@ function SensorsTableBody(props: {
   ));
 }
 
-function SensorsPanel(props: { state: ReadonlySignal<SensorsPanelBridgeState> }) {
-  const state = props.state.value;
-  const model = state.model?.value ?? { table: null };
-  const t = useUiTranslation();
+function SensorsPanel(props: {
+  actions: ReadonlySignal<SensorsPanelActionHandlers | null>;
+  model: ReadonlySignal<SensorsPanelRenderModel>;
+}) {
+  const titleText = useUiText("settings.sensors.title", "Sensors");
+  const hintText = useUiText(
+    "settings.sensors.hint",
+    "Manage sensor names and locations. Default name is the MAC address.",
+  );
+  const nameLabel = useUiText("settings.sensors.name", "Name");
+  const locationLabel = useUiText("settings.sensors.location", "Location");
+  const actionsLabel = useUiText("settings.sensors.actions", "Actions");
+  const table = useComputed(() => props.model.value.table);
   return (
     <div class="panel card">
       <strong>
-        {t("settings.sensors.title", "Sensors")}
+        {titleText}
       </strong>
       <div class="subtle">
-        {t(
-          "settings.sensors.hint",
-          "Manage sensor names and locations. Default name is the MAC address.",
-        )}
+        {hintText}
       </div>
       <div class="settings-table-wrap">
         <table class="clients-table settings-entity-table settings-entity-table--sensors">
           <thead>
             <tr>
               <th>
-                {t("settings.sensors.name", "Name")}
+                {nameLabel}
               </th>
               <th>
-                {t("settings.sensors.location", "Location")}
+                {locationLabel}
               </th>
               <th>
-                {t("settings.sensors.actions", "Actions")}
+                {actionsLabel}
               </th>
             </tr>
           </thead>
           <tbody id="sensorsSettingsBody">
-            <SensorsTableBody actions={state.actions} table={model.table} />
+            <SensorsTableBody actions={props.actions.value} table={table.value} />
           </tbody>
         </table>
       </div>
@@ -161,17 +167,16 @@ function SensorsPanel(props: { state: ReadonlySignal<SensorsPanelBridgeState> })
 }
 
 export function mountSensorsPanel(host: HTMLElement): SensorsPanelView {
-  const state = signal<SensorsPanelBridgeState>({
-    actions: null,
-    model: null,
-  });
-  render(<SensorsPanel state={state} />, host);
+  const actions = signal<SensorsPanelActionHandlers | null>(null);
+  const modelSource = signal<ReadonlySignal<SensorsPanelRenderModel> | null>(null);
+  const model = computed<SensorsPanelRenderModel>(() => modelSource.value?.value ?? { table: null });
+  render(<SensorsPanel actions={actions} model={model} />, host);
   return {
     bindModel(model) {
-      state.value = { ...state.value, model };
+      modelSource.value = model;
     },
     bindActions(handlers) {
-      state.value = { ...state.value, actions: handlers };
+      actions.value = handlers;
     },
   };
 }

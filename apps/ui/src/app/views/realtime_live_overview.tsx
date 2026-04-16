@@ -1,7 +1,12 @@
 import { render } from "preact";
 
-import { useUiTranslation } from "../ui_i18n";
-import { signal, type ReadonlySignal } from "../ui_signals";
+import { useUiText } from "../ui_i18n";
+import {
+  computed,
+  signal,
+  useComputed,
+  type ReadonlySignal,
+} from "../ui_signals";
 
 export interface RealtimeLiveOverviewActiveCarModel {
   text: string;
@@ -33,7 +38,6 @@ export interface RealtimeLiveOverviewRenderModel {
 }
 
 interface RealtimeLiveOverviewBridgeState {
-  model: ReadonlySignal<RealtimeLiveOverviewRenderModel> | null;
   speedText: string;
 }
 
@@ -60,115 +64,138 @@ const DEFAULT_OVERVIEW_MODEL: RealtimeLiveOverviewRenderModel = {
 };
 
 const DEFAULT_OVERVIEW_STATE: RealtimeLiveOverviewBridgeState = {
-  model: null,
   speedText: "--",
 };
 
-function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOverviewBridgeState> }) {
-  const state = props.state.value;
-  const model = state.model?.value ?? DEFAULT_OVERVIEW_MODEL;
-  const t = useUiTranslation();
+function RealtimeLiveOverview(props: {
+  model: ReadonlySignal<RealtimeLiveOverviewRenderModel>;
+  speedText: ReadonlySignal<string>;
+}) {
+  const titleText = useUiText("dashboard.live_overview", "Live overview");
+  const hintText = useUiText(
+    "dashboard.live_overview_hint",
+    "Check readiness, current run state, and the strongest sensor level before reading the chart.",
+  );
+  const connectedSensorsLabel = useUiText("dashboard.connected_sensors", "Sensors online");
+  const activeCarLabel = useUiText("dashboard.active_car", "Active car");
+  const recordingStateLabel = useUiText("dashboard.recording_state", "Run state");
+  const dataFreshnessLabel = useUiText("dashboard.data_freshness", "Feed freshness");
+  const strongestSignalLabel = useUiText("dashboard.strongest_signal", "Strongest signal");
+  const currentSpeedLabel = useUiText("dashboard.current_speed", "Current speed");
+  const sensorCoverageLabel = useUiText("dashboard.sensor_coverage", "Sensor coverage");
+  const noSensorsText = useUiText("settings.sensors.no_sensors", "No sensors yet.");
+  const connectedSensorsText = useComputed(() => props.model.value.connectedSensorsText);
+  const activeCar = useComputed(() => props.model.value.activeCar);
+  const activeCarText = useComputed(() => activeCar.value.text);
+  const activeCarWarning = useComputed(() => activeCar.value.warning);
+  const activeCarVariant = useComputed(() => activeCar.value.warning ? "warn" : undefined);
+  const activeCarHasIcon = useComputed(() => activeCar.value.warning ? "true" : undefined);
+  const recordingStateText = useComputed(() => props.model.value.recordingStateText);
+  const dataFreshnessText = useComputed(() => props.model.value.dataFreshnessText);
+  const strongestSignalText = useComputed(() => props.model.value.strongestSignalText);
+  const runHealth = useComputed(() => props.model.value.runHealth);
+  const runHealthHidden = useComputed(() => runHealth.value.hidden);
+  const runHealthText = useComputed(() => runHealth.value.text);
+  const runHealthVariant = useComputed(() => runHealth.value.variant);
+  const sensorCards = useComputed(() => props.model.value.sensorCards);
 
   return (
     <>
       <div class="card__header card__header--stack">
         <div>
           <div class="card__title">
-            {t("dashboard.live_overview", "Live overview")}
+            {titleText}
           </div>
           <div class="card__subtle">
-            {t(
-              "dashboard.live_overview_hint",
-              "Check readiness, current run state, and the strongest sensor level before reading the chart.",
-            )}
+            {hintText}
           </div>
         </div>
         <div
           id="liveRunHealth"
           class="pill"
-          data-variant={model.runHealth.variant}
-          hidden={model.runHealth.hidden}
+          data-variant={runHealthVariant}
+          hidden={runHealthHidden}
           aria-live="polite"
         >
-          {model.runHealth.text}
+          {runHealthText}
         </div>
       </div>
       <div class="stat-grid live-overview__stats">
         <div id="liveConnectedSensors" class="stat">
           <div class="stat__label">
-            {t("dashboard.connected_sensors", "Sensors online")}
+            {connectedSensorsLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.connectedSensorsText}
+            {connectedSensorsText}
           </div>
         </div>
         <div
           id="liveActiveCar"
           class="stat"
-          data-variant={model.activeCar.warning ? "warn" : undefined}
+          data-variant={activeCarVariant}
         >
           <div class="stat__label">
-            {t("dashboard.active_car", "Active car")}
+            {activeCarLabel}
           </div>
           <div
             class="stat__value"
             data-value
-            data-variant={model.activeCar.warning ? "warn" : undefined}
-            data-has-icon={model.activeCar.warning ? "true" : undefined}
+            data-variant={activeCarVariant}
+            data-has-icon={activeCarHasIcon}
           >
-            {model.activeCar.warning
+            {activeCarWarning.value
               ? (
                 <>
                   <span class="stat__value-icon" data-variant="warn" aria-hidden="true">
                     !
                   </span>
-                  <span>{model.activeCar.text}</span>
+                  <span>{activeCarText}</span>
                 </>
               )
-              : model.activeCar.text}
+              : activeCarText}
           </div>
         </div>
         <div id="liveRecordingState" class="stat">
           <div class="stat__label">
-            {t("dashboard.recording_state", "Run state")}
+            {recordingStateLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.recordingStateText}
+            {recordingStateText}
           </div>
         </div>
         <div id="liveDataFreshness" class="stat">
           <div class="stat__label">
-            {t("dashboard.data_freshness", "Feed freshness")}
+            {dataFreshnessLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.dataFreshnessText}
+            {dataFreshnessText}
           </div>
         </div>
         <div id="liveStrongestSignal" class="stat">
           <div class="stat__label">
-            {t("dashboard.strongest_signal", "Strongest signal")}
+            {strongestSignalLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.strongestSignalText}
+            {strongestSignalText}
           </div>
         </div>
         <div class="stat">
           <div class="stat__label">
-            {t("dashboard.current_speed", "Current speed")}
+            {currentSpeedLabel}
           </div>
           <div id="speed" class="stat__value speed" aria-live="polite">
-            {state.speedText}
+            {props.speedText}
           </div>
         </div>
       </div>
       <div class="live-sensor-roster__header">
         <div class="mini-label">
-          {t("dashboard.sensor_coverage", "Sensor coverage")}
+          {sensorCoverageLabel}
         </div>
       </div>
       <div id="liveSensorRoster" class="live-sensor-roster">
-        {model.sensorCards.length
-          ? model.sensorCards.map((card) => {
+        {sensorCards.value.length
+          ? sensorCards.value.map((card) => {
             const statusClass = card.connected ? "online" : "offline";
             return (
               <article
@@ -189,7 +216,7 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
           })
           : (
             <div class="subtle">
-              {t("settings.sensors.no_sensors", "No sensors yet.")}
+              {noSensorsText}
             </div>
           )}
       </div>
@@ -198,15 +225,17 @@ function RealtimeLiveOverview(props: { state: ReadonlySignal<RealtimeLiveOvervie
 }
 
 export function mountRealtimeLiveOverview(host: HTMLElement): RealtimeLiveOverviewBridge {
-  const state = signal<RealtimeLiveOverviewBridgeState>({ ...DEFAULT_OVERVIEW_STATE });
-  render(<RealtimeLiveOverview state={state} />, host);
+  const modelSource = signal<ReadonlySignal<RealtimeLiveOverviewRenderModel> | null>(null);
+  const model = computed<RealtimeLiveOverviewRenderModel>(() => modelSource.value?.value ?? DEFAULT_OVERVIEW_MODEL);
+  const speedText = signal(DEFAULT_OVERVIEW_STATE.speedText);
+  render(<RealtimeLiveOverview model={model} speedText={speedText} />, host);
 
   return {
     bindModel(model: ReadonlySignal<RealtimeLiveOverviewRenderModel>): void {
-      state.value = { ...state.value, model };
+      modelSource.value = model;
     },
     setSpeedText(text: string): void {
-      state.value = { ...state.value, speedText: text };
+      speedText.value = text;
     },
   };
 }
