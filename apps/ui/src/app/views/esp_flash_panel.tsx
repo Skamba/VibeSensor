@@ -333,32 +333,17 @@ function EspFlashPanel(props: {
     "settings.esp_flash.history_intro",
     "Recent flashes stay here so the next operator can see what happened last.",
   );
-  const statusBanner = useComputed(() => props.model.value.statusBanner);
-  const statusBannerVariant = useComputed(() => statusBanner.value.variant);
-  const statusBannerText = useComputed(() => statusBanner.value.text);
-  const portSelectDisabled = useComputed(() => props.model.value.portSelectDisabled);
-  const selectedPortValue = useComputed(() => props.model.value.selectedPortValue);
-  const portOptions = useComputed(() => props.model.value.portOptions);
-  const refreshPortsDisabled = useComputed(() => props.model.value.refreshPortsDisabled);
-  const startSummary = useComputed(() => props.model.value.startSummary);
-  const readiness = useComputed(() => props.model.value.readiness);
-  const journey = useComputed(() => props.model.value.journey);
-  const log = useComputed(() => props.model.value.log);
-  const history = useComputed(() => props.model.value.history);
-  const startButtonHidden = useComputed(() => props.model.value.startButtonHidden);
-  const startButtonDisabled = useComputed(() => props.model.value.startButtonDisabled);
-  const startButtonLabelText = useComputed(() => props.model.value.startButtonLabelText);
-  const cancelButtonHidden = useComputed(() => props.model.value.cancelButtonHidden);
-  const cancelButtonDisabled = useComputed(() => props.model.value.cancelButtonDisabled);
+  const model = useComputed(() => props.model.value);
   const logPanelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const logPanel = logPanelRef.current;
-    if (!logPanel || log.value.emptyState !== null) {
+    const log = model.value.log;
+    if (!logPanel || log.emptyState !== null) {
       return;
     }
     logPanel.scrollTop = logPanel.scrollHeight;
-  }, [log.value.emptyState, log.value.text]);
+  }, [model.value.log.emptyState, model.value.log.text]);
 
   return (
     <div class="panel card">
@@ -383,9 +368,9 @@ function EspFlashPanel(props: {
               <span
                 id="espFlashStatusBanner"
                 class="pill"
-                data-variant={statusBannerVariant}
+                data-variant={model.value.statusBanner.variant}
               >
-                {statusBannerText}
+                {model.value.statusBanner.text}
               </span>
             </div>
             <div class="maintenance-card__body maintenance-card__body--hero">
@@ -398,41 +383,40 @@ function EspFlashPanel(props: {
                 </label>
                 <select
                   id="espFlashPortSelect"
-                  disabled={portSelectDisabled}
-                  value={selectedPortValue}
+                  disabled={model.value.portSelectDisabled}
+                  value={model.value.selectedPortValue}
                   onChange={(event) =>
                     props.actions.value?.onSelectPort(event.currentTarget.value)}
                 >
-                  {portOptions.value.map((option) => (
+                  {model.value.portOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.labelText}
                     </option>
                   ))}
                 </select>
                 <button
-                   type="button"
-                   id="espFlashRefreshPortsBtn"
-                   class="btn btn--muted"
-
-                   disabled={refreshPortsDisabled}
-                   onClick={() => props.actions.value?.onRefreshPorts()}
-                 >
-                   {refreshLabel}
-                 </button>
-               </div>
+                  type="button"
+                  id="espFlashRefreshPortsBtn"
+                  class="btn btn--muted"
+                  disabled={model.value.refreshPortsDisabled}
+                  onClick={() => props.actions.value?.onRefreshPorts()}
+                >
+                  {refreshLabel}
+                </button>
+              </div>
               <div
                 id="espFlashStartSummary"
                 class="maintenance-stack maintenance-stack--tight"
                 aria-live="polite"
               >
-                <MaintenanceReadinessPanel model={startSummary.value} />
+                <MaintenanceReadinessPanel model={model.value.startSummary} />
               </div>
               <div
                 id="espFlashReadinessPanel"
                 class="maintenance-stack maintenance-stack--tight"
                 aria-live="polite"
               >
-                <EspFlashReadinessSection model={readiness.value} />
+                <EspFlashReadinessSection model={model.value.readiness} />
               </div>
               <details class="settings-help-disclosure settings-help-disclosure--inline">
                 <summary class="settings-help-disclosure__summary">
@@ -465,19 +449,18 @@ function EspFlashPanel(props: {
                   type="button"
                   id="espFlashStartBtn"
                   class="btn btn--success"
-                  hidden={startButtonHidden}
-                  disabled={startButtonDisabled}
+                  hidden={model.value.startButtonHidden}
+                  disabled={model.value.startButtonDisabled}
                   onClick={() => props.actions.value?.onStart()}
                 >
-                  {startButtonLabelText}
+                  {model.value.startButtonLabelText}
                 </button>
                 <button
                   type="button"
                   id="espFlashCancelBtn"
                   class="btn btn--danger"
-
-                  hidden={cancelButtonHidden}
-                  disabled={cancelButtonDisabled}
+                  hidden={model.value.cancelButtonHidden}
+                  disabled={model.value.cancelButtonDisabled}
                   onClick={() => props.actions.value?.onCancel()}
                 >
                   {cancelLabel}
@@ -503,7 +486,7 @@ function EspFlashPanel(props: {
                 class="maintenance-stack maintenance-stack--tight"
                 aria-live="polite"
               >
-                <EspFlashJourneySection model={journey.value} />
+                <EspFlashJourneySection model={model.value.journey} />
               </div>
             </section>
             <section class="maintenance-card">
@@ -527,13 +510,13 @@ function EspFlashPanel(props: {
                 id="espFlashLogPanel"
                 ref={logPanelRef}
                 class={
-                  log.value.emptyState
+                  model.value.log.emptyState
                     ? "maintenance-log-slot"
                     : "maintenance-log-slot maintenance-log-panel"
                 }
                 aria-live="polite"
               >
-                <EspFlashLogContent model={log.value} />
+                <EspFlashLogContent model={model.value.log} />
               </div>
             </section>
           </div>
@@ -541,27 +524,25 @@ function EspFlashPanel(props: {
           <section class="maintenance-card">
             <div class="maintenance-card__header">
               <div>
-                  <div
-                    class="maintenance-card__title"
-
-                   >
-                    {historyTitle}
-                  </div>
                 <div
-                   class="subtle"
-
-                   >
-                    {historyIntro}
-                  </div>
-               </div>
-             </div>
+                  class="maintenance-card__title"
+                >
+                  {historyTitle}
+                </div>
+                <div
+                  class="subtle"
+                >
+                  {historyIntro}
+                </div>
+              </div>
+            </div>
             <div
               id="espFlashHistoryPanel"
               class="maintenance-stack maintenance-stack--tight"
-             >
-               <EspFlashHistoryContent model={history.value} />
-             </div>
-           </section>
+            >
+              <EspFlashHistoryContent model={model.value.history} />
+            </div>
+          </section>
         </div>
       </div>
     </div>
