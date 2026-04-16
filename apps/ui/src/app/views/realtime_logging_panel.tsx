@@ -4,7 +4,6 @@ import { useUiText } from "../ui_i18n";
 import {
   computed,
   signal,
-  useComputed,
   type ReadonlySignal,
 } from "../ui_signals";
 import { inlineStateActionClass } from "./dom_helpers";
@@ -149,37 +148,18 @@ function RealtimeLoggingPanel(props: {
   const samplesLabel = useUiText("dashboard.recording_samples", "Samples recorded");
   const startLabel = useUiText("dashboard.start_recording", "Start Recording");
   const stopLabel = useUiText("dashboard.stop_recording", "Stop Recording");
-  const pillVariant = useComputed(() => props.model.value.pillVariant);
-  const pillText = useComputed(() => props.model.value.pillText);
-  const showPill = useComputed(() => props.model.value.showPill);
-  const summaryText = useComputed(() => props.model.value.summaryText);
-  const summaryPanel = useComputed(() => props.model.value.summaryPanel);
-  const runIdText = useComputed(() => props.model.value.runIdText);
-  const phaseText = useComputed(() => props.model.value.phaseText);
-  const elapsedText = useComputed(() => props.model.value.elapsedText);
-  const samplesText = useComputed(() => props.model.value.samplesText);
-  const checklist = useComputed(() => props.model.value.checklist);
-  const showStart = useComputed(() => props.model.value.showStart);
-  const showStop = useComputed(() => props.model.value.showStop);
-  const startDisabled = useComputed(() => props.model.value.startDisabled);
-  const stopDisabled = useComputed(() => props.model.value.stopDisabled);
-  const setupMode = useComputed(() => props.model.value.setupMode);
-  const shellLayout = useComputed(() => setupMode.value ? "setup" : undefined);
-  const loggingRowHidden = useComputed(() => !showPill.value && runIdText.value === "");
-  const showPillHidden = useComputed(() => !showPill.value);
-  const runIdHidden = useComputed(() => runIdText.value === "");
-  const showProgressSection = useComputed(() => !setupMode.value || checklist.value !== null);
-  const showStartHidden = useComputed(() => !showStart.value);
-  const showStopHidden = useComputed(() => !showStop.value);
-  const actions = useComputed(() => props.actions.value);
+  const model = props.model.value;
+  const shellLayout = model.setupMode ? "setup" : undefined;
+  const loggingRowHidden = !model.showPill && model.runIdText === "";
+  const showProgressSection = !model.setupMode || model.checklist !== null;
   const handleSummaryAction = (action: RealtimeLoggingSummaryAction) => {
-    actions.value?.onSummaryAction(action);
+    props.actions.value?.onSummaryAction(action);
   };
   const handleStartLogging = () => {
-    actions.value?.onStartLogging();
+    props.actions.value?.onStartLogging();
   };
   const handleStopLogging = () => {
-    actions.value?.onStopLogging();
+    props.actions.value?.onStopLogging();
   };
 
   return (
@@ -190,8 +170,8 @@ function RealtimeLoggingPanel(props: {
             {titleText}
           </div>
           <RealtimeLoggingSummary
-            summaryText={summaryText.value}
-            summaryPanel={summaryPanel.value}
+            summaryText={model.summaryText}
+            summaryPanel={model.summaryPanel}
             onAction={handleSummaryAction}
           />
         </div>
@@ -200,17 +180,17 @@ function RealtimeLoggingPanel(props: {
         <span
           id="loggingStatus"
           class="pill"
-          data-variant={pillVariant}
-          hidden={showPillHidden}
+          data-variant={model.pillVariant}
+          hidden={!model.showPill}
           aria-live="polite"
         >
-          {pillText}
+          {model.pillText}
         </span>
-        <span id="loggingRunId" class="subtle" hidden={runIdHidden}>
-          {runIdText}
+        <span id="loggingRunId" class="subtle" hidden={model.runIdText === ""}>
+          {model.runIdText}
         </span>
       </div>
-      {showProgressSection.value
+      {showProgressSection
         ? (
           <>
             <div class="mini-label">
@@ -222,7 +202,7 @@ function RealtimeLoggingPanel(props: {
                   {runPhaseLabel}
                 </div>
                 <div class="stat__value" data-value>
-                  {phaseText}
+                  {model.phaseText}
                 </div>
               </div>
               <div id="loggingElapsed" class="stat stat--compact">
@@ -230,7 +210,7 @@ function RealtimeLoggingPanel(props: {
                   {elapsedLabel}
                 </div>
                 <div class="stat__value" data-value>
-                  {elapsedText}
+                  {model.elapsedText}
                 </div>
               </div>
               <div id="loggingSamples" class="stat stat--compact">
@@ -238,11 +218,11 @@ function RealtimeLoggingPanel(props: {
                   {samplesLabel}
                 </div>
                 <div class="stat__value" data-value>
-                  {samplesText}
+                  {model.samplesText}
                 </div>
               </div>
             </div>
-            <RealtimeLoggingChecklist checklist={checklist.value} />
+            <RealtimeLoggingChecklist checklist={model.checklist} />
           </>
         )
         : null}
@@ -252,8 +232,8 @@ function RealtimeLoggingPanel(props: {
           class="btn btn--primary"
           type="button"
 
-          hidden={showStartHidden}
-          disabled={startDisabled}
+          hidden={!model.showStart}
+          disabled={model.startDisabled}
           onClick={handleStartLogging}
         >
           {startLabel}
@@ -263,8 +243,8 @@ function RealtimeLoggingPanel(props: {
           class="btn btn--danger-quiet"
           type="button"
 
-          hidden={showStopHidden}
-          disabled={stopDisabled}
+          hidden={!model.showStop}
+          disabled={model.stopDisabled}
           onClick={handleStopLogging}
         >
           {stopLabel}
