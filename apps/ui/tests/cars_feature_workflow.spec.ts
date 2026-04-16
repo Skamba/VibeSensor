@@ -162,6 +162,83 @@ test.describe("createCarsFeatureWorkflow", () => {
     expect(workflow.getRenderState().isOpen).toBe(false);
   });
 
+  test("preserves manual draft values across wizard reopen", async () => {
+    const harness = createHarness();
+    const workflow = createCarsFeatureWorkflow({
+      addCarFromWizard: async () => undefined,
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      t: createTranslator(),
+      transport: {
+        async loadBrands() {
+          return ["BMW"];
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    await workflow.openWizard();
+    workflow.handleManualInputsChanged({
+      ...createDefaultManualInputs(),
+      finalDrive: "4.10",
+      topGear: "0.71",
+    });
+    workflow.closeWizard();
+
+    await workflow.openWizard();
+
+    expect(workflow.getRenderState().manualInputs).toEqual({
+      ...createDefaultManualInputs(),
+      finalDrive: "4.10",
+      topGear: "0.71",
+    });
+  });
+
+  test("keeps manual gearbox inputs when tire autofill updates only tire fields", async () => {
+    const harness = createHarness();
+    const tire = makeTireOption({
+      rim_in: 20,
+      tire_aspect_pct: 35,
+      tire_width_mm: 285,
+    });
+    const workflow = createCarsFeatureWorkflow({
+      addCarFromWizard: async () => undefined,
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      t: createTranslator(),
+      transport: {
+        async loadBrands() {
+          return ["BMW"];
+        },
+        async loadModels() {
+          return [makeModel({
+            tire_options: [tire],
+          })];
+        },
+        async loadTypes() {
+          return ["SUV"];
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    await workflow.openWizard();
+    await workflow.selectBrand("BMW");
+    await workflow.selectType("SUV");
+    workflow.handleManualInputsChanged({
+      ...createDefaultManualInputs(),
+      finalDrive: "4.10",
+      topGear: "0.71",
+    });
+    await workflow.selectModel(0);
+
+    expect(workflow.getRenderState().manualInputs).toEqual({
+      finalDrive: "4.10",
+      rim: "20",
+      tireAspect: "35",
+      tireWidth: "285",
+      topGear: "0.71",
+    });
+  });
+
   test("keeps the library branch disabled until a gearbox is chosen and then submits the selected specs", async () => {
     const harness = createHarness();
     const addCalls: Array<{

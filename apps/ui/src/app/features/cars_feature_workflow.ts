@@ -200,9 +200,11 @@ export function createCarsFeatureWorkflow(
   const transport = createCarsFeatureTransport(deps.transport);
   const wizardState = signal<WizardState>(createInitialWizardState());
   const isOpen = signal(false);
-  const manualInputs = signal<CarsFeatureManualInputState>({
-    ...DEFAULT_CARS_WIZARD_MANUAL_INPUTS,
-  });
+  const manualFinalDrive = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.finalDrive);
+  const manualRim = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.rim);
+  const manualTireAspect = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.tireAspect);
+  const manualTireWidth = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.tireWidth);
+  const manualTopGear = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.topGear);
   const brandOptions = signal(createIdleOptionsState<string>());
   const typeOptions = signal(createIdleOptionsState<string>());
   const modelOptions = signal(createIdleOptionsState<CarLibraryModel>());
@@ -211,31 +213,48 @@ export function createCarsFeatureWorkflow(
   const gearboxOptions = signal<readonly CarLibraryGearbox[]>([]);
   const noGearboxesMessage = signal<string | null>(null);
 
+  function readManualInputs(): CarsFeatureManualInputState {
+    return {
+      finalDrive: manualFinalDrive.value,
+      rim: manualRim.value,
+      tireAspect: manualTireAspect.value,
+      tireWidth: manualTireWidth.value,
+      topGear: manualTopGear.value,
+    };
+  }
+
+  function writeManualInputs(inputs: CarsFeatureManualInputState): void {
+    manualFinalDrive.value = inputs.finalDrive;
+    manualRim.value = inputs.rim;
+    manualTireAspect.value = inputs.tireAspect;
+    manualTireWidth.value = inputs.tireWidth;
+    manualTopGear.value = inputs.topGear;
+  }
+
   function updateWizardState(mutator: (state: WizardState) => void): void {
     const nextState = { ...wizardState.value };
     mutator(nextState);
     wizardState.value = nextState;
   }
 
-  function currentManualValues() {
-    const state = wizardState.value;
-    const inputs = manualInputs.value;
-    return {
-      manualGearbox: readWizardManualGearboxValues(state.step, {
-        finalDrive: inputs.finalDrive,
-        topGear: inputs.topGear,
-      }),
-      manualTire: readWizardManualTireValues(state.step, {
-        aspect: inputs.tireAspect,
-        rim: inputs.rim,
-        width: inputs.tireWidth,
-      }),
-    };
-  }
+  const manualGearbox = computed(() =>
+    readWizardManualGearboxValues(wizardState.value.step, {
+      finalDrive: manualFinalDrive.value,
+      topGear: manualTopGear.value,
+    })
+  );
+
+  const manualTire = computed(() =>
+    readWizardManualTireValues(wizardState.value.step, {
+      aspect: manualTireAspect.value,
+      rim: manualRim.value,
+      width: manualTireWidth.value,
+    })
+  );
 
   const renderState = computed<CarsFeatureRenderState>(() => {
     const state = wizardState.value;
-    const inputs = manualInputs.value;
+    const inputs = readManualInputs();
     const currentBrandOptions = brandOptions.value;
     const currentTypeOptions = typeOptions.value;
     const currentModelOptions = modelOptions.value;
@@ -243,13 +262,14 @@ export function createCarsFeatureWorkflow(
     const currentTireOptions = tireOptions.value;
     const currentGearboxOptions = gearboxOptions.value;
     const currentNoGearboxesMessage = noGearboxesMessage.value;
-    const { manualGearbox, manualTire } = currentManualValues();
+    const currentManualGearbox = manualGearbox.value;
+    const currentManualTire = manualTire.value;
     return {
       actionHint: state.step === 4
         ? getWizardActionHint(state, {
           fmt: deps.fmt,
-          manualGearbox,
-          manualTire,
+          manualGearbox: currentManualGearbox,
+          manualTire: currentManualTire,
           t: deps.t,
         })
         : "",
@@ -257,7 +277,7 @@ export function createCarsFeatureWorkflow(
         ...currentBrandOptions,
         options: [...currentBrandOptions.options],
       },
-      canFinish: canFinishWizard(state, manualTire, manualGearbox),
+      canFinish: canFinishWizard(state, currentManualTire, currentManualGearbox),
       gearboxOptions: [...currentGearboxOptions],
       isOpen: isOpen.value,
       manualInputs: cloneManualInputs(inputs),
@@ -272,8 +292,8 @@ export function createCarsFeatureWorkflow(
       step: state.step,
       summaryData: buildWizardSummaryData(state, {
         fmt: deps.fmt,
-        manualGearbox,
-        manualTire,
+        manualGearbox: currentManualGearbox,
+        manualTire: currentManualTire,
         t: deps.t,
       }),
       tireOptions: [...currentTireOptions],
@@ -405,7 +425,7 @@ export function createCarsFeatureWorkflow(
 
   function loadSpecsStep(): void {
     const state = wizardState.value;
-    const currentManualInputs = manualInputs.value;
+    const currentManualInputs = readManualInputs();
     const nextTireOptions = resolveTireOptions(state.selectedModel, state.selectedVariant);
     const nextGearboxOptions = resolveGearboxes(state.selectedModel, state.selectedVariant);
     const nextSelectedTire = nextTireOptions.length > 0
@@ -424,7 +444,7 @@ export function createCarsFeatureWorkflow(
       tireOptions.value = nextTireOptions;
       gearboxOptions.value = nextGearboxOptions;
       noGearboxesMessage.value = nextNoGearboxesMessage;
-      manualInputs.value = nextManualInputs;
+      writeManualInputs(nextManualInputs);
       updateWizardState((nextState) => {
         nextState.selectedTire = nextSelectedTire;
         if (!nextTireOptions.length) {
@@ -471,7 +491,7 @@ export function createCarsFeatureWorkflow(
 
     async finishWizard(): Promise<boolean> {
       const state = wizardState.value;
-      const inputs = manualInputs.value;
+      const inputs = readManualInputs();
       const resolvedBranch = getResolvedWizardSpecBranch(state);
       if (resolvedBranch === "library") {
         const tire = state.selectedTire;
@@ -540,7 +560,7 @@ export function createCarsFeatureWorkflow(
 
     handleManualInputsChanged(inputs: CarsFeatureManualInputState): void {
       batch(() => {
-        manualInputs.value = cloneManualInputs(inputs);
+        writeManualInputs(inputs);
         if (isOpen.value && wizardState.value.step === 4) {
           updateWizardState((state) => {
             state.specBranch = "manual";
@@ -552,7 +572,6 @@ export function createCarsFeatureWorkflow(
     async openWizard(): Promise<void> {
       batch(() => {
         wizardState.value = createInitialWizardState();
-        manualInputs.value = cloneManualInputs(manualInputs.value);
         brandOptions.value = createIdleOptionsState<string>();
         typeOptions.value = createIdleOptionsState<string>();
         modelOptions.value = createIdleOptionsState<CarLibraryModel>();
@@ -613,7 +632,7 @@ export function createCarsFeatureWorkflow(
         updateWizardState((state) => {
           state.selectedTire = selectedTire;
         });
-        manualInputs.value = tireInputsFromOption(selectedTire, manualInputs.value);
+        writeManualInputs(tireInputsFromOption(selectedTire, readManualInputs()));
       });
     },
 
