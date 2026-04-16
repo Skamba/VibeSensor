@@ -10,6 +10,7 @@ import {
 } from "../ui_signals";
 import { SpeedSourceConfigPanel } from "./speed_source_config_panel";
 import { SpeedSourceDiagnosticsPanel } from "./speed_source_diagnostics_panel";
+import { DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL } from "./speed_source_panel_defaults";
 import type {
   SettingsFeedbackMessage,
 } from "./settings_feedback";
@@ -147,38 +148,6 @@ const DEFAULT_SPEED_SOURCE_PANEL_MODEL: SpeedSourcePanelRenderModel = {
     currentSourceText: "--",
     effectiveSpeedText: "--",
     fallbackActiveText: "--",
-  },
-};
-
-export const DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL: SpeedSourceDiagnosticsRenderModel = {
-  gps: {
-    deviceText: "--",
-    effectiveSpeedText: "--",
-    fallbackText: "--",
-    lastErrorText: "--",
-    lastUpdateText: "--",
-    rawSpeedText: "--",
-    reconnectText: "--",
-    stateText: "--",
-  },
-  obd: {
-    backoffText: "--",
-    configuredDeviceText: "--",
-    connectedText: "--",
-    debugHintText: "--",
-    effectiveCadenceText: "--",
-    errorsText: "--",
-    lastRpmText: "--",
-    modeText: "--",
-    pairingText: "--",
-    rawResponseText: "--",
-    requestRttText: "--",
-    rfcommChannelText: "--",
-    rpmAgeText: "--",
-    targetCadenceText: "--",
-    timeoutsText: "--",
-    trustedText: "--",
-    visible: false,
   },
 };
 

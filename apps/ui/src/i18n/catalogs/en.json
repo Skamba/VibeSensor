@@ -465,6 +465,7 @@
   "status.running": "Running",
   "status.stopped": "Stopped",
   "status.unavailable": "Unavailable",
+  "status.view_load_failed": "This view could not be loaded right now.",
   "speed.gps": "{value} {unit} · GPS",
   "speed.obd2": "{value} {unit} · OBD2",
   "speed.override": "{value} {unit} · Manual override",
