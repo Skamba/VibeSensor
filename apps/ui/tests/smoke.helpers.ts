@@ -1,15 +1,14 @@
-import type { Locator, Page, Route } from "@playwright/test";
+import { expect, type Locator, type Page, type Route } from "@playwright/test";
 import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
 
 export type FakeWebSocketOptions = {
   payload?: Record<string, unknown>;
-  confirmResult?: boolean;
   repeatPayloadCount?: number;
   repeatPayloadIntervalMs?: number;
 };
 
 export async function installFakeWebSocket(page: Page, options: FakeWebSocketOptions = {}): Promise<void> {
-  await page.addInitScript(({ payload, confirmResult, schemaVersion, repeatPayloadCount, repeatPayloadIntervalMs }) => {
+  await page.addInitScript(({ payload, schemaVersion, repeatPayloadCount, repeatPayloadIntervalMs }) => {
     const mergedPayload = payload
       ? {
           schema_version: schemaVersion,
@@ -64,10 +63,21 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
       }
     }
     window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-    if (typeof confirmResult === "boolean") {
-      window.confirm = () => confirmResult;
-    }
   }, { ...options, schemaVersion: EXPECTED_SCHEMA_VERSION });
+}
+
+export async function confirmPrompt(page: Page): Promise<void> {
+  const dialog = page.locator(".confirmation-dialog");
+  await expect(dialog).toBeVisible();
+  await dialog.locator(".btn--danger").click();
+  await expect(dialog).toHaveCount(0);
+}
+
+export async function cancelPrompt(page: Page): Promise<void> {
+  const dialog = page.locator(".confirmation-dialog");
+  await expect(dialog).toBeVisible();
+  await dialog.locator("button:not(.btn--danger)").click();
+  await expect(dialog).toHaveCount(0);
 }
 
 export type CommonRouteOptions = {

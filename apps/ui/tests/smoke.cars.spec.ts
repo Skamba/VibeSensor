@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import {
   activateWizardCloseButton,
   buildCaptureReadiness,
+  confirmPrompt,
   fulfillJson,
   installCommonRoutes,
   installFakeWebSocket,
@@ -580,13 +581,14 @@ test("shows car-tab guidance for invalid persisted selection and after deleting 
       await fulfillJson(route, {});
     },
   });
-  await installFakeWebSocket(page, { confirmResult: true });
+  await installFakeWebSocket(page);
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await expect(page.locator("#carSelectionGuidance")).toBeVisible();
   await page.locator("#carListBody .car-activate-btn").last().click();
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
   await page.locator('#carListBody tr[data-car-id="car-2"] .car-delete-btn').click();
+  await confirmPrompt(page);
   await expect(page.locator("#carSelectionGuidance")).toBeVisible();
 });
 
