@@ -42,7 +42,7 @@ export const SPEED_UNIT_OPTIONS = [
   { fallbackLabel: "m/s", labelKey: "speed.unit.mps", value: "mps" },
 ] as const;
 
-export const LANGUAGE_OPTIONS = [
+const LANGUAGE_OPTIONS = [
   { label: "🇺🇸 English", value: "en" },
   { label: "🇳🇱 Nederlands", value: "nl" },
 ] as const;
