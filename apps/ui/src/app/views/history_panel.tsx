@@ -4,6 +4,7 @@ import {
   computed,
   signal,
   useComputed,
+  useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
 import { HistoryTableBody } from "./history_table_content";
@@ -19,6 +20,12 @@ const DEFAULT_PANEL_MODEL: HistoryPanelRenderModel = {
   table: null,
 };
 
+const HISTORY_PANEL_MODEL_KEYS = [
+  "deleteAllRunsDisabled",
+  "historySummaryText",
+  "table",
+] as const;
+
 function HistoryPanel(props: {
   actions: ReadonlySignal<HistoryPanelActionHandlers | null>;
   model: ReadonlySignal<HistoryPanelRenderModel>;
@@ -30,9 +37,10 @@ function HistoryPanel(props: {
   const samplesLabel = useUiText("history.table.size", "Samples");
   const actionsLabel = useUiText("history.table.actions", "Actions");
   const actions = useComputed(() => props.actions.value);
-  const deleteAllRunsDisabled = useComputed(() => props.model.value.deleteAllRunsDisabled);
-  const historySummaryText = useComputed(() => props.model.value.historySummaryText);
-  const table = useComputed(() => props.model.value.table);
+  const { deleteAllRunsDisabled, historySummaryText, table } = useSignalProperties(
+    props.model,
+    HISTORY_PANEL_MODEL_KEYS,
+  );
   const handleRefreshHistory = () => {
     actions.value?.onRefreshHistory();
   };
