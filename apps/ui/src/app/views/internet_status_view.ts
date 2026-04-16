@@ -2,7 +2,7 @@ import type { UsbInternetStatusPayload } from "../../transport/http_models";
 import type {
   UpdateStatusBadgeModel,
   UpdateStatusRowModel,
-} from "./update_status_view_models";
+} from "./update_status_models";
 
 export interface InternetStatusViewDeps {
   t: (key: string, vars?: Record<string, unknown>) => string;

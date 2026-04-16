@@ -17,7 +17,7 @@ import type { InternetStatusPanelModel } from "./internet_status_view";
 import type {
   UpdateStatusBadgeModel,
   UpdateStatusRowModel,
-} from "./update_status_view_models";
+} from "./update_status_models";
 
 export interface UpdateTransportChoiceCardRenderModel {
   badgeText: string | null;

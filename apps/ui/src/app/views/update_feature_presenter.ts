@@ -18,8 +18,10 @@ import type {
 } from "./update_panel";
 import {
   buildUpdateStatusPanelViewModel,
+} from "./update_status_builders";
+import {
   getUpdateFailureSummary,
-} from "./update_status_view_models";
+} from "./update_journey_builder";
 import {
   computed,
   effect,

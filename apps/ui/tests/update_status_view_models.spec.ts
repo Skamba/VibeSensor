@@ -2,9 +2,11 @@ import { expect, test } from "@playwright/test";
 
 import {
   buildUpdateCurrentStatusSectionModel,
-  buildUpdateJourneySectionModel,
   buildUpdateLogSectionModel,
-} from "../src/app/views/update_status_view_models";
+} from "../src/app/views/update_status_builders";
+import {
+  buildUpdateJourneySectionModel,
+} from "../src/app/views/update_journey_builder";
 import type {
   HealthStatusPayload,
   UpdateStatusPayload,

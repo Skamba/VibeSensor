@@ -20,7 +20,7 @@ import type {
   UpdateStatusBadgeModel,
   UpdateStatusPanelViewModel,
   UpdateStatusRowModel,
-} from "./update_status_view_models";
+} from "./update_status_models";
 
 export interface UpdatePanelRenderModel {
   cancelButtonDisabled: boolean;
