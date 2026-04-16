@@ -79,6 +79,29 @@ export interface CarsFeatureRenderState {
   variantOptions: readonly CarLibraryVariant[];
 }
 
+type CarsFeatureOptionsRenderState = Pick<
+  CarsFeatureRenderState,
+  | "brandOptions"
+  | "gearboxOptions"
+  | "modelOptions"
+  | "noGearboxesMessage"
+  | "tireOptions"
+  | "typeOptions"
+  | "variantOptions"
+>;
+
+type CarsFeatureWizardMetaRenderState = Pick<
+  CarsFeatureRenderState,
+  | "actionHint"
+  | "canFinish"
+  | "isOpen"
+  | "resolvedSpecBranch"
+  | "selectedGearbox"
+  | "selectedTire"
+  | "step"
+  | "summaryData"
+>;
+
 export interface CarsFeatureWorkflowViewPorts {
   focus(target: CarsFeatureFocusTarget): void;
 }
@@ -192,33 +215,55 @@ export function createCarsFeatureWorkflow(
     });
   });
 
-  const renderState = computed<CarsFeatureRenderState>(() => {
+  const optionsRenderState = computed<CarsFeatureOptionsRenderState>(() => ({
+    brandOptions: brandOptions.value,
+    gearboxOptions: gearboxOptions.value,
+    modelOptions: modelOptions.value,
+    noGearboxesMessage: noGearboxesMessage.value,
+    tireOptions: tireOptions.value,
+    typeOptions: typeOptions.value,
+    variantOptions: variantOptions.value,
+  }));
+
+  const manualInputRenderState = computed<CarsFeatureManualInputState>(() =>
+    cloneManualInputs(manualInputs.read())
+  );
+
+  const wizardMetaRenderState = computed<CarsFeatureWizardMetaRenderState>(() => {
     const state = wizardState.value;
-    const inputs = manualInputs.read();
-    const currentBrandOptions = brandOptions.value;
-    const currentTypeOptions = typeOptions.value;
-    const currentModelOptions = modelOptions.value;
-    const currentVariantOptions = variantOptions.value;
-    const currentTireOptions = tireOptions.value;
-    const currentGearboxOptions = gearboxOptions.value;
-    const currentNoGearboxesMessage = noGearboxesMessage.value;
     return {
       actionHint: actionHint.value,
-      brandOptions: currentBrandOptions,
       canFinish: canFinish.value,
-      gearboxOptions: currentGearboxOptions,
       isOpen: isOpen.value,
-      manualInputs: cloneManualInputs(inputs),
-      modelOptions: currentModelOptions,
-      noGearboxesMessage: currentNoGearboxesMessage,
       resolvedSpecBranch: resolvedSpecBranch.value,
       selectedGearbox: state.selectedGearbox,
       selectedTire: state.selectedTire,
       step: state.step,
       summaryData: summaryData.value,
-      tireOptions: currentTireOptions,
-      typeOptions: currentTypeOptions,
-      variantOptions: currentVariantOptions,
+    };
+  });
+
+  const renderState = computed<CarsFeatureRenderState>(() => {
+    const optionsState = optionsRenderState.value;
+    const manualInputsState = manualInputRenderState.value;
+    const wizardMetaState = wizardMetaRenderState.value;
+    return {
+      actionHint: wizardMetaState.actionHint,
+      brandOptions: optionsState.brandOptions,
+      canFinish: wizardMetaState.canFinish,
+      gearboxOptions: optionsState.gearboxOptions,
+      isOpen: wizardMetaState.isOpen,
+      manualInputs: manualInputsState,
+      modelOptions: optionsState.modelOptions,
+      noGearboxesMessage: optionsState.noGearboxesMessage,
+      resolvedSpecBranch: wizardMetaState.resolvedSpecBranch,
+      selectedGearbox: wizardMetaState.selectedGearbox,
+      selectedTire: wizardMetaState.selectedTire,
+      step: wizardMetaState.step,
+      summaryData: wizardMetaState.summaryData,
+      tireOptions: optionsState.tireOptions,
+      typeOptions: optionsState.typeOptions,
+      variantOptions: optionsState.variantOptions,
     };
   });
 
