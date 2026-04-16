@@ -234,10 +234,14 @@ instead of controller-side variant class interpolation.
   single component render. Keep component-local transient state in hooks.
 - Use `computed()` for derived state instead of mirroring derived fields onto
   mutable state bags or manual render-model caches.
+- Inside Preact components, prefer `useComputed()`, `useSignal()`, and
+  `useSignalEffect()` over ad-hoc local refs or render-time signal reads when a
+  hook-scoped reactive owner is clearer.
 - Use `effect()` only for narrow imperative integrations such as timers,
   persistence, canvas/uPlot bridges, or other external-library coordination.
-- Preact-rendered copy comes from `useUiTranslation()`. Do not leave
-  `data-i18n` attributes in JSX unless a non-Preact consumer still reads them.
+- Preact-rendered copy should come from `useUiTranslation()` or `useUiText()`.
+  Do not leave `data-i18n` attributes in JSX unless a non-Preact consumer still
+  reads them.
 - Existing mutable app-state objects and manual bridge rerenders are follow-up
   migration residue, not the default pattern for new frontend work.
 
@@ -323,7 +327,8 @@ pages are seeded manually.
 - Drive island state with `signal()` and `computed()` inputs instead of
   rebuilding the old `render(model)` fixture pattern.
   `tests/signal_view_reference_tests.ts` contains the reference panel coverage
-  for computed-driven output assertions.
+  for direct signal JSX bindings, computed-driven output assertions, and
+  effect-backed subscription seams.
 - Run `npm run test:signals` to execute the reference signal-view coverage
   directly in Node with the same helper path used by future isolated island
   tests.

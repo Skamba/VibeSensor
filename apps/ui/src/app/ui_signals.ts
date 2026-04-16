@@ -4,6 +4,9 @@ import {
   effect,
   signal,
   untracked,
+  useComputed,
+  useSignal,
+  useSignalEffect,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
@@ -16,5 +19,5 @@ import {
  * and keep effect() limited to narrow imperative integrations such as timers,
  * storage, or external library bridges.
  */
-export { batch, computed, effect, signal, untracked };
+export { batch, computed, effect, signal, untracked, useComputed, useSignal, useSignalEffect };
 export type { ReadonlySignal, Signal };
