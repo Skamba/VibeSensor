@@ -5,7 +5,7 @@ import type {
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { FeatureServices } from "../feature_deps_base";
 import { defaultVehicleSettings, type SettingsState } from "../ui_app_state";
-import { computed, signal } from "../ui_signals";
+import { batch, computed, signal } from "../ui_signals";
 import type {
   AnalysisPanelFieldKey,
   AnalysisPanelRenderModel,
@@ -476,14 +476,16 @@ export function createSettingsAnalysisModule(
   function handleFieldInput(
     action: { field: AnalysisPanelFieldKey; value: string },
   ): void {
-    draftValues.value = {
-      ...draftValues.value,
-      [action.field]: action.value,
-    };
-    const nextErrors = { ...fieldErrorMessages.value };
-    delete nextErrors[action.field];
-    fieldErrorMessages.value = nextErrors;
-    saveFeedback.value = null;
+    batch(() => {
+      draftValues.value = {
+        ...draftValues.value,
+        [action.field]: action.value,
+      };
+      const nextErrors = { ...fieldErrorMessages.value };
+      delete nextErrors[action.field];
+      fieldErrorMessages.value = nextErrors;
+      saveFeedback.value = null;
+    });
   }
 
   function bindHandlers(): void {
