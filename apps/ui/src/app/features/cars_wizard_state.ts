@@ -63,10 +63,6 @@ export function createInitialWizardState(): WizardState {
   };
 }
 
-export function resetWizardState(state: WizardState): void {
-  Object.assign(state, createInitialWizardState());
-}
-
 export function resolveGearboxes(
   model: CarLibraryModel | null,
   variant: CarLibraryVariant | null,
