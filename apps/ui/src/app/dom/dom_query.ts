@@ -2,7 +2,7 @@ function missingElement(owner: string, target: string): never {
   throw new Error(`${owner} requires ${target}`);
 }
 
-export function getById<T extends HTMLElement>(id: string): T | null {
+function getById<T extends HTMLElement>(id: string): T | null {
   return document.getElementById(id) as T | null;
 }
 

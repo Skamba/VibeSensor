@@ -40,14 +40,14 @@ function isConfiguredAspectValue(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
-export function resolveActiveCar(settings: CarSelectionStateSource): CarRecord | null {
+function resolveActiveCar(settings: CarSelectionStateSource): CarRecord | null {
   if (!settings.activeCarId) {
     return null;
   }
   return settings.cars.find((car) => car.id === settings.activeCarId) ?? null;
 }
 
-export function deriveCarSelectionState(settings: CarSelectionStateSource): CarSelectionState {
+function deriveCarSelectionState(settings: CarSelectionStateSource): CarSelectionState {
   if (!settings.carsLoaded) {
     return { kind: "loading" };
   }
