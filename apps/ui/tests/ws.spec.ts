@@ -52,6 +52,34 @@ class FakeWebSocket {
   }
 }
 
+function installIntervalHarness() {
+  const originalSetInterval = globalThis.setInterval;
+  const originalClearInterval = globalThis.clearInterval;
+  let intervalHandler: (() => void) | null = null;
+
+  globalThis.setInterval = ((handler: TimerHandler) => {
+    intervalHandler = handler as () => void;
+    return 1 as unknown as ReturnType<typeof setInterval>;
+  }) as typeof setInterval;
+
+  globalThis.clearInterval = (() => {
+    intervalHandler = null;
+  }) as typeof clearInterval;
+
+  return {
+    tick(): void {
+      if (!intervalHandler) {
+        throw new Error("No interval handler installed");
+      }
+      intervalHandler();
+    },
+    restore(): void {
+      globalThis.setInterval = originalSetInterval;
+      globalThis.clearInterval = originalClearInterval;
+    },
+  };
+}
+
 test.describe("WsClient", () => {
   test.beforeEach(() => {
     installWindowGlobal();
@@ -91,6 +119,47 @@ test.describe("WsClient", () => {
 
       client.close();
     } finally {
+      globalThis.WebSocket = originalWebSocket;
+    }
+  });
+
+  test("marks the transport stale after signal-backed message timing expires", () => {
+    const originalWebSocket = globalThis.WebSocket;
+    const originalDateNow = Date.now;
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    const interval = installIntervalHarness();
+    let now = 1_000;
+    Date.now = () => now;
+    try {
+      const state = createAppState();
+      const client = new WsClient({
+        url: "ws://example.test/ws",
+        transport: state.transport,
+        staleAfterMs: 10,
+      });
+
+      client.connect();
+
+      const socket = FakeWebSocket.instances[0];
+      socket?.emitOpen();
+      socket?.emitMessage({
+        spectra: {
+          clients: {
+            "client-1": {},
+          },
+        },
+      });
+
+      expect(state.transport.wsState).toBe("connected");
+
+      now += 25;
+      interval.tick();
+
+      expect(state.transport.wsState).toBe("stale");
+      client.close();
+    } finally {
+      Date.now = originalDateNow;
+      interval.restore();
       globalThis.WebSocket = originalWebSocket;
     }
   });

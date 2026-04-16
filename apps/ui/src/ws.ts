@@ -1,5 +1,6 @@
 import type { LiveWsPayload } from "./contracts/ws_payload_types";
 import { batchAppStateUpdates } from "./app/ui_app_state";
+import { signal } from "./app/ui_signals";
 
 export type WsUiState = "connecting" | "connected" | "reconnecting" | "stale" | "no_data";
 
@@ -31,11 +32,10 @@ export class WsClient {
   };
 
   private ws: WebSocket | null = null;
-  private state: WsUiState;
   private reconnectTimer: number | null = null;
   private staleTimer: number | null = null;
-  private lastMessageAtMs = 0;
-  private hasData = false;
+  private readonly lastMessageAtMs = signal(0);
+  private readonly hasData = signal(false);
   private manuallyClosed = false;
   private reconnectAttempt = 0;
 
@@ -47,7 +47,6 @@ export class WsClient {
       hasData: hasSpectraClients,
       ...options,
     };
-    this.state = this.options.transport.wsState;
   }
 
   connect(): void {
@@ -81,9 +80,11 @@ export class WsClient {
   }
 
   private open(initialState: WsUiState): void {
-    this.setState(initialState);
-    this.hasData = false;
-    this.lastMessageAtMs = 0;
+    batchAppStateUpdates(() => {
+      this.commitState(initialState);
+      this.hasData.value = false;
+      this.lastMessageAtMs.value = 0;
+    });
     this.ws = new WebSocket(this.options.url);
 
     this.ws.onopen = () => {
@@ -98,11 +99,11 @@ export class WsClient {
         return;
       }
       const receivedAt = Date.now();
-      this.lastMessageAtMs = receivedAt;
-      this.hasData = this.hasData || this.options.hasData(payload);
       this.reconnectAttempt = 0;
       batchAppStateUpdates(() => {
-        this.commitState(this.hasData ? "connected" : "no_data");
+        this.lastMessageAtMs.value = receivedAt;
+        this.hasData.value = this.hasData.value || this.options.hasData(payload);
+        this.commitState(this.hasData.value ? "connected" : "no_data");
         this.options.transport.hasReceivedPayload = true;
         this.options.transport.pendingPayload = payload;
       });
@@ -141,11 +142,11 @@ export class WsClient {
 
   private tickStale(): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    if (!this.hasData || this.lastMessageAtMs <= 0) {
+    if (!this.hasData.value || this.lastMessageAtMs.value <= 0) {
       this.setState("no_data");
       return;
     }
-    if (Date.now() - this.lastMessageAtMs > this.options.staleAfterMs) {
+    if (Date.now() - this.lastMessageAtMs.value > this.options.staleAfterMs) {
       this.setState("stale");
     }
   }
@@ -157,8 +158,7 @@ export class WsClient {
   }
 
   private commitState(next: WsUiState): void {
-    if (this.state === next) return;
-    this.state = next;
+    if (this.options.transport.wsState === next) return;
     this.options.transport.wsState = next;
   }
 }
