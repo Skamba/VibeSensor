@@ -1,10 +1,11 @@
 import { render, type ComponentChildren, type JSX } from "preact";
-import { useEffect, useRef } from "preact/hooks";
+import { useRef } from "preact/hooks";
 
 import { requiredById } from "../dom/dom_query";
 import {
   signal,
   type ReadonlySignal,
+  useSignalEffect,
 } from "../ui_signals";
 import type { UiConfirmationDialogModel } from "./ui_confirmation_module";
 import {
@@ -195,9 +196,11 @@ function ConfirmationDialog(props: {
   const { bridge, model } = props;
   const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  useEffect(() => {
-    confirmButtonRef.current?.focus();
-  }, [model.messageText]);
+  useSignalEffect(() => {
+    if (model.messageText) {
+      confirmButtonRef.current?.focus();
+    }
+  });
 
   return (
     <div class="app-modal-layer">
