@@ -1,4 +1,4 @@
-const DOWNLOAD_REVOKE_DELAY_MS = 1000;
+import { triggerBlobDownload } from "../dom/download";
 
 export function filenameFromDisposition(headerValue: string | null, fallback: string): string {
   if (!headerValue) {
@@ -38,12 +38,5 @@ export async function downloadBlobFile(url: string, fallbackName: string): Promi
     response.headers.get("content-disposition"),
     fallbackName || "download.bin",
   );
-  const objectUrl = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = objectUrl;
-  anchor.download = fileName;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(objectUrl), DOWNLOAD_REVOKE_DELAY_MS);
+  triggerBlobDownload(blob, fileName);
 }
