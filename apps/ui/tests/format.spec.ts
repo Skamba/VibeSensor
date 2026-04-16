@@ -1,0 +1,20 @@
+import { expect, test } from "@playwright/test";
+
+import { fmtTs, formatEpochTimestamp } from "../src/format";
+
+test.describe("timestamp formatting helpers", () => {
+  test("formats ISO strings and epoch seconds through the same locale path", () => {
+    const iso = "2024-01-02T03:04:05Z";
+    const expected = new Date(iso).toLocaleString();
+
+    expect(fmtTs(iso)).toBe(expected);
+    expect(formatEpochTimestamp(Date.parse(iso) / 1000)).toBe(expected);
+  });
+
+  test("preserves existing empty and invalid fallback text", () => {
+    expect(fmtTs("")).toBe("--");
+    expect(fmtTs("not-a-date")).toBe("not-a-date");
+    expect(formatEpochTimestamp(null)).toBe("—");
+    expect(formatEpochTimestamp(Number.NaN)).toBe("—");
+  });
+});

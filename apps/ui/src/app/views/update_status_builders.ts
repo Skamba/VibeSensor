@@ -2,7 +2,7 @@ import type {
   HealthStatusPayload,
   UpdateStatusPayload,
 } from "../../transport/http_models";
-import { formatEpochTimestamp } from "./dom_helpers";
+import { formatEpochTimestamp } from "../../format";
 import {
   buildUpdateJourneySectionModel,
   formatUpdatePhase,
