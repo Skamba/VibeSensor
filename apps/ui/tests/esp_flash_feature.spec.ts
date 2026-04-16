@@ -632,6 +632,7 @@ function createDeps() {
     espFlashJourneyPanel,
     services: {
       t: (key: string) => key,
+      requestConfirmation: async () => true,
       showError: () => {},
     },
     setActiveSettingsTabId: navigation.setActiveSettingsTabId,
@@ -847,6 +848,7 @@ function createUpdateDeps() {
     updateCancelBtn,
     services: {
       t: (key: string) => key,
+      requestConfirmation: async () => true,
       showError: () => {},
     },
     setActiveSettingsTabId: navigation.setActiveSettingsTabId,

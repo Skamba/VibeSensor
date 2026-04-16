@@ -86,7 +86,7 @@ test.describe("createRealtimeFeatureWorkflow", () => {
           harness.recordingCalls.push("onRecordingStatusChanged");
         },
       },
-      confirmRemoveClient: () => true,
+      confirmRemoveClient: async () => true,
       state: workflowState,
       api: {
         async startLoggingRun() {
@@ -140,7 +140,7 @@ test.describe("createRealtimeFeatureWorkflow", () => {
           harness.recordingCalls.push("onRecordingStatusChanged");
         },
       },
-      confirmRemoveClient: () => true,
+      confirmRemoveClient: async () => true,
       api: {
         async getLoggingStatus() {
           harness.apiCalls.push(`getLoggingStatus:${idleCaptureReadinessSignature.value}`);
@@ -192,7 +192,7 @@ test.describe("createRealtimeFeatureWorkflow", () => {
           harness.recordingCalls.push("onRecordingStatusChanged");
         },
       },
-      confirmRemoveClient: () => true,
+      confirmRemoveClient: async () => true,
       api: {
         async getClientLocations(): Promise<ClientLocationsResponse> {
           throw new Error("network unavailable");
@@ -236,7 +236,7 @@ test.describe("createRealtimeFeatureWorkflow", () => {
           harness.recordingCalls.push("onRecordingStatusChanged");
         },
       },
-      confirmRemoveClient: () => true,
+      confirmRemoveClient: async () => true,
       api: {
         async getLoggingStatus(): Promise<LoggingStatusPayload> {
           const next = responses.shift();
@@ -281,7 +281,7 @@ test.describe("createRealtimeFeatureWorkflow", () => {
           harness.recordingCalls.push("onRecordingStatusChanged");
         },
       },
-      confirmRemoveClient: (message) => {
+      confirmRemoveClient: async (message) => {
         harness.confirmMessages.push(message);
         return true;
       },
@@ -299,5 +299,53 @@ test.describe("createRealtimeFeatureWorkflow", () => {
     expect(harness.state.realtime.clients.map((client) => client.id)).toEqual(["client-b"]);
     expect(harness.state.realtime.selectedClientId).toBe("client-b");
     expect(harness.selectionCalls).toEqual(["sendSelection"]);
+  });
+
+  test("does not remove a client when confirmation is declined", async () => {
+    const harness = createHarness();
+    harness.state.realtime.clients = [
+      makeClient("client-a", { connected: true }),
+      makeClient("client-b", { connected: true }),
+    ];
+    harness.state.realtime.selectedClientId = "client-a";
+    const workflow = createRealtimeFeatureWorkflow({
+      realtime: harness.state.realtime,
+      t: (key, vars) => `${key}:${String(vars?.id ?? "")}`,
+      showError: (message) => {
+        harness.showErrors.push(message);
+      },
+      isDemoMode: false,
+      idleCaptureReadinessSignature: signal("car-1##client-a|client-b"),
+      selection: {
+        sendSelection() {
+          harness.selectionCalls.push("sendSelection");
+        },
+      },
+      recording: {
+        async onRecordingStatusChanged() {
+          harness.recordingCalls.push("onRecordingStatusChanged");
+        },
+      },
+      confirmRemoveClient: async (message) => {
+        harness.confirmMessages.push(message);
+        return false;
+      },
+      api: {
+        async removeClient(clientId: string) {
+          harness.apiCalls.push(`removeClient:${clientId}`);
+        },
+      },
+    });
+
+    await workflow.removeClient("client-a");
+
+    expect(harness.confirmMessages).toEqual(["actions.remove_client_confirm:client-a"]);
+    expect(harness.apiCalls).toEqual([]);
+    expect(harness.state.realtime.clients.map((client) => client.id)).toEqual([
+      "client-a",
+      "client-b",
+    ]);
+    expect(harness.state.realtime.selectedClientId).toBe("client-a");
+    expect(harness.selectionCalls).toEqual([]);
   });
 });

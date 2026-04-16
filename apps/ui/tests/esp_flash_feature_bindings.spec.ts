@@ -20,6 +20,7 @@ test("bindHandlers uses panel action surfaces instead of raw DOM bindings", () =
     },
     services: {
       t: (key) => key,
+      requestConfirmation: async () => true,
       showError() {},
     },
   });
