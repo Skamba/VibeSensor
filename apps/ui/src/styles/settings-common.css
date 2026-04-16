@@ -84,10 +84,18 @@
 .settings-help-disclosure--inline > .settings-help-disclosure__body {
   padding: 0 0 var(--space-2) calc(1rem + 0.45rem);
 }
-.settings-groups { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.settings-groups {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
 .settings-group { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); padding: var(--space-3); }
 .settings-group h3 { margin: 0 0 var(--space-2); font-size: 0.84rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--pill-muted-text); }
-.settings-subgrid { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.settings-subgrid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
 .settings-subgrid--aligned-labels > .field > label {
   display: flex;
   align-items: flex-end;
