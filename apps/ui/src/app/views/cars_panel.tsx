@@ -114,23 +114,6 @@ function CarsPanel(props: {
   }, [wizardModel.isOpen]);
 
   useEffect(() => {
-    if (!wizardModel.isOpen) {
-      return;
-    }
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") {
-        return;
-      }
-      event.preventDefault();
-      state.wizardActions?.onAction({ type: "close" });
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [wizardModel.isOpen, state.wizardActions]);
-
-  useEffect(() => {
     if (!wizardFocusRequest) {
       return;
     }
