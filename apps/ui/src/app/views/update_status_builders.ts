@@ -1,10 +1,25 @@
 import type {
   HealthStatusPayload,
-  UpdateIssue,
-  UpdateStartRequestPayload,
   UpdateStatusPayload,
 } from "../../transport/http_models";
 import { formatEpochTimestamp } from "./dom_helpers";
+import {
+  buildUpdateJourneySectionModel,
+  formatUpdatePhase,
+  getUpdateFailureSummary,
+} from "./update_journey_builder";
+import type {
+  UpdateCurrentStatusSectionModel,
+  UpdateHealthSectionModel,
+  UpdateIssuesSectionModel,
+  UpdateLatestAttemptSectionModel,
+  UpdateLogSectionModel,
+  UpdateStatusBadgeModel,
+  UpdateStatusBadgeVariant,
+  UpdateStatusPanelViewModel,
+  UpdateStatusRowModel,
+  UpdateStatusViewDeps,
+} from "./update_status_models";
 
 const STATE_VARIANT: Readonly<Record<UpdateStatusPayload["state"], UpdateStatusBadgeVariant>> = {
   idle: "muted",
@@ -29,202 +44,6 @@ const HEALTH_REASON_KEYS: Readonly<Record<string, string>> = {
 };
 
 const ASSET_ISSUE_RE = /asset|artifacts|stale|hash|missing/i;
-
-type JourneyStageState = "upcoming" | "active" | "done" | "attention";
-type UpdateJourneyTransport = UpdateStartRequestPayload["transport"];
-
-export interface UpdateFailureSummary {
-  detail: string | null;
-  message: string | null;
-  phaseLabel: string;
-  recoveryDetail: string;
-  recoveryTitle: string;
-}
-
-type UpdateJourneyStage = {
-  phase: string;
-  titleKey: string;
-  detailKey: string;
-};
-
-const WIFI_JOURNEY_STAGES: readonly UpdateJourneyStage[] = [
-  {
-    phase: "validating",
-    titleKey: "settings.update.phase.validating",
-    detailKey: "settings.update.journey.detail.validating",
-  },
-  {
-    phase: "stopping_hotspot",
-    titleKey: "settings.update.phase.stopping_hotspot",
-    detailKey: "settings.update.journey.detail.stopping_hotspot",
-  },
-  {
-    phase: "connecting_wifi",
-    titleKey: "settings.update.phase.connecting_wifi",
-    detailKey: "settings.update.journey.detail.connecting_wifi",
-  },
-  {
-    phase: "checking",
-    titleKey: "settings.update.phase.checking",
-    detailKey: "settings.update.journey.detail.checking",
-  },
-  {
-    phase: "downloading",
-    titleKey: "settings.update.phase.downloading",
-    detailKey: "settings.update.journey.detail.downloading",
-  },
-  {
-    phase: "installing",
-    titleKey: "settings.update.phase.installing",
-    detailKey: "settings.update.journey.detail.installing",
-  },
-  {
-    phase: "restoring_hotspot",
-    titleKey: "settings.update.phase.restoring_hotspot",
-    detailKey: "settings.update.journey.detail.restoring_hotspot",
-  },
-  {
-    phase: "done",
-    titleKey: "settings.update.phase.done",
-    detailKey: "settings.update.journey.detail.done",
-  },
-] as const;
-
-const USB_JOURNEY_STAGES: readonly UpdateJourneyStage[] = [
-  {
-    phase: "validating",
-    titleKey: "settings.update.phase.validating",
-    detailKey: "settings.update.journey.detail.validating",
-  },
-  {
-    phase: "connecting_usb_internet",
-    titleKey: "settings.update.phase.connecting_usb_internet",
-    detailKey: "settings.update.journey.detail.connecting_usb_internet",
-  },
-  {
-    phase: "checking",
-    titleKey: "settings.update.phase.checking",
-    detailKey: "settings.update.journey.detail.checking",
-  },
-  {
-    phase: "downloading",
-    titleKey: "settings.update.phase.downloading",
-    detailKey: "settings.update.journey.detail.downloading",
-  },
-  {
-    phase: "installing",
-    titleKey: "settings.update.phase.installing",
-    detailKey: "settings.update.journey.detail.installing",
-  },
-  {
-    phase: "done",
-    titleKey: "settings.update.phase.done",
-    detailKey: "settings.update.journey.detail.done",
-  },
-] as const;
-
-export interface UpdateStatusViewDeps {
-  t: (key: string, vars?: Record<string, unknown>) => string;
-  selectedTransport: UpdateJourneyTransport;
-}
-
-export type UpdateStatusBadgeVariant = "muted" | "warn" | "ok" | "bad";
-
-export interface UpdateStatusBadgeModel {
-  variant: UpdateStatusBadgeVariant;
-  text: string;
-}
-
-export interface UpdateStatusRowModel {
-  labelText: string;
-  valueText: string;
-}
-
-export interface UpdateCurrentStatusSectionModel {
-  titleText: string;
-  summaryText: string;
-  badge: UpdateStatusBadgeModel;
-  rows: readonly UpdateStatusRowModel[];
-  emptyText: string | null;
-}
-
-export interface UpdateJourneyFailureNoteModel {
-  summaryText: string;
-  detailText: string | null;
-  recoveryTitleText: string;
-  recoveryDetailText: string;
-}
-
-export interface UpdateJourneyStageModel {
-  phase: string;
-  titleText: string;
-  detailText: string;
-  markerText: string;
-  state: JourneyStageState;
-  stateText: string;
-  current: boolean;
-}
-
-export interface UpdateJourneySectionModel {
-  titleText: string;
-  subtitleText: string;
-  failureNote: UpdateJourneyFailureNoteModel | null;
-  stages: readonly UpdateJourneyStageModel[];
-}
-
-export interface UpdateIssueSectionItemModel {
-  phaseText: string;
-  messageText: string;
-  detailText: string | null;
-}
-
-export interface UpdateIssuesSectionModel {
-  titleText: string;
-  subtitleText: string;
-  items: readonly UpdateIssueSectionItemModel[];
-}
-
-export interface UpdateLatestAttemptFailureNoteModel {
-  summaryText: string;
-  detailText: string | null;
-}
-
-export interface UpdateLatestAttemptSectionModel {
-  titleText: string;
-  subtitleText: string;
-  badge: UpdateStatusBadgeModel;
-  rows: readonly UpdateStatusRowModel[];
-  failureNote: UpdateLatestAttemptFailureNoteModel | null;
-}
-
-export interface UpdateHealthSectionModel {
-  titleText: string;
-  summaryText: string;
-  badge: UpdateStatusBadgeModel;
-  rows: readonly UpdateStatusRowModel[];
-}
-
-export interface UpdateLogEmptyStateModel {
-  titleText: string;
-  bodyText: string;
-}
-
-export interface UpdateLogSectionModel {
-  titleText: string;
-  subtitleText: string;
-  noteText: string | null;
-  lines: readonly string[];
-  emptyState: UpdateLogEmptyStateModel | null;
-}
-
-export interface UpdateStatusPanelViewModel {
-  currentStatus: UpdateCurrentStatusSectionModel;
-  journey: UpdateJourneySectionModel;
-  issues: UpdateIssuesSectionModel | null;
-  latestAttempt: UpdateLatestAttemptSectionModel | null;
-  health: UpdateHealthSectionModel;
-  log: UpdateLogSectionModel;
-}
 
 function formatDuration(seconds: number | null | undefined): string {
   if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return "—";
@@ -251,29 +70,6 @@ function formatHealthReason(
   }
   const key = HEALTH_REASON_KEYS[reason];
   return key ? t(key) : reason;
-}
-
-function translateKeyOrFallback(
-  key: string,
-  fallback: string,
-  t: (key: string, vars?: Record<string, unknown>) => string,
-): string {
-  const translated = t(key);
-  return translated === key ? fallback : translated;
-}
-
-function normalizeUpdatePhase(phase: string | null | undefined): string {
-  if (!phase) return "idle";
-  if (phase === "restore") return "restoring_hotspot";
-  return phase;
-}
-
-export function formatUpdatePhase(
-  phase: string | null | undefined,
-  t: (key: string, vars?: Record<string, unknown>) => string,
-): string {
-  const normalized = normalizeUpdatePhase(phase);
-  return translateKeyOrFallback(`settings.update.phase.${normalized}`, normalized, t);
 }
 
 function buildStateBadge(
@@ -433,224 +229,6 @@ function hasAssetRelatedIssue(status: UpdateStatusPayload): boolean {
   return status.issues.some((issue) => ASSET_ISSUE_RE.test(`${issue.message} ${issue.detail}`));
 }
 
-export function buildUpdateCurrentStatusSectionModel(
-  status: UpdateStatusPayload,
-  health: HealthStatusPayload,
-  deps: UpdateStatusViewDeps,
-): UpdateCurrentStatusSectionModel {
-  const showRuntimeAssetsCheck = status.state !== "failed" || hasAssetRelatedIssue(status);
-  const rows = [
-    ...buildLifecycleRows(status, deps.t),
-    ...buildRuntimeRows(status, showRuntimeAssetsCheck, deps.t),
-  ];
-  return {
-    titleText: deps.t("settings.update.current_status_title"),
-    summaryText: buildCurrentStatusSummaryText(status, health, deps.t),
-    badge: buildStateBadge(status, deps.t),
-    rows,
-    emptyText: rows.length > 0 ? null : deps.t("settings.update.current_status_empty"),
-  };
-}
-
-function journeyStages(transport: UpdateJourneyTransport): readonly UpdateJourneyStage[] {
-  return transport === "usb_internet" ? USB_JOURNEY_STAGES : WIFI_JOURNEY_STAGES;
-}
-
-function resolvedJourneyTransport(
-  status: UpdateStatusPayload,
-  selectedTransport: UpdateJourneyTransport,
-): UpdateJourneyTransport {
-  if (status.state === "idle") {
-    return selectedTransport;
-  }
-  return status.transport === "usb_internet" ? "usb_internet" : "wifi";
-}
-
-function journeyStageIndex(
-  phase: string | null | undefined,
-  stages: readonly UpdateJourneyStage[],
-): number {
-  const normalized = normalizeUpdatePhase(phase);
-  return stages.findIndex((stage) => stage.phase === normalized);
-}
-
-function resolveJourneyStageState(
-  status: UpdateStatusPayload,
-  stages: readonly UpdateJourneyStage[],
-  stageIndex: number,
-): JourneyStageState {
-  if (status.state === "success") return "done";
-  if (status.state === "idle") return "upcoming";
-  const currentIndex = journeyStageIndex(status.phase, stages);
-  if (currentIndex === -1) {
-    return "upcoming";
-  }
-  if (stageIndex < currentIndex) return "done";
-  if (stageIndex === currentIndex) {
-    return status.state === "failed" ? "attention" : "active";
-  }
-  return "upcoming";
-}
-
-function primaryJourneyIssue(status: UpdateStatusPayload): UpdateIssue | null {
-  const currentPhase = normalizeUpdatePhase(status.phase);
-  for (let index = status.issues.length - 1; index >= 0; index -= 1) {
-    const issue = status.issues[index];
-    if (normalizeUpdatePhase(issue.phase) === currentPhase) {
-      return issue;
-    }
-  }
-  return status.issues.length > 0 ? status.issues[status.issues.length - 1] : null;
-}
-
-function recoveryGuidanceKey(phase: string): string {
-  switch (normalizeUpdatePhase(phase)) {
-    case "stopping_hotspot":
-    case "connecting_wifi":
-    case "restoring_hotspot":
-      return "settings.update.recovery.wifi";
-    case "connecting_usb_internet":
-      return "settings.update.recovery.usb";
-    case "checking":
-    case "downloading":
-      return "settings.update.recovery.network";
-    case "installing":
-      return "settings.update.recovery.install";
-    default:
-      return "settings.update.recovery.generic";
-  }
-}
-
-export function getUpdateFailureSummary(
-  status: UpdateStatusPayload,
-  t: (key: string, vars?: Record<string, unknown>) => string,
-): UpdateFailureSummary | null {
-  if (status.state !== "failed") {
-    return null;
-  }
-  const issue = primaryJourneyIssue(status);
-  const phase = issue?.phase ?? status.phase;
-  const keyBase = recoveryGuidanceKey(phase);
-  return {
-    detail: issue?.detail ?? null,
-    message: issue?.message ?? null,
-    phaseLabel: formatUpdatePhase(phase, t),
-    recoveryTitle: t(`${keyBase}.title`),
-    recoveryDetail: t(`${keyBase}.detail`),
-  };
-}
-
-function buildJourneyFailureNoteModel(
-  status: UpdateStatusPayload,
-  t: (key: string, vars?: Record<string, unknown>) => string,
-): UpdateJourneyFailureNoteModel | null {
-  const failure = getUpdateFailureSummary(status, t);
-  if (!failure) {
-    return null;
-  }
-  return {
-    summaryText: failure.message ? `${failure.phaseLabel} — ${failure.message}` : failure.phaseLabel,
-    detailText: failure.detail,
-    recoveryTitleText: failure.recoveryTitle,
-    recoveryDetailText: failure.recoveryDetail,
-  };
-}
-
-export function buildUpdateJourneySectionModel(
-  status: UpdateStatusPayload,
-  deps: UpdateStatusViewDeps,
-): UpdateJourneySectionModel {
-  const stages = journeyStages(resolvedJourneyTransport(status, deps.selectedTransport));
-  return {
-    titleText: deps.t("settings.update.journey_title"),
-    subtitleText: deps.t("settings.update.journey_intro"),
-    failureNote: buildJourneyFailureNoteModel(status, deps.t),
-    stages: stages.map((stage, index) => {
-      const state = resolveJourneyStageState(status, stages, index);
-      return {
-        phase: stage.phase,
-        titleText: deps.t(stage.titleKey),
-        detailText: deps.t(stage.detailKey),
-        markerText: state === "done" ? "✓" : `${index + 1}`,
-        state,
-        stateText: deps.t(`maintenance.stage_state.${state}`),
-        current: state === "active",
-      };
-    }),
-  };
-}
-
-export function buildUpdateIssuesSectionModel(
-  status: UpdateStatusPayload,
-  deps: UpdateStatusViewDeps,
-): UpdateIssuesSectionModel | null {
-  if (status.issues.length === 0) {
-    return null;
-  }
-  return {
-    titleText: deps.t("settings.update.issues"),
-    subtitleText: deps.t("settings.update.issues_intro"),
-    items: status.issues.map((issue) => ({
-      phaseText: formatUpdatePhase(issue.phase, deps.t),
-      messageText: issue.message,
-      detailText: issue.detail ?? null,
-    })),
-  };
-}
-
-export function buildUpdateLatestAttemptSectionModel(
-  status: UpdateStatusPayload,
-  deps: UpdateStatusViewDeps,
-): UpdateLatestAttemptSectionModel | null {
-  if (status.state === "idle" || status.state === "running") {
-    return null;
-  }
-  const rows: UpdateStatusRowModel[] = [];
-  if (status.started_at != null) {
-    rows.push(
-      buildStatusRow(
-        deps.t("settings.update.started_at"),
-        formatEpochTimestamp(status.started_at),
-      ),
-    );
-  }
-  if (status.finished_at != null) {
-    rows.push(
-      buildStatusRow(
-        deps.t("settings.update.finished_at"),
-        formatEpochTimestamp(status.finished_at),
-      ),
-    );
-  }
-  rows.push(
-    buildStatusRow(
-      deps.t("settings.update.transport_label"),
-      buildTransportValueText(status, deps.t),
-    ),
-  );
-  if (status.exit_code != null) {
-    rows.push(
-      buildStatusRow(
-        deps.t("settings.update.exit_code"),
-        String(status.exit_code),
-      ),
-    );
-  }
-  const failure = getUpdateFailureSummary(status, deps.t);
-  return {
-    titleText: deps.t("settings.update.attempt_title"),
-    subtitleText: deps.t("settings.update.attempt_intro"),
-    badge: buildStateBadge(status, deps.t),
-    rows,
-    failureNote: failure
-      ? {
-          summaryText: failure.message ?? failure.phaseLabel,
-          detailText: failure.detail,
-        }
-      : null,
-  };
-}
-
 function buildHealthSummaryRows(
   health: HealthStatusPayload,
   t: (key: string, vars?: Record<string, unknown>) => string,
@@ -787,6 +365,96 @@ function buildHealthSummaryText(
       ? "settings.update.health_card_summary.warn"
       : "settings.update.health_card_summary.ok";
   return t(key);
+}
+
+export function buildUpdateCurrentStatusSectionModel(
+  status: UpdateStatusPayload,
+  health: HealthStatusPayload,
+  deps: UpdateStatusViewDeps,
+): UpdateCurrentStatusSectionModel {
+  const showRuntimeAssetsCheck = status.state !== "failed" || hasAssetRelatedIssue(status);
+  const rows = [
+    ...buildLifecycleRows(status, deps.t),
+    ...buildRuntimeRows(status, showRuntimeAssetsCheck, deps.t),
+  ];
+  return {
+    titleText: deps.t("settings.update.current_status_title"),
+    summaryText: buildCurrentStatusSummaryText(status, health, deps.t),
+    badge: buildStateBadge(status, deps.t),
+    rows,
+    emptyText: rows.length > 0 ? null : deps.t("settings.update.current_status_empty"),
+  };
+}
+
+export function buildUpdateIssuesSectionModel(
+  status: UpdateStatusPayload,
+  deps: UpdateStatusViewDeps,
+): UpdateIssuesSectionModel | null {
+  if (status.issues.length === 0) {
+    return null;
+  }
+  return {
+    titleText: deps.t("settings.update.issues"),
+    subtitleText: deps.t("settings.update.issues_intro"),
+    items: status.issues.map((issue) => ({
+      phaseText: formatUpdatePhase(issue.phase, deps.t),
+      messageText: issue.message,
+      detailText: issue.detail ?? null,
+    })),
+  };
+}
+
+export function buildUpdateLatestAttemptSectionModel(
+  status: UpdateStatusPayload,
+  deps: UpdateStatusViewDeps,
+): UpdateLatestAttemptSectionModel | null {
+  if (status.state === "idle" || status.state === "running") {
+    return null;
+  }
+  const rows: UpdateStatusRowModel[] = [];
+  if (status.started_at != null) {
+    rows.push(
+      buildStatusRow(
+        deps.t("settings.update.started_at"),
+        formatEpochTimestamp(status.started_at),
+      ),
+    );
+  }
+  if (status.finished_at != null) {
+    rows.push(
+      buildStatusRow(
+        deps.t("settings.update.finished_at"),
+        formatEpochTimestamp(status.finished_at),
+      ),
+    );
+  }
+  rows.push(
+    buildStatusRow(
+      deps.t("settings.update.transport_label"),
+      buildTransportValueText(status, deps.t),
+    ),
+  );
+  if (status.exit_code != null) {
+    rows.push(
+      buildStatusRow(
+        deps.t("settings.update.exit_code"),
+        String(status.exit_code),
+      ),
+    );
+  }
+  const failure = getUpdateFailureSummary(status, deps.t);
+  return {
+    titleText: deps.t("settings.update.attempt_title"),
+    subtitleText: deps.t("settings.update.attempt_intro"),
+    badge: buildStateBadge(status, deps.t),
+    rows,
+    failureNote: failure
+      ? {
+          summaryText: failure.message ?? failure.phaseLabel,
+          detailText: failure.detail,
+        }
+      : null,
+  };
 }
 
 export function buildUpdateHealthSectionModel(
