@@ -4,9 +4,9 @@ import type {
   CarLibraryVariant,
 } from "../../transport/http_models";
 import type {
-  CarsFeatureOptionsState,
   CarsFeatureRenderState,
 } from "../features/cars_feature_workflow";
+import type { CarsFeatureOptionsState } from "../features/cars_option_state";
 import { DEFAULT_CARS_WIZARD_MANUAL_INPUTS } from "../features/cars_wizard_state";
 
 type FormatNumber = (value: number, digits?: number) => string;

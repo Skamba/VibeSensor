@@ -6,9 +6,9 @@ import type {
   CarLibraryTireOption,
 } from "../src/transport/http_models";
 import type {
-  CarsFeatureOptionsState,
   CarsFeatureRenderState,
 } from "../src/app/features/cars_feature_workflow";
+import type { CarsFeatureOptionsState } from "../src/app/features/cars_option_state";
 import {
   buildCarsWizardRenderModel,
   createClosedCarsWizardRenderModel,
