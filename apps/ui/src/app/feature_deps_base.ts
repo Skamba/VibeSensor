@@ -5,6 +5,7 @@
 export interface FeatureServices {
   t: (key: string, vars?: Record<string, unknown>) => string;
   showError: (message: string) => void;
+  requestConfirmation: (message: string) => Promise<boolean>;
 }
 
 export interface FeatureFormatting {

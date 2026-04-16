@@ -201,6 +201,7 @@ function createFeatureHarness(
   overrides: {
     panel?: HistoryPanelView;
     showError?: (message: string) => void;
+    requestConfirmation?: (message: string) => Promise<boolean>;
     activatePrimaryView?: (viewId: string) => void;
   } = {},
 ) {
@@ -222,6 +223,8 @@ function createFeatureHarness(
     shell: state.shell,
     services: {
       t: testTranslation,
+      requestConfirmation:
+        overrides.requestConfirmation ?? (async () => true),
       showError: overrides.showError ?? ((message) => {
         errors.push(message);
       }),
@@ -243,6 +246,25 @@ function createFeatureHarness(
 
 test.beforeEach(() => {
   installWindowGlobal();
+});
+
+test("history feature skips deletion when confirmation is declined", async () => {
+  const state = createAppState();
+  state.history.runs = [historyListRun("run-42")];
+  const confirmationMessages: string[] = [];
+  const { feature } = createFeatureHarness(state, {
+    requestConfirmation: async (message) => {
+      confirmationMessages.push(message);
+      return false;
+    },
+  });
+
+  await feature.onHistoryTableAction("delete-run", "run-42");
+
+  expect(confirmationMessages).toEqual([
+    'history.delete_confirm:{"name":"run-42"}',
+  ]);
+  expect(state.history.runs.map((run) => run.run_id)).toEqual(["run-42"]);
 });
 
 test("history feature refreshes runs and renders an empty-state model when no runs exist", async () => {

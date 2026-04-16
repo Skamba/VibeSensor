@@ -39,6 +39,7 @@ function createUiAppSharedDeps(
   return {
     services: {
       t: (key, vars) => shell.t(key, vars),
+      requestConfirmation: (message) => shell.requestConfirmation(message),
       showError: (message) => shell.showError(message),
     },
     formatting: {

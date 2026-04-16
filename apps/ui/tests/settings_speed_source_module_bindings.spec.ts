@@ -27,6 +27,7 @@ test("bindHandlers uses typed panel actions and navigation subscriptions", () =>
     },
     services: {
       t: (key) => key,
+      requestConfirmation: async () => true,
       showError() {},
     },
     formatting: {

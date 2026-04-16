@@ -43,7 +43,6 @@ interface SettingsCarsModulePorts {
 }
 
 export interface SettingsCarsModuleDeps {
-  confirmDelete?: (message: string) => boolean;
   settings: SettingsState;
   panels: SettingsCarsModulePanels;
   ports: SettingsCarsModulePorts;
@@ -82,8 +81,6 @@ export function createSettingsCarsModule(
 ): SettingsCarsModule {
   const { settings, services, formatting } = ctx;
   const { t } = services;
-  const confirmDelete =
-    ctx.confirmDelete ?? ((message: string) => window.confirm(message));
   const transport = createSettingsCarsTransport(ctx.transport);
   const carSelection = createCarSelectionDerivedState(settings);
   let handlersBound = false;
@@ -225,7 +222,7 @@ export function createSettingsCarsModule(
       return;
     }
     const car = findCar(carId);
-    const confirmed = confirmDelete(
+    const confirmed = await services.requestConfirmation(
       t("settings.car.delete_confirm", { name: car?.name || "" }),
     );
     if (!confirmed) {
