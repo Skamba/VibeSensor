@@ -300,6 +300,33 @@ test.describe("createCarsFeatureWorkflow", () => {
     expect(rerenderState.gearboxOptions).toBe(initialRenderState.gearboxOptions);
   });
 
+  test("keeps manual input references stable while option state changes", async () => {
+    const harness = createHarness();
+    const workflow = createCarsFeatureWorkflow({
+      addCarFromWizard: async () => undefined,
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      t: createTranslator(),
+      transport: {
+        async loadBrands() {
+          return ["BMW"];
+        },
+        async loadTypes() {
+          return ["SUV"];
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    await workflow.openWizard();
+
+    const initialRenderState = workflow.getRenderState();
+    await workflow.selectBrand("BMW");
+
+    const rerenderState = workflow.getRenderState();
+    expect(rerenderState.typeOptions).not.toBe(initialRenderState.typeOptions);
+    expect(rerenderState.manualInputs).toBe(initialRenderState.manualInputs);
+  });
+
   test("keeps the library branch disabled until a gearbox is chosen and then submits the selected specs", async () => {
     const harness = createHarness();
     const addCalls: Array<{
