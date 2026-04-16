@@ -46,6 +46,12 @@ export interface RealtimeFeatureViewState {
   readonly sensorsPanelModel: ReadonlySignal<SensorsPanelRenderModel>;
 }
 
+interface LoggingElapsedTickInputs {
+  handlersBound: boolean;
+  loggingEnabled: boolean;
+  loggingStartTimeUtc: string | null;
+}
+
 function formatElapsed(
   startTimeUtc: string | null | undefined,
   nowMs: number,
@@ -148,6 +154,11 @@ export function createRealtimeFeatureViewState(
   });
   const elapsedNowMs = signal(Date.now());
   const lastCompletedElapsedText = signal("--");
+  const loggingElapsedTickInputs = signal<LoggingElapsedTickInputs>({
+    handlersBound: workflow.handlersBound.value,
+    loggingEnabled: realtime.loggingStatus.enabled,
+    loggingStartTimeUtc: realtime.loggingStatus.start_time_utc ?? null,
+  });
   let loggingElapsedTimer: ReturnType<typeof setInterval> | null = null;
 
   function clearLoggingElapsedTimer(): void {
@@ -159,23 +170,44 @@ export function createRealtimeFeatureViewState(
   }
 
   effect(() => {
+    const handlersBound = workflow.handlersBound.value;
     trackAppStateSlice(realtime);
+    const nextTickInputs = {
+      handlersBound,
+      loggingEnabled: realtime.loggingStatus.enabled,
+      loggingStartTimeUtc: realtime.loggingStatus.start_time_utc ?? null,
+    } satisfies LoggingElapsedTickInputs;
+    const currentTickInputs = loggingElapsedTickInputs.value;
+    if (
+      currentTickInputs.handlersBound === nextTickInputs.handlersBound
+      && currentTickInputs.loggingEnabled === nextTickInputs.loggingEnabled
+      && currentTickInputs.loggingStartTimeUtc === nextTickInputs.loggingStartTimeUtc
+    ) {
+      return;
+    }
+    loggingElapsedTickInputs.value = nextTickInputs;
+  });
+
+  effect(() => {
+    const {
+      handlersBound,
+      loggingEnabled,
+      loggingStartTimeUtc,
+    } = loggingElapsedTickInputs.value;
     const shouldTick =
-      workflow.handlersBound.value
-      && Boolean(
-        realtime.loggingStatus.enabled && realtime.loggingStatus.start_time_utc,
-      );
+      handlersBound && Boolean(loggingEnabled && loggingStartTimeUtc);
     if (!shouldTick) {
       clearLoggingElapsedTimer();
       return;
     }
     elapsedNowMs.value = Date.now();
-    if (loggingElapsedTimer !== null) {
-      return;
-    }
+    clearLoggingElapsedTimer();
     loggingElapsedTimer = setInterval(() => {
       elapsedNowMs.value = Date.now();
     }, 1_000);
+    return () => {
+      clearLoggingElapsedTimer();
+    };
   });
 
   effect(() => {
