@@ -335,12 +335,19 @@ function UpdatePanel(props: {
     "Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.",
   );
   const cancelLabel = useUiText("settings.update.cancel", "Cancel Update");
+  const actions = useComputed(() => props.actions.value);
   const status = useComputed(() => props.model.value.status);
   const startButtonHidden = useComputed(() => props.model.value.startButtonHidden);
   const startButtonDisabled = useComputed(() => props.model.value.startButtonDisabled);
   const startButtonLabelText = useComputed(() => props.model.value.startButtonLabelText);
   const cancelButtonHidden = useComputed(() => props.model.value.cancelButtonHidden);
   const cancelButtonDisabled = useComputed(() => props.model.value.cancelButtonDisabled);
+  const handleStart = () => {
+    actions.value?.onStart();
+  };
+  const handleCancel = () => {
+    actions.value?.onCancel();
+  };
   return (
     <div class="panel card">
       <div class="maintenance-layout maintenance-layout--compact">
@@ -373,7 +380,7 @@ function UpdatePanel(props: {
                 class="btn btn--success"
                 hidden={startButtonHidden}
                 disabled={startButtonDisabled}
-                onClick={() => props.actions.value?.onStart()}
+                onClick={handleStart}
               >
                 {startButtonLabelText}
               </button>
@@ -383,7 +390,7 @@ function UpdatePanel(props: {
                 class="btn btn--danger"
                 hidden={cancelButtonHidden}
                 disabled={cancelButtonDisabled}
-                onClick={() => props.actions.value?.onCancel()}
+                onClick={handleCancel}
               >
                 {cancelLabel}
               </button>

@@ -171,6 +171,16 @@ function RealtimeLoggingPanel(props: {
   const showProgressSection = useComputed(() => !setupMode.value || checklist.value !== null);
   const showStartHidden = useComputed(() => !showStart.value);
   const showStopHidden = useComputed(() => !showStop.value);
+  const actions = useComputed(() => props.actions.value);
+  const handleSummaryAction = (action: RealtimeLoggingSummaryAction) => {
+    actions.value?.onSummaryAction(action);
+  };
+  const handleStartLogging = () => {
+    actions.value?.onStartLogging();
+  };
+  const handleStopLogging = () => {
+    actions.value?.onStopLogging();
+  };
 
   return (
     <div class="realtime-logging-shell" data-layout={shellLayout}>
@@ -182,7 +192,7 @@ function RealtimeLoggingPanel(props: {
           <RealtimeLoggingSummary
             summaryText={summaryText.value}
             summaryPanel={summaryPanel.value}
-            onAction={props.actions.value?.onSummaryAction ?? null}
+            onAction={handleSummaryAction}
           />
         </div>
       </div>
@@ -244,7 +254,7 @@ function RealtimeLoggingPanel(props: {
 
           hidden={showStartHidden}
           disabled={startDisabled}
-          onClick={() => props.actions.value?.onStartLogging()}
+          onClick={handleStartLogging}
         >
           {startLabel}
         </button>
@@ -255,7 +265,7 @@ function RealtimeLoggingPanel(props: {
 
           hidden={showStopHidden}
           disabled={stopDisabled}
-          onClick={() => props.actions.value?.onStopLogging()}
+          onClick={handleStopLogging}
         >
           {stopLabel}
         </button>

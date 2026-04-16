@@ -29,9 +29,16 @@ function HistoryPanel(props: {
   const startedLabel = useUiText("history.table.updated", "Started");
   const samplesLabel = useUiText("history.table.size", "Samples");
   const actionsLabel = useUiText("history.table.actions", "Actions");
+  const actions = useComputed(() => props.actions.value);
   const deleteAllRunsDisabled = useComputed(() => props.model.value.deleteAllRunsDisabled);
   const historySummaryText = useComputed(() => props.model.value.historySummaryText);
   const table = useComputed(() => props.model.value.table);
+  const handleRefreshHistory = () => {
+    actions.value?.onRefreshHistory();
+  };
+  const handleDeleteAllRuns = () => {
+    actions.value?.onDeleteAllRuns();
+  };
 
   return (
     <>
@@ -46,7 +53,7 @@ function HistoryPanel(props: {
             id="refreshHistoryBtn"
             class="btn btn--muted"
             type="button"
-            onClick={() => props.actions.value?.onRefreshHistory()}
+            onClick={handleRefreshHistory}
           >
             {refreshLabel}
           </button>
@@ -55,7 +62,7 @@ function HistoryPanel(props: {
             class="btn btn--danger-quiet"
             type="button"
             disabled={deleteAllRunsDisabled}
-            onClick={() => props.actions.value?.onDeleteAllRuns()}
+            onClick={handleDeleteAllRuns}
           >
             {deleteAllLabel}
           </button>
@@ -71,7 +78,7 @@ function HistoryPanel(props: {
           </tr>
         </thead>
         <tbody id="historyTableBody">
-          <HistoryTableBody handlers={props.actions.value} table={table.value} />
+          <HistoryTableBody handlers={actions.value} table={table.value} />
         </tbody>
       </table>
     </>

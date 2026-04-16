@@ -333,8 +333,21 @@ function EspFlashPanel(props: {
     "settings.esp_flash.history_intro",
     "Recent flashes stay here so the next operator can see what happened last.",
   );
+  const actions = useComputed(() => props.actions.value);
   const model = useComputed(() => props.model.value);
   const logPanelRef = useRef<HTMLDivElement | null>(null);
+  const handleSelectPort = (value: string) => {
+    actions.value?.onSelectPort(value);
+  };
+  const handleRefreshPorts = () => {
+    actions.value?.onRefreshPorts();
+  };
+  const handleStart = () => {
+    actions.value?.onStart();
+  };
+  const handleCancel = () => {
+    actions.value?.onCancel();
+  };
 
   useEffect(() => {
     const logPanel = logPanelRef.current;
@@ -385,8 +398,7 @@ function EspFlashPanel(props: {
                   id="espFlashPortSelect"
                   disabled={model.value.portSelectDisabled}
                   value={model.value.selectedPortValue}
-                  onChange={(event) =>
-                    props.actions.value?.onSelectPort(event.currentTarget.value)}
+                  onChange={(event) => handleSelectPort(event.currentTarget.value)}
                 >
                   {model.value.portOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -399,7 +411,7 @@ function EspFlashPanel(props: {
                   id="espFlashRefreshPortsBtn"
                   class="btn btn--muted"
                   disabled={model.value.refreshPortsDisabled}
-                  onClick={() => props.actions.value?.onRefreshPorts()}
+                  onClick={handleRefreshPorts}
                 >
                   {refreshLabel}
                 </button>
@@ -451,7 +463,7 @@ function EspFlashPanel(props: {
                   class="btn btn--success"
                   hidden={model.value.startButtonHidden}
                   disabled={model.value.startButtonDisabled}
-                  onClick={() => props.actions.value?.onStart()}
+                  onClick={handleStart}
                 >
                   {model.value.startButtonLabelText}
                 </button>
@@ -461,7 +473,7 @@ function EspFlashPanel(props: {
                   class="btn btn--danger"
                   hidden={model.value.cancelButtonHidden}
                   disabled={model.value.cancelButtonDisabled}
-                  onClick={() => props.actions.value?.onCancel()}
+                  onClick={handleCancel}
                 >
                   {cancelLabel}
                 </button>
