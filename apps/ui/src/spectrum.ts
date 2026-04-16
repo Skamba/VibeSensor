@@ -6,6 +6,7 @@ import {
   SPECTRUM_DB_REFERENCE_AMP_G,
   SPECTRUM_MIN_RENDER_AMP_G,
 } from "./config";
+import { getSpectrumCssVars } from "./spectrum_css_vars";
 
 export interface SpectrumSeriesMeta {
   label: string;
@@ -38,7 +39,6 @@ export class SpectrumChart {
   private readonly hostEl: HTMLElement;
   private readonly measureEl: HTMLElement;
   private readonly height: number;
-  private readonly rootStyle: CSSStyleDeclaration;
   private resizeObserver: ResizeObserver | null = null;
   private resizeRaf: number | null = null;
 
@@ -46,7 +46,6 @@ export class SpectrumChart {
     this.hostEl = hostEl;
     this.measureEl = measureEl || hostEl;
     this.height = height;
-    this.rootStyle = getComputedStyle(document.documentElement);
     this.startResizeObserver();
   }
 
@@ -54,6 +53,7 @@ export class SpectrumChart {
     if (this.plot && this.plot.series.length === seriesMeta.length + 1) {
       return;
     }
+    const cssVars = getSpectrumCssVars();
 
     this.destroyPlot();
     const series: uPlot.Series[] = [{ label: "Hz" }];
@@ -76,7 +76,7 @@ export class SpectrumChart {
             one: true,
             size: 7,
             width: 2,
-            fill: this.cssVar("--surface", "#f8f9fb"),
+            fill: cssVars.surface,
           },
         },
         scales: {
@@ -88,13 +88,13 @@ export class SpectrumChart {
         axes: [
           {
             label: text.axisHz,
-            stroke: this.cssVar("--muted", "#5a6b82"),
-            grid: { stroke: this.cssVar("--border", "#d7e1ee"), width: 1 },
+            stroke: cssVars.muted,
+            grid: { stroke: cssVars.border, width: 1 },
           },
           {
             label: text.axisAmplitude,
-            stroke: this.cssVar("--muted", "#5a6b82"),
-            grid: { stroke: this.cssVar("--border", "#d7e1ee"), width: 1 },
+            stroke: cssVars.muted,
+            grid: { stroke: cssVars.border, width: 1 },
           },
         ],
         series,
@@ -159,11 +159,6 @@ export class SpectrumChart {
       });
     });
     this.resizeObserver.observe(this.measureEl);
-  }
-
-
-  private cssVar(name: string, fallback: string): string {
-    return this.rootStyle.getPropertyValue(name).trim() || fallback;
   }
 
   private computeWidth(): number {

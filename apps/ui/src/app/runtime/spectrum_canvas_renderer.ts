@@ -2,6 +2,7 @@ import type uPlot from "uplot";
 
 import { SPECTRUM_TWEEN_DURATION_MS } from "../../config";
 import { convertSpectrumAmplitudesToDbInPlace, SpectrumChart } from "../../spectrum";
+import { getSpectrumCssVars } from "../../spectrum_css_vars";
 import { chartSeriesPalette, orderBandFills } from "../../theme";
 import {
   createSpectrumTweenDerivedState,
@@ -43,8 +44,6 @@ export interface SpectrumCanvasRendererDeps {
 }
 
 export class SpectrumCanvasRenderer {
-  private readonly rootStyle: CSSStyleDeclaration;
-
   private readonly spectrumBandPlugin: uPlot.Plugin;
 
   private spectrumTweenRaf: number | null = null;
@@ -70,7 +69,6 @@ export class SpectrumCanvasRenderer {
   constructor(
     private readonly deps: SpectrumCanvasRendererDeps,
   ) {
-    this.rootStyle = getComputedStyle(document.documentElement);
     this.spectrumBandPlugin = this.createBandPlugin();
   }
 
@@ -314,6 +312,7 @@ export class SpectrumCanvasRenderer {
             const labelPaddingX = 6;
             const labelHeight = 20;
             const labelTop = top + 8;
+            const cssVars = getSpectrumCssVars();
             plot.ctx.save();
             plot.ctx.setLineDash([5, 4]);
             plot.ctx.strokeStyle = focusMarker.color;
@@ -333,9 +332,9 @@ export class SpectrumCanvasRenderer {
               plot.bbox.left,
               Math.min(x - (labelWidth / 2), plot.bbox.left + plot.bbox.width - labelWidth),
             );
-            plot.ctx.fillStyle = this.cssVar("--tooltip-bg", "rgba(15, 23, 42, 0.88)");
+            plot.ctx.fillStyle = cssVars.tooltipBg;
             plot.ctx.fillRect(labelLeft, labelTop, labelWidth, labelHeight);
-            plot.ctx.fillStyle = this.cssVar("--tooltip-fg", "#f8f9fb");
+            plot.ctx.fillStyle = cssVars.tooltipFg;
             plot.ctx.textBaseline = "middle";
             plot.ctx.fillText(label, labelLeft + labelPaddingX, labelTop + (labelHeight / 2));
             plot.ctx.restore();
@@ -366,10 +365,6 @@ export class SpectrumCanvasRenderer {
       },
       [this.spectrumBandPlugin],
     );
-  }
-
-  private cssVar(name: string, fallback: string): string {
-    return this.rootStyle.getPropertyValue(name).trim() || fallback;
   }
 
   private formatHz(value: number): string {
