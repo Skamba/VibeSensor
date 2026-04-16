@@ -3,7 +3,6 @@ import { expect, test } from "@playwright/test";
 import {
   createCarsFeatureWorkflow,
   type CarsFeatureFocusTarget,
-  type CarsFeatureRenderState,
   type CarsFeatureWorkflowViewPorts,
 } from "../src/app/features/cars_feature_workflow";
 import type {
@@ -14,13 +13,11 @@ import type {
 
 type WorkflowHarness = {
   focuses: CarsFeatureFocusTarget[];
-  renderStates: CarsFeatureRenderState[];
 };
 
 function createHarness(): WorkflowHarness {
   return {
     focuses: [],
-    renderStates: [],
   };
 }
 
@@ -28,27 +25,6 @@ function createViewPorts(harness: WorkflowHarness): CarsFeatureWorkflowViewPorts
   return {
     focus(target): void {
       harness.focuses.push(target);
-    },
-    render(state): void {
-      harness.renderStates.push({
-        ...state,
-        brandOptions: {
-          ...state.brandOptions,
-          options: [...state.brandOptions.options],
-        },
-        gearboxOptions: [...state.gearboxOptions],
-        manualInputs: { ...state.manualInputs },
-        modelOptions: {
-          ...state.modelOptions,
-          options: [...state.modelOptions.options],
-        },
-        tireOptions: [...state.tireOptions],
-        typeOptions: {
-          ...state.typeOptions,
-          options: [...state.typeOptions.options],
-        },
-        variantOptions: [...state.variantOptions],
-      });
     },
   };
 }
@@ -122,7 +98,7 @@ test.describe("createCarsFeatureWorkflow", () => {
     await workflow.openWizard();
 
     expect(harness.focuses).toEqual(["close", "custom-brand"]);
-    expect(harness.renderStates.at(-1)?.brandOptions).toEqual({
+    expect(workflow.getRenderState().brandOptions).toEqual({
       message: "settings.wizard.load_failed_brands",
       options: [],
       status: "error",
@@ -183,7 +159,7 @@ test.describe("createCarsFeatureWorkflow", () => {
       variant: undefined,
     }]);
     expect(harness.focuses).toContain("manual-tire-width");
-    expect(harness.renderStates.at(-1)?.isOpen).toBe(false);
+    expect(workflow.getRenderState().isOpen).toBe(false);
   });
 
   test("keeps the library branch disabled until a gearbox is chosen and then submits the selected specs", async () => {
@@ -224,7 +200,7 @@ test.describe("createCarsFeatureWorkflow", () => {
     await workflow.selectType("SUV");
     await workflow.selectModel(0);
 
-    expect(harness.renderStates.at(-1)).toMatchObject({
+    expect(workflow.getRenderState()).toMatchObject({
       canFinish: false,
       resolvedSpecBranch: null,
       selectedTire: tire,
@@ -248,6 +224,6 @@ test.describe("createCarsFeatureWorkflow", () => {
       variant: undefined,
     }]);
     expect(harness.focuses).toContain("finish");
-    expect(harness.renderStates.at(-1)?.isOpen).toBe(false);
+    expect(workflow.getRenderState().isOpen).toBe(false);
   });
 });

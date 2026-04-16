@@ -16,9 +16,14 @@ import type {
   EspFlashPortsPayload,
   EspFlashStatusPayload,
   EspSerialPortPayload,
-} from "../../transport/http_models";
+  } from "../../transport/http_models";
 import type { EspFlashFeatureRenderState } from "../views/esp_flash_feature_presenter";
-import type { ReadonlySignal } from "../ui_signals";
+import {
+  batch,
+  computed,
+  signal,
+  type ReadonlySignal,
+} from "../ui_signals";
 import {
   createPollingController,
   type PollingController,
@@ -34,14 +39,9 @@ export interface EspFlashFeatureWorkflowApi {
   startEspFlash(port: string | null, autoDetect: boolean): Promise<unknown>;
 }
 
-export interface EspFlashFeatureWorkflowViewPorts {
-  render(state: EspFlashFeatureRenderState): void;
-}
-
 export interface EspFlashFeatureWorkflowDeps {
   t: (key: string, vars?: Record<string, unknown>) => string;
   showError: (message: string) => void;
-  view: EspFlashFeatureWorkflowViewPorts;
   api?: Partial<EspFlashFeatureWorkflowApi>;
   createPollingController?: (options: PollingControllerOptions) => PollingController;
   pollingEnabled?: ReadonlySignal<boolean>;
@@ -50,9 +50,9 @@ export interface EspFlashFeatureWorkflowDeps {
 export interface EspFlashFeatureWorkflow {
   cancelFlash(): Promise<void>;
   getRenderState(): EspFlashFeatureRenderState;
+  readonly renderState: ReadonlySignal<EspFlashFeatureRenderState>;
   refreshPorts(): Promise<void>;
   refreshStatus(): Promise<void>;
-  renderCurrentState(): void;
   setSelectedPortValue(value: string): void;
   startFlash(): Promise<void>;
   startPolling(): void;
@@ -93,26 +93,23 @@ export function createEspFlashFeatureWorkflow(
   const createPolling = deps.createPollingController ?? createPollingController;
 
   let nextLogIndex = 0;
-  let latestStatus: EspFlashStatusPayload = createIdleStatus();
-  let lastJourneyPhase: string | null = null;
-  let availablePorts: EspSerialPortPayload[] = [];
-  let selectedPortValue = "__auto__";
-  let logText = "";
-  let latestAttempts: NonNullable<EspFlashHistoryPayload["attempts"]> = [];
+  const latestStatus = signal<EspFlashStatusPayload>(createIdleStatus());
+  const lastJourneyPhase = signal<string | null>(null);
+  const availablePorts = signal<readonly EspSerialPortPayload[]>([]);
+  const selectedPortValue = signal("__auto__");
+  const logText = signal("");
+  const latestAttempts = signal<readonly NonNullable<EspFlashHistoryPayload["attempts"]>[number][]>([]);
+  const renderState = computed<EspFlashFeatureRenderState>(() => ({
+    attempts: [...latestAttempts.value],
+    availablePorts: [...availablePorts.value],
+    lastJourneyPhase: lastJourneyPhase.value,
+    logText: logText.value,
+    selectedPortValue: selectedPortValue.value,
+    status: latestStatus.value,
+  }));
 
   function getRenderState(): EspFlashFeatureRenderState {
-    return {
-      attempts: latestAttempts,
-      availablePorts,
-      lastJourneyPhase,
-      logText,
-      selectedPortValue,
-      status: latestStatus,
-    };
-  }
-
-  function renderCurrentState(): void {
-    deps.view.render(getRenderState());
+    return renderState.value;
   }
 
   function updateJourneyPhase(status: EspFlashStatusPayload): void {
@@ -122,18 +119,18 @@ export function createEspFlashFeatureWorkflow(
       phase || "",
     );
     if (isJourneyPhase) {
-      lastJourneyPhase = phase;
+      lastJourneyPhase.value = phase;
       return;
     }
     if (safeState === "idle" || safeState === "success") {
-      lastJourneyPhase = null;
+      lastJourneyPhase.value = null;
     }
   }
 
   async function refreshHistory(): Promise<void> {
     try {
       const payload = await api.getEspFlashHistory();
-      latestAttempts = payload.attempts || [];
+      latestAttempts.value = payload.attempts || [];
     } catch {
       /* keep existing history on transient error */
     }
@@ -141,23 +138,23 @@ export function createEspFlashFeatureWorkflow(
 
   async function refreshLogs(status: EspFlashStatusPayload): Promise<void> {
     if ((status.log_count || 0) === 0) {
-      logText = "";
+      logText.value = "";
       nextLogIndex = 0;
       return;
     }
     if (nextLogIndex === 0) {
-      logText = "";
+      logText.value = "";
     }
     const logs = await api.getEspFlashLogs(nextLogIndex);
     if (logs.lines.length > 0) {
-      logText += `${logs.lines.join("\n")}\n`;
+      logText.value += `${logs.lines.join("\n")}\n`;
     }
     nextLogIndex = logs.next_index;
   }
 
   function applyStatus(status: EspFlashStatusPayload): void {
     updateJourneyPhase(status);
-    latestStatus = status;
+    latestStatus.value = status;
     if (safeEspFlashState(status.state) !== "running") {
       nextLogIndex = status.log_count || 0;
     }
@@ -165,20 +162,23 @@ export function createEspFlashFeatureWorkflow(
 
   async function refreshStatus(): Promise<void> {
     const status = await api.getEspFlashStatus();
-    applyStatus(status);
+    batch(() => {
+      applyStatus(status);
+    });
     await refreshLogs(status);
     await refreshHistory();
-    renderCurrentState();
   }
 
   async function refreshPorts(): Promise<void> {
     try {
       const payload = await api.getEspFlashPorts();
-      availablePorts = payload.ports || [];
-      if (!availablePorts.some((port) => port.port === selectedPortValue)) {
-        selectedPortValue = "__auto__";
-      }
-      renderCurrentState();
+      const ports = payload.ports || [];
+      batch(() => {
+        availablePorts.value = ports;
+        if (!ports.some((port) => port.port === selectedPortValue.value)) {
+          selectedPortValue.value = "__auto__";
+        }
+      });
     } catch {
       /* keep existing options on transient error */
     }
@@ -188,7 +188,7 @@ export function createEspFlashFeatureWorkflow(
     enabled: deps.pollingEnabled,
     poll: async () => {
       await refreshStatus();
-      return safeEspFlashState(latestStatus.state) === "running"
+      return safeEspFlashState(latestStatus.value.state) === "running"
         ? ESP_FLASH_POLL_ACTIVE_MS
         : ESP_FLASH_POLL_IDLE_MS;
     },
@@ -197,18 +197,17 @@ export function createEspFlashFeatureWorkflow(
 
   async function startFlash(): Promise<void> {
     if (
-      safeEspFlashState(latestStatus.state) === "running"
-      || availablePorts.length === 0
+      safeEspFlashState(latestStatus.value.state) === "running"
+      || availablePorts.value.length === 0
     ) {
       return;
     }
-    const autoDetect = selectedPortValue === "__auto__";
-    const port = autoDetect ? null : selectedPortValue;
+    const autoDetect = selectedPortValue.value === "__auto__";
+    const port = autoDetect ? null : selectedPortValue.value;
     try {
       await api.startEspFlash(port, autoDetect);
-      logText = "";
+      logText.value = "";
       nextLogIndex = 0;
-      renderCurrentState();
       polling.restart();
     } catch (err) {
       deps.showError(
@@ -229,12 +228,11 @@ export function createEspFlashFeatureWorkflow(
   return {
     cancelFlash,
     getRenderState,
+    renderState,
     refreshPorts,
     refreshStatus,
-    renderCurrentState,
     setSelectedPortValue(value: string) {
-      selectedPortValue = value || "__auto__";
-      renderCurrentState();
+      selectedPortValue.value = value || "__auto__";
     },
     startFlash,
     startPolling() {

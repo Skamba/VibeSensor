@@ -8,28 +8,32 @@ import type {
   HistoryPanelView,
 } from "./history_table_view";
 
-interface HistoryPanelBridgeState extends HistoryPanelRenderModel {
+interface HistoryPanelBridgeState {
   actions: HistoryPanelActionHandlers | null;
+  model: ReadonlySignal<HistoryPanelRenderModel> | null;
 }
 
 const DEFAULT_PANEL_STATE: HistoryPanelBridgeState = {
-  historySummaryText: "No runs yet.",
-  deleteAllRunsDisabled: true,
-  table: null,
   actions: null,
+  model: null,
 };
 
 function HistoryPanel(props: { state: ReadonlySignal<HistoryPanelBridgeState> }) {
   const state = props.state.value;
+  const model = state.model?.value ?? {
+    deleteAllRunsDisabled: true,
+    historySummaryText: "No runs yet.",
+    table: null,
+  };
   const t = useUiTranslation();
 
   return (
     <>
       <div class="history-toolbar">
         <div class="history-toolbar__copy">
-          <div id="historySummary" class="history-toolbar__summary subtle">
-            {state.historySummaryText}
-          </div>
+            <div id="historySummary" class="history-toolbar__summary subtle">
+            {model.historySummaryText}
+            </div>
         </div>
         <div class="history-toolbar__actions">
           <button
@@ -46,7 +50,7 @@ function HistoryPanel(props: { state: ReadonlySignal<HistoryPanelBridgeState> })
             class="btn btn--danger-quiet"
             type="button"
 
-            disabled={state.deleteAllRunsDisabled}
+            disabled={model.deleteAllRunsDisabled}
             onClick={() => state.actions?.onDeleteAllRuns()}
           >
             {t("history.delete_all", "Delete All Runs")}
@@ -65,7 +69,7 @@ function HistoryPanel(props: { state: ReadonlySignal<HistoryPanelBridgeState> })
           </tr>
         </thead>
         <tbody id="historyTableBody">
-          <HistoryTableBody handlers={state.actions} table={state.table} />
+          <HistoryTableBody handlers={state.actions} table={model.table} />
         </tbody>
       </table>
     </>
@@ -77,8 +81,8 @@ export function mountHistoryPanel(host: HTMLElement): HistoryPanelView {
   render(<HistoryPanel state={state} />, host);
 
   return {
-    setModel(model: HistoryPanelRenderModel): void {
-      state.value = { ...state.value, ...model };
+    bindModel(model: ReadonlySignal<HistoryPanelRenderModel>): void {
+      state.value = { ...state.value, model };
     },
     bindActions(handlers: HistoryPanelActionHandlers): void {
       state.value = { ...state.value, actions: handlers };

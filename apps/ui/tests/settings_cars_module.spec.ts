@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { createSettingsCarsModule } from "../src/app/features/settings_cars_module";
-import { signal } from "../src/app/ui_signals";
+import { effect, signal } from "../src/app/ui_signals";
 import type { CarsListRenderModel, CarsListPanelView } from "../src/app/views/cars_panel";
 import { createAppState } from "../src/app/ui_app_state";
 import type { CarsPayload } from "../src/transport/http_models";
@@ -22,8 +22,10 @@ test("settings cars module dismisses transient creation feedback through typed t
 
   const panel: CarsListPanelView = {
     bindActions() {},
-    setModel(model) {
-      renders.push(model);
+    bindModel(model) {
+      effect(() => {
+        renders.push(model.value);
+      });
     },
   };
 
@@ -31,7 +33,7 @@ test("settings cars module dismisses transient creation feedback through typed t
     settings: state,
     panels: {
       analysisPanel: {
-        setCarAvailability() {
+        bindCarAvailability() {
           return;
         },
       },

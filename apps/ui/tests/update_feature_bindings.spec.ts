@@ -2,13 +2,9 @@ import { expect, test } from "@playwright/test";
 
 import { createUpdateFeature } from "../src/app/features/update_feature";
 import { signal } from "../src/app/ui_signals";
-import type {
-  InternetPanelActionHandlers,
-  InternetPanelRenderModel,
-} from "../src/app/views/internet_panel";
+import type { InternetPanelActionHandlers } from "../src/app/views/internet_panel";
 import type {
   UpdatePanelActionHandlers,
-  UpdatePanelRenderModel,
 } from "../src/app/views/update_panel";
 
 test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners", () => {
@@ -30,14 +26,14 @@ test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners
         bindActions(handlers: UpdatePanelActionHandlers) {
           updateHandlers = handlers;
         },
-        setModel(_model: UpdatePanelRenderModel) {},
+        bindModel() {},
       },
       internet: {
         bindActions(handlers: InternetPanelActionHandlers) {
           internetHandlers = handlers;
         },
         focusSsidInput() {},
-        setModel(_model: InternetPanelRenderModel) {},
+        bindModel() {},
       },
     },
   });

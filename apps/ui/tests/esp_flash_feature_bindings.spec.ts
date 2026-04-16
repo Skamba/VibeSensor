@@ -11,7 +11,7 @@ test("bindHandlers uses panel action surfaces instead of raw DOM bindings", () =
       bindActions(nextHandlers) {
         handlers = nextHandlers;
       },
-      setModel() {},
+      bindModel() {},
     },
     ports: {
       getActiveSettingsTabId: () => "espFlashTab",

@@ -15,7 +15,6 @@ import {
   getWizardActionHint,
   readWizardManualGearboxValues,
   readWizardManualTireValues,
-  resetWizardState,
   resolveGearboxes,
   resolveTireOptions,
   type WizardSpecBranch,
@@ -25,6 +24,12 @@ import {
   createCarsFeatureTransport,
   type CarsFeatureTransport,
 } from "./cars_feature_transport";
+import {
+  batch,
+  computed,
+  signal,
+  type ReadonlySignal,
+} from "../ui_signals";
 
 export interface CarsFeatureManualInputState {
   finalDrive: string;
@@ -81,7 +86,6 @@ export interface CarsFeatureRenderState {
 
 export interface CarsFeatureWorkflowViewPorts {
   focus(target: CarsFeatureFocusTarget): void;
-  render(state: CarsFeatureRenderState): void;
 }
 
 export interface CarsFeatureWorkflowDeps {
@@ -101,6 +105,7 @@ export interface CarsFeatureWorkflow {
   closeWizard(): void;
   finishWizard(): Promise<boolean>;
   getRenderState(): CarsFeatureRenderState;
+  readonly renderState: ReadonlySignal<CarsFeatureRenderState>;
   goBack(): Promise<void>;
   handleManualInputsChanged(inputs: CarsFeatureManualInputState): void;
   openWizard(): Promise<void>;
@@ -193,39 +198,55 @@ export function createCarsFeatureWorkflow(
   deps: CarsFeatureWorkflowDeps,
 ): CarsFeatureWorkflow {
   const transport = createCarsFeatureTransport(deps.transport);
-  const wizardState: WizardState = createInitialWizardState();
-
-  let isOpen = false;
-  let manualInputs: CarsFeatureManualInputState = {
+  const wizardState = signal<WizardState>(createInitialWizardState());
+  const isOpen = signal(false);
+  const manualInputs = signal<CarsFeatureManualInputState>({
     ...DEFAULT_CARS_WIZARD_MANUAL_INPUTS,
-  };
-  let brandOptions = createIdleOptionsState<string>();
-  let typeOptions = createIdleOptionsState<string>();
-  let modelOptions = createIdleOptionsState<CarLibraryModel>();
-  let variantOptions: CarLibraryVariant[] = [];
-  let tireOptions: CarLibraryTireOption[] = [];
-  let gearboxOptions: CarLibraryGearbox[] = [];
-  let noGearboxesMessage: string | null = null;
+  });
+  const brandOptions = signal(createIdleOptionsState<string>());
+  const typeOptions = signal(createIdleOptionsState<string>());
+  const modelOptions = signal(createIdleOptionsState<CarLibraryModel>());
+  const variantOptions = signal<readonly CarLibraryVariant[]>([]);
+  const tireOptions = signal<readonly CarLibraryTireOption[]>([]);
+  const gearboxOptions = signal<readonly CarLibraryGearbox[]>([]);
+  const noGearboxesMessage = signal<string | null>(null);
+
+  function updateWizardState(mutator: (state: WizardState) => void): void {
+    const nextState = { ...wizardState.value };
+    mutator(nextState);
+    wizardState.value = nextState;
+  }
 
   function currentManualValues() {
+    const state = wizardState.value;
+    const inputs = manualInputs.value;
     return {
-      manualGearbox: readWizardManualGearboxValues(wizardState.step, {
-        finalDrive: manualInputs.finalDrive,
-        topGear: manualInputs.topGear,
+      manualGearbox: readWizardManualGearboxValues(state.step, {
+        finalDrive: inputs.finalDrive,
+        topGear: inputs.topGear,
       }),
-      manualTire: readWizardManualTireValues(wizardState.step, {
-        aspect: manualInputs.tireAspect,
-        rim: manualInputs.rim,
-        width: manualInputs.tireWidth,
+      manualTire: readWizardManualTireValues(state.step, {
+        aspect: inputs.tireAspect,
+        rim: inputs.rim,
+        width: inputs.tireWidth,
       }),
     };
   }
 
-  function getRenderState(): CarsFeatureRenderState {
+  const renderState = computed<CarsFeatureRenderState>(() => {
+    const state = wizardState.value;
+    const inputs = manualInputs.value;
+    const currentBrandOptions = brandOptions.value;
+    const currentTypeOptions = typeOptions.value;
+    const currentModelOptions = modelOptions.value;
+    const currentVariantOptions = variantOptions.value;
+    const currentTireOptions = tireOptions.value;
+    const currentGearboxOptions = gearboxOptions.value;
+    const currentNoGearboxesMessage = noGearboxesMessage.value;
     const { manualGearbox, manualTire } = currentManualValues();
     return {
-      actionHint: wizardState.step === 4
-        ? getWizardActionHint(wizardState, {
+      actionHint: state.step === 4
+        ? getWizardActionHint(state, {
           fmt: deps.fmt,
           manualGearbox,
           manualTire,
@@ -233,190 +254,210 @@ export function createCarsFeatureWorkflow(
         })
         : "",
       brandOptions: {
-        ...brandOptions,
-        options: [...brandOptions.options],
+        ...currentBrandOptions,
+        options: [...currentBrandOptions.options],
       },
-      canFinish: canFinishWizard(wizardState, manualTire, manualGearbox),
-      gearboxOptions: [...gearboxOptions],
-      isOpen,
-      manualInputs: cloneManualInputs(manualInputs),
+      canFinish: canFinishWizard(state, manualTire, manualGearbox),
+      gearboxOptions: [...currentGearboxOptions],
+      isOpen: isOpen.value,
+      manualInputs: cloneManualInputs(inputs),
       modelOptions: {
-        ...modelOptions,
-        options: [...modelOptions.options],
+        ...currentModelOptions,
+        options: [...currentModelOptions.options],
       },
-      noGearboxesMessage,
-      resolvedSpecBranch: getResolvedWizardSpecBranch(wizardState),
-      selectedGearbox: wizardState.selectedGearbox,
-      selectedTire: wizardState.selectedTire,
-      step: wizardState.step,
-      summaryData: buildWizardSummaryData(wizardState, {
+      noGearboxesMessage: currentNoGearboxesMessage,
+      resolvedSpecBranch: getResolvedWizardSpecBranch(state),
+      selectedGearbox: state.selectedGearbox,
+      selectedTire: state.selectedTire,
+      step: state.step,
+      summaryData: buildWizardSummaryData(state, {
         fmt: deps.fmt,
         manualGearbox,
         manualTire,
         t: deps.t,
       }),
-      tireOptions: [...tireOptions],
+      tireOptions: [...currentTireOptions],
       typeOptions: {
-        ...typeOptions,
-        options: [...typeOptions.options],
+        ...currentTypeOptions,
+        options: [...currentTypeOptions.options],
       },
-      variantOptions: [...variantOptions],
+      variantOptions: [...currentVariantOptions],
     };
-  }
+  });
 
-  function renderCurrentState(): void {
-    deps.view.render(getRenderState());
+  function getRenderState(): CarsFeatureRenderState {
+    return renderState.value;
   }
 
   function resetDownstreamAfterBrandChange(): void {
-    wizardState.carType = "";
-    wizardState.model = "";
-    wizardState.selectedModel = null;
-    wizardState.selectedVariant = null;
-    wizardState.selectedGearbox = null;
-    wizardState.selectedTire = null;
-    wizardState.specBranch = null;
-    typeOptions = createIdleOptionsState<string>();
-    modelOptions = createIdleOptionsState<CarLibraryModel>();
-    variantOptions = [];
-    tireOptions = [];
-    gearboxOptions = [];
-    noGearboxesMessage = null;
+    batch(() => {
+      updateWizardState((state) => {
+        state.carType = "";
+        state.model = "";
+        state.selectedModel = null;
+        state.selectedVariant = null;
+        state.selectedGearbox = null;
+        state.selectedTire = null;
+        state.specBranch = null;
+      });
+      typeOptions.value = createIdleOptionsState<string>();
+      modelOptions.value = createIdleOptionsState<CarLibraryModel>();
+      variantOptions.value = [];
+      tireOptions.value = [];
+      gearboxOptions.value = [];
+      noGearboxesMessage.value = null;
+    });
   }
 
   function resetDownstreamAfterTypeChange(): void {
-    wizardState.model = "";
-    wizardState.selectedModel = null;
-    wizardState.selectedVariant = null;
-    wizardState.selectedGearbox = null;
-    wizardState.selectedTire = null;
-    wizardState.specBranch = null;
-    modelOptions = createIdleOptionsState<CarLibraryModel>();
-    variantOptions = [];
-    tireOptions = [];
-    gearboxOptions = [];
-    noGearboxesMessage = null;
+    batch(() => {
+      updateWizardState((state) => {
+        state.model = "";
+        state.selectedModel = null;
+        state.selectedVariant = null;
+        state.selectedGearbox = null;
+        state.selectedTire = null;
+        state.specBranch = null;
+      });
+      modelOptions.value = createIdleOptionsState<CarLibraryModel>();
+      variantOptions.value = [];
+      tireOptions.value = [];
+      gearboxOptions.value = [];
+      noGearboxesMessage.value = null;
+    });
   }
 
   function resetDownstreamAfterModelChange(): void {
-    wizardState.selectedVariant = null;
-    wizardState.selectedGearbox = null;
-    wizardState.selectedTire = null;
-    wizardState.specBranch = null;
-    variantOptions = [];
-    tireOptions = [];
-    gearboxOptions = [];
-    noGearboxesMessage = null;
+    batch(() => {
+      updateWizardState((state) => {
+        state.selectedVariant = null;
+        state.selectedGearbox = null;
+        state.selectedTire = null;
+        state.specBranch = null;
+      });
+      variantOptions.value = [];
+      tireOptions.value = [];
+      gearboxOptions.value = [];
+      noGearboxesMessage.value = null;
+    });
   }
 
   function resetSpecSelections(): void {
-    wizardState.selectedGearbox = null;
-    wizardState.selectedTire = null;
-    wizardState.specBranch = null;
-    tireOptions = [];
-    gearboxOptions = [];
-    noGearboxesMessage = null;
+    batch(() => {
+      updateWizardState((state) => {
+        state.selectedGearbox = null;
+        state.selectedTire = null;
+        state.specBranch = null;
+      });
+      tireOptions.value = [];
+      gearboxOptions.value = [];
+      noGearboxesMessage.value = null;
+    });
   }
 
   async function loadBrandStep(): Promise<void> {
-    brandOptions = createLoadingOptionsState(deps.t("settings.wizard.loading"));
-    renderCurrentState();
+    brandOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
     try {
-      brandOptions = createReadyOptionsState(await transport.loadBrands());
-      renderCurrentState();
+      brandOptions.value = createReadyOptionsState(await transport.loadBrands());
       deps.view.focus("brand-option");
     } catch (_err) {
-      brandOptions = createErrorOptionsState(deps.t("settings.wizard.load_failed_brands"));
-      renderCurrentState();
+      brandOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_brands"));
       deps.view.focus("custom-brand");
     }
   }
 
   async function loadTypeStep(): Promise<void> {
-    typeOptions = createLoadingOptionsState(deps.t("settings.wizard.loading"));
-    renderCurrentState();
+    typeOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
     try {
-      typeOptions = createReadyOptionsState(await transport.loadTypes(wizardState.brand));
-      renderCurrentState();
+      typeOptions.value = createReadyOptionsState(await transport.loadTypes(wizardState.value.brand));
       deps.view.focus("type-option");
     } catch (_err) {
-      typeOptions = createErrorOptionsState(deps.t("settings.wizard.load_failed_types"));
-      renderCurrentState();
+      typeOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_types"));
       deps.view.focus("custom-type");
     }
   }
 
   async function loadModelStep(): Promise<void> {
-    modelOptions = createLoadingOptionsState(deps.t("settings.wizard.loading"));
-    renderCurrentState();
+    modelOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
     try {
-      modelOptions = createReadyOptionsState(
-        await transport.loadModels(wizardState.brand, wizardState.carType),
+      modelOptions.value = createReadyOptionsState(
+        await transport.loadModels(wizardState.value.brand, wizardState.value.carType),
       );
-      renderCurrentState();
       deps.view.focus("model-option");
     } catch (_err) {
-      modelOptions = createErrorOptionsState(deps.t("settings.wizard.load_failed_models"));
-      renderCurrentState();
+      modelOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_models"));
       deps.view.focus("custom-model");
     }
   }
 
   function loadVariantStep(): void {
-    variantOptions = wizardState.selectedModel?.variants || [];
-    if (!variantOptions.length) {
-      wizardState.step = 4;
+    const nextVariantOptions = wizardState.value.selectedModel?.variants || [];
+    variantOptions.value = nextVariantOptions;
+    if (!nextVariantOptions.length) {
+      updateWizardState((state) => {
+        state.step = 4;
+      });
       loadSpecsStep();
       return;
     }
-    renderCurrentState();
     deps.view.focus("variant-option");
   }
 
   function loadSpecsStep(): void {
-    tireOptions = resolveTireOptions(wizardState.selectedModel, wizardState.selectedVariant);
-    gearboxOptions = resolveGearboxes(wizardState.selectedModel, wizardState.selectedVariant);
-    noGearboxesMessage = null;
+    const state = wizardState.value;
+    const currentManualInputs = manualInputs.value;
+    const nextTireOptions = resolveTireOptions(state.selectedModel, state.selectedVariant);
+    const nextGearboxOptions = resolveGearboxes(state.selectedModel, state.selectedVariant);
+    const nextSelectedTire = nextTireOptions.length > 0
+      ? (state.selectedTire && nextTireOptions.includes(state.selectedTire)
+        ? state.selectedTire
+        : nextTireOptions[0])
+      : null;
+    const nextManualInputs = nextSelectedTire
+      ? tireInputsFromOption(nextSelectedTire, currentManualInputs)
+      : currentManualInputs;
+    const nextNoGearboxesMessage = nextGearboxOptions.length > 0
+      ? null
+      : deps.t("settings.wizard.no_gearboxes");
 
-    if (tireOptions.length > 0) {
-      const selectedTire = wizardState.selectedTire && tireOptions.includes(wizardState.selectedTire)
-        ? wizardState.selectedTire
-        : tireOptions[0];
-      wizardState.selectedTire = selectedTire;
-      manualInputs = tireInputsFromOption(selectedTire, manualInputs);
-    } else {
-      wizardState.selectedTire = null;
-      wizardState.specBranch = "manual";
-    }
+    batch(() => {
+      tireOptions.value = nextTireOptions;
+      gearboxOptions.value = nextGearboxOptions;
+      noGearboxesMessage.value = nextNoGearboxesMessage;
+      manualInputs.value = nextManualInputs;
+      updateWizardState((nextState) => {
+        nextState.selectedTire = nextSelectedTire;
+        if (!nextTireOptions.length) {
+          nextState.specBranch = "manual";
+        }
+        if (!nextGearboxOptions.length) {
+          nextState.selectedGearbox = null;
+          nextState.specBranch = "manual";
+        }
+      });
+    });
 
-    if (!gearboxOptions.length) {
-      wizardState.selectedGearbox = null;
-      wizardState.specBranch = "manual";
-      noGearboxesMessage = deps.t("settings.wizard.no_gearboxes");
-      renderCurrentState();
-      deps.view.focus("manual-tire-width");
-      return;
-    }
-
-    renderCurrentState();
-    deps.view.focus(tireOptions.length > 0 ? "spec-selection" : "gearbox-option");
+    deps.view.focus(
+      nextGearboxOptions.length > 0
+        ? (nextTireOptions.length > 0 ? "spec-selection" : "gearbox-option")
+        : "manual-tire-width",
+    );
   }
 
   async function loadCurrentStep(): Promise<void> {
-    renderCurrentState();
-    if (wizardState.step === 0) {
+    if (wizardState.value.step === 0) {
       await loadBrandStep();
       return;
     }
-    if (wizardState.step === 1) {
+    if (wizardState.value.step === 1) {
       await loadTypeStep();
       return;
     }
-    if (wizardState.step === 2) {
+    if (wizardState.value.step === 2) {
       await loadModelStep();
       return;
     }
-    if (wizardState.step === 3) {
+    if (wizardState.value.step === 3) {
       loadVariantStep();
       return;
     }
@@ -425,15 +466,16 @@ export function createCarsFeatureWorkflow(
 
   return {
     closeWizard(): void {
-      isOpen = false;
-      renderCurrentState();
+      isOpen.value = false;
     },
 
     async finishWizard(): Promise<boolean> {
-      const resolvedBranch = getResolvedWizardSpecBranch(wizardState);
+      const state = wizardState.value;
+      const inputs = manualInputs.value;
+      const resolvedBranch = getResolvedWizardSpecBranch(state);
       if (resolvedBranch === "library") {
-        const tire = wizardState.selectedTire;
-        const gearbox = wizardState.selectedGearbox;
+        const tire = state.selectedTire;
+        const gearbox = state.selectedGearbox;
         if (!tire) {
           deps.view.focus("spec-selection");
           return false;
@@ -443,8 +485,8 @@ export function createCarsFeatureWorkflow(
           return false;
         }
         await deps.addCarFromWizard(
-          buildWizardCarName(wizardState.brand, wizardState.model, wizardState.selectedVariant),
-          wizardState.carType || "Custom",
+          buildWizardCarName(state.brand, state.model, state.selectedVariant),
+          state.carType || "Custom",
           {
             current_gear_ratio: gearbox.top_gear_ratio,
             final_drive_ratio: gearbox.final_drive_ratio,
@@ -452,69 +494,74 @@ export function createCarsFeatureWorkflow(
             tire_aspect_pct: tire.tire_aspect_pct,
             tire_width_mm: tire.tire_width_mm,
           },
-          wizardState.selectedVariant?.name,
+          state.selectedVariant?.name,
         );
-        isOpen = false;
-        renderCurrentState();
+        isOpen.value = false;
         return true;
       }
 
-      const missingFocusTarget = missingManualInputFocusTarget(manualInputs);
+      const missingFocusTarget = missingManualInputFocusTarget(inputs);
       if (missingFocusTarget) {
         deps.view.focus(missingFocusTarget);
         return false;
       }
 
       await deps.addCarFromWizard(
-        buildWizardCarName(wizardState.brand, wizardState.model, wizardState.selectedVariant),
-        wizardState.carType || "Custom",
+        buildWizardCarName(state.brand, state.model, state.selectedVariant),
+        state.carType || "Custom",
         {
-          current_gear_ratio: Number(manualInputs.topGear),
-          final_drive_ratio: Number(manualInputs.finalDrive),
-          rim_in: Number(manualInputs.rim),
-          tire_aspect_pct: Number(manualInputs.tireAspect),
-          tire_width_mm: Number(manualInputs.tireWidth),
+          current_gear_ratio: Number(inputs.topGear),
+          final_drive_ratio: Number(inputs.finalDrive),
+          rim_in: Number(inputs.rim),
+          tire_aspect_pct: Number(inputs.tireAspect),
+          tire_width_mm: Number(inputs.tireWidth),
         },
-        wizardState.selectedVariant?.name,
+        state.selectedVariant?.name,
       );
-      isOpen = false;
-      renderCurrentState();
+      isOpen.value = false;
       return true;
     },
 
     getRenderState,
+    renderState,
 
     async goBack(): Promise<void> {
-      if (wizardState.step === 0) {
+      if (wizardState.value.step === 0) {
         return;
       }
-      wizardState.step -= 1;
-      if (wizardState.step === 3 && !(wizardState.selectedModel?.variants?.length)) {
-        wizardState.step = 2;
-      }
+      updateWizardState((state) => {
+        state.step -= 1;
+        if (state.step === 3 && !(state.selectedModel?.variants?.length)) {
+          state.step = 2;
+        }
+      });
       await loadCurrentStep();
     },
 
     handleManualInputsChanged(inputs: CarsFeatureManualInputState): void {
-      manualInputs = cloneManualInputs(inputs);
-      if (isOpen && wizardState.step === 4) {
-        wizardState.specBranch = "manual";
-        renderCurrentState();
-      }
+      batch(() => {
+        manualInputs.value = cloneManualInputs(inputs);
+        if (isOpen.value && wizardState.value.step === 4) {
+          updateWizardState((state) => {
+            state.specBranch = "manual";
+          });
+        }
+      });
     },
 
     async openWizard(): Promise<void> {
-      resetWizardState(wizardState);
-      manualInputs = cloneManualInputs(manualInputs);
-      brandOptions = createIdleOptionsState<string>();
-      typeOptions = createIdleOptionsState<string>();
-      modelOptions = createIdleOptionsState<CarLibraryModel>();
-      variantOptions = [];
-      tireOptions = [];
-      gearboxOptions = [];
-      noGearboxesMessage = null;
-      isOpen = true;
-      renderCurrentState();
+      batch(() => {
+        wizardState.value = createInitialWizardState();
+        manualInputs.value = cloneManualInputs(manualInputs.value);
+        brandOptions.value = createIdleOptionsState<string>();
+        typeOptions.value = createIdleOptionsState<string>();
+        modelOptions.value = createIdleOptionsState<CarLibraryModel>();
+        variantOptions.value = [];
+        tireOptions.value = [];
+        gearboxOptions.value = [];
+        noGearboxesMessage.value = null;
+        isOpen.value = true;
+      });
       deps.view.focus("close");
       await loadCurrentStep();
     },
@@ -523,62 +570,74 @@ export function createCarsFeatureWorkflow(
       if (!value) {
         return;
       }
-      wizardState.brand = value;
-      wizardState.step = 1;
+      updateWizardState((state) => {
+        state.brand = value;
+        state.step = 1;
+      });
       resetDownstreamAfterBrandChange();
       await loadCurrentStep();
     },
 
     selectGearbox(index: number): void {
-      const gearbox = gearboxOptions[index];
+      const gearbox = gearboxOptions.value[index];
       if (!gearbox) {
         return;
       }
-      wizardState.selectedGearbox = gearbox;
-      wizardState.specBranch = "library";
-      renderCurrentState();
+      updateWizardState((state) => {
+        state.selectedGearbox = gearbox;
+        state.specBranch = "library";
+      });
       deps.view.focus("finish");
     },
 
     async selectModel(index: number): Promise<void> {
-      const selectedModel = modelOptions.options[index];
+      const selectedModel = modelOptions.value.options[index];
       if (!selectedModel) {
         return;
       }
-      wizardState.selectedModel = selectedModel;
-      wizardState.model = selectedModel.model;
-      wizardState.step = 3;
+      updateWizardState((state) => {
+        state.selectedModel = selectedModel;
+        state.model = selectedModel.model;
+        state.step = 3;
+      });
       resetDownstreamAfterModelChange();
       await loadCurrentStep();
     },
 
     selectTire(index: number): void {
-      const selectedTire = tireOptions[index];
+      const selectedTire = tireOptions.value[index];
       if (!selectedTire) {
         return;
       }
-      wizardState.selectedTire = selectedTire;
-      manualInputs = tireInputsFromOption(selectedTire, manualInputs);
-      renderCurrentState();
+      batch(() => {
+        updateWizardState((state) => {
+          state.selectedTire = selectedTire;
+        });
+        manualInputs.value = tireInputsFromOption(selectedTire, manualInputs.value);
+      });
     },
 
     async selectType(value: string): Promise<void> {
       if (!value) {
         return;
       }
-      wizardState.carType = value;
-      wizardState.step = 2;
+      updateWizardState((state) => {
+        state.carType = value;
+        state.step = 2;
+      });
       resetDownstreamAfterTypeChange();
       await loadCurrentStep();
     },
 
     async selectVariant(index: number): Promise<void> {
-      const selectedVariant = variantOptions[index];
+      const selectedVariant = variantOptions.value[index];
       if (!selectedVariant) {
         return;
       }
-      wizardState.selectedVariant = selectedVariant;
-      wizardState.step = 4;
+      updateWizardState((state) => {
+        state.selectedVariant = selectedVariant;
+        state.step = 4;
+      });
       resetSpecSelections();
       await loadCurrentStep();
     },
@@ -589,8 +648,10 @@ export function createCarsFeatureWorkflow(
         deps.view.focus("custom-brand");
         return;
       }
-      wizardState.brand = trimmedValue;
-      wizardState.step = 1;
+      updateWizardState((state) => {
+        state.brand = trimmedValue;
+        state.step = 1;
+      });
       resetDownstreamAfterBrandChange();
       await loadCurrentStep();
     },
@@ -601,17 +662,21 @@ export function createCarsFeatureWorkflow(
         deps.view.focus("custom-model");
         return;
       }
-      wizardState.model = trimmedValue;
-      wizardState.selectedModel = null;
-      wizardState.selectedVariant = null;
-      wizardState.selectedGearbox = null;
-      wizardState.selectedTire = null;
-      wizardState.specBranch = "manual";
-      wizardState.step = 4;
-      variantOptions = [];
-      tireOptions = [];
-      gearboxOptions = [];
-      noGearboxesMessage = null;
+      batch(() => {
+        updateWizardState((state) => {
+          state.model = trimmedValue;
+          state.selectedModel = null;
+          state.selectedVariant = null;
+          state.selectedGearbox = null;
+          state.selectedTire = null;
+          state.specBranch = "manual";
+          state.step = 4;
+        });
+        variantOptions.value = [];
+        tireOptions.value = [];
+        gearboxOptions.value = [];
+        noGearboxesMessage.value = null;
+      });
       await loadCurrentStep();
     },
 
@@ -621,8 +686,10 @@ export function createCarsFeatureWorkflow(
         deps.view.focus("custom-type");
         return;
       }
-      wizardState.carType = trimmedValue;
-      wizardState.step = 2;
+      updateWizardState((state) => {
+        state.carType = trimmedValue;
+        state.step = 2;
+      });
       resetDownstreamAfterTypeChange();
       await loadCurrentStep();
     },

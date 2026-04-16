@@ -1,41 +1,21 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  createEspFlashFeatureWorkflow,
-  type EspFlashFeatureWorkflowViewPorts,
-} from "../src/app/features/esp_flash_feature_workflow";
+import { createEspFlashFeatureWorkflow } from "../src/app/features/esp_flash_feature_workflow";
 import type {
   EspFlashHistoryAttemptPayload,
   EspFlashStatusPayload,
   EspSerialPortPayload,
 } from "../src/transport/http_models";
-import type { EspFlashFeatureRenderState } from "../src/app/views/esp_flash_feature_presenter";
 
 type WorkflowHarness = {
   errors: string[];
   pollerCalls: string[];
-  renderStates: EspFlashFeatureRenderState[];
 };
 
 function createHarness(): WorkflowHarness {
   return {
     errors: [],
     pollerCalls: [],
-    renderStates: [],
-  };
-}
-
-function createViewPorts(
-  harness: WorkflowHarness,
-): EspFlashFeatureWorkflowViewPorts {
-  return {
-    render(state): void {
-      harness.renderStates.push({
-        ...state,
-        attempts: [...state.attempts],
-        availablePorts: [...state.availablePorts],
-      });
-    },
   };
 }
 
@@ -101,7 +81,6 @@ test.describe("createEspFlashFeatureWorkflow", () => {
       showError: (message) => {
         harness.errors.push(message);
       },
-      view: createViewPorts(harness),
       api: {
         async getEspFlashStatus() {
           return status;
@@ -123,13 +102,13 @@ test.describe("createEspFlashFeatureWorkflow", () => {
 
     await workflow.refreshStatus();
 
-    expect(harness.renderStates).toHaveLength(1);
-    expect(harness.renderStates[0]).toMatchObject({
+    const renderState = workflow.getRenderState();
+    expect(renderState).toMatchObject({
       status,
       lastJourneyPhase: "flashing",
     });
-    expect(harness.renderStates[0].logText).toContain("erase ok");
-    expect(harness.renderStates[0].attempts).toHaveLength(1);
+    expect(renderState.logText).toContain("erase ok");
+    expect(renderState.attempts).toHaveLength(1);
   });
 
   test("keeps the last running journey phase when a later status only reports failure", async () => {
@@ -144,7 +123,6 @@ test.describe("createEspFlashFeatureWorkflow", () => {
       showError: (message) => {
         harness.errors.push(message);
       },
-      view: createViewPorts(harness),
       api: {
         async getEspFlashStatus() {
           return status;
@@ -173,7 +151,7 @@ test.describe("createEspFlashFeatureWorkflow", () => {
     });
     await workflow.refreshStatus();
 
-    expect(harness.renderStates.at(-1)?.lastJourneyPhase).toBe("flashing");
+    expect(workflow.getRenderState().lastJourneyPhase).toBe("flashing");
     expect(harness.errors).toEqual([]);
   });
 
@@ -185,7 +163,6 @@ test.describe("createEspFlashFeatureWorkflow", () => {
       showError: (message) => {
         harness.errors.push(message);
       },
-      view: createViewPorts(harness),
       api: {
         async getEspFlashPorts() {
           return {
@@ -235,7 +212,7 @@ test.describe("createEspFlashFeatureWorkflow", () => {
       port: "/dev/ttyUSB0",
       autoDetect: false,
     });
-    expect(harness.renderStates.at(-1)?.logText).toBe("");
+    expect(workflow.getRenderState().logText).toBe("");
     expect(harness.pollerCalls).toEqual(["restart"]);
     expect(harness.errors).toEqual([]);
   });

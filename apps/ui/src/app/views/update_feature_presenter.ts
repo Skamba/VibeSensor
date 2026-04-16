@@ -6,7 +6,6 @@ import type {
 } from "../../transport/http_models";
 import type {
   InternetPanelRenderModel,
-  InternetPanelView,
   UpdateTransportChoiceCardRenderModel,
 } from "./internet_panel";
 import {
@@ -16,12 +15,18 @@ import {
 import type { MaintenanceReadinessPanelModel } from "./maintenance_readiness_view";
 import type {
   UpdatePanelRenderModel,
-  UpdatePanelView,
 } from "./update_panel";
 import {
   buildUpdateStatusPanelViewModel,
   getUpdateFailureSummary,
 } from "./update_status_view_models";
+import {
+  computed,
+  effect,
+  signal,
+  untracked,
+  type ReadonlySignal,
+} from "../ui_signals";
 
 export interface UpdateFeatureRenderState {
   internetStatus: UsbInternetStatusPayload;
@@ -61,19 +66,18 @@ export interface UpdateFeaturePanelModels {
 }
 
 export interface UpdateFeaturePresenterDeps {
-  internetPanel: InternetPanelView;
-  panel: UpdatePanelView;
+  renderState: ReadonlySignal<UpdateFeatureRenderState>;
   t: (key: string, vars?: Record<string, unknown>) => string;
 }
 
 export interface UpdateFeaturePresenter {
+  readonly internetPanelModel: ReadonlySignal<InternetPanelRenderModel>;
+  readonly updatePanelModel: ReadonlySignal<UpdatePanelRenderModel>;
   setPasswordInput(value: string): void;
   setSelectedTransport(transport: UpdateStartRequestPayload["transport"]): void;
   setSsidInput(value: string): void;
-  render(state: UpdateFeatureRenderState): void;
-  readStartIntent(state: UpdateFeatureRenderState): UpdateFeatureStartIntent;
+  readStartIntent(): UpdateFeatureStartIntent;
   togglePassword(): void;
-  focusSsidInput(): void;
   clearPassword(): void;
 }
 
@@ -342,94 +346,80 @@ export function buildUpdateFeaturePanelModels(
 export function createUpdateFeaturePresenter(
   ctx: UpdateFeaturePresenterDeps,
 ): UpdateFeaturePresenter {
-  const { internetPanel, panel, t } = ctx;
-
-  let formState: UpdateFeatureFormSnapshot = {
+  const { renderState, t } = ctx;
+  const formState = signal<UpdateFeatureFormSnapshot>({
     passwordInputValue: "",
     passwordVisible: false,
     selectedTransport: "wifi",
     ssidInputValue: "",
-  };
-  let lastPanelModels: UpdateFeaturePanelModels | null = null;
-  let lastRenderedState: UpdateFeatureRenderState | null = null;
+  });
   let hasHydratedPersistedWifiSettings = false;
 
-  function syncHydratedWifiSettings(state: UpdateFeatureRenderState): void {
-    if (hasHydratedPersistedWifiSettings || state.updateStatus == null) {
-      return;
-    }
-    hasHydratedPersistedWifiSettings = true;
-    if (
-      state.updateStatus.transport === "wifi" &&
-      state.updateStatus.ssid &&
-      formState.ssidInputValue.trim().length === 0
-    ) {
-      formState = { ...formState, ssidInputValue: state.updateStatus.ssid };
-    }
-  }
+  effect(() => {
+    const state = renderState.value;
+    const currentForm = untracked(() => formState.value);
+    let nextForm = currentForm;
 
-  function readFormSnapshot(
-    state: UpdateFeatureRenderState,
-  ): UpdateFeatureFormSnapshot {
-    syncHydratedWifiSettings(state);
-    if (state.updateState === "running" && formState.selectedTransport !== state.updateTransport) {
-      formState = { ...formState, selectedTransport: state.updateTransport };
+    if (!hasHydratedPersistedWifiSettings && state.updateStatus != null) {
+      hasHydratedPersistedWifiSettings = true;
+      if (
+        state.updateStatus.transport === "wifi"
+        && state.updateStatus.ssid
+        && currentForm.ssidInputValue.trim().length === 0
+      ) {
+        nextForm = { ...nextForm, ssidInputValue: state.updateStatus.ssid };
+      }
     }
-    return formState;
-  }
 
-  function render(state: UpdateFeatureRenderState): void {
-    lastRenderedState = state;
-    const panelModels = buildUpdateFeaturePanelModels(state, readFormSnapshot(state), {
-      t,
-    });
-    lastPanelModels = panelModels;
-    internetPanel.setModel(panelModels.internetPanel);
-    panel.setModel(panelModels.updatePanel);
-  }
+    if (state.updateState === "running" && nextForm.selectedTransport !== state.updateTransport) {
+      nextForm = { ...nextForm, selectedTransport: state.updateTransport };
+    }
 
-  function readStartIntent(
-    state: UpdateFeatureRenderState,
-  ): UpdateFeatureStartIntent {
-    const form = readFormSnapshot(state);
-    const panelModels = lastPanelModels ?? buildUpdateFeaturePanelModels(state, form, { t });
+    if (nextForm !== currentForm) {
+      formState.value = nextForm;
+    }
+  });
+
+  const panelModels = computed(() =>
+    buildUpdateFeaturePanelModels(renderState.value, formState.value, { t })
+  );
+  const internetPanelModel = computed(() => panelModels.value.internetPanel);
+  const updatePanelModel = computed(() => panelModels.value.updatePanel);
+
+  function readStartIntent(): UpdateFeatureStartIntent {
+    const form = formState.value;
+    const currentRenderState = renderState.value;
+    const currentPanelModels = panelModels.value;
     return {
-      canStart: panelModels.canStart,
+      canStart: currentPanelModels.canStart,
       password: form.passwordInputValue,
       ssid: form.ssidInputValue.trim(),
-      transport: panelModels.transport,
-      usbAvailable: state.internetStatus.usable,
+      transport: currentPanelModels.transport,
+      usbAvailable: currentRenderState.internetStatus.usable,
     };
   }
 
-  function rerenderLastState(): void {
-    if (lastRenderedState) {
-      render(lastRenderedState);
-    }
-  }
-
   return {
+    internetPanelModel,
+    updatePanelModel,
     setPasswordInput(value) {
-      formState = { ...formState, passwordInputValue: value };
+      formState.value = { ...formState.value, passwordInputValue: value };
     },
     setSelectedTransport(transport) {
-      formState = { ...formState, selectedTransport: transport };
+      formState.value = { ...formState.value, selectedTransport: transport };
     },
     setSsidInput(value) {
-      formState = { ...formState, ssidInputValue: value };
+      formState.value = { ...formState.value, ssidInputValue: value };
     },
-    render,
     readStartIntent,
     togglePassword() {
-      formState = { ...formState, passwordVisible: !formState.passwordVisible };
-      rerenderLastState();
-    },
-    focusSsidInput() {
-      internetPanel.focusSsidInput();
+      formState.value = {
+        ...formState.value,
+        passwordVisible: !formState.value.passwordVisible,
+      };
     },
     clearPassword() {
-      formState = { ...formState, passwordInputValue: "" };
-      rerenderLastState();
+      formState.value = { ...formState.value, passwordInputValue: "" };
     },
   };
 }
