@@ -1,4 +1,4 @@
-import { Component, render, type ComponentChildren, type JSX } from "preact";
+import { render, type ComponentChildren, type JSX } from "preact";
 
 import { requiredById } from "../dom/dom_query";
 import {
@@ -183,40 +183,22 @@ function SettingsFeedbackSlot(props: {
   );
 }
 
-class DashboardViewHosts extends Component {
-  override shouldComponentUpdate(): boolean {
-    return false;
-  }
-
-  override render() {
-    return (
-      <div class="dashboard-grid">
-        <div id="liveOverviewRoot" class="panel card dashboard-grid__overview"></div>
-        <div id="spectrumPanelRoot" class="panel card dashboard-grid__main"></div>
-        <div id="loggingPanelRoot" class="panel card dashboard-grid__controls"></div>
-      </div>
-    );
-  }
+function DashboardViewHosts() {
+  return (
+    <div class="dashboard-grid">
+      <div id="liveOverviewRoot" class="panel card dashboard-grid__overview"></div>
+      <div id="spectrumPanelRoot" class="panel card dashboard-grid__main"></div>
+      <div id="loggingPanelRoot" class="panel card dashboard-grid__controls"></div>
+    </div>
+  );
 }
 
-class HistoryViewHosts extends Component {
-  override shouldComponentUpdate(): boolean {
-    return false;
-  }
-
-  override render() {
-    return <div id="historyPanelRoot" class="panel card"></div>;
-  }
+function HistoryViewHosts() {
+  return <div id="historyPanelRoot" class="panel card"></div>;
 }
 
-class SettingsViewHosts extends Component {
-  override shouldComponentUpdate(): boolean {
-    return false;
-  }
-
-  override render() {
-    return <div id="settingsShellRoot"></div>;
-  }
+function SettingsViewHosts() {
+  return <div id="settingsShellRoot"></div>;
 }
 
 function ShellViewSection(props: ShellViewSectionProps) {
