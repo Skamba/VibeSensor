@@ -88,18 +88,6 @@
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
   }
 
-  .vib-matrix tr[data-severity="l5"] td:first-child { background: rgba(248, 113, 113, 0.15); }
-  .vib-matrix tr[data-severity="l4"] td:first-child { background: rgba(251, 191, 36, 0.12); }
-  .vib-matrix tr[data-severity="l3"] td:first-child { background: rgba(250, 204, 21, 0.10); }
-  .vib-matrix tr[data-severity="l2"] td:first-child { background: rgba(74, 222, 128, 0.12); }
-  .vib-matrix tr[data-severity="l1"] td:first-child { background: rgba(139, 92, 246, 0.12); }
-
-  td.vib-cell[data-severity="l5"] { background: rgba(248, 113, 113, 0.12); }
-  td.vib-cell[data-severity="l4"] { background: rgba(251, 191, 36, 0.10); }
-  td.vib-cell[data-severity="l3"] { background: rgba(250, 204, 21, 0.08); }
-  td.vib-cell[data-severity="l2"] { background: rgba(74, 222, 128, 0.08); }
-  td.vib-cell[data-severity="l1"] { background: rgba(139, 92, 246, 0.08); }
-
   .history-row--expanded td { background: var(--surface-2) !important; }
 
   .uplot .u-select { background: rgba(167, 139, 250, 0.15); }
@@ -139,8 +127,6 @@
 
   .card__title { font-size: 1.1rem; }
 
-  .vib-matrix th,
-  .vib-matrix td,
   .history-table th,
   .history-table td,
   .clients-table th,

@@ -1,0 +1,593 @@
+.history-details-row td {
+  padding: 0 !important;
+  background: transparent !important;
+  border-bottom: 0;
+}
+
+.history-details-card {
+  margin: var(--space-2) 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.history-details-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.history-details-header__copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.history-details-header__eyebrow {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--brand-600);
+}
+
+.history-details-header__title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.history-details-header__actions {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-2);
+}
+
+.history-details-header__status {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.history-run-summary {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.history-details-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.history-details-footer__copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.history-details-footer__eyebrow {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.history-details-footer__body {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  max-width: 34rem;
+}
+
+.history-details-footer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.history-warning-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.history-warning-banner {
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-sm);
+  background: var(--warning-surface);
+  color: var(--warning-text);
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.84rem;
+}
+
+.history-warning-banner--error {
+  border-color: #cf6a6a;
+  background: #fdeaea;
+  color: #7a2222;
+}
+
+.history-warning-banner__detail {
+  margin-top: 0.25rem;
+}
+
+.history-results-layout {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
+  align-items: start;
+}
+
+.history-main-column {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.history-evidence-column {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.history-evidence-panel,
+.history-insights-block {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: var(--space-3);
+}
+
+.history-evidence-panel {
+  min-width: 0;
+}
+
+.history-heatmap {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.history-heatmap__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.history-heatmap__title {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.history-heatmap__grid {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "front-left engine front-right"
+    "driver driveshaft ."
+    "rear-left trunk rear-right";
+}
+
+.history-heatmap__zone {
+  --history-heatmap-accent: var(--border);
+  --history-heatmap-fill: 0%;
+  display: grid;
+  gap: 0.55rem;
+  align-content: start;
+  min-height: 5.75rem;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.history-heatmap__zone::before {
+  content: "";
+  display: block;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--history-heatmap-accent);
+}
+
+.history-heatmap__zone--empty {
+  background: var(--surface-2);
+  border-style: dashed;
+}
+
+.history-heatmap__zone--empty::before {
+  background: var(--border);
+  opacity: 0.7;
+}
+
+.history-heatmap__zone--strongest {
+  box-shadow:
+    0 0 0 1px var(--history-heatmap-accent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.history-heatmap__zone-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+.history-heatmap__zone-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.history-heatmap__zone-value--empty {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.history-heatmap__zone-meter {
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.history-heatmap__zone-meter-fill {
+  display: block;
+  height: 100%;
+  width: var(--history-heatmap-fill);
+  border-radius: inherit;
+  background: var(--history-heatmap-accent);
+}
+
+.history-heatmap__extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.history-heatmap__extra-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.history-panel-header {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.history-panel-header__eyebrow {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--brand-600);
+}
+
+.history-panel-header__subtitle {
+  color: var(--muted);
+  font-size: 0.84rem;
+  max-width: 34rem;
+}
+
+.history-panel-state {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.history-findings-overview {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.history-findings-overview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.history-findings-overview__eyebrow,
+.history-findings-overview__count {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.history-findings-overview__headline {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.history-diagnosis-card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.history-diagnosis-card--success {
+  border-color: var(--history-diagnosis-success-border);
+  background: var(--history-diagnosis-success-surface);
+}
+
+.history-diagnosis-card--warn {
+  border-color: var(--history-diagnosis-warn-border);
+  background: var(--history-diagnosis-warn-surface);
+}
+
+.history-diagnosis-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.history-diagnosis-card__copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.history-diagnosis-card__signature {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.history-diagnosis-card__confidence {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--pill-muted-bg);
+  color: var(--pill-muted-text);
+}
+
+.history-diagnosis-card__confidence--success {
+  background: var(--pill-ok-bg);
+  color: var(--pill-ok-text);
+}
+
+.history-diagnosis-card__confidence--warn {
+  background: var(--pill-warn-bg);
+  color: var(--pill-warn-text);
+}
+
+.history-findings-overview__explanation {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.history-findings-overview__chips {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.history-findings-chip {
+  display: grid;
+  gap: 0.25rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.history-findings-chip__label {
+  font-size: 0.76rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.history-findings-list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.history-findings-list--secondary {
+  margin-top: 0;
+}
+
+.history-secondary-findings {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.history-secondary-findings__title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.history-secondary-findings__more {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: var(--space-2) var(--space-3);
+}
+
+.history-secondary-findings__more summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.history-secondary-findings__more[open] {
+  padding-bottom: var(--space-3);
+}
+
+.history-secondary-findings__more[open] .history-findings-list {
+  margin-top: var(--space-3);
+}
+
+.history-finding-card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.history-finding-card--secondary {
+  background: var(--surface-2);
+}
+
+.history-finding-card--success {
+  border-color: #c4dec8;
+}
+
+.history-finding-card--warn {
+  border-color: var(--warning-border);
+}
+
+.history-finding-card--empty {
+  color: var(--muted);
+}
+
+.history-finding-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.history-finding-card__title-group {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.history-finding-card__title {
+  font-size: 0.95rem;
+}
+
+.history-finding-card__signal {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.history-finding-card__confidence {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--pill-muted-bg);
+  color: var(--pill-muted-text);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.history-finding-card__confidence--success {
+  background: var(--pill-ok-bg);
+  color: var(--pill-ok-text);
+}
+
+.history-finding-card__confidence--warn {
+  background: var(--pill-warn-bg);
+  color: var(--pill-warn-text);
+}
+
+.history-finding-card__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2);
+}
+
+.history-finding-card__meta-item {
+  display: grid;
+  gap: 0.2rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.history-finding-card__label {
+  font-size: 0.74rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.history-finding-card__summary {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 1080px) {
+  .history-details-header {
+    grid-template-columns: 1fr;
+  }
+
+  .history-details-header__actions {
+    justify-items: start;
+  }
+
+  .history-results-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .history-heatmap__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "front-left front-right"
+      "engine driver"
+      "driveshaft trunk"
+      "rear-left rear-right";
+  }
+}
