@@ -14,6 +14,7 @@ test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners
   const feature = createUpdateFeature({
     services: {
       t: (key) => key,
+      requestConfirmation: async () => true,
       showError: () => undefined,
     },
     ports: {

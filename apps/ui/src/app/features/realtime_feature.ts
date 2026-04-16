@@ -100,7 +100,7 @@ export function createRealtimeFeature(
     idleCaptureReadinessSignature: viewState.idleCaptureReadinessSignature,
     selection: ports.selection,
     recording: ports.recording,
-    confirmRemoveClient: (message) => window.confirm(message),
+    confirmRemoveClient: (message) => services.requestConfirmation(message),
     state: workflowState,
   });
 

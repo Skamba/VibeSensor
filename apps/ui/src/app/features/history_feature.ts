@@ -237,7 +237,9 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (!runId) {
       return;
     }
-    const ok = window.confirm(services.t("history.delete_confirm", { name: runId }));
+    const ok = await services.requestConfirmation(
+      services.t("history.delete_confirm", { name: runId }),
+    );
     if (!ok) {
       return;
     }
@@ -260,7 +262,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (!names.length) {
       return;
     }
-    const ok = window.confirm(
+    const ok = await services.requestConfirmation(
       services.t("history.delete_all_confirm", { count: names.length }),
     );
     if (!ok) {

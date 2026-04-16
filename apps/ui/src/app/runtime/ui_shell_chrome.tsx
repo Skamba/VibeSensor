@@ -1,4 +1,5 @@
 import { render, type ComponentChildren, type JSX } from "preact";
+import { useEffect, useRef } from "preact/hooks";
 
 import { requiredById } from "../dom/dom_query";
 import {
@@ -6,6 +7,7 @@ import {
   useComputed,
   type ReadonlySignal,
 } from "../ui_signals";
+import type { UiConfirmationDialogModel } from "./ui_confirmation_module";
 import {
   settingsFeedbackClassName,
   type SettingsFeedbackMessage,
@@ -47,6 +49,8 @@ export const LANGUAGE_OPTIONS = [
 
 export interface UiShellChromeActions {
   activateView(viewId: string): void;
+  cancelConfirmation(): void;
+  confirmConfirmation(): void;
   saveLanguage(lang: string): Promise<void> | void;
   saveSpeedUnit(unit: string): Promise<void> | void;
 }
@@ -76,6 +80,7 @@ export interface UiShellChromeNavItemModel {
 export interface UiShellChromeRenderModel {
   activeViewId: string;
   appErrorBanner: UiShellErrorBannerModel;
+  confirmationDialog: UiConfirmationDialogModel | null;
   languageFeedback: SettingsFeedbackMessage | null;
   languageLabelText: string;
   navItems: readonly UiShellChromeNavItemModel[];
@@ -111,6 +116,7 @@ const DEFAULT_SHELL_CHROME_MODEL: UiShellChromeRenderModel = {
     text: "",
     variant: null,
   },
+  confirmationDialog: null,
   languageFeedback: null,
   languageLabelText: "Language",
   navItems: SHELL_NAV_ITEMS.map((item) => ({
@@ -183,6 +189,67 @@ function SettingsFeedbackSlot(props: {
   );
 }
 
+function ConfirmationDialog(props: {
+  bridge: UiShellChromeActionBridge;
+  model: UiConfirmationDialogModel;
+}) {
+  const { bridge, model } = props;
+  const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    confirmButtonRef.current?.focus();
+  }, [model.messageText]);
+
+  return (
+    <div class="app-modal-layer">
+      <div
+        class="app-modal-backdrop"
+        aria-hidden="true"
+        onClick={() => bridge.current.cancelConfirmation()}
+      />
+      <div
+        class="panel card confirmation-dialog"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="confirmationDialogTitle"
+        aria-describedby="confirmationDialogMessage"
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            bridge.current.cancelConfirmation();
+          }
+        }}
+      >
+        <div class="confirmation-dialog__body">
+          <strong id="confirmationDialogTitle" class="confirmation-dialog__title">
+            {model.titleText}
+          </strong>
+          <p id="confirmationDialogMessage" class="confirmation-dialog__message">
+            {model.messageText}
+          </p>
+        </div>
+        <div class="confirmation-dialog__actions">
+          <button
+            type="button"
+            class="btn"
+            onClick={() => bridge.current.cancelConfirmation()}
+          >
+            {model.cancelButtonText}
+          </button>
+          <button
+            type="button"
+            class="btn btn--danger"
+            onClick={() => bridge.current.confirmConfirmation()}
+            ref={confirmButtonRef}
+          >
+            {model.confirmButtonText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DashboardViewHosts() {
   return (
     <div class="dashboard-grid">
@@ -220,6 +287,7 @@ function UiShellChrome(props: UiShellChromeProps) {
   const { bridge } = props;
   const activeViewId = useComputed(() => props.model.value.activeViewId);
   const appErrorBanner = useComputed(() => props.model.value.appErrorBanner);
+  const confirmationDialog = useComputed(() => props.model.value.confirmationDialog);
   const languageFeedback = useComputed(() => props.model.value.languageFeedback);
   const languageLabelText = useComputed(() => props.model.value.languageLabelText);
   const navItems = useComputed(() => props.model.value.navItems);
@@ -429,6 +497,10 @@ function UiShellChrome(props: UiShellChromeProps) {
       >
         <SettingsViewHosts />
       </ShellViewSection>
+
+      {confirmationDialog.value
+        ? <ConfirmationDialog bridge={bridge} model={confirmationDialog.value} />
+        : null}
     </div>
   );
 }
@@ -436,6 +508,8 @@ function UiShellChrome(props: UiShellChromeProps) {
 export function createUiShellChromeActionBridge(): UiShellChromeActionBridge {
   const current: UiShellChromeActions = {
     activateView: noop,
+    cancelConfirmation: noop,
+    confirmConfirmation: noop,
     saveLanguage: noop,
     saveSpeedUnit: noop,
   };
@@ -443,6 +517,8 @@ export function createUiShellChromeActionBridge(): UiShellChromeActionBridge {
     current,
     attach(actions: UiShellChromeActions): void {
       current.activateView = actions.activateView;
+      current.cancelConfirmation = actions.cancelConfirmation;
+      current.confirmConfirmation = actions.confirmConfirmation;
       current.saveLanguage = actions.saveLanguage;
       current.saveSpeedUnit = actions.saveSpeedUnit;
     },
