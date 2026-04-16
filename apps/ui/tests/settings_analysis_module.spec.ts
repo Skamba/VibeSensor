@@ -109,11 +109,13 @@ test("settings analysis module renders guidance and surfaces invalid input throu
   expect(focusedField).toBe("wheel_bandwidth_pct");
   expect(guidanceOpened).toBe(true);
 
+  const rendersBeforeRecovery = renders.length;
   actions?.onFieldInput({
     field: "wheel_bandwidth_pct",
     value: "5",
   });
 
+  expect(renders).toHaveLength(rendersBeforeRecovery + 1);
   const recoveredRender = lastRender(renders);
   expect(recoveredRender.fields.wheel_bandwidth_pct.invalid).toBe(false);
   expect(recoveredRender.fields.wheel_bandwidth_pct.guidance.error).toBeNull();
