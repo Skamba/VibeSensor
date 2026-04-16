@@ -465,6 +465,7 @@
   "status.running": "Lopend",
   "status.stopped": "Gestopt",
   "status.unavailable": "Niet beschikbaar",
+  "status.view_load_failed": "Deze weergave kon nu niet worden geladen.",
   "speed.gps": "{value} {unit} · GPS",
   "speed.obd2": "{value} {unit} · OBD2",
   "speed.override": "{value} {unit} · Handmatige override",

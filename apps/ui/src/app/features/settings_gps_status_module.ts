@@ -7,10 +7,8 @@ import {
   signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import {
-  DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL,
-  type SpeedSourcePanelView,
-} from "../views/speed_source_panel";
+import { DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL } from "../views/speed_source_panel_defaults";
+import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 import {
   buildSpeedSourceDiagnosticsRenderModel,
   type SettingsSpeedSourcePresenterDeps,

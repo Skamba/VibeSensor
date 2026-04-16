@@ -42,11 +42,15 @@ function testTranslation(key: string, vars?: Record<string, unknown>): string {
 test.describe("createUiShellNavigationModule", () => {
   test("setActiveView updates signal-backed state and falls back to dashboard", () => {
     const state = createAppState();
+    const activatedViews: string[] = [];
     let resizeCalls = 0;
 
     const module = createUiShellNavigationModule({
       shell: state.shell,
       viewIds: [DEFAULT_SHELL_VIEW_ID, "historyView"],
+      onViewActivated: (viewId) => {
+        activatedViews.push(viewId);
+      },
       onDashboardViewActivated: () => {
         resizeCalls += 1;
       },
@@ -55,12 +59,66 @@ test.describe("createUiShellNavigationModule", () => {
     module.setActiveView("historyView");
     expect(state.shell.activeViewId).toBe("historyView");
     expect(module.activeViewId.value).toBe("historyView");
+    expect(activatedViews).toEqual(["historyView"]);
     expect(resizeCalls).toBe(0);
 
     module.setActiveView("missingView");
     expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(activatedViews).toEqual(["historyView"]);
     expect(resizeCalls).toBe(1);
+  });
+
+  test("waits for async lazy-view activation before switching views", async () => {
+    const state = createAppState();
+    let resolveActivation: (() => void) | null = null;
+
+    const module = createUiShellNavigationModule({
+      shell: state.shell,
+      viewIds: [DEFAULT_SHELL_VIEW_ID, "settingsView"],
+      onViewActivated: (viewId) =>
+        viewId === "settingsView"
+          ? new Promise<void>((resolve) => {
+              resolveActivation = resolve;
+            })
+          : undefined,
+    });
+
+    module.setActiveView("settingsView");
+    expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
+
+    resolveActivation?.();
+    await Promise.resolve();
+
+    expect(state.shell.activeViewId).toBe("settingsView");
+    expect(module.activeViewId.value).toBe("settingsView");
+  });
+
+  test("keeps the current view when lazy activation fails", async () => {
+    const state = createAppState();
+    const activationErrors: string[] = [];
+
+    const module = createUiShellNavigationModule({
+      shell: state.shell,
+      viewIds: [DEFAULT_SHELL_VIEW_ID, "settingsView"],
+      onViewActivated: async () => {
+        throw new Error("chunk failed");
+      },
+      onViewActivationFailed: (viewId, error) => {
+        activationErrors.push(
+          `${viewId}:${error instanceof Error ? error.message : String(error)}`,
+        );
+      },
+    });
+
+    module.setActiveView("settingsView");
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(activationErrors).toEqual(["settingsView:chunk failed"]);
   });
 });
 

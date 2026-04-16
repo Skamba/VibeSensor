@@ -1,7 +1,7 @@
 import "../styles/app.css";
-import { mountUiPanels } from "./ui_panel_bootstrap";
 import { createAppState } from "./ui_app_state";
 import { UiAppRuntime } from "./ui_app_runtime";
+import { createLazyUiPanels } from "./ui_lazy_panels";
 import {
   createUiShellChromeActionBridge,
   getUiShellChromeHost,
@@ -12,11 +12,13 @@ export function startUiApp(): void {
   const state = createAppState();
   const shellChromeActions = createUiShellChromeActionBridge();
   const shellChrome = mountUiShellChrome(getUiShellChromeHost(), shellChromeActions);
-  const panels = mountUiPanels();
+  const lazyPanels = createLazyUiPanels();
   new UiAppRuntime({
     shellChrome,
-    panels,
+    panels: lazyPanels.panels,
+    ensureViewPanels: lazyPanels.ensureViewPanels,
     state,
     shellChromeActions,
   }).start();
+  lazyPanels.prefetchHiddenPanels();
 }

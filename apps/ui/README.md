@@ -84,9 +84,10 @@ source-of-truth export commands remain the only writers for those files.
 | File | Purpose |
 |------|---------|
 | `main.ts` | Thin Vite entry that boots the UI runtime |
-| `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact shell first, resolves and mounts the centralized panel bootstrap from shell-rendered hosts, then constructs and starts the app runtime |
+| `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact shell first, boots dashboard panels immediately, then starts the runtime with deferred history/settings panel loaders |
 | `app/ui_panel_host_registry.ts` | Centralized host registry for dashboard, history, and settings panel mount points so startup and tests stop depending on one host getter module per panel |
-| `app/ui_panel_bootstrap.ts` | Centralized host registry and panel-mount bootstrap for dashboard, history, and settings islands so startup/runtime stop wiring one host getter per panel |
+| `app/ui_panel_bootstrap.ts` | Centralized panel bootstrap that keeps dashboard mounts synchronous while exposing lazy history/settings loaders from the shared host registry |
+| `app/ui_lazy_panels.ts` | Deferred panel manager that gives the runtime full panel contracts up front, then attaches real history/settings islands on first activation or idle prefetch |
 | `app/dom/` | Focused DOM lookup helpers that remain after the panel bootstrap cleanup, including `requiredById` and other non-panel runtime locators |
 | `app/ui_app_runtime.ts` | Thin UI composition root that creates the shell, spectrum, transport, feature bundle, and startup coordinator from local helper wiring instead of deferred attachment seams |
 | `app/ui_app_state.ts` | Canonical AppState shape plus reactive slice helpers that keep object-style reads/writes working while shared shell/transport/realtime/history/settings/spectrum state becomes signal-observable |

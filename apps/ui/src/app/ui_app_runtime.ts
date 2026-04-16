@@ -22,6 +22,7 @@ import type { UiMountedPanels } from "./ui_panel_bootstrap";
 export interface UiAppRuntimeDeps {
   shellChrome: UiShellChromeView;
   panels: UiMountedPanels;
+  ensureViewPanels?: (viewId: string) => Promise<void> | void;
   state?: AppState;
   shellChromeActions?: UiShellChromeActionBridge;
 }
@@ -98,6 +99,7 @@ export class UiAppRuntime {
       chrome: deps.shellChrome,
       chromeActions: shellChromeActions,
       liveOverview: deps.panels.dashboard.liveOverview,
+      onViewActivated: deps.ensureViewPanels,
     });
     spectrum = new UiSpectrumController({
       state,
