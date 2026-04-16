@@ -1,0 +1,64 @@
+.maintenance-log-slot { min-height: 8.5rem; }
+
+.maintenance-log-panel {
+  min-height: 8.5rem;
+  max-height: 16rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: var(--space-3);
+}
+
+.log-pre {
+  margin: 0;
+  max-height: 15rem;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: var(--space-3);
+  white-space: pre-wrap;
+}
+
+.issue-list,
+.maintenance-attempt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.issue-item,
+.maintenance-attempt {
+  display: grid;
+  gap: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: var(--space-2) var(--space-3);
+}
+
+.issue-phase {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.issue-detail { margin-top: 0.2rem; }
+
+.maintenance-attempt__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.maintenance-attempt__meta { font-size: 0.82rem; }
