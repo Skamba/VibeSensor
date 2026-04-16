@@ -4,6 +4,7 @@ import { useUiText } from "../ui_i18n";
 import {
   computed,
   signal,
+  useComputed,
   type ReadonlySignal,
 } from "../ui_signals";
 
@@ -83,9 +84,7 @@ function RealtimeLiveOverview(props: {
   const currentSpeedLabel = useUiText("dashboard.current_speed", "Current speed");
   const sensorCoverageLabel = useUiText("dashboard.sensor_coverage", "Sensor coverage");
   const noSensorsText = useUiText("settings.sensors.no_sensors", "No sensors yet.");
-  const model = props.model.value;
-  const activeCarVariant = model.activeCar.warning ? "warn" : undefined;
-  const activeCarHasIcon = model.activeCar.warning ? "true" : undefined;
+  const model = useComputed(() => props.model.value);
 
   return (
     <>
@@ -101,11 +100,11 @@ function RealtimeLiveOverview(props: {
         <div
           id="liveRunHealth"
           class="pill"
-          data-variant={model.runHealth.variant}
-          hidden={model.runHealth.hidden}
+          data-variant={model.value.runHealth.variant}
+          hidden={model.value.runHealth.hidden}
           aria-live="polite"
         >
-          {model.runHealth.text}
+          {model.value.runHealth.text}
         </div>
       </div>
       <div class="stat-grid live-overview__stats">
@@ -114,13 +113,13 @@ function RealtimeLiveOverview(props: {
             {connectedSensorsLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.connectedSensorsText}
+            {model.value.connectedSensorsText}
           </div>
         </div>
         <div
           id="liveActiveCar"
           class="stat"
-          data-variant={activeCarVariant}
+          data-variant={model.value.activeCar.warning ? "warn" : undefined}
         >
           <div class="stat__label">
             {activeCarLabel}
@@ -128,19 +127,19 @@ function RealtimeLiveOverview(props: {
           <div
             class="stat__value"
             data-value
-            data-variant={activeCarVariant}
-            data-has-icon={activeCarHasIcon}
+            data-variant={model.value.activeCar.warning ? "warn" : undefined}
+            data-has-icon={model.value.activeCar.warning ? "true" : undefined}
           >
-            {model.activeCar.warning
+            {model.value.activeCar.warning
               ? (
                 <>
                   <span class="stat__value-icon" data-variant="warn" aria-hidden="true">
                     !
                   </span>
-                  <span>{model.activeCar.text}</span>
+                  <span>{model.value.activeCar.text}</span>
                 </>
               )
-              : model.activeCar.text}
+              : model.value.activeCar.text}
           </div>
         </div>
         <div id="liveRecordingState" class="stat">
@@ -148,7 +147,7 @@ function RealtimeLiveOverview(props: {
             {recordingStateLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.recordingStateText}
+            {model.value.recordingStateText}
           </div>
         </div>
         <div id="liveDataFreshness" class="stat">
@@ -156,7 +155,7 @@ function RealtimeLiveOverview(props: {
             {dataFreshnessLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.dataFreshnessText}
+            {model.value.dataFreshnessText}
           </div>
         </div>
         <div id="liveStrongestSignal" class="stat">
@@ -164,7 +163,7 @@ function RealtimeLiveOverview(props: {
             {strongestSignalLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.strongestSignalText}
+            {model.value.strongestSignalText}
           </div>
         </div>
         <div class="stat">
@@ -182,8 +181,8 @@ function RealtimeLiveOverview(props: {
         </div>
       </div>
       <div id="liveSensorRoster" class="live-sensor-roster">
-        {model.sensorCards.length
-          ? model.sensorCards.map((card) => {
+        {model.value.sensorCards.length
+          ? model.value.sensorCards.map((card) => {
             const statusClass = card.connected ? "online" : "offline";
             return (
               <article
