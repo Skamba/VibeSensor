@@ -239,6 +239,35 @@ test.describe("createCarsFeatureWorkflow", () => {
     });
   });
 
+  test("keeps summary data stable while pre-spec manual drafts change", async () => {
+    const harness = createHarness();
+    const workflow = createCarsFeatureWorkflow({
+      addCarFromWizard: async () => undefined,
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      t: createTranslator(),
+      transport: {
+        async loadBrands() {
+          return ["BMW"];
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    await workflow.openWizard();
+
+    const initialRenderState = workflow.getRenderState();
+    workflow.handleManualInputsChanged({
+      ...createDefaultManualInputs(),
+      finalDrive: "4.10",
+      topGear: "0.71",
+    });
+
+    const rerenderState = workflow.getRenderState();
+    expect(rerenderState.step).toBe(0);
+    expect(rerenderState.summaryData).toBe(initialRenderState.summaryData);
+    expect(rerenderState.actionHint).toBe(initialRenderState.actionHint);
+  });
+
   test("keeps the library branch disabled until a gearbox is chosen and then submits the selected specs", async () => {
     const harness = createHarness();
     const addCalls: Array<{

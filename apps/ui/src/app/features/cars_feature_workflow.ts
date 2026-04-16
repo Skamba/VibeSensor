@@ -252,6 +252,41 @@ export function createCarsFeatureWorkflow(
     })
   );
 
+  const resolvedSpecBranch = computed(() => getResolvedWizardSpecBranch(wizardState.value));
+
+  const canFinish = computed(() =>
+    canFinishWizard(
+      wizardState.value,
+      resolvedSpecBranch.value === "manual" ? manualTire.value : null,
+      resolvedSpecBranch.value === "manual" ? manualGearbox.value : null,
+    )
+  );
+
+  const actionHint = computed(() => {
+    const state = wizardState.value;
+    if (state.step !== 4) {
+      return "";
+    }
+    const branch = resolvedSpecBranch.value;
+    return getWizardActionHint(state, {
+      fmt: deps.fmt,
+      manualGearbox: branch === "manual" ? manualGearbox.value : null,
+      manualTire: branch === "manual" ? manualTire.value : null,
+      t: deps.t,
+    });
+  });
+
+  const summaryData = computed<WizardSummaryData>(() => {
+    const state = wizardState.value;
+    const branch = resolvedSpecBranch.value;
+    return buildWizardSummaryData(state, {
+      fmt: deps.fmt,
+      manualGearbox: branch === "manual" ? manualGearbox.value : null,
+      manualTire: branch === "manual" ? manualTire.value : null,
+      t: deps.t,
+    });
+  });
+
   const renderState = computed<CarsFeatureRenderState>(() => {
     const state = wizardState.value;
     const inputs = readManualInputs();
@@ -262,22 +297,13 @@ export function createCarsFeatureWorkflow(
     const currentTireOptions = tireOptions.value;
     const currentGearboxOptions = gearboxOptions.value;
     const currentNoGearboxesMessage = noGearboxesMessage.value;
-    const currentManualGearbox = manualGearbox.value;
-    const currentManualTire = manualTire.value;
     return {
-      actionHint: state.step === 4
-        ? getWizardActionHint(state, {
-          fmt: deps.fmt,
-          manualGearbox: currentManualGearbox,
-          manualTire: currentManualTire,
-          t: deps.t,
-        })
-        : "",
+      actionHint: actionHint.value,
       brandOptions: {
         ...currentBrandOptions,
         options: [...currentBrandOptions.options],
       },
-      canFinish: canFinishWizard(state, currentManualTire, currentManualGearbox),
+      canFinish: canFinish.value,
       gearboxOptions: [...currentGearboxOptions],
       isOpen: isOpen.value,
       manualInputs: cloneManualInputs(inputs),
@@ -286,16 +312,11 @@ export function createCarsFeatureWorkflow(
         options: [...currentModelOptions.options],
       },
       noGearboxesMessage: currentNoGearboxesMessage,
-      resolvedSpecBranch: getResolvedWizardSpecBranch(state),
+      resolvedSpecBranch: resolvedSpecBranch.value,
       selectedGearbox: state.selectedGearbox,
       selectedTire: state.selectedTire,
       step: state.step,
-      summaryData: buildWizardSummaryData(state, {
-        fmt: deps.fmt,
-        manualGearbox: currentManualGearbox,
-        manualTire: currentManualTire,
-        t: deps.t,
-      }),
+      summaryData: summaryData.value,
       tireOptions: [...currentTireOptions],
       typeOptions: {
         ...currentTypeOptions,
