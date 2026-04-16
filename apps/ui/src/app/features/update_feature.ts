@@ -5,7 +5,10 @@ import {
 } from "../ui_signals";
 import type { FeatureServices } from "../feature_deps_base";
 import { createUpdateFeatureWorkflow } from "./update_feature_workflow";
-import { createUpdateFeaturePresenter } from "../views/update_feature_presenter";
+import {
+  createUpdateFeaturePresenter,
+  type UpdateFeaturePresenter,
+} from "../views/update_feature_presenter";
 import type { InternetPanelView } from "../views/internet_panel";
 import type { UpdatePanelView } from "../views/update_panel";
 
@@ -44,17 +47,26 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     handlersBound.value
     && isUpdatePollingContext(ports.activeViewId.value, activeSettingsTabId.value)
   );
-  const presenter = createUpdateFeaturePresenter({
-    panel: panels.update,
-    internetPanel: panels.internet,
-    t: services.t,
-  });
+  let presenter!: UpdateFeaturePresenter;
   const workflow = createUpdateFeatureWorkflow({
     t: services.t,
     showError: services.showError,
-    view: presenter,
+    view: {
+      clearPassword() {
+        presenter.clearPassword();
+      },
+      focusSsidInput() {
+        panels.internet.focusSsidInput();
+      },
+    },
     pollingEnabled,
   });
+  presenter = createUpdateFeaturePresenter({
+    renderState: workflow.renderState,
+    t: services.t,
+  });
+  panels.internet.bindModel(presenter.internetPanelModel);
+  panels.update.bindModel(presenter.updatePanelModel);
 
   ports.subscribeSettingsTabChanges((tabId) => {
     activeSettingsTabId.value = tabId;
@@ -67,10 +79,7 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     handlersBound.value = true;
     panels.update.bindActions({
       onStart: () => {
-        workflow.renderCurrentState();
-        void workflow.startUpdate(
-          presenter.readStartIntent(workflow.getRenderState()),
-        );
+        void workflow.startUpdate(presenter.readStartIntent());
       },
       onCancel: () => {
         void workflow.cancelUpdate();
@@ -85,14 +94,11 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       },
       onTransportChange: (transport) => {
         presenter.setSelectedTransport(transport);
-        workflow.renderCurrentState();
       },
       onSsidInput: (value) => {
         presenter.setSsidInput(value);
-        workflow.renderCurrentState();
       },
     });
-    workflow.renderCurrentState();
   }
 
   return {

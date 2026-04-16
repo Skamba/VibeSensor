@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import type { InternetPanelRenderModel } from "../src/app/views/internet_panel";
 import type { UpdatePanelRenderModel } from "../src/app/views/update_panel";
+import { signal } from "../src/app/ui_signals";
 import {
   buildUpdateFeaturePanelModels,
   createUpdateFeaturePresenter,
@@ -245,28 +246,7 @@ test.describe("buildUpdateFeaturePanelModels", () => {
 
 test.describe("createUpdateFeaturePresenter", () => {
   test("reads and clears presenter-owned form state instead of DOM values", () => {
-    let latestInternetPanel: InternetPanelRenderModel | null = null;
-    let latestUpdatePanel: UpdatePanelRenderModel | null = null;
-    let focusCalls = 0;
-    const presenter = createUpdateFeaturePresenter({
-      internetPanel: {
-        bindActions() {},
-        focusSsidInput() {
-          focusCalls += 1;
-        },
-        setModel(model) {
-          latestInternetPanel = model;
-        },
-      },
-      panel: {
-        bindActions() {},
-        setModel(model) {
-          latestUpdatePanel = model;
-        },
-      },
-      t,
-    });
-    const state = {
+    const renderState = signal({
       internetStatus: makeInternet({
         detected: true,
         usable: true,
@@ -276,31 +256,33 @@ test.describe("createUpdateFeaturePresenter", () => {
       updateStatus: makeStatus(),
       updateState: "idle" as const,
       updateTransport: "wifi" as const,
-    };
+    });
+    const presenter = createUpdateFeaturePresenter({
+      renderState,
+      t,
+    });
 
     presenter.setSelectedTransport("wifi");
     presenter.setSsidInput("presenter-ssid");
     presenter.setPasswordInput("presenter-password");
-    presenter.render(state);
+    const latestInternetPanel: InternetPanelRenderModel = presenter.internetPanelModel.value;
+    const latestUpdatePanel: UpdatePanelRenderModel = presenter.updatePanelModel.value;
 
     expect(latestInternetPanel?.ssidInputValue).toBe("presenter-ssid");
     expect(latestInternetPanel?.passwordInputValue).toBe("presenter-password");
     expect(latestUpdatePanel?.startButtonDisabled).toBe(false);
-    expect(presenter.readStartIntent(state)).toMatchObject({
+    expect(presenter.readStartIntent()).toMatchObject({
       password: "presenter-password",
       ssid: "presenter-ssid",
       transport: "wifi",
     });
 
     presenter.clearPassword();
-    expect(latestInternetPanel?.passwordInputValue).toBe("");
-    expect(presenter.readStartIntent(state)).toMatchObject({
+    expect(presenter.internetPanelModel.value.passwordInputValue).toBe("");
+    expect(presenter.readStartIntent()).toMatchObject({
       password: "",
       ssid: "presenter-ssid",
       transport: "wifi",
     });
-
-    presenter.focusSsidInput();
-    expect(focusCalls).toBe(1);
   });
 });

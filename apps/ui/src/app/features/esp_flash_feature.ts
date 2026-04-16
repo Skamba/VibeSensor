@@ -41,16 +41,16 @@ export function createEspFlashFeature(
     handlersBound.value
     && isEspFlashPollingContext(ports.activeViewId.value, activeSettingsTabId.value)
   );
-  const presenter = createEspFlashFeaturePresenter({
-    panel,
-    t: services.t,
-  });
   const workflow = createEspFlashFeatureWorkflow({
     t: services.t,
     showError: services.showError,
-    view: presenter,
     pollingEnabled,
   });
+  const presenter = createEspFlashFeaturePresenter({
+    renderState: workflow.renderState,
+    t: services.t,
+  });
+  panel.bindModel(presenter.model);
 
   ports.subscribeSettingsTabChanges((tabId) => {
     activeSettingsTabId.value = tabId;
@@ -84,7 +84,6 @@ export function createEspFlashFeature(
         workflow.setSelectedPortValue(value);
       },
     });
-    workflow.renderCurrentState();
   }
 
   return {

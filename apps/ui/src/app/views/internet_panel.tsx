@@ -52,13 +52,13 @@ export interface InternetPanelActionHandlers {
 
 export interface InternetPanelView {
   bindActions(handlers: InternetPanelActionHandlers): void;
+  bindModel(model: ReadonlySignal<InternetPanelRenderModel>): void;
   focusSsidInput(): void;
-  setModel(model: InternetPanelRenderModel): void;
 }
 
 type InternetPanelBridgeState = {
   actions: InternetPanelActionHandlers | null;
-  model: InternetPanelRenderModel;
+  model: ReadonlySignal<InternetPanelRenderModel> | null;
 };
 
 type InternetPanelFocusRequest = {
@@ -262,7 +262,7 @@ function InternetPanel(props: {
 }) {
   const focusRequest = props.focusRequest.value;
   const state = props.state.value;
-  const { model } = state;
+  const model = state.model?.value ?? DEFAULT_INTERNET_PANEL_MODEL;
   const t = useUiTranslation();
   const ssidInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -443,7 +443,7 @@ export function mountInternetPanel(host: HTMLElement): InternetPanelView {
   let focusRequestToken = 0;
   const state = signal<InternetPanelBridgeState>({
     actions: null,
-    model: DEFAULT_INTERNET_PANEL_MODEL,
+    model: null,
   });
   render(<InternetPanel focusRequest={focusRequest} state={state} />, host);
 
@@ -451,12 +451,12 @@ export function mountInternetPanel(host: HTMLElement): InternetPanelView {
     bindActions(handlers) {
       state.value = { ...state.value, actions: handlers };
     },
+    bindModel(model) {
+      state.value = { ...state.value, model };
+    },
     focusSsidInput() {
       focusRequestToken += 1;
       focusRequest.value = { field: "ssid", token: focusRequestToken };
-    },
-    setModel(model) {
-      state.value = { ...state.value, model };
     },
   };
 }

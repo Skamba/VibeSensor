@@ -3,7 +3,12 @@ import { h, render } from "preact";
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
 import type { ChoiceCardState } from "../view_style_types";
 import { useUiTranslation } from "../ui_i18n";
-import { signal, type ReadonlySignal } from "../ui_signals";
+import {
+  effect,
+  signal,
+  untracked,
+  type ReadonlySignal,
+} from "../ui_signals";
 import {
   settingsFeedbackClassName,
   type SettingsFeedbackMessage,
@@ -102,12 +107,12 @@ export interface SpeedSourcePanelActionHandlers {
 
 export interface SpeedSourcePanelView {
   bindActions(handlers: SpeedSourcePanelActionHandlers): void;
+  bindDiagnostics(model: ReadonlySignal<SpeedSourceDiagnosticsRenderModel>): void;
+  bindModel(model: ReadonlySignal<SpeedSourcePanelRenderModel>): void;
   focusManualSpeedInput(): void;
   focusScanObdDevices(): void;
   focusStaleTimeoutInput(): void;
   isObdConfigVisible(): boolean;
-  setModel(model: SpeedSourcePanelRenderModel): void;
-  setDiagnostics(model: SpeedSourceDiagnosticsRenderModel): void;
 }
 
 type SpeedSourcePanelBridgeState = {
@@ -340,7 +345,7 @@ const DEFAULT_SPEED_SOURCE_PANEL_MODEL: SpeedSourcePanelRenderModel = {
   },
 };
 
-const DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL: SpeedSourceDiagnosticsRenderModel = {
+export const DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL: SpeedSourceDiagnosticsRenderModel = {
   gps: {
     deviceText: "--",
     effectiveSpeedText: "--",
@@ -837,6 +842,26 @@ export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
     bindActions(handlers): void {
       bridgeState.value = { ...bridgeState.value, actions: handlers };
     },
+    bindDiagnostics(model): void {
+      effect(() => {
+        const currentBridgeState = untracked(() => bridgeState.value);
+        bridgeState.value = {
+          ...currentBridgeState,
+          diagnostics: model.value,
+        };
+      });
+    },
+    bindModel(model): void {
+      effect(() => {
+        const currentBridgeState = untracked(() => bridgeState.value);
+        bridgeState.value = {
+          ...currentBridgeState,
+          diagnosticsDisclosureOpen:
+            currentBridgeState.diagnosticsDisclosureOpen || model.value.diagnosticsShouldOpen,
+          model: model.value,
+        };
+      });
+    },
     focusManualSpeedInput(): void {
       manualSpeedInput?.focus();
     },
@@ -856,17 +881,6 @@ export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
       }
       const activeView = activePanel.closest<HTMLElement>(".view");
       return activeView == null || !activeView.hidden;
-    },
-    setModel(model): void {
-      bridgeState.value = {
-        ...bridgeState.value,
-        diagnosticsDisclosureOpen:
-          bridgeState.value.diagnosticsDisclosureOpen || model.diagnosticsShouldOpen,
-        model,
-      };
-    },
-    setDiagnostics(model): void {
-      bridgeState.value = { ...bridgeState.value, diagnostics: model };
     },
   };
 }

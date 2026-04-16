@@ -2,7 +2,12 @@ import { render, type JSX } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 
 import { useUiTranslation } from "../ui_i18n";
-import { signal, type ReadonlySignal } from "../ui_signals";
+import {
+  effect,
+  signal,
+  untracked,
+  type ReadonlySignal,
+} from "../ui_signals";
 import {
   settingsFeedbackClassName,
   type SettingsFeedbackMessage,
@@ -53,10 +58,10 @@ export interface AnalysisPanelActionHandlers {
 
 export interface AnalysisPanelView {
   bindActions(handlers: AnalysisPanelActionHandlers): void;
+  bindCarAvailability(state: ReadonlySignal<AnalysisPanelCarAvailability>): void;
+  bindModel(model: ReadonlySignal<AnalysisPanelRenderModel>): void;
   focusField(field: AnalysisPanelFieldKey): void;
   openGuidance(): void;
-  setModel(model: AnalysisPanelRenderModel): void;
-  setCarAvailability(state: AnalysisPanelCarAvailability): void;
 }
 
 type AnalysisFieldSpec = {
@@ -545,18 +550,30 @@ export function mountAnalysisPanel(host: HTMLElement): AnalysisPanelView {
     bindActions(handlers) {
       bridgeState.value = { ...bridgeState.value, actions: handlers };
     },
+    bindCarAvailability(state) {
+      effect(() => {
+        const currentBridgeState = untracked(() => bridgeState.value);
+        bridgeState.value = {
+          ...currentBridgeState,
+          availability: state.value,
+        };
+      });
+    },
+    bindModel(model) {
+      effect(() => {
+        const currentBridgeState = untracked(() => bridgeState.value);
+        bridgeState.value = {
+          ...currentBridgeState,
+          model: model.value,
+        };
+      });
+    },
     focusField(field) {
       focusRequestToken += 1;
       inputFocusRequest.value = { field, token: focusRequestToken };
     },
     openGuidance() {
       guidanceOpenRequest.value += 1;
-    },
-    setModel(model) {
-      bridgeState.value = { ...bridgeState.value, model };
-    },
-    setCarAvailability(state) {
-      bridgeState.value = { ...bridgeState.value, availability: state };
     },
   };
 }

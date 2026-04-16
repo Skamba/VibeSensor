@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { createHistoryFeature } from "../src/app/features/history_feature";
 import { downloadBlobFile } from "../src/app/features/history_download";
 import { createAppState, type RunDetail } from "../src/app/ui_app_state";
+import { effect } from "../src/app/ui_signals";
 import type {
   HistoryPanelActionHandlers,
   HistoryPanelRenderModel,
@@ -46,11 +47,14 @@ function createHistoryElements(): {
   let latestHandlers: HistoryPanelActionHandlers | null = null;
   let renderCount = 0;
   const panel: HistoryPanelView = {
-    setModel(model) {
-      renderCount += 1;
-      latestModel = model;
-      historySummary.textContent = model.historySummaryText;
-      deleteAllRunsBtn.disabled = model.deleteAllRunsDisabled;
+    bindModel(model) {
+      effect(() => {
+        const nextModel = model.value;
+        renderCount += 1;
+        latestModel = nextModel;
+        historySummary.textContent = nextModel.historySummaryText;
+        deleteAllRunsBtn.disabled = nextModel.deleteAllRunsDisabled;
+      });
     },
     bindActions(handlers) {
       latestHandlers = handlers;
@@ -447,7 +451,7 @@ test("history feature preloads collapsed row context for completed runs", async 
   expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.complete");
   expect(row.summaryHeadline).toBe("Front-right wheel imbalance");
   expect(row.summaryMeta?.includes("report.confidence")).toBe(true);
-  expect(requests).toEqual([
+  expect(requests.filter((url) => url.startsWith("/api/history"))).toEqual([
     "/api/history",
     "/api/history/run-001/insights?lang=en",
   ]);

@@ -6,10 +6,15 @@ import {
 } from "../car_selection_state";
 import type { SettingsState } from "../ui_app_state";
 import type { CarRecord, CarsPayload } from "../../transport/http_models";
-import type { CarsListPanelView } from "../views/cars_panel";
+import type {
+  CarsListPanelView,
+  CarsListRenderModel,
+} from "../views/cars_panel";
 import type { AnalysisPanelView } from "../views/analysis_panel";
 import {
+  computed,
   effect,
+  signal,
   untracked,
   type ReadonlySignal,
 } from "../ui_signals";
@@ -24,7 +29,7 @@ import {
 } from "./settings_cars_transport";
 
 interface SettingsCarsModulePanels {
-  analysisPanel: Pick<AnalysisPanelView, "setCarAvailability">;
+  analysisPanel: Pick<AnalysisPanelView, "bindCarAvailability">;
   panel: CarsListPanelView;
 }
 
@@ -82,7 +87,7 @@ export function createSettingsCarsModule(
   const transport = createSettingsCarsTransport(ctx.transport);
   const carSelection = createCarSelectionDerivedState(settings);
   let handlersBound = false;
-  let highlightedCarFeedback: CarsListHighlightedFeedback | null = null;
+  const highlightedCarFeedback = signal<CarsListHighlightedFeedback | null>(null);
 
   function hasValidActiveCar(): boolean {
     return carSelection.hasResolvedActiveCar.value;
@@ -94,11 +99,11 @@ export function createSettingsCarsModule(
 
   function createPanelModel(
     carSelectionState: CarSelectionState,
-  ): Parameters<CarsListPanelView["setModel"]>[0] {
+  ): CarsListRenderModel {
     return {
       guidance: buildCarsGuidanceRenderModel({
         carSelectionState,
-        highlightedCarFeedback,
+        highlightedCarFeedback: highlightedCarFeedback.value,
         t,
       }),
       table: carSelectionState.kind === "loading"
@@ -106,36 +111,34 @@ export function createSettingsCarsModule(
         : buildSettingsCarListRenderModel({
           activeCarId: settings.activeCarId,
           cars: settings.cars,
-          highlightedCarId: highlightedCarFeedback?.carId ?? null,
+          highlightedCarId: highlightedCarFeedback.value?.carId ?? null,
           fmt: formatting.fmt,
           t,
         }),
     };
   }
-
-  function syncAnalysisControls(carSelectionState: CarSelectionState): void {
-    ctx.panels.analysisPanel.setCarAvailability({
+  const analysisAvailability = computed(() => {
+    const carSelectionState = carSelection.selection.value;
+    return {
       hasActiveCar: carSelectionState.kind === "active",
       isLoading: carSelectionState.kind === "loading",
-    });
-  }
+    };
+  });
+  const panelModel = computed(() => createPanelModel(getCarSelectionState()));
+  ctx.panels.analysisPanel.bindCarAvailability(analysisAvailability);
+  ctx.panels.panel.bindModel(panelModel);
 
-  function renderCarList(): void {
-    const carSelectionState = getCarSelectionState();
-    syncAnalysisControls(carSelectionState);
-    ctx.panels.panel.setModel(createPanelModel(carSelectionState));
-  }
+  function renderCarList(): void {}
 
   function clearHighlightedCarFeedback(): void {
-    highlightedCarFeedback = null;
+    highlightedCarFeedback.value = null;
   }
 
   function dismissHighlightedCarFeedback(): void {
-    if (!highlightedCarFeedback) {
+    if (!highlightedCarFeedback.value) {
       return;
     }
     clearHighlightedCarFeedback();
-    renderCarList();
   }
 
   function syncCarsPayload(payload: CarsPayload): void {
@@ -147,12 +150,11 @@ export function createSettingsCarsModule(
       : false;
     settings.activeCarId = hasRequestedActive ? requestedActiveCarId : null;
     if (
-      highlightedCarFeedback &&
-      !settings.cars.some((car) => car.id === highlightedCarFeedback?.carId)
+      highlightedCarFeedback.value &&
+      !settings.cars.some((car) => car.id === highlightedCarFeedback.value?.carId)
     ) {
-      highlightedCarFeedback = null;
+      highlightedCarFeedback.value = null;
     }
-    renderCarList();
   }
 
   function findCar(carId: string): CarRecord | null {
@@ -164,7 +166,6 @@ export function createSettingsCarsModule(
     if (hasValidActiveCar()) {
       ctx.ports.syncAnalysisInputs();
     }
-    renderCarList();
   }
 
   async function loadCarsFromServer(): Promise<void> {
@@ -192,7 +193,6 @@ export function createSettingsCarsModule(
       syncCarsPayload(await transport.activateCar(carId));
       syncActiveCarToInputs();
       clearHighlightedCarFeedback();
-      renderCarList();
       ctx.ports.renderSpectrum();
     } catch (_err) {
       services.showError(t("settings.car.activate_failed"));
@@ -208,17 +208,12 @@ export function createSettingsCarsModule(
       return;
     }
     try {
-      let shouldRefreshAfterSelection = highlightedCarFeedback !== null;
       if (car.id !== settings.activeCarId) {
         syncCarsPayload(await transport.activateCar(carId));
         syncActiveCarToInputs();
         ctx.ports.renderSpectrum();
-        shouldRefreshAfterSelection = true;
       }
       clearHighlightedCarFeedback();
-      if (shouldRefreshAfterSelection) {
-        renderCarList();
-      }
       ctx.ports.openAnalysisTab();
     } catch (_err) {
       services.showError(t("settings.car.activate_failed"));
@@ -240,7 +235,6 @@ export function createSettingsCarsModule(
       syncCarsPayload(await transport.deleteCar(carId));
       syncActiveCarToInputs();
       clearHighlightedCarFeedback();
-      renderCarList();
       ctx.ports.renderSpectrum();
     } catch (_err) {
       services.showError(t("settings.car.delete_failed"));
@@ -295,16 +289,13 @@ export function createSettingsCarsModule(
     });
   }
 
-  renderCarList();
-
   return {
     bindHandlers,
     hasValidActiveCar,
     loadCarsFromServer,
     renderCarList,
     showCarCreationSuccess(carId: string, carName: string): void {
-      highlightedCarFeedback = { carId, carName };
-      renderCarList();
+      highlightedCarFeedback.value = { carId, carName };
     },
     syncActiveCarToInputs,
     syncCarsPayload,

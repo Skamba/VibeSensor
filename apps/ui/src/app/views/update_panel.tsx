@@ -33,12 +33,12 @@ export interface UpdatePanelActionHandlers {
 
 export interface UpdatePanelView {
   bindActions(handlers: UpdatePanelActionHandlers): void;
-  setModel(model: UpdatePanelRenderModel): void;
+  bindModel(model: ReadonlySignal<UpdatePanelRenderModel>): void;
 }
 
 type UpdatePanelBridgeState = {
   actions: UpdatePanelActionHandlers | null;
-  model: UpdatePanelRenderModel;
+  model: ReadonlySignal<UpdatePanelRenderModel> | null;
 };
 
 const DEFAULT_UPDATE_PANEL_MODEL: UpdatePanelRenderModel = {
@@ -325,7 +325,7 @@ function UpdatePanel(props: {
   state: ReadonlySignal<UpdatePanelBridgeState>;
 }) {
   const state = props.state.value;
-  const { model } = state;
+  const model = state.model?.value ?? DEFAULT_UPDATE_PANEL_MODEL;
   const t = useUiTranslation();
   return (
     <div class="panel card">
@@ -398,7 +398,7 @@ function UpdatePanel(props: {
 export function mountUpdatePanel(host: HTMLElement): UpdatePanelView {
   const state = signal<UpdatePanelBridgeState>({
     actions: null,
-    model: DEFAULT_UPDATE_PANEL_MODEL,
+    model: null,
   });
   render(<UpdatePanel state={state} />, host);
 
@@ -406,7 +406,7 @@ export function mountUpdatePanel(host: HTMLElement): UpdatePanelView {
     bindActions(handlers) {
       state.value = { ...state.value, actions: handlers };
     },
-    setModel(model) {
+    bindModel(model) {
       state.value = { ...state.value, model };
     },
   };
