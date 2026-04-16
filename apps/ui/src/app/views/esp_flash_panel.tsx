@@ -1,11 +1,12 @@
 import { render } from "preact";
-import { useEffect, useRef } from "preact/hooks";
+import { useRef } from "preact/hooks";
 
 import { useUiText } from "../ui_i18n";
 import {
   computed,
   signal,
   useComputed,
+  useSignalEffect,
   type ReadonlySignal,
 } from "../ui_signals";
 import type { VisualVariant } from "../view_style_types";
@@ -349,14 +350,14 @@ function EspFlashPanel(props: {
     actions.value?.onCancel();
   };
 
-  useEffect(() => {
+  useSignalEffect(() => {
     const logPanel = logPanelRef.current;
     const log = model.value.log;
     if (!logPanel || log.emptyState !== null) {
       return;
     }
     logPanel.scrollTop = logPanel.scrollHeight;
-  }, [model.value.log.emptyState, model.value.log.text]);
+  });
 
   return (
     <div class="panel card">

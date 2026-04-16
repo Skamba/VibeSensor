@@ -5,7 +5,10 @@ import { fulfillJson, installCommonRoutes, installFakeWebSocket, normalizePathna
 test("settings esp flash tab renders lifecycle state and live logs", async ({ page }) => {
   let statusState: "idle" | "running" | "success" = "idle";
   let logCursor = 0;
-  const logs = ["build ok", "erase ok", "upload ok"];
+  const logs = Array.from(
+    { length: 18 },
+    (_, index) => `flash line ${index}: ${"output ".repeat(12)}`,
+  );
   await installCommonRoutes(page, {
     espFlashHandler: async (route) => {
       const url = new URL(route.request().url());
@@ -64,6 +67,14 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
     "Current readiness",
   );
   await expect(page.locator("#espFlashTab")).toContainText("What happens next");
+  await page.locator("#espFlashLogPanel").evaluate((panel) => {
+    if (!(panel instanceof HTMLElement)) {
+      return;
+    }
+    panel.style.height = "48px";
+    panel.style.overflowY = "auto";
+    panel.scrollTop = 0;
+  });
   await page.locator("#espFlashStartBtn").click();
   statusState = "running";
   logCursor = 2;
@@ -99,7 +110,15 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
   await expect(page.locator('#espFlashJourneyPanel .maintenance-stage[aria-current="step"]')).toHaveAttribute("data-stage-phase", "flashing");
   await expect(page.locator('#espFlashJourneyPanel .maintenance-stage[data-stage-state="done"]')).toHaveCount(3);
   await expect(page.locator('#espFlashJourneyPanel .maintenance-stage[data-stage-phase="validating"] .maintenance-stage__marker')).toHaveText("✓");
-  await expect(page.locator("#espFlashLogPanel")).toContainText("erase ok");
+  await expect(page.locator("#espFlashLogPanel")).toContainText("flash line 17");
+  await expect.poll(async () =>
+    page.locator("#espFlashLogPanel").evaluate((panel) => {
+      if (!(panel instanceof HTMLElement)) {
+        return false;
+      }
+      const maxScrollTop = panel.scrollHeight - panel.clientHeight;
+      return maxScrollTop > 0 && panel.scrollTop >= maxScrollTop - 1;
+    })).toBe(true);
   await expect(page.locator("#espFlashStatusBanner")).toContainText("Success");
   await expect(page.locator('#espFlashJourneyPanel .maintenance-stage[data-stage-state="done"]')).toHaveCount(5);
   await expect(page.locator("#espFlashHistoryPanel")).toContainText("/dev/ttyUSB0");
