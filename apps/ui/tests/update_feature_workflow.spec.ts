@@ -9,12 +9,10 @@ import type {
   UpdateStatusPayload,
   UsbInternetStatusPayload,
 } from "../src/transport/http_models";
-import type { UpdateFeatureRenderState } from "../src/app/views/update_feature_presenter";
 
 type WorkflowHarness = {
   errors: string[];
   pollerCalls: string[];
-  renderStates: UpdateFeatureRenderState[];
   viewCalls: string[];
 };
 
@@ -22,7 +20,6 @@ function createHarness(): WorkflowHarness {
   return {
     errors: [],
     pollerCalls: [],
-    renderStates: [],
     viewCalls: [],
   };
 }
@@ -31,10 +28,6 @@ function createViewPorts(
   harness: WorkflowHarness,
 ): UpdateFeatureWorkflowViewPorts {
   return {
-    render(state): void {
-      harness.renderStates.push(state);
-      harness.viewCalls.push(`render:${state.updateState}`);
-    },
     focusSsidInput(): void {
       harness.viewCalls.push("focusSsidInput");
     },
@@ -158,14 +151,14 @@ test.describe("createUpdateFeatureWorkflow", () => {
 
     await workflow.refreshStatus();
 
-    expect(harness.renderStates).toHaveLength(1);
-    expect(harness.renderStates[0]).toMatchObject({
+    const renderState = workflow.getRenderState();
+    expect(renderState).toMatchObject({
       updateState: "running",
       updateTransport: "usb_internet",
       updateStatus: status,
       healthStatus: health,
     });
-    expect(harness.renderStates[0].internetStatus).toMatchObject({
+    expect(renderState.internetStatus).toMatchObject({
       usable: true,
       interface_name: "usb0",
     });

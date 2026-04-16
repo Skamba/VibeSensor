@@ -12,7 +12,7 @@ import {
   type RunDetail,
   type ShellState,
 } from "../ui_app_state";
-import { effect, untracked } from "../ui_signals";
+import { computed, effect, untracked } from "../ui_signals";
 import type {
   HistoryPanelRenderModel,
   HistoryPanelView,
@@ -74,8 +74,11 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
 
   function buildPanelRenderModel(): HistoryPanelRenderModel {
     const deleteAllRunsDisabled = history.deleteAllRunsInFlight || history.runs.length === 0;
+    const expandedRunId = history.expandedRunId
+      && history.runs.some((row) => row.run_id === history.expandedRunId)
+      ? history.expandedRunId
+      : null;
     if (!history.runs.length) {
-      collapseExpandedRun();
       return {
         historySummaryText: services.t("history.none"),
         deleteAllRunsDisabled,
@@ -85,39 +88,32 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         },
       };
     }
-    if (
-      history.expandedRunId &&
-      !history.runs.some((row) => row.run_id === history.expandedRunId)
-    ) {
-      collapseExpandedRun();
-    }
-    for (const run of history.runs) {
-      ensureRunDetail(run.run_id);
-    }
     return {
       historySummaryText: services.t("history.available_count", {
         count: history.runs.length,
       }),
       deleteAllRunsDisabled,
-      table: {
-        kind: "rows",
-        params: {
-          runs: history.runs,
-          expandedRunId: history.expandedRunId,
-          runDetailsById: history.runDetailsById,
-          t: services.t,
-          fmt: formatting.fmt,
+        table: {
+          kind: "rows",
+          params: {
+            runs: history.runs,
+            expandedRunId,
+            runDetailsById: history.runDetailsById,
+            t: services.t,
+            fmt: formatting.fmt,
           fmtTs: formatting.fmtTs,
           formatInt: formatting.formatInt,
           historyExportUrl,
         },
       },
-    };
+      };
   }
-
-  function renderHistoryTable(): void {
-    panel.setModel(buildPanelRenderModel());
-  }
+  const panelModel = computed(() => {
+    trackAppStateSlice(history);
+    trackAppStateSlice(shell);
+    return buildPanelRenderModel();
+  });
+  panel.bindModel(panelModel);
 
   async function loadRunPreview(runId: string, force = false): Promise<void> {
     if (!runId) {
@@ -129,7 +125,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     }
     detail.previewLoading = true;
     detail.previewError = "";
-    renderHistoryTable();
     try {
       const response = await getHistoryInsights(runId, shell.lang);
       detail.preview = response.status === "complete" ? response : null;
@@ -139,7 +134,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         : services.t("report.unable_load_insights");
     } finally {
       detail.previewLoading = false;
-      renderHistoryTable();
     }
   }
 
@@ -153,7 +147,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     }
     detail.insightsLoading = true;
     detail.insightsError = "";
-    renderHistoryTable();
     try {
       const response = await getHistoryInsights(runId, shell.lang);
       detail.insights = response.status === "complete" ? response : null;
@@ -163,7 +156,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         : services.t("report.unable_load_insights");
     } finally {
       detail.insightsLoading = false;
-      renderHistoryTable();
     }
   }
 
@@ -173,12 +165,10 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     }
     if (history.expandedRunId === runId) {
       collapseExpandedRun();
-      renderHistoryTable();
       return;
     }
     collapseExpandedRun();
     history.expandedRunId = runId;
-    renderHistoryTable();
     void loadRunPreview(runId);
   }
 
@@ -206,9 +196,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       if (!initialized) {
         initialized = true;
         previousLanguage = currentLanguage;
-        untracked(() => {
-          renderHistoryTable();
-        });
         return;
       }
       if (currentLanguage === previousLanguage) {
@@ -216,7 +203,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       }
       previousLanguage = currentLanguage;
       untracked(() => {
-        renderHistoryTable();
         reloadExpandedRunOnLanguageChange();
       });
     });
@@ -242,10 +228,8 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       const payload = await getHistory();
       history.runs = payload.runs ?? [];
     } catch (_err) {
-      renderHistoryTable();
       return;
     }
-    renderHistoryTable();
     prefetchCollapsedRunContext();
   }
 
@@ -284,7 +268,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     }
 
     history.deleteAllRunsInFlight = true;
-    renderHistoryTable();
     let deleted = 0;
     let failed = 0;
     let firstError = "";
@@ -324,7 +307,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     }
     detail.pdfLoading = true;
     detail.pdfError = "";
-    renderHistoryTable();
     try {
       await downloadBlobFile(
         historyReportPdfUrl(runId, shell.lang),
@@ -336,7 +318,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         : services.t("history.pdf_failed");
     } finally {
       detail.pdfLoading = false;
-      renderHistoryTable();
     }
   }
 

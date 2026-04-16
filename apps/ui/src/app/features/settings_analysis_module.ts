@@ -5,6 +5,7 @@ import type {
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { FeatureServices } from "../feature_deps_base";
 import { defaultVehicleSettings, type SettingsState } from "../ui_app_state";
+import { computed, signal } from "../ui_signals";
 import type {
   AnalysisPanelFieldKey,
   AnalysisPanelRenderModel,
@@ -210,9 +211,9 @@ export function createSettingsAnalysisModule(
 ): SettingsAnalysisModule {
   const { panel, settings, services } = ctx;
   const { t } = services;
-  let draftValues = buildDraftValues(settings);
-  let saveFeedback: SettingsFeedbackMessage | null = null;
-  const fieldErrorMessages = new Map<AnalysisPanelFieldKey, string>();
+  const draftValues = signal(buildDraftValues(settings));
+  const saveFeedback = signal<SettingsFeedbackMessage | null>(null);
+  const fieldErrorMessages = signal<Partial<Record<AnalysisPanelFieldKey, string>>>({});
 
   function formatRange(min: number, max: number, unit: UnitSuffix): string {
     return t("settings.analysis.range_value", {
@@ -239,13 +240,13 @@ export function createSettingsAnalysisModule(
         min_abs_band_hz: buildFieldRenderModel("min_abs_band_hz"),
         max_band_half_width_pct: buildFieldRenderModel("max_band_half_width_pct"),
       },
-      saveFeedback,
+      saveFeedback: saveFeedback.value,
     };
   }
 
   function buildFieldRenderModel(fieldKey: AnalysisPanelFieldKey) {
     const field = analysisFieldConfig(fieldKey);
-    const errorMessage = fieldErrorMessages.get(field.key);
+    const errorMessage = fieldErrorMessages.value[field.key];
     const guidance: SettingsAnalysisGuidanceRenderModel = {
       error: errorMessage
         ? {
@@ -268,16 +269,14 @@ export function createSettingsAnalysisModule(
     return {
       guidance,
       invalid: errorMessage !== undefined,
-      value: draftValues[field.key],
+      value: draftValues.value[field.key],
     };
   }
-
-  function syncPanelModel(): void {
-    panel.setModel(buildPanelModel());
-  }
+  const panelModel = computed(() => buildPanelModel());
+  panel.bindModel(panelModel);
 
   function clearFieldValidationState(): void {
-    fieldErrorMessages.clear();
+    fieldErrorMessages.value = {};
   }
 
   function openAnalysisGuidance(): void {
@@ -285,8 +284,10 @@ export function createSettingsAnalysisModule(
   }
 
   function markFieldInvalid(field: AnalysisFieldConfig, message: string): void {
-    fieldErrorMessages.set(field.key, message);
-    syncPanelModel();
+    fieldErrorMessages.value = {
+      ...fieldErrorMessages.value,
+      [field.key]: message,
+    };
     panel.focusField(field.key);
     openAnalysisGuidance();
   }
@@ -294,7 +295,7 @@ export function createSettingsAnalysisModule(
   function collectFieldStates(): AnalysisFieldState[] {
     return EDITABLE_ANALYSIS_KEYS.map((fieldKey) => {
       const config = analysisFieldConfig(fieldKey);
-      const rawValue = draftValues[fieldKey].trim();
+      const rawValue = draftValues.value[fieldKey].trim();
       return {
         config,
         rawValue,
@@ -322,8 +323,7 @@ export function createSettingsAnalysisModule(
       return;
     }
     clearFieldValidationState();
-    saveFeedback = null;
-    syncPanelModel();
+    saveFeedback.value = null;
     void syncAnalysisSettingsToServer({
       wheel_bandwidth_pct: defaultVehicleSettings.wheel_bandwidth_pct,
       driveshaft_bandwidth_pct: defaultVehicleSettings.driveshaft_bandwidth_pct,
@@ -340,10 +340,9 @@ export function createSettingsAnalysisModule(
   }
 
   function syncSettingsInputs(): void {
-    draftValues = buildDraftValues(settings);
+    draftValues.value = buildDraftValues(settings);
     clearFieldValidationState();
-    saveFeedback = null;
-    syncPanelModel();
+    saveFeedback.value = null;
   }
 
   function applyAnalysisSettingsPayload(
@@ -367,14 +366,13 @@ export function createSettingsAnalysisModule(
       applyAnalysisSettingsPayload(saved);
     } catch (error) {
       openAnalysisGuidance();
-      saveFeedback = {
+      saveFeedback.value = {
         tone: "error",
         title: t("settings.analysis.save_failed_title"),
         body:
           error instanceof Error ? error.message : t("settings.save_failed"),
         detail: t("settings.analysis.save_failed_detail"),
       };
-      syncPanelModel();
       ctx.onSaveError(error);
     }
   }
@@ -396,7 +394,7 @@ export function createSettingsAnalysisModule(
       return;
     }
     clearFieldValidationState();
-    saveFeedback = null;
+    saveFeedback.value = null;
     const fieldStates = collectFieldStates();
     const missingField = fieldStates.find(
       (field) =>
@@ -472,13 +470,14 @@ export function createSettingsAnalysisModule(
   function handleFieldInput(
     action: { field: AnalysisPanelFieldKey; value: string },
   ): void {
-    draftValues = {
-      ...draftValues,
+    draftValues.value = {
+      ...draftValues.value,
       [action.field]: action.value,
     };
-    fieldErrorMessages.delete(action.field);
-    saveFeedback = null;
-    syncPanelModel();
+    const nextErrors = { ...fieldErrorMessages.value };
+    delete nextErrors[action.field];
+    fieldErrorMessages.value = nextErrors;
+    saveFeedback.value = null;
   }
 
   function bindHandlers(): void {
@@ -487,7 +486,6 @@ export function createSettingsAnalysisModule(
       onReset: resetAnalysisToDefaults,
       onSave: saveAnalysisFromInputs,
     });
-    syncPanelModel();
   }
 
   return {

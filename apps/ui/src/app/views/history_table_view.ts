@@ -1,5 +1,6 @@
 import type { HistoryEntry } from "../../transport/http_models";
 import type { RunDetail } from "../ui_app_state";
+import type { ReadonlySignal } from "../ui_signals";
 
 export interface HistoryTableViewParams {
   runs: HistoryEntry[];
@@ -49,6 +50,6 @@ export interface HistoryPanelActionHandlers {
 }
 
 export interface HistoryPanelView {
-  setModel(model: HistoryPanelRenderModel): void;
+  bindModel(model: ReadonlySignal<HistoryPanelRenderModel>): void;
   bindActions(handlers: HistoryPanelActionHandlers): void;
 }

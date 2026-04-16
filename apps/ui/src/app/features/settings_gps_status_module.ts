@@ -7,7 +7,10 @@ import {
   signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import type { SpeedSourcePanelView } from "../views/speed_source_panel";
+import {
+  DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL,
+  type SpeedSourcePanelView,
+} from "../views/speed_source_panel";
 import {
   buildSpeedSourceDiagnosticsRenderModel,
   type SettingsSpeedSourcePresenterDeps,
@@ -48,6 +51,8 @@ export function createSettingsGpsStatusModule(
     getSpeedUnit: ctx.getSpeedUnit,
     t: ctx.services.t,
   };
+  const diagnosticsModel = signal(DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL);
+  panel.bindDiagnostics(diagnosticsModel);
   const pollingEnabled = computed(() =>
     handlersBound.value
     && startupReady.value
@@ -76,9 +81,7 @@ export function createSettingsGpsStatusModule(
       settings.gpsFallbackActive = status.fallback_active;
       settings.gpsEffectiveSpeedKph = status.effective_speed_kmh;
       settings.resolvedSpeedSource = status.speed_source;
-      panel.setDiagnostics(
-        buildSpeedSourceDiagnosticsRenderModel(status, obdStatus, presenterDeps),
-      );
+      diagnosticsModel.value = buildSpeedSourceDiagnosticsRenderModel(status, obdStatus, presenterDeps);
       ctx.ports.syncSpeedSourceSelectionUi();
       ctx.ports.renderSpeedReadout();
       return status.connection_state === "connected"
