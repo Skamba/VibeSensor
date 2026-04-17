@@ -1,6 +1,6 @@
 import type { LiveWsPayload } from "./contracts/ws_payload_types";
 import { batchAppStateUpdates } from "./app/ui_app_state";
-import { signal } from "./app/ui_signals";
+import { effect, signal } from "./app/ui_signals";
 
 export type WsUiState = "connecting" | "connected" | "reconnecting" | "stale" | "no_data";
 
@@ -32,12 +32,12 @@ export class WsClient {
   };
 
   private ws: WebSocket | null = null;
-  private reconnectTimer: number | null = null;
-  private staleTimer: number | null = null;
   private readonly lastMessageAtMs = signal(0);
   private readonly hasData = signal(false);
-  private manuallyClosed = false;
-  private reconnectAttempt = 0;
+  private readonly manuallyClosed = signal(false);
+  private readonly reconnectAttempt = signal(0);
+  private readonly reconnectDelayMs = signal<number | null>(null);
+  private readonly socketOpen = signal(false);
 
   constructor(options: WsClientOptions) {
     this.options = {
@@ -47,26 +47,24 @@ export class WsClient {
       hasData: hasSpectraClients,
       ...options,
     };
+    this.bindReconnectLifecycle();
+    this.bindStaleLifecycle();
   }
 
   connect(): void {
-    this.manuallyClosed = false;
+    batchAppStateUpdates(() => {
+      this.manuallyClosed.value = false;
+      this.reconnectDelayMs.value = null;
+    });
     this.open("connecting");
-    if (this.staleTimer === null) {
-      this.staleTimer = window.setInterval(() => this.tickStale(), 1000);
-    }
   }
 
   close(): void {
-    this.manuallyClosed = true;
-    if (this.reconnectTimer !== null) {
-      window.clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    if (this.staleTimer !== null) {
-      window.clearInterval(this.staleTimer);
-      this.staleTimer = null;
-    }
+    batchAppStateUpdates(() => {
+      this.manuallyClosed.value = true;
+      this.reconnectDelayMs.value = null;
+      this.socketOpen.value = false;
+    });
     if (this.ws) {
       this.ws.close();
       this.ws = null;
@@ -84,11 +82,15 @@ export class WsClient {
       this.commitState(initialState);
       this.hasData.value = false;
       this.lastMessageAtMs.value = 0;
+      this.socketOpen.value = false;
     });
     this.ws = new WebSocket(this.options.url);
 
     this.ws.onopen = () => {
-      this.setState("no_data");
+      batchAppStateUpdates(() => {
+        this.socketOpen.value = true;
+        this.commitState("no_data");
+      });
     };
 
     this.ws.onmessage = (event) => {
@@ -99,8 +101,8 @@ export class WsClient {
         return;
       }
       const receivedAt = Date.now();
-      this.reconnectAttempt = 0;
       batchAppStateUpdates(() => {
+        this.reconnectAttempt.value = 0;
         this.lastMessageAtMs.value = receivedAt;
         this.hasData.value = this.hasData.value || this.options.hasData(payload);
         this.commitState(this.hasData.value ? "connected" : "no_data");
@@ -110,10 +112,15 @@ export class WsClient {
     };
 
     this.ws.onclose = () => {
-      this.ws = null;
-      if (this.manuallyClosed) return;
-      this.setState("reconnecting");
-      this.scheduleReconnect();
+      batchAppStateUpdates(() => {
+        this.ws = null;
+        this.socketOpen.value = false;
+        if (this.manuallyClosed.value) {
+          return;
+        }
+        this.commitState("reconnecting");
+        this.scheduleReconnect();
+      });
     };
 
     this.ws.onerror = () => {
@@ -122,33 +129,56 @@ export class WsClient {
   }
 
   private scheduleReconnect(): void {
-    if (this.reconnectTimer !== null) {
-      window.clearTimeout(this.reconnectTimer);
-    }
-    this.reconnectTimer = window.setTimeout(() => {
-      this.reconnectTimer = null;
-      this.open("reconnecting");
-    }, this.nextReconnectDelayMs());
+    this.reconnectDelayMs.value = this.nextReconnectDelayMs();
   }
 
   private nextReconnectDelayMs(): number {
     const base = Math.max(250, this.options.reconnectDelayMs);
-    const exp = Math.min(6, this.reconnectAttempt);
+    const exp = Math.min(6, this.reconnectAttempt.value);
     const raw = Math.min(15000, base * (2 ** exp));
     const jitter = raw * 0.25 * Math.random();
-    this.reconnectAttempt += 1;
+    this.reconnectAttempt.value += 1;
     return Math.round(raw + jitter);
   }
 
-  private tickStale(): void {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    if (!this.hasData.value || this.lastMessageAtMs.value <= 0) {
-      this.setState("no_data");
-      return;
-    }
-    if (Date.now() - this.lastMessageAtMs.value > this.options.staleAfterMs) {
-      this.setState("stale");
-    }
+  private bindReconnectLifecycle(): void {
+    effect(() => {
+      const reconnectDelayMs = this.reconnectDelayMs.value;
+      if (reconnectDelayMs === null || this.manuallyClosed.value) {
+        return;
+      }
+      const timeoutId = window.setTimeout(() => {
+        batchAppStateUpdates(() => {
+          this.reconnectDelayMs.value = null;
+        });
+        this.open("reconnecting");
+      }, reconnectDelayMs);
+      return () => {
+        window.clearTimeout(timeoutId);
+      };
+    });
+  }
+
+  private bindStaleLifecycle(): void {
+    effect(() => {
+      if (
+        !this.socketOpen.value
+        || this.manuallyClosed.value
+        || !this.hasData.value
+        || this.lastMessageAtMs.value <= 0
+      ) {
+        return;
+      }
+      const lastMessageAtMs = this.lastMessageAtMs.value;
+      const intervalId = window.setInterval(() => {
+        if (Date.now() - lastMessageAtMs > this.options.staleAfterMs) {
+          this.setState("stale");
+        }
+      }, 1000);
+      return () => {
+        window.clearInterval(intervalId);
+      };
+    });
   }
 
   private setState(next: WsUiState): void {
