@@ -106,20 +106,6 @@
   line-height: 1.45;
 }
 
-.settings-field-guidance__stack {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.75rem;
-}
-
-.settings-field-guidance__line {
-  font-size: 0.8rem;
-  color: var(--muted);
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.2rem;
-}
-
 .settings-field-guidance__label {
   color: var(--pill-muted-text);
   font-weight: 700;
