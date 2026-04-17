@@ -1,7 +1,6 @@
 import { render } from "preact";
 
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
-import type { ChoiceCardState } from "../view_style_types";
 import {
   computed,
   effect,
@@ -16,6 +15,8 @@ import type {
   SettingsFeedbackMessage,
 } from "./settings_feedback";
 import type { DeferredModelSignal } from "./view_model_binding";
+
+type ChoiceCardState = "active" | "draft" | "error";
 
 export interface SpeedSourceChoiceCardRenderModel {
   badgeText: string | null;

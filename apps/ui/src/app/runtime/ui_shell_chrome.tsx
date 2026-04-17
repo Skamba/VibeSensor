@@ -24,9 +24,10 @@ import {
 import {
   createDeferredModelSignal,
 } from "../views/view_model_binding";
-import type { VisualVariant } from "../view_style_types";
 const SHELL_OWNER = "UI shell";
 const SHELL_CHROME_HOST_ID = "appShellChromeRoot";
+
+type VisualVariant = "bad" | "muted" | "ok" | "warn";
 
 export const SHELL_NAV_ITEMS = [
   {

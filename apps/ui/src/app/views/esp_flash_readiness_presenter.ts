@@ -4,13 +4,14 @@ import type {
   EspSerialPortPayload,
 } from "../../api/types";
 import { formatEpochTimestamp } from "../../format";
-import type { VisualVariant } from "../view_style_types";
 import type { MaintenanceReadinessPanelModel } from "./maintenance_readiness_view";
 import type {
   EspFlashReadinessPanelModel,
   EspFlashStatusBadgeModel,
   EspFlashStatusGridRowModel,
 } from "./esp_flash_panel";
+
+type VisualVariant = "bad" | "muted" | "ok" | "warn";
 
 const STATE_TO_VARIANT: Readonly<Record<string, VisualVariant>> = {
   failed: "bad",

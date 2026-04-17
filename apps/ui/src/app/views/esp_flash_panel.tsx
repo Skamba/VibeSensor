@@ -8,12 +8,13 @@ import {
   type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import type { VisualVariant } from "../view_style_types";
 import {
   MaintenanceReadinessPanel,
   type MaintenanceReadinessPanelModel,
 } from "./maintenance_readiness_view";
 import { type DeferredModelSignal } from "./view_model_binding";
+
+type VisualVariant = "bad" | "muted" | "ok" | "warn";
 
 export interface EspFlashStatusBadgeModel {
   text: string;
