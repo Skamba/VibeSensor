@@ -26,6 +26,7 @@ type MutableSpectrumPanelChartDom = {
 };
 
 const SPECTRUM_BAND_TOGGLE_KEYS = ["bandsVisible", "hasBands", "text"] as const;
+const SPECTRUM_BAND_LEGEND_KEYS = ["emptyText", "items", "visible"] as const;
 
 function requireSpectrumElement<T extends HTMLElement>(
   element: T | null,
@@ -35,6 +36,96 @@ function requireSpectrumElement<T extends HTMLElement>(
     return element;
   }
   throw new Error(`Spectrum UI requires ${target}`);
+}
+
+function SpectrumBandLegend(props: {
+  bandLegend: ReadonlySignal<SpectrumBandLegendModel>;
+}) {
+  const {
+    emptyText,
+    items,
+    visible,
+  } = useSignalProperties(props.bandLegend, SPECTRUM_BAND_LEGEND_KEYS);
+  const hidden = useComputed(() => !visible.value);
+
+  return (
+    <div id="bandLegend" class="legend band-legend" hidden={hidden}>
+      {visible.value
+        ? items.value.length
+          ? items.value.map((item) => (
+            <div
+              key={item.labelText}
+              class="legend-item legend-item--band"
+              data-band-state="active"
+              style={`--band-color: ${item.color}`}
+            >
+              <span class="swatch" style={`--swatch-color: ${item.color}`} />
+              <span>{item.labelText}</span>
+            </div>
+          ))
+          : (
+            <div class="legend-item legend-item--band" data-band-state="empty">
+              {emptyText}
+            </div>
+          )
+        : null}
+    </div>
+  );
+}
+
+function SpectrumSensorLegend(props: {
+  sensorLegend: ReadonlySignal<SpectrumSensorLegendModel | null>;
+  sensorLegendHandlers: ReadonlySignal<SpectrumLegendHandlers | null>;
+}) {
+  const hasLegend = useComputed(() => {
+    const legend = props.sensorLegend.value;
+    return legend !== null && legend.items.length > 0 && props.sensorLegendHandlers.value !== null;
+  });
+  if (!hasLegend.value) {
+    return null;
+  }
+
+  const sensorLegend = props.sensorLegend.value;
+  const sensorLegendHandlers = props.sensorLegendHandlers.value;
+  if (sensorLegend === null || sensorLegendHandlers === null) {
+    return null;
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        class="legend-item legend-item--interactive legend-item--reset"
+        aria-pressed={sensorLegend.reset.ariaPressed ? "true" : "false"}
+        title={sensorLegend.reset.titleText}
+        aria-label={sensorLegend.reset.ariaLabel}
+        data-legend-state={sensorLegend.reset.active ? "active" : undefined}
+        onClick={() => sensorLegendHandlers.onReset()}
+      >
+        <span class="legend-item__label">{sensorLegend.reset.labelText}</span>
+      </button>
+      {sensorLegend.items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          class="legend-item legend-item--interactive"
+          aria-pressed={item.ariaPressed ? "true" : "false"}
+          title={item.titleText}
+          aria-label={item.ariaLabel}
+          data-legend-state={item.active ? "active" : item.muted ? "muted" : undefined}
+          onClick={() => sensorLegendHandlers.onSelect(item.id)}
+        >
+          <span class="swatch" style={`--swatch-color: ${item.color}`} />
+          <span class="legend-item__text-group">
+            <span class="legend-item__label">{item.labelText}</span>
+            {item.detailText
+              ? <span class="legend-item__meta">{item.detailText}</span>
+              : null}
+          </span>
+        </button>
+      ))}
+    </>
+  );
 }
 
 function SpectrumPanel(props: {
@@ -62,10 +153,6 @@ function SpectrumPanel(props: {
     bandToggleHasBands.value && bandToggleBandsVisible.value ? "true" : "false"
   );
   const bandToggleHidden = useComputed(() => !bandToggleHasBands.value);
-  const bandLegendHidden = useComputed(() => !props.bandLegend.value.visible);
-  const bandLegend = props.bandLegend.value;
-  const sensorLegend = props.sensorLegend.value;
-  const sensorLegendHandlers = props.sensorLegendHandlers.value;
 
   return (
     <>
@@ -110,70 +197,17 @@ function SpectrumPanel(props: {
             >
               {bandToggleText}
             </button>
-            <div id="bandLegend" class="legend band-legend" hidden={bandLegendHidden}>
-              {bandLegend.visible
-                ? bandLegend.items.length
-                  ? bandLegend.items.map((item) => (
-                    <div
-                      key={item.labelText}
-                      class="legend-item legend-item--band"
-                      data-band-state="active"
-                      style={`--band-color: ${item.color}`}
-                    >
-                      <span class="swatch" style={`--swatch-color: ${item.color}`} />
-                      <span>{item.labelText}</span>
-                    </div>
-                  ))
-                  : (
-                    <div class="legend-item legend-item--band" data-band-state="empty">
-                      {bandLegend.emptyText}
-                    </div>
-                  )
-                : null}
-            </div>
+            <SpectrumBandLegend bandLegend={props.bandLegend} />
           </div>
         </div>
         <div id="spectrumInspector" class="spectrum-inspector" aria-live="polite">
           {props.inspectorText}
         </div>
         <div id="legend" class="legend">
-          {sensorLegend && sensorLegend.items.length > 0 && sensorLegendHandlers
-            ? (
-              <>
-                <button
-                  type="button"
-                  class="legend-item legend-item--interactive legend-item--reset"
-                  aria-pressed={sensorLegend.reset.ariaPressed ? "true" : "false"}
-                  title={sensorLegend.reset.titleText}
-                  aria-label={sensorLegend.reset.ariaLabel}
-                  data-legend-state={sensorLegend.reset.active ? "active" : undefined}
-                  onClick={() => sensorLegendHandlers?.onReset()}
-                >
-                  <span class="legend-item__label">{sensorLegend.reset.labelText}</span>
-                </button>
-                {sensorLegend.items.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    class="legend-item legend-item--interactive"
-                    aria-pressed={item.ariaPressed ? "true" : "false"}
-                    title={item.titleText}
-                    aria-label={item.ariaLabel}
-                    data-legend-state={item.active ? "active" : item.muted ? "muted" : undefined}
-                    onClick={() => sensorLegendHandlers?.onSelect(item.id)}
-                  >
-                    <span class="swatch" style={`--swatch-color: ${item.color}`} />
-                    <span class="legend-item__text-group">
-                      <span class="legend-item__label">{item.labelText}</span>
-                      {item.detailText
-                        ? <span class="legend-item__meta">{item.detailText}</span>
-                        : null}
-                    </span>
-                  </button>
-                ))}
-              </>
-            )
-            : null}
+          <SpectrumSensorLegend
+            sensorLegend={props.sensorLegend}
+            sensorLegendHandlers={props.sensorLegendHandlers}
+          />
         </div>
       </div>
     </>
