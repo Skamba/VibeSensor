@@ -74,6 +74,23 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
   const runHealthText = signal("Ready");
   const runHealthVariant = signal<RealtimeLiveOverviewRenderModel["runHealth"]["variant"]>("ok");
   const sensorCards = signal<RealtimeLiveOverviewSensorCardModel[]>([]);
+  const reboundConnectedSensorsText = signal("1 / 1");
+  const reboundActiveCarText = signal("Support Van");
+  const reboundActiveCarWarning = signal(false);
+  const reboundRecordingStateText = signal("Paused");
+  const reboundDataFreshnessText = signal("Buffered");
+  const reboundStrongestSignalText = signal("54 dB");
+  const reboundRunHealthText = signal("Paused");
+  const reboundRunHealthVariant = signal<RealtimeLiveOverviewRenderModel["runHealth"]["variant"]>("muted");
+  const reboundSensorCards = signal<RealtimeLiveOverviewSensorCardModel[]>([
+    {
+      connected: true,
+      id: "rear-right",
+      label: "Rear Right",
+      statusText: "Online",
+      strongest: false,
+    },
+  ]);
 
   const model = computed<RealtimeLiveOverviewRenderModel>(() => ({
     activeCar: {
@@ -90,6 +107,22 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
     },
     sensorCards: sensorCards.value,
     strongestSignalText: strongestSignalText.value,
+  }));
+  const reboundModel = computed<RealtimeLiveOverviewRenderModel>(() => ({
+    activeCar: {
+      text: reboundActiveCarText.value,
+      warning: reboundActiveCarWarning.value,
+    },
+    connectedSensorsText: reboundConnectedSensorsText.value,
+    dataFreshnessText: reboundDataFreshnessText.value,
+    recordingStateText: reboundRecordingStateText.value,
+    runHealth: {
+      hidden: false,
+      text: reboundRunHealthText.value,
+      variant: reboundRunHealthVariant.value,
+    },
+    sensorCards: reboundSensorCards.value,
+    strongestSignalText: reboundStrongestSignalText.value,
   }));
 
   const harness = await mountSignalView(async () => {
@@ -145,6 +178,32 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
     assert.equal(harness.host.querySelectorAll(".live-sensor-card--strongest").length, 1);
     assert.match(harness.host.textContent ?? "", /Front Left/);
     assert.doesNotMatch(harness.host.textContent ?? "", /No sensors/i);
+
+    harness.view.bindModel(reboundModel);
+    await harness.flush();
+
+    assert.equal(requireElement(harness.host, "#liveConnectedSensors [data-value]").textContent, "1 / 1");
+    assert.equal(requireElement(harness.host, "#liveRecordingState [data-value]").textContent, "Paused");
+    assert.equal(requireElement(harness.host, "#liveDataFreshness [data-value]").textContent, "Buffered");
+    assert.equal(requireElement(harness.host, "#liveStrongestSignal [data-value]").textContent, "54 dB");
+    assert.equal(requireElement(harness.host, "#liveRunHealth").textContent, "Paused");
+    assert.match(requireElement(harness.host, "#liveActiveCar [data-value]").textContent ?? "", /Support Van/);
+    assert.match(harness.host.textContent ?? "", /Rear Right/);
+    assert.doesNotMatch(harness.host.textContent ?? "", /Front Left/);
+
+    connectedSensorsText.value = "9 / 9";
+    strongestSignalText.value = "99 dB";
+    await harness.flush();
+
+    assert.equal(requireElement(harness.host, "#liveConnectedSensors [data-value]").textContent, "1 / 1");
+    assert.equal(requireElement(harness.host, "#liveStrongestSignal [data-value]").textContent, "54 dB");
+
+    reboundConnectedSensorsText.value = "2 / 2";
+    reboundStrongestSignalText.value = "61 dB";
+    await harness.flush();
+
+    assert.equal(requireElement(harness.host, "#liveConnectedSensors [data-value]").textContent, "2 / 2");
+    assert.equal(requireElement(harness.host, "#liveStrongestSignal [data-value]").textContent, "61 dB");
   } finally {
     harness.cleanup();
   }

@@ -1,12 +1,9 @@
 import { render } from "preact";
 
 import { useUiText } from "../ui_i18n";
-import {
-  computed,
-  signal,
-  type ReadonlySignal,
-} from "../ui_signals";
+import { signal, type ReadonlySignal } from "../ui_signals";
 import { inlineStateActionClass } from "./dom_helpers";
+import { createBoundViewModel } from "./view_model_binding";
 import type {
   RealtimeCaptureReadinessChecklistModel,
   RealtimeLoggingSummaryAction,
@@ -256,13 +253,12 @@ function RealtimeLoggingPanel(props: {
 
 export function mountRealtimeLoggingPanel(host: HTMLElement): RealtimeLoggingPanelBridge {
   const actions = signal<RealtimeLoggingPanelActionHandlers | null>(null);
-  const modelSource = signal<ReadonlySignal<RealtimeLoggingPanelRenderModel> | null>(null);
-  const model = computed<RealtimeLoggingPanelRenderModel>(() => modelSource.value?.value ?? DEFAULT_PANEL_MODEL);
-  render(<RealtimeLoggingPanel actions={actions} model={model} />, host);
+  const modelBinding = createBoundViewModel(DEFAULT_PANEL_MODEL);
+  render(<RealtimeLoggingPanel actions={actions} model={modelBinding.model} />, host);
 
   return {
     bindModel(model: ReadonlySignal<RealtimeLoggingPanelRenderModel>): void {
-      modelSource.value = model;
+      modelBinding.bind(model);
     },
     bindActions(handlers: RealtimeLoggingPanelActionHandlers): void {
       actions.value = handlers;
