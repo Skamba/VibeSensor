@@ -1,5 +1,4 @@
 import { apiJson, apiJsonResponse } from "./http";
-import { cloneTransportValue } from "../transport/clone";
 import type * as Local from "../api/types";
 import type * as Transport from "./types";
 
@@ -12,23 +11,17 @@ export function historyReportPdfUrl(runId: string, lang: string): string {
 }
 
 export async function getHistory(): Promise<Local.HistoryListPayload> {
-  return cloneTransportValue(
-    await apiJson<Transport.HistoryListPayload>("/api/history"),
-  );
+  return await apiJson<Transport.HistoryListPayload>("/api/history");
 }
 
 export async function deleteHistoryRun(runId: string): Promise<Local.DeleteHistoryRunPayload> {
-  return cloneTransportValue(
-    await apiJson<Transport.DeleteHistoryRunPayload>(`/api/history/${encodeURIComponent(runId)}`, {
-      method: "DELETE",
-    }),
-  );
+  return await apiJson<Transport.DeleteHistoryRunPayload>(`/api/history/${encodeURIComponent(runId)}`, {
+    method: "DELETE",
+  });
 }
 
 export async function getHistoryRun(runId: string): Promise<Local.HistoryRunPayload> {
-  return cloneTransportValue(
-    await apiJson<Transport.HistoryRunPayload>(`/api/history/${encodeURIComponent(runId)}`),
-  );
+  return await apiJson<Transport.HistoryRunPayload>(`/api/history/${encodeURIComponent(runId)}`);
 }
 
 export async function getHistoryInsights(
@@ -42,11 +35,7 @@ export async function getHistoryInsights(
     throw new Error("Empty history insights response");
   }
   if (response.status === 202) {
-    return cloneTransportValue(
-      response.body as Transport.HistoryInsightsAnalyzingPayload,
-    );
+    return response.body as Transport.HistoryInsightsAnalyzingPayload;
   }
-  return cloneTransportValue(
-    response.body as Transport.HistoryInsightsPayload,
-  );
+  return response.body as Transport.HistoryInsightsPayload;
 }
