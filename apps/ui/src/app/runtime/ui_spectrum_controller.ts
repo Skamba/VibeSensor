@@ -124,7 +124,6 @@ export class UiSpectrumController {
     let initialized = false;
     let previousLanguage = this.state.shell.lang;
     effect(() => {
-      trackAppStateSlice(this.state.shell);
       const currentLanguage = this.state.shell.lang;
       if (!initialized) {
         initialized = true;
