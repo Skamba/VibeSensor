@@ -1,12 +1,12 @@
 import { apiJson } from "./http";
-import { fromTransportPayload } from "../transport/http_adapters";
+import { cloneTransportValue } from "../transport/clone";
 import type * as Local from "../transport/http_models";
 import type * as Transport from "./types";
 
 const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
 
 export async function getClientLocations(): Promise<Local.ClientLocationsResponse> {
-  return fromTransportPayload<Transport.ClientLocationsResponse, Local.ClientLocationsResponse>(
+  return cloneTransportValue(
     await apiJson<Transport.ClientLocationsResponse>("/api/client-locations"),
   );
 }
