@@ -2,6 +2,10 @@ import { render, type JSX } from "preact";
 import { useRef } from "preact/hooks";
 
 import {
+  handleTabListKeyboardNavigation,
+  normalizeTabListIndex,
+} from "../dom/tab_list_keyboard_navigation";
+import {
   createUiSettingsPanelHostRefs,
   resolveUiSettingsPanelHosts,
   type UiSettingsPanelHostRefs,
@@ -80,10 +84,6 @@ function isSettingsShellTabId(value: string): value is SettingsShellTabId {
   return SETTINGS_TABS.some((tab) => tab.id === value);
 }
 
-function normalizeSettingsTabIndex(index: number): number {
-  return ((index % SETTINGS_TABS.length) + SETTINGS_TABS.length) % SETTINGS_TABS.length;
-}
-
 function SettingsShellTabButton(props: {
   activeTabId: ReadonlySignal<SettingsShellTabId>;
   index: number;
@@ -102,37 +102,14 @@ function SettingsShellTabButton(props: {
   function handleTabKeyDown(
     event: JSX.TargetedKeyboardEvent<HTMLButtonElement>,
   ): void {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      onActivateTab(tab.id);
-      return;
-    }
-    if (event.key === "ArrowRight") {
-      event.preventDefault();
-      const nextIndex = normalizeSettingsTabIndex(index + 1);
-      onActivateTab(SETTINGS_TABS[nextIndex].id);
-      props.onFocusTab(nextIndex);
-      return;
-    }
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      const nextIndex = normalizeSettingsTabIndex(index - 1);
-      onActivateTab(SETTINGS_TABS[nextIndex].id);
-      props.onFocusTab(nextIndex);
-      return;
-    }
-    if (event.key === "Home") {
-      event.preventDefault();
-      onActivateTab(SETTINGS_TABS[0].id);
-      props.onFocusTab(0);
-      return;
-    }
-    if (event.key === "End") {
-      event.preventDefault();
-      const nextIndex = SETTINGS_TABS.length - 1;
-      onActivateTab(SETTINGS_TABS[nextIndex].id);
-      props.onFocusTab(nextIndex);
-    }
+    handleTabListKeyboardNavigation({
+      count: SETTINGS_TABS.length,
+      event,
+      focusTabAt: props.onFocusTab,
+      getTabIdAt: (nextIndex) => SETTINGS_TABS[nextIndex].id,
+      index,
+      onActivateTab,
+    });
   }
 
   return (
@@ -179,7 +156,7 @@ function SettingsShell(props: SettingsShellProps) {
   const tabButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function focusTabAtIndex(index: number): void {
-    tabButtonRefs.current[normalizeSettingsTabIndex(index)]?.focus();
+    tabButtonRefs.current[normalizeTabListIndex(index, SETTINGS_TABS.length)]?.focus();
   }
 
   return (
