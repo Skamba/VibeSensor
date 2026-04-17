@@ -10,9 +10,8 @@ import { createEspFlashFeaturePresenter } from "../views/esp_flash_feature_prese
 import type { EspFlashPanelView } from "../views/esp_flash_panel";
 
 interface EspFlashFeaturePorts {
-  getActiveSettingsTabId: () => string;
   activeViewId: ReadonlySignal<string>;
-  subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
+  activeSettingsTabId: ReadonlySignal<string>;
 }
 
 export interface EspFlashFeatureDeps {
@@ -36,10 +35,9 @@ export function createEspFlashFeature(
 ): EspFlashFeature {
   const { panel, ports, services } = ctx;
   const handlersBound = signal(false);
-  const activeSettingsTabId = signal(ports.getActiveSettingsTabId());
   const pollingEnabled = computed(() =>
     handlersBound.value
-    && isEspFlashPollingContext(ports.activeViewId.value, activeSettingsTabId.value)
+    && isEspFlashPollingContext(ports.activeViewId.value, ports.activeSettingsTabId.value)
   );
   const workflow = createEspFlashFeatureWorkflow({
     t: services.t,
@@ -51,10 +49,6 @@ export function createEspFlashFeature(
     t: services.t,
   });
   panel.bindModel(presenter.model);
-
-  ports.subscribeSettingsTabChanges((tabId) => {
-    activeSettingsTabId.value = tabId;
-  });
 
   let wasPollingEnabled = false;
   effect(() => {

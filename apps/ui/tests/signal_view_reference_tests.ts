@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { computed, signal, useSignalProperties } from "../src/app/ui_signals";
+import { computed, effect, signal, useSignalProperties } from "../src/app/ui_signals";
 import type {
   RealtimeLiveOverviewRenderModel,
   RealtimeLiveOverviewSensorCardModel,
@@ -276,18 +276,25 @@ async function runSettingsShellReferenceTest(): Promise<void> {
 
   try {
     const observedTabs: string[] = [];
-    const dispose = harness.view.subscribeActiveTabChanges((tabId) => {
+    const shellView = harness.view.view;
+    let initialized = false;
+    const dispose = effect(() => {
+      const tabId = shellView.activeTabId.value;
+      if (!initialized) {
+        initialized = true;
+        return;
+      }
       observedTabs.push(tabId);
     });
 
-    assert.equal(harness.view.getActiveTabId(), "carTab");
+    assert.equal(shellView.activeTabId.value, "carTab");
     assert.deepEqual(observedTabs, []);
 
-    harness.view.activateTab("analysisTab");
+    shellView.activateTab("analysisTab");
     await harness.flush();
 
     assert.deepEqual(observedTabs, ["analysisTab"]);
-    assert.equal(harness.view.getActiveTabId(), "analysisTab");
+    assert.equal(shellView.activeTabId.value, "analysisTab");
     assert.equal(
       requireElement(harness.host, '[data-settings-tab="analysisTab"]').getAttribute("aria-selected"),
       "true",
@@ -295,12 +302,12 @@ async function runSettingsShellReferenceTest(): Promise<void> {
     assert.equal(requireElement(harness.host, "#analysisTab").hidden, false);
     assert.equal(requireElement(harness.host, "#carTab").hidden, true);
 
-    harness.view.activateTab("analysisTab");
+    shellView.activateTab("analysisTab");
     await harness.flush();
     assert.deepEqual(observedTabs, ["analysisTab"]);
 
     dispose();
-    harness.view.activateTab("speedSourceTab");
+    shellView.activateTab("speedSourceTab");
     await harness.flush();
     assert.deepEqual(observedTabs, ["analysisTab"]);
   } finally {

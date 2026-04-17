@@ -60,30 +60,18 @@ function createHistoryPanelSpy() {
 
 function createSettingsShellSpy() {
   const activations: string[] = [];
-  let activeTabId = "carTab";
-  let listener: ((tabId: string) => void) | null = null;
+  const activeTabId = signal("carTab");
 
   return {
     activations,
     emit(tabId: string) {
-      activeTabId = tabId;
-      listener?.(tabId);
+      activeTabId.value = tabId;
     },
     view: {
+      activeTabId,
       activateTab(tabId) {
-        activeTabId = tabId;
+        activeTabId.value = tabId;
         activations.push(tabId);
-      },
-      getActiveTabId() {
-        return activeTabId;
-      },
-      subscribeActiveTabChanges(nextListener) {
-        listener = nextListener;
-        return () => {
-          if (listener === nextListener) {
-            listener = null;
-          }
-        };
       },
     } satisfies SettingsShellView,
   };
@@ -220,11 +208,9 @@ test.describe("createLazyUiPanels", () => {
     lazyPanels.panels.history.bindModel(historyModel);
     lazyPanels.panels.history.bindActions(historyActions);
 
-    const tabChanges: string[] = [];
-    const dispose = lazyPanels.panels.settingsShell.subscribeActiveTabChanges((tabId) => {
-      tabChanges.push(tabId);
-    });
+    expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("carTab");
     lazyPanels.panels.settingsShell.activateTab("updateTab");
+    expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("updateTab");
 
     const internetActions = {} as Parameters<InternetPanelView["bindActions"]>[0];
     const internetModel = signal({}) as unknown as Parameters<InternetPanelView["bindModel"]>[0];
@@ -258,7 +244,7 @@ test.describe("createLazyUiPanels", () => {
     expect(speedSourcePanel.diagnostics).toEqual([speedSourceDiagnostics]);
     expect(speedSourcePanel.focusManualCalls).toBe(1);
     expect(lazyPanels.panels.settings.speedSource.isObdConfigVisible()).toBe(true);
-    expect(tabChanges).toEqual(["updateTab"]);
+    expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("updateTab");
 
     lazyPanels.panels.settings.speedSource.focusScanObdDevices();
     lazyPanels.panels.settings.speedSource.focusStaleTimeoutInput();
@@ -266,15 +252,13 @@ test.describe("createLazyUiPanels", () => {
     expect(speedSourcePanel.focusStaleCalls).toBe(1);
 
     settingsShell.emit("internetTab");
-    expect(lazyPanels.panels.settingsShell.getActiveTabId()).toBe("internetTab");
-    expect(tabChanges).toEqual(["updateTab", "internetTab"]);
+    expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("internetTab");
 
     await lazyPanels.ensureViewPanels("historyView");
     await lazyPanels.ensureViewPanels("settingsView");
     expect(historyLoads).toBe(1);
     expect(settingsLoads).toBe(1);
 
-    dispose();
   });
 
   test("prefetchHiddenPanels schedules offscreen mounts through the deferred scheduler", async () => {
