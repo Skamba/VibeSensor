@@ -81,9 +81,10 @@ const REALTIME_LIVE_OVERVIEW_MODEL_KEYS = [
 function RealtimeLiveOverviewRunHealthPill(props: {
   runHealth: ReadonlySignal<RealtimeLiveOverviewHealthModel>;
 }) {
-  const hidden = useComputed(() => props.runHealth.value.hidden);
-  const text = useComputed(() => props.runHealth.value.text);
-  const variant = useComputed(() => props.runHealth.value.variant);
+  const { hidden, text, variant } = useSignalProperties(
+    props.runHealth,
+    ["hidden", "text", "variant"] as const,
+  );
 
   return (
     <div
@@ -102,8 +103,7 @@ function RealtimeLiveOverviewActiveCarStat(props: {
   activeCar: ReadonlySignal<RealtimeLiveOverviewActiveCarModel>;
   labelText: ReadonlySignal<string>;
 }) {
-  const text = useComputed(() => props.activeCar.value.text);
-  const warning = useComputed(() => props.activeCar.value.warning);
+  const { text, warning } = useSignalProperties(props.activeCar, ["text", "warning"] as const);
   const variant = useComputed(() => warning.value ? "warn" : undefined);
   const hasIcon = useComputed(() => warning.value ? "true" : undefined);
 
