@@ -1,3 +1,6 @@
+import { Suspense, lazy } from "preact/compat";
+
+import { render } from "preact";
 import { signal } from "./ui_signals";
 import {
   createDeferredModelSignal,
@@ -7,11 +10,11 @@ import type { SpectrumPanelView } from "./runtime/spectrum_panel_view";
 import {
   type UiPanelHostRegistry,
 } from "./ui_panel_host_registry";
-import { mountAnalysisPanel, type AnalysisPanelView } from "./views/analysis_panel";
-import { mountCarsPanel, type CarsPanelView } from "./views/cars_panel";
-import { mountEspFlashPanel, type EspFlashPanelView } from "./views/esp_flash_panel";
+import type { AnalysisPanelView } from "./views/analysis_panel";
+import type { CarsPanelView } from "./views/cars_panel";
+import type { EspFlashPanelView } from "./views/esp_flash_panel";
 import type { HistoryPanelView } from "./views/history_table_view";
-import { mountInternetPanel, type InternetPanelView } from "./views/internet_panel";
+import type { InternetPanelView } from "./views/internet_panel";
 import {
   mountRealtimeLoggingPanel,
   type RealtimeLoggingPanelActionHandlers,
@@ -23,11 +26,11 @@ import {
   type RealtimeLiveOverviewBridge,
   type RealtimeLiveOverviewRenderModel,
 } from "./views/realtime_live_overview";
-import { mountSensorsPanel, type SensorsPanelView } from "./views/sensors_panel";
+import type { SensorsPanelView } from "./views/sensors_panel";
 import type { SettingsShellView } from "./views/settings_shell";
-import { mountSpeedSourcePanel, type SpeedSourcePanelView } from "./views/speed_source_panel";
+import type { SpeedSourcePanelView } from "./views/speed_source_panel";
 import { mountSpectrumPanel } from "./views/spectrum_panel";
-import { mountUpdatePanel, type UpdatePanelView } from "./views/update_panel";
+import type { UpdatePanelView } from "./views/update_panel";
 
 export interface UiMountedDashboardPanels {
   spectrum: SpectrumPanelView;
@@ -52,8 +55,6 @@ export interface UiMountedPanels {
   settings: UiMountedSettingsPanels;
 }
 
-export type UiMountedLazyPanels = Pick<UiMountedPanels, "settingsShell" | "settings">;
-
 export interface UiMountedLazyPanelHandles {
   settingsShell: SettingsShellView;
   settings: {
@@ -65,6 +66,17 @@ export interface UiMountedLazyPanelHandles {
       "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput" | "isObdConfigVisible"
     >;
   };
+}
+
+const HistoryLazyView = lazy(() => import("./views/history_lazy_view"));
+const SettingsLazyView = lazy(() => import("./views/settings_lazy_view"));
+
+function LazyPanelFallback(props: { text: string }) {
+  return (
+    <div class="subtle" aria-busy="true">
+      {props.text}
+    </div>
+  );
 }
 
 export function mountDashboardPanels(
@@ -91,51 +103,26 @@ export async function mountHistoryPanelLazy(
   hosts: UiPanelHostRegistry,
   view: HistoryPanelView,
 ): Promise<void> {
-  const { mountHistoryPanel } = await import("./views/history_panel");
-  mountHistoryPanel(hosts.history, view);
+  return new Promise((resolve) => {
+    render(
+      <Suspense fallback={<LazyPanelFallback text="Loading history..." />}>
+        <HistoryLazyView onReady={resolve} view={view} />
+      </Suspense>,
+      hosts.history,
+    );
+  });
 }
 
 export async function mountSettingsPanelsLazy(
   hosts: UiPanelHostRegistry,
-  panels: UiMountedLazyPanels,
+  panels: Pick<UiMountedPanels, "settings">,
 ): Promise<UiMountedLazyPanelHandles> {
-  const settingsShellModulePromise = import("./views/settings_shell");
-  const settingsPanelModulesPromise = Promise.all([
-    import("./views/cars_panel"),
-    import("./views/analysis_panel"),
-    import("./views/internet_panel"),
-    import("./views/update_panel"),
-    import("./views/sensors_panel"),
-    import("./views/speed_source_panel"),
-    import("./views/esp_flash_panel"),
-  ]);
-  const { mountSettingsShell } = await settingsShellModulePromise;
-  const settingsShellMount = mountSettingsShell(hosts.settingsShell);
-  const settingsShell = settingsShellMount.view;
-  const settingsHosts = settingsShellMount.panelHosts;
-  const [
-    { mountCarsPanel },
-    { mountAnalysisPanel },
-    { mountInternetPanel },
-    { mountUpdatePanel },
-    { mountSensorsPanel },
-    { mountSpeedSourcePanel },
-    { mountEspFlashPanel },
-  ] = await settingsPanelModulesPromise;
-  const cars = mountCarsPanel(settingsHosts.cars, panels.settings.cars);
-  const analysis = mountAnalysisPanel(settingsHosts.analysis, panels.settings.analysis);
-  const internet = mountInternetPanel(settingsHosts.internet, panels.settings.internet);
-  mountUpdatePanel(settingsHosts.update, panels.settings.update);
-  mountSensorsPanel(settingsHosts.sensors, panels.settings.sensors);
-  const speedSource = mountSpeedSourcePanel(settingsHosts.speedSource, panels.settings.speedSource);
-  mountEspFlashPanel(settingsHosts.espFlash, panels.settings.espFlash);
-  return {
-    settingsShell,
-    settings: {
-      cars,
-      analysis,
-      internet,
-      speedSource,
-    },
-  };
+  return new Promise((resolve) => {
+    render(
+      <Suspense fallback={<LazyPanelFallback text="Loading settings..." />}>
+        <SettingsLazyView onReady={resolve} panels={panels} />
+      </Suspense>,
+      hosts.settingsShell,
+    );
+  });
 }

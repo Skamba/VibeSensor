@@ -5,14 +5,12 @@ import {
   mountSettingsPanelsLazy,
   type UiMountedDashboardPanels,
   type UiMountedLazyPanelHandles,
-  type UiMountedLazyPanels,
   type UiMountedPanels,
 } from "./ui_panel_bootstrap";
 import { effect, signal } from "./ui_signals";
 import type {
   AnalysisPanelActionHandlers,
   AnalysisPanelCarAvailability,
-  AnalysisPanelFieldKey,
   AnalysisPanelRenderModel,
   AnalysisPanelView,
 } from "./views/analysis_panel";
@@ -76,7 +74,7 @@ export interface CreateUiLazyPanelsDeps {
   loadHistoryPanel?: (hosts: UiPanelHostRegistry, view: HistoryPanelView) => Promise<void>;
   loadSettingsPanels?: (
     hosts: UiPanelHostRegistry,
-    panels: UiMountedLazyPanels,
+    panels: Pick<UiMountedPanels, "settings">,
   ) => Promise<UiMountedLazyPanelHandles>;
   scheduleDeferredWork?: DeferredWorkScheduler;
 }
@@ -362,21 +360,20 @@ export function createLazyUiPanels(deps: CreateUiLazyPanelsDeps): UiLazyPanels {
 
   const ensureSettingsMounted = (): Promise<void> => {
     if (settingsMountPromise === null) {
-      settingsMountPromise = (deps.loadSettingsPanels ?? mountSettingsPanelsLazy)(
-        hosts,
-        {
-          settingsShell: settingsShell.view,
-          settings: {
-            analysis: settings.analysis.view,
-            cars: settings.cars.view,
-            espFlash: settings.espFlash.view,
-            internet: settings.internet.view,
-            sensors: settings.sensors.view,
-            speedSource: settings.speedSource.view,
-            update: settings.update.view,
+        settingsMountPromise = (deps.loadSettingsPanels ?? mountSettingsPanelsLazy)(
+          hosts,
+          {
+            settings: {
+              analysis: settings.analysis.view,
+              cars: settings.cars.view,
+              espFlash: settings.espFlash.view,
+              internet: settings.internet.view,
+              sensors: settings.sensors.view,
+              speedSource: settings.speedSource.view,
+              update: settings.update.view,
+            },
           },
-        },
-      ).then((mountedPanels) => {
+        ).then((mountedPanels) => {
           attachSettingsPanels(mountedPanels);
         });
     }
