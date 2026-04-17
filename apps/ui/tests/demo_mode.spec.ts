@@ -14,18 +14,20 @@ test.describe("runDemoMode", () => {
     const selectedClientId = "aabbcc001122";
     const state = createAppState();
     state.transport.wsState = "reconnecting";
+    let queuedPayload: unknown = null;
 
     runDemoMode({
+      queueTransportPayload: (payload) => {
+        queuedPayload = payload;
+      },
       state,
     });
 
-    const adaptedPayload = adaptServerPayload(
-      unwrapAppStateValue(state.transport.pendingPayload),
-    );
+    const adaptedPayload = adaptServerPayload(queuedPayload);
 
-    expect(state.transport.wsState).toBe("connected");
-    expect(state.transport.hasReceivedPayload).toBe(true);
-    expect(state.transport.pendingPayload).not.toBeNull();
+    expect(state.transport.wsState).toBe("reconnecting");
+    expect(state.transport.hasReceivedPayload).toBe(false);
+    expect(unwrapAppStateValue(state.transport.pendingPayload)).toBeNull();
     expect(adaptedPayload.clients).toHaveLength(5);
     expect(adaptedPayload.spectra?.clients[selectedClientId]).toMatchObject({
       freq: expect.any(Array),
