@@ -117,6 +117,30 @@ test.describe("UiLiveTransportController", () => {
     }
   });
 
+  test("does not queue an initial payload that already exists before effects bind", async () => {
+    const state = createAppState();
+    state.transport.pendingPayload.value = makeLivePayload({
+      clients: [makeClient("client-1")],
+      speed_mps: 12,
+    });
+
+    const raf = installRafHarness();
+    try {
+      new UiLiveTransportController({
+        state,
+        payloadErrorMessage: () => "payload error",
+      });
+      await flushAsyncWork();
+
+      expect(state.transport.renderQueued.value).toBe(false);
+      expect(state.realtime.clients.value).toEqual([]);
+      expect(state.realtime.selectedClientId.value).toBeNull();
+      expect(state.realtime.speedMps.value).toBeNull();
+    } finally {
+      raf.restore();
+    }
+  });
+
   test("sends the current client selection when websocket state becomes ready", async () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
@@ -147,6 +171,28 @@ test.describe("UiLiveTransportController", () => {
       { client_id: "client-7" },
       { client_id: "client-7" },
     ]);
+  });
+
+  test("does not send the current selection for an initial ready websocket state", async () => {
+    const state = createAppState();
+    const sentSelections: Array<{ client_id: string | null }> = [];
+    state.transport.ws.value = {
+      uiState: signal("connected"),
+      close() {},
+      connect() {},
+      send(selection: { client_id: string | null }) {
+        sentSelections.push(selection);
+      },
+    } as typeof state.transport.ws.value;
+    state.realtime.selectedClientId.value = "client-7";
+
+    new UiLiveTransportController({
+      state,
+      payloadErrorMessage: () => "payload error",
+    });
+    await flushAsyncWork();
+
+    expect(sentSelections).toEqual([]);
   });
 
   test("mirrors ws client uiState into the transport slice", async () => {
