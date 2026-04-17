@@ -1,6 +1,12 @@
 import { render, type JSX } from "preact";
 import { useRef } from "preact/hooks";
 
+import {
+  createUiSettingsPanelHostRefs,
+  resolveUiSettingsPanelHosts,
+  type UiSettingsPanelHostRefs,
+  type UiSettingsPanelHostRegistry,
+} from "../ui_panel_host_registry";
 import { useUiText } from "../ui_i18n";
 import {
   effect,
@@ -67,6 +73,7 @@ export interface SettingsShellView {
 type SettingsShellProps = {
   activeTabId: ReadonlySignal<SettingsShellTabId>;
   onActivateTab(tabId: SettingsShellTabId): void;
+  panelHostRefs: UiSettingsPanelHostRefs;
 };
 
 function isSettingsShellTabId(value: string): value is SettingsShellTabId {
@@ -148,6 +155,7 @@ function SettingsShellTabButton(props: {
 
 function SettingsShellTabPanel(props: {
   activeTabId: ReadonlySignal<SettingsShellTabId>;
+  hostRef: UiSettingsPanelHostRefs[keyof UiSettingsPanelHostRefs];
   tab: (typeof SETTINGS_TABS)[number];
 }) {
   const isActive = useComputed(() => props.tab.id === props.activeTabId.value);
@@ -161,13 +169,13 @@ function SettingsShellTabPanel(props: {
       role="tabpanel"
       hidden={hidden}
     >
-      <div id={props.tab.hostId} />
+      <div id={props.tab.hostId} ref={props.hostRef} />
     </div>
   );
 }
 
 function SettingsShell(props: SettingsShellProps) {
-  const { onActivateTab } = props;
+  const { onActivateTab, panelHostRefs } = props;
   const tabButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function focusTabAtIndex(index: number): void {
@@ -192,14 +200,44 @@ function SettingsShell(props: SettingsShellProps) {
         })}
       </nav>
       {SETTINGS_TABS.map((tab) => (
-        <SettingsShellTabPanel key={tab.id} activeTabId={props.activeTabId} tab={tab} />
+        <SettingsShellTabPanel
+          key={tab.id}
+          activeTabId={props.activeTabId}
+          hostRef={getSettingsPanelHostRef(panelHostRefs, tab.id)}
+          tab={tab}
+        />
       ))}
     </>
   );
 }
 
-export function mountSettingsShell(host: HTMLElement): SettingsShellView {
+function getSettingsPanelHostRef(
+  panelHostRefs: UiSettingsPanelHostRefs,
+  tabId: SettingsShellTabId,
+): UiSettingsPanelHostRefs[keyof UiSettingsPanelHostRefs] {
+  switch (tabId) {
+    case "carTab":
+      return panelHostRefs.cars;
+    case "analysisTab":
+      return panelHostRefs.analysis;
+    case "speedSourceTab":
+      return panelHostRefs.speedSource;
+    case "sensorsTab":
+      return panelHostRefs.sensors;
+    case "internetTab":
+      return panelHostRefs.internet;
+    case "updateTab":
+      return panelHostRefs.update;
+    case "espFlashTab":
+      return panelHostRefs.espFlash;
+  }
+}
+
+export function mountSettingsShell(
+  host: HTMLElement,
+): { panelHosts: UiSettingsPanelHostRegistry; view: SettingsShellView } {
   const activeTabId = signal<SettingsShellTabId>("carTab");
+  const panelHostRefs = createUiSettingsPanelHostRefs();
 
   function setActiveTab(tabId: SettingsShellTabId): void {
     if (tabId === activeTabId.value) {
@@ -214,30 +252,35 @@ export function mountSettingsShell(host: HTMLElement): SettingsShellView {
       onActivateTab={(tabId) => {
         setActiveTab(tabId);
       }}
+      panelHostRefs={panelHostRefs}
     />,
     host,
   );
+  const panelHosts = resolveUiSettingsPanelHosts(panelHostRefs);
 
   return {
-    activateTab(tabId: string): void {
-      if (!isSettingsShellTabId(tabId)) {
-        return;
-      }
-      setActiveTab(tabId);
-    },
-    getActiveTabId(): string {
-      return activeTabId.value;
-    },
-    subscribeActiveTabChanges(listener: (tabId: string) => void): ViewDisposer {
-      let initialized = false;
-      return effect(() => {
-        const nextTabId = activeTabId.value;
-        if (!initialized) {
-          initialized = true;
+    panelHosts,
+    view: {
+      activateTab(tabId: string): void {
+        if (!isSettingsShellTabId(tabId)) {
           return;
         }
-        listener(nextTabId);
-      });
+        setActiveTab(tabId);
+      },
+      getActiveTabId(): string {
+        return activeTabId.value;
+      },
+      subscribeActiveTabChanges(listener: (tabId: string) => void): ViewDisposer {
+        let initialized = false;
+        return effect(() => {
+          const nextTabId = activeTabId.value;
+          if (!initialized) {
+            initialized = true;
+            return;
+          }
+          listener(nextTabId);
+        });
+      },
     },
   };
 }
