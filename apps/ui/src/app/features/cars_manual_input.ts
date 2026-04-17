@@ -7,6 +7,7 @@ import {
   type ManualTireValues,
 } from "./cars_wizard_state";
 import {
+  batch,
   computed,
   signal,
   type ReadonlySignal,
@@ -95,11 +96,13 @@ export function createCarsManualInputStore(
   }
 
   function write(inputs: CarsFeatureManualInputState): void {
-    finalDrive.value = inputs.finalDrive;
-    rim.value = inputs.rim;
-    tireAspect.value = inputs.tireAspect;
-    tireWidth.value = inputs.tireWidth;
-    topGear.value = inputs.topGear;
+    batch(() => {
+      finalDrive.value = inputs.finalDrive;
+      rim.value = inputs.rim;
+      tireAspect.value = inputs.tireAspect;
+      tireWidth.value = inputs.tireWidth;
+      topGear.value = inputs.topGear;
+    });
   }
 
   return {
