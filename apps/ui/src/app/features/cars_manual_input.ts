@@ -34,10 +34,6 @@ export interface CarsFeatureManualInputStore {
   write(inputs: CarsFeatureManualInputState): void;
 }
 
-export function cloneManualInputs(inputs: CarsFeatureManualInputState): CarsFeatureManualInputState {
-  return { ...inputs };
-}
-
 function parsePositiveValue(value: string): number | null {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
