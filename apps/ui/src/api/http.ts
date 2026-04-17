@@ -1,31 +1,13 @@
 const DEFAULT_TIMEOUT_MS = 10000;
-const NOOP = () => {};
 const WHITESPACE_RE = /\s+/g;
 const DEFAULT_TIMEOUT_MESSAGE = "Request timed out.";
 
 function composeSignal(
   timeoutSignal: AbortSignal,
   externalSignal?: AbortSignal,
-): { signal: AbortSignal; cleanup: () => void } {
-  if (!externalSignal) return { signal: timeoutSignal, cleanup: NOOP };
-  if ("any" in AbortSignal) {
-    return { signal: AbortSignal.any([timeoutSignal, externalSignal]), cleanup: NOOP };
-  }
-
-  const controller = new AbortController();
-  const abortFromExternal = () => controller.abort(externalSignal.reason);
-  const abortFromTimeout = () => controller.abort(timeoutSignal.reason);
-  externalSignal.addEventListener("abort", abortFromExternal, { once: true });
-  timeoutSignal.addEventListener("abort", abortFromTimeout, { once: true });
-  if (externalSignal.aborted) abortFromExternal();
-  if (timeoutSignal.aborted) abortFromTimeout();
-  return {
-    signal: controller.signal,
-    cleanup: () => {
-      externalSignal.removeEventListener("abort", abortFromExternal);
-      timeoutSignal.removeEventListener("abort", abortFromTimeout);
-    },
-  };
+): AbortSignal {
+  if (!externalSignal) return timeoutSignal;
+  return AbortSignal.any([timeoutSignal, externalSignal]);
 }
 
 function formatBodySnippet(text: string): string {
@@ -52,10 +34,9 @@ export async function apiJsonResponse<T = unknown>(
     () => timeoutController.abort(new DOMException(DEFAULT_TIMEOUT_MESSAGE, "AbortError")),
     timeoutMs,
   );
-  const { signal, cleanup } = composeSignal(timeoutController.signal, externalSignal ?? undefined);
+  const signal = composeSignal(timeoutController.signal, externalSignal ?? undefined);
   const response = await fetch(path, { ...requestInit, signal }).finally(() => {
     window.clearTimeout(timeoutId);
-    cleanup();
   });
   const bodyText = await response.text();
   if (!response.ok) {
