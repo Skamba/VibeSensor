@@ -1,4 +1,5 @@
 import { render, type JSX } from "preact";
+import { useRef } from "preact/hooks";
 
 import { useUiText } from "../ui_i18n";
 import {
@@ -76,22 +77,12 @@ function normalizeSettingsTabIndex(index: number): number {
   return ((index % SETTINGS_TABS.length) + SETTINGS_TABS.length) % SETTINGS_TABS.length;
 }
 
-function focusSettingsTab(
-  event: JSX.TargetedKeyboardEvent<HTMLButtonElement>,
-  nextIndex: number,
-): void {
-  const nav = event.currentTarget.closest(".settings-tabs");
-  if (!(nav instanceof HTMLElement)) {
-    return;
-  }
-  const buttons = Array.from(nav.querySelectorAll<HTMLButtonElement>(".settings-tab"));
-  buttons[normalizeSettingsTabIndex(nextIndex)]?.focus();
-}
-
 function SettingsShellTabButton(props: {
   activeTabId: ReadonlySignal<SettingsShellTabId>;
   index: number;
   onActivateTab(tabId: SettingsShellTabId): void;
+  onFocusTab(index: number): void;
+  onRef(el: HTMLButtonElement | null): void;
   tab: (typeof SETTINGS_TABS)[number];
 }) {
   const { index, onActivateTab, tab } = props;
@@ -113,32 +104,33 @@ function SettingsShellTabButton(props: {
       event.preventDefault();
       const nextIndex = normalizeSettingsTabIndex(index + 1);
       onActivateTab(SETTINGS_TABS[nextIndex].id);
-      focusSettingsTab(event, nextIndex);
+      props.onFocusTab(nextIndex);
       return;
     }
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       const nextIndex = normalizeSettingsTabIndex(index - 1);
       onActivateTab(SETTINGS_TABS[nextIndex].id);
-      focusSettingsTab(event, nextIndex);
+      props.onFocusTab(nextIndex);
       return;
     }
     if (event.key === "Home") {
       event.preventDefault();
       onActivateTab(SETTINGS_TABS[0].id);
-      focusSettingsTab(event, 0);
+      props.onFocusTab(0);
       return;
     }
     if (event.key === "End") {
       event.preventDefault();
       const nextIndex = SETTINGS_TABS.length - 1;
       onActivateTab(SETTINGS_TABS[nextIndex].id);
-      focusSettingsTab(event, nextIndex);
+      props.onFocusTab(nextIndex);
     }
   }
 
   return (
     <button
+      ref={props.onRef}
       type="button"
       class={tabClass}
       data-settings-tab={tab.id}
@@ -176,6 +168,11 @@ function SettingsShellTabPanel(props: {
 
 function SettingsShell(props: SettingsShellProps) {
   const { onActivateTab } = props;
+  const tabButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  function focusTabAtIndex(index: number): void {
+    tabButtonRefs.current[normalizeSettingsTabIndex(index)]?.focus();
+  }
 
   return (
     <>
@@ -187,6 +184,8 @@ function SettingsShell(props: SettingsShellProps) {
               activeTabId={props.activeTabId}
               index={index}
               onActivateTab={onActivateTab}
+              onFocusTab={focusTabAtIndex}
+              onRef={(el) => { tabButtonRefs.current[index] = el; }}
               tab={tab}
             />
           );
