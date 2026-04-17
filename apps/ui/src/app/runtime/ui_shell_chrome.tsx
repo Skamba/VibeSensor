@@ -81,6 +81,7 @@ export interface UiShellChromeRenderModel {
   activeViewId: string;
   appErrorBanner: UiShellErrorBannerModel;
   confirmationDialog: UiConfirmationDialogModel | null;
+  connectionState: "degraded" | "live";
   languageFeedback: SettingsFeedbackMessage | null;
   languageLabelText: string;
   navItems: readonly UiShellChromeNavItemModel[];
@@ -117,6 +118,7 @@ const DEFAULT_SHELL_CHROME_MODEL: UiShellChromeRenderModel = {
     variant: null,
   },
   confirmationDialog: null,
+  connectionState: "live",
   languageFeedback: null,
   languageLabelText: "Language",
   navItems: SHELL_NAV_ITEMS.map((item) => ({
@@ -291,6 +293,12 @@ function UiShellChrome(props: UiShellChromeProps) {
   const statusHidden = model.activeViewId === "dashboardView";
   const appErrorVariant = model.appErrorBanner.variant ?? undefined;
 
+  useSignalEffect(() => {
+    const lang = props.model.value.selectedLanguage;
+    const documentElement = globalThis.document?.documentElement;
+    if (documentElement) documentElement.lang = lang;
+  });
+
   function activateView(viewId: string): void {
     bridge.current.activateView(viewId);
   }
@@ -333,7 +341,7 @@ function UiShellChrome(props: UiShellChromeProps) {
   }
 
   return (
-    <div class="wrap">
+    <div class="wrap" data-connection-state={model.connectionState}>
       <header class="site-header">
         <div class="site-header__main">
           <div class="site-header__nav">

@@ -1,6 +1,5 @@
 import * as I18N from "../../i18n";
 import { formatIntLocale } from "../../format";
-import { queryOne } from "../dom/dom_query";
 import { setUiLanguage } from "../ui_i18n";
 import { trackAppStateSlice, type AppState } from "../ui_app_state";
 import {
@@ -63,8 +62,6 @@ export class UiShellController {
 
   private readonly chrome: UiShellChromeView;
 
-  private readonly appShellWrap: HTMLElement | null;
-
   private readonly liveOverview: RealtimeLiveOverviewBridge;
 
   private readonly navigation: UiShellNavigationModule;
@@ -89,7 +86,6 @@ export class UiShellController {
   constructor(deps: UiShellControllerDeps) {
     this.state = deps.state;
     this.chrome = deps.chrome;
-    this.appShellWrap = queryOne<HTMLElement>(".wrap");
     this.liveOverview = deps.liveOverview;
     this.bindFeatureHandlers = deps.bindFeatureHandlers;
     this.notifications = createUiShellNotificationModule({
@@ -196,10 +192,6 @@ export class UiShellController {
       }
       untracked(() => {
         setUiLanguage(currentLanguage);
-        const documentElement = globalThis.document?.documentElement;
-        if (documentElement) {
-          documentElement.lang = currentLanguage;
-        }
       });
     });
   }
@@ -207,11 +199,7 @@ export class UiShellController {
   private bindReactiveStatusSync(): void {
     effect(() => {
       const model = this.chromeRenderModel.value;
-      const connectionState = this.status.connectionState.value;
       untracked(() => {
-        if (this.appShellWrap) {
-          this.appShellWrap.dataset.connectionState = connectionState;
-        }
         this.chrome.setModel(model);
       });
     });
@@ -231,6 +219,7 @@ export class UiShellController {
         activeViewId: this.state.shell.activeViewId,
         appErrorBanner: this.notifications.bannerModel.value,
         confirmationDialog: this.confirmation.dialogModel.value,
+        connectionState: this.status.connectionState.value,
         languageFeedback: this.preferences.languageFeedback.value,
         languageLabelText: this.t("settings.language"),
         navItems: SHELL_NAV_ITEMS.map((item) => ({
