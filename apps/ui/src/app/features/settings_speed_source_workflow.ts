@@ -10,6 +10,7 @@ import {
   type DisplayedSpeedSourceMode,
 } from "../speed_source_state";
 import {
+  batchAppStateUpdates,
   trackAppStateSlice,
   type SettingsState,
 } from "../ui_app_state";
@@ -300,13 +301,17 @@ export function createSettingsSpeedSourceWorkflow(
   }
 
   function applyPayload(payload: SpeedSourcePayload): void {
-    deps.settings.speedSource = payload.speed_source;
-    deps.settings.manualSpeedKph = payload.manual_speed_kph;
-    deps.settings.obdDeviceMac = payload.obd_device_mac ?? null;
-    deps.settings.obdDeviceName = payload.obd_device_name ?? null;
-    deps.settings.resolvedSpeedSource = null;
-    staleTimeoutInputValue.value = String(payload.stale_timeout_s);
-    syncInputsFromSettings();
+    batch(() => {
+      batchAppStateUpdates(() => {
+        deps.settings.speedSource = payload.speed_source;
+        deps.settings.manualSpeedKph = payload.manual_speed_kph;
+        deps.settings.obdDeviceMac = payload.obd_device_mac ?? null;
+        deps.settings.obdDeviceName = payload.obd_device_name ?? null;
+        deps.settings.resolvedSpeedSource = null;
+      });
+      staleTimeoutInputValue.value = String(payload.stale_timeout_s);
+      syncInputsFromSettings();
+    });
     deps.renderSpeedReadout();
   }
 
@@ -329,13 +334,17 @@ export function createSettingsSpeedSourceWorkflow(
   }
 
   function handleManualSpeedInput(value: string): void {
-    manualSpeedInputValue.value = value;
-    clearManualSpeedFeedback();
+    batch(() => {
+      manualSpeedInputValue.value = value;
+      clearManualSpeedFeedback();
+    });
   }
 
   function handleStaleTimeoutInput(value: string): void {
-    staleTimeoutInputValue.value = value;
-    clearStaleTimeoutFeedback();
+    batch(() => {
+      staleTimeoutInputValue.value = value;
+      clearStaleTimeoutFeedback();
+    });
   }
 
   async function saveSpeedSource(): Promise<void> {
@@ -360,39 +369,45 @@ export function createSettingsSpeedSourceWorkflow(
     const activeSource = activeSourceLabel(deps.settings, deps.t);
 
     if (manualSpeedInvalid) {
-      manualSpeedFeedback.value = {
-        body: deps.t("settings.speed.manual_invalid"),
-        compact: true,
-        tone: "error",
-      };
-      showSaveFeedback(
-        deps.t("settings.speed.manual_invalid"),
-        deps.t("settings.speed.validation_active_detail", { source: activeSource }),
-      );
+      batch(() => {
+        manualSpeedFeedback.value = {
+          body: deps.t("settings.speed.manual_invalid"),
+          compact: true,
+          tone: "error",
+        };
+        showSaveFeedback(
+          deps.t("settings.speed.manual_invalid"),
+          deps.t("settings.speed.validation_active_detail", { source: activeSource }),
+        );
+      });
       deps.view.focusManualSpeedInput();
       return;
     }
 
     if (staleTimeoutInvalid) {
-      staleTimeoutFeedback.value = {
-        body: deps.t("settings.speed.stale_timeout_invalid"),
-        compact: true,
-        tone: "error",
-      };
-      showSaveFeedback(
-        deps.t("settings.speed.stale_timeout_invalid"),
-        deps.t("settings.speed.validation_active_detail", { source: activeSource }),
-      );
+      batch(() => {
+        staleTimeoutFeedback.value = {
+          body: deps.t("settings.speed.stale_timeout_invalid"),
+          compact: true,
+          tone: "error",
+        };
+        showSaveFeedback(
+          deps.t("settings.speed.stale_timeout_invalid"),
+          deps.t("settings.speed.validation_active_detail", { source: activeSource }),
+        );
+      });
       deps.view.focusStaleTimeoutInput();
       return;
     }
 
     if (source === "obd2" && !deps.settings.obdDeviceMac) {
-      obdSelectionError.value = true;
-      showSaveFeedback(
-        deps.t("settings.speed.obd_missing_device_error"),
-        deps.t("settings.speed.validation_active_detail", { source: activeSource }),
-      );
+      batch(() => {
+        obdSelectionError.value = true;
+        showSaveFeedback(
+          deps.t("settings.speed.obd_missing_device_error"),
+          deps.t("settings.speed.validation_active_detail", { source: activeSource }),
+        );
+      });
       deps.view.focusScanObdDevices();
       return;
     }
@@ -420,20 +435,24 @@ export function createSettingsSpeedSourceWorkflow(
     if (scanInFlight.value || pairInFlightMac.value !== null) {
       return;
     }
-    scanInFlight.value = true;
-    if (mode === "manual") {
-      clearObdSelectionFeedback();
-      obdScanStatusMessage.value = deps.t("settings.speed.obd_scanning");
-    }
+    batch(() => {
+      scanInFlight.value = true;
+      if (mode === "manual") {
+        clearObdSelectionFeedback();
+        obdScanStatusMessage.value = deps.t("settings.speed.obd_scanning");
+      }
+    });
     syncBackgroundRescan();
     try {
       const payload = await transport.scanObdDevices();
       if (mode === "manual") {
-        setScannedDevices(payload.devices);
         backgroundRescanRequested = true;
-        obdScanStatusMessage.value = payload.devices.length > 0
-          ? deps.t("settings.speed.obd_scan_found", { count: payload.devices.length })
-          : deps.t("settings.speed.obd_scan_empty");
+        batch(() => {
+          setScannedDevices(payload.devices);
+          obdScanStatusMessage.value = payload.devices.length > 0
+            ? deps.t("settings.speed.obd_scan_found", { count: payload.devices.length })
+            : deps.t("settings.speed.obd_scan_empty");
+        });
         syncBackgroundRescan();
       } else {
         mergeScannedDevices(payload.devices);
@@ -451,22 +470,28 @@ export function createSettingsSpeedSourceWorkflow(
 
   async function pairObdDevice(macAddress: string): Promise<void> {
     clearObdSelectionFeedback();
-    pairInFlightMac.value = macAddress;
-    obdScanStatusMessage.value = deps.t("settings.speed.obd_pairing");
+    batch(() => {
+      pairInFlightMac.value = macAddress;
+      obdScanStatusMessage.value = deps.t("settings.speed.obd_pairing");
+    });
     syncBackgroundRescan();
     try {
       const payload = await transport.pairObdDevice(macAddress);
-      deps.settings.obdDeviceMac = payload.configured_device_mac ?? null;
-      deps.settings.obdDeviceName = payload.configured_device_name ?? null;
-      mergeScannedDevices([{
-        connected: payload.connected,
-        mac_address: payload.configured_device_mac ?? macAddress,
-        name: payload.configured_device_name ?? null,
-        paired: payload.paired,
-        rfcomm_channel: payload.rfcomm_channel,
-        trusted: payload.trusted,
-      }]);
-      obdScanStatusMessage.value = deps.t("settings.speed.obd_pair_success");
+      batch(() => {
+        batchAppStateUpdates(() => {
+          deps.settings.obdDeviceMac = payload.configured_device_mac ?? null;
+          deps.settings.obdDeviceName = payload.configured_device_name ?? null;
+        });
+        mergeScannedDevices([{
+          connected: payload.connected,
+          mac_address: payload.configured_device_mac ?? macAddress,
+          name: payload.configured_device_name ?? null,
+          paired: payload.paired,
+          rfcomm_channel: payload.rfcomm_channel,
+          trusted: payload.trusted,
+        }]);
+        obdScanStatusMessage.value = deps.t("settings.speed.obd_pair_success");
+      });
     } catch (error) {
       obdScanStatusMessage.value = deps.t("settings.speed.obd_pair_failed");
       deps.showError(error instanceof Error ? error.message : deps.t("settings.speed.obd_pair_failed"));

@@ -10,6 +10,7 @@ import type {
   SpeedSourceRequest,
 } from "../src/transport/http_models";
 import { createAppState } from "../src/app/ui_app_state";
+import { effect } from "../src/app/ui_signals";
 
 type WorkflowHarness = {
   contextVisible: boolean;
@@ -84,6 +85,55 @@ function makeObdDevice(
 }
 
 test.describe("createSettingsSpeedSourceWorkflow", () => {
+  test("applies loaded payload updates as one render-state invalidation", async () => {
+    const harness = createHarness();
+    const appState = createAppState();
+    const workflow = createSettingsSpeedSourceWorkflow({
+      renderSpeedReadout: () => undefined,
+      settings: appState.settings,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      t: createTranslator(),
+      transport: {
+        async loadSpeedSource() {
+          return makeSpeedSourcePayload({
+            manual_speed_kph: 90,
+            obd_device_mac: "00:22:d9:00:1b:b1",
+            obd_device_name: "OBDLink CX",
+            speed_source: "manual",
+            stale_timeout_s: 12,
+          });
+        },
+      },
+      view: createViewPorts(harness),
+    });
+    const seenSnapshots: string[] = [];
+
+    const dispose = effect(() => {
+      const state = workflow.renderState.value;
+      seenSnapshots.push([
+        state.selectedMode,
+        state.manualSpeedInputValue,
+        state.staleTimeoutInputValue,
+        state.settings.speedSource,
+        String(state.settings.manualSpeedKph),
+      ].join(":"));
+    });
+
+    expect(seenSnapshots).toEqual(["gps:::gps:null"]);
+
+    await workflow.loadSpeedSourceFromServer();
+
+    expect(seenSnapshots).toEqual([
+      "gps:::gps:null",
+      "manual:90:12:manual:90",
+    ]);
+    expect(harness.errors).toEqual([]);
+
+    dispose();
+  });
+
   test("keeps the configured GPS source when saving fallback-manual edits without a radio change", async () => {
     const harness = createHarness();
     const appState = createAppState();
@@ -158,6 +208,47 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
         tone: "error",
       },
     });
+  });
+
+  test("clears manual validation feedback in one render-state invalidation", async () => {
+    const harness = createHarness();
+    const appState = createAppState();
+    const workflow = createSettingsSpeedSourceWorkflow({
+      renderSpeedReadout: () => undefined,
+      settings: appState.settings,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      t: createTranslator(),
+      view: createViewPorts(harness),
+    });
+
+    workflow.handleSpeedSourceChanged("manual");
+    await workflow.saveSpeedSource();
+
+    const seenSnapshots: string[] = [];
+    const dispose = effect(() => {
+      const state = workflow.renderState.value;
+      seenSnapshots.push([
+        state.manualSpeedInputValue,
+        state.manualSpeedFeedback?.body ?? "none",
+        state.saveFeedback?.body ?? "none",
+      ].join(":"));
+    });
+
+    expect(seenSnapshots).toEqual([
+      ":settings.speed.manual_invalid:settings.speed.manual_invalid",
+    ]);
+
+    workflow.handleManualSpeedInput("80");
+
+    expect(seenSnapshots).toEqual([
+      ":settings.speed.manual_invalid:settings.speed.manual_invalid",
+      "80:none:none",
+    ]);
+    expect(harness.errors).toEqual([]);
+
+    dispose();
   });
 
   test("scans and pairs OBD devices without DOM bindings", async () => {
