@@ -4,6 +4,13 @@ import uPlot from "uplot";
 
 import { SPECTRUM_DB_MAX, SPECTRUM_DB_MIN } from "./config";
 import { getSpectrumCssVars } from "./spectrum_css_vars";
+import {
+  computed,
+  effect,
+  signal,
+  untracked,
+  type ReadonlySignal,
+} from "./app/ui_signals";
 
 export interface SpectrumSeriesMeta {
   label: string;
@@ -16,40 +23,69 @@ export interface SpectrumText {
   axisAmplitude: string;
 }
 
-export class SpectrumChart {
-  private static readonly FIXED_Y_RANGE: [number, number] = [SPECTRUM_DB_MIN, SPECTRUM_DB_MAX];
+export interface SpectrumChart {
+  destroy(): void;
+  resize(): void;
+  setSeriesIsolation(seriesIdx: number | null): void;
+}
 
-  private plot: uPlot | null = null;
-  private readonly hostEl: HTMLElement;
-  private readonly measureEl: HTMLElement;
-  private readonly height: number;
-  private resizeObserver: ResizeObserver | null = null;
-  private resizeRaf: number | null = null;
+export interface CreateSpectrumChartDeps {
+  hostEl: HTMLElement;
+  measureEl?: HTMLElement | null;
+  height?: ReadonlySignal<number>;
+  seriesMeta: ReadonlySignal<readonly SpectrumSeriesMeta[]>;
+  data: ReadonlySignal<uPlot.AlignedData>;
+  text: ReadonlySignal<SpectrumText>;
+  plugins?: ReadonlySignal<readonly uPlot.Plugin[]>;
+}
 
-  constructor(hostEl: HTMLElement, height = 360, measureEl?: HTMLElement | null) {
-    this.hostEl = hostEl;
-    this.measureEl = measureEl || hostEl;
-    this.height = height;
-    this.startResizeObserver();
-  }
+const DEFAULT_HEIGHT = 360;
+const EMPTY_DATA: uPlot.AlignedData = [[]];
 
-  ensurePlot(seriesMeta: SpectrumSeriesMeta[], text: SpectrumText, plugins: uPlot.Plugin[] = []): void {
-    if (this.plot && this.plot.series.length === seriesMeta.length + 1) {
+export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChart {
+  const measureEl = deps.measureEl ?? deps.hostEl;
+  const height = deps.height ?? signal(DEFAULT_HEIGHT);
+  const plugins = deps.plugins ?? computed<readonly uPlot.Plugin[]>(() => []);
+  const width = signal(computeWidth(measureEl));
+  const plot = signal<uPlot | null>(null);
+  let resizeRaf: number | null = null;
+  let disposed = false;
+
+  const stopResizeObserver = effect(() => {
+    width.value = computeWidth(measureEl);
+    const resizeObserver = new ResizeObserver(() => {
+      if (resizeRaf !== null) {
+        window.cancelAnimationFrame(resizeRaf);
+      }
+      resizeRaf = window.requestAnimationFrame(() => {
+        resizeRaf = null;
+        width.value = computeWidth(measureEl);
+      });
+    });
+    resizeObserver.observe(measureEl);
+    return () => {
+      resizeObserver.disconnect();
+      if (resizeRaf !== null) {
+        window.cancelAnimationFrame(resizeRaf);
+        resizeRaf = null;
+      }
+    };
+  });
+
+  const stopPlotLifecycle = effect(() => {
+    const seriesMeta = deps.seriesMeta.value;
+    const text = deps.text.value;
+    const currentPlugins = Array.from(plugins.value);
+    if (!seriesMeta.length) {
+      plot.value = null;
       return;
     }
     const cssVars = getSpectrumCssVars();
-
-    this.destroyPlot();
-    const series: uPlot.Series[] = [{ label: "Hz" }];
-    for (const item of seriesMeta) {
-      series.push({ label: item.label, stroke: item.color, width: 2 });
-    }
-
-    this.plot = new uPlot(
+    const nextPlot = new uPlot(
       {
         title: "",
-        width: this.computeWidth(),
-        height: this.height,
+        width: untracked(() => width.value),
+        height: untracked(() => height.value),
         focus: { alpha: 0.16 },
         cursor: {
           x: true,
@@ -66,7 +102,7 @@ export class SpectrumChart {
         scales: {
           x: { time: false },
           y: {
-            range: SpectrumChart.FIXED_Y_RANGE as uPlot.Range.MinMax,
+            range: [SPECTRUM_DB_MIN, SPECTRUM_DB_MAX] as uPlot.Range.MinMax,
           },
         },
         axes: [
@@ -81,71 +117,77 @@ export class SpectrumChart {
             grid: { stroke: cssVars.border, width: 1 },
           },
         ],
-        series,
-        plugins,
+        series: [{ label: "Hz" }, ...seriesMeta.map((item) => ({
+          label: item.label,
+          stroke: item.color,
+          width: 2,
+        }))],
+        plugins: currentPlugins,
       },
-      [[]],
-      this.hostEl,
+      untracked(() => deps.data.value.length ? deps.data.value : EMPTY_DATA),
+      deps.hostEl,
     );
-  }
-
-  setData(data: uPlot.AlignedData): void {
-    if (!this.plot) return;
-    this.plot.setData(data);
-  }
-
-  setSeriesIsolation(seriesIdx: number | null): void {
-    const plot = this.plot;
-    if (!plot) return;
-    plot.batch(() => {
-      for (let index = 1; index < plot.series.length; index += 1) {
-        plot.setSeries(index, { show: seriesIdx === null || index === seriesIdx }, false);
+    plot.value = nextPlot;
+    return () => {
+      if (plot.value === nextPlot) {
+        plot.value = null;
       }
+      nextPlot.destroy();
+    };
+  });
+
+  const stopDataSync = effect(() => {
+    const currentPlot = plot.value;
+    if (!currentPlot) {
+      return;
+    }
+    currentPlot.setData(deps.data.value);
+  });
+
+  const stopSizeSync = effect(() => {
+    const currentPlot = plot.value;
+    if (!currentPlot) {
+      return;
+    }
+    currentPlot.setSize({
+      width: width.value,
+      height: height.value,
     });
-  }
+  });
 
-  resize(): void {
-    if (!this.plot) return;
-    this.plot.setSize({ width: this.computeWidth(), height: this.height });
-  }
-
-  getSeriesCount(): number {
-    return this.plot ? this.plot.series.length : 0;
-  }
-
-  destroy(): void {
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-      this.resizeObserver = null;
-    }
-    if (this.resizeRaf !== null) {
-      window.cancelAnimationFrame(this.resizeRaf);
-      this.resizeRaf = null;
-    }
-    this.destroyPlot();
-  }
-
-  private destroyPlot(): void {
-    if (this.plot) {
-      this.plot.destroy();
-      this.plot = null;
-    }
-  }
-
-  private startResizeObserver(): void {
-    this.resizeObserver = new ResizeObserver(() => {
-      if (this.resizeRaf !== null) {
-        window.cancelAnimationFrame(this.resizeRaf);
+  return {
+    destroy(): void {
+      if (disposed) {
+        return;
       }
-      this.resizeRaf = window.requestAnimationFrame(() => {
-        this.resizeRaf = null;
-        this.resize();
+      disposed = true;
+      stopSizeSync();
+      stopDataSync();
+      stopPlotLifecycle();
+      stopResizeObserver();
+      plot.value = null;
+    },
+    resize(): void {
+      width.value = computeWidth(measureEl);
+    },
+    setSeriesIsolation(seriesIdx: number | null): void {
+      const currentPlot = plot.value;
+      if (!currentPlot) {
+        return;
+      }
+      currentPlot.batch(() => {
+        for (let index = 1; index < currentPlot.series.length; index += 1) {
+          currentPlot.setSeries(
+            index,
+            { show: seriesIdx === null || index === seriesIdx },
+            false,
+          );
+        }
       });
-    });
-    this.resizeObserver.observe(this.measureEl);
-  }
+    },
+  };
+}
 
-  private computeWidth(): number {
-    return Math.max(320, Math.floor(this.measureEl.getBoundingClientRect().width));
-  }
+function computeWidth(measureEl: HTMLElement): number {
+  return Math.max(320, Math.floor(measureEl.getBoundingClientRect().width));
 }
