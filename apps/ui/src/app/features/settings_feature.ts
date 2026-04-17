@@ -1,6 +1,6 @@
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarSelectionDerivedState } from "../car_selection_state";
-import { trackAppStateSlice, type SettingsState, type ShellState } from "../ui_app_state";
+import type { SettingsState, ShellState } from "../ui_app_state";
 import { effect, untracked, type ReadonlySignal } from "../ui_signals";
 import type { CarsPayload } from "../../api/types";
 import {
@@ -151,7 +151,6 @@ export function createSettingsFeature(
   let initializedLanguage = false;
   let previousLanguage = ctx.state.shell.lang;
   effect(() => {
-    trackAppStateSlice(ctx.state.shell);
     const currentLanguage = ctx.state.shell.lang;
     if (!initializedLanguage) {
       initializedLanguage = true;

@@ -1,7 +1,7 @@
 import * as I18N from "../../i18n";
 import { formatIntLocale } from "../../format";
 import { setUiLanguage } from "../ui_i18n";
-import { trackAppStateSlice, type AppState } from "../ui_app_state";
+import type { AppState } from "../ui_app_state";
 import {
   computed,
   effect,
@@ -192,7 +192,6 @@ export class UiShellController {
     let initialized = false;
     let previousLanguage = this.state.shell.lang;
     effect(() => {
-      trackAppStateSlice(this.state.shell);
       const currentLanguage = this.state.shell.lang;
       if (!initialized) {
         initialized = true;
