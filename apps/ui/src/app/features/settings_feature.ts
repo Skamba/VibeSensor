@@ -1,7 +1,7 @@
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarSelectionDerivedState } from "../car_selection_state";
 import type { SettingsState, ShellState } from "../ui_app_state";
-import { effect, untracked, type ReadonlySignal } from "../ui_signals";
+import { effectOnChange, untracked, type ReadonlySignal } from "../ui_signals";
 import type { CarsPayload } from "../../api/types";
 import {
   createSettingsAnalysisModule,
@@ -144,18 +144,7 @@ export function createSettingsFeature(
     formatting,
   });
 
-  let initializedLanguage = false;
-  let previousLanguage = ctx.state.shell.lang.value;
-  effect(() => {
-    const currentLanguage = ctx.state.shell.lang.value;
-    if (!initializedLanguage) {
-      initializedLanguage = true;
-      previousLanguage = currentLanguage;
-    } else if (currentLanguage === previousLanguage) {
-      return;
-    } else {
-      previousLanguage = currentLanguage;
-    }
+  effectOnChange(ctx.state.shell.lang, () => {
     untracked(() => {
       analysisModule.syncSettingsInputs();
     });

@@ -69,3 +69,19 @@ export function useSignalProperties<
 >(source: ReadonlySignal<T>, keys: K): SignalPropertyMap<T, K> {
   return getOrCreateSignalPropertyMap(source, keys);
 }
+
+export function effectOnChange<T>(
+  source: ReadonlySignal<T>,
+  callback: (value: T, previousValue: T) => void,
+): () => void {
+  let previousValue = source.peek();
+  return effect(() => {
+    const nextValue = source.value;
+    if (Object.is(nextValue, previousValue)) {
+      return;
+    }
+    const oldValue = previousValue;
+    previousValue = nextValue;
+    callback(nextValue, oldValue);
+  });
+}

@@ -11,7 +11,7 @@ import type {
   RunDetail,
   ShellState,
 } from "../ui_app_state";
-import { computed, effect, untracked } from "../ui_signals";
+import { computed, effectOnChange, untracked } from "../ui_signals";
 import type {
   HistoryPanelRenderModel,
   HistoryPanelView,
@@ -233,19 +233,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   }
 
   function bindReactiveLanguageSync(): void {
-    let initialized = false;
-    let previousLanguage = shell.lang.value;
-    effect(() => {
-      const currentLanguage = shell.lang.value;
-      if (!initialized) {
-        initialized = true;
-        previousLanguage = currentLanguage;
-        return;
-      }
-      if (currentLanguage === previousLanguage) {
-        return;
-      }
-      previousLanguage = currentLanguage;
+    effectOnChange(shell.lang, () => {
       untracked(() => {
         reloadExpandedRunOnLanguageChange();
       });
