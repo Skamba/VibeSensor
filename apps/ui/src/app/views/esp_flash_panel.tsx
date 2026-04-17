@@ -3,7 +3,6 @@ import { useRef } from "preact/hooks";
 
 import { useUiText } from "../ui_i18n";
 import {
-  computed,
   signal,
   useComputed,
   useSignalEffect,
@@ -14,6 +13,7 @@ import {
   MaintenanceReadinessPanel,
   type MaintenanceReadinessPanelModel,
 } from "./maintenance_readiness_view";
+import { createBoundViewModel } from "./view_model_binding";
 
 export interface EspFlashStatusBadgeModel {
   text: string;
@@ -564,16 +564,15 @@ function EspFlashPanel(props: {
 
 export function mountEspFlashPanel(host: HTMLElement): EspFlashPanelView {
   const actions = signal<EspFlashPanelActionHandlers | null>(null);
-  const modelSource = signal<ReadonlySignal<EspFlashPanelRenderModel> | null>(null);
-  const model = computed<EspFlashPanelRenderModel>(() => modelSource.value?.value ?? DEFAULT_ESP_FLASH_PANEL_MODEL);
-  render(<EspFlashPanel actions={actions} model={model} />, host);
+  const modelBinding = createBoundViewModel(DEFAULT_ESP_FLASH_PANEL_MODEL);
+  render(<EspFlashPanel actions={actions} model={modelBinding.model} />, host);
 
   return {
     bindActions(handlers) {
       actions.value = handlers;
     },
     bindModel(model) {
-      modelSource.value = model;
+      modelBinding.bind(model);
     },
   };
 }

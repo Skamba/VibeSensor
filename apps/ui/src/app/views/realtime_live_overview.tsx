@@ -2,11 +2,11 @@ import { render } from "preact";
 
 import { useUiText } from "../ui_i18n";
 import {
-  computed,
   signal,
   useComputed,
   type ReadonlySignal,
 } from "../ui_signals";
+import { createBoundViewModel } from "./view_model_binding";
 
 export interface RealtimeLiveOverviewActiveCarModel {
   text: string;
@@ -212,14 +212,13 @@ function RealtimeLiveOverview(props: {
 }
 
 export function mountRealtimeLiveOverview(host: HTMLElement): RealtimeLiveOverviewBridge {
-  const modelSource = signal<ReadonlySignal<RealtimeLiveOverviewRenderModel> | null>(null);
-  const model = computed<RealtimeLiveOverviewRenderModel>(() => modelSource.value?.value ?? DEFAULT_OVERVIEW_MODEL);
+  const modelBinding = createBoundViewModel(DEFAULT_OVERVIEW_MODEL);
   const speedText = signal(DEFAULT_OVERVIEW_STATE.speedText);
-  render(<RealtimeLiveOverview model={model} speedText={speedText} />, host);
+  render(<RealtimeLiveOverview model={modelBinding.model} speedText={speedText} />, host);
 
   return {
     bindModel(model: ReadonlySignal<RealtimeLiveOverviewRenderModel>): void {
-      modelSource.value = model;
+      modelBinding.bind(model);
     },
     setSpeedText(text: string): void {
       speedText.value = text;
