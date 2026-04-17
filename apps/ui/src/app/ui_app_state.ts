@@ -17,14 +17,6 @@ import type {
 } from "../api/types";
 import { batch, signal, type Signal } from "./ui_signals";
 
-export function batchAppStateUpdates<T>(callback: () => T): T {
-  let result!: T;
-  batch(() => {
-    result = callback();
-  });
-  return result;
-}
-
 export interface VehicleSettings {
   tire_width_mm: number;
   tire_aspect_pct: number;
@@ -139,7 +131,8 @@ export function syncSelectedRealtimeClient(realtime: RealtimeState): void {
 }
 
 export function applyLivePayloadUpdate(deps: LivePayloadUpdateDeps): LivePayloadUpdateResult {
-  return batchAppStateUpdates(() => {
+  let update!: LivePayloadUpdateResult;
+  batch(() => {
     const { realtime, spectrum, adaptedPayload } = deps;
     const previousSelectedClientId = realtime.selectedClientId.value;
     realtime.clients.value = adaptedPayload.clients;
@@ -153,7 +146,7 @@ export function applyLivePayloadUpdate(deps: LivePayloadUpdateDeps): LivePayload
     realtime.speedMps.value = adaptedPayload.speed_mps;
     realtime.rotationalSpeeds.value = adaptedPayload.rotational_speeds;
     spectrum.hasSpectrumData.value = spectrumTick.hasSpectrumData;
-    return {
+    update = {
       hasSelectedClientChanged: previousSelectedClientId !== realtime.selectedClientId.value,
       selectedClient: realtime.clients.value.find(
         (client) => client.id === realtime.selectedClientId.value,
@@ -161,6 +154,7 @@ export function applyLivePayloadUpdate(deps: LivePayloadUpdateDeps): LivePayload
       hasNewSpectrumFrame: spectrumTick.hasNewSpectrumFrame,
     };
   });
+  return update;
 }
 
 export type SignalState<T extends object> = {
