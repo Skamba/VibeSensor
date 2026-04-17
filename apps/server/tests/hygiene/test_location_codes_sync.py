@@ -39,9 +39,7 @@ def test_generated_ui_constants_encode_backend_locations() -> None:
     generated = _generated_constants_ts()
     assert "export const METRIC_FIELDS" not in generated
     assert "export const LOCATION_CODES" not in generated
-    assert _extract_export_json(generated, "defaultLocationCodes") == list(
-        LOCATION_CODES.keys()
-    )
+    assert _extract_export_json(generated, "defaultLocationCodes") == list(LOCATION_CODES.keys())
 
 
 def test_domain_location_codes_match_shared() -> None:
