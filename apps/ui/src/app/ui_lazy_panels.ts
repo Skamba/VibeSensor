@@ -23,6 +23,23 @@ const SETTINGS_VIEW_ID = "settingsView";
 const DEFAULT_SETTINGS_TAB_ID = "carTab";
 
 type DeferredWorkScheduler = (task: () => void) => void;
+type SingleArgVoidMethodKey<TView extends object> = Extract<{
+  [K in keyof TView]: TView[K] extends (arg: infer _TArg) => void ? K : never;
+}[keyof TView], keyof TView>;
+type SingleArgMethodArg<
+  TView extends object,
+  TMethodName extends SingleArgVoidMethodKey<TView>,
+> = TView[TMethodName] extends (arg: infer TArg) => void ? TArg : never;
+
+interface DeferredViewContext<
+  TView extends object,
+  TBindMethodName extends SingleArgVoidMethodKey<TView>,
+> {
+  getPendingArg<TMethodName extends TBindMethodName>(
+    methodName: TMethodName,
+  ): SingleArgMethodArg<TView, TMethodName> | null;
+  getRealView(): TView | null;
+}
 
 export interface UiLazyPanels {
   panels: UiMountedPanels;
@@ -42,38 +59,79 @@ function scheduleDeferredWork(task: () => void): void {
   setTimeout(task, 0);
 }
 
+const DEFERRED_MODEL_ACTION_METHOD_NAMES = ["bindModel", "bindActions"] as const;
+const DEFERRED_ANALYSIS_METHOD_NAMES = ["bindModel", "bindActions", "bindCarAvailability"] as const;
+const DEFERRED_SPEED_SOURCE_METHOD_NAMES = ["bindModel", "bindActions", "bindDiagnostics"] as const;
+
+function createDeferredView<
+  TView extends object,
+  const TBindMethodNames extends readonly SingleArgVoidMethodKey<TView>[],
+>(config: {
+  bindMethodNames: TBindMethodNames;
+  createExtraView?: (
+    context: DeferredViewContext<TView, TBindMethodNames[number]>,
+  ) => Omit<TView, TBindMethodNames[number]>;
+  onRealViewSet?: (
+    realView: TView,
+    context: DeferredViewContext<TView, TBindMethodNames[number]>,
+  ) => void;
+}): {
+  attach(realView: TView): void;
+  view: TView;
+} {
+  type TBindMethodName = TBindMethodNames[number];
+
+  let realView: TView | null = null;
+  const pendingArgs = new Map<TBindMethodName, unknown>();
+  const context: DeferredViewContext<TView, TBindMethodName> = {
+    getPendingArg(methodName) {
+      if (!pendingArgs.has(methodName)) {
+        return null;
+      }
+      return pendingArgs.get(methodName) as SingleArgMethodArg<TView, typeof methodName>;
+    },
+    getRealView() {
+      return realView;
+    },
+  };
+  const boundView = {} as Pick<TView, TBindMethodName>;
+  for (const methodName of config.bindMethodNames) {
+    const bindMethod = ((nextArg: SingleArgMethodArg<TView, typeof methodName>) => {
+      pendingArgs.set(methodName, nextArg);
+      if (realView !== null) {
+        (realView[methodName] as (arg: SingleArgMethodArg<TView, typeof methodName>) => void)(nextArg);
+      }
+    }) as TView[typeof methodName];
+    boundView[methodName] = bindMethod;
+  }
+  const view = {
+    ...boundView,
+    ...(config.createExtraView?.(context) ?? {}),
+  } as TView;
+
+  return {
+    view,
+    attach(nextRealView) {
+      realView = nextRealView;
+      for (const methodName of config.bindMethodNames) {
+        if (!pendingArgs.has(methodName)) {
+          continue;
+        }
+        const nextArg = pendingArgs.get(methodName) as SingleArgMethodArg<TView, typeof methodName>;
+        (nextRealView[methodName] as (arg: typeof nextArg) => void)(nextArg);
+      }
+      config.onRealViewSet?.(nextRealView, context);
+    },
+  };
+}
+
 function createDeferredHistoryPanelView(): {
   attach(realView: HistoryPanelView): void;
   view: HistoryPanelView;
 } {
-  type HistoryModel = Parameters<HistoryPanelView["bindModel"]>[0];
-  type HistoryActions = Parameters<HistoryPanelView["bindActions"]>[0];
-
-  let actions: HistoryActions | null = null;
-  let model: HistoryModel | null = null;
-  let realView: HistoryPanelView | null = null;
-
-  return {
-    view: {
-      bindModel(nextModel) {
-        model = nextModel;
-        realView?.bindModel(nextModel);
-      },
-      bindActions(nextActions) {
-        actions = nextActions;
-        realView?.bindActions(nextActions);
-      },
-    },
-    attach(nextRealView) {
-      realView = nextRealView;
-      if (model !== null) {
-        realView.bindModel(model);
-      }
-      if (actions !== null) {
-        realView.bindActions(actions);
-      }
-    },
-  };
+  return createDeferredView<HistoryPanelView, typeof DEFERRED_MODEL_ACTION_METHOD_NAMES>({
+    bindMethodNames: DEFERRED_MODEL_ACTION_METHOD_NAMES,
+  });
 }
 
 function createDeferredSettingsShellView(): {
@@ -121,67 +179,41 @@ function createDeferredCarsPanelView(): {
   attach(realView: CarsPanelView): void;
   view: CarsPanelView;
 } {
-  type CarsListActions = Parameters<CarsPanelView["list"]["bindActions"]>[0];
-  type CarsListModel = Parameters<CarsPanelView["list"]["bindModel"]>[0];
-  type CarsWizardActions = Parameters<CarsPanelView["wizard"]["bindActions"]>[0];
   type CarsWizardFocusTarget = Parameters<CarsPanelView["wizard"]["focus"]>[0];
-  type CarsWizardModel = Parameters<CarsPanelView["wizard"]["bindModel"]>[0];
-
-  let listActions: CarsListActions | null = null;
-  let listModel: CarsListModel | null = null;
-  let realView: CarsPanelView | null = null;
-  let wizardActions: CarsWizardActions | null = null;
+  const list = createDeferredView<CarsPanelView["list"], typeof DEFERRED_MODEL_ACTION_METHOD_NAMES>({
+    bindMethodNames: DEFERRED_MODEL_ACTION_METHOD_NAMES,
+  });
   let wizardFocusTarget: CarsWizardFocusTarget | null = null;
-  let wizardModel: CarsWizardModel | null = null;
+  const flushWizardFocusTarget = (realView: CarsPanelView["wizard"] | null): void => {
+    if (realView === null || wizardFocusTarget === null) {
+      return;
+    }
+    realView.focus(wizardFocusTarget);
+    wizardFocusTarget = null;
+  };
+  const wizard = createDeferredView<CarsPanelView["wizard"], typeof DEFERRED_MODEL_ACTION_METHOD_NAMES>({
+    bindMethodNames: DEFERRED_MODEL_ACTION_METHOD_NAMES,
+    createExtraView(context) {
+      return {
+        focus(target) {
+          wizardFocusTarget = target;
+          flushWizardFocusTarget(context.getRealView());
+        },
+      };
+    },
+    onRealViewSet(realView) {
+      flushWizardFocusTarget(realView);
+    },
+  });
 
   return {
     view: {
-      list: {
-        bindModel(nextModel) {
-          listModel = nextModel;
-          realView?.list.bindModel(nextModel);
-        },
-        bindActions(nextActions) {
-          listActions = nextActions;
-          realView?.list.bindActions(nextActions);
-        },
-      },
-      wizard: {
-        bindModel(nextModel) {
-          wizardModel = nextModel;
-          realView?.wizard.bindModel(nextModel);
-        },
-        bindActions(nextActions) {
-          wizardActions = nextActions;
-          realView?.wizard.bindActions(nextActions);
-        },
-        focus(target) {
-          wizardFocusTarget = target;
-          realView?.wizard.focus(target);
-          if (realView !== null) {
-            wizardFocusTarget = null;
-          }
-        },
-      },
+      list: list.view,
+      wizard: wizard.view,
     },
     attach(nextRealView) {
-      realView = nextRealView;
-      if (listModel !== null) {
-        realView.list.bindModel(listModel);
-      }
-      if (listActions !== null) {
-        realView.list.bindActions(listActions);
-      }
-      if (wizardModel !== null) {
-        realView.wizard.bindModel(wizardModel);
-      }
-      if (wizardActions !== null) {
-        realView.wizard.bindActions(wizardActions);
-      }
-      if (wizardFocusTarget !== null) {
-        realView.wizard.focus(wizardFocusTarget);
-        wizardFocusTarget = null;
-      }
+      list.attach(nextRealView.list);
+      wizard.attach(nextRealView.wizard);
     },
   };
 }
@@ -190,120 +222,59 @@ function createDeferredAnalysisPanelView(): {
   attach(realView: AnalysisPanelView): void;
   view: AnalysisPanelView;
 } {
-  type AnalysisActions = Parameters<AnalysisPanelView["bindActions"]>[0];
-  type AnalysisCarAvailability = Parameters<AnalysisPanelView["bindCarAvailability"]>[0];
   type AnalysisFocusField = Parameters<AnalysisPanelView["focusField"]>[0];
-  type AnalysisModel = Parameters<AnalysisPanelView["bindModel"]>[0];
-
-  let actions: AnalysisActions | null = null;
-  let carAvailability: AnalysisCarAvailability | null = null;
   let focusField: AnalysisFocusField | null = null;
   let guidanceOpenRequested = false;
-  let model: AnalysisModel | null = null;
-  let realView: AnalysisPanelView | null = null;
-
-  return {
-    view: {
-      bindModel(nextModel) {
-        model = nextModel;
-        realView?.bindModel(nextModel);
-      },
-      bindActions(nextActions) {
-        actions = nextActions;
-        realView?.bindActions(nextActions);
-      },
-      bindCarAvailability(nextCarAvailability) {
-        carAvailability = nextCarAvailability;
-        realView?.bindCarAvailability(nextCarAvailability);
-      },
-      openGuidance() {
-        guidanceOpenRequested = true;
-        realView?.openGuidance();
-        if (realView !== null) {
-          guidanceOpenRequested = false;
-        }
-      },
-      focusField(nextFocusField) {
-        focusField = nextFocusField;
-        realView?.focusField(nextFocusField);
-        if (realView !== null) {
-          focusField = null;
-        }
-      },
-    },
-    attach(nextRealView) {
-      realView = nextRealView;
-      if (model !== null) {
-        realView.bindModel(model);
-      }
-      if (actions !== null) {
-        realView.bindActions(actions);
-      }
-      if (carAvailability !== null) {
-        realView.bindCarAvailability(carAvailability);
-      }
-      if (guidanceOpenRequested) {
-        realView.openGuidance();
-        guidanceOpenRequested = false;
-      }
-      if (focusField !== null) {
-        realView.focusField(focusField);
-        focusField = null;
-      }
-    },
+  const flushPendingEffects = (realView: AnalysisPanelView | null): void => {
+    if (realView === null) {
+      return;
+    }
+    if (guidanceOpenRequested) {
+      realView.openGuidance();
+      guidanceOpenRequested = false;
+    }
+    if (focusField !== null) {
+      realView.focusField(focusField);
+      focusField = null;
+    }
   };
+
+  return createDeferredView<AnalysisPanelView, typeof DEFERRED_ANALYSIS_METHOD_NAMES>({
+    bindMethodNames: DEFERRED_ANALYSIS_METHOD_NAMES,
+    createExtraView(context) {
+      return {
+        openGuidance() {
+          guidanceOpenRequested = true;
+          flushPendingEffects(context.getRealView());
+        },
+        focusField(nextFocusField) {
+          focusField = nextFocusField;
+          flushPendingEffects(context.getRealView());
+        },
+      };
+    },
+    onRealViewSet(realView) {
+      flushPendingEffects(realView);
+    },
+  });
 }
 
 function createDeferredSensorsPanelView(): {
   attach(realView: SensorsPanelView): void;
   view: SensorsPanelView;
 } {
-  type SensorsActions = Parameters<SensorsPanelView["bindActions"]>[0];
-  type SensorsModel = Parameters<SensorsPanelView["bindModel"]>[0];
-
-  let actions: SensorsActions | null = null;
-  let model: SensorsModel | null = null;
-  let realView: SensorsPanelView | null = null;
-
-  return {
-    view: {
-      bindModel(nextModel) {
-        model = nextModel;
-        realView?.bindModel(nextModel);
-      },
-      bindActions(nextActions) {
-        actions = nextActions;
-        realView?.bindActions(nextActions);
-      },
-    },
-    attach(nextRealView) {
-      realView = nextRealView;
-      if (model !== null) {
-        realView.bindModel(model);
-      }
-      if (actions !== null) {
-        realView.bindActions(actions);
-      }
-    },
-  };
+  return createDeferredView<SensorsPanelView, typeof DEFERRED_MODEL_ACTION_METHOD_NAMES>({
+    bindMethodNames: DEFERRED_MODEL_ACTION_METHOD_NAMES,
+  });
 }
 
 function createDeferredSpeedSourcePanelView(): {
   attach(realView: SpeedSourcePanelView): void;
   view: SpeedSourcePanelView;
 } {
-  type SpeedSourceActions = Parameters<SpeedSourcePanelView["bindActions"]>[0];
-  type SpeedSourceDiagnostics = Parameters<SpeedSourcePanelView["bindDiagnostics"]>[0];
-  type SpeedSourceModel = Parameters<SpeedSourcePanelView["bindModel"]>[0];
   type PendingFocusTarget = "manual" | "scan" | "stale";
-
-  let actions: SpeedSourceActions | null = null;
-  let diagnostics: SpeedSourceDiagnostics | null = null;
-  let model: SpeedSourceModel | null = null;
   let pendingFocusTarget: PendingFocusTarget | null = null;
-  let realView: SpeedSourcePanelView | null = null;
-
-  const flushPendingFocusTarget = (): void => {
+  const flushPendingFocusTarget = (realView: SpeedSourcePanelView | null): void => {
     if (realView === null || pendingFocusTarget === null) {
       return;
     }
@@ -317,167 +288,82 @@ function createDeferredSpeedSourcePanelView(): {
     pendingFocusTarget = null;
   };
 
-  return {
-    view: {
-      bindModel(nextModel) {
-        model = nextModel;
-        realView?.bindModel(nextModel);
-      },
-      bindActions(nextActions) {
-        actions = nextActions;
-        realView?.bindActions(nextActions);
-      },
-      bindDiagnostics(nextDiagnostics) {
-        diagnostics = nextDiagnostics;
-        realView?.bindDiagnostics(nextDiagnostics);
-      },
-      focusManualSpeedInput() {
-        pendingFocusTarget = "manual";
-        flushPendingFocusTarget();
-      },
-      focusScanObdDevices() {
-        pendingFocusTarget = "scan";
-        flushPendingFocusTarget();
-      },
-      focusStaleTimeoutInput() {
-        pendingFocusTarget = "stale";
-        flushPendingFocusTarget();
-      },
-      isObdConfigVisible() {
-        if (realView !== null) {
-          return realView.isObdConfigVisible();
-        }
-        return model?.value.obdConfigVisible ?? false;
-      },
+  return createDeferredView<SpeedSourcePanelView, typeof DEFERRED_SPEED_SOURCE_METHOD_NAMES>({
+    bindMethodNames: DEFERRED_SPEED_SOURCE_METHOD_NAMES,
+    createExtraView(context) {
+      return {
+        focusManualSpeedInput() {
+          pendingFocusTarget = "manual";
+          flushPendingFocusTarget(context.getRealView());
+        },
+        focusScanObdDevices() {
+          pendingFocusTarget = "scan";
+          flushPendingFocusTarget(context.getRealView());
+        },
+        focusStaleTimeoutInput() {
+          pendingFocusTarget = "stale";
+          flushPendingFocusTarget(context.getRealView());
+        },
+        isObdConfigVisible() {
+          const realView = context.getRealView();
+          if (realView !== null) {
+            return realView.isObdConfigVisible();
+          }
+          return context.getPendingArg("bindModel")?.value.obdConfigVisible ?? false;
+        },
+      };
     },
-    attach(nextRealView) {
-      realView = nextRealView;
-      if (model !== null) {
-        realView.bindModel(model);
-      }
-      if (actions !== null) {
-        realView.bindActions(actions);
-      }
-      if (diagnostics !== null) {
-        realView.bindDiagnostics(diagnostics);
-      }
-      flushPendingFocusTarget();
+    onRealViewSet(realView) {
+      flushPendingFocusTarget(realView);
     },
-  };
+  });
 }
 
 function createDeferredUpdatePanelView(): {
   attach(realView: UpdatePanelView): void;
   view: UpdatePanelView;
 } {
-  type UpdateActions = Parameters<UpdatePanelView["bindActions"]>[0];
-  type UpdateModel = Parameters<UpdatePanelView["bindModel"]>[0];
-
-  let actions: UpdateActions | null = null;
-  let model: UpdateModel | null = null;
-  let realView: UpdatePanelView | null = null;
-
-  return {
-    view: {
-      bindModel(nextModel) {
-        model = nextModel;
-        realView?.bindModel(nextModel);
-      },
-      bindActions(nextActions) {
-        actions = nextActions;
-        realView?.bindActions(nextActions);
-      },
-    },
-    attach(nextRealView) {
-      realView = nextRealView;
-      if (model !== null) {
-        realView.bindModel(model);
-      }
-      if (actions !== null) {
-        realView.bindActions(actions);
-      }
-    },
-  };
+  return createDeferredView<UpdatePanelView, typeof DEFERRED_MODEL_ACTION_METHOD_NAMES>({
+    bindMethodNames: DEFERRED_MODEL_ACTION_METHOD_NAMES,
+  });
 }
 
 function createDeferredInternetPanelView(): {
   attach(realView: InternetPanelView): void;
   view: InternetPanelView;
 } {
-  type InternetActions = Parameters<InternetPanelView["bindActions"]>[0];
-  type InternetModel = Parameters<InternetPanelView["bindModel"]>[0];
-
-  let actions: InternetActions | null = null;
   let focusSsidRequested = false;
-  let model: InternetModel | null = null;
-  let realView: InternetPanelView | null = null;
-
-  return {
-    view: {
-      bindModel(nextModel) {
-        model = nextModel;
-        realView?.bindModel(nextModel);
-      },
-      bindActions(nextActions) {
-        actions = nextActions;
-        realView?.bindActions(nextActions);
-      },
-      focusSsidInput() {
-        focusSsidRequested = true;
-        realView?.focusSsidInput();
-        if (realView !== null) {
-          focusSsidRequested = false;
-        }
-      },
-    },
-    attach(nextRealView) {
-      realView = nextRealView;
-      if (model !== null) {
-        realView.bindModel(model);
-      }
-      if (actions !== null) {
-        realView.bindActions(actions);
-      }
-      if (focusSsidRequested) {
-        realView.focusSsidInput();
-        focusSsidRequested = false;
-      }
-    },
+  const flushPendingFocusSsid = (realView: InternetPanelView | null): void => {
+    if (!focusSsidRequested || realView === null) {
+      return;
+    }
+    realView.focusSsidInput();
+    focusSsidRequested = false;
   };
+
+  return createDeferredView<InternetPanelView, typeof DEFERRED_MODEL_ACTION_METHOD_NAMES>({
+    bindMethodNames: DEFERRED_MODEL_ACTION_METHOD_NAMES,
+    createExtraView(context) {
+      return {
+        focusSsidInput() {
+          focusSsidRequested = true;
+          flushPendingFocusSsid(context.getRealView());
+        },
+      };
+    },
+    onRealViewSet(realView) {
+      flushPendingFocusSsid(realView);
+    },
+  });
 }
 
 function createDeferredEspFlashPanelView(): {
   attach(realView: EspFlashPanelView): void;
   view: EspFlashPanelView;
 } {
-  type EspFlashActions = Parameters<EspFlashPanelView["bindActions"]>[0];
-  type EspFlashModel = Parameters<EspFlashPanelView["bindModel"]>[0];
-
-  let actions: EspFlashActions | null = null;
-  let model: EspFlashModel | null = null;
-  let realView: EspFlashPanelView | null = null;
-
-  return {
-    view: {
-      bindModel(nextModel) {
-        model = nextModel;
-        realView?.bindModel(nextModel);
-      },
-      bindActions(nextActions) {
-        actions = nextActions;
-        realView?.bindActions(nextActions);
-      },
-    },
-    attach(nextRealView) {
-      realView = nextRealView;
-      if (model !== null) {
-        realView.bindModel(model);
-      }
-      if (actions !== null) {
-        realView.bindActions(actions);
-      }
-    },
-  };
+  return createDeferredView<EspFlashPanelView, typeof DEFERRED_MODEL_ACTION_METHOD_NAMES>({
+    bindMethodNames: DEFERRED_MODEL_ACTION_METHOD_NAMES,
+  });
 }
 
 export function createLazyUiPanels(deps: CreateUiLazyPanelsDeps): UiLazyPanels {
