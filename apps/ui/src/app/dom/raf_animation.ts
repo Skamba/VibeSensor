@@ -1,3 +1,5 @@
+export type RafApi = Pick<typeof globalThis, "cancelAnimationFrame" | "requestAnimationFrame">;
+
 export interface RafAnimationCallbacks {
   durationMs: number;
   onFrame: (alpha: number) => void;
@@ -14,12 +16,15 @@ export interface RafAnimation {
  * Calling `start()` cancels any in-progress loop and begins a fresh one.
  * Calling `stop()` cancels without invoking `onComplete`.
  */
-export function createRafAnimation(callbacks: RafAnimationCallbacks): RafAnimation {
+export function createRafAnimation(
+  callbacks: RafAnimationCallbacks,
+  api: RafApi = globalThis,
+): RafAnimation {
   let handle: number | null = null;
 
   const stop = (): void => {
     if (handle !== null) {
-      window.cancelAnimationFrame(handle);
+      api.cancelAnimationFrame(handle);
       handle = null;
     }
   };
@@ -32,12 +37,12 @@ export function createRafAnimation(callbacks: RafAnimationCallbacks): RafAnimati
       callbacks.onFrame(alpha);
       if (alpha >= 1) {
         handle = null;
-        callbacks.onComplete();
-        return;
-      }
-      handle = window.requestAnimationFrame(animate);
+      callbacks.onComplete();
+      return;
+    }
+      handle = api.requestAnimationFrame(animate);
     };
-    handle = window.requestAnimationFrame(animate);
+    handle = api.requestAnimationFrame(animate);
   };
 
   return { start, stop };
