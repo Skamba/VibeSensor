@@ -44,10 +44,10 @@ function wizardOptionAttributeProps(
 }
 
 function submitCurrentInputValue(
-  inputRef: { current: HTMLInputElement | null },
+  input: HTMLInputElement | null,
   onSubmit: (value: string) => void,
 ): void {
-  onSubmit(inputRef.current?.value?.trim() ?? "");
+  onSubmit(input?.value?.trim() ?? "");
 }
 
 function WizardOptionButton(props: {
@@ -103,14 +103,16 @@ function WizardCustomEntry(props: {
   buttonId: string;
   className?: string;
   inputId: string;
-  inputRef: { current: HTMLInputElement | null };
+  inputKey: "customBrandInput" | "customModelInput" | "customTypeInput";
   intro?: ComponentChildren;
   labelText: string;
   maxLength: number;
+  refs: CarsWizardElementRefs;
   placeholder: string;
   onSubmit(value: string): void;
 }) {
-  const { buttonId, className, inputId, inputRef, intro, labelText, maxLength, onSubmit, placeholder } = props;
+  const { buttonId, className, inputId, inputKey, intro, labelText, maxLength, onSubmit, placeholder, refs } =
+    props;
   return (
     <div class={className ?? "wizard-custom"}>
       {intro}
@@ -120,12 +122,12 @@ function WizardCustomEntry(props: {
         type="text"
         maxLength={maxLength}
         placeholder={placeholder}
-        ref={inputRef}
+        ref={refs.setElementRef(inputKey)}
       />
       <button
         id={buttonId}
         class="btn btn--primary"
-        onClick={() => submitCurrentInputValue(inputRef, onSubmit)}
+        onClick={() => submitCurrentInputValue(refs.elements.current[inputKey], onSubmit)}
       >
         {t("settings.car.use_custom", "Use Custom")}
       </button>
@@ -152,7 +154,7 @@ function CarsManualInputForm(props: {
           step="1"
           value={wizardModel.manualInputs.tireWidth}
           onInput={(event) => emitManualInputs("tireWidth", event.currentTarget.value)}
-          ref={refs.wizTireWidthInputRef}
+          ref={refs.setElementRef("tireWidthInput")}
         />
       </div>
       <div class="field">
@@ -166,7 +168,7 @@ function CarsManualInputForm(props: {
           step="1"
           value={wizardModel.manualInputs.tireAspect}
           onInput={(event) => emitManualInputs("tireAspect", event.currentTarget.value)}
-          ref={refs.wizTireAspectInputRef}
+          ref={refs.setElementRef("tireAspectInput")}
         />
       </div>
       <div class="field">
@@ -180,7 +182,7 @@ function CarsManualInputForm(props: {
           step="0.5"
           value={wizardModel.manualInputs.rim}
           onInput={(event) => emitManualInputs("rim", event.currentTarget.value)}
-          ref={refs.wizRimInputRef}
+          ref={refs.setElementRef("rimInput")}
         />
       </div>
       <div class="field">
@@ -194,7 +196,7 @@ function CarsManualInputForm(props: {
           min="0.1"
           value={wizardModel.manualInputs.finalDrive}
           onInput={(event) => emitManualInputs("finalDrive", event.currentTarget.value)}
-          ref={refs.wizFinalDriveInputRef}
+          ref={refs.setElementRef("finalDriveInput")}
         />
       </div>
       <div class="field">
@@ -208,7 +210,7 @@ function CarsManualInputForm(props: {
           min="0.1"
           value={wizardModel.manualInputs.topGear}
           onInput={(event) => emitManualInputs("topGear", event.currentTarget.value)}
-          ref={refs.wizGearRatioInputRef}
+          ref={refs.setElementRef("topGearInput")}
         />
       </div>
     </div>
@@ -232,18 +234,17 @@ function WizardBrandStep(props: {
         id="wizardBrandList"
         onSelectOption={(item) => onSelectBrand(item.value)}
         section={section}
-        firstOptionRef={(element) => {
-          refs.optionRefs.current.brandOption = element;
-        }}
+        firstOptionRef={refs.setElementRef("brandOption")}
       />
       <WizardCustomEntry
         buttonId="wizardCustomBrandBtn"
         inputId="wizardCustomBrand"
-        inputRef={refs.wizardCustomBrandInputRef}
+        inputKey="customBrandInput"
         labelText={t("settings.car.or_custom_brand", "Or type a custom brand:")}
         maxLength={32}
         onSubmit={onSubmitCustomBrand}
         placeholder="e.g. Mercedes-Benz"
+        refs={refs}
       />
     </div>
   );
@@ -266,18 +267,17 @@ function WizardTypeStep(props: {
         id="wizardTypeList"
         onSelectOption={(item) => onSelectType(item.value)}
         section={section}
-        firstOptionRef={(element) => {
-          refs.optionRefs.current.typeOption = element;
-        }}
+        firstOptionRef={refs.setElementRef("typeOption")}
       />
       <WizardCustomEntry
         buttonId="wizardCustomTypeBtn"
         inputId="wizardCustomType"
-        inputRef={refs.wizardCustomTypeInputRef}
+        inputKey="customTypeInput"
         labelText={t("settings.car.or_custom_type", "Or type a custom type:")}
         maxLength={32}
         onSubmit={onSubmitCustomType}
         placeholder="e.g. Van"
+        refs={refs}
       />
     </div>
   );
@@ -306,15 +306,13 @@ function WizardModelStep(props: {
           onSelectModel(index);
         }}
         section={section}
-        firstOptionRef={(element) => {
-          refs.optionRefs.current.modelOption = element;
-        }}
+        firstOptionRef={refs.setElementRef("modelOption")}
       />
       <WizardCustomEntry
         buttonId="wizardCustomModelBtn"
         className="wizard-custom wizard-custom--branch"
         inputId="wizardCustomModel"
-        inputRef={refs.wizardCustomModelInputRef}
+        inputKey="customModelInput"
         intro={(
           <>
             <strong class="wizard-branch-label">
@@ -332,6 +330,7 @@ function WizardModelStep(props: {
         maxLength={64}
         onSubmit={onSubmitCustomModel}
         placeholder="e.g. C-Class W205"
+        refs={refs}
       />
     </div>
   );
@@ -359,9 +358,7 @@ function WizardVariantStep(props: {
           onSelectVariant(index);
         }}
         section={section}
-        firstOptionRef={(element) => {
-          refs.optionRefs.current.variantOption = element;
-        }}
+        firstOptionRef={refs.setElementRef("variantOption")}
       />
     </div>
   );
@@ -393,37 +390,33 @@ function WizardSpecsStep(props: {
         <h3>
           {t("settings.car.step_wheels", "Select Wheels")}
         </h3>
-        <WizardOptions
-          id="wizardTireList"
+      <WizardOptions
+        id="wizardTireList"
           onSelectOption={(item) => {
             const index = parseWizardOptionIndex(item.value);
             if (index == null) {
               return;
-            }
-            onSelectTire(index);
-          }}
-          section={wizardModel.tireOptions}
-          firstOptionRef={(element) => {
-            refs.optionRefs.current.tireOption = element;
-          }}
-        />
+          }
+          onSelectTire(index);
+        }}
+        section={wizardModel.tireOptions}
+        firstOptionRef={refs.setElementRef("tireOption")}
+      />
         <h3 class="wizard-section-title">
           {t("settings.car.step_gearbox", "Select Gearbox")}
         </h3>
-        <WizardOptions
-          id="wizardGearboxList"
+      <WizardOptions
+        id="wizardGearboxList"
           onSelectOption={(item) => {
             const index = parseWizardOptionIndex(item.value);
             if (index == null) {
               return;
-            }
-            onSelectGearbox(index);
-          }}
-          section={wizardModel.gearboxOptions}
-          firstOptionRef={(element) => {
-            refs.optionRefs.current.gearboxOption = element;
-          }}
-        />
+          }
+          onSelectGearbox(index);
+        }}
+        section={wizardModel.gearboxOptions}
+        firstOptionRef={refs.setElementRef("gearboxOption")}
+      />
       </div>
       <div class="wizard-branch-divider">
         <span>
