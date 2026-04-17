@@ -6,7 +6,7 @@ import {
   captureReadinessSummaryText,
   type CaptureReadinessPayload,
 } from "../src/app/views/realtime_logging_view_models";
-import type { LoggingStatusPayload } from "../src/transport/http_models";
+import type { LoggingStatusPayload } from "../src/api/types";
 
 function t(key: string, vars?: Record<string, unknown>): string {
   if (!vars || Object.keys(vars).length === 0) {

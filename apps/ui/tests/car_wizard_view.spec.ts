@@ -4,7 +4,7 @@ import type {
   CarLibraryGearbox,
   CarLibraryModel,
   CarLibraryTireOption,
-} from "../src/transport/http_models";
+} from "../src/api/types";
 import type {
   CarsFeatureRenderState,
 } from "../src/app/features/cars_feature_workflow";

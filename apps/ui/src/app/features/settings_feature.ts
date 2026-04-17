@@ -2,7 +2,7 @@ import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarSelectionDerivedState } from "../car_selection_state";
 import { trackAppStateSlice, type SettingsState, type ShellState } from "../ui_app_state";
 import { effect, untracked, type ReadonlySignal } from "../ui_signals";
-import type { CarsPayload } from "../../transport/http_models";
+import type { CarsPayload } from "../../api/types";
 import {
   createSettingsAnalysisModule,
   type SettingsAnalysisModule,

@@ -1,5 +1,5 @@
 import type { LiveHealth } from "../features/realtime_sensor_state";
-import type { LoggingStatusPayload } from "../../transport/http_models";
+import type { LoggingStatusPayload } from "../../api/types";
 import type {
   InlineStateActionVariant,
   InlineStatePanelElement,

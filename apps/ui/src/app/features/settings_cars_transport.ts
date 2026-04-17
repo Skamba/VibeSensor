@@ -3,7 +3,7 @@ import {
   getSettingsCars,
   setActiveSettingsCar,
 } from "../../api";
-import type { CarsPayload } from "../../transport/http_models";
+import type { CarsPayload } from "../../api/types";
 
 export interface SettingsCarsTransport {
   activateCar(carId: string): Promise<CarsPayload>;

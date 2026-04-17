@@ -11,7 +11,7 @@ import { defaultLocationCodes } from "../../constants";
 import type {
   ClientLocationsResponse,
   LoggingStatusPayload,
-} from "../../transport/http_models";
+} from "../../api/types";
 import {
   trackAppStateSlice,
   syncSelectedRealtimeClient,

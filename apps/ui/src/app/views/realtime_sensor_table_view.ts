@@ -1,4 +1,4 @@
-import type { LocationOption } from "../../transport/http_models";
+import type { LocationOption } from "../../api/types";
 import type { AdaptedClient } from "../../transport/live_models";
 
 export interface RealtimeSensorTableViewParams {

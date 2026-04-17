@@ -1,4 +1,4 @@
-import type { LocationOption, LoggingStatusPayload } from "../../transport/http_models";
+import type { LocationOption, LoggingStatusPayload } from "../../api/types";
 import type { AdaptedClient } from "../../transport/live_models";
 import * as I18N from "../../i18n";
 import {

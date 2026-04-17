@@ -1,4 +1,4 @@
-import type { UpdateStartRequestPayload } from "../../transport/http_models";
+import type { UpdateStartRequestPayload } from "../../api/types";
 
 export type JourneyStageState = "upcoming" | "active" | "done" | "attention";
 export type UpdateJourneyTransport = UpdateStartRequestPayload["transport"];

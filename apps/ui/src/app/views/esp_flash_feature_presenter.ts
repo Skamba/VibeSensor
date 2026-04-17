@@ -2,7 +2,7 @@ import type {
   EspFlashHistoryAttemptPayload,
   EspFlashStatusPayload,
   EspSerialPortPayload,
-} from "../../transport/http_models";
+} from "../../api/types";
 import { formatEpochTimestamp } from "../../format";
 import type { VisualVariant } from "../view_style_types";
 import type { MaintenanceReadinessPanelModel } from "./maintenance_readiness_view";

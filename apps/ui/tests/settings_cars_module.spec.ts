@@ -4,7 +4,7 @@ import { createSettingsCarsModule } from "../src/app/features/settings_cars_modu
 import { effect, signal } from "../src/app/ui_signals";
 import type { CarsListRenderModel, CarsListPanelView } from "../src/app/views/cars_panel";
 import { createAppState } from "../src/app/ui_app_state";
-import type { CarsPayload } from "../src/transport/http_models";
+import type { CarsPayload } from "../src/api/types";
 
 function lastRender(renders: CarsListRenderModel[]): CarsListRenderModel {
   const render = renders.at(-1);
