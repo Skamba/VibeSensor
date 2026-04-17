@@ -7,10 +7,7 @@ import {
   type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import {
-  type DeferredModelSignal,
-  useDeferredViewModel,
-} from "./view_model_binding";
+import { type DeferredModelSignal } from "./view_model_binding";
 import type {
   UpdateCurrentStatusSectionModel,
   UpdateHealthSectionModel,
@@ -349,7 +346,7 @@ function UpdatePanel(props: {
   );
   const cancelLabel = useUiText("settings.update.cancel", "Cancel Update");
   const actions = useComputed(() => props.actions.value);
-  const model = useDeferredViewModel(props.model, DEFAULT_UPDATE_PANEL_MODEL);
+  const model = useComputed(() => props.model.value?.value ?? DEFAULT_UPDATE_PANEL_MODEL);
   const {
     cancelButtonDisabled,
     cancelButtonHidden,

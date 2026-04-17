@@ -13,10 +13,7 @@ import {
   MaintenanceReadinessPanel,
   type MaintenanceReadinessPanelModel,
 } from "./maintenance_readiness_view";
-import {
-  type DeferredModelSignal,
-  useDeferredViewModel,
-} from "./view_model_binding";
+import { type DeferredModelSignal } from "./view_model_binding";
 
 export interface EspFlashStatusBadgeModel {
   text: string;
@@ -338,7 +335,7 @@ function EspFlashPanel(props: {
     "Recent flashes stay here so the next operator can see what happened last.",
   );
   const actions = useComputed(() => props.actions.value);
-  const model = useDeferredViewModel(props.model, DEFAULT_ESP_FLASH_PANEL_MODEL);
+  const model = useComputed(() => props.model.value?.value ?? DEFAULT_ESP_FLASH_PANEL_MODEL);
   const logPanelRef = useRef<HTMLDivElement | null>(null);
   const handleSelectPort = (value: string) => {
     actions.value?.onSelectPort(value);

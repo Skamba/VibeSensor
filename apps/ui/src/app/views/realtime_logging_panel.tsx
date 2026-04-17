@@ -8,10 +8,7 @@ import {
   type ReadonlySignal,
 } from "../ui_signals";
 import { inlineStateActionClass } from "./dom_helpers";
-import {
-  type DeferredModelSignal,
-  useDeferredViewModel,
-} from "./view_model_binding";
+import { type DeferredModelSignal } from "./view_model_binding";
 import type {
   RealtimeCaptureReadinessChecklistModel,
   RealtimeLoggingSummaryAction,
@@ -177,7 +174,7 @@ function RealtimeLoggingPanel(props: {
   const startLabel = useUiText("dashboard.start_recording", "Start Recording");
   const stopLabel = useUiText("dashboard.stop_recording", "Stop Recording");
   const actions = useComputed(() => props.actions.value);
-  const model = useDeferredViewModel(props.model, DEFAULT_PANEL_MODEL);
+  const model = useComputed(() => props.model.value?.value ?? DEFAULT_PANEL_MODEL);
   const {
     checklist,
     elapsedText,
