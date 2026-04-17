@@ -23,10 +23,11 @@ const spectrumCssVars = computed<Readonly<SpectrumCssVars>>(() => {
   return readSpectrumCssVars();
 });
 let spectrumCssVarsThemeListenerInitialized = false;
+let cachedSpectrumCssVars: Readonly<SpectrumCssVars> | null = null;
 
 function readSpectrumCssVars(): Readonly<SpectrumCssVars> {
   const rootStyle = getComputedStyle(document.documentElement);
-  return Object.freeze({
+  const next: SpectrumCssVars = {
     surface: rootStyle.getPropertyValue("--surface").trim() || DEFAULT_SPECTRUM_CSS_VARS.surface,
     muted: rootStyle.getPropertyValue("--muted").trim() || DEFAULT_SPECTRUM_CSS_VARS.muted,
     border: rootStyle.getPropertyValue("--border").trim() || DEFAULT_SPECTRUM_CSS_VARS.border,
@@ -34,7 +35,19 @@ function readSpectrumCssVars(): Readonly<SpectrumCssVars> {
       || DEFAULT_SPECTRUM_CSS_VARS.tooltipBg,
     tooltipFg: rootStyle.getPropertyValue("--tooltip-fg").trim()
       || DEFAULT_SPECTRUM_CSS_VARS.tooltipFg,
-  });
+  };
+  if (
+    cachedSpectrumCssVars
+    && cachedSpectrumCssVars.surface === next.surface
+    && cachedSpectrumCssVars.muted === next.muted
+    && cachedSpectrumCssVars.border === next.border
+    && cachedSpectrumCssVars.tooltipBg === next.tooltipBg
+    && cachedSpectrumCssVars.tooltipFg === next.tooltipFg
+  ) {
+    return cachedSpectrumCssVars;
+  }
+  cachedSpectrumCssVars = Object.freeze(next);
+  return cachedSpectrumCssVars;
 }
 
 export function getSpectrumCssVars(): Readonly<SpectrumCssVars> {

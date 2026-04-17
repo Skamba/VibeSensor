@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { installDocumentStub } from "./spectrum_test_support";
 
 test.describe("spectrum_css_vars", () => {
-  test("caches a plain spectrum css snapshot until refreshed", async () => {
+  test("reuses the cached spectrum css snapshot until values actually change", async () => {
     const restoreDocument = installDocumentStub();
     const styleValues: Record<string, string> = {
       "--surface": "#101820",
@@ -52,16 +52,28 @@ test.describe("spectrum_css_vars", () => {
       });
       expect(readCount).toBe(1);
 
+      const unchangedRefresh = refreshSpectrumCssVars();
+      expect(unchangedRefresh).toBe(first);
+      expect(readCount).toBe(2);
+
       styleValues["--surface"] = "#222222";
       expect(getSpectrumCssVars()).toBe(first);
       expect(getSpectrumCssVars().surface).toBe("#101820");
-      expect(readCount).toBe(1);
+      expect(readCount).toBe(2);
 
       const refreshed = refreshSpectrumCssVars();
       expect(refreshed.surface).toBe("#222222");
       expect(refreshed).not.toBe(first);
       expect(getSpectrumCssVars()).toBe(refreshed);
-      expect(readCount).toBe(2);
+      expect(readCount).toBe(3);
+
+      themeChangeHandler?.({
+        matches: true,
+        media: "(prefers-color-scheme: dark)",
+      } as MediaQueryListEvent);
+      const unchangedThemeRefresh = getSpectrumCssVars();
+      expect(unchangedThemeRefresh).toBe(refreshed);
+      expect(readCount).toBe(4);
 
       styleValues["--surface"] = "#444444";
       themeChangeHandler?.({
@@ -71,7 +83,7 @@ test.describe("spectrum_css_vars", () => {
       const autoRefreshed = getSpectrumCssVars();
       expect(autoRefreshed.surface).toBe("#444444");
       expect(autoRefreshed).not.toBe(refreshed);
-      expect(readCount).toBe(3);
+      expect(readCount).toBe(5);
     } finally {
       restoreDocument();
     }
