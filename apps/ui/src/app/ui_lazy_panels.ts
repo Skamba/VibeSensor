@@ -1,5 +1,4 @@
 import type { UiPanelHostRegistry } from "./ui_panel_host_registry";
-import { resolveUiPanelHosts } from "./ui_panel_host_registry";
 import {
   mountDashboardPanels,
   mountHistoryPanelLazy,
@@ -32,7 +31,7 @@ export interface UiLazyPanels {
 }
 
 export interface CreateUiLazyPanelsDeps {
-  hosts?: UiPanelHostRegistry;
+  hosts: UiPanelHostRegistry;
   mountDashboardPanels?: (hosts: UiPanelHostRegistry) => UiMountedDashboardPanels;
   loadHistoryPanel?: (hosts: UiPanelHostRegistry) => Promise<HistoryPanelView>;
   loadSettingsPanels?: (hosts: UiPanelHostRegistry) => Promise<UiMountedLazyPanels>;
@@ -481,8 +480,8 @@ function createDeferredEspFlashPanelView(): {
   };
 }
 
-export function createLazyUiPanels(deps: CreateUiLazyPanelsDeps = {}): UiLazyPanels {
-  const hosts = deps.hosts ?? resolveUiPanelHosts();
+export function createLazyUiPanels(deps: CreateUiLazyPanelsDeps): UiLazyPanels {
+  const { hosts } = deps;
   const dashboard = (deps.mountDashboardPanels ?? mountDashboardPanels)(hosts);
   const history = createDeferredHistoryPanelView();
   const settingsShell = createDeferredSettingsShellView();

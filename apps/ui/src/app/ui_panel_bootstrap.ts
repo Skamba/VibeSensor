@@ -1,6 +1,5 @@
 import type { SpectrumPanelView } from "./runtime/spectrum_panel_view";
 import {
-  resolveUiPanelHosts,
   type UiPanelHostRegistry,
 } from "./ui_panel_host_registry";
 import type { AnalysisPanelView } from "./views/analysis_panel";
@@ -48,7 +47,7 @@ export interface UiMountedPanels {
 export type UiMountedLazyPanels = Pick<UiMountedPanels, "settingsShell" | "settings">;
 
 export function mountDashboardPanels(
-  hosts: UiPanelHostRegistry = resolveUiPanelHosts(),
+  hosts: UiPanelHostRegistry,
 ): UiMountedDashboardPanels {
   return {
     spectrum: mountSpectrumPanel(hosts.dashboard.spectrum),
@@ -58,14 +57,14 @@ export function mountDashboardPanels(
 }
 
 export async function mountHistoryPanelLazy(
-  hosts: UiPanelHostRegistry = resolveUiPanelHosts(),
+  hosts: UiPanelHostRegistry,
 ): Promise<HistoryPanelView> {
   const { mountHistoryPanel } = await import("./views/history_panel");
   return mountHistoryPanel(hosts.history);
 }
 
 export async function mountSettingsPanelsLazy(
-  hosts: UiPanelHostRegistry = resolveUiPanelHosts(),
+  hosts: UiPanelHostRegistry,
 ): Promise<UiMountedLazyPanels> {
   const settingsShellModulePromise = import("./views/settings_shell");
   const settingsPanelModulesPromise = Promise.all([

@@ -12,7 +12,7 @@ export function startUiApp(): void {
   const state = createAppState();
   const shellChromeActions = createUiShellChromeActionBridge();
   const shellChrome = mountUiShellChrome(getUiShellChromeHost(), shellChromeActions);
-  const lazyPanels = createLazyUiPanels();
+  const lazyPanels = createLazyUiPanels({ hosts: shellChrome.panelHosts });
   new UiAppRuntime({
     shellChrome,
     panels: lazyPanels.panels,

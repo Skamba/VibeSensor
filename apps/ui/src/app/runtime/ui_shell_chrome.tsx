@@ -1,7 +1,12 @@
 import { render, type ComponentChildren, type JSX } from "preact";
 import { useRef } from "preact/hooks";
 
-import { requiredById } from "../dom/dom_query";
+import {
+  createUiPanelHostRefs,
+  resolveUiPanelHosts,
+  type UiPanelHostRefs,
+  type UiPanelHostRegistry,
+} from "../ui_panel_host_registry";
 import {
   signal,
   type ReadonlySignal,
@@ -120,6 +125,7 @@ type UiShellChromeProps = {
   bridge: UiShellChromeActionBridge;
   dialogModel: ReadonlySignal<UiShellChromeDialogModel>;
   navigationModel: ReadonlySignal<UiShellChromeNavigationModel>;
+  panelHostRefs: UiPanelHostRefs;
   preferencesModel: ReadonlySignal<UiShellChromePreferencesModel>;
   statusModel: ReadonlySignal<UiShellChromeStatusModel>;
 };
@@ -272,22 +278,41 @@ function ConfirmationDialog(props: {
   );
 }
 
-function DashboardViewHosts() {
+function DashboardViewHosts(props: {
+  panelHostRefs: UiPanelHostRefs["dashboard"];
+}) {
+  const { panelHostRefs } = props;
   return (
     <div class="dashboard-grid">
-      <div id="liveOverviewRoot" class="panel card dashboard-grid__overview"></div>
-      <div id="spectrumPanelRoot" class="panel card dashboard-grid__main"></div>
-      <div id="loggingPanelRoot" class="panel card dashboard-grid__controls"></div>
+      <div
+        id="liveOverviewRoot"
+        ref={panelHostRefs.liveOverview}
+        class="panel card dashboard-grid__overview"
+      ></div>
+      <div
+        id="spectrumPanelRoot"
+        ref={panelHostRefs.spectrum}
+        class="panel card dashboard-grid__main"
+      ></div>
+      <div
+        id="loggingPanelRoot"
+        ref={panelHostRefs.logging}
+        class="panel card dashboard-grid__controls"
+      ></div>
     </div>
   );
 }
 
-function HistoryViewHosts() {
-  return <div id="historyPanelRoot" class="panel card"></div>;
+function HistoryViewHosts(props: {
+  hostRef: UiPanelHostRefs["history"];
+}) {
+  return <div id="historyPanelRoot" ref={props.hostRef} class="panel card"></div>;
 }
 
-function SettingsViewHosts() {
-  return <div id="settingsShellRoot"></div>;
+function SettingsViewHosts(props: {
+  hostRef: UiPanelHostRefs["settingsShell"];
+}) {
+  return <div id="settingsShellRoot" ref={props.hostRef}></div>;
 }
 
 function ShellViewSection(props: ShellViewSectionProps) {
@@ -556,8 +581,10 @@ function AppErrorBanner(props: {
 
 function ShellViewHostsContainer(props: {
   navigationModel: ReadonlySignal<UiShellChromeNavigationModel>;
+  panelHostRefs: UiPanelHostRefs;
 }) {
-  const activeViewId = props.navigationModel.value.activeViewId;
+  const { navigationModel, panelHostRefs } = props;
+  const activeViewId = navigationModel.value.activeViewId;
 
   return (
     <>
@@ -566,7 +593,7 @@ function ShellViewHostsContainer(props: {
         ariaLabelledBy="tab-dashboard"
         viewId="dashboardView"
       >
-        <DashboardViewHosts />
+        <DashboardViewHosts panelHostRefs={panelHostRefs.dashboard} />
       </ShellViewSection>
 
       <ShellViewSection
@@ -574,7 +601,7 @@ function ShellViewHostsContainer(props: {
         ariaLabelledBy="tab-history"
         viewId="historyView"
       >
-        <HistoryViewHosts />
+        <HistoryViewHosts hostRef={panelHostRefs.history} />
       </ShellViewSection>
 
       <ShellViewSection
@@ -582,7 +609,7 @@ function ShellViewHostsContainer(props: {
         ariaLabelledBy="tab-settings"
         viewId="settingsView"
       >
-        <SettingsViewHosts />
+        <SettingsViewHosts hostRef={panelHostRefs.settingsShell} />
       </ShellViewSection>
     </>
   );
@@ -604,6 +631,7 @@ function UiShellChrome(props: UiShellChromeProps) {
     bridge,
     dialogModel,
     navigationModel,
+    panelHostRefs,
     preferencesModel,
     statusModel,
   } = props;
@@ -620,7 +648,7 @@ function UiShellChrome(props: UiShellChromeProps) {
       </header>
 
       <AppErrorBanner dialogModel={dialogModel} />
-      <ShellViewHostsContainer navigationModel={navigationModel} />
+      <ShellViewHostsContainer navigationModel={navigationModel} panelHostRefs={panelHostRefs} />
       <ConfirmationDialogLayer bridge={bridge} dialogModel={dialogModel} />
     </ShellChromeFrame>
   );
@@ -647,15 +675,20 @@ export function createUiShellChromeActionBridge(): UiShellChromeActionBridge {
 }
 
 export function getUiShellChromeHost(): HTMLElement {
-  return requiredById<HTMLElement>(SHELL_CHROME_HOST_ID, SHELL_OWNER);
+  const host = globalThis.document?.getElementById(SHELL_CHROME_HOST_ID);
+  if (host) {
+    return host as HTMLElement;
+  }
+  throw new Error(`${SHELL_OWNER} requires #${SHELL_CHROME_HOST_ID}`);
 }
 
 export function mountUiShellChrome(
   host: HTMLElement,
   bridge: UiShellChromeActionBridge,
-): UiShellChromeView {
+): UiShellChromeView & { panelHosts: UiPanelHostRegistry } {
   const dialogModel = signal<UiShellChromeDialogModel>(DEFAULT_DIALOG_MODEL);
   const navigationModel = signal<UiShellChromeNavigationModel>(DEFAULT_NAVIGATION_MODEL);
+  const panelHostRefs = createUiPanelHostRefs();
   const preferencesModel = signal<UiShellChromePreferencesModel>(DEFAULT_PREFERENCES_MODEL);
   const statusModel = signal<UiShellChromeStatusModel>(DEFAULT_STATUS_MODEL);
   render(
@@ -663,13 +696,16 @@ export function mountUiShellChrome(
       bridge={bridge}
       dialogModel={dialogModel}
       navigationModel={navigationModel}
+      panelHostRefs={panelHostRefs}
       preferencesModel={preferencesModel}
       statusModel={statusModel}
     />,
     host,
   );
+  const panelHosts = resolveUiPanelHosts(panelHostRefs);
 
   return {
+    panelHosts,
     setDialogModel(nextModel) {
       dialogModel.value = nextModel;
     },
