@@ -132,7 +132,6 @@ _UI_FRONTEND_BOUNDARY_IMPORTERS: dict[str, frozenset[str]] = {
     "apps/ui/src/generated/http_api_contracts.ts": frozenset(
         {"apps/ui/src/api/types.ts"}
     ),
-    "apps/ui/src/api/types.ts": frozenset({"apps/ui/src/transport/http_models.ts"}),
     "apps/ui/src/contracts/ws_payload_types.ts": frozenset(
         {
             "apps/ui/src/server_payload.ts",
@@ -338,16 +337,14 @@ def _resolve_ui_local_import(source_path: Path, specifier: str) -> Path | None:
 
 def _ui_boundary_import_allowed(importer_rel: str, target_rel: str) -> bool:
     if target_rel == "apps/ui/src/api/types.ts":
-        return importer_rel == "apps/ui/src/transport/http_models.ts" or (
-            importer_rel.startswith("apps/ui/src/api/") and importer_rel != target_rel
-        )
+        return importer_rel.startswith("apps/ui/src/") and importer_rel != target_rel
     allowed_importers = _UI_FRONTEND_BOUNDARY_IMPORTERS.get(target_rel)
     return allowed_importers is None or importer_rel in allowed_importers
 
 
 def _ui_boundary_allowed_description(target_rel: str) -> str:
     if target_rel == "apps/ui/src/api/types.ts":
-        return "apps/ui/src/api/*.ts and apps/ui/src/transport/http_models.ts"
+        return "apps/ui/src/**"
     allowed_importers = _UI_FRONTEND_BOUNDARY_IMPORTERS.get(target_rel)
     return (
         ", ".join(sorted(allowed_importers))
