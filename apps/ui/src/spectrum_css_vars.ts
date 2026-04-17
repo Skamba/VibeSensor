@@ -60,9 +60,5 @@ function ensureSpectrumCssVarsThemeTracking(): void {
   const refresh = () => {
     spectrumCssVarsVersion.value += 1;
   };
-  if (typeof mediaQuery.addEventListener === "function") {
-    mediaQuery.addEventListener("change", refresh);
-    return;
-  }
-  mediaQuery.addListener(refresh);
+  mediaQuery.addEventListener("change", refresh);
 }
