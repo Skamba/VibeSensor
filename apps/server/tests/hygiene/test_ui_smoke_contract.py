@@ -27,15 +27,18 @@ def test_ui_smoke_script_defers_test_selection_to_smoke_config() -> None:
     package_json = json.loads(_UI_PACKAGE_JSON.read_text())
     scripts = package_json["scripts"]
     script = str(scripts["test:smoke"])
+    config_text = _SMOKE_CONFIG.read_text()
 
     assert scripts["pretest:smoke"] == "npm run sync:generated-contracts"
     assert "--config=playwright.smoke.config.ts" in script
     assert "--project=laptop-light" in script
-    assert "--workers=1" in script
+    assert "--workers=" not in script
     assert "tests/" not in script, (
         "Smoke file selection should live in playwright.smoke.config.ts, "
         "not as hard-coded paths in package.json."
     )
+    assert "PLAYWRIGHT_SMOKE_WORKERS" in config_text
+    assert '?? "1"' in config_text
 
 
 def test_ui_smoke_config_uses_split_smoke_glob() -> None:
