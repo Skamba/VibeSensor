@@ -130,3 +130,112 @@ export function buildHistoryTableRowsViewModel(params: PresenterParams): History
     buildRowViewModel(run, params.runDetailsById[run.run_id] ?? EMPTY_RUN_DETAIL, params),
   );
 }
+
+type HistoryRowsMemoKey = Pick<
+  PresenterParams,
+  "expandedRunId" | "fmt" | "fmtTs" | "formatInt" | "t"
+> & {
+  detailState: Array<
+    readonly [
+      runId: string,
+      preview: RunDetail["preview"],
+      previewLoading: boolean,
+      previewError: string,
+      insights: RunDetail["insights"],
+      insightsLoading: boolean,
+      insightsError: string,
+      pdfLoading: boolean,
+      pdfError: string,
+    ]
+  >;
+  runState: Array<
+    readonly [
+      runRef: HistoryEntry,
+      runId: string,
+      status: HistoryEntry["status"],
+      errorMessage: HistoryEntry["error_message"],
+      sampleCount: HistoryEntry["sample_count"],
+      startTimeUtc: HistoryEntry["start_time_utc"],
+      carName: HistoryEntry["car_name"],
+    ]
+  >;
+};
+
+function buildHistoryRowsMemoKey(params: PresenterParams): HistoryRowsMemoKey {
+  return {
+    expandedRunId: params.expandedRunId,
+    t: params.t,
+    fmt: params.fmt,
+    fmtTs: params.fmtTs,
+    formatInt: params.formatInt,
+    runState: params.runs.map((run) => [
+      run,
+      run.run_id,
+      run.status,
+      run.error_message,
+      run.sample_count,
+      run.start_time_utc,
+      run.car_name,
+    ] as const),
+    detailState: params.runs.map((run) => {
+      const detail = params.runDetailsById[run.run_id] ?? EMPTY_RUN_DETAIL;
+      return [
+        run.run_id,
+        detail.preview,
+        detail.previewLoading,
+        detail.previewError,
+        detail.insights,
+        detail.insightsLoading,
+        detail.insightsError,
+        detail.pdfLoading,
+        detail.pdfError,
+      ] as const;
+    }),
+  };
+}
+
+function shallowTupleListEqual<T extends readonly unknown[]>(left: T[], right: T[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+  for (let index = 0; index < left.length; index += 1) {
+    const leftEntry = left[index];
+    const rightEntry = right[index];
+    if (!leftEntry || !rightEntry || leftEntry.length !== rightEntry.length) {
+      return false;
+    }
+    for (let tupleIndex = 0; tupleIndex < leftEntry.length; tupleIndex += 1) {
+      if (leftEntry[tupleIndex] !== rightEntry[tupleIndex]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function sameHistoryRowsMemoKey(left: HistoryRowsMemoKey | null, right: HistoryRowsMemoKey): boolean {
+  return left !== null
+    && left.expandedRunId === right.expandedRunId
+    && left.t === right.t
+    && left.fmt === right.fmt
+    && left.fmtTs === right.fmtTs
+    && left.formatInt === right.formatInt
+    && shallowTupleListEqual(left.runState, right.runState)
+    && shallowTupleListEqual(left.detailState, right.detailState);
+}
+
+export function createHistoryTableRowsMemo(): (params: PresenterParams) => HistoryRowViewModel[] {
+  let previousKey: HistoryRowsMemoKey | null = null;
+  let previousRows: HistoryRowViewModel[] = [];
+
+  return (params: PresenterParams) => {
+    const nextKey = buildHistoryRowsMemoKey(params);
+    if (sameHistoryRowsMemoKey(previousKey, nextKey)) {
+      return previousRows;
+    }
+
+    previousKey = nextKey;
+    previousRows = buildHistoryTableRowsViewModel(params);
+    return previousRows;
+  };
+}
