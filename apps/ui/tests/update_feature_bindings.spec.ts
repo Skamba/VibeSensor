@@ -8,8 +8,15 @@ import type {
 } from "../src/app/views/update_panel";
 
 test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners", () => {
-  let updateHandlers: UpdatePanelActionHandlers | null = null;
-  let internetHandlers: InternetPanelActionHandlers | null = null;
+  const updatePanel = {
+    actions: signal<UpdatePanelActionHandlers | null>(null),
+    model: signal(null),
+  };
+  const internetPanel = {
+    actions: signal<InternetPanelActionHandlers | null>(null),
+    model: signal(null),
+    focusSsidInput() {},
+  };
 
   const feature = createUpdateFeature({
     services: {
@@ -22,23 +29,14 @@ test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners
       activeViewId: signal("settingsView"),
     },
     panels: {
-      update: {
-        bindActions(handlers: UpdatePanelActionHandlers) {
-          updateHandlers = handlers;
-        },
-        bindModel() {},
-      },
-      internet: {
-        bindActions(handlers: InternetPanelActionHandlers) {
-          internetHandlers = handlers;
-        },
-        focusSsidInput() {},
-        bindModel() {},
-      },
+      update: updatePanel,
+      internet: internetPanel,
     },
   });
 
   expect(() => feature.bindUpdateHandlers()).not.toThrow();
+  const updateHandlers = updatePanel.actions.value;
+  const internetHandlers = internetPanel.actions.value;
   expect(updateHandlers).not.toBeNull();
   expect(internetHandlers).not.toBeNull();
   expect(typeof internetHandlers?.onPasswordInput).toBe("function");

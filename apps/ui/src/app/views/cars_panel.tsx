@@ -2,7 +2,9 @@ import { render } from "preact";
 
 import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
 import {
+  computed,
   signal,
+  type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
 import {
@@ -23,19 +25,20 @@ import {
   useCarsWizardFocusManager,
   type CarsWizardFocusRequest,
 } from "./cars_wizard_focus";
+import type { DeferredModelSignal } from "./view_model_binding";
 
 export type { CarsFeatureInteraction, CarsFeatureInteractionHandlers } from "./cars_wizard_panel";
 export type { CarsListRenderModel } from "./cars_list_section";
 
 export interface CarsListPanelView {
-  bindActions(handlers: { onAction(action: import("./settings_car_list_view").CarsListAction): void }): void;
-  bindModel(model: ReadonlySignal<CarsListRenderModel>): void;
+  actions: Signal<{ onAction(action: import("./settings_car_list_view").CarsListAction): void } | null>;
+  model: DeferredModelSignal<CarsListRenderModel>;
 }
 
 export interface CarsWizardPanelBridge {
-  bindActions(handlers: CarsFeatureInteractionHandlers): void;
+  actions: Signal<CarsFeatureInteractionHandlers | null>;
   focus(target: CarsFeatureFocusTarget): void;
-  bindModel(model: ReadonlySignal<CarsWizardRenderModel>): void;
+  model: DeferredModelSignal<CarsWizardRenderModel>;
 }
 
 export interface CarsPanelView {
@@ -84,13 +87,16 @@ function CarsPanel(props: {
   );
 }
 
-export function mountCarsPanel(host: HTMLElement): CarsPanelView {
-  const bridgeState = signal<CarsPanelBridgeState>({
-    actions: null,
-    model: null,
-    wizardActions: null,
-    wizardModel: null,
-  });
+export function mountCarsPanel(
+  host: HTMLElement,
+  bindings: Pick<CarsPanelView, "list" | "wizard">,
+): Pick<CarsPanelView["wizard"], "focus"> {
+  const bridgeState = computed<CarsPanelBridgeState>(() => ({
+      actions: bindings.list.actions.value,
+      model: bindings.list.model.value,
+      wizardActions: bindings.wizard.actions.value,
+      wizardModel: bindings.wizard.model.value,
+    }));
   const wizardFocusRequest = signal<CarsWizardFocusRequest | null>(null);
   let focusRequestToken = 0;
   render(
@@ -102,25 +108,9 @@ export function mountCarsPanel(host: HTMLElement): CarsPanelView {
   );
 
   return {
-    list: {
-      bindActions(handlers): void {
-        bridgeState.value = { ...bridgeState.value, actions: handlers };
-      },
-      bindModel(model): void {
-        bridgeState.value = { ...bridgeState.value, model };
-      },
-    },
-    wizard: {
-      bindActions(handlers): void {
-        bridgeState.value = { ...bridgeState.value, wizardActions: handlers };
-      },
-      focus(target): void {
-        focusRequestToken += 1;
-        wizardFocusRequest.value = { target, token: focusRequestToken };
-      },
-      bindModel(model): void {
-        bridgeState.value = { ...bridgeState.value, wizardModel: model };
-      },
+    focus(target): void {
+      focusRequestToken += 1;
+      wizardFocusRequest.value = { target, token: focusRequestToken };
     },
   };
 }

@@ -48,7 +48,7 @@ export function createEspFlashFeature(
     renderState: workflow.renderState,
     t: services.t,
   });
-  panel.bindModel(presenter.model);
+  panel.model.value = presenter.model;
 
   let wasPollingEnabled = false;
   effect(() => {
@@ -64,7 +64,7 @@ export function createEspFlashFeature(
       return;
     }
     handlersBound.value = true;
-    panel.bindActions({
+    panel.actions.value = {
       onStart: () => {
         void workflow.startFlash();
       },
@@ -77,7 +77,7 @@ export function createEspFlashFeature(
       onSelectPort: (value) => {
         workflow.setSelectedPortValue(value);
       },
-    });
+    };
   }
 
   return {

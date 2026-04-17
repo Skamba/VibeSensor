@@ -29,17 +29,19 @@ function createDashboardPanels(): UiMountedDashboardPanels {
   return {
     spectrum: {} as UiMountedDashboardPanels["spectrum"],
     liveOverview: {
-      setSpeedText() {
-        return undefined;
-      },
+      model: signal(null),
+      speedText: signal("--"),
     } as UiMountedDashboardPanels["liveOverview"],
-    logging: {} as UiMountedDashboardPanels["logging"],
+    logging: {
+      actions: signal(null),
+      model: signal(null),
+    } as UiMountedDashboardPanels["logging"],
   };
 }
 
 function createHistoryPanelSpy() {
-  type HistoryActions = Parameters<HistoryPanelView["bindActions"]>[0];
-  type HistoryModel = Parameters<HistoryPanelView["bindModel"]>[0];
+  type HistoryActions = NonNullable<HistoryPanelView["actions"]["value"]>;
+  type HistoryModel = NonNullable<HistoryPanelView["model"]["value"]>;
 
   const actions: HistoryActions[] = [];
   const models: HistoryModel[] = [];
@@ -47,14 +49,14 @@ function createHistoryPanelSpy() {
   return {
     actions,
     models,
-    view: {
-      bindActions(nextActions) {
-        actions.push(nextActions);
-      },
-      bindModel(nextModel) {
-        models.push(nextModel);
-      },
-    } satisfies HistoryPanelView,
+    mount(view: HistoryPanelView) {
+      if (view.actions.value) {
+        actions.push(view.actions.value);
+      }
+      if (view.model.value) {
+        models.push(view.model.value);
+      }
+    },
   };
 }
 
@@ -78,8 +80,8 @@ function createSettingsShellSpy() {
 }
 
 function createInternetPanelSpy() {
-  type InternetActions = Parameters<InternetPanelView["bindActions"]>[0];
-  type InternetModel = Parameters<InternetPanelView["bindModel"]>[0];
+  type InternetActions = NonNullable<InternetPanelView["actions"]["value"]>;
+  type InternetModel = NonNullable<InternetPanelView["model"]["value"]>;
 
   const actions: InternetActions[] = [];
   let focusCalls = 0;
@@ -91,24 +93,26 @@ function createInternetPanelSpy() {
       return focusCalls;
     },
     models,
-    view: {
-      bindActions(nextActions) {
-        actions.push(nextActions);
-      },
-      bindModel(nextModel) {
-        models.push(nextModel);
-      },
+    handle: {
       focusSsidInput() {
         focusCalls += 1;
       },
-    } satisfies InternetPanelView,
+    } satisfies Pick<InternetPanelView, "focusSsidInput">,
+    mount(view: InternetPanelView) {
+      if (view.actions.value) {
+        actions.push(view.actions.value);
+      }
+      if (view.model.value) {
+        models.push(view.model.value);
+      }
+    },
   };
 }
 
 function createSpeedSourcePanelSpy() {
-  type SpeedSourceActions = Parameters<SpeedSourcePanelView["bindActions"]>[0];
-  type SpeedSourceDiagnostics = Parameters<SpeedSourcePanelView["bindDiagnostics"]>[0];
-  type SpeedSourceModel = Parameters<SpeedSourcePanelView["bindModel"]>[0];
+  type SpeedSourceActions = NonNullable<SpeedSourcePanelView["actions"]["value"]>;
+  type SpeedSourceDiagnostics = NonNullable<SpeedSourcePanelView["diagnostics"]["value"]>;
+  type SpeedSourceModel = NonNullable<SpeedSourcePanelView["model"]["value"]>;
 
   const actions: SpeedSourceActions[] = [];
   const diagnostics: SpeedSourceDiagnostics[] = [];
@@ -116,7 +120,7 @@ function createSpeedSourcePanelSpy() {
   let focusScanCalls = 0;
   let focusStaleCalls = 0;
   const models: SpeedSourceModel[] = [];
-  let obdConfigVisible = false;
+  let mountedView: SpeedSourcePanelView | null = null;
 
   return {
     actions,
@@ -131,33 +135,38 @@ function createSpeedSourcePanelSpy() {
       return focusStaleCalls;
     },
     isObdConfigVisible() {
-      return obdConfigVisible;
+      return mountedView?.model.value?.value.obdConfigVisible ?? false;
     },
     models,
-    view: {
-      bindActions(nextActions) {
-        actions.push(nextActions);
-      },
-      bindDiagnostics(nextDiagnostics) {
-        diagnostics.push(nextDiagnostics);
-      },
-      bindModel(nextModel) {
-        models.push(nextModel);
-        obdConfigVisible = nextModel.value.obdConfigVisible;
-      },
-      focusManualSpeedInput() {
-        focusManualCalls += 1;
-      },
-      focusScanObdDevices() {
-        focusScanCalls += 1;
-      },
-      focusStaleTimeoutInput() {
-        focusStaleCalls += 1;
-      },
-      isObdConfigVisible() {
-        return obdConfigVisible;
-      },
-    } satisfies SpeedSourcePanelView,
+    mount(view: SpeedSourcePanelView) {
+      mountedView = view;
+      if (view.actions.value) {
+        actions.push(view.actions.value);
+      }
+      if (view.diagnostics.value) {
+        diagnostics.push(view.diagnostics.value);
+      }
+      if (view.model.value) {
+        models.push(view.model.value);
+      }
+      return {
+        focusManualSpeedInput() {
+          focusManualCalls += 1;
+        },
+        focusScanObdDevices() {
+          focusScanCalls += 1;
+        },
+        focusStaleTimeoutInput() {
+          focusStaleCalls += 1;
+        },
+        isObdConfigVisible() {
+          return mountedView?.model.value?.value.obdConfigVisible ?? false;
+        },
+      } satisfies Pick<
+        SpeedSourcePanelView,
+        "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput" | "isObdConfigVisible"
+      >;
+    },
   };
 }
 
@@ -178,22 +187,25 @@ test.describe("createLazyUiPanels", () => {
         dashboardMounts += 1;
         return createDashboardPanels();
       },
-      loadHistoryPanel: async () => {
+      loadHistoryPanel: async (_hosts, view) => {
         historyLoads += 1;
-        return historyPanel.view;
+        historyPanel.mount(view);
       },
-      loadSettingsPanels: async () => {
+      loadSettingsPanels: async (_hosts, panels) => {
         settingsLoads += 1;
+        internetPanel.mount(panels.settings.internet);
         return {
           settingsShell: settingsShell.view,
           settings: {
-            cars: {} as ReturnType<typeof createLazyUiPanels>["panels"]["settings"]["cars"],
-            analysis: {} as ReturnType<typeof createLazyUiPanels>["panels"]["settings"]["analysis"],
-            internet: internetPanel.view,
-            update: {} as ReturnType<typeof createLazyUiPanels>["panels"]["settings"]["update"],
-            sensors: {} as ReturnType<typeof createLazyUiPanels>["panels"]["settings"]["sensors"],
-            speedSource: speedSourcePanel.view,
-            espFlash: {} as ReturnType<typeof createLazyUiPanels>["panels"]["settings"]["espFlash"],
+            analysis: {
+              focusField() {},
+              openGuidance() {},
+            },
+            cars: {
+              focus() {},
+            },
+            internet: internetPanel.handle,
+            speedSource: speedSourcePanel.mount(panels.settings.speedSource),
           },
         };
       },
@@ -203,30 +215,34 @@ test.describe("createLazyUiPanels", () => {
     expect(historyLoads).toBe(0);
     expect(settingsLoads).toBe(0);
 
-    const historyActions = {} as Parameters<HistoryPanelView["bindActions"]>[0];
-    const historyModel = signal({}) as unknown as Parameters<HistoryPanelView["bindModel"]>[0];
-    lazyPanels.panels.history.bindModel(historyModel);
-    lazyPanels.panels.history.bindActions(historyActions);
+    const historyActions = {} as NonNullable<HistoryPanelView["actions"]["value"]>;
+    const historyModel = signal({}) as unknown as NonNullable<HistoryPanelView["model"]["value"]>;
+    lazyPanels.panels.history.model.value = historyModel;
+    lazyPanels.panels.history.actions.value = historyActions;
 
     expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("carTab");
     lazyPanels.panels.settingsShell.activateTab("updateTab");
     expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("updateTab");
 
-    const internetActions = {} as Parameters<InternetPanelView["bindActions"]>[0];
-    const internetModel = signal({}) as unknown as Parameters<InternetPanelView["bindModel"]>[0];
-    const speedSourceActions = {} as Parameters<SpeedSourcePanelView["bindActions"]>[0];
-    const speedSourceDiagnostics = signal({}) as unknown as Parameters<SpeedSourcePanelView["bindDiagnostics"]>[0];
+    const internetActions = {} as NonNullable<InternetPanelView["actions"]["value"]>;
+    const internetModel = signal({}) as unknown as NonNullable<InternetPanelView["model"]["value"]>;
+    const speedSourceActions = {} as NonNullable<SpeedSourcePanelView["actions"]["value"]>;
+    const speedSourceDiagnostics = signal({}) as unknown as NonNullable<
+      SpeedSourcePanelView["diagnostics"]["value"]
+    >;
     const speedSourceModel = signal({
       obdConfigVisible: true,
-    }) as unknown as Parameters<SpeedSourcePanelView["bindModel"]>[0];
-    lazyPanels.panels.settings.internet.bindModel(internetModel);
-    lazyPanels.panels.settings.internet.bindActions(internetActions);
+    }) as unknown as NonNullable<SpeedSourcePanelView["model"]["value"]>;
+    lazyPanels.panels.settings.internet.model.value = internetModel;
+    lazyPanels.panels.settings.internet.actions.value = internetActions;
     lazyPanels.panels.settings.internet.focusSsidInput();
-    lazyPanels.panels.settings.speedSource.bindModel(speedSourceModel);
-    lazyPanels.panels.settings.speedSource.bindActions(speedSourceActions);
-    lazyPanels.panels.settings.speedSource.bindDiagnostics(speedSourceDiagnostics);
+    lazyPanels.panels.settings.speedSource.model.value = speedSourceModel;
+    lazyPanels.panels.settings.speedSource.actions.value = speedSourceActions;
+    lazyPanels.panels.settings.speedSource.diagnostics.value = speedSourceDiagnostics;
     lazyPanels.panels.settings.speedSource.focusManualSpeedInput();
     expect(lazyPanels.panels.settings.speedSource.isObdConfigVisible()).toBe(true);
+    const readSpeedSourceVisibility = lazyPanels.panels.settings.speedSource.isObdConfigVisible;
+    expect(readSpeedSourceVisibility()).toBe(true);
 
     await lazyPanels.ensureViewPanels("historyView");
     expect(historyLoads).toBe(1);
@@ -244,6 +260,7 @@ test.describe("createLazyUiPanels", () => {
     expect(speedSourcePanel.diagnostics).toEqual([speedSourceDiagnostics]);
     expect(speedSourcePanel.focusManualCalls).toBe(1);
     expect(lazyPanels.panels.settings.speedSource.isObdConfigVisible()).toBe(true);
+    expect(readSpeedSourceVisibility()).toBe(true);
     expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("updateTab");
 
     lazyPanels.panels.settings.speedSource.focusScanObdDevices();
@@ -258,7 +275,6 @@ test.describe("createLazyUiPanels", () => {
     await lazyPanels.ensureViewPanels("settingsView");
     expect(historyLoads).toBe(1);
     expect(settingsLoads).toBe(1);
-
   });
 
   test("prefetchHiddenPanels schedules offscreen mounts through the deferred scheduler", async () => {
@@ -273,22 +289,32 @@ test.describe("createLazyUiPanels", () => {
     const lazyPanels = createLazyUiPanels({
       hosts,
       mountDashboardPanels: () => createDashboardPanels(),
-      loadHistoryPanel: async () => {
+      loadHistoryPanel: async (_hosts, view) => {
         historyLoads += 1;
-        return historyPanel.view;
+        historyPanel.mount(view);
       },
-      loadSettingsPanels: async () => {
+      loadSettingsPanels: async (_hosts, panels) => {
         settingsLoads += 1;
+        internetPanel.mount(panels.settings.internet);
         return {
           settingsShell: settingsShell.view,
           settings: {
-            cars: {} as ReturnType<typeof createLazyUiPanels>["panels"]["settings"]["cars"],
-            analysis: {} as ReturnType<typeof createLazyUiPanels>["panels"]["settings"]["analysis"],
-            internet: internetPanel.view,
-            update: {} as ReturnType<typeof createLazyUiPanels>["panels"]["settings"]["update"],
-            sensors: {} as ReturnType<typeof createLazyUiPanels>["panels"]["settings"]["sensors"],
-            speedSource: {} as ReturnType<typeof createLazyUiPanels>["panels"]["settings"]["speedSource"],
-            espFlash: {} as ReturnType<typeof createLazyUiPanels>["panels"]["settings"]["espFlash"],
+            analysis: {
+              focusField() {},
+              openGuidance() {},
+            },
+            cars: {
+              focus() {},
+            },
+            internet: internetPanel.handle,
+            speedSource: {
+              focusManualSpeedInput() {},
+              focusScanObdDevices() {},
+              focusStaleTimeoutInput() {},
+              isObdConfigVisible() {
+                return false;
+              },
+            },
           },
         };
       },

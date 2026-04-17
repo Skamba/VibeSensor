@@ -41,7 +41,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       t: ctx.services.t,
     })
   );
-  ctx.panel.bindModel(wizardModel);
+  ctx.panel.model.value = wizardModel;
   let handlersBound = false;
 
   function openWizard(): void {
@@ -110,11 +110,11 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         return;
       }
       handlersBound = true;
-      ctx.panel.bindActions({
+      ctx.panel.actions.value = {
         onAction: (action) => {
           void handleInteraction(action);
         },
-      });
+      };
     },
     openWizard,
   };

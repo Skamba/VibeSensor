@@ -2,13 +2,16 @@ import { render } from "preact";
 
 import { useUiText } from "../ui_i18n";
 import {
-  signal,
   useComputed,
   useSignalProperties,
+  type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
 import { inlineStateActionClass } from "./dom_helpers";
-import { createDeferredViewModel, useDeferredViewModel } from "./view_model_binding";
+import {
+  type DeferredModelSignal,
+  useDeferredViewModel,
+} from "./view_model_binding";
 import type {
   RealtimeCaptureReadinessChecklistModel,
   RealtimeLoggingSummaryAction,
@@ -40,8 +43,8 @@ export interface RealtimeLoggingPanelActionHandlers {
 }
 
 export interface RealtimeLoggingPanelBridge {
-  bindModel(model: ReadonlySignal<RealtimeLoggingPanelRenderModel>): void;
-  bindActions(handlers: RealtimeLoggingPanelActionHandlers): void;
+  actions: Signal<RealtimeLoggingPanelActionHandlers | null>;
+  model: DeferredModelSignal<RealtimeLoggingPanelRenderModel>;
 }
 
 const DEFAULT_PANEL_MODEL: RealtimeLoggingPanelRenderModel = {
@@ -301,17 +304,9 @@ function RealtimeLoggingPanel(props: {
   );
 }
 
-export function mountRealtimeLoggingPanel(host: HTMLElement): RealtimeLoggingPanelBridge {
-  const actions = signal<RealtimeLoggingPanelActionHandlers | null>(null);
-  const modelBinding = createDeferredViewModel<RealtimeLoggingPanelRenderModel>();
-  render(<RealtimeLoggingPanel actions={actions} model={modelBinding.model} />, host);
-
-  return {
-    bindModel(model: ReadonlySignal<RealtimeLoggingPanelRenderModel>): void {
-      modelBinding.bind(model);
-    },
-    bindActions(handlers: RealtimeLoggingPanelActionHandlers): void {
-      actions.value = handlers;
-    },
-  };
+export function mountRealtimeLoggingPanel(
+  host: HTMLElement,
+  view: RealtimeLoggingPanelBridge,
+): void {
+  render(<RealtimeLoggingPanel actions={view.actions} model={view.model} />, host);
 }

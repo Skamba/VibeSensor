@@ -48,7 +48,7 @@ export function createSettingsGpsStatusModule(
     t: ctx.services.t,
   };
   const diagnosticsModel = signal(DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL);
-  panel.bindDiagnostics(diagnosticsModel);
+  panel.diagnostics.value = diagnosticsModel;
   const pollingEnabled = computed(() =>
     handlersBound.value
     && startupReady.value

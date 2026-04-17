@@ -277,7 +277,7 @@ export function createSettingsAnalysisModule(
     };
   }
   const panelModel = computed(() => buildPanelModel());
-  panel.bindModel(panelModel);
+  panel.model.value = panelModel;
 
   function clearFieldValidationState(): void {
     fieldErrorMessages.value = {};
@@ -493,13 +493,13 @@ export function createSettingsAnalysisModule(
   }
 
   function bindHandlers(): void {
-    panel.bindActions({
+    panel.actions.value = {
       onFieldInput: handleFieldInput,
       onReset: () => {
         void resetAnalysisToDefaults();
       },
       onSave: saveAnalysisFromInputs,
-    });
+    };
   }
 
   return {
