@@ -3,9 +3,9 @@ import { render } from "preact";
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
 import type { ChoiceCardState } from "../view_style_types";
 import {
+  computed,
   effect,
   signal,
-  untracked,
   type ReadonlySignal,
 } from "../ui_signals";
 import { SpeedSourceConfigPanel } from "./speed_source_config_panel";
@@ -188,12 +188,21 @@ function SpeedSourcePanel(props: {
 }
 
 export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
-  const bridgeState = signal<SpeedSourcePanelBridgeState>({
-    actions: null,
-    diagnostics: DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL,
-    diagnosticsDisclosureOpen: false,
-    model: DEFAULT_SPEED_SOURCE_PANEL_MODEL,
+  const actions = signal<SpeedSourcePanelActionHandlers | null>(null);
+  const diagnosticsSignal = signal<ReadonlySignal<SpeedSourceDiagnosticsRenderModel> | null>(null);
+  const diagnosticsDisclosureOpen = signal(false);
+  const modelSignal = signal<ReadonlySignal<SpeedSourcePanelRenderModel> | null>(null);
+  effect(() => {
+    if (modelSignal.value?.value.diagnosticsShouldOpen) {
+      diagnosticsDisclosureOpen.value = true;
+    }
   });
+  const bridgeState = computed<SpeedSourcePanelBridgeState>(() => ({
+    actions: actions.value,
+    diagnostics: diagnosticsSignal.value?.value ?? DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL,
+    diagnosticsDisclosureOpen: diagnosticsDisclosureOpen.value,
+    model: modelSignal.value?.value ?? DEFAULT_SPEED_SOURCE_PANEL_MODEL,
+  }));
   let manualSpeedInput: HTMLInputElement | null = null;
   let obdConfig: HTMLElement | null = null;
   let scanObdDevicesBtn: HTMLButtonElement | null = null;
@@ -207,11 +216,8 @@ export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
         obdConfig = element;
       }}
       onDiagnosticsToggle={(event) => {
-        bridgeState.value = {
-          ...bridgeState.value,
-          diagnosticsDisclosureOpen:
-            (event.currentTarget as HTMLDetailsElement | null)?.open ?? false,
-        };
+        diagnosticsDisclosureOpen.value =
+          (event.currentTarget as HTMLDetailsElement | null)?.open ?? false;
       }}
       scanButtonRef={(element) => {
         scanObdDevicesBtn = element;
@@ -226,27 +232,13 @@ export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
 
   return {
     bindActions(handlers): void {
-      bridgeState.value = { ...bridgeState.value, actions: handlers };
+      actions.value = handlers;
     },
     bindDiagnostics(model): void {
-      effect(() => {
-        const currentBridgeState = untracked(() => bridgeState.value);
-        bridgeState.value = {
-          ...currentBridgeState,
-          diagnostics: model.value,
-        };
-      });
+      diagnosticsSignal.value = model;
     },
     bindModel(model): void {
-      effect(() => {
-        const currentBridgeState = untracked(() => bridgeState.value);
-        bridgeState.value = {
-          ...currentBridgeState,
-          diagnosticsDisclosureOpen:
-            currentBridgeState.diagnosticsDisclosureOpen || model.value.diagnosticsShouldOpen,
-          model: model.value,
-        };
-      });
+      modelSignal.value = model;
     },
     focusManualSpeedInput(): void {
       manualSpeedInput?.focus();
