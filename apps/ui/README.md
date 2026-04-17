@@ -142,7 +142,9 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/history_panel.tsx` | Signal-backed Preact owner for the history panel shell that renders summary/toolbar chrome and binds typed row actions through a semantic bridge |
 | `app/views/history_table_content.tsx` | History island JSX renderer that turns typed row/detail models into empty state, table rows, expanded evidence cards, and action affordances |
 | `app/views/history_table_view.ts` | Thin history-panel bridge that defines the typed empty/table render contract consumed by the Preact history island |
-| `app/views/realtime_logging_view_models.ts` | Typed realtime logging and readiness view-model builders for summary, checklist, and control-state derivation |
+| `app/views/realtime_capture_readiness_models.ts` | Typed capture-readiness helpers and checklist builders reused by realtime logging and sensor-health derivation |
+| `app/views/realtime_logging_summary_models.ts` | Typed realtime logging summary-panel builders for blocked/setup/post-run states and CTA mapping |
+| `app/views/realtime_logging_view_models.ts` | Thin realtime logging panel compositor and stable re-export surface over the focused readiness and summary builders |
 | `app/views/realtime_live_overview.tsx` | Signal-backed Preact owner for the live overview card that consumes typed status/sensor models without manual island rerender loops |
 | `app/views/realtime_logging_panel.tsx` | Signal-backed Preact owner for the run-recording card that renders typed logging/readiness models, owns the setup-layout marker locally, and binds start/stop plus summary CTA actions through the shared bridge |
 | `app/views/settings_car_list_view.ts` | Typed saved-car list and guidance view-model builders reused by the car-management island for row, empty-state, and highlight rendering |
@@ -225,10 +227,12 @@ mutation flow, and signal-backed workflow state, `realtime_feature_view_state.ts
 derives the live overview/logging/sensors models plus idle readiness signatures
 from shared AppState slices, `app/views/realtime_live_overview.tsx` and
 `app/views/realtime_logging_panel.tsx` consume bound model signals inside their
-signal-backed islands, and `realtime_logging_view_models.ts` still owns the
-logging/readiness model builders reused by that derived state. `app/views/` now
-owns typed view-model builders, event-target decoding, and signal-backed Preact
-surfaces for reusable multi-action panels.
+signal-backed islands, `realtime_capture_readiness_models.ts` owns the
+readiness/checklist helpers, `realtime_logging_summary_models.ts` owns the
+logging summary-panel builders, and `realtime_logging_view_models.ts` stays the
+top-level logging panel compositor and stable re-export surface reused by that
+derived state. `app/views/` now owns typed view-model builders, event-target
+decoding, and signal-backed Preact surfaces for reusable multi-action panels.
 
 `src/transport/` owns transport-specific helpers such as clone and live-model
 surfaces, while `api/types.ts` owns generated HTTP alias exports used across
