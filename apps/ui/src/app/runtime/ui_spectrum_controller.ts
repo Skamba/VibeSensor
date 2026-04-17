@@ -135,12 +135,6 @@ export class UiSpectrumController {
       }
       previousLanguage = currentLanguage;
       untracked(() => {
-        if (this.state.spectrum.spectrumPlot) {
-          this.state.spectrum.spectrumPlot.destroy();
-          this.state.spectrum.spectrumPlot = null;
-          this.renderSpectrum();
-          return;
-        }
         this.renderSpectrumHeader();
         this.updateSpectrumOverlay();
       });
