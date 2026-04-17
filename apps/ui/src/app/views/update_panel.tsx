@@ -7,7 +7,7 @@ import {
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
-import { createBoundViewModel } from "./view_model_binding";
+import { createDeferredViewModel, useDeferredViewModel } from "./view_model_binding";
 import type {
   UpdateCurrentStatusSectionModel,
   UpdateHealthSectionModel,
@@ -333,7 +333,7 @@ function UpdateStatusContent(props: {
 
 function UpdatePanel(props: {
   actions: ReadonlySignal<UpdatePanelActionHandlers | null>;
-  model: ReadonlySignal<UpdatePanelRenderModel>;
+  model: ReadonlySignal<ReadonlySignal<UpdatePanelRenderModel> | null>;
 }) {
   const titleText = useUiText("settings.update.title", "System Update");
   const hintText = useUiText(
@@ -346,6 +346,7 @@ function UpdatePanel(props: {
   );
   const cancelLabel = useUiText("settings.update.cancel", "Cancel Update");
   const actions = useComputed(() => props.actions.value);
+  const model = useDeferredViewModel(props.model, DEFAULT_UPDATE_PANEL_MODEL);
   const {
     cancelButtonDisabled,
     cancelButtonHidden,
@@ -353,7 +354,7 @@ function UpdatePanel(props: {
     startButtonHidden,
     startButtonLabelText,
     status,
-  } = useSignalProperties(props.model, UPDATE_PANEL_MODEL_KEYS);
+  } = useSignalProperties(model, UPDATE_PANEL_MODEL_KEYS);
   const handleStart = () => {
     actions.value?.onStart();
   };
@@ -424,7 +425,7 @@ function UpdatePanel(props: {
 
 export function mountUpdatePanel(host: HTMLElement): UpdatePanelView {
   const actions = signal<UpdatePanelActionHandlers | null>(null);
-  const modelBinding = createBoundViewModel(DEFAULT_UPDATE_PANEL_MODEL);
+  const modelBinding = createDeferredViewModel<UpdatePanelRenderModel>();
   render(<UpdatePanel actions={actions} model={modelBinding.model} />, host);
 
   return {
