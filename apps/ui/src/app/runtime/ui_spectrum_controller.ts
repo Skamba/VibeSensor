@@ -1,6 +1,9 @@
 import { trackAppStateSlice, type AppState } from "../ui_app_state";
 import { effect, untracked } from "../ui_signals";
-import { SpectrumCanvasRenderer } from "./spectrum_canvas_renderer";
+import {
+  createSpectrumCanvasRenderer,
+  type SpectrumCanvasRenderer,
+} from "./spectrum_canvas_renderer";
 import { SpectrumInteractionController } from "./spectrum_interaction_controller";
 import type { SpectrumPanelView } from "./spectrum_panel_view";
 
@@ -21,7 +24,7 @@ export class UiSpectrumController {
     private readonly deps: UiSpectrumControllerDeps,
   ) {
     this.panel = this.deps.panel;
-    this.canvas = new SpectrumCanvasRenderer({
+    this.canvas = createSpectrumCanvasRenderer({
       state: this.state,
       dom: this.panel.chartDom,
       t: this.t,
