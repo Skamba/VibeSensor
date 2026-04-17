@@ -16,7 +16,7 @@ import {
 import { createUiShellNotificationModule } from "../src/app/runtime/ui_shell_notification_module";
 import { createUiShellPreferencesModule } from "../src/app/runtime/ui_shell_preferences_module";
 import { createUiShellStatusModule } from "../src/app/runtime/ui_shell_status_module";
-import type { ReadonlySignal } from "../src/app/ui_signals";
+import { signal, type ReadonlySignal } from "../src/app/ui_signals";
 
 function jsonResponse(body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -194,8 +194,8 @@ test.describe("UiShellController", () => {
       chrome: chrome.view,
       chromeActions: createUiShellChromeActionBridge(),
       liveOverview: {
-        bindModel() {},
-        setSpeedText() {},
+        model: signal(null),
+        speedText: signal("--"),
       },
       state,
     });
@@ -233,8 +233,8 @@ test.describe("UiShellController", () => {
       chrome: chrome.view,
       chromeActions: createUiShellChromeActionBridge(),
       liveOverview: {
-        bindModel() {},
-        setSpeedText() {},
+        model: signal(null),
+        speedText: signal("--"),
       },
       state,
     });

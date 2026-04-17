@@ -63,23 +63,23 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     renderState: workflow.renderState,
     t: services.t,
   });
-  panels.internet.bindModel(presenter.internetPanelModel);
-  panels.update.bindModel(presenter.updatePanelModel);
+  panels.internet.model.value = presenter.internetPanelModel;
+  panels.update.model.value = presenter.updatePanelModel;
 
   function bindUpdateHandlers(): void {
     if (handlersBound.value) {
       return;
     }
     handlersBound.value = true;
-    panels.update.bindActions({
+    panels.update.actions.value = {
       onStart: () => {
         void workflow.startUpdate(presenter.readStartIntent());
       },
       onCancel: () => {
         void workflow.cancelUpdate();
       },
-    });
-    panels.internet.bindActions({
+    };
+    panels.internet.actions.value = {
       onPasswordInput: (value) => {
         presenter.setPasswordInput(value);
       },
@@ -92,7 +92,7 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       onSsidInput: (value) => {
         presenter.setSsidInput(value);
       },
-    });
+    };
   }
 
   return {

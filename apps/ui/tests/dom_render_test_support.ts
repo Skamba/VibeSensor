@@ -436,6 +436,18 @@ function restoreGlobal<K extends keyof DomGlobals>(
 
 export async function mountSignalView<TView>(
   loadMount: () => Promise<(host: HTMLElement) => TView> | ((host: HTMLElement) => TView),
+): Promise<MountedSignalView<TView>>;
+export async function mountSignalView<TView>(
+  loadMount: () =>
+    Promise<(host: HTMLElement, view: TView) => void> | ((host: HTMLElement, view: TView) => void),
+  createView: () => TView,
+): Promise<MountedSignalView<TView>>;
+export async function mountSignalView<TView>(
+  loadMount: () =>
+    | Promise<((host: HTMLElement) => TView) | ((host: HTMLElement, view: TView) => void)>
+    | ((host: HTMLElement) => TView)
+    | ((host: HTMLElement, view: TView) => void),
+  createView?: () => TView,
 ): Promise<MountedSignalView<TView>> {
   const restoreDom = installMountedViewDomGlobals();
   const host = globalThis.document.createElement("div");
@@ -445,7 +457,10 @@ export async function mountSignalView<TView>(
   try {
     const { render } = await import("preact");
     const mount = await loadMount();
-    const view = mount(host);
+    const view = createView ? createView() : undefined;
+    const mountedView = createView
+      ? (mount as (host: HTMLElement, view: TView) => void)(host, view)
+      : (mount as (host: HTMLElement) => TView)(host);
     return {
       cleanup(): void {
         if (cleanedUp) {
@@ -459,7 +474,7 @@ export async function mountSignalView<TView>(
         return flushSignalUpdates(rounds);
       },
       host,
-      view,
+      view: createView ? view : mountedView,
     };
   } catch (error) {
     restoreDom();

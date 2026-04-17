@@ -5,14 +5,12 @@ import { signal } from "../src/app/ui_signals";
 import type { EspFlashPanelActionHandlers } from "../src/app/views/esp_flash_panel";
 
 test("bindHandlers uses panel action surfaces instead of raw DOM bindings", () => {
-  let handlers: EspFlashPanelActionHandlers | null = null;
+  const panel = {
+    actions: signal<EspFlashPanelActionHandlers | null>(null),
+    model: signal(null),
+  };
   const feature = createEspFlashFeature({
-    panel: {
-      bindActions(nextHandlers) {
-        handlers = nextHandlers;
-      },
-      bindModel() {},
-    },
+    panel,
     ports: {
       activeSettingsTabId: signal("espFlashTab"),
       activeViewId: signal("settingsView"),
@@ -25,6 +23,7 @@ test("bindHandlers uses panel action surfaces instead of raw DOM bindings", () =
   });
 
   expect(() => feature.bindHandlers()).not.toThrow();
+  const handlers = panel.actions.value;
   expect(handlers).not.toBeNull();
   expect(typeof handlers?.onStart).toBe("function");
   expect(typeof handlers?.onCancel).toBe("function");

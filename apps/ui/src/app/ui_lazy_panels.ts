@@ -4,19 +4,59 @@ import {
   mountHistoryPanelLazy,
   mountSettingsPanelsLazy,
   type UiMountedDashboardPanels,
+  type UiMountedLazyPanelHandles,
   type UiMountedLazyPanels,
   type UiMountedPanels,
 } from "./ui_panel_bootstrap";
 import { effect, signal } from "./ui_signals";
-import type { AnalysisPanelView } from "./views/analysis_panel";
-import type { CarsPanelView } from "./views/cars_panel";
-import type { EspFlashPanelView } from "./views/esp_flash_panel";
-import type { HistoryPanelView } from "./views/history_table_view";
-import type { InternetPanelView } from "./views/internet_panel";
-import type { SensorsPanelView } from "./views/sensors_panel";
+import type {
+  AnalysisPanelActionHandlers,
+  AnalysisPanelCarAvailability,
+  AnalysisPanelFieldKey,
+  AnalysisPanelRenderModel,
+  AnalysisPanelView,
+} from "./views/analysis_panel";
+import type {
+  CarsFeatureInteractionHandlers,
+  CarsListRenderModel,
+  CarsPanelView,
+} from "./views/cars_panel";
+import type {
+  EspFlashPanelActionHandlers,
+  EspFlashPanelRenderModel,
+  EspFlashPanelView,
+} from "./views/esp_flash_panel";
+import type {
+  HistoryPanelActionHandlers,
+  HistoryPanelRenderModel,
+  HistoryPanelView,
+} from "./views/history_table_view";
+import type {
+  InternetPanelActionHandlers,
+  InternetPanelRenderModel,
+  InternetPanelView,
+} from "./views/internet_panel";
+import type {
+  SensorsPanelActionHandlers,
+  SensorsPanelRenderModel,
+  SensorsPanelView,
+} from "./views/sensors_panel";
 import type { SettingsShellView } from "./views/settings_shell";
-import type { SpeedSourcePanelView } from "./views/speed_source_panel";
-import type { UpdatePanelView } from "./views/update_panel";
+import type {
+  SpeedSourceDiagnosticsRenderModel,
+  SpeedSourcePanelActionHandlers,
+  SpeedSourcePanelRenderModel,
+  SpeedSourcePanelView,
+} from "./views/speed_source_panel";
+import type {
+  UpdatePanelActionHandlers,
+  UpdatePanelRenderModel,
+  UpdatePanelView,
+} from "./views/update_panel";
+import {
+  createDeferredModelSignal,
+  createModelActionPanelBindings,
+} from "./views/view_model_binding";
 
 const HISTORY_VIEW_ID = "historyView";
 const SETTINGS_VIEW_ID = "settingsView";
@@ -33,8 +73,11 @@ export interface UiLazyPanels {
 export interface CreateUiLazyPanelsDeps {
   hosts: UiPanelHostRegistry;
   mountDashboardPanels?: (hosts: UiPanelHostRegistry) => UiMountedDashboardPanels;
-  loadHistoryPanel?: (hosts: UiPanelHostRegistry) => Promise<HistoryPanelView>;
-  loadSettingsPanels?: (hosts: UiPanelHostRegistry) => Promise<UiMountedLazyPanels>;
+  loadHistoryPanel?: (hosts: UiPanelHostRegistry, view: HistoryPanelView) => Promise<void>;
+  loadSettingsPanels?: (
+    hosts: UiPanelHostRegistry,
+    panels: UiMountedLazyPanels,
+  ) => Promise<UiMountedLazyPanelHandles>;
   scheduleDeferredWork?: DeferredWorkScheduler;
 }
 
@@ -42,76 +85,15 @@ function scheduleDeferredWork(task: () => void): void {
   setTimeout(task, 0);
 }
 
-function createDeferredBindSlot<TView extends object, TArg>(
-  realView: { value: TView | null },
-  apply: (view: TView, arg: TArg) => void,
-): {
-  attach(view: TView): void;
-  bind(nextArg: TArg): void;
-  current: { value: TArg | null };
-} {
-  const current = { value: null as TArg | null };
-  return {
-    attach(view) {
-      if (current.value !== null) {
-        apply(view, current.value);
-      }
-    },
-    bind(nextArg) {
-      current.value = nextArg;
-      if (realView.value !== null) {
-        apply(realView.value, nextArg);
-      }
-    },
-    current,
-  };
-}
-
-function createDeferredModelActionView<
-  TModel,
-  TActions,
-  TView extends {
-    bindActions(actions: TActions): void;
-    bindModel(model: TModel): void;
-  },
->(): {
-  attach(realView: TView): void;
-  view: TView;
-} {
-  const realView = signal<TView | null>(null);
-  const actions = createDeferredBindSlot(realView, (view, nextActions: TActions) => {
-    view.bindActions(nextActions);
-  });
-  const model = createDeferredBindSlot(realView, (view, nextModel: TModel) => {
-    view.bindModel(nextModel);
-  });
-
-  return {
-    view: {
-      bindActions(nextActions) {
-        actions.bind(nextActions);
-      },
-      bindModel(nextModel) {
-        model.bind(nextModel);
-      },
-    } as TView,
-    attach(nextRealView) {
-      realView.value = nextRealView;
-      actions.attach(nextRealView);
-      model.attach(nextRealView);
-    },
-  };
-}
-
 function createDeferredHistoryPanelView(): {
-  attach(realView: HistoryPanelView): void;
   view: HistoryPanelView;
 } {
-  return createDeferredModelActionView<
-    Parameters<HistoryPanelView["bindModel"]>[0],
-    Parameters<HistoryPanelView["bindActions"]>[0],
-    HistoryPanelView
-  >();
+  return {
+    view: createModelActionPanelBindings<
+      HistoryPanelRenderModel,
+      HistoryPanelActionHandlers
+    >(),
+  };
 }
 
 function createDeferredSettingsShellView(): {
@@ -143,22 +125,19 @@ function createDeferredSettingsShellView(): {
 }
 
 function createDeferredCarsPanelView(): {
-  attach(realView: CarsPanelView): void;
+  attach(realView: Pick<CarsPanelView["wizard"], "focus">): void;
   view: CarsPanelView;
 } {
   type CarsWizardFocusTarget = Parameters<CarsPanelView["wizard"]["focus"]>[0];
-  const list = createDeferredModelActionView<
-    Parameters<CarsPanelView["list"]["bindModel"]>[0],
-    Parameters<CarsPanelView["list"]["bindActions"]>[0],
-    CarsPanelView["list"]
+  const list = createModelActionPanelBindings<
+    CarsListRenderModel,
+    { onAction(action: import("./views/settings_car_list_view").CarsListAction): void }
   >();
-  const realWizard = signal<CarsPanelView["wizard"] | null>(null);
-  const wizardActions = createDeferredBindSlot(realWizard, (view, nextActions: Parameters<CarsPanelView["wizard"]["bindActions"]>[0]) => {
-    view.bindActions(nextActions);
-  });
-  const wizardModel = createDeferredBindSlot(realWizard, (view, nextModel: Parameters<CarsPanelView["wizard"]["bindModel"]>[0]) => {
-    view.bindModel(nextModel);
-  });
+  const wizard = createModelActionPanelBindings<
+    import("./views/car_wizard_view").CarsWizardRenderModel,
+    CarsFeatureInteractionHandlers
+  >();
+  const realWizard = signal<Pick<CarsPanelView["wizard"], "focus"> | null>(null);
   const wizardFocusTarget = signal<CarsWizardFocusTarget | null>(null);
   effect(() => {
     const view = realWizard.value;
@@ -171,43 +150,27 @@ function createDeferredCarsPanelView(): {
 
   return {
     view: {
-      list: list.view,
+      list,
       wizard: {
-        bindActions(nextActions) {
-          wizardActions.bind(nextActions);
-        },
-        bindModel(nextModel) {
-          wizardModel.bind(nextModel);
-        },
+        actions: wizard.actions,
+        model: wizard.model,
         focus(target) {
           wizardFocusTarget.value = target;
         },
       },
     },
     attach(nextRealView) {
-      list.attach(nextRealView.list);
-      realWizard.value = nextRealView.wizard;
-      wizardActions.attach(nextRealView.wizard);
-      wizardModel.attach(nextRealView.wizard);
+      realWizard.value = nextRealView;
     },
   };
 }
 
 function createDeferredAnalysisPanelView(): {
-  attach(realView: AnalysisPanelView): void;
+  attach(realView: Pick<AnalysisPanelView, "focusField" | "openGuidance">): void;
   view: AnalysisPanelView;
 } {
   type AnalysisFocusField = Parameters<AnalysisPanelView["focusField"]>[0];
-  const realView = signal<AnalysisPanelView | null>(null);
-  const actions = createDeferredBindSlot(realView, (view, nextActions: Parameters<AnalysisPanelView["bindActions"]>[0]) => {
-    view.bindActions(nextActions);
-  });
-  const carAvailability = createDeferredBindSlot(realView, (view, nextCarAvailability: Parameters<AnalysisPanelView["bindCarAvailability"]>[0]) => {
-    view.bindCarAvailability(nextCarAvailability);
-  });
-  const model = createDeferredBindSlot(realView, (view, nextModel: Parameters<AnalysisPanelView["bindModel"]>[0]) => {
-    view.bindModel(nextModel);
-  });
+  const realView = signal<Pick<AnalysisPanelView, "focusField" | "openGuidance"> | null>(null);
   const focusField = signal<AnalysisFocusField | null>(null);
   const guidanceOpenRequested = signal(false);
   effect(() => {
@@ -228,15 +191,9 @@ function createDeferredAnalysisPanelView(): {
 
   return {
     view: {
-      bindActions(nextActions) {
-        actions.bind(nextActions);
-      },
-      bindCarAvailability(nextCarAvailability) {
-        carAvailability.bind(nextCarAvailability);
-      },
-      bindModel(nextModel) {
-        model.bind(nextModel);
-      },
+      actions: signal<AnalysisPanelActionHandlers | null>(null),
+      carAvailability: createDeferredModelSignal<AnalysisPanelCarAvailability>(),
+      model: createDeferredModelSignal<AnalysisPanelRenderModel>(),
       openGuidance() {
         guidanceOpenRequested.value = true;
       },
@@ -246,39 +203,35 @@ function createDeferredAnalysisPanelView(): {
     },
     attach(nextRealView) {
       realView.value = nextRealView;
-      actions.attach(nextRealView);
-      carAvailability.attach(nextRealView);
-      model.attach(nextRealView);
     },
   };
 }
 
 function createDeferredSensorsPanelView(): {
-  attach(realView: SensorsPanelView): void;
   view: SensorsPanelView;
 } {
-  return createDeferredModelActionView<
-    Parameters<SensorsPanelView["bindModel"]>[0],
-    Parameters<SensorsPanelView["bindActions"]>[0],
-    SensorsPanelView
-  >();
+  return {
+    view: createModelActionPanelBindings<
+      SensorsPanelRenderModel,
+      SensorsPanelActionHandlers
+    >(),
+  };
 }
 
 function createDeferredSpeedSourcePanelView(): {
-  attach(realView: SpeedSourcePanelView): void;
+  attach(
+    realView: Pick<
+      SpeedSourcePanelView,
+      "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput" | "isObdConfigVisible"
+    >,
+  ): void;
   view: SpeedSourcePanelView;
 } {
   type PendingFocusTarget = "manual" | "scan" | "stale";
-  const realView = signal<SpeedSourcePanelView | null>(null);
-  const actions = createDeferredBindSlot(realView, (view, nextActions: Parameters<SpeedSourcePanelView["bindActions"]>[0]) => {
-    view.bindActions(nextActions);
-  });
-  const diagnostics = createDeferredBindSlot(realView, (view, nextDiagnostics: Parameters<SpeedSourcePanelView["bindDiagnostics"]>[0]) => {
-    view.bindDiagnostics(nextDiagnostics);
-  });
-  const model = createDeferredBindSlot(realView, (view, nextModel: Parameters<SpeedSourcePanelView["bindModel"]>[0]) => {
-    view.bindModel(nextModel);
-  });
+  const realView = signal<Pick<
+    SpeedSourcePanelView,
+    "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput" | "isObdConfigVisible"
+  > | null>(null);
   const pendingFocusTarget = signal<PendingFocusTarget | null>(null);
   effect(() => {
     const view = realView.value;
@@ -298,15 +251,9 @@ function createDeferredSpeedSourcePanelView(): {
 
   return {
     view: {
-      bindActions(nextActions) {
-        actions.bind(nextActions);
-      },
-      bindDiagnostics(nextDiagnostics) {
-        diagnostics.bind(nextDiagnostics);
-      },
-      bindModel(nextModel) {
-        model.bind(nextModel);
-      },
+      actions: signal<SpeedSourcePanelActionHandlers | null>(null),
+      diagnostics: createDeferredModelSignal<SpeedSourceDiagnosticsRenderModel>(),
+      model: createDeferredModelSignal<SpeedSourcePanelRenderModel>(),
       focusManualSpeedInput() {
         pendingFocusTarget.value = "manual";
       },
@@ -321,40 +268,31 @@ function createDeferredSpeedSourcePanelView(): {
         if (attachedView !== null) {
           return attachedView.isObdConfigVisible();
         }
-        return model.current.value?.value.obdConfigVisible ?? false;
+        return this.model.value?.value.obdConfigVisible ?? false;
       },
     },
     attach(nextRealView) {
       realView.value = nextRealView;
-      actions.attach(nextRealView);
-      diagnostics.attach(nextRealView);
-      model.attach(nextRealView);
     },
   };
 }
 
 function createDeferredUpdatePanelView(): {
-  attach(realView: UpdatePanelView): void;
   view: UpdatePanelView;
 } {
-  return createDeferredModelActionView<
-    Parameters<UpdatePanelView["bindModel"]>[0],
-    Parameters<UpdatePanelView["bindActions"]>[0],
-    UpdatePanelView
-  >();
+  return {
+    view: createModelActionPanelBindings<
+      UpdatePanelRenderModel,
+      UpdatePanelActionHandlers
+    >(),
+  };
 }
 
 function createDeferredInternetPanelView(): {
-  attach(realView: InternetPanelView): void;
+  attach(realView: Pick<InternetPanelView, "focusSsidInput">): void;
   view: InternetPanelView;
 } {
-  const realView = signal<InternetPanelView | null>(null);
-  const actions = createDeferredBindSlot(realView, (view, nextActions: Parameters<InternetPanelView["bindActions"]>[0]) => {
-    view.bindActions(nextActions);
-  });
-  const model = createDeferredBindSlot(realView, (view, nextModel: Parameters<InternetPanelView["bindModel"]>[0]) => {
-    view.bindModel(nextModel);
-  });
+  const realView = signal<Pick<InternetPanelView, "focusSsidInput"> | null>(null);
   const focusSsidRequested = signal(false);
   effect(() => {
     const view = realView.value;
@@ -366,33 +304,27 @@ function createDeferredInternetPanelView(): {
 
   return {
     view: {
-      bindActions(nextActions) {
-        actions.bind(nextActions);
-      },
-      bindModel(nextModel) {
-        model.bind(nextModel);
-      },
+      actions: signal<InternetPanelActionHandlers | null>(null),
+      model: createDeferredModelSignal<InternetPanelRenderModel>(),
       focusSsidInput() {
         focusSsidRequested.value = true;
       },
     },
     attach(nextRealView) {
       realView.value = nextRealView;
-      actions.attach(nextRealView);
-      model.attach(nextRealView);
     },
   };
 }
 
 function createDeferredEspFlashPanelView(): {
-  attach(realView: EspFlashPanelView): void;
   view: EspFlashPanelView;
 } {
-  return createDeferredModelActionView<
-    Parameters<EspFlashPanelView["bindModel"]>[0],
-    Parameters<EspFlashPanelView["bindActions"]>[0],
-    EspFlashPanelView
-  >();
+  return {
+    view: createModelActionPanelBindings<
+      EspFlashPanelRenderModel,
+      EspFlashPanelActionHandlers
+    >(),
+  };
 }
 
 export function createLazyUiPanels(deps: CreateUiLazyPanelsDeps): UiLazyPanels {
@@ -412,35 +344,40 @@ export function createLazyUiPanels(deps: CreateUiLazyPanelsDeps): UiLazyPanels {
   let historyMountPromise: Promise<void> | null = null;
   let settingsMountPromise: Promise<void> | null = null;
 
-  const attachSettingsPanels = (mountedPanels: UiMountedLazyPanels): void => {
+  const attachSettingsPanels = (mountedPanels: UiMountedLazyPanelHandles): void => {
     settingsShell.attach(mountedPanels.settingsShell);
     settings.cars.attach(mountedPanels.settings.cars);
     settings.analysis.attach(mountedPanels.settings.analysis);
     settings.internet.attach(mountedPanels.settings.internet);
-    settings.update.attach(mountedPanels.settings.update);
-    settings.sensors.attach(mountedPanels.settings.sensors);
     settings.speedSource.attach(mountedPanels.settings.speedSource);
-    settings.espFlash.attach(mountedPanels.settings.espFlash);
   };
 
   const ensureHistoryMounted = (): Promise<void> => {
     if (historyMountPromise === null) {
-      historyMountPromise = (deps.loadHistoryPanel ?? mountHistoryPanelLazy)(hosts).then(
-        (realView) => {
-          history.attach(realView);
-        },
-      );
+      historyMountPromise = (deps.loadHistoryPanel ?? mountHistoryPanelLazy)(hosts, history.view);
     }
     return historyMountPromise;
   };
 
   const ensureSettingsMounted = (): Promise<void> => {
     if (settingsMountPromise === null) {
-      settingsMountPromise = (deps.loadSettingsPanels ?? mountSettingsPanelsLazy)(hosts).then(
-        (mountedPanels) => {
-          attachSettingsPanels(mountedPanels);
+      settingsMountPromise = (deps.loadSettingsPanels ?? mountSettingsPanelsLazy)(
+        hosts,
+        {
+          settingsShell: settingsShell.view,
+          settings: {
+            analysis: settings.analysis.view,
+            cars: settings.cars.view,
+            espFlash: settings.espFlash.view,
+            internet: settings.internet.view,
+            sensors: settings.sensors.view,
+            speedSource: settings.speedSource.view,
+            update: settings.update.view,
+          },
         },
-      );
+      ).then((mountedPanels) => {
+          attachSettingsPanels(mountedPanels);
+        });
     }
     return settingsMountPromise;
   };

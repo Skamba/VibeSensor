@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 import { computed, effect, signal, useSignalProperties } from "../src/app/ui_signals";
 import type {
+  RealtimeLiveOverviewBridge,
   RealtimeLiveOverviewRenderModel,
   RealtimeLiveOverviewSensorCardModel,
 } from "../src/app/views/realtime_live_overview";
@@ -127,11 +128,14 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
   const harness = await mountSignalView(async () => {
     const { mountRealtimeLiveOverview } = await import("../src/app/views/realtime_live_overview");
     return mountRealtimeLiveOverview;
-  });
+  }, (): RealtimeLiveOverviewBridge => ({
+    model: signal(null),
+    speedText: signal("--"),
+  }));
 
   try {
-    harness.view.bindModel(model);
-    harness.view.setSpeedText("43 km/h");
+    harness.view.model.value = model;
+    harness.view.speedText.value = "43 km/h";
     await harness.flush();
 
     assert.equal(requireElement(harness.host, "#liveConnectedSensors [data-value]").textContent, "2 / 4");
@@ -178,7 +182,7 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
     assert.match(harness.host.textContent ?? "", /Front Left/);
     assert.doesNotMatch(harness.host.textContent ?? "", /No sensors/i);
 
-    harness.view.bindModel(reboundModel);
+    harness.view.model.value = reboundModel;
     await harness.flush();
 
     assert.equal(requireElement(harness.host, "#liveConnectedSensors [data-value]").textContent, "1 / 1");

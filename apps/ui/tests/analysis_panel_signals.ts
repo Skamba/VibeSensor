@@ -5,6 +5,7 @@ import type {
   AnalysisPanelCarAvailability,
   AnalysisPanelFieldKey,
   AnalysisPanelRenderModel,
+  AnalysisPanelView,
 } from "../src/app/views/analysis_panel";
 import { mountSignalView } from "./dom_render_test_support";
 
@@ -53,7 +54,13 @@ async function runAnalysisPanelSignalBindingTest(): Promise<void> {
   const harness = await mountSignalView(async () => {
     const { mountAnalysisPanel } = await import("../src/app/views/analysis_panel");
     return mountAnalysisPanel;
-  });
+  }, (): AnalysisPanelView => ({
+    actions: signal(null),
+    carAvailability: signal(null),
+    model: signal(null),
+    focusField() {},
+    openGuidance() {},
+  }));
 
   try {
     const firstAvailability = signal<AnalysisPanelCarAvailability>({
@@ -67,8 +74,8 @@ async function runAnalysisPanelSignalBindingTest(): Promise<void> {
     const firstModel = signal(createAnalysisModel("5"));
     const secondModel = signal(createAnalysisModel("11"));
 
-    harness.view.bindCarAvailability(firstAvailability);
-    harness.view.bindModel(firstModel);
+    harness.view.carAvailability.value = firstAvailability;
+    harness.view.model.value = firstModel;
     await harness.flush();
 
     const noCarMessage = requireElement<HTMLElement>(harness.host, "#analysisNoCarMessage");
@@ -90,8 +97,8 @@ async function runAnalysisPanelSignalBindingTest(): Promise<void> {
     assert.equal(saveButton.disabled, false);
     assert.match(wheelBandwidthGuidance.textContent ?? "", /Current 8%/);
 
-    harness.view.bindCarAvailability(secondAvailability);
-    harness.view.bindModel(secondModel);
+    harness.view.carAvailability.value = secondAvailability;
+    harness.view.model.value = secondModel;
     await harness.flush();
 
     assert.equal(noCarMessage.hidden, true);

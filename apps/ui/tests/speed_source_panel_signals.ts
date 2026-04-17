@@ -4,6 +4,7 @@ import { signal } from "../src/app/ui_signals";
 import { DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL } from "../src/app/views/speed_source_panel_defaults";
 import type {
   SpeedSourceDiagnosticsRenderModel,
+  SpeedSourcePanelView,
   SpeedSourcePanelRenderModel,
 } from "../src/app/views/speed_source_panel";
 import { mountSignalView } from "./dom_render_test_support";
@@ -61,7 +62,17 @@ async function runSpeedSourcePanelSignalBindingTest(): Promise<void> {
   const harness = await mountSignalView(async () => {
     const { mountSpeedSourcePanel } = await import("../src/app/views/speed_source_panel");
     return mountSpeedSourcePanel;
-  });
+  }, (): SpeedSourcePanelView => ({
+    actions: signal(null),
+    diagnostics: signal(null),
+    model: signal(null),
+    focusManualSpeedInput() {},
+    focusScanObdDevices() {},
+    focusStaleTimeoutInput() {},
+    isObdConfigVisible() {
+      return false;
+    },
+  }));
 
   try {
     const firstModel = signal(createSpeedSourcePanelModel("GPS primary", false));
@@ -69,8 +80,8 @@ async function runSpeedSourcePanelSignalBindingTest(): Promise<void> {
     const firstDiagnostics = signal(createDiagnosticsModel("idle"));
     const secondDiagnostics = signal(createDiagnosticsModel("locked"));
 
-    harness.view.bindModel(firstModel);
-    harness.view.bindDiagnostics(firstDiagnostics);
+    harness.view.model.value = firstModel;
+    harness.view.diagnostics.value = firstDiagnostics;
     await harness.flush();
 
     const currentSource = requireElement<HTMLElement>(harness.host, "#speedSourceCurrentSource");
@@ -90,8 +101,8 @@ async function runSpeedSourcePanelSignalBindingTest(): Promise<void> {
     assert.match(diagnosticsState.textContent ?? "", /searching/);
     assert.equal(diagnosticsDetails.hasAttribute("open"), false);
 
-    harness.view.bindModel(secondModel);
-    harness.view.bindDiagnostics(secondDiagnostics);
+    harness.view.model.value = secondModel;
+    harness.view.diagnostics.value = secondDiagnostics;
     await harness.flush();
 
     assert.match(currentSource.textContent ?? "", /OBD fallback/);

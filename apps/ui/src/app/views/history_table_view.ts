@@ -1,6 +1,7 @@
 import type { HistoryEntry } from "../../api/types";
 import type { RunDetail } from "../ui_app_state";
-import type { ReadonlySignal } from "../ui_signals";
+import type { Signal } from "../ui_signals";
+import type { DeferredModelSignal } from "./view_model_binding";
 
 export interface HistoryTableViewParams {
   runs: HistoryEntry[];
@@ -50,6 +51,6 @@ export interface HistoryPanelActionHandlers {
 }
 
 export interface HistoryPanelView {
-  bindModel(model: ReadonlySignal<HistoryPanelRenderModel>): void;
-  bindActions(handlers: HistoryPanelActionHandlers): void;
+  actions: Signal<HistoryPanelActionHandlers | null>;
+  model: DeferredModelSignal<HistoryPanelRenderModel>;
 }

@@ -112,7 +112,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     trackAppStateSlice(history);
     return buildPanelRenderModel();
   });
-  panel.bindModel(panelModel);
+  panel.model.value = panelModel;
 
   async function loadRunPreview(runId: string, force = false): Promise<void> {
     if (!runId) {
@@ -346,7 +346,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       return;
     }
     handlersBound = true;
-    panel.bindActions({
+    panel.actions.value = {
       onRefreshHistory: () => {
         void refreshHistory();
       },
@@ -367,7 +367,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         }
         toggleRunDetails(action.runId);
       },
-    });
+    };
   }
 
   bindReactiveLanguageSync();

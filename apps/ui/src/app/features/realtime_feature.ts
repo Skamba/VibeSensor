@@ -89,9 +89,9 @@ export function createRealtimeFeature(
     },
     workflow: workflowState,
   });
-  ports.chrome.liveOverview.bindModel(viewState.liveOverviewModel);
-  ports.chrome.loggingPanel.bindModel(viewState.loggingPanelModel);
-  panels.sensorsPanel.bindModel(viewState.sensorsPanelModel);
+  ports.chrome.liveOverview.model.value = viewState.liveOverviewModel;
+  ports.chrome.loggingPanel.model.value = viewState.loggingPanelModel;
+  panels.sensorsPanel.model.value = viewState.sensorsPanelModel;
   const workflow = createRealtimeFeatureWorkflow({
     realtime: state.realtime,
     t: services.t,
@@ -129,7 +129,7 @@ export function createRealtimeFeature(
       return;
     }
     handlersBound = true;
-    ports.chrome.loggingPanel.bindActions({
+    ports.chrome.loggingPanel.actions.value = {
       onStartLogging: () => {
         void workflow.startLogging();
       },
@@ -156,9 +156,9 @@ export function createRealtimeFeature(
         }
         openSettingsView("speedSourceTab");
       },
-    });
+    };
     workflow.bindHandlers();
-    panels.sensorsPanel.bindActions({
+    panels.sensorsPanel.actions.value = {
       onSensorLocationChange: (change) => {
         void workflow.setClientLocation(change.clientId, change.locationCode);
       },
@@ -169,7 +169,7 @@ export function createRealtimeFeature(
         }
         void workflow.removeClient(action.clientId);
       },
-    });
+    };
   }
 
   return {
