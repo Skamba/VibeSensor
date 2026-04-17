@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import {
   activateWizardCloseButton,
@@ -8,6 +8,16 @@ import {
   installFakeWebSocket,
   requestPath,
 } from "./smoke.helpers";
+
+async function fillControlledNumberInput(
+  page: Page,
+  selector: string,
+  value: string,
+): Promise<void> {
+  const input = page.locator(selector);
+  await input.fill(value);
+  await expect(input).toHaveValue(value);
+}
 
 test("opens the add car wizard in a focused task container and restores focus when canceled", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -263,8 +273,8 @@ test("keeps the manual branch deliberate while summarizing selections and activa
   await expect(page.locator(".wizard-custom-specs__note")).toBeVisible();
   await expect(page.locator("#wizardGearboxList")).toContainText("Enter specs manually below.");
   await expect(page.locator("#wizardActionHint")).toContainText("Manual path selected");
-  await page.locator("#wizTireWidth").fill("245");
-  await page.locator("#wizGearRatio").fill("0.68");
+  await fillControlledNumberInput(page, "#wizTireWidth", "245");
+  await fillControlledNumberInput(page, "#wizGearRatio", "0.68");
   await expect(page.locator("#wizardSummaryPanel")).toContainText("245/45R18");
   await expect(page.locator("#wizardSummaryPanel")).toContainText("Top gear 0.68");
   await page.locator("#addCarWizard").evaluate((wizard) => {

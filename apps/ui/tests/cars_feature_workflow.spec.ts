@@ -5,6 +5,7 @@ import {
   type CarsFeatureFocusTarget,
   type CarsFeatureWorkflowViewPorts,
 } from "../src/app/features/cars_feature_workflow";
+import type { CarsFeatureManualInputState } from "../src/app/features/cars_manual_input";
 import type {
   CarLibraryGearbox,
   CarLibraryModel,
@@ -46,6 +47,17 @@ function createDefaultManualInputs() {
     tireWidth: "225",
     topGear: "0.64",
   };
+}
+
+function updateManualInputs(
+  workflow: ReturnType<typeof createCarsFeatureWorkflow>,
+  updates: Partial<CarsFeatureManualInputState>,
+): void {
+  for (const [field, value] of Object.entries(updates) as Array<
+    [keyof CarsFeatureManualInputState, string]
+  >) {
+    workflow.handleManualInputChanged(field, value);
+  }
 }
 
 function makeGearbox(overrides: Partial<CarLibraryGearbox> = {}): CarLibraryGearbox {
@@ -137,8 +149,7 @@ test.describe("createCarsFeatureWorkflow", () => {
     await workflow.selectBrand("BMW");
     await workflow.selectType("SUV");
     await workflow.submitCustomModel("X5 M60i");
-    workflow.handleManualInputsChanged({
-      ...createDefaultManualInputs(),
+    updateManualInputs(workflow, {
       tireWidth: "245",
       topGear: "0.68",
     });
@@ -177,8 +188,7 @@ test.describe("createCarsFeatureWorkflow", () => {
     });
 
     await workflow.openWizard();
-    workflow.handleManualInputsChanged({
-      ...createDefaultManualInputs(),
+    updateManualInputs(workflow, {
       finalDrive: "4.10",
       topGear: "0.71",
     });
@@ -223,8 +233,7 @@ test.describe("createCarsFeatureWorkflow", () => {
     await workflow.openWizard();
     await workflow.selectBrand("BMW");
     await workflow.selectType("SUV");
-    workflow.handleManualInputsChanged({
-      ...createDefaultManualInputs(),
+    updateManualInputs(workflow, {
       finalDrive: "4.10",
       topGear: "0.71",
     });
@@ -256,8 +265,7 @@ test.describe("createCarsFeatureWorkflow", () => {
     await workflow.openWizard();
 
     const initialRenderState = workflow.getRenderState();
-    workflow.handleManualInputsChanged({
-      ...createDefaultManualInputs(),
+    updateManualInputs(workflow, {
       finalDrive: "4.10",
       topGear: "0.71",
     });
@@ -285,8 +293,7 @@ test.describe("createCarsFeatureWorkflow", () => {
     await workflow.openWizard();
 
     const initialRenderState = workflow.getRenderState();
-    workflow.handleManualInputsChanged({
-      ...createDefaultManualInputs(),
+    updateManualInputs(workflow, {
       finalDrive: "4.10",
       topGear: "0.71",
     });
@@ -325,6 +332,38 @@ test.describe("createCarsFeatureWorkflow", () => {
     const rerenderState = workflow.getRenderState();
     expect(rerenderState.typeOptions).not.toBe(initialRenderState.typeOptions);
     expect(rerenderState.manualInputs).toBe(initialRenderState.manualInputs);
+  });
+
+  test("preserves prior manual edits across sequential field changes", async () => {
+    const harness = createHarness();
+    const workflow = createCarsFeatureWorkflow({
+      addCarFromWizard: async () => undefined,
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      t: createTranslator(),
+      transport: {
+        async loadBrands() {
+          return ["BMW"];
+        },
+        async loadTypes() {
+          return ["SUV"];
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    await workflow.openWizard();
+    await workflow.selectBrand("BMW");
+    await workflow.selectType("SUV");
+    await workflow.submitCustomModel("X5 M60i");
+
+    updateManualInputs(workflow, { tireWidth: "245" });
+    updateManualInputs(workflow, { topGear: "0.68" });
+
+    expect(workflow.getRenderState().manualInputs).toEqual({
+      ...createDefaultManualInputs(),
+      tireWidth: "245",
+      topGear: "0.68",
+    });
   });
 
   test("keeps the library branch disabled until a gearbox is chosen and then submits the selected specs", async () => {
