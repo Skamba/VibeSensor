@@ -14,10 +14,7 @@ import type {
   RealtimeSensorTableRenderModel,
   RealtimeSensorTableRowViewModel,
 } from "./realtime_sensor_table_view";
-import {
-  type DeferredModelSignal,
-  useDeferredViewModel,
-} from "./view_model_binding";
+import { type DeferredModelSignal } from "./view_model_binding";
 
 export interface SensorsPanelRenderModel {
   table: RealtimeSensorTableRenderModel | null;
@@ -144,7 +141,7 @@ function SensorsPanel(props: {
   const locationLabel = useUiText("settings.sensors.location", "Location");
   const actionsLabel = useUiText("settings.sensors.actions", "Actions");
   const actions = useComputed(() => props.actions.value);
-  const model = useDeferredViewModel(props.model, DEFAULT_SENSORS_PANEL_MODEL);
+  const model = useComputed(() => props.model.value?.value ?? DEFAULT_SENSORS_PANEL_MODEL);
   const { table } = useSignalProperties(model, SENSORS_PANEL_MODEL_KEYS);
   return (
     <div class="panel card">

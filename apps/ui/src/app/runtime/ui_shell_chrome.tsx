@@ -21,8 +21,7 @@ import {
   type SettingsFeedbackMessage,
 } from "../views/settings_feedback";
 import {
-  createDeferredViewModel,
-  useDeferredViewModel,
+  createDeferredModelSignal,
 } from "../views/view_model_binding";
 import type { VisualVariant } from "../view_style_types";
 const SHELL_OWNER = "UI shell";
@@ -721,10 +720,10 @@ function UiShellChrome(props: UiShellChromeProps) {
     bridge,
     panelHosts,
   } = props;
-  const dialogModel = useDeferredViewModel(props.dialogModel, DEFAULT_DIALOG_MODEL);
-  const navigationModel = useDeferredViewModel(props.navigationModel, DEFAULT_NAVIGATION_MODEL);
-  const preferencesModel = useDeferredViewModel(props.preferencesModel, DEFAULT_PREFERENCES_MODEL);
-  const statusModel = useDeferredViewModel(props.statusModel, DEFAULT_STATUS_MODEL);
+  const dialogModel = useComputed(() => props.dialogModel.value?.value ?? DEFAULT_DIALOG_MODEL);
+  const navigationModel = useComputed(() => props.navigationModel.value?.value ?? DEFAULT_NAVIGATION_MODEL);
+  const preferencesModel = useComputed(() => props.preferencesModel.value?.value ?? DEFAULT_PREFERENCES_MODEL);
+  const statusModel = useComputed(() => props.statusModel.value?.value ?? DEFAULT_STATUS_MODEL);
 
   return (
     <ShellChromeFrame statusModel={statusModel}>
@@ -776,19 +775,19 @@ export function mountUiShellChrome(
   host: HTMLElement,
   bridge: UiShellChromeActionBridge,
 ): UiShellChromeView & { panelHosts: UiPanelHostRegistry } {
-  const dialogModel = createDeferredViewModel<UiShellChromeDialogModel>();
-  const navigationModel = createDeferredViewModel<UiShellChromeNavigationModel>();
+  const dialogModel = createDeferredModelSignal<UiShellChromeDialogModel>();
+  const navigationModel = createDeferredModelSignal<UiShellChromeNavigationModel>();
   const panelHosts = createPendingUiPanelHosts();
-  const preferencesModel = createDeferredViewModel<UiShellChromePreferencesModel>();
-  const statusModel = createDeferredViewModel<UiShellChromeStatusModel>();
+  const preferencesModel = createDeferredModelSignal<UiShellChromePreferencesModel>();
+  const statusModel = createDeferredModelSignal<UiShellChromeStatusModel>();
   render(
     <UiShellChrome
       bridge={bridge}
-      dialogModel={dialogModel.model}
-      navigationModel={navigationModel.model}
+      dialogModel={dialogModel}
+      navigationModel={navigationModel}
       panelHosts={panelHosts}
-      preferencesModel={preferencesModel.model}
-      statusModel={statusModel.model}
+      preferencesModel={preferencesModel}
+      statusModel={statusModel}
     />,
     host,
   );
@@ -797,16 +796,16 @@ export function mountUiShellChrome(
   return {
     panelHosts: resolvedPanelHosts,
     bindDialogModel(model) {
-      dialogModel.bind(model);
+      dialogModel.value = model;
     },
     bindNavigationModel(model) {
-      navigationModel.bind(model);
+      navigationModel.value = model;
     },
     bindPreferencesModel(model) {
-      preferencesModel.bind(model);
+      preferencesModel.value = model;
     },
     bindStatusModel(model) {
-      statusModel.bind(model);
+      statusModel.value = model;
     },
   };
 }

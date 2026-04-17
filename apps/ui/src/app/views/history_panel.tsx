@@ -6,7 +6,6 @@ import {
   type ReadonlySignal,
 } from "../ui_signals";
 import { HistoryTableBody } from "./history_table_content";
-import { useDeferredViewModel } from "./view_model_binding";
 import type {
   HistoryPanelActionHandlers,
   HistoryPanelView,
@@ -36,7 +35,7 @@ export function HistoryPanel(props: {
   const samplesLabel = useUiText("history.table.size", "Samples");
   const actionsLabel = useUiText("history.table.actions", "Actions");
   const actions = useComputed(() => props.actions.value);
-  const model = useDeferredViewModel(props.model, DEFAULT_PANEL_MODEL);
+  const model = useComputed(() => props.model.value?.value ?? DEFAULT_PANEL_MODEL);
   const { deleteAllRunsDisabled, historySummaryText, table } = useSignalProperties(
     model,
     HISTORY_PANEL_MODEL_KEYS,
