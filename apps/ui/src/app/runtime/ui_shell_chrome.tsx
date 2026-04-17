@@ -8,6 +8,7 @@ import {
   type UiPanelHostRegistry,
 } from "../ui_panel_host_registry";
 import {
+  useComputed,
   signal,
   type ReadonlySignal,
   useSignalEffect,
@@ -349,20 +350,12 @@ function ShellChromeFrame(props: {
   statusModel: ReadonlySignal<UiShellChromeStatusModel>;
 }) {
   const { children, statusModel } = props;
-  const rootRef = useRef<HTMLDivElement | null>(null);
-
-  useSignalEffect(() => {
-    const root = rootRef.current;
-    if (root) {
-      root.dataset.connectionState = statusModel.value.connectionState;
-    }
-  });
+  const connectionState = useComputed(() => statusModel.value.connectionState);
 
   return (
     <div
-      ref={rootRef}
       class="wrap"
-      data-connection-state={DEFAULT_STATUS_MODEL.connectionState}
+      data-connection-state={connectionState}
     >
       {children}
     </div>
