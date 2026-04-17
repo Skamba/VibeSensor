@@ -18,6 +18,7 @@ import {
   type RealtimeState,
 } from "../ui_app_state";
 import {
+  batch,
   effect,
   signal,
   type ReadonlySignal,
@@ -235,11 +236,13 @@ export function createRealtimeFeatureWorkflow(
     try {
       nextStatus = await api.getLoggingStatus();
     } catch {
-      state.pendingLoggingAction.value = null;
-      state.loggingError.value = {
-        kind: "unavailable",
-        message: t("status.unavailable"),
-      };
+      batch(() => {
+        state.pendingLoggingAction.value = null;
+        state.loggingError.value = {
+          kind: "unavailable",
+          message: t("status.unavailable"),
+        };
+      });
       return;
     }
     realtime.loggingStatus = nextStatus;
@@ -258,45 +261,57 @@ export function createRealtimeFeatureWorkflow(
   async function startLogging(): Promise<void> {
     if (state.pendingLoggingAction.value) return;
     syncIdleCaptureReadinessSignature();
-    state.pendingLoggingAction.value = "starting";
-    state.loggingError.value = null;
+    batch(() => {
+      state.pendingLoggingAction.value = "starting";
+      state.loggingError.value = null;
+    });
     try {
       realtime.loggingStatus = await api.startLoggingRun();
       await recording.onRecordingStatusChanged();
       loggingStatusPolling.restart();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      state.pendingLoggingAction.value = null;
-      state.loggingError.value = {
-        kind: "error",
-        message: message || t("status.unavailable"),
-      };
+      batch(() => {
+        state.pendingLoggingAction.value = null;
+        state.loggingError.value = {
+          kind: "error",
+          message: message || t("status.unavailable"),
+        };
+      });
       return;
     }
-    state.pendingLoggingAction.value = null;
-    state.loggingError.value = null;
+    batch(() => {
+      state.pendingLoggingAction.value = null;
+      state.loggingError.value = null;
+    });
   }
 
   async function stopLogging(): Promise<void> {
     if (state.pendingLoggingAction.value) return;
     syncIdleCaptureReadinessSignature();
-    state.pendingLoggingAction.value = "stopping";
-    state.loggingError.value = null;
+    batch(() => {
+      state.pendingLoggingAction.value = "stopping";
+      state.loggingError.value = null;
+    });
     try {
       realtime.loggingStatus = await api.stopLoggingRun();
       await recording.onRecordingStatusChanged();
       loggingStatusPolling.restart();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      state.pendingLoggingAction.value = null;
-      state.loggingError.value = {
-        kind: "error",
-        message: message || t("status.unavailable"),
-      };
+      batch(() => {
+        state.pendingLoggingAction.value = null;
+        state.loggingError.value = {
+          kind: "error",
+          message: message || t("status.unavailable"),
+        };
+      });
       return;
     }
-    state.pendingLoggingAction.value = null;
-    state.loggingError.value = null;
+    batch(() => {
+      state.pendingLoggingAction.value = null;
+      state.loggingError.value = null;
+    });
   }
 
   async function refreshLocationOptions(): Promise<void> {
