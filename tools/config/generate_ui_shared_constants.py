@@ -1,4 +1,4 @@
-"""Generate frontend constants from shared backend literal definitions."""
+"""Generate frontend constants from shared backend location definitions."""
 
 from __future__ import annotations
 
@@ -11,7 +11,6 @@ from typing import TypeGuard
 ROOT = Path(__file__).resolve().parents[2]
 SHARED_ROOT = ROOT / "apps" / "server" / "vibesensor" / "shared"
 LOCATIONS_PATH = SHARED_ROOT / "locations.py"
-STRENGTH_FIELDS_PATH = SHARED_ROOT / "strength_fields.py"
 
 
 def _is_string_dict(value: object) -> TypeGuard[dict[str, str]]:
@@ -50,14 +49,10 @@ def _load_dict_constant(module_path: Path, constant_name: str) -> dict[str, str]
 
 def render_ui_shared_constants_module() -> str:
     location_codes = _load_dict_constant(LOCATIONS_PATH, "LOCATION_CODES")
-    metric_fields = _load_dict_constant(STRENGTH_FIELDS_PATH, "METRIC_FIELDS")
     return (
-        "// Generated from apps/server/vibesensor/shared/locations.py and "
-        "apps/server/vibesensor/shared/strength_fields.py\n"
+        "// Generated from apps/server/vibesensor/shared/locations.py\n"
         "// Do not edit manually; run make sync-contracts\n\n"
-        f"export const METRIC_FIELDS = {json.dumps(metric_fields, indent=2)} as const;\n\n"
-        f"export const LOCATION_CODES = {json.dumps(list(location_codes.keys()), indent=2)} as const;\n\n"
-        "export const defaultLocationCodes = LOCATION_CODES;\n"
+        f"export const defaultLocationCodes = {json.dumps(list(location_codes.keys()), indent=2)} as const;\n"
     )
 
 
