@@ -125,7 +125,7 @@ export interface CarsFeatureWorkflow {
   getRenderState(): CarsFeatureRenderState;
   readonly renderState: ReadonlySignal<CarsFeatureRenderState>;
   goBack(): Promise<void>;
-  handleManualInputsChanged(inputs: CarsFeatureManualInputState): void;
+  handleManualInputChanged(field: keyof CarsFeatureManualInputState, value: string): void;
   openWizard(): Promise<void>;
   selectBrand(value: string): Promise<void>;
   selectGearbox(index: number): void;
@@ -520,9 +520,15 @@ export function createCarsFeatureWorkflow(
       await loadCurrentStep();
     },
 
-    handleManualInputsChanged(inputs: CarsFeatureManualInputState): void {
+    handleManualInputChanged(
+      field: keyof CarsFeatureManualInputState,
+      value: string,
+    ): void {
       batch(() => {
-        manualInputs.write(inputs);
+        manualInputs.write({
+          ...manualInputs.read(),
+          [field]: value,
+        });
         if (isOpen.value && wizardState.value.step === 4) {
           updateWizardState((state) => {
             state.specBranch = "manual";

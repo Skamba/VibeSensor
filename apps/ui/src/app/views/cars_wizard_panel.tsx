@@ -13,7 +13,7 @@ export type CarsFeatureInteraction =
   | { type: "back" }
   | { type: "close" }
   | { type: "finish" }
-  | { type: "manual-inputs-changed"; inputs: CarsFeatureManualInputState }
+  | { type: "manual-input-changed"; field: keyof CarsFeatureManualInputState; value: string }
   | { type: "open" }
   | { type: "select-brand"; value: string }
   | { type: "select-gearbox"; index: number }
@@ -46,11 +46,9 @@ export function CarsWizardPanel(props: {
     value: string,
   ): void {
     actions?.onAction({
-      type: "manual-inputs-changed",
-      inputs: {
-        ...wizardModel.manualInputs,
-        [field]: value,
-      },
+      type: "manual-input-changed",
+      field,
+      value,
     });
   }
 
