@@ -8,6 +8,10 @@ import {
   type UiPanelHostRegistry,
 } from "../ui_panel_host_registry";
 import {
+  handleTabListKeyboardNavigation,
+  normalizeTabListIndex,
+} from "../dom/tab_list_keyboard_navigation";
+import {
   useComputed,
   useSignalProperties,
   signal,
@@ -198,10 +202,6 @@ const DEFAULT_DIALOG_MODEL: UiShellChromeDialogModel = {
 
 function noop(): void {
   return;
-}
-
-function normalizeMenuIndex(index: number): number {
-  return ((index % SHELL_NAV_ITEMS.length) + SHELL_NAV_ITEMS.length) % SHELL_NAV_ITEMS.length;
 }
 
 function SettingsFeedbackSlot(props: {
@@ -399,44 +399,21 @@ function ShellNavigation(props: {
   }
 
   function focusMenuButton(nextIndex: number): void {
-    menuButtonRefs.current[normalizeMenuIndex(nextIndex)]?.focus();
+    menuButtonRefs.current[normalizeTabListIndex(nextIndex, navItems.value.length)]?.focus();
   }
 
   function handleMenuKeyDown(
     index: number,
     event: JSX.TargetedKeyboardEvent<HTMLButtonElement>,
   ): void {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      activateView(navItems.value[index].viewId);
-      return;
-    }
-    if (event.key === "ArrowRight") {
-      event.preventDefault();
-      const nextIndex = normalizeMenuIndex(index + 1);
-      activateView(navItems.value[nextIndex].viewId);
-      focusMenuButton(nextIndex);
-      return;
-    }
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      const nextIndex = normalizeMenuIndex(index - 1);
-      activateView(navItems.value[nextIndex].viewId);
-      focusMenuButton(nextIndex);
-      return;
-    }
-    if (event.key === "Home") {
-      event.preventDefault();
-      activateView(navItems.value[0].viewId);
-      focusMenuButton(0);
-      return;
-    }
-    if (event.key === "End") {
-      event.preventDefault();
-      const nextIndex = navItems.value.length - 1;
-      activateView(navItems.value[nextIndex].viewId);
-      focusMenuButton(nextIndex);
-    }
+    handleTabListKeyboardNavigation({
+      count: navItems.value.length,
+      event,
+      focusTabAt: focusMenuButton,
+      getTabIdAt: (nextIndex) => navItems.value[nextIndex].viewId,
+      index,
+      onActivateTab: activateView,
+    });
   }
 
   return (
