@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { EXPECTED_SCHEMA_VERSION, type LiveWsPayload } from "../src/contracts/ws_payload_types";
 import { UiLiveTransportController } from "../src/app/runtime/ui_live_transport_controller";
 import { createAppState } from "../src/app/ui_app_state";
+import { signal } from "../src/app/ui_signals";
 import { flushAsyncWork, installWindowGlobal } from "./async_test_helpers";
 
 function makeLivePayload(overrides: Partial<LiveWsPayload> = {}): LiveWsPayload {
@@ -83,6 +84,9 @@ test.describe("UiLiveTransportController", () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
     state.transport.ws = {
+      uiState: signal("connecting"),
+      close() {},
+      connect() {},
       send(selection: { client_id: string | null }) {
         sentSelections.push(selection);
       },
@@ -116,7 +120,11 @@ test.describe("UiLiveTransportController", () => {
   test("sends the current client selection when websocket state becomes ready", async () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
+    const wsUiState = signal("connecting");
     state.transport.ws = {
+      uiState: wsUiState,
+      close() {},
+      connect() {},
       send(selection: { client_id: string | null }) {
         sentSelections.push(selection);
       },
@@ -128,17 +136,41 @@ test.describe("UiLiveTransportController", () => {
       payloadErrorMessage: () => "payload error",
     });
 
-    state.transport.wsState = "no_data";
+    wsUiState.value = "no_data";
     await flushAsyncWork();
-    state.transport.wsState = "connected";
+    wsUiState.value = "connected";
     await flushAsyncWork();
-    state.transport.wsState = "stale";
+    wsUiState.value = "stale";
     await flushAsyncWork();
 
     expect(sentSelections).toEqual([
       { client_id: "client-7" },
       { client_id: "client-7" },
     ]);
+  });
+
+  test("mirrors ws client uiState into the transport slice", async () => {
+    const state = createAppState();
+    const wsUiState = signal("connecting");
+    state.transport.ws = {
+      uiState: wsUiState,
+      close() {},
+      connect() {},
+      send() {},
+    } as unknown as typeof state.transport.ws;
+
+    new UiLiveTransportController({
+      state,
+      payloadErrorMessage: () => "payload error",
+    });
+
+    wsUiState.value = "no_data";
+    await flushAsyncWork();
+    expect(state.transport.wsState).toBe("no_data");
+
+    wsUiState.value = "connected";
+    await flushAsyncWork();
+    expect(state.transport.wsState).toBe("connected");
   });
 
   test("applies payloads without requiring feature-port attachment", () => {
