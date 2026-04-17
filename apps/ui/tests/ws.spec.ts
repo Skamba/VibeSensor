@@ -80,6 +80,46 @@ function installIntervalHarness() {
   };
 }
 
+function installTimeoutHarness() {
+  const originalSetTimeout = globalThis.setTimeout;
+  const originalClearTimeout = globalThis.clearTimeout;
+  let nextId = 1;
+  const callbacks = new Map<number, () => void>();
+
+  globalThis.setTimeout = ((handler: TimerHandler) => {
+    const timeoutId = nextId;
+    nextId += 1;
+    callbacks.set(timeoutId, handler as () => void);
+    return timeoutId as unknown as ReturnType<typeof setTimeout>;
+  }) as typeof setTimeout;
+
+  globalThis.clearTimeout = ((timeoutId?: ReturnType<typeof setTimeout>) => {
+    if (typeof timeoutId !== "number") {
+      return;
+    }
+    callbacks.delete(timeoutId);
+  }) as typeof clearTimeout;
+
+  return {
+    pendingTimeoutCount(): number {
+      return callbacks.size;
+    },
+    fireNext(): void {
+      const next = callbacks.entries().next();
+      if (next.done) {
+        throw new Error("No timeout callback installed");
+      }
+      const [timeoutId, callback] = next.value;
+      callbacks.delete(timeoutId);
+      callback();
+    },
+    restore(): void {
+      globalThis.setTimeout = originalSetTimeout;
+      globalThis.clearTimeout = originalClearTimeout;
+    },
+  };
+}
+
 test.describe("WsClient", () => {
   test.beforeEach(() => {
     installWindowGlobal();
@@ -160,6 +200,37 @@ test.describe("WsClient", () => {
     } finally {
       Date.now = originalDateNow;
       interval.restore();
+      globalThis.WebSocket = originalWebSocket;
+    }
+  });
+
+  test("schedules reconnect through the signal-driven timeout lifecycle", () => {
+    const originalWebSocket = globalThis.WebSocket;
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    const timeouts = installTimeoutHarness();
+    try {
+      const state = createAppState();
+      const client = new WsClient({
+        url: "ws://example.test/ws",
+        transport: state.transport,
+      });
+
+      client.connect();
+      const socket = FakeWebSocket.instances[0];
+      socket?.emitOpen();
+      socket?.close();
+
+      expect(state.transport.wsState).toBe("reconnecting");
+      expect(timeouts.pendingTimeoutCount()).toBe(1);
+
+      timeouts.fireNext();
+
+      expect(FakeWebSocket.instances).toHaveLength(2);
+      expect(FakeWebSocket.instances[1]?.url).toBe("ws://example.test/ws");
+
+      client.close();
+    } finally {
+      timeouts.restore();
       globalThis.WebSocket = originalWebSocket;
     }
   });
