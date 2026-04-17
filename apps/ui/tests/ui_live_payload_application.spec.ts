@@ -56,11 +56,11 @@ test.describe("applyLivePayloadUpdate", () => {
       }),
     });
 
-    expect(state.realtime.clients.map((client) => client.id)).toEqual(["client-1"]);
-    expect(state.realtime.selectedClientId).toBe("client-1");
-    expect(state.realtime.speedMps).toBe(12);
-    expect(state.spectrum.spectra.clients["client-1"]?.freq).toEqual([10, 20, 30]);
-    expect(state.spectrum.hasSpectrumData).toBe(true);
+    expect(state.realtime.clients.value.map((client) => client.id)).toEqual(["client-1"]);
+    expect(state.realtime.selectedClientId.value).toBe("client-1");
+    expect(state.realtime.speedMps.value).toBe(12);
+    expect(state.spectrum.spectra.value.clients["client-1"]?.freq).toEqual([10, 20, 30]);
+    expect(state.spectrum.hasSpectrumData.value).toBe(true);
     expect(update.hasSelectedClientChanged).toBe(true);
     expect(update.hasNewSpectrumFrame).toBe(true);
     expect(update.selectedClient?.id).toBe("client-1");
@@ -68,8 +68,8 @@ test.describe("applyLivePayloadUpdate", () => {
 
   test("preserves the previous spectrum frame when the adapted payload omits spectra", () => {
     const state = createAppState();
-    state.realtime.selectedClientId = "client-1";
-    state.spectrum.spectra = {
+    state.realtime.selectedClientId.value = "client-1";
+    state.spectrum.spectra.value = {
       clients: {
         "client-1": {
           freq: [1, 2, 3],
@@ -84,7 +84,7 @@ test.describe("applyLivePayloadUpdate", () => {
         },
       },
     };
-    state.spectrum.hasSpectrumData = true;
+    state.spectrum.hasSpectrumData.value = true;
 
     const update = applyLivePayloadUpdate({
       realtime: state.realtime,
@@ -96,9 +96,9 @@ test.describe("applyLivePayloadUpdate", () => {
       }),
     });
 
-    expect(state.spectrum.spectra.clients["client-1"]?.freq).toEqual([1, 2, 3]);
-    expect(state.spectrum.hasSpectrumData).toBe(true);
-    expect(state.realtime.speedMps).toBe(14);
+    expect(state.spectrum.spectra.value.clients["client-1"]?.freq).toEqual([1, 2, 3]);
+    expect(state.spectrum.hasSpectrumData.value).toBe(true);
+    expect(state.realtime.speedMps.value).toBe(14);
     expect(update.hasSelectedClientChanged).toBe(false);
     expect(update.hasNewSpectrumFrame).toBe(false);
     expect(update.selectedClient?.id).toBe("client-1");
