@@ -12,6 +12,7 @@ import {
 import {
   useComputed,
   useSignalProperties,
+  type Signal,
   type ReadonlySignal,
   useSignalEffect,
 } from "../ui_signals";
@@ -80,10 +81,13 @@ export interface UiShellChromeActions {
   saveSpeedUnit(unit: string): Promise<void> | void;
 }
 
-export interface UiShellChromeActionBridge {
-  readonly current: UiShellChromeActions;
-  attach(actions: UiShellChromeActions): void;
-}
+export const DEFAULT_UI_SHELL_CHROME_ACTIONS: UiShellChromeActions = {
+  activateView: noop,
+  cancelConfirmation: noop,
+  confirmConfirmation: noop,
+  saveLanguage: noop,
+  saveSpeedUnit: noop,
+};
 
 export interface UiShellBadgeModel {
   text: string;
@@ -142,7 +146,7 @@ export interface UiShellChromeView {
 }
 
 type UiShellChromeProps = {
-  bridge: UiShellChromeActionBridge;
+  actions: ReadonlySignal<UiShellChromeActions>;
   dialogModel: ReadonlySignal<ReadonlySignal<UiShellChromeDialogModel> | null>;
   navigationModel: ReadonlySignal<ReadonlySignal<UiShellChromeNavigationModel> | null>;
   panelHosts: PendingUiPanelHosts;
@@ -251,10 +255,10 @@ function SettingsFeedbackSlot(props: {
 }
 
 function ConfirmationDialog(props: {
-  bridge: UiShellChromeActionBridge;
+  actions: ReadonlySignal<UiShellChromeActions>;
   model: UiConfirmationDialogModel;
 }) {
-  const { bridge, model } = props;
+  const { actions, model } = props;
   const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useSignalEffect(() => {
@@ -265,11 +269,11 @@ function ConfirmationDialog(props: {
 
   return (
     <div class="app-modal-layer">
-      <div
-        class="app-modal-backdrop"
-        aria-hidden="true"
-        onClick={() => bridge.current.cancelConfirmation()}
-      />
+        <div
+          class="app-modal-backdrop"
+          aria-hidden="true"
+          onClick={() => actions.value.cancelConfirmation()}
+        />
       <div
         class="panel card confirmation-dialog"
         role="alertdialog"
@@ -279,7 +283,7 @@ function ConfirmationDialog(props: {
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.preventDefault();
-            bridge.current.cancelConfirmation();
+            actions.value.cancelConfirmation();
           }
         }}
       >
@@ -295,14 +299,14 @@ function ConfirmationDialog(props: {
           <button
             type="button"
             class="btn"
-            onClick={() => bridge.current.cancelConfirmation()}
+            onClick={() => actions.value.cancelConfirmation()}
           >
             {model.cancelButtonText}
           </button>
           <button
             type="button"
             class="btn btn--danger"
-            onClick={() => bridge.current.confirmConfirmation()}
+            onClick={() => actions.value.confirmConfirmation()}
             ref={confirmButtonRef}
           >
             {model.confirmButtonText}
@@ -429,10 +433,10 @@ function ShellChromeFrame(props: {
 }
 
 function ShellNavigation(props: {
-  bridge: UiShellChromeActionBridge;
+  actions: ReadonlySignal<UiShellChromeActions>;
   navigationModel: ReadonlySignal<UiShellChromeNavigationModel>;
 }) {
-  const { bridge, navigationModel } = props;
+  const { actions, navigationModel } = props;
   const { activeViewId, navItems } = useSignalProperties(
     navigationModel,
     SHELL_NAVIGATION_MODEL_KEYS,
@@ -440,7 +444,7 @@ function ShellNavigation(props: {
   const menuButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function activateView(viewId: string): void {
-    bridge.current.activateView(viewId);
+    actions.value.activateView(viewId);
   }
 
   function focusMenuButton(nextIndex: number): void {
@@ -528,10 +532,10 @@ function ShellNavigationTabButton(props: {
 }
 
 function ShellPreferences(props: {
-  bridge: UiShellChromeActionBridge;
+  actions: ReadonlySignal<UiShellChromeActions>;
   preferencesModel: ReadonlySignal<UiShellChromePreferencesModel>;
 }) {
-  const { bridge, preferencesModel } = props;
+  const { actions, preferencesModel } = props;
   const {
     languageFeedback,
     languageLabelText,
@@ -566,7 +570,7 @@ function ShellPreferences(props: {
           aria-invalid={speedUnitAriaInvalid}
           value={selectedSpeedUnit}
           onChange={(event) => {
-            void bridge.current.saveSpeedUnit(event.currentTarget.value);
+            void actions.value.saveSpeedUnit(event.currentTarget.value);
           }}
         >
           {SPEED_UNIT_OPTIONS.map((option) => (
@@ -590,7 +594,7 @@ function ShellPreferences(props: {
           aria-invalid={languageAriaInvalid}
           value={selectedLanguage}
           onChange={(event) => {
-            void bridge.current.saveLanguage(event.currentTarget.value);
+            void actions.value.saveLanguage(event.currentTarget.value);
           }}
         >
           {LANGUAGE_OPTIONS.map((option) => (
@@ -705,19 +709,19 @@ function ShellViewHostsContainer(props: {
 }
 
 function ConfirmationDialogLayer(props: {
-  bridge: UiShellChromeActionBridge;
+  actions: ReadonlySignal<UiShellChromeActions>;
   dialogModel: ReadonlySignal<UiShellChromeDialogModel>;
 }) {
-  const { bridge, dialogModel } = props;
+  const { actions, dialogModel } = props;
   const confirmationDialog = dialogModel.value.confirmationDialog;
   return confirmationDialog
-    ? <ConfirmationDialog bridge={bridge} model={confirmationDialog} />
+    ? <ConfirmationDialog actions={actions} model={confirmationDialog} />
     : null;
 }
 
 function UiShellChrome(props: UiShellChromeProps) {
   const {
-    bridge,
+    actions,
     panelHosts,
   } = props;
   const dialogModel = useComputed(() => props.dialogModel.value?.value ?? DEFAULT_DIALOG_MODEL);
@@ -730,37 +734,17 @@ function UiShellChrome(props: UiShellChromeProps) {
       <DocumentLanguageSync preferencesModel={preferencesModel} />
       <header class="site-header">
         <div class="site-header__main">
-          <ShellNavigation bridge={bridge} navigationModel={navigationModel} />
-          <ShellPreferences bridge={bridge} preferencesModel={preferencesModel} />
+          <ShellNavigation actions={actions} navigationModel={navigationModel} />
+          <ShellPreferences actions={actions} preferencesModel={preferencesModel} />
         </div>
         <ShellStatus navigationModel={navigationModel} statusModel={statusModel} />
       </header>
 
       <AppErrorBanner dialogModel={dialogModel} />
       <ShellViewHostsContainer navigationModel={navigationModel} panelHosts={panelHosts} />
-      <ConfirmationDialogLayer bridge={bridge} dialogModel={dialogModel} />
+      <ConfirmationDialogLayer actions={actions} dialogModel={dialogModel} />
     </ShellChromeFrame>
   );
-}
-
-export function createUiShellChromeActionBridge(): UiShellChromeActionBridge {
-  const current: UiShellChromeActions = {
-    activateView: noop,
-    cancelConfirmation: noop,
-    confirmConfirmation: noop,
-    saveLanguage: noop,
-    saveSpeedUnit: noop,
-  };
-  return {
-    current,
-    attach(actions: UiShellChromeActions): void {
-      current.activateView = actions.activateView;
-      current.cancelConfirmation = actions.cancelConfirmation;
-      current.confirmConfirmation = actions.confirmConfirmation;
-      current.saveLanguage = actions.saveLanguage;
-      current.saveSpeedUnit = actions.saveSpeedUnit;
-    },
-  };
 }
 
 export function getUiShellChromeHost(): HTMLElement {
@@ -773,7 +757,7 @@ export function getUiShellChromeHost(): HTMLElement {
 
 export function mountUiShellChrome(
   host: HTMLElement,
-  bridge: UiShellChromeActionBridge,
+  actions: Signal<UiShellChromeActions>,
 ): UiShellChromeView & { panelHosts: UiPanelHostRegistry } {
   const dialogModel = createDeferredModelSignal<UiShellChromeDialogModel>();
   const navigationModel = createDeferredModelSignal<UiShellChromeNavigationModel>();
@@ -782,7 +766,7 @@ export function mountUiShellChrome(
   const statusModel = createDeferredModelSignal<UiShellChromeStatusModel>();
   render(
     <UiShellChrome
-      bridge={bridge}
+      actions={actions}
       dialogModel={dialogModel}
       navigationModel={navigationModel}
       panelHosts={panelHosts}
