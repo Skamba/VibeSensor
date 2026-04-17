@@ -388,4 +388,79 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
     expect(workflow.getRenderState().settings.gpsEffectiveSpeedKph).toBe(81);
     expect(harness.errors).toEqual([]);
   });
+
+  test("derives selected mode and manual input from settings when no draft exists", () => {
+    const harness = createHarness();
+    const appState = createAppState();
+    const workflow = createSettingsSpeedSourceWorkflow({
+      createPollingController: () => ({
+        restart() {},
+        start() {},
+        stop() {},
+      }),
+      renderSpeedReadout: () => undefined,
+      settings: appState.settings,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      t: createTranslator(),
+      view: createViewPorts(harness),
+    });
+
+    expect(workflow.getRenderState()).toMatchObject({
+      manualSpeedInputValue: "",
+      selectedMode: "gps",
+    });
+
+    appState.settings.manualSpeedKph = 88;
+    appState.settings.speedSource = "manual";
+    appState.settings.resolvedSpeedSource = "manual";
+
+    expect(workflow.getRenderState()).toMatchObject({
+      manualSpeedInputValue: "88",
+      selectedMode: "manual",
+    });
+    expect(harness.errors).toEqual([]);
+  });
+
+  test("keeps local manual input draft when settings change externally", () => {
+    const harness = createHarness();
+    const appState = createAppState();
+    appState.settings.speedSource = "gps";
+    appState.settings.manualSpeedKph = 80;
+
+    const workflow = createSettingsSpeedSourceWorkflow({
+      createPollingController: () => ({
+        restart() {},
+        start() {},
+        stop() {},
+      }),
+      renderSpeedReadout: () => undefined,
+      settings: appState.settings,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      t: createTranslator(),
+      view: createViewPorts(harness),
+    });
+
+    workflow.handleManualSpeedInput("90");
+    appState.settings.manualSpeedKph = 70;
+    workflow.syncFromSettings();
+
+    expect(workflow.getRenderState()).toMatchObject({
+      draftDirty: false,
+      manualSpeedInputValue: "90",
+      selectedMode: "gps",
+    });
+
+    workflow.syncInputsFromSettings();
+
+    expect(workflow.getRenderState()).toMatchObject({
+      draftDirty: false,
+      manualSpeedInputValue: "70",
+      selectedMode: "gps",
+    });
+    expect(harness.errors).toEqual([]);
+  });
 });

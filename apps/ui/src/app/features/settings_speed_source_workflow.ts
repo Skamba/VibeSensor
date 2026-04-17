@@ -137,11 +137,19 @@ export function createSettingsSpeedSourceWorkflow(
   const transport = createSettingsSpeedSourceTransport(deps.transport);
   const createPolling = deps.createPollingController ?? createPollingController;
   const speedSourceState = createSpeedSourceDerivedState(deps.settings);
-  const speedSourceDraftDirty = signal(false);
-  const selectedMode = signal<DisplayedSpeedSourceMode>(speedSourceState.displayedMode.value);
-  const manualSpeedInputValue = signal(
-    deps.settings.manualSpeedKph != null ? String(deps.settings.manualSpeedKph) : "",
+  const selectedModeDraft = signal<DisplayedSpeedSourceMode | null>(null);
+  const manualSpeedInputDraft = signal<string | null>(null);
+  const selectedMode = computed<DisplayedSpeedSourceMode>(() =>
+    selectedModeDraft.value ?? speedSourceState.displayedMode.value
   );
+  const manualSpeedInputValue = computed(() => {
+    const draft = manualSpeedInputDraft.value;
+    if (draft != null) {
+      return draft;
+    }
+    trackAppStateSlice(deps.settings);
+    return deps.settings.manualSpeedKph != null ? String(deps.settings.manualSpeedKph) : "";
+  });
   const staleTimeoutInputValue = signal("");
   let speedSourceContextVisible = false;
   let backgroundRescanRequested = false;
@@ -158,7 +166,7 @@ export function createSettingsSpeedSourceWorkflow(
     const trackedSettings = trackAppStateSlice(deps.settings);
     return {
       diagnosticsOpen: diagnosticsOpen.value,
-      draftDirty: speedSourceDraftDirty.value,
+      draftDirty: selectedModeDraft.value !== null,
       manualSpeedFeedback: cloneFeedback(manualSpeedFeedback.value),
       manualSpeedInputValue: manualSpeedInputValue.value,
       obdScanStatusMessage: obdScanStatusMessage.value,
@@ -275,11 +283,8 @@ export function createSettingsSpeedSourceWorkflow(
 
   function syncInputsFromSettings(): void {
     batch(() => {
-      speedSourceDraftDirty.value = false;
-      selectedMode.value = speedSourceState.displayedMode.value;
-      manualSpeedInputValue.value = deps.settings.manualSpeedKph != null
-        ? String(deps.settings.manualSpeedKph)
-        : "";
+      selectedModeDraft.value = null;
+      manualSpeedInputDraft.value = null;
       manualSpeedFeedback.value = null;
       staleTimeoutFeedback.value = null;
       saveFeedback.value = null;
@@ -289,14 +294,6 @@ export function createSettingsSpeedSourceWorkflow(
   }
 
   function syncFromSettings(): void {
-    if (!speedSourceDraftDirty.value) {
-      batch(() => {
-        selectedMode.value = speedSourceState.displayedMode.value;
-        manualSpeedInputValue.value = deps.settings.manualSpeedKph != null
-          ? String(deps.settings.manualSpeedKph)
-          : "";
-      });
-    }
     scheduleContextVisibilitySync();
   }
 
@@ -326,8 +323,7 @@ export function createSettingsSpeedSourceWorkflow(
 
   function handleSpeedSourceChanged(mode: DisplayedSpeedSourceMode): void {
     batch(() => {
-      speedSourceDraftDirty.value = true;
-      selectedMode.value = mode;
+      selectedModeDraft.value = mode;
       clearAllFeedback();
     });
     scheduleContextVisibilitySync();
@@ -335,7 +331,7 @@ export function createSettingsSpeedSourceWorkflow(
 
   function handleManualSpeedInput(value: string): void {
     batch(() => {
-      manualSpeedInputValue.value = value;
+      manualSpeedInputDraft.value = value;
       clearManualSpeedFeedback();
     });
   }
@@ -350,9 +346,8 @@ export function createSettingsSpeedSourceWorkflow(
   async function saveSpeedSource(): Promise<void> {
     clearAllFeedback();
 
-    const source: SpeedSourceKind = speedSourceDraftDirty.value
-      ? selectedMode.value
-      : deps.settings.speedSource;
+    const source: SpeedSourceKind =
+      selectedModeDraft.value ?? deps.settings.speedSource;
     const manualInputValue = manualSpeedInputValue.value.trim();
     const manualSpeedKph = parseManualSpeedKph(Number(manualInputValue));
     const staleValueRaw = staleTimeoutInputValue.value.trim();
