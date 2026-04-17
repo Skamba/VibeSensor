@@ -10,6 +10,7 @@ import type {
   ShellState,
   SpectrumState,
 } from "../ui_app_state";
+import { createReplaceableInterval } from "../timer_cleanup";
 import { trackAppStateSlice } from "../ui_app_state";
 import { computed, effect, signal, type ReadonlySignal } from "../ui_signals";
 import type { AdaptedClient } from "../../transport/live_models";
@@ -199,15 +200,7 @@ export function createRealtimeFeatureViewState(
     }
     return cachedLastCompletedElapsedText;
   });
-  let loggingElapsedTimer: ReturnType<typeof setInterval> | null = null;
-
-  function clearLoggingElapsedTimer(): void {
-    if (loggingElapsedTimer === null) {
-      return;
-    }
-    clearInterval(loggingElapsedTimer);
-    loggingElapsedTimer = null;
-  }
+  const loggingElapsedTimer = createReplaceableInterval();
 
   effect(() => {
     const {
@@ -218,16 +211,15 @@ export function createRealtimeFeatureViewState(
     const shouldTick =
       handlersBound && Boolean(loggingEnabled && loggingStartTimeUtc);
     if (!shouldTick) {
-      clearLoggingElapsedTimer();
+      loggingElapsedTimer.clear();
       return;
     }
     elapsedNowMs.value = Date.now();
-    clearLoggingElapsedTimer();
-    loggingElapsedTimer = setInterval(() => {
+    loggingElapsedTimer.replace(() => {
       elapsedNowMs.value = Date.now();
     }, 1_000);
     return () => {
-      clearLoggingElapsedTimer();
+      loggingElapsedTimer.clear();
     };
   });
 
