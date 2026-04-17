@@ -24,7 +24,7 @@ function makeClient(id: string, name: string): AdaptedClient {
   };
 }
 
-test.describe("SpectrumCanvasRenderer", () => {
+test.describe("createSpectrumCanvasRenderer", () => {
   test.beforeEach(() => {
     installWindowGlobal();
   });
@@ -32,7 +32,7 @@ test.describe("SpectrumCanvasRenderer", () => {
   test("prepares aligned dB series without shell DOM bindings", async () => {
     const restoreDocument = installDocumentStub();
     try {
-      const { SpectrumCanvasRenderer } = await import(
+      const { createSpectrumCanvasRenderer } = await import(
         "../src/app/runtime/spectrum_canvas_renderer"
       );
       const state = createAppState();
@@ -75,7 +75,7 @@ test.describe("SpectrumCanvasRenderer", () => {
         },
       };
 
-      const renderer = new SpectrumCanvasRenderer({
+      const renderer = createSpectrumCanvasRenderer({
         state,
         dom: {
           specChart: createElementStub("div"),
@@ -104,7 +104,7 @@ test.describe("SpectrumCanvasRenderer", () => {
   test("queues the first render until the chart module finishes loading", async () => {
     const restoreDocument = installDocumentStub();
     try {
-      const { SpectrumCanvasRenderer } = await import(
+      const { createSpectrumCanvasRenderer } = await import(
         "../src/app/runtime/spectrum_canvas_renderer"
       );
       const state = createAppState();
@@ -155,7 +155,7 @@ test.describe("SpectrumCanvasRenderer", () => {
         };
       }
 
-      const renderer = new SpectrumCanvasRenderer({
+      const renderer = createSpectrumCanvasRenderer({
         state,
         dom: {
           specChart: createElementStub("div"),
@@ -195,7 +195,7 @@ test.describe("SpectrumCanvasRenderer", () => {
   test("passes reactive chart text updates through the factory signals", async () => {
     const restoreDocument = installDocumentStub();
     try {
-      const { SpectrumCanvasRenderer } = await import(
+      const { createSpectrumCanvasRenderer } = await import(
         "../src/app/runtime/spectrum_canvas_renderer"
       );
       const state = createAppState();
@@ -221,7 +221,7 @@ test.describe("SpectrumCanvasRenderer", () => {
       const axisTexts: string[] = [];
       let createCalls = 0;
 
-      const renderer = new SpectrumCanvasRenderer({
+      const renderer = createSpectrumCanvasRenderer({
         state,
         dom: {
           specChart: createElementStub("div"),
