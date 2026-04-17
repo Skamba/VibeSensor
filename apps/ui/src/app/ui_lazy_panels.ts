@@ -46,20 +46,22 @@ function createDeferredBindSlot<TView extends object, TArg>(
   realView: { value: TView | null },
   apply: (view: TView, arg: TArg) => void,
 ): {
+  attach(view: TView): void;
   bind(nextArg: TArg): void;
   current: { value: TArg | null };
 } {
-  const current = signal<TArg | null>(null);
-  effect(() => {
-    const view = realView.value;
-    const nextArg = current.value;
-    if (view !== null && nextArg !== null) {
-      apply(view, nextArg);
-    }
-  });
+  const current = { value: null as TArg | null };
   return {
+    attach(view) {
+      if (current.value !== null) {
+        apply(view, current.value);
+      }
+    },
     bind(nextArg) {
       current.value = nextArg;
+      if (realView.value !== null) {
+        apply(realView.value, nextArg);
+      }
     },
     current,
   };
@@ -95,6 +97,8 @@ function createDeferredModelActionView<
     } as TView,
     attach(nextRealView) {
       realView.value = nextRealView;
+      actions.attach(nextRealView);
+      model.attach(nextRealView);
     },
   };
 }
@@ -183,6 +187,8 @@ function createDeferredCarsPanelView(): {
     attach(nextRealView) {
       list.attach(nextRealView.list);
       realWizard.value = nextRealView.wizard;
+      wizardActions.attach(nextRealView.wizard);
+      wizardModel.attach(nextRealView.wizard);
     },
   };
 }
@@ -240,6 +246,9 @@ function createDeferredAnalysisPanelView(): {
     },
     attach(nextRealView) {
       realView.value = nextRealView;
+      actions.attach(nextRealView);
+      carAvailability.attach(nextRealView);
+      model.attach(nextRealView);
     },
   };
 }
@@ -317,6 +326,9 @@ function createDeferredSpeedSourcePanelView(): {
     },
     attach(nextRealView) {
       realView.value = nextRealView;
+      actions.attach(nextRealView);
+      diagnostics.attach(nextRealView);
+      model.attach(nextRealView);
     },
   };
 }
@@ -366,6 +378,8 @@ function createDeferredInternetPanelView(): {
     },
     attach(nextRealView) {
       realView.value = nextRealView;
+      actions.attach(nextRealView);
+      model.attach(nextRealView);
     },
   };
 }
