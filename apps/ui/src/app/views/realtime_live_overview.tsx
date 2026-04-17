@@ -4,6 +4,7 @@ import { useUiText } from "../ui_i18n";
 import {
   signal,
   useComputed,
+  useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
 import { createBoundViewModel } from "./view_model_binding";
@@ -67,6 +68,112 @@ const DEFAULT_OVERVIEW_STATE: RealtimeLiveOverviewBridgeState = {
   speedText: "--",
 };
 
+const REALTIME_LIVE_OVERVIEW_MODEL_KEYS = [
+  "activeCar",
+  "connectedSensorsText",
+  "dataFreshnessText",
+  "recordingStateText",
+  "runHealth",
+  "sensorCards",
+  "strongestSignalText",
+] as const;
+
+function RealtimeLiveOverviewRunHealthPill(props: {
+  runHealth: ReadonlySignal<RealtimeLiveOverviewHealthModel>;
+}) {
+  const hidden = useComputed(() => props.runHealth.value.hidden);
+  const text = useComputed(() => props.runHealth.value.text);
+  const variant = useComputed(() => props.runHealth.value.variant);
+
+  return (
+    <div
+      id="liveRunHealth"
+      class="pill"
+      data-variant={variant}
+      hidden={hidden}
+      aria-live="polite"
+    >
+      {text}
+    </div>
+  );
+}
+
+function RealtimeLiveOverviewActiveCarStat(props: {
+  activeCar: ReadonlySignal<RealtimeLiveOverviewActiveCarModel>;
+  labelText: ReadonlySignal<string>;
+}) {
+  const text = useComputed(() => props.activeCar.value.text);
+  const warning = useComputed(() => props.activeCar.value.warning);
+  const variant = useComputed(() => warning.value ? "warn" : undefined);
+  const hasIcon = useComputed(() => warning.value ? "true" : undefined);
+
+  return (
+    <div
+      id="liveActiveCar"
+      class="stat"
+      data-variant={variant}
+    >
+      <div class="stat__label">
+        {props.labelText}
+      </div>
+      <div
+        class="stat__value"
+        data-value
+        data-variant={variant}
+        data-has-icon={hasIcon}
+      >
+        {warning.value
+          ? (
+            <>
+              <span class="stat__value-icon" data-variant="warn" aria-hidden="true">
+                !
+              </span>
+              <span>{text}</span>
+            </>
+          )
+          : text}
+      </div>
+    </div>
+  );
+}
+
+function RealtimeLiveOverviewSensorRoster(props: {
+  sensorCards: ReadonlySignal<RealtimeLiveOverviewSensorCardModel[]>;
+  noSensorsText: ReadonlySignal<string>;
+}) {
+  const hasSensorCards = useComputed(() => props.sensorCards.value.length > 0);
+
+  return (
+    <div id="liveSensorRoster" class="live-sensor-roster">
+      {hasSensorCards.value
+        ? props.sensorCards.value.map((card) => {
+          const statusClass = card.connected ? "online" : "offline";
+          return (
+            <article
+              key={card.id}
+              class={card.strongest ? "live-sensor-card live-sensor-card--strongest" : "live-sensor-card"}
+            >
+              <div class="live-sensor-card__header">
+                <strong>{card.label}</strong>
+                <span
+                  class={`live-sensor-card__status-dot live-sensor-card__status-dot--${statusClass}`}
+                  role="img"
+                  aria-label={card.statusText}
+                  title={card.statusText}
+                />
+              </div>
+            </article>
+          );
+        })
+        : (
+          <div class="subtle">
+            {props.noSensorsText}
+          </div>
+        )}
+    </div>
+  );
+}
+
 function RealtimeLiveOverview(props: {
   model: ReadonlySignal<RealtimeLiveOverviewRenderModel>;
   speedText: ReadonlySignal<string>;
@@ -84,7 +191,15 @@ function RealtimeLiveOverview(props: {
   const currentSpeedLabel = useUiText("dashboard.current_speed", "Current speed");
   const sensorCoverageLabel = useUiText("dashboard.sensor_coverage", "Sensor coverage");
   const noSensorsText = useUiText("settings.sensors.no_sensors", "No sensors yet.");
-  const model = useComputed(() => props.model.value);
+  const {
+    activeCar,
+    connectedSensorsText,
+    dataFreshnessText,
+    recordingStateText,
+    runHealth,
+    sensorCards,
+    strongestSignalText,
+  } = useSignalProperties(props.model, REALTIME_LIVE_OVERVIEW_MODEL_KEYS);
 
   return (
     <>
@@ -97,15 +212,7 @@ function RealtimeLiveOverview(props: {
             {hintText}
           </div>
         </div>
-        <div
-          id="liveRunHealth"
-          class="pill"
-          data-variant={model.value.runHealth.variant}
-          hidden={model.value.runHealth.hidden}
-          aria-live="polite"
-        >
-          {model.value.runHealth.text}
-        </div>
+        <RealtimeLiveOverviewRunHealthPill runHealth={runHealth} />
       </div>
       <div class="stat-grid live-overview__stats">
         <div id="liveConnectedSensors" class="stat">
@@ -113,41 +220,16 @@ function RealtimeLiveOverview(props: {
             {connectedSensorsLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.value.connectedSensorsText}
+            {connectedSensorsText}
           </div>
         </div>
-        <div
-          id="liveActiveCar"
-          class="stat"
-          data-variant={model.value.activeCar.warning ? "warn" : undefined}
-        >
-          <div class="stat__label">
-            {activeCarLabel}
-          </div>
-          <div
-            class="stat__value"
-            data-value
-            data-variant={model.value.activeCar.warning ? "warn" : undefined}
-            data-has-icon={model.value.activeCar.warning ? "true" : undefined}
-          >
-            {model.value.activeCar.warning
-              ? (
-                <>
-                  <span class="stat__value-icon" data-variant="warn" aria-hidden="true">
-                    !
-                  </span>
-                  <span>{model.value.activeCar.text}</span>
-                </>
-              )
-              : model.value.activeCar.text}
-          </div>
-        </div>
+        <RealtimeLiveOverviewActiveCarStat activeCar={activeCar} labelText={activeCarLabel} />
         <div id="liveRecordingState" class="stat">
           <div class="stat__label">
             {recordingStateLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.value.recordingStateText}
+            {recordingStateText}
           </div>
         </div>
         <div id="liveDataFreshness" class="stat">
@@ -155,7 +237,7 @@ function RealtimeLiveOverview(props: {
             {dataFreshnessLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.value.dataFreshnessText}
+            {dataFreshnessText}
           </div>
         </div>
         <div id="liveStrongestSignal" class="stat">
@@ -163,7 +245,7 @@ function RealtimeLiveOverview(props: {
             {strongestSignalLabel}
           </div>
           <div class="stat__value" data-value>
-            {model.value.strongestSignalText}
+            {strongestSignalText}
           </div>
         </div>
         <div class="stat">
@@ -180,33 +262,7 @@ function RealtimeLiveOverview(props: {
           {sensorCoverageLabel}
         </div>
       </div>
-      <div id="liveSensorRoster" class="live-sensor-roster">
-        {model.value.sensorCards.length
-          ? model.value.sensorCards.map((card) => {
-            const statusClass = card.connected ? "online" : "offline";
-            return (
-              <article
-                key={card.id}
-                class={card.strongest ? "live-sensor-card live-sensor-card--strongest" : "live-sensor-card"}
-              >
-                <div class="live-sensor-card__header">
-                  <strong>{card.label}</strong>
-                  <span
-                    class={`live-sensor-card__status-dot live-sensor-card__status-dot--${statusClass}`}
-                    role="img"
-                    aria-label={card.statusText}
-                    title={card.statusText}
-                  />
-                </div>
-              </article>
-            );
-          })
-          : (
-            <div class="subtle">
-              {noSensorsText}
-            </div>
-          )}
-      </div>
+      <RealtimeLiveOverviewSensorRoster sensorCards={sensorCards} noSensorsText={noSensorsText} />
     </>
   );
 }

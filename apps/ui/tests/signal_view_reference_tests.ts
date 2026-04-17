@@ -124,7 +124,6 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
     sensorCards: reboundSensorCards.value,
     strongestSignalText: reboundStrongestSignalText.value,
   }));
-
   const harness = await mountSignalView(async () => {
     const { mountRealtimeLiveOverview } = await import("../src/app/views/realtime_live_overview");
     return mountRealtimeLiveOverview;
