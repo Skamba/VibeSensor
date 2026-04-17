@@ -1,3 +1,4 @@
+import { batch, effect, signal } from "../ui_signals";
 import type { ChartBand } from "../ui_app_state";
 import type { SpectrumFocusMarker, SpectrumSeriesEntry } from "./spectrum_shared";
 import { closestFrequencyIndex } from "./spectrum_shared";
@@ -28,76 +29,199 @@ export interface SpectrumInteractionSyncOptions {
 }
 
 export class SpectrumInteractionController {
-  private currentEntries: readonly SpectrumSeriesEntry[] = [];
+  private readonly currentEntries = signal<readonly SpectrumSeriesEntry[]>([]);
 
-  private currentFreqAxis: readonly number[] = [];
+  private readonly currentFreqAxis = signal<readonly number[]>([]);
 
-  private currentBands: readonly ChartBand[] = [];
+  private readonly currentBands = signal<readonly ChartBand[]>([]);
 
-  private pinnedSeriesId: string | null = null;
+  private readonly pinnedSeriesId = signal<string | null>(null);
 
-  private cursorDataIdx: number | null = null;
+  private readonly cursorDataIdx = signal<number | null>(null);
 
-  private bandsVisible = false;
+  private readonly bandsVisible = signal(false);
 
   constructor(
     private readonly deps: SpectrumInteractionControllerDeps,
   ) {
     this.deps.panel.bindBandToggle(() => this.toggleBands());
-    this.renderBandToggle();
+
+    effect(() => {
+      const bands = this.currentBands.value;
+      const entries = this.currentEntries.value;
+      const visible = this.bandsVisible.value;
+      const hasBands = bands.length > 0 && entries.length > 0;
+      this.deps.panel.renderBandToggle({
+        hasBands,
+        bandsVisible: visible,
+        text: this.deps.t(visible ? "spectrum.bands.hide" : "spectrum.bands.show"),
+      });
+    });
+
+    effect(() => {
+      const entries = this.currentEntries.value;
+      const pinnedId = this.pinnedSeriesId.value;
+      if (!entries.length) {
+        this.deps.panel.renderSensorLegend(null);
+        return;
+      }
+      const allActive = pinnedId === null;
+      const model: SpectrumSensorLegendModel = {
+        reset: {
+          labelText: this.deps.t("spectrum.legend.all_series"),
+          titleText: this.deps.t("spectrum.legend.clear_focus"),
+          ariaLabel: [
+            this.deps.t("spectrum.legend.all_series"),
+            allActive ? this.legendStateText("all-visible") : null,
+          ].filter((value): value is string => Boolean(value)).join(". "),
+          ariaPressed: allActive,
+          active: allActive,
+        },
+        items: entries.map((entry) => {
+          const active = pinnedId === entry.id;
+          const muted = pinnedId !== null && !active;
+          const legendState: SpectrumLegendState = active
+            ? "isolated"
+            : muted
+              ? "inactive"
+              : "visible";
+          const metric = this.deps.getStrengthDb(entry.id);
+          const detailText = typeof metric === "number" && Number.isFinite(metric)
+            ? this.deps.t("spectrum.legend.sensor_level", {
+              value: this.formatDb(metric),
+            })
+            : this.legendStateText(legendState);
+          return {
+            id: entry.id,
+            labelText: entry.label,
+            color: entry.color,
+            detailText,
+            titleText: active
+              ? this.deps.t("spectrum.legend.clear_focus")
+              : this.deps.t("spectrum.legend.focus_series", { sensor: entry.label }),
+            ariaLabel: [
+              entry.label,
+              this.legendStateText(legendState),
+              typeof metric === "number" && Number.isFinite(metric)
+                ? this.deps.t("spectrum.legend.sensor_level", {
+                  value: this.formatDb(metric),
+                })
+                : null,
+            ].filter((value): value is string => Boolean(value)).join(". "),
+            ariaPressed: active,
+            active,
+            muted,
+          } satisfies SpectrumLegendItemModel;
+        }),
+      };
+      this.deps.panel.renderSensorLegend(model, {
+        onReset: () => {
+          this.pinnedSeriesId.value = null;
+          this.applyPlotSelection();
+        },
+        onSelect: (entryId) => {
+          this.pinnedSeriesId.value = this.pinnedSeriesId.value === entryId ? null : entryId;
+          this.applyPlotSelection();
+        },
+      });
+    });
+
+    effect(() => {
+      const activeFreq = this.activeFrequency();
+      const activeBands = activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
+      this.deps.panel.renderBandLegend({
+        visible: this.bandsVisible.value && this.currentBands.value.length > 0 && this.currentEntries.value.length > 0,
+        items: activeBands.map((band) => ({
+          labelText: band.label,
+          color: band.color,
+        })),
+        emptyText: this.deps.t("spectrum.bands.none"),
+      });
+
+      const focusEntry = this.focusEntry();
+      if (!focusEntry) {
+        this.deps.panel.renderInspectorText(this.deps.t("spectrum.inspector_idle"));
+        return;
+      }
+      const cursorIdx = this.cursorDataIdx.value;
+      if (activeFreq !== null && cursorIdx !== null) {
+        const currentValue = focusEntry.values[Math.min(cursorIdx, focusEntry.values.length - 1)];
+        const valueText = typeof currentValue === "number" && Number.isFinite(currentValue)
+          ? this.formatDb(currentValue)
+          : "--";
+        this.deps.panel.renderInspectorText(this.deps.t("spectrum.inspector_hover", {
+          sensor: focusEntry.label,
+          freq: this.formatHz(activeFreq),
+          value: valueText,
+          bands: this.bandSummaryText(activeBands),
+        }));
+        return;
+      }
+      const peak = this.focusPeakInfo(focusEntry);
+      if (!peak) {
+        this.deps.panel.renderInspectorText(this.deps.t("spectrum.inspector_idle"));
+        return;
+      }
+      this.deps.panel.renderInspectorText(this.deps.t(
+        this.pinnedSeriesId.value ? "spectrum.inspector_focus_selected" : "spectrum.inspector_focus_strongest",
+        {
+          sensor: focusEntry.label,
+          freq: this.formatHz(peak.freq),
+          value: this.formatDb(peak.value),
+          bands: this.bandSummaryText(this.activeBandsForFrequency(peak.freq)),
+        },
+      ));
+    });
   }
 
   sync(
     params: SpectrumInteractionSyncParams,
     options: SpectrumInteractionSyncOptions = {},
   ): void {
-    this.currentEntries = params.entries;
-    this.currentFreqAxis = params.freqAxis;
-    this.currentBands = params.chartBands;
-    if (
-      this.cursorDataIdx !== null
-      && (this.cursorDataIdx < 0 || this.cursorDataIdx >= this.currentFreqAxis.length)
-    ) {
-      this.cursorDataIdx = null;
-    }
-    if (!this.currentEntries.length || !this.currentBands.length) {
-      this.bandsVisible = false;
-    }
-    this.renderBandToggle();
-    if (options.applyPlotIsolation === false) {
-      if (this.pinnedSeriesId && !this.currentEntries.some((entry) => entry.id === this.pinnedSeriesId)) {
-        this.pinnedSeriesId = null;
+    batch(() => {
+      this.currentEntries.value = params.entries;
+      this.currentFreqAxis.value = params.freqAxis;
+      this.currentBands.value = params.chartBands;
+      if (
+        this.cursorDataIdx.value !== null
+        && (this.cursorDataIdx.value < 0 || this.cursorDataIdx.value >= params.freqAxis.length)
+      ) {
+        this.cursorDataIdx.value = null;
       }
-      this.renderSensorLegend();
-      this.updateInspector();
-      return;
+      if (!params.entries.length || !params.chartBands.length) {
+        this.bandsVisible.value = false;
+      }
+      if (options.applyPlotIsolation === false) {
+        if (this.pinnedSeriesId.value && !params.entries.some((entry) => entry.id === this.pinnedSeriesId.value)) {
+          this.pinnedSeriesId.value = null;
+        }
+      }
+    });
+    if (options.applyPlotIsolation !== false) {
+      this.applyPlotSelection();
     }
-    this.applyPlotSelection();
   }
 
   applyPlotSelection(): void {
-    if (this.pinnedSeriesId && !this.currentEntries.some((entry) => entry.id === this.pinnedSeriesId)) {
-      this.pinnedSeriesId = null;
+    if (this.pinnedSeriesId.value && !this.currentEntries.value.some((entry) => entry.id === this.pinnedSeriesId.value)) {
+      this.pinnedSeriesId.value = null;
     }
-    const activeIndex = this.pinnedSeriesId
-      ? this.currentEntries.findIndex((entry) => entry.id === this.pinnedSeriesId)
+    const activeIndex = this.pinnedSeriesId.value
+      ? this.currentEntries.value.findIndex((entry) => entry.id === this.pinnedSeriesId.value)
       : -1;
     this.deps.setSeriesIsolation(activeIndex >= 0 ? activeIndex + 1 : null);
-    this.renderSensorLegend();
-    this.updateInspector();
   }
 
   setCursorDataIndex(cursorDataIdx: number | null): void {
-    this.cursorDataIdx = cursorDataIdx;
-    this.updateInspector();
+    this.cursorDataIdx.value = cursorDataIdx;
   }
 
   getBandsVisible(): boolean {
-    return this.bandsVisible;
+    return this.bandsVisible.value;
   }
 
   getChartBands(): readonly ChartBand[] {
-    return this.currentBands;
+    return this.currentBands.value;
   }
 
   getFocusMarker(): SpectrumFocusMarker | null {
@@ -117,141 +241,17 @@ export class SpectrumInteractionController {
   }
 
   private toggleBands(): void {
-    const hasBands = this.currentBands.length > 0 && this.currentEntries.length > 0;
+    const hasBands = this.currentBands.value.length > 0 && this.currentEntries.value.length > 0;
     if (!hasBands) {
-      this.bandsVisible = false;
-      this.renderBandToggle();
+      this.bandsVisible.value = false;
       return;
     }
-    this.bandsVisible = !this.bandsVisible;
-    this.renderBandToggle();
-    this.updateInspector();
+    this.bandsVisible.value = !this.bandsVisible.value;
     this.deps.requestPlotRefresh();
   }
 
-  private renderBandToggle(): void {
-    const hasBands = this.currentBands.length > 0 && this.currentEntries.length > 0;
-    this.deps.panel.renderBandToggle({
-      hasBands,
-      bandsVisible: this.bandsVisible,
-      text: this.deps.t(this.bandsVisible ? "spectrum.bands.hide" : "spectrum.bands.show"),
-    });
-  }
-
-  private renderSensorLegend(): void {
-    if (!this.currentEntries.length) {
-      this.deps.panel.renderSensorLegend(null);
-      return;
-    }
-    const allActive = this.pinnedSeriesId === null;
-    const model: SpectrumSensorLegendModel = {
-      reset: {
-        labelText: this.deps.t("spectrum.legend.all_series"),
-        titleText: this.deps.t("spectrum.legend.clear_focus"),
-        ariaLabel: [
-          this.deps.t("spectrum.legend.all_series"),
-          allActive ? this.legendStateText("all-visible") : null,
-        ].filter((value): value is string => Boolean(value)).join(". "),
-        ariaPressed: allActive,
-        active: allActive,
-      },
-      items: this.currentEntries.map((entry) => {
-        const active = this.pinnedSeriesId === entry.id;
-        const muted = this.pinnedSeriesId !== null && !active;
-        const legendState: SpectrumLegendState = active
-          ? "isolated"
-          : muted
-            ? "inactive"
-            : "visible";
-        const metric = this.deps.getStrengthDb(entry.id);
-        const detailText = typeof metric === "number" && Number.isFinite(metric)
-          ? this.deps.t("spectrum.legend.sensor_level", {
-            value: this.formatDb(metric),
-          })
-          : this.legendStateText(legendState);
-        return {
-          id: entry.id,
-          labelText: entry.label,
-          color: entry.color,
-          detailText,
-          titleText: active
-            ? this.deps.t("spectrum.legend.clear_focus")
-            : this.deps.t("spectrum.legend.focus_series", { sensor: entry.label }),
-          ariaLabel: [
-            entry.label,
-            this.legendStateText(legendState),
-            typeof metric === "number" && Number.isFinite(metric)
-              ? this.deps.t("spectrum.legend.sensor_level", {
-                value: this.formatDb(metric),
-              })
-              : null,
-          ].filter((value): value is string => Boolean(value)).join(". "),
-          ariaPressed: active,
-          active,
-          muted,
-        } satisfies SpectrumLegendItemModel;
-      }),
-    };
-    this.deps.panel.renderSensorLegend(model, {
-      onReset: () => {
-        this.pinnedSeriesId = null;
-        this.applyPlotSelection();
-      },
-      onSelect: (entryId) => {
-        this.pinnedSeriesId = this.pinnedSeriesId === entryId ? null : entryId;
-        this.applyPlotSelection();
-      },
-    });
-  }
-
-  private updateInspector(): void {
-    const activeFreq = this.activeFrequency();
-    const activeBands = activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
-    this.deps.panel.renderBandLegend({
-      visible: this.bandsVisible && this.currentBands.length > 0 && this.currentEntries.length > 0,
-      items: activeBands.map((band) => ({
-        labelText: band.label,
-        color: band.color,
-      })),
-      emptyText: this.deps.t("spectrum.bands.none"),
-    });
-
-    const focusEntry = this.focusEntry();
-    if (!focusEntry) {
-      this.deps.panel.renderInspectorText(this.deps.t("spectrum.inspector_idle"));
-      return;
-    }
-    if (activeFreq !== null && this.cursorDataIdx !== null) {
-      const currentValue = focusEntry.values[Math.min(this.cursorDataIdx, focusEntry.values.length - 1)];
-      const valueText = typeof currentValue === "number" && Number.isFinite(currentValue)
-        ? this.formatDb(currentValue)
-        : "--";
-      this.deps.panel.renderInspectorText(this.deps.t("spectrum.inspector_hover", {
-        sensor: focusEntry.label,
-        freq: this.formatHz(activeFreq),
-        value: valueText,
-        bands: this.bandSummaryText(activeBands),
-      }));
-      return;
-    }
-    const peak = this.focusPeakInfo(focusEntry);
-    if (!peak) {
-      this.deps.panel.renderInspectorText(this.deps.t("spectrum.inspector_idle"));
-      return;
-    }
-    this.deps.panel.renderInspectorText(this.deps.t(
-      this.pinnedSeriesId ? "spectrum.inspector_focus_selected" : "spectrum.inspector_focus_strongest",
-      {
-        sensor: focusEntry.label,
-        freq: this.formatHz(peak.freq),
-        value: this.formatDb(peak.value),
-        bands: this.bandSummaryText(this.activeBandsForFrequency(peak.freq)),
-      },
-    ));
-  }
-
   private activeBandsForFrequency(freqHz: number): ChartBand[] {
-    return this.currentBands.filter((band) => freqHz >= band.min_hz && freqHz <= band.max_hz);
+    return this.currentBands.value.filter((band) => freqHz >= band.min_hz && freqHz <= band.max_hz);
   }
 
   private bandSummaryText(bands: ChartBand[]): string {
@@ -261,12 +261,14 @@ export class SpectrumInteractionController {
   }
 
   private activeFrequency(): number | null {
+    const cursorIdx = this.cursorDataIdx.value;
+    const freqAxis = this.currentFreqAxis.value;
     if (
-      this.cursorDataIdx !== null
-      && this.cursorDataIdx >= 0
-      && this.cursorDataIdx < this.currentFreqAxis.length
+      cursorIdx !== null
+      && cursorIdx >= 0
+      && cursorIdx < freqAxis.length
     ) {
-      return this.currentFreqAxis[this.cursorDataIdx];
+      return freqAxis[cursorIdx];
     }
     const focusEntry = this.focusEntry();
     const peak = focusEntry ? this.focusPeakInfo(focusEntry) : null;
@@ -276,7 +278,7 @@ export class SpectrumInteractionController {
   private strongestEntry(): SpectrumSeriesEntry | null {
     let bestEntry: SpectrumSeriesEntry | null = null;
     let bestDb = Number.NEGATIVE_INFINITY;
-    for (const entry of this.currentEntries) {
+    for (const entry of this.currentEntries.value) {
       const db = this.deps.getStrengthDb(entry.id);
       if (typeof db !== "number" || !Number.isFinite(db)) {
         continue;
@@ -290,8 +292,9 @@ export class SpectrumInteractionController {
   }
 
   private focusEntry(): SpectrumSeriesEntry | null {
-    if (this.pinnedSeriesId) {
-      const pinnedEntry = this.currentEntries.find((entry) => entry.id === this.pinnedSeriesId);
+    const pinnedId = this.pinnedSeriesId.value;
+    if (pinnedId) {
+      const pinnedEntry = this.currentEntries.value.find((entry) => entry.id === pinnedId);
       if (pinnedEntry) {
         return pinnedEntry;
       }
@@ -304,7 +307,8 @@ export class SpectrumInteractionController {
     if (typeof peakHz !== "number" || !Number.isFinite(peakHz)) {
       return null;
     }
-    const peakIndex = closestFrequencyIndex(this.currentFreqAxis, peakHz);
+    const freqAxis = this.currentFreqAxis.value;
+    const peakIndex = closestFrequencyIndex(freqAxis, peakHz);
     if (peakIndex === null) {
       return null;
     }
@@ -313,7 +317,7 @@ export class SpectrumInteractionController {
       return null;
     }
     return {
-      freq: this.currentFreqAxis[peakIndex] ?? peakHz,
+      freq: freqAxis[peakIndex] ?? peakHz,
       value,
     };
   }
