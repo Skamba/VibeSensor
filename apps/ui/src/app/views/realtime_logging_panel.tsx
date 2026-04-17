@@ -8,7 +8,7 @@ import {
   type ReadonlySignal,
 } from "../ui_signals";
 import { inlineStateActionClass } from "./dom_helpers";
-import { createBoundViewModel } from "./view_model_binding";
+import { createDeferredViewModel, useDeferredViewModel } from "./view_model_binding";
 import type {
   RealtimeCaptureReadinessChecklistModel,
   RealtimeLoggingSummaryAction,
@@ -164,7 +164,7 @@ function RealtimeLoggingChecklist(props: {
 
 function RealtimeLoggingPanel(props: {
   actions: ReadonlySignal<RealtimeLoggingPanelActionHandlers | null>;
-  model: ReadonlySignal<RealtimeLoggingPanelRenderModel>;
+  model: ReadonlySignal<ReadonlySignal<RealtimeLoggingPanelRenderModel> | null>;
 }) {
   const titleText = useUiText("dashboard.run_recording", "Run Recording");
   const runProgressLabel = useUiText("dashboard.recording_progress", "Run progress");
@@ -174,6 +174,7 @@ function RealtimeLoggingPanel(props: {
   const startLabel = useUiText("dashboard.start_recording", "Start Recording");
   const stopLabel = useUiText("dashboard.stop_recording", "Stop Recording");
   const actions = useComputed(() => props.actions.value);
+  const model = useDeferredViewModel(props.model, DEFAULT_PANEL_MODEL);
   const {
     checklist,
     elapsedText,
@@ -190,7 +191,7 @@ function RealtimeLoggingPanel(props: {
     stopDisabled,
     summaryPanel,
     summaryText,
-  } = useSignalProperties(props.model, REALTIME_LOGGING_PANEL_MODEL_KEYS);
+  } = useSignalProperties(model, REALTIME_LOGGING_PANEL_MODEL_KEYS);
   const shellLayout = useComputed(() => setupMode.value ? "setup" : undefined);
   const loggingRowHidden = useComputed(() => !showPill.value && runIdText.value === "");
   const pillHidden = useComputed(() => !showPill.value);
@@ -302,7 +303,7 @@ function RealtimeLoggingPanel(props: {
 
 export function mountRealtimeLoggingPanel(host: HTMLElement): RealtimeLoggingPanelBridge {
   const actions = signal<RealtimeLoggingPanelActionHandlers | null>(null);
-  const modelBinding = createBoundViewModel(DEFAULT_PANEL_MODEL);
+  const modelBinding = createDeferredViewModel<RealtimeLoggingPanelRenderModel>();
   render(<RealtimeLoggingPanel actions={actions} model={modelBinding.model} />, host);
 
   return {

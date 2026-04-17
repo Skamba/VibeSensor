@@ -4,6 +4,7 @@ import { render } from "preact";
 import { useUiText } from "../ui_i18n";
 import {
   signal,
+  useComputed,
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
@@ -13,7 +14,7 @@ import type {
   RealtimeSensorTableRenderModel,
   RealtimeSensorTableRowViewModel,
 } from "./realtime_sensor_table_view";
-import { createBoundViewModel } from "./view_model_binding";
+import { createDeferredViewModel, useDeferredViewModel } from "./view_model_binding";
 
 export interface SensorsPanelRenderModel {
   table: RealtimeSensorTableRenderModel | null;
@@ -129,7 +130,7 @@ function SensorsTableBody(props: {
 
 function SensorsPanel(props: {
   actions: ReadonlySignal<SensorsPanelActionHandlers | null>;
-  model: ReadonlySignal<SensorsPanelRenderModel>;
+  model: ReadonlySignal<ReadonlySignal<SensorsPanelRenderModel> | null>;
 }) {
   const titleText = useUiText("settings.sensors.title", "Sensors");
   const hintText = useUiText(
@@ -139,7 +140,9 @@ function SensorsPanel(props: {
   const nameLabel = useUiText("settings.sensors.name", "Name");
   const locationLabel = useUiText("settings.sensors.location", "Location");
   const actionsLabel = useUiText("settings.sensors.actions", "Actions");
-  const { table } = useSignalProperties(props.model, SENSORS_PANEL_MODEL_KEYS);
+  const actions = useComputed(() => props.actions.value);
+  const model = useDeferredViewModel(props.model, DEFAULT_SENSORS_PANEL_MODEL);
+  const { table } = useSignalProperties(model, SENSORS_PANEL_MODEL_KEYS);
   return (
     <div class="panel card">
       <strong>
@@ -164,7 +167,7 @@ function SensorsPanel(props: {
             </tr>
           </thead>
           <tbody id="sensorsSettingsBody">
-            <SensorsTableBody actions={props.actions.value} table={table.value} />
+            <SensorsTableBody actions={actions.value} table={table.value} />
           </tbody>
         </table>
       </div>
@@ -174,7 +177,7 @@ function SensorsPanel(props: {
 
 export function mountSensorsPanel(host: HTMLElement): SensorsPanelView {
   const actions = signal<SensorsPanelActionHandlers | null>(null);
-  const modelBinding = createBoundViewModel(DEFAULT_SENSORS_PANEL_MODEL);
+  const modelBinding = createDeferredViewModel<SensorsPanelRenderModel>();
   render(<SensorsPanel actions={actions} model={modelBinding.model} />, host);
   return {
     bindModel(model) {
