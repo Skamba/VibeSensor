@@ -12,6 +12,7 @@ test.describe("spectrum_css_vars", () => {
       "--tooltip-bg": "rgba(1, 2, 3, 0.9)",
       "--tooltip-fg": "#fefefe",
     };
+    let themeChangeHandler: ((event: MediaQueryListEvent) => void) | null = null;
     let readCount = 0;
     globalThis.getComputedStyle = (() => {
       readCount += 1;
@@ -19,8 +20,22 @@ test.describe("spectrum_css_vars", () => {
         getPropertyValue(name: string): string {
           return styleValues[name] ?? "";
         },
-      } as CSSStyleDeclaration;
+        } as CSSStyleDeclaration;
     }) as typeof getComputedStyle;
+    globalThis.matchMedia = (() => ({
+      matches: false,
+      media: "(prefers-color-scheme: dark)",
+      onchange: null,
+      addEventListener: (_type: string, handler: (event: MediaQueryListEvent) => void) => {
+        themeChangeHandler = handler;
+      },
+      removeEventListener: () => undefined,
+      addListener: (handler: (event: MediaQueryListEvent) => void) => {
+        themeChangeHandler = handler;
+      },
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    })) as typeof matchMedia;
 
     try {
       const { getSpectrumCssVars, refreshSpectrumCssVars } = await import(
@@ -47,6 +62,16 @@ test.describe("spectrum_css_vars", () => {
       expect(refreshed).not.toBe(first);
       expect(getSpectrumCssVars()).toBe(refreshed);
       expect(readCount).toBe(2);
+
+      styleValues["--surface"] = "#444444";
+      themeChangeHandler?.({
+        matches: true,
+        media: "(prefers-color-scheme: dark)",
+      } as MediaQueryListEvent);
+      const autoRefreshed = getSpectrumCssVars();
+      expect(autoRefreshed.surface).toBe("#444444");
+      expect(autoRefreshed).not.toBe(refreshed);
+      expect(readCount).toBe(3);
     } finally {
       restoreDocument();
     }
