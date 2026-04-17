@@ -1,5 +1,5 @@
 import type { AppState } from "../ui_app_state";
-import { effect, untracked } from "../ui_signals";
+import { effect, effectOnChange, untracked } from "../ui_signals";
 import {
   createSpectrumCanvasRenderer,
   type SpectrumCanvasRenderer,
@@ -127,19 +127,7 @@ export class UiSpectrumController {
   }
 
   private bindReactiveLanguageSync(): void {
-    let initialized = false;
-    let previousLanguage = this.state.shell.lang.value;
-    effect(() => {
-      const currentLanguage = this.state.shell.lang.value;
-      if (!initialized) {
-        initialized = true;
-        previousLanguage = currentLanguage;
-        return;
-      }
-      if (currentLanguage === previousLanguage) {
-        return;
-      }
-      previousLanguage = currentLanguage;
+    effectOnChange(this.state.shell.lang, () => {
       untracked(() => {
         this.renderSpectrumHeader();
         this.updateSpectrumOverlay();

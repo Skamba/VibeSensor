@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { computed, effect, signal, useSignalProperties } from "../src/app/ui_signals";
+import { computed, effect, effectOnChange, signal, useSignalProperties } from "../src/app/ui_signals";
 import type {
   RealtimeLiveOverviewBridge,
   RealtimeLiveOverviewRenderModel,
@@ -212,6 +212,28 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
   }
 }
 
+async function runEffectOnChangeReferenceTest(): Promise<void> {
+  const source = signal("idle");
+  const observed: Array<[string, string]> = [];
+  const dispose = effectOnChange(source, (value, previousValue) => {
+    observed.push([previousValue, value]);
+  });
+
+  try {
+    source.value = "idle";
+    source.value = "running";
+    source.value = "running";
+    source.value = "done";
+
+    assert.deepEqual(observed, [
+      ["idle", "running"],
+      ["running", "done"],
+    ]);
+  } finally {
+    dispose();
+  }
+}
+
 async function runSignalPropertiesHelperReferenceTest(): Promise<void> {
   const badgeText = signal("Idle");
   const hidden = signal(true);
@@ -327,6 +349,10 @@ const referenceTests = [
   {
     name: "realtime live overview computed-driven output",
     run: runRealtimeLiveOverviewReferenceTest,
+  },
+  {
+    name: "effectOnChange skips initial and unchanged values",
+    run: runEffectOnChangeReferenceTest,
   },
   {
     name: "useSignalProperties returns direct binding signals",
