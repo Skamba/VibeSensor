@@ -1,3 +1,5 @@
+import { computed, signal } from "./app/ui_signals";
+
 export interface SpectrumCssVars {
   surface: string;
   muted: string;
@@ -14,7 +16,13 @@ const DEFAULT_SPECTRUM_CSS_VARS: Readonly<SpectrumCssVars> = Object.freeze({
   tooltipFg: "#f8f9fb",
 });
 
-let cachedSpectrumCssVars: Readonly<SpectrumCssVars> | null = null;
+const THEME_MEDIA_QUERY = "(prefers-color-scheme: dark)";
+const spectrumCssVarsVersion = signal(0);
+const spectrumCssVars = computed<Readonly<SpectrumCssVars>>(() => {
+  spectrumCssVarsVersion.value;
+  return readSpectrumCssVars();
+});
+let spectrumCssVarsThemeListenerInitialized = false;
 
 function readSpectrumCssVars(): Readonly<SpectrumCssVars> {
   const rootStyle = getComputedStyle(document.documentElement);
@@ -30,13 +38,31 @@ function readSpectrumCssVars(): Readonly<SpectrumCssVars> {
 }
 
 export function getSpectrumCssVars(): Readonly<SpectrumCssVars> {
-  if (cachedSpectrumCssVars === null) {
-    cachedSpectrumCssVars = readSpectrumCssVars();
-  }
-  return cachedSpectrumCssVars;
+  ensureSpectrumCssVarsThemeTracking();
+  return spectrumCssVars.value;
 }
 
 export function refreshSpectrumCssVars(): Readonly<SpectrumCssVars> {
-  cachedSpectrumCssVars = readSpectrumCssVars();
-  return cachedSpectrumCssVars;
+  ensureSpectrumCssVarsThemeTracking();
+  spectrumCssVarsVersion.value += 1;
+  return spectrumCssVars.value;
+}
+
+function ensureSpectrumCssVarsThemeTracking(): void {
+  if (spectrumCssVarsThemeListenerInitialized) {
+    return;
+  }
+  if (typeof globalThis.matchMedia !== "function") {
+    return;
+  }
+  spectrumCssVarsThemeListenerInitialized = true;
+  const mediaQuery = globalThis.matchMedia(THEME_MEDIA_QUERY);
+  const refresh = () => {
+    spectrumCssVarsVersion.value += 1;
+  };
+  if (typeof mediaQuery.addEventListener === "function") {
+    mediaQuery.addEventListener("change", refresh);
+    return;
+  }
+  mediaQuery.addListener(refresh);
 }
