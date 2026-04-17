@@ -197,7 +197,7 @@ function buildActionSummary(
       ]
     : readinessItems;
   return {
-    canStart: !isRunning && !hasBlockedItem,
+    canStart: !isRunning && (isRecoveryState || !hasBlockedItem),
     startLabel: t(
       isRecoveryState ? "settings.update.retry" : "settings.update.start",
     ),

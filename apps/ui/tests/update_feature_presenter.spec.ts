@@ -242,6 +242,76 @@ test.describe("buildUpdateFeaturePanelModels", () => {
       "settings.update.hide_password",
     );
   });
+
+  test("keeps retry enabled when recovery state still has blocked readiness items", () => {
+    const models = buildUpdateFeaturePanelModels(
+      {
+        internetStatus: makeInternet(),
+        healthStatus: makeHealth({
+          status: "degraded",
+          degradation_reasons: ["db"],
+          persistence: {
+            analysis_active_run_id: null,
+            analysis_elapsed_s: null,
+            analysis_in_progress: false,
+            analysis_queue_depth: 0,
+            analysis_started_at: null,
+            write_error: "disk full",
+          },
+        }),
+        updateStatus: makeStatus({
+          state: "failed",
+          phase: "downloading",
+          transport: "usb_internet",
+          issues: [
+            {
+              phase: "downloading",
+              message: "GitHub release download timed out",
+              detail: "Upstream connectivity dropped during fetch.",
+            },
+          ],
+          started_at: 1,
+          finished_at: 2,
+          exit_code: 28,
+        }),
+        updateState: "failed",
+        updateTransport: "usb_internet",
+      },
+      {
+        passwordInputValue: "",
+        passwordVisible: false,
+        selectedTransport: "usb_internet",
+        ssidInputValue: "",
+      },
+      { t },
+    );
+
+    expect(models.canStart).toBe(true);
+    expect(models.updatePanel).toMatchObject({
+      startButtonDisabled: false,
+      startButtonHidden: false,
+      startButtonLabelText: "settings.update.retry",
+    });
+    expect(models.transport).toBe("wifi");
+    expect(models.internetPanel.readiness.summary).toBe(
+      "settings.update.recovery.summary_blocked",
+    );
+    expect(models.internetPanel.readiness.items).toContainEqual({
+      label: "settings.update.recovery.item.next_step",
+      detail: "settings.update.recovery.item.next_step_blocked",
+      state: "blocked",
+    });
+    expect(models.internetPanel.transportChoices.usb_internet).toMatchObject({
+      disabled: true,
+      inputDisabled: true,
+      selected: false,
+    });
+    expect(models.internetPanel.transportChoices.wifi).toMatchObject({
+      disabled: false,
+      inputDisabled: false,
+      selected: true,
+    });
+  });
 });
 
 test.describe("createUpdateFeaturePresenter", () => {

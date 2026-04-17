@@ -526,3 +526,90 @@ test("settings update failure shows retry guidance, failed-stage retention, and 
     ),
   ).toHaveAttribute("data-stage-state", "attention");
 });
+
+test("settings update recovery keeps Retry Update enabled even when readiness stays blocked", async ({
+  page,
+}) => {
+  await installCommonRoutes(page);
+  await page.route("**/api/update/status", async (route) => {
+    await fulfillJson(route, {
+      state: "failed",
+      phase: "downloading",
+      transport: "usb_internet",
+      ssid: null,
+      uplink_interface: null,
+      started_at: 1,
+      phase_started_at: 1,
+      phase_elapsed_s: 42,
+      finished_at: 2,
+      last_success_at: null,
+      updated_at: 2,
+      issues: [
+        {
+          phase: "downloading",
+          message: "GitHub release download timed out",
+          detail: "The upstream connection dropped while fetching the release package.",
+        },
+      ],
+      log_tail: [],
+      exit_code: 28,
+      runtime: {
+        version: "1.2.3",
+        commit: "abcdef1234567890",
+        ui_source_hash: "ui-hash",
+        static_assets_hash: "feedfacecafebeef",
+        static_build_source_hash: "build-hash",
+        static_build_commit: "build-commit",
+        assets_verified: true,
+        has_packaged_static: true,
+      },
+    });
+  });
+  await page.route("**/api/health", async (route) => {
+    await fulfillJson(route, {
+      status: "degraded",
+      processing_state: "idle",
+      processing_failures: 0,
+      degradation_reasons: ["disk"],
+      data_loss: {
+        affected_clients: 0,
+        tracked_clients: 0,
+        frames_dropped: 0,
+        queue_overflow_drops: 0,
+        server_queue_drops: 0,
+        parse_errors: 0,
+      },
+      persistence: {
+        analysis_in_progress: false,
+        analysis_queue_depth: 0,
+        write_error: "disk full",
+        analysis_active_run_id: null,
+        analysis_started_at: null,
+        analysis_elapsed_s: null,
+      },
+    });
+  });
+  await page.route("**/api/update/internet-status", async (route) => {
+    await fulfillJson(route, {
+      detected: false,
+      usable: false,
+      interface_name: null,
+      connection_name: null,
+      driver: null,
+      ipv4_addresses: [],
+      gateway: null,
+      has_default_route: false,
+      diagnostic: "USB internet is not available.",
+    });
+  });
+  await installFakeWebSocket(page);
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="internetTab"]').click();
+  await expect(page.locator("#updateReadinessSummary")).toContainText(
+    "Clear the blocked item before retrying.",
+  );
+  await page.locator('[data-settings-tab="updateTab"]').click();
+  await expect(page.locator("#updateStartBtn")).toHaveText("Retry Update");
+  await expect(page.locator("#updateStartBtn")).toBeEnabled();
+});
