@@ -85,10 +85,10 @@ source-of-truth export commands remain the only writers for those files.
 |------|---------|
 | `main.ts` | Thin Vite entry that boots the UI runtime |
 | `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact shell first, boots dashboard panels immediately, then starts the runtime with deferred history/settings panel loaders |
-| `app/ui_panel_host_registry.ts` | Centralized host registry for dashboard, history, and settings panel mount points so startup and tests stop depending on one host getter module per panel |
+| `app/ui_panel_host_registry.ts` | Ref-backed host registry for dashboard, history, and settings panel mount points resolved from the shell chrome instead of global document queries |
 | `app/ui_panel_bootstrap.ts` | Centralized panel bootstrap that keeps dashboard mounts synchronous while exposing lazy history/settings loaders from the shared host registry |
 | `app/ui_lazy_panels.ts` | Deferred panel manager that gives the runtime full panel contracts up front, then attaches real history/settings islands on first activation or idle prefetch |
-| `app/dom/` | Focused DOM lookup helpers that remain after the panel bootstrap cleanup, including `requiredById` and other non-panel runtime locators |
+| `app/dom/` | Focused DOM-only utilities for download and RAF lifecycles after removing the shared global query helper |
 | `app/ui_app_runtime.ts` | Thin UI composition root that creates the shell, spectrum, transport, feature bundle, and startup coordinator from local helper wiring instead of deferred attachment seams |
 | `app/ui_app_state.ts` | Canonical AppState shape plus reactive slice helpers that keep object-style reads/writes working while shared shell/transport/realtime/history/settings/spectrum state becomes signal-observable |
 | `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
@@ -206,7 +206,8 @@ and GPS-status polling now start and stop from feature-owned reactive context.
 The live UI architecture is now fully Preact for every page, tab, and
 feature surface.
 `app/runtime/ui_shell_chrome.tsx` owns the primary navigation, header
-preferences, pills, app banner, and the top-level view containers;
+preferences, pills, app banner, the top-level view containers, and the
+startup panel-host refs;
 `app/views/settings_shell.tsx` owns the shared settings tab strip and panel
 wrappers; and the individual page/settings panel islands own their local chrome
 plus typed bridges. The remaining
