@@ -263,11 +263,11 @@ instead of controller-side variant class interpolation.
   remaining imperative DOM seams. Feature, runtime, and presenter modules
   should receive typed bridges or focused DOM surfaces instead of rebuilding
   page-wide registries or ad hoc `document.getElementById(...)` lookups.
-- Generated HTTP / WS contracts stay behind the transport boundary. The approved
+- Generated HTTP / WS contracts stay behind narrow UI-owned seams. The approved
   generated-contract seams are the `api/*.ts` HTTP wrappers plus `api/types.ts`,
-  `transport/http_models.ts`, `transport/live_models.ts`, `server_payload.ts`,
-  `ws.ts`, and `ws_payload_validator.ts`; `app/**` code imports `transport/**`,
-  not generated contract files or `api/types.ts`.
+  `transport/live_models.ts`, `server_payload.ts`, `ws.ts`, and
+  `ws_payload_validator.ts`; `app/**` code may import `transport/**` and
+  `api/types.ts`, but not generated contract files directly.
 - Normal UI rendering belongs in Preact owner surfaces. If code outside an
   island needs imperative DOM work, keep it narrowly scoped to non-render
   integrations such as download anchors, canvas/uPlot lifecycles, observers, or

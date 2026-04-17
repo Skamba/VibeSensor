@@ -14,7 +14,7 @@ import type {
   LoggingStatusPayload,
   SpeedSourceKind,
   SpeedSourceStatusPayload,
-} from "../transport/http_models";
+} from "../api/types";
 import { batch, signal, type ReadonlySignal, type Signal } from "./ui_signals";
 
 const reactiveTargetProxies = new WeakMap<object, WeakMap<Signal<number>, object>>();

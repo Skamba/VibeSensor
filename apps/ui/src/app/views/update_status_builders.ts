@@ -1,7 +1,7 @@
 import type {
   HealthStatusPayload,
   UpdateStatusPayload,
-} from "../../transport/http_models";
+} from "../../api/types";
 import { formatEpochTimestamp } from "../../format";
 import {
   buildUpdateJourneySectionModel,

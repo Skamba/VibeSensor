@@ -1,4 +1,4 @@
-import type { UsbInternetStatusPayload } from "../../transport/http_models";
+import type { UsbInternetStatusPayload } from "../../api/types";
 import type {
   UpdateStatusBadgeModel,
   UpdateStatusRowModel,

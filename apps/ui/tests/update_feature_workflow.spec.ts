@@ -8,7 +8,7 @@ import type {
   HealthStatusPayload,
   UpdateStatusPayload,
   UsbInternetStatusPayload,
-} from "../src/transport/http_models";
+} from "../src/api/types";
 
 type WorkflowHarness = {
   errors: string[];

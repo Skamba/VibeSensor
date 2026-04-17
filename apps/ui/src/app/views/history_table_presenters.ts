@@ -3,7 +3,7 @@ import type {
   HistoryEntry,
   HistoryInsightWarningPayload,
   HistoryInsightsPayload,
-} from "../../transport/http_models";
+} from "../../api/types";
 import { HISTORY_HEATMAP_POSITIONS } from "../../config";
 import type { RunDetail } from "../ui_app_state";
 import { heatColor, normalizeUnit } from "../features/heat_utils";

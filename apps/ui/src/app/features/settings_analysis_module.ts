@@ -1,7 +1,7 @@
 import type {
   AnalysisSettingsPayload,
   AnalysisSettingsRequest,
-} from "../../transport/http_models";
+} from "../../api/types";
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { FeatureServices } from "../feature_deps_base";
 import { defaultVehicleSettings, type SettingsState } from "../ui_app_state";

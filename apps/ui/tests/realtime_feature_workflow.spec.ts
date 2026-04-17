@@ -10,7 +10,7 @@ import { defaultLocationCodes } from "../src/constants";
 import type {
   ClientLocationsResponse,
   LoggingStatusPayload,
-} from "../src/transport/http_models";
+} from "../src/api/types";
 import type { AdaptedClient } from "../src/transport/live_models";
 
 type WorkflowHarness = {

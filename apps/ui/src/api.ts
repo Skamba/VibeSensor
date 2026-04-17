@@ -3,7 +3,7 @@ export type {
   CarLibraryGearbox,
   CarLibraryTireOption,
   CarLibraryVariant,
-} from "./transport/http_models";
+} from "./api/types";
 export {
   getAnalysisSettings,
   setAnalysisSettings,
@@ -54,4 +54,4 @@ export type {
   EspFlashStatusPayload,
   EspSerialPortPayload,
   UsbInternetStatusPayload,
-} from "./transport/http_models";
+} from "./api/types";
