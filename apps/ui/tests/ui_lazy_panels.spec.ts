@@ -241,6 +241,8 @@ test.describe("createLazyUiPanels", () => {
     lazyPanels.panels.settings.speedSource.diagnostics.value = speedSourceDiagnostics;
     lazyPanels.panels.settings.speedSource.focusManualSpeedInput();
     expect(lazyPanels.panels.settings.speedSource.isObdConfigVisible()).toBe(true);
+    const readSpeedSourceVisibility = lazyPanels.panels.settings.speedSource.isObdConfigVisible;
+    expect(readSpeedSourceVisibility()).toBe(true);
 
     await lazyPanels.ensureViewPanels("historyView");
     expect(historyLoads).toBe(1);
@@ -258,6 +260,7 @@ test.describe("createLazyUiPanels", () => {
     expect(speedSourcePanel.diagnostics).toEqual([speedSourceDiagnostics]);
     expect(speedSourcePanel.focusManualCalls).toBe(1);
     expect(lazyPanels.panels.settings.speedSource.isObdConfigVisible()).toBe(true);
+    expect(readSpeedSourceVisibility()).toBe(true);
     expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("updateTab");
 
     lazyPanels.panels.settings.speedSource.focusScanObdDevices();

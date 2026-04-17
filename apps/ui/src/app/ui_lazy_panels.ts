@@ -232,6 +232,7 @@ function createDeferredSpeedSourcePanelView(): {
     SpeedSourcePanelView,
     "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput" | "isObdConfigVisible"
   > | null>(null);
+  const model = createDeferredModelSignal<SpeedSourcePanelRenderModel>();
   const pendingFocusTarget = signal<PendingFocusTarget | null>(null);
   effect(() => {
     const view = realView.value;
@@ -253,7 +254,7 @@ function createDeferredSpeedSourcePanelView(): {
     view: {
       actions: signal<SpeedSourcePanelActionHandlers | null>(null),
       diagnostics: createDeferredModelSignal<SpeedSourceDiagnosticsRenderModel>(),
-      model: createDeferredModelSignal<SpeedSourcePanelRenderModel>(),
+      model,
       focusManualSpeedInput() {
         pendingFocusTarget.value = "manual";
       },
@@ -268,7 +269,7 @@ function createDeferredSpeedSourcePanelView(): {
         if (attachedView !== null) {
           return attachedView.isObdConfigVisible();
         }
-        return this.model.value?.value.obdConfigVisible ?? false;
+        return model.value?.value.obdConfigVisible ?? false;
       },
     },
     attach(nextRealView) {
