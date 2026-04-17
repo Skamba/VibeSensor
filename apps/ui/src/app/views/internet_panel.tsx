@@ -3,7 +3,7 @@ import { useRef } from "preact/hooks";
 
 import type { UpdateStartRequestPayload } from "../../api/types";
 import type { ChoiceCardState } from "../view_style_types";
-import { useUiTranslation } from "../ui_i18n";
+import { getUiText as t } from "../ui_i18n";
 import {
   signal,
   useSignalEffect,
@@ -266,7 +266,6 @@ function InternetPanel(props: {
 }) {
   const state = props.state.value;
   const model = state.model?.value ?? DEFAULT_INTERNET_PANEL_MODEL;
-  const t = useUiTranslation();
   const ssidInputRef = useRef<HTMLInputElement | null>(null);
 
   useSignalEffect(() => {
