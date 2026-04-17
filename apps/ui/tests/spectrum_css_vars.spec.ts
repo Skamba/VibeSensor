@@ -30,8 +30,8 @@ test.describe("spectrum_css_vars", () => {
         themeChangeHandler = handler;
       },
       removeEventListener: () => undefined,
-      addListener: (handler: (event: MediaQueryListEvent) => void) => {
-        themeChangeHandler = handler;
+      addListener: () => {
+        throw new Error("Deprecated MediaQueryList.addListener should not be used");
       },
       removeListener: () => undefined,
       dispatchEvent: () => false,
