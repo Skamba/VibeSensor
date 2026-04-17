@@ -143,6 +143,7 @@ test("settings esp flash status falls back to idle when API omits state", async 
       await fulfillJson(route, {});
     },
   });
+  await installFakeWebSocket(page);
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="espFlashTab"]').click();
@@ -196,6 +197,7 @@ test("settings esp flash failure shows retry guidance, retained failed stage, an
       await fulfillJson(route, {});
     },
   });
+  await installFakeWebSocket(page);
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="espFlashTab"]').click();
