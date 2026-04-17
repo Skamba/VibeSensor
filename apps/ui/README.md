@@ -222,10 +222,11 @@ logging/readiness model builders reused by that derived state. `app/views/` now
 owns typed view-model builders, event-target decoding, and signal-backed Preact
 surfaces for reusable multi-action panels.
 
-`src/transport/` owns the UI-local DTO and adapter layer between generated HTTP
-/ WS contracts and `app/**`, so feature, runtime, and view modules no longer
-need to import `api/types.ts` or generated WS contract files directly. Styling
-follows the same ownership split: `styles/app.css` is only the import
+`src/transport/` owns transport-specific helpers such as clone and live-model
+surfaces, while `api/types.ts` owns generated HTTP alias exports used across
+`api/**`, `app/**`, and tests. Generated contract files themselves stay out of
+those consumers. Styling follows same ownership split: `styles/app.css` is only
+the import
 aggregator, `tokens.css`/`theme.css` own global token and color-mode concerns,
 `realtime.css`, `history.css`, and `maintenance.css` are thin manifests over
 their feature partials, and `shell.css`, `components.css`, `maintenance*.css`,
