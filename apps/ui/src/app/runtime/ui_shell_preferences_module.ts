@@ -30,8 +30,8 @@ export function createUiShellPreferencesModule(
 ): UiShellPreferencesModule {
   const languageFeedback = signal<SettingsFeedbackMessage | null>(null);
   const speedUnitFeedback = signal<SettingsFeedbackMessage | null>(null);
-  const selectedLanguage = signal(deps.shell.lang);
-  const selectedSpeedUnit = signal(deps.shell.speedUnit);
+  const selectedLanguage = signal(deps.shell.lang.value);
+  const selectedSpeedUnit = signal(deps.shell.speedUnit.value);
 
   function speedUnitLabel(value: string): string {
     return deps.t(value === "mps" ? "speed.unit.mps" : "speed.unit.kmh");
@@ -46,13 +46,13 @@ export function createUiShellPreferencesModule(
   }
 
   function applyLanguageValue(rawLanguage: string): void {
-    deps.shell.lang = deps.normalizeLanguage(rawLanguage);
-    selectedLanguage.value = deps.shell.lang;
+    deps.shell.lang.value = deps.normalizeLanguage(rawLanguage);
+    selectedLanguage.value = deps.shell.lang.value;
   }
 
   function applySpeedUnitValue(rawUnit: string): void {
-    deps.shell.speedUnit = normalizeSpeedUnit(rawUnit);
-    selectedSpeedUnit.value = deps.shell.speedUnit;
+    deps.shell.speedUnit.value = normalizeSpeedUnit(rawUnit);
+    selectedSpeedUnit.value = deps.shell.speedUnit.value;
   }
 
   function buildSaveFailureFeedback(
@@ -100,7 +100,7 @@ export function createUiShellPreferencesModule(
     },
     async saveLanguage(lang) {
       const nextLanguage = deps.normalizeLanguage(lang);
-      const previousLanguage = deps.shell.lang;
+      const previousLanguage = deps.shell.lang.value;
       languageFeedback.value = null;
       selectedLanguage.value = nextLanguage;
       try {
@@ -117,7 +117,7 @@ export function createUiShellPreferencesModule(
     },
     async saveSpeedUnit(unit) {
       const nextUnit = normalizeSpeedUnit(unit);
-      const previousUnit = deps.shell.speedUnit;
+      const previousUnit = deps.shell.speedUnit.value;
       speedUnitFeedback.value = null;
       selectedSpeedUnit.value = nextUnit;
       try {

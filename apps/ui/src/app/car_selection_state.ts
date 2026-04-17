@@ -1,6 +1,5 @@
 import type { CarRecord } from "../api/types";
 import type { SettingsState } from "./ui_app_state";
-import { trackAppStateSlice } from "./ui_app_state";
 import { computed, type ReadonlySignal } from "./ui_signals";
 
 const REQUIRED_CAR_ASPECT_KEYS = [
@@ -41,17 +40,17 @@ function isConfiguredAspectValue(value: unknown): value is number {
 }
 
 function resolveActiveCar(settings: CarSelectionStateSource): CarRecord | null {
-  if (!settings.activeCarId) {
+  if (!settings.activeCarId.value) {
     return null;
   }
-  return settings.cars.find((car) => car.id === settings.activeCarId) ?? null;
+  return settings.cars.value.find((car) => car.id === settings.activeCarId.value) ?? null;
 }
 
 function deriveCarSelectionState(settings: CarSelectionStateSource): CarSelectionState {
-  if (!settings.carsLoaded) {
+  if (!settings.carsLoaded.value) {
     return { kind: "loading" };
   }
-  if (!settings.cars.length) {
+  if (!settings.cars.value.length) {
     return { kind: "no_cars" };
   }
   const activeCar = resolveActiveCar(settings);
@@ -68,16 +67,12 @@ export function hasResolvedActiveCar(settings: CarSelectionStateSource): boolean
 export function createCarSelectionDerivedState(
   settings: CarSelectionStateSource,
 ): CarSelectionDerivedState {
-  const activeCar = computed(() => {
-    trackAppStateSlice(settings);
-    return resolveActiveCar(settings);
-  });
+  const activeCar = computed(() => resolveActiveCar(settings));
   const selection = computed<CarSelectionState>(() => {
-    trackAppStateSlice(settings);
-    if (!settings.carsLoaded) {
+    if (!settings.carsLoaded.value) {
       return { kind: "loading" };
     }
-    if (!settings.cars.length) {
+    if (!settings.cars.value.length) {
       return { kind: "no_cars" };
     }
     const resolvedCar = activeCar.value;

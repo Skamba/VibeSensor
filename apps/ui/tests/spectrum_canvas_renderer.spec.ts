@@ -36,12 +36,15 @@ test.describe("createSpectrumCanvasRenderer", () => {
         "../src/app/runtime/spectrum_canvas_renderer"
       );
       const state = createAppState();
-      state.realtime.clients = [
+      state.realtime.clients.value = [
         makeClient("sensor-a", "Front Right Wheel"),
         makeClient("sensor-b", "Rear Left Wheel"),
       ];
-      state.spectrum.spectra.clients = {
-        "sensor-a": {
+      state.spectrum.spectra.value = {
+        ...state.spectrum.spectra.value,
+        clients: {
+          ...state.spectrum.spectra.value.clients,
+          "sensor-a": {
           freq: [10, 15, 20],
           combined: [1, 0.75, 0.5],
           strength_metrics: {
@@ -57,7 +60,7 @@ test.describe("createSpectrumCanvasRenderer", () => {
             vibration_strength_db: 12,
           },
         },
-        "sensor-b": {
+          "sensor-b": {
           freq: [10, 20],
           combined: [0.8, 0.4],
           strength_metrics: {
@@ -71,6 +74,7 @@ test.describe("createSpectrumCanvasRenderer", () => {
               vibration_strength_db: 9,
             }],
             vibration_strength_db: 9,
+          },
           },
         },
       };
@@ -108,10 +112,13 @@ test.describe("createSpectrumCanvasRenderer", () => {
         "../src/app/runtime/spectrum_canvas_renderer"
       );
       const state = createAppState();
-      state.transport.wsState = "connected";
-      state.realtime.clients = [makeClient("sensor-a", "Front Right Wheel")];
-      state.spectrum.spectra.clients = {
-        "sensor-a": {
+      state.transport.wsState.value = "connected";
+      state.realtime.clients.value = [makeClient("sensor-a", "Front Right Wheel")];
+      state.spectrum.spectra.value = {
+        ...state.spectrum.spectra.value,
+        clients: {
+          ...state.spectrum.spectra.value.clients,
+          "sensor-a": {
           freq: [10, 15, 20],
           combined: [1, 0.75, 0.5],
           strength_metrics: {
@@ -125,6 +132,7 @@ test.describe("createSpectrumCanvasRenderer", () => {
               vibration_strength_db: 12,
             }],
             vibration_strength_db: 12,
+          },
           },
         },
       };
@@ -172,8 +180,8 @@ test.describe("createSpectrumCanvasRenderer", () => {
       const prepared = renderer.prepareFrame();
       renderer.renderPreparedFrame(prepared);
 
-      expect(state.spectrum.chartLoading).toBe(true);
-      expect(state.spectrum.spectrumPlot).toBeNull();
+      expect(state.spectrum.chartLoading.value).toBe(true);
+      expect(state.spectrum.spectrumPlot.value).toBeNull();
       expect(createdCharts).toHaveLength(0);
 
       chartModule.resolve({
@@ -181,10 +189,10 @@ test.describe("createSpectrumCanvasRenderer", () => {
       });
       await flushSignalUpdates();
 
-      expect(state.spectrum.chartLoading).toBe(false);
-      expect(state.spectrum.chartLoadErrorDetail).toBeNull();
+      expect(state.spectrum.chartLoading.value).toBe(false);
+      expect(state.spectrum.chartLoadErrorDetail.value).toBeNull();
       expect(createdCharts).toHaveLength(1);
-      expect(state.spectrum.spectrumPlot).not.toBeNull();
+      expect(state.spectrum.spectrumPlot.value).not.toBeNull();
       expect(createdCharts[0].dataSnapshots.at(-1)?.[0]).toEqual([10, 15, 20]);
       expect(createdCharts[0].seriesCount).toBe(2);
     } finally {
@@ -199,9 +207,12 @@ test.describe("createSpectrumCanvasRenderer", () => {
         "../src/app/runtime/spectrum_canvas_renderer"
       );
       const state = createAppState();
-      state.realtime.clients = [makeClient("sensor-a", "Front Right Wheel")];
-      state.spectrum.spectra.clients = {
-        "sensor-a": {
+      state.realtime.clients.value = [makeClient("sensor-a", "Front Right Wheel")];
+      state.spectrum.spectra.value = {
+        ...state.spectrum.spectra.value,
+        clients: {
+          ...state.spectrum.spectra.value.clients,
+          "sensor-a": {
           freq: [10, 15, 20],
           combined: [1, 0.75, 0.5],
           strength_metrics: {
@@ -216,6 +227,7 @@ test.describe("createSpectrumCanvasRenderer", () => {
             }],
             vibration_strength_db: 12,
           },
+          },
         },
       };
       const axisTexts: string[] = [];
@@ -227,7 +239,7 @@ test.describe("createSpectrumCanvasRenderer", () => {
           specChart: createElementStub("div"),
           specChartWrap: createElementStub("div"),
         } as unknown as SpectrumPanelChartDom,
-        t: (key) => `${state.shell.lang}:${key}`,
+        t: (key) => `${state.shell.lang.value}:${key}`,
         getBandsVisible: () => false,
         getChartBands: () => [],
         getFocusMarker: () => null,
@@ -253,7 +265,7 @@ test.describe("createSpectrumCanvasRenderer", () => {
       renderer.renderPreparedFrame(prepared);
       await flushSignalUpdates();
 
-      state.shell.lang = "nl";
+      state.shell.lang.value = "nl";
       await flushSignalUpdates();
 
       expect(createCalls).toBe(1);

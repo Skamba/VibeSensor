@@ -103,7 +103,7 @@ export function createSettingsFeature(
       settings,
       services,
       formatting,
-      getSpeedUnit: () => ctx.state.shell.speedUnit,
+      getSpeedUnit: () => ctx.state.shell.speedUnit.value,
       ports: {
         activeViewId: ctx.ports.activeViewId,
         activeSettingsTabId: ctx.panels.settingsShell.activeTabId,
@@ -118,7 +118,7 @@ export function createSettingsFeature(
         t: services.t,
       },
       formatting,
-      getSpeedUnit: () => ctx.state.shell.speedUnit,
+      getSpeedUnit: () => ctx.state.shell.speedUnit.value,
       ports: {
         activeViewId: ctx.ports.activeViewId,
         activeSettingsTabId: ctx.panels.settingsShell.activeTabId,
@@ -145,9 +145,9 @@ export function createSettingsFeature(
   });
 
   let initializedLanguage = false;
-  let previousLanguage = ctx.state.shell.lang;
+  let previousLanguage = ctx.state.shell.lang.value;
   effect(() => {
-    const currentLanguage = ctx.state.shell.lang;
+    const currentLanguage = ctx.state.shell.lang.value;
     if (!initializedLanguage) {
       initializedLanguage = true;
       previousLanguage = currentLanguage;

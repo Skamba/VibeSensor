@@ -178,17 +178,17 @@ export function runDemoMode(deps: DemoDeps): void {
   };
 
   batchAppStateUpdates(() => {
-    state.settings.carsLoaded = true;
-    state.settings.cars = [
+    state.settings.carsLoaded.value = true;
+    state.settings.cars.value = [
       {
         id: "demo-car-1",
         name: "Demo Hatch",
         type: "Simulated setup",
         variant: "Audit baseline",
-        aspects: { ...state.settings.vehicleSettings },
+        aspects: { ...state.settings.vehicleSettings.value },
       },
     ];
-    state.settings.activeCarId = "demo-car-1";
+    state.settings.activeCarId.value = "demo-car-1";
   });
   deps.queueTransportPayload(demoPayload);
 

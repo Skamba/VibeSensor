@@ -93,7 +93,7 @@ test.describe("speed source state helpers", () => {
     expect(derived.speedReadoutLabelKey.value).toBe("speed.override");
     expect(derived.isManualEffective.value).toBe(true);
 
-    state.settings.resolvedSpeedSource = "obd2";
+    state.settings.resolvedSpeedSource.value = "obd2";
     expect(derived.effectiveSource.value).toBe("obd2");
     expect(derived.displayedMode.value).toBe("obd2");
     expect(derived.speedReadoutLabelKey.value).toBe("speed.obd2");
