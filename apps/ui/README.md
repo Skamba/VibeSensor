@@ -175,7 +175,7 @@ source-of-truth export commands remain the only writers for those files.
 | `constants.ts` | Generated sensor location codes and shared strength field names from backend sources |
 | `theme.ts` | Chart color palette and order band fill colors |
 | `styles/app.css` | Thin stylesheet aggregator that imports the UI style modules in cascade order |
-| `styles/{tokens,shell,components,maintenance,realtime,history,settings,adaptive,theme}.css` | Shared tokens/primitives plus feature-scoped and cross-cutting style ownership for shell, updater, realtime, history, settings, responsive, and theme overrides |
+| `styles/{tokens,shell,components,maintenance-*,realtime-*,history-*,settings-*,adaptive,theme}.css` | Shared tokens/primitives plus feature-scoped and cross-cutting style ownership for shell, updater, realtime, history, settings, responsive, and theme overrides |
 
 - AppState top-level slices returned by `createAppState()` are reactive proxy stores. Existing feature/runtime code can keep object-style reads and writes, but any `computed()`/`effect()` that depends on a slice should call `trackAppStateSlice(slice)` (or read `getAppStateSliceSignal(slice).value`) and bulk multi-field writes should use `batchAppStateUpdates()`.
 
@@ -238,12 +238,10 @@ decoding, and signal-backed Preact surfaces for reusable multi-action panels.
 surfaces, while `api/types.ts` owns generated HTTP alias exports used across
 `api/**`, `app/**`, and tests. Generated contract files themselves stay out of
 those consumers. Styling follows same ownership split: `styles/app.css` is only
-the import
-aggregator, `tokens.css`/`theme.css` own global token and color-mode concerns,
-`realtime.css`, `history.css`, and `maintenance.css` are thin manifests over
-their feature partials, and `shell.css`, `components.css`, `maintenance*.css`,
-`realtime*.css`, `history*.css`, and `settings.css` own the shared and
-feature-specific surfaces.
+the import aggregator, `tokens.css`/`theme.css` own global token and color-mode
+concerns, and `shell.css`, `components.css`, `maintenance*.css`,
+`realtime*.css`, `history*.css`, and `settings-*.css` own the shared and
+feature-specific surfaces directly.
 Shared visual state conventions prefer stable data/ARIA selectors such as
 `data-variant`, `data-choice-state`, `data-selected`, and `data-step-state`
 instead of controller-side variant class interpolation.
