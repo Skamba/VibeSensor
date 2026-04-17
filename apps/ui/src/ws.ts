@@ -1,21 +1,22 @@
 import type { LiveWsPayload } from "./contracts/ws_payload_types";
 import { batchAppStateUpdates } from "./app/ui_app_state";
-import { effect, signal } from "./app/ui_signals";
+import { effect, signal, type ReadonlySignal } from "./app/ui_signals";
 
 export type WsUiState = "connecting" | "connected" | "reconnecting" | "stale" | "no_data";
-
-export interface WsTransportState {
-  wsState: WsUiState;
-  pendingPayload: unknown | null;
-  hasReceivedPayload: boolean;
-}
 
 export interface WsClientOptions {
   url: string;
   staleAfterMs?: number;
   reconnectDelayMs?: number;
   hasData?: (payload: unknown) => boolean;
-  transport: WsTransportState;
+  onMessage: (payload: unknown) => void;
+}
+
+export interface WsClient {
+  readonly uiState: ReadonlySignal<WsUiState>;
+  connect(): void;
+  close(): void;
+  send(payload: { client_id: string | null }): void;
 }
 
 function hasSpectraClients(payload: unknown): boolean {
@@ -26,74 +27,77 @@ function hasSpectraClients(payload: unknown): boolean {
   return Boolean(clients && Object.keys(clients).length > 0);
 }
 
-export class WsClient {
-  private readonly options: Required<Omit<WsClientOptions, "transport">> & {
-    transport: WsTransportState;
+export function createWsClient(options: WsClientOptions): WsClient {
+  const resolvedOptions: Required<Omit<WsClientOptions, "onMessage">> & Pick<WsClientOptions, "onMessage"> = {
+    // 3s is too aggressive on weaker Pi + hotspot links and causes false stale flicker.
+    staleAfterMs: 10000,
+    reconnectDelayMs: 1200,
+    hasData: hasSpectraClients,
+    ...options,
   };
 
-  private ws: WebSocket | null = null;
-  private readonly lastMessageAtMs = signal(0);
-  private readonly hasData = signal(false);
-  private readonly manuallyClosed = signal(false);
-  private readonly reconnectAttempt = signal(0);
-  private readonly reconnectDelayMs = signal<number | null>(null);
-  private readonly socketOpen = signal(false);
+  let ws: WebSocket | null = null;
+  const uiState = signal<WsUiState>("connecting");
+  const lastMessageAtMs = signal(0);
+  const hasReceivedData = signal(false);
+  const manuallyClosed = signal(false);
+  const reconnectAttempt = signal(0);
+  const reconnectDelayMs = signal<number | null>(null);
+  const socketOpen = signal(false);
 
-  constructor(options: WsClientOptions) {
-    this.options = {
-      // 3s is too aggressive on weaker Pi + hotspot links and causes false stale flicker.
-      staleAfterMs: 10000,
-      reconnectDelayMs: 1200,
-      hasData: hasSpectraClients,
-      ...options,
-    };
-    this.bindReconnectLifecycle();
-    this.bindStaleLifecycle();
+  bindReconnectLifecycle();
+  bindStaleLifecycle();
+
+  return {
+    uiState,
+    connect,
+    close,
+    send,
+  };
+
+  function connect(): void {
+    batchAppStateUpdates(() => {
+      manuallyClosed.value = false;
+      reconnectDelayMs.value = null;
+    });
+    open("connecting");
   }
 
-  connect(): void {
+  function close(): void {
     batchAppStateUpdates(() => {
-      this.manuallyClosed.value = false;
-      this.reconnectDelayMs.value = null;
+      manuallyClosed.value = true;
+      reconnectDelayMs.value = null;
+      socketOpen.value = false;
     });
-    this.open("connecting");
-  }
-
-  close(): void {
-    batchAppStateUpdates(() => {
-      this.manuallyClosed.value = true;
-      this.reconnectDelayMs.value = null;
-      this.socketOpen.value = false;
-    });
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    if (ws) {
+      ws.close();
+      ws = null;
     }
   }
 
-  send(payload: { client_id: string | null }): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(payload));
+  function send(payload: { client_id: string | null }): void {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(payload));
     }
   }
 
-  private open(initialState: WsUiState): void {
+  function open(initialState: WsUiState): void {
     batchAppStateUpdates(() => {
-      this.commitState(initialState);
-      this.hasData.value = false;
-      this.lastMessageAtMs.value = 0;
-      this.socketOpen.value = false;
+      commitState(initialState);
+      hasReceivedData.value = false;
+      lastMessageAtMs.value = 0;
+      socketOpen.value = false;
     });
-    this.ws = new WebSocket(this.options.url);
+    ws = new WebSocket(resolvedOptions.url);
 
-    this.ws.onopen = () => {
+    ws.onopen = () => {
       batchAppStateUpdates(() => {
-        this.socketOpen.value = true;
-        this.commitState("no_data");
+        socketOpen.value = true;
+        commitState("no_data");
       });
     };
 
-    this.ws.onmessage = (event) => {
+    ws.onmessage = (event) => {
       let payload: unknown;
       try {
         payload = JSON.parse(event.data);
@@ -102,77 +106,76 @@ export class WsClient {
       }
       const receivedAt = Date.now();
       batchAppStateUpdates(() => {
-        this.reconnectAttempt.value = 0;
-        this.lastMessageAtMs.value = receivedAt;
-        this.hasData.value = this.hasData.value || this.options.hasData(payload);
-        this.commitState(this.hasData.value ? "connected" : "no_data");
-        this.options.transport.hasReceivedPayload = true;
-        this.options.transport.pendingPayload = payload;
+        reconnectAttempt.value = 0;
+        lastMessageAtMs.value = receivedAt;
+        hasReceivedData.value = hasReceivedData.value || resolvedOptions.hasData(payload);
+        commitState(hasReceivedData.value ? "connected" : "no_data");
+        resolvedOptions.onMessage(payload);
       });
     };
 
-    this.ws.onclose = () => {
+    ws.onclose = () => {
       batchAppStateUpdates(() => {
-        this.ws = null;
-        this.socketOpen.value = false;
-        if (this.manuallyClosed.value) {
+        ws = null;
+        socketOpen.value = false;
+        if (manuallyClosed.value) {
           return;
         }
-        this.commitState("reconnecting");
-        this.scheduleReconnect();
+        commitState("reconnecting");
+        scheduleReconnect();
       });
     };
 
-    this.ws.onerror = () => {
+    ws.onerror = () => {
       // onclose handles reconnect transitions.
     };
   }
 
-  private scheduleReconnect(): void {
-    this.reconnectDelayMs.value = this.nextReconnectDelayMs();
+  function scheduleReconnect(): void {
+    reconnectDelayMs.value = nextReconnectDelayMs();
   }
 
-  private nextReconnectDelayMs(): number {
-    const base = Math.max(250, this.options.reconnectDelayMs);
-    const exp = Math.min(6, this.reconnectAttempt.value);
+  function nextReconnectDelayMs(): number {
+    const base = Math.max(250, resolvedOptions.reconnectDelayMs);
+    const exp = Math.min(6, reconnectAttempt.value);
     const raw = Math.min(15000, base * (2 ** exp));
     const jitter = raw * 0.25 * Math.random();
-    this.reconnectAttempt.value += 1;
+    reconnectAttempt.value += 1;
     return Math.round(raw + jitter);
   }
 
-  private bindReconnectLifecycle(): void {
+  function bindReconnectLifecycle(): void {
     effect(() => {
-      const reconnectDelayMs = this.reconnectDelayMs.value;
-      if (reconnectDelayMs === null || this.manuallyClosed.value) {
+      const pendingReconnectDelayMs = reconnectDelayMs.value;
+      if (pendingReconnectDelayMs === null || manuallyClosed.value) {
         return;
       }
       const timeoutId = window.setTimeout(() => {
         batchAppStateUpdates(() => {
-          this.reconnectDelayMs.value = null;
+          reconnectDelayMs.value = null;
         });
-        this.open("reconnecting");
-      }, reconnectDelayMs);
+        open("reconnecting");
+      }, pendingReconnectDelayMs);
       return () => {
         window.clearTimeout(timeoutId);
       };
     });
   }
 
-  private bindStaleLifecycle(): void {
+  function bindStaleLifecycle(): void {
     effect(() => {
       if (
-        !this.socketOpen.value
-        || this.manuallyClosed.value
-        || !this.hasData.value
-        || this.lastMessageAtMs.value <= 0
+        !socketOpen.value
+        || manuallyClosed.value
+        || !hasReceivedData.value
+        || lastMessageAtMs.value <= 0
       ) {
         return;
       }
-      const lastMessageAtMs = this.lastMessageAtMs.value;
+      const mostRecentMessageAtMs = lastMessageAtMs.value;
       const intervalId = window.setInterval(() => {
-        if (Date.now() - lastMessageAtMs > this.options.staleAfterMs) {
-          this.setState("stale");
+        if (Date.now() - mostRecentMessageAtMs > resolvedOptions.staleAfterMs) {
+          setState("stale");
         }
       }, 1000);
       return () => {
@@ -181,14 +184,16 @@ export class WsClient {
     });
   }
 
-  private setState(next: WsUiState): void {
+  function setState(next: WsUiState): void {
     batchAppStateUpdates(() => {
-      this.commitState(next);
+      commitState(next);
     });
   }
 
-  private commitState(next: WsUiState): void {
-    if (this.options.transport.wsState === next) return;
-    this.options.transport.wsState = next;
+  function commitState(next: WsUiState): void {
+    if (uiState.value === next) {
+      return;
+    }
+    uiState.value = next;
   }
 }
