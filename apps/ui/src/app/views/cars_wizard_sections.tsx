@@ -1,7 +1,7 @@
 import type { ComponentChildren } from "preact";
 
 import type { CarsFeatureManualInputState } from "../features/cars_manual_input";
-import { useUiTranslation } from "../ui_i18n";
+import { getUiText as t } from "../ui_i18n";
 import type {
   CarsWizardOptionItem,
   CarsWizardOptionsRenderModel,
@@ -111,7 +111,6 @@ function WizardCustomEntry(props: {
   onSubmit(value: string): void;
 }) {
   const { buttonId, className, inputId, inputRef, intro, labelText, maxLength, onSubmit, placeholder } = props;
-  const t = useUiTranslation();
   return (
     <div class={className ?? "wizard-custom"}>
       {intro}
@@ -140,7 +139,6 @@ function CarsManualInputForm(props: {
   wizardModel: CarsWizardRenderModel;
 }) {
   const { emitManualInputs, refs, wizardModel } = props;
-  const t = useUiTranslation();
   return (
     <div class="settings-subgrid">
       <div class="field">
@@ -225,7 +223,6 @@ function WizardBrandStep(props: {
   onSubmitCustomBrand(value: string): void;
 }) {
   const { hidden, onSelectBrand, onSubmitCustomBrand, refs, section } = props;
-  const t = useUiTranslation();
   return (
     <div id="wizardStep0" class="wizard-step" hidden={hidden}>
       <h3>
@@ -260,7 +257,6 @@ function WizardTypeStep(props: {
   onSubmitCustomType(value: string): void;
 }) {
   const { hidden, onSelectType, onSubmitCustomType, refs, section } = props;
-  const t = useUiTranslation();
   return (
     <div id="wizardStep1" class="wizard-step" hidden={hidden}>
       <h3>
@@ -295,7 +291,6 @@ function WizardModelStep(props: {
   onSubmitCustomModel(value: string): void;
 }) {
   const { hidden, onSelectModel, onSubmitCustomModel, refs, section } = props;
-  const t = useUiTranslation();
   return (
     <div id="wizardStep2" class="wizard-step" hidden={hidden}>
       <h3>
@@ -349,7 +344,6 @@ function WizardVariantStep(props: {
   onSelectVariant(index: number): void;
 }) {
   const { hidden, onSelectVariant, refs, section } = props;
-  const t = useUiTranslation();
   return (
     <div id="wizardStep3" class="wizard-step" hidden={hidden}>
       <h3>
@@ -382,7 +376,6 @@ function WizardSpecsStep(props: {
   onSelectTire(index: number): void;
 }) {
   const { emitManualInputs, hidden, onSelectGearbox, onSelectTire, refs, wizardModel } = props;
-  const t = useUiTranslation();
   return (
     <div id="wizardStep4" class="wizard-step" hidden={hidden}>
       <div class="wizard-branch-card wizard-branch-card--library">
@@ -461,7 +454,6 @@ function WizardSpecsStep(props: {
 
 export function CarsWizardStepNav(props: { step: number }) {
   const { step } = props;
-  const t = useUiTranslation();
   return (
     <div class="wizard-step-indicators" aria-label="Add car progress">
       {WIZARD_STEP_LABELS.map((label, index) => (
