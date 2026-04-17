@@ -3,9 +3,8 @@ import { useRef } from "preact/hooks";
 
 import { getUiText as t } from "../ui_i18n";
 import {
-  effect,
+  computed,
   signal,
-  untracked,
   useSignalEffect,
   type ReadonlySignal,
 } from "../ui_signals";
@@ -233,11 +232,14 @@ function AnalysisPanel(props: {
 }
 
 export function mountAnalysisPanel(host: HTMLElement): AnalysisPanelView {
-  const bridgeState = signal<AnalysisPanelBridgeState>({
-    actions: null,
-    availability: DEFAULT_ANALYSIS_CAR_AVAILABILITY,
-    model: DEFAULT_ANALYSIS_PANEL_MODEL,
-  });
+  const actions = signal<AnalysisPanelActionHandlers | null>(null);
+  const availabilitySignal = signal<ReadonlySignal<AnalysisPanelCarAvailability> | null>(null);
+  const modelSignal = signal<ReadonlySignal<AnalysisPanelRenderModel> | null>(null);
+  const bridgeState = computed<AnalysisPanelBridgeState>(() => ({
+    actions: actions.value,
+    availability: availabilitySignal.value?.value ?? DEFAULT_ANALYSIS_CAR_AVAILABILITY,
+    model: modelSignal.value?.value ?? DEFAULT_ANALYSIS_PANEL_MODEL,
+  }));
   const inputFocusRequest = signal<AnalysisFieldFocusRequest | null>(null);
   const guidanceOpenRequest = signal(0);
   let focusRequestToken = 0;
@@ -252,25 +254,13 @@ export function mountAnalysisPanel(host: HTMLElement): AnalysisPanelView {
 
   return {
     bindActions(handlers) {
-      bridgeState.value = { ...bridgeState.value, actions: handlers };
+      actions.value = handlers;
     },
     bindCarAvailability(state) {
-      effect(() => {
-        const currentBridgeState = untracked(() => bridgeState.value);
-        bridgeState.value = {
-          ...currentBridgeState,
-          availability: state.value,
-        };
-      });
+      availabilitySignal.value = state;
     },
     bindModel(model) {
-      effect(() => {
-        const currentBridgeState = untracked(() => bridgeState.value);
-        bridgeState.value = {
-          ...currentBridgeState,
-          model: model.value,
-        };
-      });
+      modelSignal.value = model;
     },
     focusField(field) {
       focusRequestToken += 1;
