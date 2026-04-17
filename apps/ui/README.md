@@ -151,7 +151,10 @@ source-of-truth export commands remain the only writers for those files.
 | `app/views/internet_status_view.ts` | Pure USB-internet status model builder reused by the Preact internet panel |
 | `app/views/update_status_models.ts` | Shared update-status badge, row, and section interfaces consumed by the update and internet panels |
 | `app/views/update_journey_builder.ts` | Update journey and recovery-summary builders for phase formatting, staged progress, and retry guidance |
-| `app/views/update_status_builders.ts` | Typed update-status section builders for current status, issues, latest attempt, health, log, and full panel assembly |
+| `app/views/update_current_status_builders.ts` | Typed update-status builders for current status, issue list, and latest-attempt sections plus shared runtime/lifecycle rows |
+| `app/views/update_health_status_builders.ts` | Typed update-health builders for degradation reasons, data-loss summaries, and persistence-analysis status |
+| `app/views/update_log_status_builder.ts` | Typed update log-section builder for running, failed, and empty log states |
+| `app/views/update_status_builders.ts` | Slim update-status panel assembler and re-export surface for the focused section builders |
 | `app/views/maintenance_readiness_view.ts` | Shared maintenance-readiness model and Preact component contract reused by update and ESP flash readiness flows |
 | `app/views/` | Focused render-model builders, event-target decoding, and signal-backed Preact surfaces for settings, cars wizard, realtime, history, and updater flows |
 | `app/features/realtime_feature_view_state.ts` | Signal-backed realtime view-state owner that derives live overview, logging, and sensors models plus idle readiness signatures without presenter render fan-out |
