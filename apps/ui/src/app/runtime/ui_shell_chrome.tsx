@@ -9,6 +9,7 @@ import {
 } from "../ui_panel_host_registry";
 import {
   useComputed,
+  useSignalProperties,
   signal,
   type ReadonlySignal,
   useSignalEffect,
@@ -52,6 +53,20 @@ const LANGUAGE_OPTIONS = [
   { label: "🇺🇸 English", value: "en" },
   { label: "🇳🇱 Nederlands", value: "nl" },
 ] as const;
+
+const SHELL_NAVIGATION_MODEL_KEYS = ["activeViewId", "navItems"] as const;
+const SHELL_ACTIVE_VIEW_KEY = ["activeViewId"] as const;
+const SHELL_PREFERENCES_MODEL_KEYS = [
+  "languageFeedback",
+  "languageLabelText",
+  "selectedLanguage",
+  "selectedSpeedUnit",
+  "speedUnitFeedback",
+  "speedUnitLabelText",
+  "speedUnitOptionLabels",
+] as const;
+const SHELL_STATUS_MODEL_KEYS = ["shellLiveStatus", "wsLinkState"] as const;
+const SHELL_DIALOG_MODEL_KEYS = ["appErrorBanner"] as const;
 
 export interface UiShellChromeActions {
   activateView(viewId: string): void;
@@ -132,7 +147,7 @@ type UiShellChromeProps = {
 };
 
 type ShellViewSectionProps = {
-  activeViewId: string;
+  activeViewId: ReadonlySignal<string>;
   ariaLabelledBy: string;
   children: ComponentChildren;
   viewId: string;
@@ -191,24 +206,29 @@ function normalizeMenuIndex(index: number): number {
 
 function SettingsFeedbackSlot(props: {
   id: string;
-  message: SettingsFeedbackMessage | null;
+  message: ReadonlySignal<SettingsFeedbackMessage | null>;
 }) {
   const { id, message } = props;
+  const ariaLive = useComputed(() => {
+    const nextMessage = message.value;
+    return nextMessage ? (nextMessage.tone === "error" ? "assertive" : "polite") : undefined;
+  });
+  const hidden = useComputed(() => !message.value);
   return (
     <div
       id={id}
       class="settings-feedback-slot settings-feedback-slot--compact"
-      hidden={!message}
-      aria-live={message ? (message.tone === "error" ? "assertive" : "polite") : undefined}
+      hidden={hidden}
+      aria-live={ariaLive}
     >
-      {message ? (
-        <div class={settingsFeedbackClassName(message)}>
-          {message.title ? (
-            <strong class="settings-feedback__title">{message.title}</strong>
+      {message.value ? (
+        <div class={settingsFeedbackClassName(message.value)}>
+          {message.value.title ? (
+            <strong class="settings-feedback__title">{message.value.title}</strong>
           ) : null}
-          <span class="settings-feedback__body">{message.body}</span>
-          {message.detail ? (
-            <span class="settings-feedback__detail">{message.detail}</span>
+          <span class="settings-feedback__body">{message.value.body}</span>
+          {message.value.detail ? (
+            <span class="settings-feedback__detail">{message.value.detail}</span>
           ) : null}
         </div>
       ) : null}
@@ -318,13 +338,14 @@ function SettingsViewHosts(props: {
 
 function ShellViewSection(props: ShellViewSectionProps) {
   const { activeViewId, ariaLabelledBy, children, viewId } = props;
+  const hidden = useComputed(() => activeViewId.value !== viewId);
   return (
     <section
       id={viewId}
       class="view"
       role="tabpanel"
       aria-labelledby={ariaLabelledBy}
-      hidden={activeViewId !== viewId}
+      hidden={hidden}
     >
       {children}
     </section>
@@ -367,7 +388,10 @@ function ShellNavigation(props: {
   navigationModel: ReadonlySignal<UiShellChromeNavigationModel>;
 }) {
   const { bridge, navigationModel } = props;
-  const model = navigationModel.value;
+  const { activeViewId, navItems } = useSignalProperties(
+    navigationModel,
+    SHELL_NAVIGATION_MODEL_KEYS,
+  );
   const menuButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function activateView(viewId: string): void {
@@ -384,33 +408,33 @@ function ShellNavigation(props: {
   ): void {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      activateView(model.navItems[index].viewId);
+      activateView(navItems.value[index].viewId);
       return;
     }
     if (event.key === "ArrowRight") {
       event.preventDefault();
       const nextIndex = normalizeMenuIndex(index + 1);
-      activateView(model.navItems[nextIndex].viewId);
+      activateView(navItems.value[nextIndex].viewId);
       focusMenuButton(nextIndex);
       return;
     }
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       const nextIndex = normalizeMenuIndex(index - 1);
-      activateView(model.navItems[nextIndex].viewId);
+      activateView(navItems.value[nextIndex].viewId);
       focusMenuButton(nextIndex);
       return;
     }
     if (event.key === "Home") {
       event.preventDefault();
-      activateView(model.navItems[0].viewId);
+      activateView(navItems.value[0].viewId);
       focusMenuButton(0);
       return;
     }
     if (event.key === "End") {
       event.preventDefault();
-      const nextIndex = model.navItems.length - 1;
-      activateView(model.navItems[nextIndex].viewId);
+      const nextIndex = navItems.value.length - 1;
+      activateView(navItems.value[nextIndex].viewId);
       focusMenuButton(nextIndex);
     }
   }
@@ -432,29 +456,52 @@ function ShellNavigation(props: {
         </picture>
       </h1>
       <nav class="menu" aria-label="Primary" role="tablist">
-        {model.navItems.map((item, index) => {
-          const isActive = item.viewId === model.activeViewId;
-          return (
-            <button
-              key={item.viewId}
-              ref={(el) => { menuButtonRefs.current[index] = el; }}
-              type="button"
-              class={isActive ? "menu-btn active" : "menu-btn"}
-              data-view={item.viewId}
-              id={item.tabId}
-              role="tab"
-              aria-controls={item.viewId}
-              aria-selected={isActive ? "true" : "false"}
-              tabIndex={isActive ? 0 : -1}
-              onClick={() => activateView(item.viewId)}
-              onKeyDown={(event) => handleMenuKeyDown(index, event)}
-            >
-              <span>{item.labelText}</span>
-            </button>
-          );
-        })}
+        {navItems.value.map((item, index) => (
+          <ShellNavigationTabButton
+            key={item.viewId}
+            activeViewId={activeViewId}
+            index={index}
+            item={item}
+            onActivateView={activateView}
+            onKeyDown={handleMenuKeyDown}
+            onRef={(el) => { menuButtonRefs.current[index] = el; }}
+          />
+        ))}
       </nav>
     </div>
+  );
+}
+
+function ShellNavigationTabButton(props: {
+  activeViewId: ReadonlySignal<string>;
+  index: number;
+  item: UiShellChromeNavItemModel;
+  onActivateView(viewId: string): void;
+  onKeyDown(index: number, event: JSX.TargetedKeyboardEvent<HTMLButtonElement>): void;
+  onRef(el: HTMLButtonElement | null): void;
+}) {
+  const { index, item, onActivateView } = props;
+  const isActive = useComputed(() => item.viewId === props.activeViewId.value);
+  const buttonClass = useComputed(() => isActive.value ? "menu-btn active" : "menu-btn");
+  const ariaSelected = useComputed(() => isActive.value ? "true" : "false");
+  const tabIndex = useComputed(() => isActive.value ? 0 : -1);
+
+  return (
+    <button
+      ref={props.onRef}
+      type="button"
+      class={buttonClass}
+      data-view={item.viewId}
+      id={item.tabId}
+      role="tab"
+      aria-controls={item.viewId}
+      aria-selected={ariaSelected}
+      tabIndex={tabIndex}
+      onClick={() => onActivateView(item.viewId)}
+      onKeyDown={(event) => props.onKeyDown(index, event)}
+    >
+      <span>{item.labelText}</span>
+    </button>
   );
 }
 
@@ -463,43 +510,63 @@ function ShellPreferences(props: {
   preferencesModel: ReadonlySignal<UiShellChromePreferencesModel>;
 }) {
   const { bridge, preferencesModel } = props;
-  const model = preferencesModel.value;
+  const {
+    languageFeedback,
+    languageLabelText,
+    selectedLanguage,
+    selectedSpeedUnit,
+    speedUnitFeedback,
+    speedUnitLabelText,
+    speedUnitOptionLabels,
+  } = useSignalProperties(preferencesModel, SHELL_PREFERENCES_MODEL_KEYS);
+  const speedUnitAriaDescribedBy = useComputed(() =>
+    speedUnitFeedback.value ? "speedUnitFeedback" : undefined
+  );
+  const speedUnitAriaInvalid = useComputed(() =>
+    speedUnitFeedback.value?.tone === "error" ? "true" : undefined
+  );
+  const languageAriaDescribedBy = useComputed(() =>
+    languageFeedback.value ? "languageFeedback" : undefined
+  );
+  const languageAriaInvalid = useComputed(() =>
+    languageFeedback.value?.tone === "error" ? "true" : undefined
+  );
 
   return (
     <div class="site-header__preferences">
       <label class="header-select" htmlFor="speedUnitSelect">
-        <span class="mini-label">{model.speedUnitLabelText}</span>
+        <span class="mini-label">{speedUnitLabelText}</span>
         <select
           id="speedUnitSelect"
           class="unit-picker"
-          aria-label={model.speedUnitLabelText}
-          aria-describedby={model.speedUnitFeedback ? "speedUnitFeedback" : undefined}
-          aria-invalid={model.speedUnitFeedback?.tone === "error" ? "true" : undefined}
-          value={model.selectedSpeedUnit}
+          aria-label={speedUnitLabelText}
+          aria-describedby={speedUnitAriaDescribedBy}
+          aria-invalid={speedUnitAriaInvalid}
+          value={selectedSpeedUnit}
           onChange={(event) => {
             void bridge.current.saveSpeedUnit(event.currentTarget.value);
           }}
         >
           {SPEED_UNIT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
-              {model.speedUnitOptionLabels[option.value] ?? option.fallbackLabel}
+              {speedUnitOptionLabels.value[option.value] ?? option.fallbackLabel}
             </option>
           ))}
         </select>
         <SettingsFeedbackSlot
           id="speedUnitFeedback"
-          message={model.speedUnitFeedback}
+          message={speedUnitFeedback}
         />
       </label>
       <label class="header-select" htmlFor="languageSelect">
-        <span class="mini-label">{model.languageLabelText}</span>
+        <span class="mini-label">{languageLabelText}</span>
         <select
           id="languageSelect"
           class="lang-picker"
-          aria-label={model.languageLabelText}
-          aria-describedby={model.languageFeedback ? "languageFeedback" : undefined}
-          aria-invalid={model.languageFeedback?.tone === "error" ? "true" : undefined}
-          value={model.selectedLanguage}
+          aria-label={languageLabelText}
+          aria-describedby={languageAriaDescribedBy}
+          aria-invalid={languageAriaInvalid}
+          value={selectedLanguage}
           onChange={(event) => {
             void bridge.current.saveLanguage(event.currentTarget.value);
           }}
@@ -512,7 +579,7 @@ function ShellPreferences(props: {
         </select>
         <SettingsFeedbackSlot
           id="languageFeedback"
-          message={model.languageFeedback}
+          message={languageFeedback}
         />
       </label>
     </div>
@@ -524,30 +591,35 @@ function ShellStatus(props: {
   statusModel: ReadonlySignal<UiShellChromeStatusModel>;
 }) {
   const { navigationModel, statusModel } = props;
-  const navigation = navigationModel.value;
-  const status = statusModel.value;
-  const statusHidden = navigation.activeViewId === "dashboardView";
+  const { activeViewId } = useSignalProperties(navigationModel, SHELL_ACTIVE_VIEW_KEY);
+  const { shellLiveStatus, wsLinkState } = useSignalProperties(statusModel, SHELL_STATUS_MODEL_KEYS);
+  const statusHidden = useComputed(() => activeViewId.value === "dashboardView");
 
   return (
     <div class="site-header__status" hidden={statusHidden}>
       <div class="site-header__status-pills">
-        <div
-          id="linkState"
-          class="pill"
-          data-variant={status.wsLinkState.variant}
-          aria-live="polite"
-        >
-          {status.wsLinkState.text}
-        </div>
-        <div
-          id="shellLiveStatus"
-          class="pill"
-          data-variant={status.shellLiveStatus.variant}
-          aria-live="polite"
-        >
-          {status.shellLiveStatus.text}
-        </div>
+        <ShellStatusPill id="linkState" model={wsLinkState} />
+        <ShellStatusPill id="shellLiveStatus" model={shellLiveStatus} />
       </div>
+    </div>
+  );
+}
+
+function ShellStatusPill(props: {
+  id: string;
+  model: ReadonlySignal<UiShellBadgeModel>;
+}) {
+  const variant = useComputed(() => props.model.value.variant);
+  const text = useComputed(() => props.model.value.text);
+
+  return (
+    <div
+      id={props.id}
+      class="pill"
+      data-variant={variant}
+      aria-live="polite"
+    >
+      {text}
     </div>
   );
 }
@@ -555,19 +627,21 @@ function ShellStatus(props: {
 function AppErrorBanner(props: {
   dialogModel: ReadonlySignal<UiShellChromeDialogModel>;
 }) {
-  const banner = props.dialogModel.value.appErrorBanner;
-  const appErrorVariant = banner.variant ?? undefined;
+  const { appErrorBanner } = useSignalProperties(props.dialogModel, SHELL_DIALOG_MODEL_KEYS);
+  const appErrorHidden = useComputed(() => appErrorBanner.value.hidden);
+  const appErrorVariant = useComputed(() => appErrorBanner.value.variant ?? undefined);
+  const appErrorText = useComputed(() => appErrorBanner.value.text);
 
   return (
     <div
       id="appErrorBanner"
       class="connection-banner app-error-banner"
-      hidden={banner.hidden}
+      hidden={appErrorHidden}
       data-variant={appErrorVariant}
       aria-live="assertive"
       role="alert"
     >
-      {banner.text}
+      {appErrorText}
     </div>
   );
 }
@@ -577,7 +651,7 @@ function ShellViewHostsContainer(props: {
   panelHostRefs: UiPanelHostRefs;
 }) {
   const { navigationModel, panelHostRefs } = props;
-  const activeViewId = navigationModel.value.activeViewId;
+  const { activeViewId } = useSignalProperties(navigationModel, SHELL_ACTIVE_VIEW_KEY);
 
   return (
     <>
