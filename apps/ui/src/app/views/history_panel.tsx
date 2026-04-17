@@ -1,13 +1,13 @@
 import { render } from "preact";
 import { useUiText } from "../ui_i18n";
 import {
-  computed,
   signal,
   useComputed,
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
 import { HistoryTableBody } from "./history_table_content";
+import { createBoundViewModel } from "./view_model_binding";
 import type {
   HistoryPanelActionHandlers,
   HistoryPanelRenderModel,
@@ -95,13 +95,12 @@ function HistoryPanel(props: {
 
 export function mountHistoryPanel(host: HTMLElement): HistoryPanelView {
   const actions = signal<HistoryPanelActionHandlers | null>(null);
-  const modelSource = signal<ReadonlySignal<HistoryPanelRenderModel> | null>(null);
-  const model = computed<HistoryPanelRenderModel>(() => modelSource.value?.value ?? DEFAULT_PANEL_MODEL);
-  render(<HistoryPanel actions={actions} model={model} />, host);
+  const modelBinding = createBoundViewModel(DEFAULT_PANEL_MODEL);
+  render(<HistoryPanel actions={actions} model={modelBinding.model} />, host);
 
   return {
     bindModel(model: ReadonlySignal<HistoryPanelRenderModel>): void {
-      modelSource.value = model;
+      modelBinding.bind(model);
     },
     bindActions(handlers: HistoryPanelActionHandlers): void {
       actions.value = handlers;

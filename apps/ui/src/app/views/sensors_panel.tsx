@@ -3,7 +3,6 @@ import type { JSX } from "preact";
 import { render } from "preact";
 import { useUiText } from "../ui_i18n";
 import {
-  computed,
   signal,
   useSignalProperties,
   type ReadonlySignal,
@@ -14,6 +13,7 @@ import type {
   RealtimeSensorTableRenderModel,
   RealtimeSensorTableRowViewModel,
 } from "./realtime_sensor_table_view";
+import { createBoundViewModel } from "./view_model_binding";
 
 export interface SensorsPanelRenderModel {
   table: RealtimeSensorTableRenderModel | null;
@@ -28,6 +28,10 @@ export interface SensorsPanelView {
   bindModel(model: ReadonlySignal<SensorsPanelRenderModel>): void;
   bindActions(handlers: SensorsPanelActionHandlers): void;
 }
+
+const DEFAULT_SENSORS_PANEL_MODEL: SensorsPanelRenderModel = {
+  table: null,
+};
 
 const SENSORS_PANEL_MODEL_KEYS = ["table"] as const;
 
@@ -170,12 +174,11 @@ function SensorsPanel(props: {
 
 export function mountSensorsPanel(host: HTMLElement): SensorsPanelView {
   const actions = signal<SensorsPanelActionHandlers | null>(null);
-  const modelSource = signal<ReadonlySignal<SensorsPanelRenderModel> | null>(null);
-  const model = computed<SensorsPanelRenderModel>(() => modelSource.value?.value ?? { table: null });
-  render(<SensorsPanel actions={actions} model={model} />, host);
+  const modelBinding = createBoundViewModel(DEFAULT_SENSORS_PANEL_MODEL);
+  render(<SensorsPanel actions={actions} model={modelBinding.model} />, host);
   return {
     bindModel(model) {
-      modelSource.value = model;
+      modelBinding.bind(model);
     },
     bindActions(handlers) {
       actions.value = handlers;

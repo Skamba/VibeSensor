@@ -2,12 +2,12 @@ import { render, type ComponentChildren } from "preact";
 
 import { useUiText } from "../ui_i18n";
 import {
-  computed,
   signal,
   useComputed,
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
+import { createBoundViewModel } from "./view_model_binding";
 import type {
   UpdateCurrentStatusSectionModel,
   UpdateHealthSectionModel,
@@ -424,16 +424,15 @@ function UpdatePanel(props: {
 
 export function mountUpdatePanel(host: HTMLElement): UpdatePanelView {
   const actions = signal<UpdatePanelActionHandlers | null>(null);
-  const modelSource = signal<ReadonlySignal<UpdatePanelRenderModel> | null>(null);
-  const model = computed<UpdatePanelRenderModel>(() => modelSource.value?.value ?? DEFAULT_UPDATE_PANEL_MODEL);
-  render(<UpdatePanel actions={actions} model={model} />, host);
+  const modelBinding = createBoundViewModel(DEFAULT_UPDATE_PANEL_MODEL);
+  render(<UpdatePanel actions={actions} model={modelBinding.model} />, host);
 
   return {
     bindActions(handlers) {
       actions.value = handlers;
     },
     bindModel(model) {
-      modelSource.value = model;
+      modelBinding.bind(model);
     },
   };
 }
