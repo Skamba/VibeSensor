@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 import { createAppState } from "../src/app/ui_app_state";
+import { UiShellController } from "../src/app/runtime/ui_shell_controller";
+import { createUiShellChromeActionBridge } from "../src/app/runtime/ui_shell_chrome";
 import {
   DEFAULT_SHELL_VIEW_ID,
   createUiShellNavigationModule,
@@ -37,6 +39,40 @@ async function withMockFetch(
 
 function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : key;
+}
+
+function installWindowStub(): void {
+  (globalThis as { window?: Window & typeof globalThis }).window = {
+    clearTimeout: () => undefined,
+    setTimeout: (() => 1 as unknown as ReturnType<typeof setTimeout>) as Window["setTimeout"],
+  } as Window & typeof globalThis;
+}
+
+function createChromeViewRecorder() {
+  const counts = {
+    dialog: 0,
+    navigation: 0,
+    preferences: 0,
+    status: 0,
+  };
+
+  return {
+    counts,
+    view: {
+      setDialogModel() {
+        counts.dialog += 1;
+      },
+      setNavigationModel() {
+        counts.navigation += 1;
+      },
+      setPreferencesModel() {
+        counts.preferences += 1;
+      },
+      setStatusModel() {
+        counts.status += 1;
+      },
+    },
+  };
 }
 
 test.describe("createUiShellNavigationModule", () => {
@@ -120,6 +156,75 @@ test.describe("createUiShellNavigationModule", () => {
     expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(activationErrors).toEqual(["settingsView:chunk failed"]);
   });
+});
+
+test.describe("UiShellController", () => {
+  test.beforeEach(() => {
+    installWindowStub();
+  });
+
+  test("routes live status updates through the status model only", () => {
+    const state = createAppState();
+    const chrome = createChromeViewRecorder();
+    const controller = new UiShellController({
+      bindFeatureHandlers: () => undefined,
+      chrome: chrome.view,
+      chromeActions: createUiShellChromeActionBridge(),
+      liveOverview: {
+        bindModel() {},
+        setSpeedText() {},
+      },
+      state,
+    });
+
+    expect(chrome.counts).toEqual({
+      dialog: 1,
+      navigation: 1,
+      preferences: 1,
+      status: 1,
+    });
+
+    controller.setLiveStatus("warn", "Signal weak");
+
+    expect(chrome.counts).toEqual({
+      dialog: 1,
+      navigation: 1,
+      preferences: 1,
+      status: 2,
+    });
+  });
+
+  test("routes notification banner updates through the dialog model only", () => {
+    const state = createAppState();
+    const chrome = createChromeViewRecorder();
+    const controller = new UiShellController({
+      bindFeatureHandlers: () => undefined,
+      chrome: chrome.view,
+      chromeActions: createUiShellChromeActionBridge(),
+      liveOverview: {
+        bindModel() {},
+        setSpeedText() {},
+      },
+      state,
+    });
+
+    expect(chrome.counts).toEqual({
+      dialog: 1,
+      navigation: 1,
+      preferences: 1,
+      status: 1,
+    });
+
+    controller.showError("save failed");
+
+    expect(chrome.counts).toEqual({
+      dialog: 2,
+      navigation: 1,
+      preferences: 1,
+      status: 1,
+    });
+  });
+
 });
 
 test.describe("createUiShellPreferencesModule", () => {
