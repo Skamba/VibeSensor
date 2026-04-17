@@ -25,7 +25,7 @@ const HISTORY_PANEL_MODEL_KEYS = [
   "table",
 ] as const;
 
-function HistoryPanel(props: {
+export function HistoryPanel(props: {
   actions: ReadonlySignal<HistoryPanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<HistoryPanelRenderModel> | null>;
 }) {
