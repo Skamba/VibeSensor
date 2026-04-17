@@ -2,7 +2,13 @@ import { expect, test } from "@playwright/test";
 
 import { createAppState } from "../src/app/ui_app_state";
 import { UiShellController } from "../src/app/runtime/ui_shell_controller";
-import { createUiShellChromeActionBridge } from "../src/app/runtime/ui_shell_chrome";
+import {
+  createUiShellChromeActionBridge,
+  type UiShellChromeDialogModel,
+  type UiShellChromeNavigationModel,
+  type UiShellChromePreferencesModel,
+  type UiShellChromeStatusModel,
+} from "../src/app/runtime/ui_shell_chrome";
 import {
   DEFAULT_SHELL_VIEW_ID,
   createUiShellNavigationModule,
@@ -10,6 +16,7 @@ import {
 import { createUiShellNotificationModule } from "../src/app/runtime/ui_shell_notification_module";
 import { createUiShellPreferencesModule } from "../src/app/runtime/ui_shell_preferences_module";
 import { createUiShellStatusModule } from "../src/app/runtime/ui_shell_status_module";
+import type { ReadonlySignal } from "../src/app/ui_signals";
 
 function jsonResponse(body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -55,21 +62,37 @@ function createChromeViewRecorder() {
     preferences: 0,
     status: 0,
   };
+  const models: {
+    dialog: ReadonlySignal<UiShellChromeDialogModel> | null;
+    navigation: ReadonlySignal<UiShellChromeNavigationModel> | null;
+    preferences: ReadonlySignal<UiShellChromePreferencesModel> | null;
+    status: ReadonlySignal<UiShellChromeStatusModel> | null;
+  } = {
+    dialog: null,
+    navigation: null,
+    preferences: null,
+    status: null,
+  };
 
   return {
     counts,
+    models,
     view: {
-      setDialogModel() {
+      bindDialogModel(model: ReadonlySignal<UiShellChromeDialogModel>) {
         counts.dialog += 1;
+        models.dialog = model;
       },
-      setNavigationModel() {
+      bindNavigationModel(model: ReadonlySignal<UiShellChromeNavigationModel>) {
         counts.navigation += 1;
+        models.navigation = model;
       },
-      setPreferencesModel() {
+      bindPreferencesModel(model: ReadonlySignal<UiShellChromePreferencesModel>) {
         counts.preferences += 1;
+        models.preferences = model;
       },
-      setStatusModel() {
+      bindStatusModel(model: ReadonlySignal<UiShellChromeStatusModel>) {
         counts.status += 1;
+        models.status = model;
       },
     },
   };
@@ -183,15 +206,23 @@ test.describe("UiShellController", () => {
       preferences: 1,
       status: 1,
     });
+    expect(chrome.models.status?.value.shellLiveStatus).toEqual({
+      text: "No live signal",
+      variant: "muted",
+    });
+    const initialDialogModel = chrome.models.dialog?.value;
+    const initialNavigationModel = chrome.models.navigation?.value;
+    const initialPreferencesModel = chrome.models.preferences?.value;
 
     controller.setLiveStatus("warn", "Signal weak");
 
-    expect(chrome.counts).toEqual({
-      dialog: 1,
-      navigation: 1,
-      preferences: 1,
-      status: 2,
+    expect(chrome.models.status?.value.shellLiveStatus).toEqual({
+      text: "Signal weak",
+      variant: "warn",
     });
+    expect(chrome.models.dialog?.value).toEqual(initialDialogModel);
+    expect(chrome.models.navigation?.value).toEqual(initialNavigationModel);
+    expect(chrome.models.preferences?.value).toEqual(initialPreferencesModel);
   });
 
   test("routes notification banner updates through the dialog model only", () => {
@@ -214,15 +245,25 @@ test.describe("UiShellController", () => {
       preferences: 1,
       status: 1,
     });
+    expect(chrome.models.dialog?.value.appErrorBanner).toEqual({
+      hidden: true,
+      text: "",
+      variant: null,
+    });
+    const initialNavigationModel = chrome.models.navigation?.value;
+    const initialPreferencesModel = chrome.models.preferences?.value;
+    const initialStatusModel = chrome.models.status?.value;
 
     controller.showError("save failed");
 
-    expect(chrome.counts).toEqual({
-      dialog: 2,
-      navigation: 1,
-      preferences: 1,
-      status: 1,
+    expect(chrome.models.dialog?.value.appErrorBanner).toEqual({
+      hidden: false,
+      text: "save failed",
+      variant: "bad",
     });
+    expect(chrome.models.navigation?.value).toEqual(initialNavigationModel);
+    expect(chrome.models.preferences?.value).toEqual(initialPreferencesModel);
+    expect(chrome.models.status?.value).toEqual(initialStatusModel);
   });
 
 });

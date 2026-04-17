@@ -14,7 +14,6 @@ import {
 import {
   useComputed,
   useSignalProperties,
-  signal,
   type ReadonlySignal,
   useSignalEffect,
 } from "../ui_signals";
@@ -23,6 +22,10 @@ import {
   settingsFeedbackClassName,
   type SettingsFeedbackMessage,
 } from "../views/settings_feedback";
+import {
+  createDeferredViewModel,
+  useDeferredViewModel,
+} from "../views/view_model_binding";
 import type { VisualVariant } from "../view_style_types";
 const SHELL_OWNER = "UI shell";
 const SHELL_CHROME_HOST_ID = "appShellChromeRoot";
@@ -135,19 +138,19 @@ export type UiShellChromeRenderModel =
   & UiShellChromeDialogModel;
 
 export interface UiShellChromeView {
-  setDialogModel(model: UiShellChromeDialogModel): void;
-  setNavigationModel(model: UiShellChromeNavigationModel): void;
-  setPreferencesModel(model: UiShellChromePreferencesModel): void;
-  setStatusModel(model: UiShellChromeStatusModel): void;
+  bindDialogModel(model: ReadonlySignal<UiShellChromeDialogModel>): void;
+  bindNavigationModel(model: ReadonlySignal<UiShellChromeNavigationModel>): void;
+  bindPreferencesModel(model: ReadonlySignal<UiShellChromePreferencesModel>): void;
+  bindStatusModel(model: ReadonlySignal<UiShellChromeStatusModel>): void;
 }
 
 type UiShellChromeProps = {
   bridge: UiShellChromeActionBridge;
-  dialogModel: ReadonlySignal<UiShellChromeDialogModel>;
-  navigationModel: ReadonlySignal<UiShellChromeNavigationModel>;
+  dialogModel: ReadonlySignal<ReadonlySignal<UiShellChromeDialogModel> | null>;
+  navigationModel: ReadonlySignal<ReadonlySignal<UiShellChromeNavigationModel> | null>;
   panelHostRefs: UiPanelHostRefs;
-  preferencesModel: ReadonlySignal<UiShellChromePreferencesModel>;
-  statusModel: ReadonlySignal<UiShellChromeStatusModel>;
+  preferencesModel: ReadonlySignal<ReadonlySignal<UiShellChromePreferencesModel> | null>;
+  statusModel: ReadonlySignal<ReadonlySignal<UiShellChromeStatusModel> | null>;
 };
 
 type ShellViewSectionProps = {
@@ -673,12 +676,12 @@ function ConfirmationDialogLayer(props: {
 function UiShellChrome(props: UiShellChromeProps) {
   const {
     bridge,
-    dialogModel,
-    navigationModel,
     panelHostRefs,
-    preferencesModel,
-    statusModel,
   } = props;
+  const dialogModel = useDeferredViewModel(props.dialogModel, DEFAULT_DIALOG_MODEL);
+  const navigationModel = useDeferredViewModel(props.navigationModel, DEFAULT_NAVIGATION_MODEL);
+  const preferencesModel = useDeferredViewModel(props.preferencesModel, DEFAULT_PREFERENCES_MODEL);
+  const statusModel = useDeferredViewModel(props.statusModel, DEFAULT_STATUS_MODEL);
 
   return (
     <ShellChromeFrame statusModel={statusModel}>
@@ -730,19 +733,19 @@ export function mountUiShellChrome(
   host: HTMLElement,
   bridge: UiShellChromeActionBridge,
 ): UiShellChromeView & { panelHosts: UiPanelHostRegistry } {
-  const dialogModel = signal<UiShellChromeDialogModel>(DEFAULT_DIALOG_MODEL);
-  const navigationModel = signal<UiShellChromeNavigationModel>(DEFAULT_NAVIGATION_MODEL);
+  const dialogModel = createDeferredViewModel<UiShellChromeDialogModel>();
+  const navigationModel = createDeferredViewModel<UiShellChromeNavigationModel>();
   const panelHostRefs = createUiPanelHostRefs();
-  const preferencesModel = signal<UiShellChromePreferencesModel>(DEFAULT_PREFERENCES_MODEL);
-  const statusModel = signal<UiShellChromeStatusModel>(DEFAULT_STATUS_MODEL);
+  const preferencesModel = createDeferredViewModel<UiShellChromePreferencesModel>();
+  const statusModel = createDeferredViewModel<UiShellChromeStatusModel>();
   render(
     <UiShellChrome
       bridge={bridge}
-      dialogModel={dialogModel}
-      navigationModel={navigationModel}
+      dialogModel={dialogModel.model}
+      navigationModel={navigationModel.model}
       panelHostRefs={panelHostRefs}
-      preferencesModel={preferencesModel}
-      statusModel={statusModel}
+      preferencesModel={preferencesModel.model}
+      statusModel={statusModel.model}
     />,
     host,
   );
@@ -750,17 +753,17 @@ export function mountUiShellChrome(
 
   return {
     panelHosts,
-    setDialogModel(nextModel) {
-      dialogModel.value = nextModel;
+    bindDialogModel(model) {
+      dialogModel.bind(model);
     },
-    setNavigationModel(nextModel) {
-      navigationModel.value = nextModel;
+    bindNavigationModel(model) {
+      navigationModel.bind(model);
     },
-    setPreferencesModel(nextModel) {
-      preferencesModel.value = nextModel;
+    bindPreferencesModel(model) {
+      preferencesModel.bind(model);
     },
-    setStatusModel(nextModel) {
-      statusModel.value = nextModel;
+    bindStatusModel(model) {
+      statusModel.bind(model);
     },
   };
 }

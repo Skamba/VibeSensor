@@ -138,8 +138,9 @@ export class UiShellController {
     this.preferencesRenderModel = this.createPreferencesRenderModel();
     this.statusRenderModel = this.createStatusRenderModel();
     this.dialogRenderModel = this.createDialogRenderModel();
+    this.bindChromeModelSignals();
     this.bindReactiveLanguageSync();
-    this.bindReactiveChromeSync();
+    this.bindReactiveSpeedReadoutSync();
   }
 
   t(key: string, vars?: Record<string, unknown>): string {
@@ -207,35 +208,14 @@ export class UiShellController {
     });
   }
 
-  private bindReactiveChromeSync(): void {
-    effect(() => {
-      const model = this.navigationRenderModel.value;
-      untracked(() => {
-        this.chrome.setNavigationModel(model);
-      });
-    });
+  private bindChromeModelSignals(): void {
+    this.chrome.bindNavigationModel(this.navigationRenderModel);
+    this.chrome.bindPreferencesModel(this.preferencesRenderModel);
+    this.chrome.bindStatusModel(this.statusRenderModel);
+    this.chrome.bindDialogModel(this.dialogRenderModel);
+  }
 
-    effect(() => {
-      const model = this.preferencesRenderModel.value;
-      untracked(() => {
-        this.chrome.setPreferencesModel(model);
-      });
-    });
-
-    effect(() => {
-      const model = this.statusRenderModel.value;
-      untracked(() => {
-        this.chrome.setStatusModel(model);
-      });
-    });
-
-    effect(() => {
-      const model = this.dialogRenderModel.value;
-      untracked(() => {
-        this.chrome.setDialogModel(model);
-      });
-    });
-
+  private bindReactiveSpeedReadoutSync(): void {
     effect(() => {
       const speedText = this.status.speedReadoutText.value;
       untracked(() => {
