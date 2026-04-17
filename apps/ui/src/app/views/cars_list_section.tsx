@@ -1,4 +1,4 @@
-import { useUiTranslation } from "../ui_i18n";
+import { getUiText as t } from "../ui_i18n";
 import { inlineStateActionClass } from "./dom_helpers";
 import type {
   CarsInlineStateViewModel,
@@ -157,7 +157,6 @@ function CarsTableBody(props: {
   table: SettingsCarListTableRenderModel | null;
 }) {
   const { actions, table } = props;
-  const t = useUiTranslation();
   if (table === null) {
     return (
       <tr>
@@ -190,7 +189,6 @@ export function CarsListSection(props: {
   onOpenWizard(): void;
 }) {
   const { actions, addCarButtonRef, model, onOpenWizard } = props;
-  const t = useUiTranslation();
   return (
     <div class="panel card">
       <div class="car-tab-header">

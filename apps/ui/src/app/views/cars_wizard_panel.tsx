@@ -1,6 +1,6 @@
 import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
 import type { CarsFeatureManualInputState } from "../features/cars_manual_input";
-import { useUiTranslation } from "../ui_i18n";
+import { getUiText as t } from "../ui_i18n";
 import type { CarsWizardRenderModel } from "./car_wizard_view";
 import {
   CarsWizardStepNav,
@@ -35,7 +35,6 @@ export function CarsWizardPanel(props: {
   wizardModel: CarsWizardRenderModel;
 }) {
   const { actions, refs, wizardModel } = props;
-  const t = useUiTranslation();
 
   function closeWizard(): void {
     actions?.onAction({ type: "close" });

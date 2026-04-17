@@ -262,7 +262,7 @@ instead of controller-side variant class interpolation.
   `useComputed(() => model.value.foo)` line per property.
 - Use `effect()` only for narrow imperative integrations such as timers,
   persistence, canvas/uPlot bridges, or other external-library coordination.
-- Preact-rendered copy should come from `useUiTranslation()` or `useUiText()`.
+- Preact-rendered copy should come from `getUiText()` or `useUiText()`.
   Do not leave `data-i18n` attributes in JSX unless a non-Preact consumer still
   reads them.
 - Existing mutable app-state objects and manual bridge rerenders are follow-up

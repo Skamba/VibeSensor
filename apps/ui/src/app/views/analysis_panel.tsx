@@ -1,7 +1,7 @@
 import { render } from "preact";
 import { useRef } from "preact/hooks";
 
-import { useUiTranslation } from "../ui_i18n";
+import { getUiText as t } from "../ui_i18n";
 import {
   effect,
   signal,
@@ -119,7 +119,6 @@ function AnalysisPanel(props: {
   state: ReadonlySignal<AnalysisPanelBridgeState>;
 }) {
   const state = props.state.value;
-  const t = useUiTranslation();
   const guidanceHelpRef = useRef<HTMLDetailsElement | null>(null);
   const inputRefs = useRef<Record<AnalysisPanelFieldKey, HTMLInputElement | null>>({
     wheel_bandwidth_pct: null,
