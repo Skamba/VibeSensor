@@ -1,4 +1,4 @@
-import type { HistoryEntry } from "../../transport/http_models";
+import type { HistoryEntry } from "../../api/types";
 import type { RunDetail } from "../ui_app_state";
 import type { ReadonlySignal } from "../ui_signals";
 

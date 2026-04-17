@@ -9,7 +9,7 @@ import type {
   ObdScanPayload,
   SpeedSourcePayload,
   SpeedSourceRequest,
-} from "../../transport/http_models";
+} from "../../api/types";
 
 export interface SettingsSpeedSourceTransport {
   loadSpeedSource(): Promise<SpeedSourcePayload>;

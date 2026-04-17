@@ -222,10 +222,11 @@ logging/readiness model builders reused by that derived state. `app/views/` now
 owns typed view-model builders, event-target decoding, and signal-backed Preact
 surfaces for reusable multi-action panels.
 
-`src/transport/` owns the UI-local DTO and adapter layer between generated HTTP
-/ WS contracts and `app/**`, so feature, runtime, and view modules no longer
-need to import `api/types.ts` or generated WS contract files directly. Styling
-follows the same ownership split: `styles/app.css` is only the import
+`src/transport/` owns transport-specific helpers such as clone and live-model
+surfaces, while `api/types.ts` owns generated HTTP alias exports used across
+`api/**`, `app/**`, and tests. Generated contract files themselves stay out of
+those consumers. Styling follows same ownership split: `styles/app.css` is only
+the import
 aggregator, `tokens.css`/`theme.css` own global token and color-mode concerns,
 `realtime.css`, `history.css`, and `maintenance.css` are thin manifests over
 their feature partials, and `shell.css`, `components.css`, `maintenance*.css`,
@@ -263,11 +264,11 @@ instead of controller-side variant class interpolation.
   remaining imperative DOM seams. Feature, runtime, and presenter modules
   should receive typed bridges or focused DOM surfaces instead of rebuilding
   page-wide registries or ad hoc `document.getElementById(...)` lookups.
-- Generated HTTP / WS contracts stay behind the transport boundary. The approved
+- Generated HTTP / WS contracts stay behind narrow UI-owned seams. The approved
   generated-contract seams are the `api/*.ts` HTTP wrappers plus `api/types.ts`,
-  `transport/http_models.ts`, `transport/live_models.ts`, `server_payload.ts`,
-  `ws.ts`, and `ws_payload_validator.ts`; `app/**` code imports `transport/**`,
-  not generated contract files or `api/types.ts`.
+  `transport/live_models.ts`, `server_payload.ts`, `ws.ts`, and
+  `ws_payload_validator.ts`; `app/**` code may import `transport/**` and
+  `api/types.ts`, but not generated contract files directly.
 - Normal UI rendering belongs in Preact owner surfaces. If code outside an
   island needs imperative DOM work, keep it narrowly scoped to non-render
   integrations such as download anchors, canvas/uPlot lifecycles, observers, or

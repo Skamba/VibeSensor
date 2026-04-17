@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { cloneTransportValue } from "../src/transport/clone";
-import type { CarUpsertRequest, CarsPayload } from "../src/transport/http_models";
+import type { CarUpsertRequest, CarsPayload } from "../src/api/types";
 
 test("cloneTransportValue clones nested response payloads", () => {
   const transportPayload: CarsPayload = {

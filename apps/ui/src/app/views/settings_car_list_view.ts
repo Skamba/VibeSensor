@@ -1,4 +1,4 @@
-import type { CarRecord } from "../../transport/http_models";
+import type { CarRecord } from "../../api/types";
 import { type CarSelectionState, getCarCompleteness } from "../car_selection_state";
 
 export interface CarsListHighlightedFeedback {

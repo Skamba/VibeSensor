@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import type { HistoryEntry, HistoryInsightsPayload } from "../src/transport/http_models";
+import type { HistoryEntry, HistoryInsightsPayload } from "../src/api/types";
 import type { RunDetail } from "../src/app/ui_app_state";
 import { buildHistoryTableRowsViewModel } from "../src/app/views/history_table_presenters";
 

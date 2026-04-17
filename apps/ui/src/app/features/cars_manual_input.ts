@@ -1,4 +1,4 @@
-import type { CarLibraryTireOption } from "../../transport/http_models";
+import type { CarLibraryTireOption } from "../../api/types";
 import {
   DEFAULT_CARS_WIZARD_MANUAL_INPUTS,
   readWizardManualGearboxValues,

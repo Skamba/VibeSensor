@@ -4,7 +4,7 @@ import {
   createCarSelectionDerivedState,
 } from "../src/app/car_selection_state";
 import { createAppState } from "../src/app/ui_app_state";
-import type { CarRecord } from "../src/transport/http_models";
+import type { CarRecord } from "../src/api/types";
 
 function makeCar(overrides: Partial<CarRecord> = {}): CarRecord {
   return {

@@ -1,7 +1,7 @@
 import { render, type ComponentChildren } from "preact";
 import { useRef } from "preact/hooks";
 
-import type { UpdateStartRequestPayload } from "../../transport/http_models";
+import type { UpdateStartRequestPayload } from "../../api/types";
 import type { ChoiceCardState } from "../view_style_types";
 import { useUiTranslation } from "../ui_i18n";
 import {

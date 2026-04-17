@@ -11,7 +11,7 @@ import type {
   HealthStatusPayload,
   UpdateStatusPayload,
   UsbInternetStatusPayload,
-} from "../src/transport/http_models";
+} from "../src/api/types";
 
 function t(key: string, vars?: Record<string, unknown>): string {
   if (!vars || Object.keys(vars).length === 0) {

@@ -3,7 +3,7 @@ import {
   getCarLibraryModels,
   getCarLibraryTypes,
 } from "../../api";
-import type { CarLibraryModel } from "../../transport/http_models";
+import type { CarLibraryModel } from "../../api/types";
 
 export interface CarsFeatureTransport {
   loadBrands(): Promise<string[]>;
