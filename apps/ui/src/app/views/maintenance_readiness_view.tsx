@@ -1,6 +1,5 @@
-import type { VisualVariant } from "../view_style_types";
-
 export type MaintenanceReadinessItemState = "attention" | "blocked" | "ready";
+type VisualVariant = "bad" | "muted" | "ok" | "warn";
 
 export interface MaintenanceReadinessItem {
   label: string;

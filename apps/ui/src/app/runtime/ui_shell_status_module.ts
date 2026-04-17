@@ -6,9 +6,10 @@ import type {
   ShellState,
   TransportState,
 } from "../ui_app_state";
-import type { VisualVariant } from "../view_style_types";
 import { computed, type ReadonlySignal } from "../ui_signals";
 import type { UiShellBadgeModel } from "./ui_shell_chrome";
+
+type VisualVariant = "bad" | "muted" | "ok" | "warn";
 
 const WS_KEY_BY_STATE: Record<string, string> = {
   connecting: "ws.connecting",

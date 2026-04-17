@@ -2,7 +2,6 @@ import { render, type ComponentChildren } from "preact";
 import { useRef } from "preact/hooks";
 
 import type { UpdateStartRequestPayload } from "../../api/types";
-import type { ChoiceCardState } from "../view_style_types";
 import { getUiText as t } from "../ui_i18n";
 import {
   computed,
@@ -21,6 +20,8 @@ import type {
   UpdateStatusBadgeModel,
   UpdateStatusRowModel,
 } from "./update_status_models";
+
+type ChoiceCardState = "active" | "draft" | "error";
 
 export interface UpdateTransportChoiceCardRenderModel {
   badgeText: string | null;
