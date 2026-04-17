@@ -110,7 +110,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   }
   const panelModel = computed(() => {
     trackAppStateSlice(history);
-    trackAppStateSlice(shell);
     return buildPanelRenderModel();
   });
   panel.bindModel(panelModel);
@@ -191,7 +190,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     let initialized = false;
     let previousLanguage = shell.lang;
     effect(() => {
-      trackAppStateSlice(shell);
       const currentLanguage = shell.lang;
       if (!initialized) {
         initialized = true;

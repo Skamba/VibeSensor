@@ -79,7 +79,6 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
 
   const locationOptions = computed<LocationOption[]>(() => {
     trackAppStateSlice(realtime);
-    trackAppStateSlice(shell);
     return buildLocationOptions(realtime.locationCodes);
   });
 
@@ -147,7 +146,6 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
 
   const strongestSignalText = computed(() => {
     trackAppStateSlice(realtime);
-    trackAppStateSlice(shell);
     const signal = strongestSignal.value;
     if (!signal) {
       return t("dashboard.strongest_signal_none");
@@ -159,7 +157,6 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
   });
 
   const activeCarDisplayState = computed<ActiveCarDisplayState>(() => {
-    trackAppStateSlice(shell);
     const selection = carSelection.selection.value;
     if (selection.kind === "loading") {
       return {
@@ -187,7 +184,6 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
 
   const liveHealth = computed<LiveHealth>(() => {
     trackAppStateSlice(realtime);
-    trackAppStateSlice(shell);
     if (realtime.loggingStatus.write_error) {
       return {
         variant: "bad",

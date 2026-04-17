@@ -65,7 +65,6 @@ export function createUiShellStatusModule(
 
   const wsLinkState = computed<UiShellBadgeModel>(() => {
     trackAppStateSlice(deps.transport);
-    trackAppStateSlice(deps.shell);
     if (deps.transport.payloadError) {
       return {
         text: deps.t("ws.payload_error_pill"),
@@ -81,7 +80,6 @@ export function createUiShellStatusModule(
 
   const speedReadoutText = computed(() => {
     trackAppStateSlice(deps.realtime);
-    trackAppStateSlice(deps.shell);
     const unitLabel = selectedSpeedUnitLabel();
     if (
       typeof deps.realtime.speedMps === "number" &&

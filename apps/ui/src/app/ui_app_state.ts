@@ -21,6 +21,8 @@ const reactiveTargetProxies = new WeakMap<object, WeakMap<Signal<number>, object
 const reactiveProxyTargets = new WeakMap<object, object>();
 const reactiveSliceSignals = new WeakMap<object, Signal<number>>();
 
+type SignalStateScalar = boolean | null | number | string | undefined;
+
 function isProxyableObject(value: unknown): value is object {
   if (value === null || typeof value !== "object") {
     return false;
@@ -90,6 +92,29 @@ function createReactiveProxy<T extends object>(target: T, rootSignal: Signal<num
 
 function createReactiveStateSlice<T extends object>(value: T): T {
   return createReactiveProxy(value, signal(0));
+}
+
+function createSignalStateSlice<T extends Record<string, SignalStateScalar>>(value: T): T {
+  const sliceSignal = signal(0);
+  const slice = {} as T;
+  for (const [key, initialValue] of Object.entries(value) as [keyof T, T[keyof T]][]) {
+    const propertySignal = signal(initialValue);
+    Object.defineProperty(slice, key, {
+      enumerable: true,
+      get() {
+        return propertySignal.value;
+      },
+      set(nextValue: T[keyof T]) {
+        if (Object.is(propertySignal.value, nextValue)) {
+          return;
+        }
+        propertySignal.value = nextValue;
+        sliceSignal.value += 1;
+      },
+    });
+  }
+  reactiveSliceSignals.set(slice as object, sliceSignal);
+  return slice;
 }
 
 function requireReactiveSliceSignal<T extends object>(slice: T): Signal<number> {
@@ -324,7 +349,7 @@ export interface AppState {
 
 export function createAppState(): AppState {
   return {
-    shell: createReactiveStateSlice({
+    shell: createSignalStateSlice({
       lang: "en",
       speedUnit: "kmh",
       activeViewId: "dashboardView",
