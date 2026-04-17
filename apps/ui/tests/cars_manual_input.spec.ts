@@ -23,7 +23,7 @@ test.describe("createCarsManualInputStore", () => {
     const seenSnapshots: string[] = [];
 
     const dispose = effect(() => {
-      seenSnapshots.push(formatManualInputs(store.read()));
+      seenSnapshots.push(formatManualInputs(store.state.value));
     });
 
     expect(seenSnapshots).toEqual(["3.08:18:45:225:0.64"]);

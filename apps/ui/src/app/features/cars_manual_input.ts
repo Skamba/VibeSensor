@@ -25,12 +25,12 @@ export interface CarsFeatureManualInputState {
 export interface CarsFeatureManualInputStore {
   readonly finalDrive: Signal<string>;
   readonly rim: Signal<string>;
+  readonly state: ReadonlySignal<CarsFeatureManualInputState>;
   readonly tireAspect: Signal<string>;
   readonly tireWidth: Signal<string>;
   readonly topGear: Signal<string>;
   readonly manualGearbox: ReadonlySignal<ManualGearboxValues | null>;
   readonly manualTire: ReadonlySignal<ManualTireValues | null>;
-  read(): CarsFeatureManualInputState;
   write(inputs: CarsFeatureManualInputState): void;
 }
 
@@ -80,16 +80,13 @@ export function createCarsManualInputStore(
   const tireAspect = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.tireAspect);
   const tireWidth = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.tireWidth);
   const topGear = signal<string>(DEFAULT_CARS_WIZARD_MANUAL_INPUTS.topGear);
-
-  function read(): CarsFeatureManualInputState {
-    return {
-      finalDrive: finalDrive.value,
-      rim: rim.value,
-      tireAspect: tireAspect.value,
-      tireWidth: tireWidth.value,
-      topGear: topGear.value,
-    };
-  }
+  const state = computed<CarsFeatureManualInputState>(() => ({
+    finalDrive: finalDrive.value,
+    rim: rim.value,
+    tireAspect: tireAspect.value,
+    tireWidth: tireWidth.value,
+    topGear: topGear.value,
+  }));
 
   function write(inputs: CarsFeatureManualInputState): void {
     batch(() => {
@@ -104,6 +101,7 @@ export function createCarsManualInputStore(
   return {
     finalDrive,
     rim,
+    state,
     tireAspect,
     tireWidth,
     topGear,
@@ -120,7 +118,6 @@ export function createCarsManualInputStore(
         width: tireWidth.value,
       })
     ),
-    read,
     write,
   };
 }
