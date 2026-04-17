@@ -11,6 +11,8 @@ import {
   requestPath,
 } from "./smoke.helpers";
 
+test.describe.configure({ timeout: 20_000 });
+
 test("gps status uses selected speed unit in settings panel", async ({ page }) => {
   await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "/api/settings/language": { language: "en" }, "/api/settings/speed-unit": { speed_unit: "mps" }, "/api/settings/speed-source/status": gpsStatus({ last_update_age_s: 0.333, raw_speed_kmh: 36 }) }) });
   await installFakeWebSocket(page);

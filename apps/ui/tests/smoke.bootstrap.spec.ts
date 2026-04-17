@@ -10,6 +10,8 @@ import {
   requestPath,
 } from "./smoke.helpers";
 
+test.describe.configure({ timeout: 15_000 });
+
 const strengthMetrics = {
   vibration_strength_db: 12,
   peak_amp_g: 0.2,

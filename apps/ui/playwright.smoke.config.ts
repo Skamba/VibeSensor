@@ -1,10 +1,19 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const configuredSmokeWorkers = Number.parseInt(
+  process.env.PLAYWRIGHT_SMOKE_WORKERS ?? "1",
+  10,
+);
+
 export default defineConfig({
   testDir: "tests",
   // Smoke selection lives here so package.json and CI stay on one contract.
   testMatch: ["smoke*.spec.ts"],
-  timeout: 45_000,
+  timeout: 15_000,
+  workers:
+    Number.isFinite(configuredSmokeWorkers) && configuredSmokeWorkers > 0
+      ? configuredSmokeWorkers
+      : 1,
   use: {
     baseURL: "http://127.0.0.1:4173",
   },

@@ -7,6 +7,8 @@ import {
   requestPath,
 } from "./smoke.helpers";
 
+test.describe.configure({ timeout: 15_000 });
+
 test("analysis guidance can reopen and refocus after repeated invalid saves", async ({ page }) => {
   let analysisPutCalls = 0;
 

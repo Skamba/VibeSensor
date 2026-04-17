@@ -2,6 +2,8 @@ import { expect, test } from "@playwright/test";
 
 import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
 
+test.describe.configure({ timeout: 12_000 });
+
 const historyListRun = {
   run_id: "run-001",
   status: "complete",

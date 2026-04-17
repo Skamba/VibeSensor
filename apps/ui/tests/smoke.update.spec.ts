@@ -6,6 +6,8 @@ import {
   installFakeWebSocket,
 } from "./smoke.helpers";
 
+test.describe.configure({ timeout: 15_000 });
+
 test("settings update tab renders readiness guidance when idle", async ({
   page,
 }) => {

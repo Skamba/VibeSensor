@@ -2,6 +2,8 @@ import { expect, test } from "@playwright/test";
 
 import { fulfillJson, installCommonRoutes, installFakeWebSocket, normalizePathname, requestPath } from "./smoke.helpers";
 
+test.describe.configure({ timeout: 20_000 });
+
 test("settings esp flash tab renders lifecycle state and live logs", async ({ page }) => {
   let statusState: "idle" | "running" | "success" = "idle";
   let logCursor = 0;
