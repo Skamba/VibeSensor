@@ -1,6 +1,6 @@
 import { EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION } from "../transport/live_models";
-import { batchAppStateUpdates } from "./ui_app_state";
 import type { AppState } from "./ui_app_state";
+import { batch } from "./ui_signals";
 
 type DemoDeps = {
   queueTransportPayload(payload: unknown): void;
@@ -177,7 +177,7 @@ export function runDemoMode(deps: DemoDeps): void {
     spectra: { clients: demoSpectra },
   };
 
-  batchAppStateUpdates(() => {
+  batch(() => {
     state.settings.carsLoaded.value = true;
     state.settings.cars.value = [
       {

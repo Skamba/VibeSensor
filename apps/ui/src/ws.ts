@@ -1,6 +1,5 @@
 import type { LiveWsPayload } from "./contracts/ws_payload_types";
-import { batchAppStateUpdates } from "./app/ui_app_state";
-import { effect, signal, type ReadonlySignal } from "./app/ui_signals";
+import { batch, effect, signal, type ReadonlySignal } from "./app/ui_signals";
 
 export type WsUiState = "connecting" | "connected" | "reconnecting" | "stale" | "no_data";
 
@@ -56,7 +55,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
   };
 
   function connect(): void {
-    batchAppStateUpdates(() => {
+    batch(() => {
       manuallyClosed.value = false;
       reconnectDelayMs.value = null;
     });
@@ -64,7 +63,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
   }
 
   function close(): void {
-    batchAppStateUpdates(() => {
+    batch(() => {
       manuallyClosed.value = true;
       reconnectDelayMs.value = null;
       socketOpen.value = false;
@@ -82,7 +81,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
   }
 
   function open(initialState: WsUiState): void {
-    batchAppStateUpdates(() => {
+    batch(() => {
       commitState(initialState);
       hasReceivedData.value = false;
       lastMessageAtMs.value = 0;
@@ -91,7 +90,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
     ws = new WebSocket(resolvedOptions.url);
 
     ws.onopen = () => {
-      batchAppStateUpdates(() => {
+      batch(() => {
         socketOpen.value = true;
         commitState("no_data");
       });
@@ -105,7 +104,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
         return;
       }
       const receivedAt = Date.now();
-      batchAppStateUpdates(() => {
+      batch(() => {
         reconnectAttempt.value = 0;
         lastMessageAtMs.value = receivedAt;
         hasReceivedData.value = hasReceivedData.value || resolvedOptions.hasData(payload);
@@ -115,7 +114,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
     };
 
     ws.onclose = () => {
-      batchAppStateUpdates(() => {
+      batch(() => {
         ws = null;
         socketOpen.value = false;
         if (manuallyClosed.value) {
@@ -151,7 +150,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
         return;
       }
       const timeoutId = window.setTimeout(() => {
-        batchAppStateUpdates(() => {
+        batch(() => {
           reconnectDelayMs.value = null;
         });
         open("reconnecting");
@@ -185,7 +184,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
   }
 
   function setState(next: WsUiState): void {
-    batchAppStateUpdates(() => {
+    batch(() => {
       commitState(next);
     });
   }

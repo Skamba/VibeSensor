@@ -10,10 +10,7 @@ import {
   type DisplayedSpeedSourceMode,
   type SpeedSourceStateSnapshot,
 } from "../speed_source_state";
-import {
-  batchAppStateUpdates,
-  type SettingsState,
-} from "../ui_app_state";
+import type { SettingsState } from "../ui_app_state";
 import {
   batch,
   computed,
@@ -309,13 +306,11 @@ export function createSettingsSpeedSourceWorkflow(
 
   function applyPayload(payload: SpeedSourcePayload): void {
     batch(() => {
-      batchAppStateUpdates(() => {
-        deps.settings.speedSource.value = payload.speed_source;
-        deps.settings.manualSpeedKph.value = payload.manual_speed_kph;
-        deps.settings.obdDeviceMac.value = payload.obd_device_mac ?? null;
-        deps.settings.obdDeviceName.value = payload.obd_device_name ?? null;
-        deps.settings.resolvedSpeedSource.value = null;
-      });
+      deps.settings.speedSource.value = payload.speed_source;
+      deps.settings.manualSpeedKph.value = payload.manual_speed_kph;
+      deps.settings.obdDeviceMac.value = payload.obd_device_mac ?? null;
+      deps.settings.obdDeviceName.value = payload.obd_device_name ?? null;
+      deps.settings.resolvedSpeedSource.value = null;
       staleTimeoutInputValue.value = String(payload.stale_timeout_s);
       syncInputsFromSettings();
     });
@@ -483,10 +478,8 @@ export function createSettingsSpeedSourceWorkflow(
     try {
       const payload = await transport.pairObdDevice(macAddress);
       batch(() => {
-        batchAppStateUpdates(() => {
-          deps.settings.obdDeviceMac.value = payload.configured_device_mac ?? null;
-          deps.settings.obdDeviceName.value = payload.configured_device_name ?? null;
-        });
+        deps.settings.obdDeviceMac.value = payload.configured_device_mac ?? null;
+        deps.settings.obdDeviceName.value = payload.configured_device_name ?? null;
         mergeScannedDevices([{
           connected: payload.connected,
           mac_address: payload.configured_device_mac ?? macAddress,
