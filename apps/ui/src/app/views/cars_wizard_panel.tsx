@@ -77,7 +77,7 @@ export function CarsWizardPanel(props: {
         data-spec-branch={wizardModel.specBranch ?? undefined}
         tabIndex={-1}
         onKeyDown={handleWizardKeyDown}
-        ref={refs.addCarWizardRef}
+        ref={refs.setElementRef("addCarWizard")}
       >
         <div class="wizard-header">
           <div class="wizard-header__text">
@@ -99,7 +99,7 @@ export function CarsWizardPanel(props: {
             class="btn btn--muted wizard-close"
             aria-label="Close wizard"
             onClick={closeWizard}
-            ref={refs.wizardCloseBtnRef}
+            ref={refs.setElementRef("closeButton")}
           >
             {"\u00d7"}
           </button>
@@ -146,7 +146,7 @@ export function CarsWizardPanel(props: {
                   hidden={!wizardModel.finishVisible}
                   disabled={!wizardModel.finishEnabled}
                   onClick={() => actions?.onAction({ type: "finish" })}
-                  ref={refs.wizardManualAddBtnRef}
+                  ref={refs.setElementRef("manualAddButton")}
                 >
                   {t("settings.car.finish_add", "Add Car")}
                 </button>
