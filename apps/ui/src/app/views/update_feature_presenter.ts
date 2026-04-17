@@ -23,6 +23,7 @@ import {
   getUpdateFailureSummary,
 } from "./update_journey_builder";
 import {
+  batch,
   computed,
   effect,
   signal,
@@ -349,54 +350,83 @@ export function createUpdateFeaturePresenter(
   ctx: UpdateFeaturePresenterDeps,
 ): UpdateFeaturePresenter {
   const { renderState, t } = ctx;
-  const formState = signal<UpdateFeatureFormSnapshot>({
-    passwordInputValue: "",
-    passwordVisible: false,
-    selectedTransport: "wifi",
-    ssidInputValue: "",
-  });
+  const passwordInputValue = signal("");
+  const passwordVisible = signal(false);
+  const selectedTransportInput = signal<UpdateStartRequestPayload["transport"]>("wifi");
+  const ssidInputValue = signal("");
   let hasHydratedPersistedWifiSettings = false;
 
   effect(() => {
     const state = renderState.value;
-    const currentForm = untracked(() => formState.value);
-    let nextForm = currentForm;
+    const currentSelectedTransport = untracked(() => selectedTransportInput.value);
+    const currentSsid = untracked(() => ssidInputValue.value);
+    let nextSelectedTransport: UpdateStartRequestPayload["transport"] | null = null;
+    let nextSsid: string | null = null;
 
     if (!hasHydratedPersistedWifiSettings && state.updateStatus != null) {
       hasHydratedPersistedWifiSettings = true;
       if (
         state.updateStatus.transport === "wifi"
         && state.updateStatus.ssid
-        && currentForm.ssidInputValue.trim().length === 0
+        && currentSsid.trim().length === 0
       ) {
-        nextForm = { ...nextForm, ssidInputValue: state.updateStatus.ssid };
+        nextSsid = state.updateStatus.ssid;
       }
     }
 
-    if (state.updateState === "running" && nextForm.selectedTransport !== state.updateTransport) {
-      nextForm = { ...nextForm, selectedTransport: state.updateTransport };
+    if (state.updateState === "running" && currentSelectedTransport !== state.updateTransport) {
+      nextSelectedTransport = state.updateTransport;
     }
 
-    if (nextForm !== currentForm) {
-      formState.value = nextForm;
+    if (nextSelectedTransport !== null || nextSsid !== null) {
+      batch(() => {
+        if (nextSelectedTransport !== null) {
+          selectedTransportInput.value = nextSelectedTransport;
+        }
+        if (nextSsid !== null) {
+          ssidInputValue.value = nextSsid;
+        }
+      });
     }
   });
 
-  const panelModels = computed(() =>
-    buildUpdateFeaturePanelModels(renderState.value, formState.value, { t })
+  const actionSummaryModel = computed(() =>
+    buildActionSummary(
+      renderState.value,
+      {
+        passwordInputValue: "",
+        passwordVisible: false,
+        selectedTransport: selectedTransportInput.value,
+        ssidInputValue: ssidInputValue.value,
+      },
+      t,
+    )
   );
-  const internetPanelModel = computed(() => panelModels.value.internetPanel);
-  const updatePanelModel = computed(() => panelModels.value.updatePanel);
+  const internetPanelModel = computed(() =>
+    buildInternetPanelRenderModel(
+      renderState.value,
+      {
+        passwordInputValue: passwordInputValue.value,
+        passwordVisible: passwordVisible.value,
+        selectedTransport: selectedTransportInput.value,
+        ssidInputValue: ssidInputValue.value,
+      },
+      actionSummaryModel.value,
+      t,
+    )
+  );
+  const updatePanelModel = computed(() =>
+    buildUpdatePanelRenderModel(renderState.value, actionSummaryModel.value, t)
+  );
 
   function readStartIntent(): UpdateFeatureStartIntent {
-    const form = formState.value;
     const currentRenderState = renderState.value;
-    const currentPanelModels = panelModels.value;
+    const currentActionSummary = actionSummaryModel.value;
     return {
-      canStart: currentPanelModels.canStart,
-      password: form.passwordInputValue,
-      ssid: form.ssidInputValue.trim(),
-      transport: currentPanelModels.transport,
+      canStart: currentActionSummary.canStart,
+      password: passwordInputValue.value,
+      ssid: ssidInputValue.value.trim(),
+      transport: currentActionSummary.transport,
       usbAvailable: currentRenderState.internetStatus.usable,
     };
   }
@@ -405,23 +435,20 @@ export function createUpdateFeaturePresenter(
     internetPanelModel,
     updatePanelModel,
     setPasswordInput(value) {
-      formState.value = { ...formState.value, passwordInputValue: value };
+      passwordInputValue.value = value;
     },
     setSelectedTransport(transport) {
-      formState.value = { ...formState.value, selectedTransport: transport };
+      selectedTransportInput.value = transport;
     },
     setSsidInput(value) {
-      formState.value = { ...formState.value, ssidInputValue: value };
+      ssidInputValue.value = value;
     },
     readStartIntent,
     togglePassword() {
-      formState.value = {
-        ...formState.value,
-        passwordVisible: !formState.value.passwordVisible,
-      };
+      passwordVisible.value = !passwordVisible.value;
     },
     clearPassword() {
-      formState.value = { ...formState.value, passwordInputValue: "" };
+      passwordInputValue.value = "";
     },
   };
 }
