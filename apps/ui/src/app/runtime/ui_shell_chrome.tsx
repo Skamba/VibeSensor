@@ -2,9 +2,7 @@ import { render, type ComponentChildren, type JSX } from "preact";
 import { useRef } from "preact/hooks";
 
 import {
-  createUiPanelHostRefs,
   resolveUiPanelHosts,
-  type UiPanelHostRefs,
   type UiPanelHostRegistry,
 } from "../ui_panel_host_registry";
 import {
@@ -148,7 +146,7 @@ type UiShellChromeProps = {
   bridge: UiShellChromeActionBridge;
   dialogModel: ReadonlySignal<ReadonlySignal<UiShellChromeDialogModel> | null>;
   navigationModel: ReadonlySignal<ReadonlySignal<UiShellChromeNavigationModel> | null>;
-  panelHostRefs: UiPanelHostRefs;
+  panelHosts: PendingUiPanelHosts;
   preferencesModel: ReadonlySignal<ReadonlySignal<UiShellChromePreferencesModel> | null>;
   statusModel: ReadonlySignal<ReadonlySignal<UiShellChromeStatusModel> | null>;
 };
@@ -203,8 +201,22 @@ const DEFAULT_DIALOG_MODEL: UiShellChromeDialogModel = {
   confirmationDialog: null,
 };
 
+type PendingUiPanelHosts = Parameters<typeof resolveUiPanelHosts>[0];
+
 function noop(): void {
   return;
+}
+
+function createPendingUiPanelHosts(): PendingUiPanelHosts {
+  return {
+    dashboard: {
+      spectrum: null,
+      liveOverview: null,
+      logging: null,
+    },
+    history: null,
+    settingsShell: null,
+  };
 }
 
 function SettingsFeedbackSlot(props: {
@@ -303,24 +315,36 @@ function ConfirmationDialog(props: {
 }
 
 function DashboardViewHosts(props: {
-  panelHostRefs: UiPanelHostRefs["dashboard"];
+  panelHosts: PendingUiPanelHosts["dashboard"];
 }) {
-  const { panelHostRefs } = props;
+  const { panelHosts } = props;
+  const liveOverviewHostRef = useRef<HTMLDivElement | null>(null);
+  const spectrumHostRef = useRef<HTMLDivElement | null>(null);
+  const loggingHostRef = useRef<HTMLDivElement | null>(null);
   return (
     <div class="dashboard-grid">
       <div
         id="liveOverviewRoot"
-        ref={panelHostRefs.liveOverview}
+        ref={(element) => {
+          liveOverviewHostRef.current = element;
+          panelHosts.liveOverview = element;
+        }}
         class="panel card dashboard-grid__overview"
       ></div>
       <div
         id="spectrumPanelRoot"
-        ref={panelHostRefs.spectrum}
+        ref={(element) => {
+          spectrumHostRef.current = element;
+          panelHosts.spectrum = element;
+        }}
         class="panel card dashboard-grid__main"
       ></div>
       <div
         id="loggingPanelRoot"
-        ref={panelHostRefs.logging}
+        ref={(element) => {
+          loggingHostRef.current = element;
+          panelHosts.logging = element;
+        }}
         class="panel card dashboard-grid__controls"
       ></div>
     </div>
@@ -328,15 +352,34 @@ function DashboardViewHosts(props: {
 }
 
 function HistoryViewHosts(props: {
-  hostRef: UiPanelHostRefs["history"];
+  panelHosts: PendingUiPanelHosts;
 }) {
-  return <div id="historyPanelRoot" ref={props.hostRef} class="panel card"></div>;
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  return (
+    <div
+      id="historyPanelRoot"
+      ref={(element) => {
+        hostRef.current = element;
+        props.panelHosts.history = element;
+      }}
+      class="panel card"
+    ></div>
+  );
 }
 
 function SettingsViewHosts(props: {
-  hostRef: UiPanelHostRefs["settingsShell"];
+  panelHosts: PendingUiPanelHosts;
 }) {
-  return <div id="settingsShellRoot" ref={props.hostRef}></div>;
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  return (
+    <div
+      id="settingsShellRoot"
+      ref={(element) => {
+        hostRef.current = element;
+        props.panelHosts.settingsShell = element;
+      }}
+    ></div>
+  );
 }
 
 function ShellViewSection(props: ShellViewSectionProps) {
@@ -628,9 +671,9 @@ function AppErrorBanner(props: {
 
 function ShellViewHostsContainer(props: {
   navigationModel: ReadonlySignal<UiShellChromeNavigationModel>;
-  panelHostRefs: UiPanelHostRefs;
+  panelHosts: PendingUiPanelHosts;
 }) {
-  const { navigationModel, panelHostRefs } = props;
+  const { navigationModel, panelHosts } = props;
   const { activeViewId } = useSignalProperties(navigationModel, SHELL_ACTIVE_VIEW_KEY);
 
   return (
@@ -640,7 +683,7 @@ function ShellViewHostsContainer(props: {
         ariaLabelledBy="tab-dashboard"
         viewId="dashboardView"
       >
-        <DashboardViewHosts panelHostRefs={panelHostRefs.dashboard} />
+        <DashboardViewHosts panelHosts={panelHosts.dashboard} />
       </ShellViewSection>
 
       <ShellViewSection
@@ -648,7 +691,7 @@ function ShellViewHostsContainer(props: {
         ariaLabelledBy="tab-history"
         viewId="historyView"
       >
-        <HistoryViewHosts hostRef={panelHostRefs.history} />
+        <HistoryViewHosts panelHosts={panelHosts} />
       </ShellViewSection>
 
       <ShellViewSection
@@ -656,7 +699,7 @@ function ShellViewHostsContainer(props: {
         ariaLabelledBy="tab-settings"
         viewId="settingsView"
       >
-        <SettingsViewHosts hostRef={panelHostRefs.settingsShell} />
+        <SettingsViewHosts panelHosts={panelHosts} />
       </ShellViewSection>
     </>
   );
@@ -676,7 +719,7 @@ function ConfirmationDialogLayer(props: {
 function UiShellChrome(props: UiShellChromeProps) {
   const {
     bridge,
-    panelHostRefs,
+    panelHosts,
   } = props;
   const dialogModel = useDeferredViewModel(props.dialogModel, DEFAULT_DIALOG_MODEL);
   const navigationModel = useDeferredViewModel(props.navigationModel, DEFAULT_NAVIGATION_MODEL);
@@ -695,7 +738,7 @@ function UiShellChrome(props: UiShellChromeProps) {
       </header>
 
       <AppErrorBanner dialogModel={dialogModel} />
-      <ShellViewHostsContainer navigationModel={navigationModel} panelHostRefs={panelHostRefs} />
+      <ShellViewHostsContainer navigationModel={navigationModel} panelHosts={panelHosts} />
       <ConfirmationDialogLayer bridge={bridge} dialogModel={dialogModel} />
     </ShellChromeFrame>
   );
@@ -735,7 +778,7 @@ export function mountUiShellChrome(
 ): UiShellChromeView & { panelHosts: UiPanelHostRegistry } {
   const dialogModel = createDeferredViewModel<UiShellChromeDialogModel>();
   const navigationModel = createDeferredViewModel<UiShellChromeNavigationModel>();
-  const panelHostRefs = createUiPanelHostRefs();
+  const panelHosts = createPendingUiPanelHosts();
   const preferencesModel = createDeferredViewModel<UiShellChromePreferencesModel>();
   const statusModel = createDeferredViewModel<UiShellChromeStatusModel>();
   render(
@@ -743,16 +786,16 @@ export function mountUiShellChrome(
       bridge={bridge}
       dialogModel={dialogModel.model}
       navigationModel={navigationModel.model}
-      panelHostRefs={panelHostRefs}
+      panelHosts={panelHosts}
       preferencesModel={preferencesModel.model}
       statusModel={statusModel.model}
     />,
     host,
   );
-  const panelHosts = resolveUiPanelHosts(panelHostRefs);
+  const resolvedPanelHosts = resolveUiPanelHosts(panelHosts);
 
   return {
-    panelHosts,
+    panelHosts: resolvedPanelHosts,
     bindDialogModel(model) {
       dialogModel.bind(model);
     },

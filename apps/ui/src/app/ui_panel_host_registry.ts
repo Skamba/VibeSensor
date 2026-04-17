@@ -1,64 +1,3 @@
-type PanelHostSpec = {
-  id: string;
-  owner: string;
-};
-
-const PANEL_HOST_SPECS = {
-  dashboard: {
-    spectrum: {
-      id: "spectrumPanelRoot",
-      owner: "Spectrum UI",
-    },
-    liveOverview: {
-      id: "liveOverviewRoot",
-      owner: "Realtime feature",
-    },
-    logging: {
-      id: "loggingPanelRoot",
-      owner: "Realtime feature",
-    },
-  },
-  history: {
-    id: "historyPanelRoot",
-    owner: "History feature",
-  },
-  settingsShell: {
-    id: "settingsShellRoot",
-    owner: "Settings shell",
-  },
-} as const;
-
-const SETTINGS_PANEL_HOST_SPECS = {
-  cars: {
-    id: "carsPanelRoot",
-    owner: "Cars feature",
-  },
-  analysis: {
-    id: "analysisPanelRoot",
-    owner: "Analysis feature",
-  },
-  internet: {
-    id: "internetPanelRoot",
-    owner: "Internet settings",
-  },
-  update: {
-    id: "updatePanelRoot",
-    owner: "Update feature",
-  },
-  sensors: {
-    id: "sensorsPanelRoot",
-    owner: "Sensors feature",
-  },
-  speedSource: {
-    id: "speedSourcePanelRoot",
-    owner: "Speed source feature",
-  },
-  espFlash: {
-    id: "espFlashPanelRoot",
-    owner: "ESP flash feature",
-  },
-} as const;
-
 export interface UiPanelHostRegistry {
   dashboard: {
     spectrum: HTMLElement;
@@ -68,6 +7,16 @@ export interface UiPanelHostRegistry {
   history: HTMLElement;
   settingsShell: HTMLElement;
 }
+
+type UiPendingPanelHostRegistry = {
+  dashboard: {
+    spectrum: HTMLDivElement | null;
+    liveOverview: HTMLDivElement | null;
+    logging: HTMLDivElement | null;
+  };
+  history: HTMLDivElement | null;
+  settingsShell: HTMLDivElement | null;
+};
 
 export interface UiSettingsPanelHostRegistry {
   cars: HTMLElement;
@@ -79,81 +28,57 @@ export interface UiSettingsPanelHostRegistry {
   espFlash: HTMLElement;
 }
 
-type PanelHostRef<T extends HTMLElement = HTMLElement> = {
+type UiSettingsPanelHostRef<T extends HTMLElement = HTMLElement> = {
   current: T | null;
 };
 
-export interface UiPanelHostRefs {
-  dashboard: {
-    spectrum: PanelHostRef<HTMLDivElement>;
-    liveOverview: PanelHostRef<HTMLDivElement>;
-    logging: PanelHostRef<HTMLDivElement>;
-  };
-  history: PanelHostRef<HTMLDivElement>;
-  settingsShell: PanelHostRef<HTMLDivElement>;
-}
-
 export interface UiSettingsPanelHostRefs {
-  cars: PanelHostRef<HTMLDivElement>;
-  analysis: PanelHostRef<HTMLDivElement>;
-  internet: PanelHostRef<HTMLDivElement>;
-  update: PanelHostRef<HTMLDivElement>;
-  sensors: PanelHostRef<HTMLDivElement>;
-  speedSource: PanelHostRef<HTMLDivElement>;
-  espFlash: PanelHostRef<HTMLDivElement>;
+  cars: UiSettingsPanelHostRef<HTMLDivElement>;
+  analysis: UiSettingsPanelHostRef<HTMLDivElement>;
+  internet: UiSettingsPanelHostRef<HTMLDivElement>;
+  update: UiSettingsPanelHostRef<HTMLDivElement>;
+  sensors: UiSettingsPanelHostRef<HTMLDivElement>;
+  speedSource: UiSettingsPanelHostRef<HTMLDivElement>;
+  espFlash: UiSettingsPanelHostRef<HTMLDivElement>;
 }
 
-function createPanelHostRef<T extends HTMLElement = HTMLDivElement>(): PanelHostRef<T> {
-  return { current: null };
+function missingElement(message: string): never {
+  throw new Error(message);
 }
 
-function missingElement(owner: string, target: string): never {
-  throw new Error(`${owner} requires ${target}`);
-}
-
-function resolvePanelHost<T extends HTMLElement>(
-  ref: PanelHostRef<T>,
-  spec: PanelHostSpec,
-): T {
-  return ref.current ?? missingElement(spec.owner, `#${spec.id}`);
-}
-
-export function createUiPanelHostRefs(): UiPanelHostRefs {
+export function resolveUiPanelHosts(
+  panelHosts: UiPendingPanelHostRegistry,
+): UiPanelHostRegistry {
   return {
     dashboard: {
-      spectrum: createPanelHostRef(),
-      liveOverview: createPanelHostRef(),
-      logging: createPanelHostRef(),
+      spectrum:
+        panelHosts.dashboard.spectrum ??
+        missingElement("Spectrum UI requires #spectrumPanelRoot"),
+      liveOverview:
+        panelHosts.dashboard.liveOverview ??
+        missingElement("Realtime feature requires #liveOverviewRoot"),
+      logging:
+        panelHosts.dashboard.logging ??
+        missingElement("Realtime feature requires #loggingPanelRoot"),
     },
-    history: createPanelHostRef(),
-    settingsShell: createPanelHostRef(),
+    history:
+      panelHosts.history ??
+      missingElement("History feature requires #historyPanelRoot"),
+    settingsShell:
+      panelHosts.settingsShell ??
+      missingElement("Settings shell requires #settingsShellRoot"),
   };
 }
 
 export function createUiSettingsPanelHostRefs(): UiSettingsPanelHostRefs {
   return {
-    cars: createPanelHostRef(),
-    analysis: createPanelHostRef(),
-    internet: createPanelHostRef(),
-    update: createPanelHostRef(),
-    sensors: createPanelHostRef(),
-    speedSource: createPanelHostRef(),
-    espFlash: createPanelHostRef(),
-  };
-}
-
-export function resolveUiPanelHosts(panelHostRefs: UiPanelHostRefs): UiPanelHostRegistry {
-  return {
-    dashboard: {
-      spectrum: resolvePanelHost(panelHostRefs.dashboard.spectrum, PANEL_HOST_SPECS.dashboard.spectrum),
-      liveOverview: resolvePanelHost(
-        panelHostRefs.dashboard.liveOverview,
-        PANEL_HOST_SPECS.dashboard.liveOverview,
-      ),
-      logging: resolvePanelHost(panelHostRefs.dashboard.logging, PANEL_HOST_SPECS.dashboard.logging),
-    },
-    history: resolvePanelHost(panelHostRefs.history, PANEL_HOST_SPECS.history),
-    settingsShell: resolvePanelHost(panelHostRefs.settingsShell, PANEL_HOST_SPECS.settingsShell),
+    cars: { current: null },
+    analysis: { current: null },
+    internet: { current: null },
+    update: { current: null },
+    sensors: { current: null },
+    speedSource: { current: null },
+    espFlash: { current: null },
   };
 }
 
@@ -161,12 +86,26 @@ export function resolveUiSettingsPanelHosts(
   panelHostRefs: UiSettingsPanelHostRefs,
 ): UiSettingsPanelHostRegistry {
   return {
-    cars: resolvePanelHost(panelHostRefs.cars, SETTINGS_PANEL_HOST_SPECS.cars),
-    analysis: resolvePanelHost(panelHostRefs.analysis, SETTINGS_PANEL_HOST_SPECS.analysis),
-    internet: resolvePanelHost(panelHostRefs.internet, SETTINGS_PANEL_HOST_SPECS.internet),
-    update: resolvePanelHost(panelHostRefs.update, SETTINGS_PANEL_HOST_SPECS.update),
-    sensors: resolvePanelHost(panelHostRefs.sensors, SETTINGS_PANEL_HOST_SPECS.sensors),
-    speedSource: resolvePanelHost(panelHostRefs.speedSource, SETTINGS_PANEL_HOST_SPECS.speedSource),
-    espFlash: resolvePanelHost(panelHostRefs.espFlash, SETTINGS_PANEL_HOST_SPECS.espFlash),
+    cars:
+      panelHostRefs.cars.current ??
+      missingElement("Cars feature requires #carsPanelRoot"),
+    analysis:
+      panelHostRefs.analysis.current ??
+      missingElement("Analysis feature requires #analysisPanelRoot"),
+    internet:
+      panelHostRefs.internet.current ??
+      missingElement("Internet settings requires #internetPanelRoot"),
+    update:
+      panelHostRefs.update.current ??
+      missingElement("Update feature requires #updatePanelRoot"),
+    sensors:
+      panelHostRefs.sensors.current ??
+      missingElement("Sensors feature requires #sensorsPanelRoot"),
+    speedSource:
+      panelHostRefs.speedSource.current ??
+      missingElement("Speed source feature requires #speedSourcePanelRoot"),
+    espFlash:
+      panelHostRefs.espFlash.current ??
+      missingElement("ESP flash feature requires #espFlashPanelRoot"),
   };
 }
