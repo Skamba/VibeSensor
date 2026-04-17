@@ -2,12 +2,15 @@ import { render, type ComponentChildren } from "preact";
 
 import { useUiText } from "../ui_i18n";
 import {
-  signal,
   useComputed,
   useSignalProperties,
+  type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import { createDeferredViewModel, useDeferredViewModel } from "./view_model_binding";
+import {
+  type DeferredModelSignal,
+  useDeferredViewModel,
+} from "./view_model_binding";
 import type {
   UpdateCurrentStatusSectionModel,
   UpdateHealthSectionModel,
@@ -47,8 +50,8 @@ const UPDATE_PANEL_MODEL_KEYS = [
 ] as const;
 
 export interface UpdatePanelView {
-  bindActions(handlers: UpdatePanelActionHandlers): void;
-  bindModel(model: ReadonlySignal<UpdatePanelRenderModel>): void;
+  actions: Signal<UpdatePanelActionHandlers | null>;
+  model: DeferredModelSignal<UpdatePanelRenderModel>;
 }
 
 const DEFAULT_UPDATE_PANEL_MODEL: UpdatePanelRenderModel = {
@@ -423,17 +426,6 @@ function UpdatePanel(props: {
   );
 }
 
-export function mountUpdatePanel(host: HTMLElement): UpdatePanelView {
-  const actions = signal<UpdatePanelActionHandlers | null>(null);
-  const modelBinding = createDeferredViewModel<UpdatePanelRenderModel>();
-  render(<UpdatePanel actions={actions} model={modelBinding.model} />, host);
-
-  return {
-    bindActions(handlers) {
-      actions.value = handlers;
-    },
-    bindModel(model) {
-      modelBinding.bind(model);
-    },
-  };
+export function mountUpdatePanel(host: HTMLElement, view: UpdatePanelView): void {
+  render(<UpdatePanel actions={view.actions} model={view.model} />, host);
 }

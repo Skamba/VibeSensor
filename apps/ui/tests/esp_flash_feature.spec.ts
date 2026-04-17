@@ -589,28 +589,42 @@ function createDeps() {
     espFlashHistoryPanel,
   } as EspFlashPanelDom;
 
+  const panel = {
+    actions: signal<EspFlashPanelActionHandlers | null>(null),
+    model: signal<ReadonlySignal<EspFlashPanelRenderModel> | null>(null),
+  };
+
+  effect(() => {
+    const handlers = panel.actions.value;
+    if (!handlers) {
+      return;
+    }
+    dom.espFlashStartBtn.addEventListener("click", () => {
+      handlers.onStart();
+    });
+    dom.espFlashCancelBtn?.addEventListener("click", () => {
+      handlers.onCancel();
+    });
+    dom.espFlashRefreshPortsBtn?.addEventListener("click", () => {
+      handlers.onRefreshPorts();
+    });
+    dom.espFlashPortSelect?.addEventListener("change", () => {
+      handlers.onSelectPort(dom.espFlashPortSelect?.value || "__auto__");
+    });
+  });
+
+  effect(() => {
+    const model = panel.model.value;
+    if (!model) {
+      return;
+    }
+    bindReactiveModel(model, (nextModel) => {
+      renderEspFlashPanelDom(dom, nextModel);
+    });
+  });
+
   return {
-    panel: {
-      bindActions(handlers: EspFlashPanelActionHandlers) {
-        dom.espFlashStartBtn.addEventListener("click", () => {
-          handlers.onStart();
-        });
-        dom.espFlashCancelBtn?.addEventListener("click", () => {
-          handlers.onCancel();
-        });
-        dom.espFlashRefreshPortsBtn?.addEventListener("click", () => {
-          handlers.onRefreshPorts();
-        });
-        dom.espFlashPortSelect?.addEventListener("change", () => {
-          handlers.onSelectPort(dom.espFlashPortSelect?.value || "__auto__");
-        });
-      },
-      bindModel(model) {
-        bindReactiveModel(model, (nextModel) => {
-          renderEspFlashPanelDom(dom, nextModel);
-        });
-      },
-    },
+    panel,
     ports: navigation.ports,
     els: dom,
     espFlashPortSelect,
@@ -774,50 +788,77 @@ function createUpdateDeps() {
     updateStatusPanel,
   } satisfies UpdatePanelDomHarness;
 
+  const updatePanel = {
+    actions: signal<UpdatePanelActionHandlers | null>(null),
+    model: signal<ReadonlySignal<UpdatePanelRenderModel> | null>(null),
+  };
+  const internetPanel = {
+    actions: signal<InternetPanelActionHandlers | null>(null),
+    model: signal<ReadonlySignal<InternetPanelRenderModel> | null>(null),
+    focusSsidInput() {
+      internetDom.updateSsidInput?.focus();
+    },
+  };
+
+  effect(() => {
+    const handlers = updatePanel.actions.value;
+    if (!handlers) {
+      return;
+    }
+    dom.updateStartBtn.addEventListener("click", () => {
+      handlers.onStart();
+    });
+    dom.updateCancelBtn.addEventListener("click", () => {
+      handlers.onCancel();
+    });
+  });
+
+  effect(() => {
+    const model = updatePanel.model.value;
+    if (!model) {
+      return;
+    }
+    bindReactiveModel(model, (nextModel) => {
+      renderUpdatePanelDom(dom, nextModel);
+    });
+  });
+
+  effect(() => {
+    const handlers = internetPanel.actions.value;
+    if (!handlers) {
+      return;
+    }
+    internetDom.updatePasswordInput?.addEventListener("input", () => {
+      handlers.onPasswordInput(internetDom.updatePasswordInput?.value ?? "");
+    });
+    internetDom.updateTogglePasswordBtn?.addEventListener("click", () => {
+      handlers.onTogglePassword();
+    });
+    internetDom.updateTransportWifiRadio?.addEventListener("change", () => {
+      handlers.onTransportChange("wifi");
+    });
+    internetDom.updateTransportUsbRadio?.addEventListener("change", () => {
+      handlers.onTransportChange("usb_internet");
+    });
+    internetDom.updateSsidInput?.addEventListener("input", () => {
+      handlers.onSsidInput(internetDom.updateSsidInput?.value ?? "");
+    });
+  });
+
+  effect(() => {
+    const model = internetPanel.model.value;
+    if (!model) {
+      return;
+    }
+    bindReactiveModel(model, (nextModel) => {
+      renderInternetPanelDom(internetDom, nextModel);
+    });
+  });
+
   return {
     panels: {
-      update: {
-        bindActions(handlers: UpdatePanelActionHandlers) {
-          dom.updateStartBtn.addEventListener("click", () => {
-            handlers.onStart();
-          });
-          dom.updateCancelBtn.addEventListener("click", () => {
-            handlers.onCancel();
-          });
-        },
-        bindModel(model) {
-          bindReactiveModel(model, (nextModel) => {
-            renderUpdatePanelDom(dom, nextModel);
-          });
-        },
-      },
-      internet: {
-        bindActions(handlers: InternetPanelActionHandlers) {
-          internetDom.updatePasswordInput?.addEventListener("input", () => {
-            handlers.onPasswordInput(internetDom.updatePasswordInput?.value ?? "");
-          });
-          internetDom.updateTogglePasswordBtn?.addEventListener("click", () => {
-            handlers.onTogglePassword();
-          });
-          internetDom.updateTransportWifiRadio?.addEventListener("change", () => {
-            handlers.onTransportChange("wifi");
-          });
-          internetDom.updateTransportUsbRadio?.addEventListener("change", () => {
-            handlers.onTransportChange("usb_internet");
-          });
-          internetDom.updateSsidInput?.addEventListener("input", () => {
-            handlers.onSsidInput(internetDom.updateSsidInput?.value ?? "");
-          });
-        },
-        focusSsidInput() {
-          internetDom.updateSsidInput?.focus();
-        },
-        bindModel(model) {
-          bindReactiveModel(model, (nextModel) => {
-            renderInternetPanelDom(internetDom, nextModel);
-          });
-        },
-      },
+      update: updatePanel,
+      internet: internetPanel,
     },
     ports: navigation.ports,
     els: dom,

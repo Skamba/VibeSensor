@@ -29,7 +29,7 @@ import {
 } from "./settings_cars_transport";
 
 interface SettingsCarsModulePanels {
-  analysisPanel: Pick<AnalysisPanelView, "bindCarAvailability">;
+  analysisPanel: Pick<AnalysisPanelView, "carAvailability">;
   panel: CarsListPanelView;
 }
 
@@ -127,8 +127,8 @@ export function createSettingsCarsModule(
     };
   });
   const panelModel = computed(() => createPanelModel(getCarSelectionState()));
-  ctx.panels.analysisPanel.bindCarAvailability(analysisAvailability);
-  ctx.panels.panel.bindModel(panelModel);
+  ctx.panels.analysisPanel.carAvailability.value = analysisAvailability;
+  ctx.panels.panel.model.value = panelModel;
 
   function renderCarList(): void {}
 
@@ -246,7 +246,7 @@ export function createSettingsCarsModule(
         untracked(clearHighlightedCarFeedback);
       }
     });
-    ctx.panels.panel.bindActions({
+    ctx.panels.panel.actions.value = {
       onAction: (action) => {
         if (action.type === "add") {
           ctx.ports.openCarWizard();
@@ -268,7 +268,7 @@ export function createSettingsCarsModule(
           void handleDeleteCar(action.carId);
         }
       },
-    });
+    };
   }
 
   return {

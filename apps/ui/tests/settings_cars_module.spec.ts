@@ -21,21 +21,22 @@ test("settings cars module dismisses transient creation feedback through typed t
   const activeSettingsTabId = signal("carTab");
 
   const panel: CarsListPanelView = {
-    bindActions() {},
-    bindModel(model) {
-      effect(() => {
-        renders.push(model.value);
-      });
-    },
+    actions: signal(null),
+    model: signal(null),
   };
+  effect(() => {
+    const model = panel.model.value;
+    if (model === null) {
+      return;
+    }
+    renders.push(model.value);
+  });
 
   const module = createSettingsCarsModule({
     settings: state,
     panels: {
       analysisPanel: {
-        bindCarAvailability() {
-          return;
-        },
+        carAvailability: signal(null),
       },
       panel,
     },

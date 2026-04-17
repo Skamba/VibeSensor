@@ -60,7 +60,7 @@ export function createSettingsSpeedSourceModule(
   const panelModel = computed(() =>
     buildSettingsSpeedSourcePanelModel(workflow.renderState.value, presenterDeps)
   );
-  ctx.panel.bindModel(panelModel);
+  ctx.panel.model.value = panelModel;
   let handlersBound = false;
 
   function bindHandlers(): void {
@@ -80,7 +80,7 @@ export function createSettingsSpeedSourceModule(
         workflow.handleNavigateContext();
       });
     });
-    ctx.panel.bindActions({
+    ctx.panel.actions.value = {
       onManualSpeedInput(value): void {
         workflow.handleManualSpeedInput(value);
       },
@@ -99,7 +99,7 @@ export function createSettingsSpeedSourceModule(
       onStaleTimeoutInput(value): void {
         workflow.handleStaleTimeoutInput(value);
       },
-    });
+    };
     workflow.handleNavigateContext();
   }
 

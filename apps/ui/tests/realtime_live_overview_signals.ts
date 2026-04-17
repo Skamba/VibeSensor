@@ -4,6 +4,7 @@ import { options } from "preact";
 
 import { computed, signal } from "../src/app/ui_signals";
 import type {
+  RealtimeLiveOverviewBridge,
   RealtimeLiveOverviewRenderModel,
   RealtimeLiveOverviewSensorCardModel,
 } from "../src/app/views/realtime_live_overview";
@@ -53,11 +54,14 @@ async function runRealtimeLiveOverviewSignalProjectionTest(): Promise<void> {
   const harness = await mountSignalView(async () => {
     const { mountRealtimeLiveOverview } = await import("../src/app/views/realtime_live_overview");
     return mountRealtimeLiveOverview;
-  });
+  }, (): RealtimeLiveOverviewBridge => ({
+    model: signal(null),
+    speedText: signal("--"),
+  }));
 
   try {
-    harness.view.bindModel(model);
-    harness.view.setSpeedText("43 km/h");
+    harness.view.model.value = model;
+    harness.view.speedText.value = "43 km/h";
     await harness.flush();
 
     assert.equal(overviewRenderCount, 1);

@@ -161,7 +161,7 @@ export class UiShellController {
 
   renderSpeedReadout(): void {
     untracked(() => {
-      this.liveOverview.setSpeedText(this.status.speedReadoutText.value);
+      this.liveOverview.speedText.value = this.status.speedReadoutText.value;
     });
   }
 
@@ -219,7 +219,7 @@ export class UiShellController {
     effect(() => {
       const speedText = this.status.speedReadoutText.value;
       untracked(() => {
-        this.liveOverview.setSpeedText(speedText);
+        this.liveOverview.speedText.value = speedText;
       });
     });
   }

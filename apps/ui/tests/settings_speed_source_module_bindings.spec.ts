@@ -6,25 +6,23 @@ import { signal } from "../src/app/ui_signals";
 import type { SpeedSourcePanelActionHandlers } from "../src/app/views/speed_source_panel";
 
 test("bindHandlers uses typed panel actions and navigation subscriptions", () => {
-  let handlers: SpeedSourcePanelActionHandlers | null = null;
   const activeViewId = signal("settingsView");
   const activeSettingsTabId = signal("speedSourceTab");
+  const panel = {
+    actions: signal<SpeedSourcePanelActionHandlers | null>(null),
+    diagnostics: signal(null),
+    model: signal(null),
+    focusManualSpeedInput() {},
+    focusScanObdDevices() {},
+    focusStaleTimeoutInput() {},
+    isObdConfigVisible() {
+      return false;
+    },
+  };
 
   const module = createSettingsSpeedSourceModule({
     settings: createAppState().settings,
-    panel: {
-      bindActions(nextHandlers) {
-        handlers = nextHandlers;
-      },
-      focusManualSpeedInput() {},
-      focusScanObdDevices() {},
-      focusStaleTimeoutInput() {},
-      isObdConfigVisible() {
-        return false;
-      },
-      bindModel() {},
-      bindDiagnostics() {},
-    },
+    panel,
     services: {
       t: (key) => key,
       requestConfirmation: async () => true,
@@ -42,6 +40,7 @@ test("bindHandlers uses typed panel actions and navigation subscriptions", () =>
   });
 
   expect(() => module.bindHandlers()).not.toThrow();
+  const handlers = panel.actions.value;
   expect(handlers).not.toBeNull();
   expect(typeof handlers?.onSpeedSourceChanged).toBe("function");
   expect(typeof handlers?.onManualSpeedInput).toBe("function");

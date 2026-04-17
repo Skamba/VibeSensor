@@ -3,9 +3,9 @@ import type { JSX } from "preact";
 import { render } from "preact";
 import { useUiText } from "../ui_i18n";
 import {
-  signal,
   useComputed,
   useSignalProperties,
+  type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
 import type {
@@ -14,7 +14,10 @@ import type {
   RealtimeSensorTableRenderModel,
   RealtimeSensorTableRowViewModel,
 } from "./realtime_sensor_table_view";
-import { createDeferredViewModel, useDeferredViewModel } from "./view_model_binding";
+import {
+  type DeferredModelSignal,
+  useDeferredViewModel,
+} from "./view_model_binding";
 
 export interface SensorsPanelRenderModel {
   table: RealtimeSensorTableRenderModel | null;
@@ -26,8 +29,8 @@ export interface SensorsPanelActionHandlers {
 }
 
 export interface SensorsPanelView {
-  bindModel(model: ReadonlySignal<SensorsPanelRenderModel>): void;
-  bindActions(handlers: SensorsPanelActionHandlers): void;
+  actions: Signal<SensorsPanelActionHandlers | null>;
+  model: DeferredModelSignal<SensorsPanelRenderModel>;
 }
 
 const DEFAULT_SENSORS_PANEL_MODEL: SensorsPanelRenderModel = {
@@ -175,16 +178,6 @@ function SensorsPanel(props: {
   );
 }
 
-export function mountSensorsPanel(host: HTMLElement): SensorsPanelView {
-  const actions = signal<SensorsPanelActionHandlers | null>(null);
-  const modelBinding = createDeferredViewModel<SensorsPanelRenderModel>();
-  render(<SensorsPanel actions={actions} model={modelBinding.model} />, host);
-  return {
-    bindModel(model) {
-      modelBinding.bind(model);
-    },
-    bindActions(handlers) {
-      actions.value = handlers;
-    },
-  };
+export function mountSensorsPanel(host: HTMLElement, view: SensorsPanelView): void {
+  render(<SensorsPanel actions={view.actions} model={view.model} />, host);
 }

@@ -5,13 +5,31 @@ import {
   type Signal,
 } from "../ui_signals";
 
+export type DeferredModelSignal<T> = Signal<ReadonlySignal<T> | null>;
+
 export interface DeferredViewModel<T> {
-  readonly model: Signal<ReadonlySignal<T> | null>;
+  readonly model: DeferredModelSignal<T>;
   bind(source: ReadonlySignal<T>): void;
 }
 
+export function createDeferredModelSignal<T>(): DeferredModelSignal<T> {
+  return signal<ReadonlySignal<T> | null>(null);
+}
+
+export interface ModelActionPanelBindings<TModel, TActions> {
+  actions: Signal<TActions | null>;
+  model: DeferredModelSignal<TModel>;
+}
+
+export function createModelActionPanelBindings<TModel, TActions>(): ModelActionPanelBindings<TModel, TActions> {
+  return {
+    actions: signal<TActions | null>(null),
+    model: createDeferredModelSignal<TModel>(),
+  };
+}
+
 export function createDeferredViewModel<T>(): DeferredViewModel<T> {
-  const model = signal<ReadonlySignal<T> | null>(null);
+  const model = createDeferredModelSignal<T>();
   return {
     model,
     bind(source) {

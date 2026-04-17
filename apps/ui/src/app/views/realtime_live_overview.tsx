@@ -2,12 +2,15 @@ import { render } from "preact";
 
 import { useUiText } from "../ui_i18n";
 import {
-  signal,
   useComputed,
   useSignalProperties,
+  type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import { createDeferredViewModel, useDeferredViewModel } from "./view_model_binding";
+import {
+  type DeferredModelSignal,
+  useDeferredViewModel,
+} from "./view_model_binding";
 
 export interface RealtimeLiveOverviewActiveCarModel {
   text: string;
@@ -43,8 +46,8 @@ interface RealtimeLiveOverviewBridgeState {
 }
 
 export interface RealtimeLiveOverviewBridge {
-  bindModel(model: ReadonlySignal<RealtimeLiveOverviewRenderModel>): void;
-  setSpeedText(text: string): void;
+  model: DeferredModelSignal<RealtimeLiveOverviewRenderModel>;
+  speedText: Signal<string>;
 }
 
 const DEFAULT_OVERVIEW_MODEL: RealtimeLiveOverviewRenderModel = {
@@ -268,17 +271,9 @@ function RealtimeLiveOverview(props: {
   );
 }
 
-export function mountRealtimeLiveOverview(host: HTMLElement): RealtimeLiveOverviewBridge {
-  const modelBinding = createDeferredViewModel<RealtimeLiveOverviewRenderModel>();
-  const speedText = signal(DEFAULT_OVERVIEW_STATE.speedText);
-  render(<RealtimeLiveOverview model={modelBinding.model} speedText={speedText} />, host);
-
-  return {
-    bindModel(model: ReadonlySignal<RealtimeLiveOverviewRenderModel>): void {
-      modelBinding.bind(model);
-    },
-    setSpeedText(text: string): void {
-      speedText.value = text;
-    },
-  };
+export function mountRealtimeLiveOverview(
+  host: HTMLElement,
+  view: RealtimeLiveOverviewBridge,
+): void {
+  render(<RealtimeLiveOverview model={view.model} speedText={view.speedText} />, host);
 }

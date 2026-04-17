@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { createSettingsAnalysisModule } from "../src/app/features/settings_analysis_module";
 import { createAppState } from "../src/app/ui_app_state";
-import { effect } from "../src/app/ui_signals";
+import { effect, signal } from "../src/app/ui_signals";
 import type {
   AnalysisPanelActionHandlers,
   AnalysisPanelFieldKey,
@@ -47,24 +47,26 @@ test("settings analysis module renders guidance and surfaces invalid input throu
   let guidanceOpened = false;
 
   const panel: AnalysisPanelView = {
-    bindActions(nextActions) {
-      actions = nextActions;
-    },
+    actions: signal(null),
+    carAvailability: signal(null),
+    model: signal(null),
     focusField(field) {
       focusedField = field;
     },
     openGuidance() {
       guidanceOpened = true;
     },
-    bindCarAvailability() {
-      return;
-    },
-    bindModel(model) {
-      effect(() => {
-        renders.push(model.value);
-      });
-    },
   };
+  effect(() => {
+    actions = panel.actions.value;
+  });
+  effect(() => {
+    const model = panel.model.value;
+    if (model === null) {
+      return;
+    }
+    renders.push(model.value);
+  });
 
   const module = createSettingsAnalysisModule({
     panel,

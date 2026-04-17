@@ -6,6 +6,7 @@ import {
   computed,
   signal,
   useSignalEffect,
+  type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
 import {
@@ -22,6 +23,7 @@ import {
   AnalysisGuidanceDialog,
   AnalysisSaveFeedback,
 } from "./analysis_panel_sections";
+import type { DeferredModelSignal } from "./view_model_binding";
 
 export type {
   AnalysisPanelActionHandlers,
@@ -32,10 +34,13 @@ export type {
   SettingsAnalysisGuidanceRenderModel,
 } from "./analysis_panel_models";
 
-export interface AnalysisPanelView {
-  bindActions(handlers: AnalysisPanelActionHandlers): void;
-  bindCarAvailability(state: ReadonlySignal<AnalysisPanelCarAvailability>): void;
-  bindModel(model: ReadonlySignal<AnalysisPanelRenderModel>): void;
+export interface AnalysisPanelBindings {
+  actions: Signal<AnalysisPanelActionHandlers | null>;
+  carAvailability: DeferredModelSignal<AnalysisPanelCarAvailability>;
+  model: DeferredModelSignal<AnalysisPanelRenderModel>;
+}
+
+export interface AnalysisPanelView extends AnalysisPanelBindings {
   focusField(field: AnalysisPanelFieldKey): void;
   openGuidance(): void;
 }
@@ -231,14 +236,14 @@ function AnalysisPanel(props: {
   );
 }
 
-export function mountAnalysisPanel(host: HTMLElement): AnalysisPanelView {
-  const actions = signal<AnalysisPanelActionHandlers | null>(null);
-  const availabilitySignal = signal<ReadonlySignal<AnalysisPanelCarAvailability> | null>(null);
-  const modelSignal = signal<ReadonlySignal<AnalysisPanelRenderModel> | null>(null);
+export function mountAnalysisPanel(
+  host: HTMLElement,
+  bindings: AnalysisPanelBindings,
+): Pick<AnalysisPanelView, "focusField" | "openGuidance"> {
   const bridgeState = computed<AnalysisPanelBridgeState>(() => ({
-    actions: actions.value,
-    availability: availabilitySignal.value?.value ?? DEFAULT_ANALYSIS_CAR_AVAILABILITY,
-    model: modelSignal.value?.value ?? DEFAULT_ANALYSIS_PANEL_MODEL,
+    actions: bindings.actions.value,
+    availability: bindings.carAvailability.value?.value ?? DEFAULT_ANALYSIS_CAR_AVAILABILITY,
+    model: bindings.model.value?.value ?? DEFAULT_ANALYSIS_PANEL_MODEL,
   }));
   const inputFocusRequest = signal<AnalysisFieldFocusRequest | null>(null);
   const guidanceOpenRequest = signal(0);
@@ -253,15 +258,6 @@ export function mountAnalysisPanel(host: HTMLElement): AnalysisPanelView {
   );
 
   return {
-    bindActions(handlers) {
-      actions.value = handlers;
-    },
-    bindCarAvailability(state) {
-      availabilitySignal.value = state;
-    },
-    bindModel(model) {
-      modelSignal.value = model;
-    },
     focusField(field) {
       focusRequestToken += 1;
       inputFocusRequest.value = { field, token: focusRequestToken };

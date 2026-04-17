@@ -3,9 +3,9 @@ import { useRef } from "preact/hooks";
 
 import { useUiText } from "../ui_i18n";
 import {
-  signal,
   useComputed,
   useSignalEffect,
+  type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
 import type { VisualVariant } from "../view_style_types";
@@ -13,7 +13,10 @@ import {
   MaintenanceReadinessPanel,
   type MaintenanceReadinessPanelModel,
 } from "./maintenance_readiness_view";
-import { createDeferredViewModel, useDeferredViewModel } from "./view_model_binding";
+import {
+  type DeferredModelSignal,
+  useDeferredViewModel,
+} from "./view_model_binding";
 
 export interface EspFlashStatusBadgeModel {
   text: string;
@@ -118,8 +121,8 @@ export interface EspFlashPanelActionHandlers {
 }
 
 export interface EspFlashPanelView {
-  bindActions(handlers: EspFlashPanelActionHandlers): void;
-  bindModel(model: ReadonlySignal<EspFlashPanelRenderModel>): void;
+  actions: Signal<EspFlashPanelActionHandlers | null>;
+  model: DeferredModelSignal<EspFlashPanelRenderModel>;
 }
 
 const DEFAULT_ESP_FLASH_PANEL_MODEL: EspFlashPanelRenderModel = {
@@ -562,17 +565,6 @@ function EspFlashPanel(props: {
   );
 }
 
-export function mountEspFlashPanel(host: HTMLElement): EspFlashPanelView {
-  const actions = signal<EspFlashPanelActionHandlers | null>(null);
-  const modelBinding = createDeferredViewModel<EspFlashPanelRenderModel>();
-  render(<EspFlashPanel actions={actions} model={modelBinding.model} />, host);
-
-  return {
-    bindActions(handlers) {
-      actions.value = handlers;
-    },
-    bindModel(model) {
-      modelBinding.bind(model);
-    },
-  };
+export function mountEspFlashPanel(host: HTMLElement, view: EspFlashPanelView): void {
+  render(<EspFlashPanel actions={view.actions} model={view.model} />, host);
 }

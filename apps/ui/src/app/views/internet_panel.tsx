@@ -5,10 +5,13 @@ import type { UpdateStartRequestPayload } from "../../api/types";
 import type { ChoiceCardState } from "../view_style_types";
 import { getUiText as t } from "../ui_i18n";
 import {
+  computed,
   signal,
+  type Signal,
   useSignalEffect,
   type ReadonlySignal,
 } from "../ui_signals";
+import type { DeferredModelSignal } from "./view_model_binding";
 import type {
   MaintenanceReadinessItem,
   MaintenanceReadinessPanelModel,
@@ -54,9 +57,12 @@ export interface InternetPanelActionHandlers {
   onTransportChange(transport: UpdateStartRequestPayload["transport"]): void;
 }
 
-export interface InternetPanelView {
-  bindActions(handlers: InternetPanelActionHandlers): void;
-  bindModel(model: ReadonlySignal<InternetPanelRenderModel>): void;
+export interface InternetPanelBindings {
+  actions: Signal<InternetPanelActionHandlers | null>;
+  model: DeferredModelSignal<InternetPanelRenderModel>;
+}
+
+export interface InternetPanelView extends InternetPanelBindings {
   focusSsidInput(): void;
 }
 
@@ -440,22 +446,19 @@ function InternetPanel(props: {
   );
 }
 
-export function mountInternetPanel(host: HTMLElement): InternetPanelView {
+export function mountInternetPanel(
+  host: HTMLElement,
+  bindings: InternetPanelBindings,
+): Pick<InternetPanelView, "focusSsidInput"> {
   const focusRequest = signal<InternetPanelFocusRequest | null>(null);
   let focusRequestToken = 0;
-  const state = signal<InternetPanelBridgeState>({
-    actions: null,
-    model: null,
-  });
+  const state = computed<InternetPanelBridgeState>(() => ({
+    actions: bindings.actions.value,
+    model: bindings.model.value,
+  }));
   render(<InternetPanel focusRequest={focusRequest} state={state} />, host);
 
   return {
-    bindActions(handlers) {
-      state.value = { ...state.value, actions: handlers };
-    },
-    bindModel(model) {
-      state.value = { ...state.value, model };
-    },
     focusSsidInput() {
       focusRequestToken += 1;
       focusRequest.value = { field: "ssid", token: focusRequestToken };

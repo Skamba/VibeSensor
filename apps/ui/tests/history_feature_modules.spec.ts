@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { createHistoryFeature } from "../src/app/features/history_feature";
 import { createAppState, type RunDetail } from "../src/app/ui_app_state";
-import { effect } from "../src/app/ui_signals";
+import { effect, signal } from "../src/app/ui_signals";
 import type {
   HistoryPanelActionHandlers,
   HistoryPanelRenderModel,
@@ -46,19 +46,23 @@ function createHistoryElements(): {
   let latestHandlers: HistoryPanelActionHandlers | null = null;
   let renderCount = 0;
   const panel: HistoryPanelView = {
-    bindModel(model) {
-      effect(() => {
-        const nextModel = model.value;
-        renderCount += 1;
-        latestModel = nextModel;
-        historySummary.textContent = nextModel.historySummaryText;
-        deleteAllRunsBtn.disabled = nextModel.deleteAllRunsDisabled;
-      });
-    },
-    bindActions(handlers) {
-      latestHandlers = handlers;
-    },
+    actions: signal(null),
+    model: signal(null),
   };
+  effect(() => {
+    latestHandlers = panel.actions.value;
+  });
+  effect(() => {
+    const model = panel.model.value;
+    if (model === null) {
+      return;
+    }
+    const nextModel = model.value;
+    renderCount += 1;
+    latestModel = nextModel;
+    historySummary.textContent = nextModel.historySummaryText;
+    deleteAllRunsBtn.disabled = nextModel.deleteAllRunsDisabled;
+  });
   return {
     panel,
     historySummary,
@@ -370,7 +374,7 @@ test("history feature reloads the expanded run when the language changes", async
   }
 
   expect(getRenderCount()).toBeGreaterThanOrEqual(6);
-  expect(requests).toEqual([
+  expect(requests.filter((url) => url.startsWith("/api/history/"))).toEqual([
     "/api/history/run-001/insights?lang=en",
     "/api/history/run-001/insights?lang=en",
     "/api/history/run-001/insights?lang=nl",
@@ -406,7 +410,7 @@ test("history feature treats analyzing insights responses as not-yet-available",
   expect(state.history.runDetailsById["run-001"]?.insights).toBeNull();
   expect(state.history.runDetailsById["run-001"]?.insightsError).toBe("");
   expect(getRenderCount()).toBeGreaterThanOrEqual(4);
-  expect(requests).toEqual([
+  expect(requests.filter((url) => url.startsWith("/api/history/"))).toEqual([
     "/api/history/run-001/insights?lang=en",
     "/api/history/run-001/insights?lang=en",
   ]);

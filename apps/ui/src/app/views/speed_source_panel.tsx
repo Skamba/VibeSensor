@@ -6,6 +6,7 @@ import {
   computed,
   effect,
   signal,
+  type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
 import { SpeedSourceConfigPanel } from "./speed_source_config_panel";
@@ -14,6 +15,7 @@ import { DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL } from "./speed_source_panel_def
 import type {
   SettingsFeedbackMessage,
 } from "./settings_feedback";
+import type { DeferredModelSignal } from "./view_model_binding";
 
 export interface SpeedSourceChoiceCardRenderModel {
   badgeText: string | null;
@@ -106,10 +108,13 @@ export interface SpeedSourcePanelActionHandlers {
   onStaleTimeoutInput(value: string): void;
 }
 
-export interface SpeedSourcePanelView {
-  bindActions(handlers: SpeedSourcePanelActionHandlers): void;
-  bindDiagnostics(model: ReadonlySignal<SpeedSourceDiagnosticsRenderModel>): void;
-  bindModel(model: ReadonlySignal<SpeedSourcePanelRenderModel>): void;
+export interface SpeedSourcePanelBindings {
+  actions: Signal<SpeedSourcePanelActionHandlers | null>;
+  diagnostics: DeferredModelSignal<SpeedSourceDiagnosticsRenderModel>;
+  model: DeferredModelSignal<SpeedSourcePanelRenderModel>;
+}
+
+export interface SpeedSourcePanelView extends SpeedSourcePanelBindings {
   focusManualSpeedInput(): void;
   focusScanObdDevices(): void;
   focusStaleTimeoutInput(): void;
@@ -187,21 +192,24 @@ function SpeedSourcePanel(props: {
   );
 }
 
-export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
-  const actions = signal<SpeedSourcePanelActionHandlers | null>(null);
-  const diagnosticsSignal = signal<ReadonlySignal<SpeedSourceDiagnosticsRenderModel> | null>(null);
+export function mountSpeedSourcePanel(
+  host: HTMLElement,
+  bindings: SpeedSourcePanelBindings,
+): Pick<
+  SpeedSourcePanelView,
+  "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput" | "isObdConfigVisible"
+> {
   const diagnosticsDisclosureOpen = signal(false);
-  const modelSignal = signal<ReadonlySignal<SpeedSourcePanelRenderModel> | null>(null);
   effect(() => {
-    if (modelSignal.value?.value.diagnosticsShouldOpen) {
+    if (bindings.model.value?.value.diagnosticsShouldOpen) {
       diagnosticsDisclosureOpen.value = true;
     }
   });
   const bridgeState = computed<SpeedSourcePanelBridgeState>(() => ({
-    actions: actions.value,
-    diagnostics: diagnosticsSignal.value?.value ?? DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL,
+    actions: bindings.actions.value,
+    diagnostics: bindings.diagnostics.value?.value ?? DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL,
     diagnosticsDisclosureOpen: diagnosticsDisclosureOpen.value,
-    model: modelSignal.value?.value ?? DEFAULT_SPEED_SOURCE_PANEL_MODEL,
+    model: bindings.model.value?.value ?? DEFAULT_SPEED_SOURCE_PANEL_MODEL,
   }));
   let manualSpeedInput: HTMLInputElement | null = null;
   let obdConfig: HTMLElement | null = null;
@@ -231,15 +239,6 @@ export function mountSpeedSourcePanel(host: HTMLElement): SpeedSourcePanelView {
   );
 
   return {
-    bindActions(handlers): void {
-      actions.value = handlers;
-    },
-    bindDiagnostics(model): void {
-      diagnosticsSignal.value = model;
-    },
-    bindModel(model): void {
-      modelSignal.value = model;
-    },
     focusManualSpeedInput(): void {
       manualSpeedInput?.focus();
     },
