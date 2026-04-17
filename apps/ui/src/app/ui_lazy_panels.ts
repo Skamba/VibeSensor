@@ -138,38 +138,25 @@ function createDeferredSettingsShellView(): {
   attach(realView: SettingsShellView): void;
   view: SettingsShellView;
 } {
-  let disposeRealViewSubscription: (() => void) | null = null;
+  let disposeRealViewSync: (() => void) | null = null;
   let realView: SettingsShellView | null = null;
   const activeTabId = signal(DEFAULT_SETTINGS_TAB_ID);
 
   return {
     view: {
+      activeTabId,
       activateTab(tabId) {
         activeTabId.value = tabId;
         realView?.activateTab(tabId);
       },
-      getActiveTabId() {
-        return activeTabId.value;
-      },
-      subscribeActiveTabChanges(listener) {
-        let initialized = false;
-        return effect(() => {
-          const nextTabId = activeTabId.value;
-          if (!initialized) {
-            initialized = true;
-            return;
-          }
-          listener(nextTabId);
-        });
-      },
     },
     attach(nextRealView) {
-      disposeRealViewSubscription?.();
+      disposeRealViewSync?.();
       realView = nextRealView;
       realView.activateTab(activeTabId.value);
-      activeTabId.value = realView.getActiveTabId();
-      disposeRealViewSubscription = realView.subscribeActiveTabChanges((nextTabId) => {
-        activeTabId.value = nextTabId;
+      activeTabId.value = realView.activeTabId.value;
+      disposeRealViewSync = effect(() => {
+        activeTabId.value = nextRealView.activeTabId.value;
       });
     },
   };

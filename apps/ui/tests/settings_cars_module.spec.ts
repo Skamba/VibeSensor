@@ -18,7 +18,7 @@ test("settings cars module dismisses transient creation feedback through typed t
   const state = createAppState().settings;
   const renders: CarsListRenderModel[] = [];
   const activeViewId = signal("settingsView");
-  let settingsTabListener: ((tabId: string) => void) | null = null;
+  const activeSettingsTabId = signal("carTab");
 
   const panel: CarsListPanelView = {
     bindActions() {},
@@ -41,17 +41,10 @@ test("settings cars module dismisses transient creation feedback through typed t
     },
     ports: {
       activeViewId,
+      activeSettingsTabId,
       openAnalysisTab: () => undefined,
       openCarWizard: () => undefined,
       renderSpectrum: () => undefined,
-      subscribeSettingsTabChanges(listener) {
-        settingsTabListener = listener;
-        return () => {
-          if (settingsTabListener === listener) {
-            settingsTabListener = null;
-          }
-        };
-      },
       syncAnalysisInputs: () => undefined,
     },
     services: {
@@ -102,7 +95,7 @@ test("settings cars module dismisses transient creation feedback through typed t
   expect(highlighted.table.rows[0].isHighlighted).toBe(true);
   expect(highlighted.table.rows[0].highlightedStatusText).toBe("settings.car.just_added");
 
-  settingsTabListener?.("analysisTab");
+  activeSettingsTabId.value = "analysisTab";
 
   const dismissedByTab = lastRender(renders);
   expect(dismissedByTab.guidance).toBeNull();

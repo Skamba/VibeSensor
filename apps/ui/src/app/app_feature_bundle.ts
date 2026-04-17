@@ -151,18 +151,16 @@ export function createAppFeatureBundle(
       internet: panels.settings.internet,
     },
     ports: {
-      getActiveSettingsTabId: () => panels.settingsShell.getActiveTabId(),
       activeViewId: runtime.navigation.activeViewId,
-      subscribeSettingsTabChanges: panels.settingsShell.subscribeActiveTabChanges,
+      activeSettingsTabId: panels.settingsShell.activeTabId,
     },
     services,
   });
   const espFlash = createEspFlashFeature({
     panel: panels.settings.espFlash,
     ports: {
-      getActiveSettingsTabId: () => panels.settingsShell.getActiveTabId(),
       activeViewId: runtime.navigation.activeViewId,
-      subscribeSettingsTabChanges: panels.settingsShell.subscribeActiveTabChanges,
+      activeSettingsTabId: panels.settingsShell.activeTabId,
     },
     services,
   });
