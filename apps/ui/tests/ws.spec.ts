@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import { createAppState, unwrapAppStateValue } from "../src/app/ui_app_state";
-import { WsClient } from "../src/ws";
+import { batchAppStateUpdates, createAppState, unwrapAppStateValue } from "../src/app/ui_app_state";
+import { createWsClient } from "../src/ws";
 import { installWindowGlobal } from "./async_test_helpers";
 
 class FakeWebSocket {
@@ -120,20 +120,25 @@ function installTimeoutHarness() {
   };
 }
 
-test.describe("WsClient", () => {
+test.describe("createWsClient", () => {
   test.beforeEach(() => {
     installWindowGlobal();
     FakeWebSocket.reset();
   });
 
-  test("writes websocket state and queued payloads into the transport slice", () => {
+  test("exposes signal state and forwards queued payloads through onMessage", () => {
     const originalWebSocket = globalThis.WebSocket;
     globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
     try {
       const state = createAppState();
-      const client = new WsClient({
+      const client = createWsClient({
         url: "ws://example.test/ws",
-        transport: state.transport,
+        onMessage: (payload) => {
+          batchAppStateUpdates(() => {
+            state.transport.hasReceivedPayload = true;
+            state.transport.pendingPayload = payload;
+          });
+        },
       });
 
       client.connect();
@@ -142,7 +147,7 @@ test.describe("WsClient", () => {
       expect(socket?.url).toBe("ws://example.test/ws");
 
       socket?.emitOpen();
-      expect(state.transport.wsState).toBe("no_data");
+      expect(client.uiState.value).toBe("no_data");
 
       const payload = {
         spectra: {
@@ -153,7 +158,7 @@ test.describe("WsClient", () => {
       };
       socket?.emitMessage(payload);
 
-      expect(state.transport.wsState).toBe("connected");
+      expect(client.uiState.value).toBe("connected");
       expect(state.transport.hasReceivedPayload).toBe(true);
       expect(unwrapAppStateValue(state.transport.pendingPayload)).toEqual(payload);
 
@@ -171,11 +176,10 @@ test.describe("WsClient", () => {
     let now = 1_000;
     Date.now = () => now;
     try {
-      const state = createAppState();
-      const client = new WsClient({
+      const client = createWsClient({
         url: "ws://example.test/ws",
-        transport: state.transport,
         staleAfterMs: 10,
+        onMessage: () => undefined,
       });
 
       client.connect();
@@ -190,12 +194,12 @@ test.describe("WsClient", () => {
         },
       });
 
-      expect(state.transport.wsState).toBe("connected");
+      expect(client.uiState.value).toBe("connected");
 
       now += 25;
       interval.tick();
 
-      expect(state.transport.wsState).toBe("stale");
+      expect(client.uiState.value).toBe("stale");
       client.close();
     } finally {
       Date.now = originalDateNow;
@@ -209,10 +213,9 @@ test.describe("WsClient", () => {
     globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
     const timeouts = installTimeoutHarness();
     try {
-      const state = createAppState();
-      const client = new WsClient({
+      const client = createWsClient({
         url: "ws://example.test/ws",
-        transport: state.transport,
+        onMessage: () => undefined,
       });
 
       client.connect();
@@ -220,7 +223,7 @@ test.describe("WsClient", () => {
       socket?.emitOpen();
       socket?.close();
 
-      expect(state.transport.wsState).toBe("reconnecting");
+      expect(client.uiState.value).toBe("reconnecting");
       expect(timeouts.pendingTimeoutCount()).toBe(1);
 
       timeouts.fireNext();
