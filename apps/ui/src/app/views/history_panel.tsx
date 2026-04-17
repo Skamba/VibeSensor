@@ -87,7 +87,7 @@ function HistoryPanel(props: {
           </tr>
         </thead>
         <tbody id="historyTableBody">
-          <HistoryTableBody handlers={actions.value} table={table.value} />
+          <HistoryTableBody handlers={actions.value} table={table} />
         </tbody>
       </table>
     </>

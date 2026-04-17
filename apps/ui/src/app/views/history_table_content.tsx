@@ -1,5 +1,6 @@
 import type { JSX } from "preact";
 
+import { useComputed, useSignal, type ReadonlySignal } from "../ui_signals";
 import { inlineStateActionClass } from "./dom_helpers";
 import type {
   HistoryPanelActionHandlers,
@@ -15,7 +16,7 @@ import type {
   HistorySecondaryFindingViewModel,
   HistorySummaryChipTone,
 } from "./history_table_models";
-import { buildHistoryTableRowsViewModel } from "./history_table_presenters";
+import { createHistoryTableRowsMemo } from "./history_table_presenters";
 
 type HistoryHeatmapZoneStyle = JSX.CSSProperties & {
   "--history-heatmap-accent"?: string;
@@ -60,6 +61,20 @@ function handleRunAction(
     type: "run-action",
     action,
     runId,
+  });
+}
+
+function useHistoryTableRows(
+  table: ReadonlySignal<HistoryPanelTableRenderModel | null>,
+): ReadonlySignal<HistoryRowViewModel[] | null> {
+  const rowsMemo = useSignal(createHistoryTableRowsMemo());
+
+  return useComputed(() => {
+    const nextTable = table.value;
+    if (nextTable === null || nextTable.kind !== "rows") {
+      return null;
+    }
+    return rowsMemo.value(nextTable.params);
   });
 }
 
@@ -518,31 +533,48 @@ function HistoryRow(props: {
 
 export function HistoryTableBody(props: {
   handlers: HistoryPanelActionHandlers | null;
-  table: HistoryPanelTableRenderModel | null;
+  table: ReadonlySignal<HistoryPanelTableRenderModel | null>;
 }) {
-  const { handlers, table } = props;
-  if (table === null) {
+  const { handlers } = props;
+  const tableKind = useComputed(() => props.table.value?.kind ?? null);
+  const emptyStateTranslate = useComputed(() =>
+    props.table.value?.kind === "empty" ? props.table.value.t : null
+  );
+  const historyExportUrl = useComputed(() =>
+    props.table.value?.kind === "rows" ? props.table.value.params.historyExportUrl : null
+  );
+  const rows = useHistoryTableRows(props.table);
+
+  if (tableKind.value === null) {
     return (
       <tr>
         <td colSpan={4}>No runs found.</td>
       </tr>
     );
   }
-  if (table.kind === "empty") {
-    return <HistoryEmptyStateRow handlers={handlers} t={table.t} />;
+  if (tableKind.value === "empty") {
+    const translate = emptyStateTranslate.value;
+    if (translate === null) {
+      throw new Error("History empty-state translation missing");
+    }
+    return <HistoryEmptyStateRow handlers={handlers} t={translate} />;
   }
 
-  const rows = buildHistoryTableRowsViewModel(table.params);
+  const currentRows = rows.value;
+  const currentHistoryExportUrl = historyExportUrl.value;
+  if (currentRows === null || currentHistoryExportUrl === null) {
+    throw new Error("History row params missing");
+  }
   return (
     <>
-      {rows.flatMap((row) => [
+      {currentRows.flatMap((row) => [
         <HistoryRow key={`row:${row.runId}`} handlers={handlers} row={row} />,
         row.details ? (
           <HistoryDetailsRow
             key={`details:${row.runId}`}
             details={row.details}
             handlers={handlers}
-            historyExportUrl={table.params.historyExportUrl}
+            historyExportUrl={currentHistoryExportUrl}
             row={row}
           />
         ) : null,
