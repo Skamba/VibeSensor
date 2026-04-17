@@ -6,11 +6,10 @@ import {
   historyReportPdfUrl,
 } from "../../api";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
-import {
-  trackAppStateSlice,
-  type HistoryState,
-  type RunDetail,
-  type ShellState,
+import type {
+  HistoryState,
+  RunDetail,
+  ShellState,
 } from "../ui_app_state";
 import { computed, effect, untracked } from "../ui_signals";
 import type {
@@ -49,36 +48,61 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   }
 
   function ensureRunDetail(runId: string): RunDetail {
-    if (!history.runDetailsById[runId]) {
-      history.runDetailsById[runId] = {
-        preview: null,
-        previewLoading: false,
-        previewError: "",
-        insights: null,
-        insightsLoading: false,
-        insightsError: "",
-        pdfLoading: false,
-        pdfError: "",
-      };
+    const existing = history.runDetailsById.value[runId];
+    if (existing) {
+      return existing;
     }
-    return history.runDetailsById[runId];
+    const nextDetail: RunDetail = {
+      preview: null,
+      previewLoading: false,
+      previewError: "",
+      insights: null,
+      insightsLoading: false,
+      insightsError: "",
+      pdfLoading: false,
+      pdfError: "",
+    };
+    history.runDetailsById.value = {
+      ...history.runDetailsById.value,
+      [runId]: nextDetail,
+    };
+    return nextDetail;
+  }
+
+  function updateRunDetail(
+    runId: string,
+    updater: (detail: RunDetail) => RunDetail,
+  ): RunDetail {
+    const nextDetail = updater(ensureRunDetail(runId));
+    history.runDetailsById.value = {
+      ...history.runDetailsById.value,
+      [runId]: nextDetail,
+    };
+    return nextDetail;
+  }
+
+  function removeRunDetail(runId: string): void {
+    const { [runId]: _removed, ...rest } = history.runDetailsById.value;
+    history.runDetailsById.value = rest;
   }
 
   function collapseExpandedRun(): void {
-    const previous = history.expandedRunId;
-    history.expandedRunId = null;
+    const previous = history.expandedRunId.value;
+    history.expandedRunId.value = null;
     if (previous) {
-      delete history.runDetailsById[previous];
+      removeRunDetail(previous);
     }
   }
 
   function buildPanelRenderModel(): HistoryPanelRenderModel {
-    const deleteAllRunsDisabled = history.deleteAllRunsInFlight || history.runs.length === 0;
-    const expandedRunId = history.expandedRunId
-      && history.runs.some((row) => row.run_id === history.expandedRunId)
-      ? history.expandedRunId
+    const runs = history.runs.value;
+    const deleteAllRunsDisabled =
+      history.deleteAllRunsInFlight.value || runs.length === 0;
+    const expandedRunId = history.expandedRunId.value
+      && runs.some((row) => row.run_id === history.expandedRunId.value)
+      ? history.expandedRunId.value
       : null;
-    if (!history.runs.length) {
+    if (!runs.length) {
       return {
         historySummaryText: services.t("history.none"),
         deleteAllRunsDisabled,
@@ -90,28 +114,26 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     }
     return {
       historySummaryText: services.t("history.available_count", {
-        count: history.runs.length,
+        count: runs.length,
       }),
       deleteAllRunsDisabled,
-        table: {
-          kind: "rows",
-          params: {
-            runs: history.runs,
-            expandedRunId,
-            runDetailsById: history.runDetailsById,
-            t: services.t,
-            fmt: formatting.fmt,
+      table: {
+        kind: "rows",
+        params: {
+          runs,
+          expandedRunId,
+          runDetailsById: history.runDetailsById.value,
+          t: services.t,
+          fmt: formatting.fmt,
           fmtTs: formatting.fmtTs,
           formatInt: formatting.formatInt,
           historyExportUrl,
         },
       },
-      };
+    };
   }
-  const panelModel = computed(() => {
-    trackAppStateSlice(history);
-    return buildPanelRenderModel();
-  });
+
+  const panelModel = computed(buildPanelRenderModel);
   panel.model.value = panelModel;
 
   async function loadRunPreview(runId: string, force = false): Promise<void> {
@@ -122,17 +144,29 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (!force && (detail.previewLoading || detail.preview)) {
       return;
     }
-    detail.previewLoading = true;
-    detail.previewError = "";
+    updateRunDetail(runId, (current) => ({
+      ...current,
+      previewLoading: true,
+      previewError: "",
+    }));
     try {
-      const response = await getHistoryInsights(runId, shell.lang);
-      detail.preview = response.status === "complete" ? response : null;
+      const response = await getHistoryInsights(runId, shell.lang.value);
+      updateRunDetail(runId, (current) => ({
+        ...current,
+        preview: response.status === "complete" ? response : null,
+      }));
     } catch (err) {
-      detail.previewError = err instanceof Error
-        ? err.message
-        : services.t("report.unable_load_insights");
+      updateRunDetail(runId, (current) => ({
+        ...current,
+        previewError: err instanceof Error
+          ? err.message
+          : services.t("report.unable_load_insights"),
+      }));
     } finally {
-      detail.previewLoading = false;
+      updateRunDetail(runId, (current) => ({
+        ...current,
+        previewLoading: false,
+      }));
     }
   }
 
@@ -144,17 +178,29 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (!force && detail.insightsLoading) {
       return;
     }
-    detail.insightsLoading = true;
-    detail.insightsError = "";
+    updateRunDetail(runId, (current) => ({
+      ...current,
+      insightsLoading: true,
+      insightsError: "",
+    }));
     try {
-      const response = await getHistoryInsights(runId, shell.lang);
-      detail.insights = response.status === "complete" ? response : null;
+      const response = await getHistoryInsights(runId, shell.lang.value);
+      updateRunDetail(runId, (current) => ({
+        ...current,
+        insights: response.status === "complete" ? response : null,
+      }));
     } catch (err) {
-      detail.insightsError = err instanceof Error
-        ? err.message
-        : services.t("report.unable_load_insights");
+      updateRunDetail(runId, (current) => ({
+        ...current,
+        insightsError: err instanceof Error
+          ? err.message
+          : services.t("report.unable_load_insights"),
+      }));
     } finally {
-      detail.insightsLoading = false;
+      updateRunDetail(runId, (current) => ({
+        ...current,
+        insightsLoading: false,
+      }));
     }
   }
 
@@ -162,23 +208,23 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (!runId) {
       return;
     }
-    if (history.expandedRunId === runId) {
+    if (history.expandedRunId.value === runId) {
       collapseExpandedRun();
       return;
     }
     collapseExpandedRun();
-    history.expandedRunId = runId;
+    history.expandedRunId.value = runId;
     void loadRunPreview(runId);
   }
 
   function reloadExpandedRunOnLanguageChange(): void {
-    if (!history.expandedRunId) {
+    if (!history.expandedRunId.value) {
       return;
     }
-    const runId = history.expandedRunId;
-    const detail = history.runDetailsById[runId];
+    const runId = history.expandedRunId.value;
+    const detail = history.runDetailsById.value[runId];
     const shouldReloadInsights = Boolean(detail?.insights);
-    delete history.runDetailsById[runId];
+    removeRunDetail(runId);
     void loadRunPreview(runId, true).then(() => {
       if (shouldReloadInsights) {
         void loadRunInsights(runId, true);
@@ -188,9 +234,9 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
 
   function bindReactiveLanguageSync(): void {
     let initialized = false;
-    let previousLanguage = shell.lang;
+    let previousLanguage = shell.lang.value;
     effect(() => {
-      const currentLanguage = shell.lang;
+      const currentLanguage = shell.lang.value;
       if (!initialized) {
         initialized = true;
         previousLanguage = currentLanguage;
@@ -209,7 +255,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   function prefetchCollapsedRunContext(): void {
     const token = ++previewPrefetchToken;
     void (async () => {
-      for (const run of history.runs) {
+      for (const run of history.runs.value) {
         if (token !== previewPrefetchToken) {
           return;
         }
@@ -224,7 +270,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   async function refreshHistory(): Promise<void> {
     try {
       const payload = await getHistory();
-      history.runs = payload.runs ?? [];
+      history.runs.value = payload.runs ?? [];
     } catch (_err) {
       return;
     }
@@ -249,14 +295,14 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       );
       return;
     }
-    if (history.expandedRunId === runId) {
+    if (history.expandedRunId.value === runId) {
       collapseExpandedRun();
     }
     await refreshHistory();
   }
 
   async function deleteAllRuns(): Promise<void> {
-    const names = history.runs.map((row) => row.run_id).filter(Boolean);
+    const names = history.runs.value.map((row) => row.run_id).filter(Boolean);
     if (!names.length) {
       return;
     }
@@ -267,7 +313,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       return;
     }
 
-    history.deleteAllRunsInFlight = true;
+    history.deleteAllRunsInFlight.value = true;
     let deleted = 0;
     let failed = 0;
     let firstError = "";
@@ -275,8 +321,8 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       try {
         await deleteHistoryRunApi(name);
         deleted += 1;
-        delete history.runDetailsById[name];
-        if (history.expandedRunId === name) {
+        removeRunDetail(name);
+        if (history.expandedRunId.value === name) {
           collapseExpandedRun();
         }
       } catch (err) {
@@ -288,7 +334,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         }
       }
     }
-    history.deleteAllRunsInFlight = false;
+    history.deleteAllRunsInFlight.value = false;
     await refreshHistory();
     if (failed > 0) {
       const summary = services.t("history.delete_all_partial", {
@@ -305,19 +351,28 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (detail.pdfLoading) {
       return;
     }
-    detail.pdfLoading = true;
-    detail.pdfError = "";
+    updateRunDetail(runId, (current) => ({
+      ...current,
+      pdfLoading: true,
+      pdfError: "",
+    }));
     try {
       await downloadBlobFile(
-        historyReportPdfUrl(runId, shell.lang),
+        historyReportPdfUrl(runId, shell.lang.value),
         `${runId}_report.pdf`,
       );
     } catch (err) {
-      detail.pdfError = err instanceof Error
-        ? err.message
-        : services.t("history.pdf_failed");
+      updateRunDetail(runId, (current) => ({
+        ...current,
+        pdfError: err instanceof Error
+          ? err.message
+          : services.t("history.pdf_failed"),
+      }));
     } finally {
-      detail.pdfLoading = false;
+      updateRunDetail(runId, (current) => ({
+        ...current,
+        pdfLoading: false,
+      }));
     }
   }
 
@@ -361,7 +416,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         if (action.type === "run-action") {
           void onHistoryTableAction(
             action.action,
-            action.runId ?? history.expandedRunId ?? "",
+            action.runId ?? history.expandedRunId.value ?? "",
           );
           return;
         }

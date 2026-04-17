@@ -183,23 +183,24 @@ function analysisFieldConfig(key: AnalysisPanelFieldKey): AnalysisFieldConfig {
 }
 
 function buildDraftValues(settings: SettingsState): EditableAnalysisDrafts {
+  const vehicleSettings = settings.vehicleSettings.value;
   return {
-    wheel_bandwidth_pct: formatSettingValue(settings.vehicleSettings.wheel_bandwidth_pct),
+    wheel_bandwidth_pct: formatSettingValue(vehicleSettings.wheel_bandwidth_pct),
     driveshaft_bandwidth_pct: formatSettingValue(
-      settings.vehicleSettings.driveshaft_bandwidth_pct,
+      vehicleSettings.driveshaft_bandwidth_pct,
     ),
-    engine_bandwidth_pct: formatSettingValue(settings.vehicleSettings.engine_bandwidth_pct),
-    speed_uncertainty_pct: formatSettingValue(settings.vehicleSettings.speed_uncertainty_pct),
+    engine_bandwidth_pct: formatSettingValue(vehicleSettings.engine_bandwidth_pct),
+    speed_uncertainty_pct: formatSettingValue(vehicleSettings.speed_uncertainty_pct),
     tire_diameter_uncertainty_pct: formatSettingValue(
-      settings.vehicleSettings.tire_diameter_uncertainty_pct,
+      vehicleSettings.tire_diameter_uncertainty_pct,
     ),
     final_drive_uncertainty_pct: formatSettingValue(
-      settings.vehicleSettings.final_drive_uncertainty_pct,
+      vehicleSettings.final_drive_uncertainty_pct,
     ),
-    gear_uncertainty_pct: formatSettingValue(settings.vehicleSettings.gear_uncertainty_pct),
-    min_abs_band_hz: formatSettingValue(settings.vehicleSettings.min_abs_band_hz),
+    gear_uncertainty_pct: formatSettingValue(vehicleSettings.gear_uncertainty_pct),
+    min_abs_band_hz: formatSettingValue(vehicleSettings.min_abs_band_hz),
     max_band_half_width_pct: formatSettingValue(
-      settings.vehicleSettings.max_band_half_width_pct,
+      vehicleSettings.max_band_half_width_pct,
     ),
   };
 }
@@ -351,15 +352,25 @@ export function createSettingsAnalysisModule(
     saveFeedback.value = null;
   }
 
+  function updateVehicleSettings(
+    updater: (current: VehicleSettings) => VehicleSettings,
+  ): void {
+    settings.vehicleSettings.value = updater(settings.vehicleSettings.value);
+  }
+
   function applyAnalysisSettingsPayload(
     serverSettings: AnalysisSettingsPayload,
   ): void {
-    for (const key of ANALYSIS_SETTING_KEYS) {
-      const value = serverSettings[key];
-      if (typeof value === "number") {
-        settings.vehicleSettings[key] = value;
+    updateVehicleSettings((current) => {
+      const next = { ...current };
+      for (const key of ANALYSIS_SETTING_KEYS) {
+        const value = serverSettings[key];
+        if (typeof value === "number") {
+          next[key] = value;
+        }
       }
-    }
+      return next;
+    });
     syncSettingsInputs();
     ctx.renderSpectrum();
   }
@@ -465,9 +476,10 @@ export function createSettingsAnalysisModule(
       }
     }
     const payload = buildEditableAnalysisPayload(fieldStates);
+    const vehicleSettings = settings.vehicleSettings.value;
     for (const key of ANALYSIS_SETTING_KEYS) {
       if (!(key in payload)) {
-        payload[key] = settings.vehicleSettings[key];
+        payload[key] = vehicleSettings[key];
       }
     }
     void syncAnalysisSettingsToServer(payload);

@@ -1,4 +1,4 @@
-import { trackAppStateSlice, type AppState } from "../ui_app_state";
+import type { AppState } from "../ui_app_state";
 import { effect, untracked } from "../ui_signals";
 import {
   createSpectrumCanvasRenderer,
@@ -41,10 +41,10 @@ export class UiSpectrumController {
       panel: this.panel,
       t: this.t,
       getStrengthDb: (entryId) =>
-        this.state.spectrum.spectra.clients[entryId]?.strength_metrics?.vibration_strength_db
+        this.state.spectrum.spectra.value.clients[entryId]?.strength_metrics?.vibration_strength_db
         ?? null,
       getTopPeakHz: (entryId) =>
-        this.state.spectrum.spectra.clients[entryId]?.strength_metrics?.top_peaks?.[0]?.hz
+        this.state.spectrum.spectra.value.clients[entryId]?.strength_metrics?.top_peaks?.[0]?.hz
         ?? null,
       setSeriesIsolation: (seriesIndex) => this.canvas.setSeriesIsolation(seriesIndex),
       requestPlotRefresh: () => this.canvas.refreshDecorations(),
@@ -77,8 +77,8 @@ export class UiSpectrumController {
   renderSpectrum(): void {
     this.renderSpectrumHeader();
     const prepared = this.canvas.prepareFrame();
-    this.state.spectrum.chartBands = prepared.chartBands;
-    this.state.spectrum.hasSpectrumData = prepared.hasData;
+    this.state.spectrum.chartBands.value = prepared.chartBands;
+    this.state.spectrum.hasSpectrumData.value = prepared.hasData;
     this.interaction.sync({
       entries: prepared.entries,
       freqAxis: prepared.freqAxis,
@@ -90,30 +90,33 @@ export class UiSpectrumController {
   }
 
   private spectrumOverlayMessage(): string | null {
-    if (this.state.spectrum.chartLoadErrorDetail) {
+    if (this.state.spectrum.chartLoadErrorDetail.value) {
       return this.t("spectrum.chart_load_error", {
-        message: this.state.spectrum.chartLoadErrorDetail,
+        message: this.state.spectrum.chartLoadErrorDetail.value,
       });
     }
-    if (this.state.transport.payloadError) {
-      return this.state.transport.payloadError;
+    if (this.state.transport.payloadError.value) {
+      return this.state.transport.payloadError.value;
     }
-    if (!this.state.transport.hasReceivedPayload && this.state.transport.wsState === "connecting") {
+    if (
+      !this.state.transport.hasReceivedPayload.value
+      && this.state.transport.wsState.value === "connecting"
+    ) {
       return this.t("spectrum.loading");
     }
     if (
-      this.state.transport.wsState === "connecting"
-      || this.state.transport.wsState === "reconnecting"
+      this.state.transport.wsState.value === "connecting"
+      || this.state.transport.wsState.value === "reconnecting"
     ) {
       return this.t("ws.connecting");
     }
-    if (this.state.transport.wsState === "stale") {
+    if (this.state.transport.wsState.value === "stale") {
       return this.t("spectrum.stale");
     }
-    if (this.state.spectrum.chartLoading && this.state.spectrum.hasSpectrumData) {
+    if (this.state.spectrum.chartLoading.value && this.state.spectrum.hasSpectrumData.value) {
       return this.t("spectrum.loading");
     }
-    if (!this.state.spectrum.hasSpectrumData) {
+    if (!this.state.spectrum.hasSpectrumData.value) {
       return this.t("spectrum.empty");
     }
     return null;
@@ -125,9 +128,9 @@ export class UiSpectrumController {
 
   private bindReactiveLanguageSync(): void {
     let initialized = false;
-    let previousLanguage = this.state.shell.lang;
+    let previousLanguage = this.state.shell.lang.value;
     effect(() => {
-      const currentLanguage = this.state.shell.lang;
+      const currentLanguage = this.state.shell.lang.value;
       if (!initialized) {
         initialized = true;
         previousLanguage = currentLanguage;
@@ -145,18 +148,16 @@ export class UiSpectrumController {
   }
 
   private bindReactiveTransportSync(): void {
-    let previousSpectra = this.state.spectrum.spectra;
-    let previousWsState = this.state.transport.wsState;
-    let previousPayloadError = this.state.transport.payloadError;
-    let previousHasReceivedPayload = this.state.transport.hasReceivedPayload;
+    let previousSpectra = this.state.spectrum.spectra.value;
+    let previousWsState = this.state.transport.wsState.value;
+    let previousPayloadError = this.state.transport.payloadError.value;
+    let previousHasReceivedPayload = this.state.transport.hasReceivedPayload.value;
     let initialized = false;
     effect(() => {
-      trackAppStateSlice(this.state.spectrum);
-      trackAppStateSlice(this.state.transport);
-      const nextSpectra = this.state.spectrum.spectra;
-      const nextWsState = this.state.transport.wsState;
-      const nextPayloadError = this.state.transport.payloadError;
-      const nextHasReceivedPayload = this.state.transport.hasReceivedPayload;
+      const nextSpectra = this.state.spectrum.spectra.value;
+      const nextWsState = this.state.transport.wsState.value;
+      const nextPayloadError = this.state.transport.payloadError.value;
+      const nextHasReceivedPayload = this.state.transport.hasReceivedPayload.value;
       if (!initialized) {
         initialized = true;
         previousSpectra = nextSpectra;

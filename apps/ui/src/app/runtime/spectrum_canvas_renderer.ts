@@ -121,11 +121,11 @@ export function createSpectrumCanvasRenderer(
     const entries: SpectrumSeriesEntry[] = [];
     let targetFreq: number[] = [];
 
-    for (const [index, client] of deps.state.realtime.clients.entries()) {
+    for (const [index, client] of deps.state.realtime.clients.value.entries()) {
       if (!client?.connected) {
         continue;
       }
-      const spectrum = deps.state.spectrum.spectra.clients?.[client.id];
+      const spectrum = deps.state.spectrum.spectra.value.clients?.[client.id];
       if (!spectrum || !Array.isArray(spectrum.combined)) {
         continue;
       }
@@ -230,7 +230,7 @@ export function createSpectrumCanvasRenderer(
     tweenFromFrame.value = spectrumLastFrame.value;
     tweenToFrame.value = nextFrame;
     tweenTarget.value = null; // cancel any in-flight animation
-    const canTween = deps.state.transport.wsState === "connected"
+    const canTween = deps.state.transport.wsState.value === "connected"
       && tweenState.canTween.value;
     if (!canTween || !spectrumLastFrame.value) {
       setSpectrumDataFromFrame(nextFrame);
@@ -254,7 +254,7 @@ export function createSpectrumCanvasRenderer(
   }
 
   function setSeriesIsolation(seriesIndex: number | null): void {
-    deps.state.spectrum.spectrumPlot?.setSeriesIsolation(seriesIndex);
+    deps.state.spectrum.spectrumPlot.value?.setSeriesIsolation(seriesIndex);
   }
 
   function colorForClient(index: number): string {
@@ -262,7 +262,7 @@ export function createSpectrumCanvasRenderer(
   }
 
   function setSpectrumDataFromFrame(frame: SpectrumHeavyFrame): void {
-    if (!deps.state.spectrum.spectrumPlot) {
+    if (!deps.state.spectrum.spectrumPlot.value) {
       return;
     }
     currentFreqAxis.value = frame.freq;
@@ -271,7 +271,7 @@ export function createSpectrumCanvasRenderer(
   }
 
   function calculateBandsFromBackend(): ChartBand[] | null {
-    const bands = deps.state.realtime.rotationalSpeeds?.order_bands;
+    const bands = deps.state.realtime.rotationalSpeeds.value?.order_bands;
     if (!Array.isArray(bands) || !bands.length) {
       return null;
     }
@@ -380,11 +380,11 @@ export function createSpectrumCanvasRenderer(
   function createSpectrumPlot(loadedChartModule: SpectrumChartModule): void {
     tweenTarget.value = null;
     spectrumLastFrame.value = null;
-    if (deps.state.spectrum.spectrumPlot) {
-      deps.state.spectrum.spectrumPlot.destroy();
-      deps.state.spectrum.spectrumPlot = null;
+    if (deps.state.spectrum.spectrumPlot.value) {
+      deps.state.spectrum.spectrumPlot.value.destroy();
+      deps.state.spectrum.spectrumPlot.value = null;
     }
-    deps.state.spectrum.spectrumPlot = loadedChartModule.createSpectrumChart({
+    deps.state.spectrum.spectrumPlot.value = loadedChartModule.createSpectrumChart({
       hostEl: deps.dom.specChart,
       measureEl: deps.dom.specChartWrap,
       height: chartHeight,
@@ -396,22 +396,22 @@ export function createSpectrumCanvasRenderer(
   }
 
   function ensureSpectrumPlot(): boolean {
-    if (deps.state.spectrum.spectrumPlot) {
-      deps.state.spectrum.chartLoadErrorDetail = null;
+    if (deps.state.spectrum.spectrumPlot.value) {
+      deps.state.spectrum.chartLoadErrorDetail.value = null;
       return true;
     }
     if (chartModule.value) {
-      deps.state.spectrum.chartLoading = false;
-      deps.state.spectrum.chartLoadErrorDetail = null;
+      deps.state.spectrum.chartLoading.value = false;
+      deps.state.spectrum.chartLoadErrorDetail.value = null;
       createSpectrumPlot(chartModule.value);
-      return deps.state.spectrum.spectrumPlot !== null;
+      return deps.state.spectrum.spectrumPlot.value !== null;
     }
     if (chartLoadPromise) {
       return false;
     }
 
-    deps.state.spectrum.chartLoading = true;
-    deps.state.spectrum.chartLoadErrorDetail = null;
+    deps.state.spectrum.chartLoading.value = true;
+    deps.state.spectrum.chartLoadErrorDetail.value = null;
     chartLoadPromise = loadChartModule()
       .then((module) => {
         chartModule.value = module;
@@ -425,10 +425,10 @@ export function createSpectrumCanvasRenderer(
         renderPreparedFrame(rerender);
       })
       .catch((error: unknown) => {
-        deps.state.spectrum.chartLoadErrorDetail = getChartLoadErrorDetail(error);
+        deps.state.spectrum.chartLoadErrorDetail.value = getChartLoadErrorDetail(error);
       })
       .finally(() => {
-        deps.state.spectrum.chartLoading = false;
+        deps.state.spectrum.chartLoading.value = false;
         chartLoadPromise = null;
         onAsyncChartUpdate();
       });

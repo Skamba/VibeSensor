@@ -1,11 +1,16 @@
-import type { SettingsState } from "./ui_app_state";
-import { trackAppStateSlice } from "./ui_app_state";
+import type { SpeedSourceKind, SpeedSourceStatusPayload } from "../api/types";
 import { computed, type ReadonlySignal } from "./ui_signals";
 
+export interface SpeedSourceStateSnapshot {
+  speedSource: SpeedSourceKind;
+  manualSpeedKph: number | null;
+  resolvedSpeedSource: SpeedSourceStatusPayload["speed_source"] | null;
+}
+
 export interface SpeedSourceStateSource {
-  speedSource: SettingsState["speedSource"];
-  manualSpeedKph: SettingsState["manualSpeedKph"];
-  resolvedSpeedSource: SettingsState["resolvedSpeedSource"];
+  speedSource: ReadonlySignal<SpeedSourceKind>;
+  manualSpeedKph: ReadonlySignal<number | null>;
+  resolvedSpeedSource: ReadonlySignal<SpeedSourceStatusPayload["speed_source"] | null>;
 }
 
 export type DisplayedSpeedSourceMode = "gps" | "manual" | "obd2";
@@ -23,7 +28,7 @@ export function isManualLikeSpeedSource(source: string | null | undefined): bool
 }
 
 export function deriveDisplayedSpeedSourceMode(
-  settings: SpeedSourceStateSource,
+  settings: SpeedSourceStateSnapshot,
 ): DisplayedSpeedSourceMode {
   const effectiveSource = resolveEffectiveSpeedSource(settings);
   if (effectiveSource === "obd2") {
@@ -36,7 +41,7 @@ export function deriveDisplayedSpeedSourceMode(
 }
 
 export function resolveEffectiveSpeedSource(
-  settings: SpeedSourceStateSource,
+  settings: SpeedSourceStateSnapshot,
   runtimeSpeedSource?: string | null,
 ): string | null {
   if (settings.resolvedSpeedSource) {
@@ -49,14 +54,14 @@ export function resolveEffectiveSpeedSource(
 }
 
 export function isManualEffectiveSpeedSource(
-  settings: SpeedSourceStateSource,
+  settings: SpeedSourceStateSnapshot,
   runtimeSpeedSource?: string | null,
 ): boolean {
   return isManualLikeSpeedSource(resolveEffectiveSpeedSource(settings, runtimeSpeedSource));
 }
 
 export function deriveSpeedReadoutLabelKey(
-  settings: SpeedSourceStateSource,
+  settings: SpeedSourceStateSnapshot,
   runtimeSpeedSource?: string | null,
 ): SpeedReadoutLabelKey {
   const effectiveSource = resolveEffectiveSpeedSource(settings, runtimeSpeedSource);
@@ -70,12 +75,15 @@ export function createSpeedSourceDerivedState(
   settings: SpeedSourceStateSource,
   runtimeSpeedSource?: ReadonlySignal<string | null>,
 ): SpeedSourceDerivedState {
-  const effectiveSource = computed(() => {
-    trackAppStateSlice(settings);
-    return resolveEffectiveSpeedSource(settings, runtimeSpeedSource?.value);
+  const snapshot = (): SpeedSourceStateSnapshot => ({
+    speedSource: settings.speedSource.value,
+    manualSpeedKph: settings.manualSpeedKph.value,
+    resolvedSpeedSource: settings.resolvedSpeedSource.value,
   });
+  const effectiveSource = computed(() =>
+    resolveEffectiveSpeedSource(snapshot(), runtimeSpeedSource?.value)
+  );
   const displayedMode = computed<DisplayedSpeedSourceMode>(() => {
-    trackAppStateSlice(settings);
     const resolvedSource = effectiveSource.value;
     if (resolvedSource === "obd2") {
       return "obd2";
@@ -83,7 +91,7 @@ export function createSpeedSourceDerivedState(
     if (isManualLikeSpeedSource(resolvedSource)) {
       return "manual";
     }
-    return settings.speedSource;
+    return settings.speedSource.value;
   });
   const isManualEffective = computed(() =>
     isManualLikeSpeedSource(effectiveSource.value),

@@ -137,10 +137,10 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
   test("keeps the configured GPS source when saving fallback-manual edits without a radio change", async () => {
     const harness = createHarness();
     const appState = createAppState();
-    appState.settings.speedSource = "gps";
-    appState.settings.manualSpeedKph = 80;
-    appState.settings.resolvedSpeedSource = "fallback_manual";
-    appState.settings.gpsEffectiveSpeedKph = 80;
+    appState.settings.speedSource.value = "gps";
+    appState.settings.manualSpeedKph.value = 80;
+    appState.settings.resolvedSpeedSource.value = "fallback_manual";
+    appState.settings.gpsEffectiveSpeedKph.value = 80;
     let savedPayload: SpeedSourceRequest | null = null;
 
     const workflow = createSettingsSpeedSourceWorkflow({
@@ -174,8 +174,8 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
       stale_timeout_s: 5,
     });
     expect(workflow.getRenderState().selectedMode).toBe("gps");
-    expect(appState.settings.speedSource).toBe("gps");
-    expect(appState.settings.manualSpeedKph).toBe(90);
+    expect(appState.settings.speedSource.value).toBe("gps");
+    expect(appState.settings.manualSpeedKph.value).toBe(90);
     expect(harness.focuses).toEqual([]);
     expect(harness.errors).toEqual([]);
   });
@@ -306,8 +306,8 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
       rfcomm_channel: 1,
       trusted: true,
     }]);
-    expect(appState.settings.obdDeviceMac).toBe(scannedDevice.mac_address);
-    expect(appState.settings.obdDeviceName).toBe("OBDLink CX");
+    expect(appState.settings.obdDeviceMac.value).toBe(scannedDevice.mac_address);
+    expect(appState.settings.obdDeviceName.value).toBe("OBDLink CX");
     expect(harness.errors).toEqual([]);
   });
 
@@ -381,9 +381,9 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
       view: createViewPorts(harness),
     });
 
-    appState.settings.speedSource = "obd2";
-    appState.settings.resolvedSpeedSource = "obd2";
-    appState.settings.gpsEffectiveSpeedKph = 81;
+    appState.settings.speedSource.value = "obd2";
+    appState.settings.resolvedSpeedSource.value = "obd2";
+    appState.settings.gpsEffectiveSpeedKph.value = 81;
 
     expect(workflow.getRenderState().settings.gpsEffectiveSpeedKph).toBe(81);
     expect(harness.errors).toEqual([]);
@@ -412,9 +412,9 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
       selectedMode: "gps",
     });
 
-    appState.settings.manualSpeedKph = 88;
-    appState.settings.speedSource = "manual";
-    appState.settings.resolvedSpeedSource = "manual";
+    appState.settings.manualSpeedKph.value = 88;
+    appState.settings.speedSource.value = "manual";
+    appState.settings.resolvedSpeedSource.value = "manual";
 
     expect(workflow.getRenderState()).toMatchObject({
       manualSpeedInputValue: "88",
@@ -426,8 +426,8 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
   test("keeps local manual input draft when settings change externally", () => {
     const harness = createHarness();
     const appState = createAppState();
-    appState.settings.speedSource = "gps";
-    appState.settings.manualSpeedKph = 80;
+    appState.settings.speedSource.value = "gps";
+    appState.settings.manualSpeedKph.value = 80;
 
     const workflow = createSettingsSpeedSourceWorkflow({
       createPollingController: () => ({
@@ -445,7 +445,7 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
     });
 
     workflow.handleManualSpeedInput("90");
-    appState.settings.manualSpeedKph = 70;
+    appState.settings.manualSpeedKph.value = 70;
     workflow.syncFromSettings();
 
     expect(workflow.getRenderState()).toMatchObject({

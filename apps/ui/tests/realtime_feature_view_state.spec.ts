@@ -50,26 +50,35 @@ test("realtime view state only re-arms its elapsed timer when logging tick input
     expect(activeTimerIds.size).toBe(0);
 
     workflow.handlersBound.value = true;
-    state.realtime.loggingStatus.enabled = true;
-    state.realtime.loggingStatus.start_time_utc = "2026-04-16T00:00:00Z";
+    state.realtime.loggingStatus.value = {
+      ...state.realtime.loggingStatus.value,
+      enabled: true,
+      start_time_utc: "2026-04-16T00:00:00Z",
+    };
 
     expect(createdTimerIds).toHaveLength(1);
     expect(Array.from(activeTimerIds)).toEqual([createdTimerIds[0]]);
     expect(clearedTimerIds).toEqual([]);
 
-    state.realtime.selectedClientId = "sensor-1";
+    state.realtime.selectedClientId.value = "sensor-1";
 
     expect(createdTimerIds).toHaveLength(1);
     expect(Array.from(activeTimerIds)).toEqual([createdTimerIds[0]]);
     expect(clearedTimerIds).toEqual([]);
 
-    state.realtime.loggingStatus.start_time_utc = "2026-04-16T00:00:05Z";
+    state.realtime.loggingStatus.value = {
+      ...state.realtime.loggingStatus.value,
+      start_time_utc: "2026-04-16T00:00:05Z",
+    };
 
     expect(createdTimerIds).toHaveLength(2);
     expect(Array.from(activeTimerIds)).toEqual([createdTimerIds[1]]);
     expect(clearedTimerIds).toEqual([createdTimerIds[0]]);
 
-    state.realtime.loggingStatus.enabled = false;
+    state.realtime.loggingStatus.value = {
+      ...state.realtime.loggingStatus.value,
+      enabled: false,
+    };
 
     expect(activeTimerIds.size).toBe(0);
     expect(clearedTimerIds).toEqual([createdTimerIds[0], createdTimerIds[1]]);
@@ -118,8 +127,8 @@ test("realtime view state preserves the last completed elapsed text through proc
     });
 
     workflow.handlersBound.value = true;
-    state.realtime.loggingStatus = {
-      ...state.realtime.loggingStatus,
+    state.realtime.loggingStatus.value = {
+      ...state.realtime.loggingStatus.value,
       enabled: true,
       start_time_utc: "2026-04-16T00:00:00Z",
       last_completed_run_id: null,
@@ -127,8 +136,8 @@ test("realtime view state preserves the last completed elapsed text through proc
 
     expect(viewState.loggingPanelModel.value.elapsedText).toBe("1:23");
 
-    state.realtime.loggingStatus = {
-      ...state.realtime.loggingStatus,
+    state.realtime.loggingStatus.value = {
+      ...state.realtime.loggingStatus.value,
       enabled: false,
       analysis_in_progress: true,
       start_time_utc: null,
@@ -137,15 +146,15 @@ test("realtime view state preserves the last completed elapsed text through proc
 
     expect(viewState.loggingPanelModel.value.elapsedText).toBe("1:23");
 
-    state.realtime.loggingStatus = {
-      ...state.realtime.loggingStatus,
+    state.realtime.loggingStatus.value = {
+      ...state.realtime.loggingStatus.value,
       analysis_in_progress: false,
     };
 
     expect(viewState.loggingPanelModel.value.elapsedText).toBe("1:23");
 
-    state.realtime.loggingStatus = {
-      ...state.realtime.loggingStatus,
+    state.realtime.loggingStatus.value = {
+      ...state.realtime.loggingStatus.value,
       last_completed_run_id: null,
     };
 

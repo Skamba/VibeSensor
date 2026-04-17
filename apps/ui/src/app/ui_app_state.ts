@@ -15,124 +15,7 @@ import type {
   SpeedSourceKind,
   SpeedSourceStatusPayload,
 } from "../api/types";
-import { batch, signal, type ReadonlySignal, type Signal } from "./ui_signals";
-
-const reactiveTargetProxies = new WeakMap<object, WeakMap<Signal<number>, object>>();
-const reactiveProxyTargets = new WeakMap<object, object>();
-const reactiveSliceSignals = new WeakMap<object, Signal<number>>();
-
-type SignalStateScalar = boolean | null | number | string | undefined;
-
-function isProxyableObject(value: unknown): value is object {
-  if (value === null || typeof value !== "object") {
-    return false;
-  }
-  if (Array.isArray(value)) {
-    return true;
-  }
-  const prototype = Object.getPrototypeOf(value);
-  return prototype === Object.prototype || prototype === null;
-}
-
-function unwrapReactiveValue<T>(value: T): T {
-  if (value === null || typeof value !== "object") {
-    return value;
-  }
-  return (reactiveProxyTargets.get(value) as T | undefined) ?? value;
-}
-
-function createReactiveProxy<T extends object>(target: T, rootSignal: Signal<number>): T {
-  let proxiesBySignal = reactiveTargetProxies.get(target);
-  if (!proxiesBySignal) {
-    proxiesBySignal = new WeakMap<Signal<number>, object>();
-    reactiveTargetProxies.set(target, proxiesBySignal);
-  }
-  const existingProxy = proxiesBySignal.get(rootSignal);
-  if (existingProxy) {
-    return existingProxy as T;
-  }
-
-  const proxy = new Proxy(target, {
-    get(current, property) {
-      const value = Reflect.get(current, property);
-      if (isProxyableObject(value)) {
-        return createReactiveProxy(unwrapReactiveValue(value), rootSignal);
-      }
-      return value;
-    },
-    set(current, property, nextValue) {
-      const rawNextValue = unwrapReactiveValue(nextValue);
-      const previousValue = unwrapReactiveValue(Reflect.get(current, property));
-      if (Object.is(previousValue, rawNextValue)) {
-        return true;
-      }
-      const didSet = Reflect.set(current, property, rawNextValue);
-      if (didSet) {
-        rootSignal.value += 1;
-      }
-      return didSet;
-    },
-    deleteProperty(current, property) {
-      if (!Reflect.has(current, property)) {
-        return true;
-      }
-      const didDelete = Reflect.deleteProperty(current, property);
-      if (didDelete) {
-        rootSignal.value += 1;
-      }
-      return didDelete;
-    },
-  });
-
-  proxiesBySignal.set(rootSignal, proxy);
-  reactiveProxyTargets.set(proxy, target);
-  reactiveSliceSignals.set(proxy, rootSignal);
-  return proxy as T;
-}
-
-function createReactiveStateSlice<T extends object>(value: T): T {
-  return createReactiveProxy(value, signal(0));
-}
-
-function createSignalStateSlice<T extends Record<string, SignalStateScalar>>(value: T): T {
-  const sliceSignal = signal(0);
-  const slice = {} as T;
-  for (const [key, initialValue] of Object.entries(value) as [keyof T, T[keyof T]][]) {
-    const propertySignal = signal(initialValue);
-    Object.defineProperty(slice, key, {
-      enumerable: true,
-      get() {
-        return propertySignal.value;
-      },
-      set(nextValue: T[keyof T]) {
-        if (Object.is(propertySignal.value, nextValue)) {
-          return;
-        }
-        propertySignal.value = nextValue;
-        sliceSignal.value += 1;
-      },
-    });
-  }
-  reactiveSliceSignals.set(slice as object, sliceSignal);
-  return slice;
-}
-
-function requireReactiveSliceSignal<T extends object>(slice: T): Signal<number> {
-  const sliceSignal = reactiveSliceSignals.get(slice as object);
-  if (!sliceSignal) {
-    throw new Error("AppState slice signal is unavailable outside createAppState()");
-  }
-  return sliceSignal;
-}
-
-export function getAppStateSliceSignal<T extends object>(slice: T): ReadonlySignal<number> {
-  return requireReactiveSliceSignal(slice);
-}
-
-export function trackAppStateSlice<T extends object>(slice: T): T {
-  requireReactiveSliceSignal(slice).value;
-  return slice;
-}
+import { batch, signal, type Signal } from "./ui_signals";
 
 export function batchAppStateUpdates<T>(callback: () => T): T {
   let result!: T;
@@ -140,10 +23,6 @@ export function batchAppStateUpdates<T>(callback: () => T): T {
     result = callback();
   });
   return result;
-}
-
-export function unwrapAppStateValue<T>(value: T): T {
-  return unwrapReactiveValue(value);
 }
 
 export interface VehicleSettings {
@@ -242,18 +121,19 @@ export function applySpectrumTick(
 }
 
 export function syncSelectedRealtimeClient(realtime: RealtimeState): void {
-  const firstConnected = realtime.clients.find((client) => Boolean(client.connected));
-  if (!realtime.selectedClientId && realtime.clients.length > 0) {
-    realtime.selectedClientId = firstConnected ? firstConnected.id : realtime.clients[0]?.id ?? null;
+  const clients = realtime.clients.value;
+  const firstConnected = clients.find((client) => Boolean(client.connected));
+  if (!realtime.selectedClientId.value && clients.length > 0) {
+    realtime.selectedClientId.value = firstConnected ? firstConnected.id : clients[0]?.id ?? null;
   }
   if (
-    realtime.selectedClientId
-    && !realtime.clients.some((client) => client.id === realtime.selectedClientId)
+    realtime.selectedClientId.value
+    && !clients.some((client) => client.id === realtime.selectedClientId.value)
   ) {
-    realtime.selectedClientId = firstConnected
+    realtime.selectedClientId.value = firstConnected
       ? firstConnected.id
-      : realtime.clients.length
-        ? realtime.clients[0]?.id ?? null
+      : clients.length
+        ? clients[0]?.id ?? null
         : null;
   }
 }
@@ -261,33 +141,39 @@ export function syncSelectedRealtimeClient(realtime: RealtimeState): void {
 export function applyLivePayloadUpdate(deps: LivePayloadUpdateDeps): LivePayloadUpdateResult {
   return batchAppStateUpdates(() => {
     const { realtime, spectrum, adaptedPayload } = deps;
-    const previousSelectedClientId = realtime.selectedClientId;
-    realtime.clients = adaptedPayload.clients;
+    const previousSelectedClientId = realtime.selectedClientId.value;
+    realtime.clients.value = adaptedPayload.clients;
     const spectrumTick = applySpectrumTick(
-      spectrum.spectra,
-      spectrum.hasSpectrumData,
+      spectrum.spectra.value,
+      spectrum.hasSpectrumData.value,
       adaptedPayload.spectra,
     );
-    spectrum.spectra = spectrumTick.spectra;
+    spectrum.spectra.value = spectrumTick.spectra;
     syncSelectedRealtimeClient(realtime);
-    realtime.speedMps = adaptedPayload.speed_mps;
-    realtime.rotationalSpeeds = adaptedPayload.rotational_speeds;
-    spectrum.hasSpectrumData = spectrumTick.hasSpectrumData;
+    realtime.speedMps.value = adaptedPayload.speed_mps;
+    realtime.rotationalSpeeds.value = adaptedPayload.rotational_speeds;
+    spectrum.hasSpectrumData.value = spectrumTick.hasSpectrumData;
     return {
-      hasSelectedClientChanged: previousSelectedClientId !== realtime.selectedClientId,
-      selectedClient: realtime.clients.find((client) => client.id === realtime.selectedClientId),
+      hasSelectedClientChanged: previousSelectedClientId !== realtime.selectedClientId.value,
+      selectedClient: realtime.clients.value.find(
+        (client) => client.id === realtime.selectedClientId.value,
+      ),
       hasNewSpectrumFrame: spectrumTick.hasNewSpectrumFrame,
     };
   });
 }
 
-export interface ShellState {
+export type SignalState<T extends object> = {
+  [K in keyof T]: Signal<T[K]>;
+};
+
+export interface ShellStateValue {
   lang: string;
   speedUnit: string;
   activeViewId: string;
 }
 
-export interface TransportState {
+export interface TransportStateValue {
   ws: WsClient | null;
   wsState: WsUiState;
   pendingPayload: unknown | null;
@@ -298,7 +184,7 @@ export interface TransportState {
   payloadError: string | null;
 }
 
-export interface RealtimeState {
+export interface RealtimeStateValue {
   clients: AdaptedClient[];
   selectedClientId: string | null;
   speedMps: number | null;
@@ -307,14 +193,14 @@ export interface RealtimeState {
   locationCodes: string[];
 }
 
-export interface HistoryState {
+export interface HistoryStateValue {
   runs: HistoryEntry[];
   deleteAllRunsInFlight: boolean;
   expandedRunId: string | null;
   runDetailsById: Record<string, RunDetail>;
 }
 
-export interface SettingsState {
+export interface SettingsStateValue {
   vehicleSettings: VehicleSettings;
   cars: CarRecord[];
   carsLoaded: boolean;
@@ -328,7 +214,7 @@ export interface SettingsState {
   gpsEffectiveSpeedKph: number | null;
 }
 
-export interface SpectrumState {
+export interface SpectrumStateValue {
   spectrumPlot: SpectrumChart | null;
   spectra: { clients: Record<string, SpectrumClientData> };
   chartBands: ChartBand[];
@@ -336,6 +222,13 @@ export interface SpectrumState {
   chartLoading: boolean;
   chartLoadErrorDetail: string | null;
 }
+
+export type ShellState = SignalState<ShellStateValue>;
+export type TransportState = SignalState<TransportStateValue>;
+export type RealtimeState = SignalState<RealtimeStateValue>;
+export type HistoryState = SignalState<HistoryStateValue>;
+export type SettingsState = SignalState<SettingsStateValue>;
+export type SpectrumState = SignalState<SpectrumStateValue>;
 
 export interface AppState {
   shell: ShellState;
@@ -348,27 +241,27 @@ export interface AppState {
 
 export function createAppState(): AppState {
   return {
-    shell: createSignalStateSlice({
-      lang: "en",
-      speedUnit: "kmh",
-      activeViewId: "dashboardView",
-    }),
-    transport: createReactiveStateSlice({
-      ws: null,
-      wsState: "connecting",
-      pendingPayload: null,
-      renderQueued: false,
-      lastRenderTsMs: 0,
-      minRenderIntervalMs: 100,
-      hasReceivedPayload: false,
-      payloadError: null,
-    }),
-    realtime: createReactiveStateSlice({
-      clients: [],
-      selectedClientId: null,
-      speedMps: null,
-      rotationalSpeeds: null,
-      loggingStatus: {
+    shell: {
+      lang: signal("en"),
+      speedUnit: signal("kmh"),
+      activeViewId: signal("dashboardView"),
+    },
+    transport: {
+      ws: signal<WsClient | null>(null),
+      wsState: signal<WsUiState>("connecting"),
+      pendingPayload: signal<unknown | null>(null),
+      renderQueued: signal(false),
+      lastRenderTsMs: signal(0),
+      minRenderIntervalMs: signal(100),
+      hasReceivedPayload: signal(false),
+      payloadError: signal<string | null>(null),
+    },
+    realtime: {
+      clients: signal<AdaptedClient[]>([]),
+      selectedClientId: signal<string | null>(null),
+      speedMps: signal<number | null>(null),
+      rotationalSpeeds: signal<RotationalSpeeds | null>(null),
+      loggingStatus: signal<LoggingStatusPayload>({
         enabled: false,
         run_id: null,
         write_error: null,
@@ -379,35 +272,35 @@ export function createAppState(): AppState {
         last_completed_run_id: null,
         last_completed_run_error: null,
         capture_readiness: null,
-      },
-      locationCodes: defaultLocationCodes.slice(),
-    }),
-    history: createReactiveStateSlice({
-      runs: [],
-      deleteAllRunsInFlight: false,
-      expandedRunId: null,
-      runDetailsById: {},
-    }),
-    settings: createReactiveStateSlice({
-      vehicleSettings: { ...defaultVehicleSettings },
-      cars: [],
-      carsLoaded: false,
-      activeCarId: null,
-      speedSource: "gps",
-      manualSpeedKph: null,
-      obdDeviceMac: null,
-      obdDeviceName: null,
-      resolvedSpeedSource: null,
-      gpsFallbackActive: false,
-      gpsEffectiveSpeedKph: null,
-    }),
-    spectrum: createReactiveStateSlice({
-      spectrumPlot: null,
-      spectra: { clients: {} },
-      chartBands: [],
-      hasSpectrumData: false,
-      chartLoading: false,
-      chartLoadErrorDetail: null,
-    }),
+      }),
+      locationCodes: signal(defaultLocationCodes.slice()),
+    },
+    history: {
+      runs: signal<HistoryEntry[]>([]),
+      deleteAllRunsInFlight: signal(false),
+      expandedRunId: signal<string | null>(null),
+      runDetailsById: signal<Record<string, RunDetail>>({}),
+    },
+    settings: {
+      vehicleSettings: signal<VehicleSettings>({ ...defaultVehicleSettings }),
+      cars: signal<CarRecord[]>([]),
+      carsLoaded: signal(false),
+      activeCarId: signal<string | null>(null),
+      speedSource: signal<SpeedSourceKind>("gps"),
+      manualSpeedKph: signal<number | null>(null),
+      obdDeviceMac: signal<string | null>(null),
+      obdDeviceName: signal<string | null>(null),
+      resolvedSpeedSource: signal<SpeedSourceStatusPayload["speed_source"] | null>(null),
+      gpsFallbackActive: signal(false),
+      gpsEffectiveSpeedKph: signal<number | null>(null),
+    },
+    spectrum: {
+      spectrumPlot: signal<SpectrumChart | null>(null),
+      spectra: signal<{ clients: Record<string, SpectrumClientData> }>({ clients: {} }),
+      chartBands: signal<ChartBand[]>([]),
+      hasSpectrumData: signal(false),
+      chartLoading: signal(false),
+      chartLoadErrorDetail: signal<string | null>(null),
+    },
   };
 }

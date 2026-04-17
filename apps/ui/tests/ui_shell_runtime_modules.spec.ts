@@ -116,13 +116,13 @@ test.describe("createUiShellNavigationModule", () => {
     });
 
     module.setActiveView("historyView");
-    expect(state.shell.activeViewId).toBe("historyView");
+    expect(state.shell.activeViewId.value).toBe("historyView");
     expect(module.activeViewId.value).toBe("historyView");
     expect(activatedViews).toEqual(["historyView"]);
     expect(resizeCalls).toBe(0);
 
     module.setActiveView("missingView");
-    expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(state.shell.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(activatedViews).toEqual(["historyView"]);
     expect(resizeCalls).toBe(1);
@@ -144,13 +144,13 @@ test.describe("createUiShellNavigationModule", () => {
     });
 
     module.setActiveView("settingsView");
-    expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(state.shell.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
 
     resolveActivation?.();
     await Promise.resolve();
 
-    expect(state.shell.activeViewId).toBe("settingsView");
+    expect(state.shell.activeViewId.value).toBe("settingsView");
     expect(module.activeViewId.value).toBe("settingsView");
   });
 
@@ -175,7 +175,7 @@ test.describe("createUiShellNavigationModule", () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(state.shell.activeViewId).toBe(DEFAULT_SHELL_VIEW_ID);
+    expect(state.shell.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(module.activeViewId.value).toBe(DEFAULT_SHELL_VIEW_ID);
     expect(activationErrors).toEqual(["settingsView:chunk failed"]);
   });
@@ -305,8 +305,8 @@ test.describe("createUiShellPreferencesModule", () => {
       "/api/settings/language",
       "/api/settings/speed-unit",
     ]);
-    expect(state.shell.lang).toBe("nl");
-    expect(state.shell.speedUnit).toBe("mps");
+    expect(state.shell.lang.value).toBe("nl");
+    expect(state.shell.speedUnit.value).toBe("mps");
     expect(module.selectedLanguage.value).toBe("nl");
     expect(module.selectedSpeedUnit.value).toBe("mps");
   });
@@ -329,13 +329,13 @@ test.describe("createUiShellPreferencesModule", () => {
       async () => {
         const savePromise = module.saveLanguage("nl");
         expect(module.selectedLanguage.value).toBe("nl");
-        expect(state.shell.lang).toBe("en");
+        expect(state.shell.lang.value).toBe("en");
         resolveResponse?.(jsonResponse({ language: "nl" }));
         await savePromise;
       },
     );
 
-    expect(state.shell.lang).toBe("nl");
+    expect(state.shell.lang.value).toBe("nl");
     expect(module.selectedLanguage.value).toBe("nl");
   });
 
@@ -357,7 +357,7 @@ test.describe("createUiShellPreferencesModule", () => {
       },
     );
 
-    expect(state.shell.speedUnit).toBe("kmh");
+    expect(state.shell.speedUnit.value).toBe("kmh");
     expect(module.selectedSpeedUnit.value).toBe("kmh");
     expect(module.speedUnitFeedback.value?.detail).toBe("save failed");
   });
@@ -396,7 +396,7 @@ test.describe("createUiShellNotificationModule", () => {
 test.describe("createUiShellStatusModule", () => {
   test("builds websocket badge state and degraded shell status signals without bootstrap wiring", () => {
     const state = createAppState();
-    state.transport.wsState = "stale";
+    state.transport.wsState.value = "stale";
 
     const module = createUiShellStatusModule({
       realtime: state.realtime,
@@ -428,13 +428,13 @@ test.describe("createUiShellStatusModule", () => {
       variant: "muted",
     });
 
-    state.transport.wsState = "stale";
+    state.transport.wsState.value = "stale";
     expect(module.wsLinkState.value).toEqual({
       text: "ws.stale",
       variant: "bad",
     });
 
-    state.transport.payloadError = "bad frame";
+    state.transport.payloadError.value = "bad frame";
     expect(module.wsLinkState.value).toEqual({
       text: "ws.payload_error_pill",
       variant: "bad",
@@ -447,7 +447,7 @@ test.describe("createUiShellStatusModule", () => {
       realtime: state.realtime,
       settings: state.settings,
       shell: state.shell,
-      t: (key) => `${state.shell.lang}:${key}`,
+      t: (key) => `${state.shell.lang.value}:${key}`,
       transport: state.transport,
     });
 
@@ -456,7 +456,7 @@ test.describe("createUiShellStatusModule", () => {
       variant: "muted",
     });
 
-    state.shell.lang = "nl";
+    state.shell.lang.value = "nl";
 
     expect(module.wsLinkState.value).toEqual({
       text: "nl:ws.connecting",
@@ -466,13 +466,13 @@ test.describe("createUiShellStatusModule", () => {
 
   test("renders speed override after car bootstrap resolves", () => {
     const state = createAppState();
-    state.realtime.speedMps = 12;
-    state.settings.speedSource = "manual";
-    state.settings.manualSpeedKph = 43.2;
-    state.shell.speedUnit = "kmh";
-    state.settings.carsLoaded = true;
-    state.settings.cars = [];
-    state.settings.activeCarId = null;
+    state.realtime.speedMps.value = 12;
+    state.settings.speedSource.value = "manual";
+    state.settings.manualSpeedKph.value = 43.2;
+    state.shell.speedUnit.value = "kmh";
+    state.settings.carsLoaded.value = true;
+    state.settings.cars.value = [];
+    state.settings.activeCarId.value = null;
 
     const module = createUiShellStatusModule({
       realtime: state.realtime,
@@ -488,10 +488,10 @@ test.describe("createUiShellStatusModule", () => {
 
   test("renders OBD2 when OBD2 is the resolved speed source", () => {
     const state = createAppState();
-    state.realtime.speedMps = 22.5;
-    state.settings.speedSource = "obd2";
-    state.settings.resolvedSpeedSource = "obd2";
-    state.shell.speedUnit = "kmh";
+    state.realtime.speedMps.value = 22.5;
+    state.settings.speedSource.value = "obd2";
+    state.settings.resolvedSpeedSource.value = "obd2";
+    state.shell.speedUnit.value = "kmh";
 
     const module = createUiShellStatusModule({
       realtime: state.realtime,

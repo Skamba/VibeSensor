@@ -8,7 +8,7 @@ import {
   isManualLikeSpeedSource,
   resolveEffectiveSpeedSource,
   type DisplayedSpeedSourceMode,
-  type SpeedSourceStateSource,
+  type SpeedSourceStateSnapshot,
 } from "../speed_source_state";
 import type {
   SpeedSourceChoiceCardRenderModel,
@@ -20,7 +20,7 @@ import type {
 import type { SettingsFeedbackMessage } from "./settings_feedback";
 
 export interface SettingsSpeedSourceSettingsSnapshot
-  extends SpeedSourceStateSource {
+  extends SpeedSourceStateSnapshot {
   gpsFallbackActive: boolean;
   gpsEffectiveSpeedKph: number | null;
   obdDeviceMac: string | null;

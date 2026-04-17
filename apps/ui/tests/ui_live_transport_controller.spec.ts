@@ -83,14 +83,14 @@ test.describe("UiLiveTransportController", () => {
   test("applies queued transport payloads through shared state without transport ports", async () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
-    state.transport.ws = {
+    state.transport.ws.value = {
       uiState: signal("connecting"),
       close() {},
       connect() {},
       send(selection: { client_id: string | null }) {
         sentSelections.push(selection);
       },
-    } as unknown as typeof state.transport.ws;
+    } as typeof state.transport.ws.value;
 
     new UiLiveTransportController({
       state,
@@ -99,7 +99,7 @@ test.describe("UiLiveTransportController", () => {
 
     const raf = installRafHarness();
     try {
-      state.transport.pendingPayload = makeLivePayload({
+      state.transport.pendingPayload.value = makeLivePayload({
         clients: [makeClient("client-1")],
         speed_mps: 12,
       });
@@ -107,10 +107,10 @@ test.describe("UiLiveTransportController", () => {
       raf.flushNext();
       await flushAsyncWork();
 
-      expect(state.transport.pendingPayload).toBeNull();
-      expect(state.realtime.clients.map((client) => client.id)).toEqual(["client-1"]);
-      expect(state.realtime.selectedClientId).toBe("client-1");
-      expect(state.realtime.speedMps).toBe(12);
+      expect(state.transport.pendingPayload.value).toBeNull();
+      expect(state.realtime.clients.value.map((client) => client.id)).toEqual(["client-1"]);
+      expect(state.realtime.selectedClientId.value).toBe("client-1");
+      expect(state.realtime.speedMps.value).toBe(12);
       expect(sentSelections).toEqual([{ client_id: "client-1" }]);
     } finally {
       raf.restore();
@@ -121,15 +121,15 @@ test.describe("UiLiveTransportController", () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
     const wsUiState = signal("connecting");
-    state.transport.ws = {
+    state.transport.ws.value = {
       uiState: wsUiState,
       close() {},
       connect() {},
       send(selection: { client_id: string | null }) {
         sentSelections.push(selection);
       },
-    } as unknown as typeof state.transport.ws;
-    state.realtime.selectedClientId = "client-7";
+    } as typeof state.transport.ws.value;
+    state.realtime.selectedClientId.value = "client-7";
 
     new UiLiveTransportController({
       state,
@@ -152,12 +152,12 @@ test.describe("UiLiveTransportController", () => {
   test("mirrors ws client uiState into the transport slice", async () => {
     const state = createAppState();
     const wsUiState = signal("connecting");
-    state.transport.ws = {
+    state.transport.ws.value = {
       uiState: wsUiState,
       close() {},
       connect() {},
       send() {},
-    } as unknown as typeof state.transport.ws;
+    } as typeof state.transport.ws.value;
 
     new UiLiveTransportController({
       state,
@@ -166,11 +166,11 @@ test.describe("UiLiveTransportController", () => {
 
     wsUiState.value = "no_data";
     await flushAsyncWork();
-    expect(state.transport.wsState).toBe("no_data");
+    expect(state.transport.wsState.value).toBe("no_data");
 
     wsUiState.value = "connected";
     await flushAsyncWork();
-    expect(state.transport.wsState).toBe("connected");
+    expect(state.transport.wsState.value).toBe("connected");
   });
 
   test("applies payloads without requiring feature-port attachment", () => {
@@ -181,7 +181,7 @@ test.describe("UiLiveTransportController", () => {
     });
 
     expect(() => applyPayload(controller, makeLivePayload())).not.toThrow();
-    expect(state.realtime.speedMps).toBe(10);
+    expect(state.realtime.speedMps.value).toBe(10);
   });
 
   test("routes demo mode through the shared queued transport pipeline", async () => {
@@ -196,18 +196,18 @@ test.describe("UiLiveTransportController", () => {
       controller.startTransportMode();
       await flushAsyncWork();
 
-      expect(state.transport.wsState).toBe("connected");
-      expect(state.transport.hasReceivedPayload).toBe(true);
-      expect(state.transport.pendingPayload).not.toBeNull();
+      expect(state.transport.wsState.value).toBe("connected");
+      expect(state.transport.hasReceivedPayload.value).toBe(true);
+      expect(state.transport.pendingPayload.value).not.toBeNull();
 
       raf.flushNext();
       await flushAsyncWork();
 
-      expect(state.transport.pendingPayload).toBeNull();
-      expect(state.realtime.clients).toHaveLength(5);
-      expect(state.realtime.selectedClientId).toBe("aabbcc001122");
-      expect(state.realtime.speedMps).toBe(22.2);
-      expect(state.spectrum.hasSpectrumData).toBe(true);
+      expect(state.transport.pendingPayload.value).toBeNull();
+      expect(state.realtime.clients.value).toHaveLength(5);
+      expect(state.realtime.selectedClientId.value).toBe("aabbcc001122");
+      expect(state.realtime.speedMps.value).toBe(22.2);
+      expect(state.spectrum.hasSpectrumData.value).toBe(true);
     } finally {
       restoreLocation();
       raf.restore();

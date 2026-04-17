@@ -23,13 +23,15 @@ function normalizeActiveViewId(viewId: string, viewIds: readonly string[]): stri
 export function createUiShellNavigationModule(
   deps: UiShellNavigationDeps,
 ): UiShellNavigationModule {
-  const activeViewId = signal(normalizeActiveViewId(deps.shell.activeViewId, deps.viewIds));
+  const activeViewId = signal(
+    normalizeActiveViewId(deps.shell.activeViewId.value, deps.viewIds),
+  );
   let pendingActivationToken = 0;
-  deps.shell.activeViewId = activeViewId.value;
+  deps.shell.activeViewId.value = activeViewId.value;
 
   const applyActiveView = (nextViewId: string): void => {
     activeViewId.value = nextViewId;
-    deps.shell.activeViewId = nextViewId;
+    deps.shell.activeViewId.value = nextViewId;
     if (nextViewId === DEFAULT_SHELL_VIEW_ID) {
       deps.onDashboardViewActivated?.();
     }

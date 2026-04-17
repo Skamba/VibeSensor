@@ -11,7 +11,6 @@ import type {
   ShellState,
   SpectrumState,
 } from "../ui_app_state";
-import { trackAppStateSlice } from "../ui_app_state";
 import { computed, type ReadonlySignal } from "../ui_signals";
 
 export type ActiveCarDisplayState = {
@@ -70,7 +69,7 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
   }
 
   function locationLabel(code: string): string {
-    return locationLabelForLang(shell.lang, code);
+    return locationLabelForLang(shell.lang.value, code);
   }
 
   function buildLocationOptions(codes: readonly string[]): LocationOption[] {
@@ -78,20 +77,19 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
   }
 
   const locationOptions = computed<LocationOption[]>(() => {
-    trackAppStateSlice(realtime);
-    return buildLocationOptions(realtime.locationCodes);
+    return buildLocationOptions(realtime.locationCodes.value);
   });
 
   function locationCodeForClient(client: AdaptedClient): string {
     const explicitCode = String(client.location_code || "").trim();
-    if (explicitCode && realtime.locationCodes.includes(explicitCode)) return explicitCode;
+    if (explicitCode && realtime.locationCodes.value.includes(explicitCode)) return explicitCode;
     const name = String(client.name || "").trim();
     if (!name) return "";
     const normalizedName = name.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
     for (const [token, code] of Object.entries(SHORTHAND_LOCATION_MAP)) {
-      if (normalizedName.includes(token) && realtime.locationCodes.includes(code)) return code;
+      if (normalizedName.includes(token) && realtime.locationCodes.value.includes(code)) return code;
     }
-    for (const code of realtime.locationCodes) {
+    for (const code of realtime.locationCodes.value) {
       const labels = I18N.getForAllLangs(`location.${code}`);
       if (labels.some((label) => label === name)) return code;
     }
@@ -113,22 +111,18 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
   }
 
   const connectedClients = computed<AdaptedClient[]>(() => {
-    trackAppStateSlice(realtime);
-    return realtime.clients.filter((client) => Boolean(client.connected));
+    return realtime.clients.value.filter((client) => Boolean(client.connected));
   });
 
   const assignedClientCount = computed(() => {
-    trackAppStateSlice(realtime);
-    return realtime.clients.filter((client) => locationCodeForClient(client)).length;
+    return realtime.clients.value.filter((client) => locationCodeForClient(client)).length;
   });
 
   const strongestSignal = computed<{ client: AdaptedClient; db: number } | null>(() => {
-    trackAppStateSlice(realtime);
-    trackAppStateSlice(spectrum);
     let bestClient: AdaptedClient | null = null;
     let bestDb = Number.NEGATIVE_INFINITY;
     for (const client of connectedClients.value) {
-      const db = spectrum.spectra.clients[client.id]?.strength_metrics?.vibration_strength_db;
+      const db = spectrum.spectra.value.clients[client.id]?.strength_metrics?.vibration_strength_db;
       if (typeof db !== "number" || !Number.isFinite(db)) continue;
       if (db > bestDb) {
         bestDb = db;
@@ -145,7 +139,6 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
   });
 
   const strongestSignalText = computed(() => {
-    trackAppStateSlice(realtime);
     const signal = strongestSignal.value;
     if (!signal) {
       return t("dashboard.strongest_signal_none");
@@ -183,12 +176,12 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
   );
 
   const liveHealth = computed<LiveHealth>(() => {
-    trackAppStateSlice(realtime);
-    if (realtime.loggingStatus.write_error) {
+    const loggingStatus = realtime.loggingStatus.value;
+    if (loggingStatus.write_error) {
       return {
         variant: "bad",
         text: t("dashboard.health.write_error"),
-        summary: realtime.loggingStatus.write_error,
+        summary: loggingStatus.write_error,
         showOverviewPill: true,
       };
     }
@@ -227,7 +220,7 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
         showOverviewPill: true,
       };
     }
-    const offlineCount = realtime.clients.filter((client) => !client.connected).length;
+    const offlineCount = realtime.clients.value.filter((client) => !client.connected).length;
     if (offlineCount > 0) {
       return {
         variant: "warn",
@@ -238,7 +231,7 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
     }
     const connectedCount = formatInt(connected.length);
     const assignedCount = formatInt(assignedClientCount.value);
-    if (realtime.loggingStatus.enabled) {
+    if (loggingStatus.enabled) {
       return {
         variant: "ok",
         text: t("dashboard.health.recording"),
@@ -246,7 +239,7 @@ export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): Realtim
         showOverviewPill: false,
       };
     }
-    const captureReadiness = realtime.loggingStatus.capture_readiness ?? null;
+    const captureReadiness = loggingStatus.capture_readiness ?? null;
     if (captureReadiness && !captureReadiness.is_ready) {
       return {
         variant: "warn",

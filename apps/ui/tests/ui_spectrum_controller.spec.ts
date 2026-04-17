@@ -55,8 +55,8 @@ test.describe("UiSpectrumController", () => {
     try {
       const UiSpectrumController = await importUiSpectrumController();
       const state = createAppState();
-      state.transport.wsState = "connecting";
-      state.transport.hasReceivedPayload = false;
+      state.transport.wsState.value = "connecting";
+      state.transport.hasReceivedPayload.value = false;
       const panel = createPanelStub();
 
       new UiSpectrumController({
@@ -76,8 +76,8 @@ test.describe("UiSpectrumController", () => {
     try {
       const UiSpectrumController = await importUiSpectrumController();
       const state = createAppState();
-      state.transport.wsState = "connecting";
-      state.transport.hasReceivedPayload = false;
+      state.transport.wsState.value = "connecting";
+      state.transport.hasReceivedPayload.value = false;
       const panel = createPanelStub();
 
       new UiSpectrumController({
@@ -86,7 +86,7 @@ test.describe("UiSpectrumController", () => {
         t: (key) => key,
       });
 
-      state.transport.wsState = "stale";
+      state.transport.wsState.value = "stale";
 
       expect(panel.lastOverlayMessage).toBe("spectrum.stale");
     } finally {
@@ -116,8 +116,8 @@ test.describe("UiSpectrumController", () => {
       };
 
       batch(() => {
-        state.spectrum.spectra = { ...state.spectrum.spectra };
-        state.transport.wsState = "stale";
+        state.spectrum.spectra.value = { ...state.spectrum.spectra.value };
+        state.transport.wsState.value = "stale";
       });
 
       expect(renderCalls).toBe(1);
@@ -132,10 +132,10 @@ test.describe("UiSpectrumController", () => {
     try {
       const UiSpectrumController = await importUiSpectrumController();
       const state = createAppState();
-      state.transport.wsState = "connected";
-      state.transport.hasReceivedPayload = true;
-      state.spectrum.hasSpectrumData = true;
-      state.spectrum.chartLoading = true;
+      state.transport.wsState.value = "connected";
+      state.transport.hasReceivedPayload.value = true;
+      state.spectrum.hasSpectrumData.value = true;
+      state.spectrum.chartLoading.value = true;
       const panel = createPanelStub();
 
       new UiSpectrumController({
@@ -155,10 +155,10 @@ test.describe("UiSpectrumController", () => {
     try {
       const UiSpectrumController = await importUiSpectrumController();
       const state = createAppState();
-      state.transport.wsState = "connected";
-      state.transport.hasReceivedPayload = true;
-      state.spectrum.hasSpectrumData = true;
-      state.spectrum.chartLoadErrorDetail = "chunk timeout";
+      state.transport.wsState.value = "connected";
+      state.transport.hasReceivedPayload.value = true;
+      state.spectrum.hasSpectrumData.value = true;
+      state.spectrum.chartLoadErrorDetail.value = "chunk timeout";
       const panel = createPanelStub();
 
       new UiSpectrumController({
@@ -183,13 +183,13 @@ test.describe("UiSpectrumController", () => {
     try {
       const UiSpectrumController = await importUiSpectrumController();
       const state = createAppState();
-      state.transport.wsState = "stale";
+      state.transport.wsState.value = "stale";
       const panel = createPanelStub();
 
       new UiSpectrumController({
         state,
         panel: panel.panel,
-        t: (key) => `${state.shell.lang}:${key}`,
+        t: (key) => `${state.shell.lang.value}:${key}`,
       });
 
       expect(panel.lastHeaderModel).toEqual({
@@ -198,7 +198,7 @@ test.describe("UiSpectrumController", () => {
       });
       expect(panel.lastOverlayMessage).toBe("en:spectrum.stale");
 
-      state.shell.lang = "nl";
+      state.shell.lang.value = "nl";
 
       expect(panel.lastHeaderModel).toEqual({
         titleText: "nl:chart.spectrum_title",

@@ -123,7 +123,7 @@ export function createAppFeatureBundle(
   });
 
   const carCreation = createUiCarCreationCommand({
-    getVehicleSettings: () => state.settings.vehicleSettings,
+    getVehicleSettings: () => state.settings.vehicleSettings.value,
     syncCarsPayload: (payload) => settings.syncCarsPayload(payload),
     syncActiveCarToInputs: () => settings.syncActiveCarToInputs(),
     showCarCreationSuccess: (carId, carName) =>

@@ -68,12 +68,13 @@ function copyActiveCarAspects(
   if (!car?.aspects || typeof car.aspects !== "object") {
     return;
   }
+  const nextVehicleSettings = { ...settings.vehicleSettings.value };
   for (const [key, value] of Object.entries(car.aspects)) {
-    if (typeof value === "number" && key in settings.vehicleSettings) {
-      settings.vehicleSettings[key as keyof SettingsState["vehicleSettings"]] =
-        value;
+    if (typeof value === "number" && key in nextVehicleSettings) {
+      nextVehicleSettings[key as keyof typeof nextVehicleSettings] = value;
     }
   }
+  settings.vehicleSettings.value = nextVehicleSettings;
 }
 
 export function createSettingsCarsModule(
@@ -111,8 +112,8 @@ export function createSettingsCarsModule(
       table: carSelectionState.kind === "loading"
         ? null
         : buildSettingsCarListRenderModel({
-          activeCarId: settings.activeCarId,
-          cars: settings.cars,
+          activeCarId: settings.activeCarId.value,
+          cars: settings.cars.value,
           highlightedCarId: highlightedCar.value?.carId ?? null,
           fmt: formatting.fmt,
           t,
@@ -137,23 +138,23 @@ export function createSettingsCarsModule(
   }
 
   function syncCarsPayload(payload: CarsPayload): void {
-    settings.cars = payload.cars;
-    settings.carsLoaded = true;
+    settings.cars.value = payload.cars;
+    settings.carsLoaded.value = true;
     const requestedActiveCarId = payload.active_car_id;
     const hasRequestedActive = requestedActiveCarId
-      ? settings.cars.some((car) => car.id === requestedActiveCarId)
+      ? settings.cars.value.some((car) => car.id === requestedActiveCarId)
       : false;
-    settings.activeCarId = hasRequestedActive ? requestedActiveCarId : null;
+    settings.activeCarId.value = hasRequestedActive ? requestedActiveCarId : null;
     if (
       highlightedCar.value
-      && !settings.cars.some((car) => car.id === highlightedCar.value?.carId)
+      && !settings.cars.value.some((car) => car.id === highlightedCar.value?.carId)
     ) {
       highlightedCar.value = null;
     }
   }
 
   function findCar(carId: string): CarRecord | null {
-    return settings.cars.find((entry) => entry.id === carId) ?? null;
+    return settings.cars.value.find((entry) => entry.id === carId) ?? null;
   }
 
   function syncActiveCarToInputs(): void {
@@ -203,7 +204,7 @@ export function createSettingsCarsModule(
       return;
     }
     try {
-      if (car.id !== settings.activeCarId) {
+      if (car.id !== settings.activeCarId.value) {
         syncCarsPayload(await transport.activateCar(carId));
         syncActiveCarToInputs();
         ctx.ports.renderSpectrum();
