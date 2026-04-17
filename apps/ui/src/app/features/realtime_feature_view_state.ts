@@ -299,7 +299,6 @@ export function createRealtimeFeatureViewState(
 
   const loggingPanelBaseModel = computed(() => {
     trackAppStateSlice(realtime);
-    trackAppStateSlice(shell);
     const loggingStatus = realtime.loggingStatus;
     const pendingLoggingAction = workflow.pendingLoggingAction.value;
     const liveHealth = sensorState.liveHealth.value;
@@ -327,7 +326,6 @@ export function createRealtimeFeatureViewState(
 
   const liveOverviewModel = computed<RealtimeLiveOverviewRenderModel>(() => {
     trackAppStateSlice(realtime);
-    trackAppStateSlice(shell);
     const connectedClients = sensorState.connectedClients.value;
     const strongestSignal = sensorState.strongestSignal.value;
     const strongestSignalText = sensorState.strongestSignalText.value;
@@ -360,7 +358,6 @@ export function createRealtimeFeatureViewState(
   });
 
   const loggingPanelModel = computed<RealtimeLoggingPanelRenderModel>(() => {
-    trackAppStateSlice(shell);
     const baseModel = buildLoggingRenderModel(loggingPanelBaseModel.value);
     const loggingError = workflow.loggingError.value;
     if (loggingError === null) {
@@ -371,7 +368,6 @@ export function createRealtimeFeatureViewState(
 
   const sensorsPanelModel = computed<SensorsPanelRenderModel>(() => {
     trackAppStateSlice(realtime);
-    trackAppStateSlice(shell);
     return {
       table: buildRealtimeSensorTableRenderModel({
         clients: realtime.clients,
@@ -384,7 +380,6 @@ export function createRealtimeFeatureViewState(
   const idleCaptureReadinessSignature = computed(() => {
     trackAppStateSlice(realtime);
     trackAppStateSlice(settings);
-    trackAppStateSlice(shell);
     const clientsSignature = realtime.clients
       .map((client) =>
         [

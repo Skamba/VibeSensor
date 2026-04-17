@@ -9,6 +9,30 @@ import {
 import { effect } from "../src/app/ui_signals";
 
 test.describe("ui_app_state reactivity", () => {
+  test("tracks shell writes directly through field signals without slice tracking", () => {
+    const state = createAppState();
+    const seenShellState: string[] = [];
+
+    const dispose = effect(() => {
+      seenShellState.push(`${state.shell.lang}:${state.shell.speedUnit}:${state.shell.activeViewId}`);
+    });
+
+    expect(seenShellState).toEqual(["en:kmh:dashboardView"]);
+
+    batchAppStateUpdates(() => {
+      state.shell.lang = "nl";
+      state.shell.speedUnit = "mps";
+      state.shell.activeViewId = "historyView";
+    });
+
+    expect(seenShellState).toEqual([
+      "en:kmh:dashboardView",
+      "nl:mps:historyView",
+    ]);
+
+    dispose();
+  });
+
   test("tracks direct slice writes through a stable slice signal", () => {
     const state = createAppState();
     const seenStates: string[] = [];
