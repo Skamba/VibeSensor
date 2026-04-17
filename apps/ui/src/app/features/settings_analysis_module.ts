@@ -4,7 +4,11 @@ import type {
 } from "../../api/types";
 import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { FeatureServices } from "../feature_deps_base";
-import { defaultVehicleSettings, type SettingsState } from "../ui_app_state";
+import {
+  defaultVehicleSettings,
+  type SettingsState,
+  type VehicleSettings,
+} from "../ui_app_state";
 import { batch, computed, signal } from "../ui_signals";
 import type {
   AnalysisPanelFieldKey,
@@ -30,7 +34,7 @@ export const ANALYSIS_SETTING_KEYS = [
   "min_abs_band_hz",
   "max_band_half_width_pct",
   "tire_deflection_factor",
-] as const satisfies readonly (keyof AnalysisSettingsPayload)[];
+] as const satisfies readonly (keyof AnalysisSettingsPayload & keyof VehicleSettings)[];
 
 export interface SettingsAnalysisModuleDeps {
   panel: AnalysisPanelView;

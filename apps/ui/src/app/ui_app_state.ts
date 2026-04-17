@@ -162,7 +162,6 @@ export interface VehicleSettings {
   min_abs_band_hz: number;
   max_band_half_width_pct: number;
   tire_deflection_factor: number;
-  [key: string]: number;
 }
 
 export const defaultVehicleSettings: Readonly<VehicleSettings> = {

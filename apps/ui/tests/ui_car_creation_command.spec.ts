@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { createUiCarCreationCommand } from "../src/app/runtime/ui_car_creation_command";
 import type { CarUpsertRequest, CarsPayload } from "../src/api/types";
+import { defaultVehicleSettings } from "../src/app/ui_app_state";
 
 test.describe("createUiCarCreationCommand", () => {
   test("creates a car through the narrow runtime seam and preserves the activate-and-sync flow", async () => {
@@ -34,6 +35,7 @@ test.describe("createUiCarCreationCommand", () => {
     };
     const command = createUiCarCreationCommand({
       getVehicleSettings: () => ({
+        ...defaultVehicleSettings,
         tire_width_mm: 205,
         tire_aspect_pct: 55,
         rim_in: 16,
@@ -85,6 +87,7 @@ test.describe("createUiCarCreationCommand", () => {
         type: "SUV",
         variant: "Twin Motor",
         aspects: {
+          ...defaultVehicleSettings,
           tire_width_mm: 235,
           tire_aspect_pct: 45,
           rim_in: 19,
@@ -109,6 +112,7 @@ test.describe("createUiCarCreationCommand", () => {
     const lifecycleCalls: string[] = [];
     const command = createUiCarCreationCommand({
       getVehicleSettings: () => ({
+        ...defaultVehicleSettings,
         tire_width_mm: 205,
       }),
       syncCarsPayload: () => {
