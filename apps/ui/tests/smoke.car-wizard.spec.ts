@@ -9,6 +9,8 @@ import {
   requestPath,
 } from "./smoke.helpers";
 
+test.describe.configure({ timeout: 15_000 });
+
 async function fillControlledNumberInput(
   page: Page,
   selector: string,

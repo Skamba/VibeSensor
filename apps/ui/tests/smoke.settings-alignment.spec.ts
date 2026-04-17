@@ -8,6 +8,8 @@ import {
   requestPath,
 } from "./smoke.helpers";
 
+test.describe.configure({ timeout: 12_000 });
+
 const analysisSettingsPayload = {
   wheel_bandwidth_pct: 5,
   driveshaft_bandwidth_pct: 5,

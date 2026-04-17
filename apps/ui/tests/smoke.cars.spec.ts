@@ -11,6 +11,8 @@ import {
   requestPath,
 } from "./smoke.helpers";
 
+test.describe.configure({ timeout: 20_000 });
+
 test("dark mode warning pills use semantic theme tokens in Live and Cars", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
   await installCommonRoutes(page, {

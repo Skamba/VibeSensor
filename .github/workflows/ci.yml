@@ -271,6 +271,8 @@ jobs:
 
       - name: UI smoke tests
         working-directory: apps/ui
+        env:
+          PLAYWRIGHT_SMOKE_WORKERS: 4
         run: |
           npx playwright install chromium
           npm run test:smoke

@@ -7,6 +7,8 @@ import {
   installFakeWebSocket,
 } from "./smoke.helpers";
 
+test.describe.configure({ timeout: 12_000 });
+
 async function openSettings(page: Page): Promise<void> {
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({

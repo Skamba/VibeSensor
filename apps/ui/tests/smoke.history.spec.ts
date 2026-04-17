@@ -9,6 +9,8 @@ import {
   requestPath,
 } from "./smoke.helpers";
 
+test.describe.configure({ timeout: 15_000 });
+
 const historyListRun = {
   run_id: "run-001",
   status: "complete",
