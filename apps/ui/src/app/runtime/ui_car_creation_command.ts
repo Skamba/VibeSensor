@@ -1,8 +1,9 @@
 import { addSettingsCar as addSettingsCarApi, setActiveSettingsCar as setActiveSettingsCarApi } from "../../api";
 import type { CarUpsertRequest, CarsPayload } from "../../api/types";
+import type { VehicleSettings } from "../ui_app_state";
 
 export interface UiCarCreationCommandDeps {
-  getVehicleSettings: () => Record<string, number>;
+  getVehicleSettings: () => VehicleSettings;
   syncCarsPayload: (payload: CarsPayload) => void;
   syncActiveCarToInputs: () => void;
   showCarCreationSuccess?: (carId: string, carName: string) => void;
