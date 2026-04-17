@@ -285,4 +285,32 @@ test.describe("createUpdateFeaturePresenter", () => {
       transport: "wifi",
     });
   });
+
+  test("keeps the update panel model stable across password-only form edits", () => {
+    const renderState = signal({
+      internetStatus: makeInternet({
+        detected: true,
+        usable: true,
+        interface_name: "usb0",
+      }),
+      healthStatus: makeHealth(),
+      updateStatus: makeStatus(),
+      updateState: "idle" as const,
+      updateTransport: "wifi" as const,
+    });
+    const presenter = createUpdateFeaturePresenter({
+      renderState,
+      t,
+    });
+
+    const initialUpdatePanel = presenter.updatePanelModel.value;
+
+    presenter.setPasswordInput("secret");
+    expect(presenter.updatePanelModel.value).toBe(initialUpdatePanel);
+    expect(presenter.internetPanelModel.value.passwordInputValue).toBe("secret");
+
+    presenter.togglePassword();
+    expect(presenter.updatePanelModel.value).toBe(initialUpdatePanel);
+    expect(presenter.internetPanelModel.value.passwordInputType).toBe("text");
+  });
 });
