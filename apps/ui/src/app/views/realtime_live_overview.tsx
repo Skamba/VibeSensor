@@ -7,10 +7,7 @@ import {
   type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import {
-  type DeferredModelSignal,
-  useDeferredViewModel,
-} from "./view_model_binding";
+import { type DeferredModelSignal } from "./view_model_binding";
 
 export interface RealtimeLiveOverviewActiveCarModel {
   text: string;
@@ -194,7 +191,7 @@ function RealtimeLiveOverview(props: {
   const currentSpeedLabel = useUiText("dashboard.current_speed", "Current speed");
   const sensorCoverageLabel = useUiText("dashboard.sensor_coverage", "Sensor coverage");
   const noSensorsText = useUiText("settings.sensors.no_sensors", "No sensors yet.");
-  const model = useDeferredViewModel(props.model, DEFAULT_OVERVIEW_MODEL);
+  const model = useComputed(() => props.model.value?.value ?? DEFAULT_OVERVIEW_MODEL);
   const {
     activeCar,
     connectedSensorsText,
