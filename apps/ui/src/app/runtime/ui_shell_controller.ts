@@ -7,6 +7,7 @@ import {
   effect,
   signal,
   untracked,
+  type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
 import {
@@ -31,7 +32,7 @@ import {
 } from "./ui_shell_status_module";
 import type {
   UiShellBadgeModel,
-  UiShellChromeActionBridge,
+  UiShellChromeActions,
   UiShellChromeDialogModel,
   UiShellChromeNavigationModel,
   UiShellChromePreferencesModel,
@@ -48,7 +49,7 @@ import type { VisualVariant } from "../view_style_types";
 type UiShellControllerDeps = {
   bindFeatureHandlers: () => void;
   chrome: UiShellChromeView;
-  chromeActions: UiShellChromeActionBridge;
+  chromeActions: Signal<UiShellChromeActions>;
   liveOverview: RealtimeLiveOverviewBridge;
   onViewActivated?: (viewId: string) => Promise<void> | void;
   state: AppState;
@@ -127,13 +128,13 @@ export class UiShellController {
       t: (key, vars) => this.t(key, vars),
       normalizeLanguage: (lang) => I18N.normalizeLang(lang ?? ""),
     });
-    deps.chromeActions.attach({
+    deps.chromeActions.value = {
       activateView: (viewId) => this.setActiveView(viewId),
       cancelConfirmation: () => this.confirmation.cancel(),
       confirmConfirmation: () => this.confirmation.confirm(),
       saveLanguage: (lang) => this.preferences.saveLanguage(lang),
       saveSpeedUnit: (unit) => this.preferences.saveSpeedUnit(unit),
-    });
+    };
     this.navigationRenderModel = this.createNavigationRenderModel();
     this.preferencesRenderModel = this.createPreferencesRenderModel();
     this.statusRenderModel = this.createStatusRenderModel();

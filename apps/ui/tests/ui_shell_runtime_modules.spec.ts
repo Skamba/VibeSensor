@@ -3,7 +3,8 @@ import { expect, test } from "@playwright/test";
 import { createAppState } from "../src/app/ui_app_state";
 import { UiShellController } from "../src/app/runtime/ui_shell_controller";
 import {
-  createUiShellChromeActionBridge,
+  DEFAULT_UI_SHELL_CHROME_ACTIONS,
+  type UiShellChromeActions,
   type UiShellChromeDialogModel,
   type UiShellChromeNavigationModel,
   type UiShellChromePreferencesModel,
@@ -186,13 +187,32 @@ test.describe("UiShellController", () => {
     installWindowStub();
   });
 
+  test("publishes live shell actions through the provided signal", () => {
+    const state = createAppState();
+    const chrome = createChromeViewRecorder();
+    const chromeActions = signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS });
+    new UiShellController({
+      bindFeatureHandlers: () => undefined,
+      chrome: chrome.view,
+      chromeActions,
+      liveOverview: {
+        model: signal(null),
+        speedText: signal("--"),
+      },
+      state,
+    });
+
+    chromeActions.value.activateView("historyView");
+    expect(state.shell.activeViewId.value).toBe("historyView");
+  });
+
   test("routes live status updates through the status model only", () => {
     const state = createAppState();
     const chrome = createChromeViewRecorder();
     const controller = new UiShellController({
       bindFeatureHandlers: () => undefined,
       chrome: chrome.view,
-      chromeActions: createUiShellChromeActionBridge(),
+      chromeActions: signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS }),
       liveOverview: {
         model: signal(null),
         speedText: signal("--"),
@@ -231,7 +251,7 @@ test.describe("UiShellController", () => {
     const controller = new UiShellController({
       bindFeatureHandlers: () => undefined,
       chrome: chrome.view,
-      chromeActions: createUiShellChromeActionBridge(),
+      chromeActions: signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS }),
       liveOverview: {
         model: signal(null),
         speedText: signal("--"),
