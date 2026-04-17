@@ -1,4 +1,3 @@
-import { useMemo } from "preact/hooks";
 import {
   batch,
   computed,
@@ -37,16 +36,36 @@ type MutableSignalPropertyMap<
 export { batch, computed, effect, signal, untracked, useComputed, useSignal, useSignalEffect };
 export type { ReadonlySignal, Signal };
 
+const signalPropertiesCache = new WeakMap<object, WeakMap<object, object>>();
+
+function getOrCreateSignalPropertyMap<
+  T extends object,
+  const K extends readonly (keyof T & string)[],
+>(source: ReadonlySignal<T>, keys: K): SignalPropertyMap<T, K> {
+  const sourceCacheKey = source as object;
+  let sourceCache = signalPropertiesCache.get(sourceCacheKey);
+  if (!sourceCache) {
+    sourceCache = new WeakMap<object, object>();
+    signalPropertiesCache.set(sourceCacheKey, sourceCache);
+  }
+
+  const keysCacheKey = keys as object;
+  const cachedProperties = sourceCache.get(keysCacheKey);
+  if (cachedProperties) {
+    return cachedProperties as SignalPropertyMap<T, K>;
+  }
+
+  const properties = {} as MutableSignalPropertyMap<T, K>;
+  for (const key of keys) {
+    properties[key] = computed(() => source.value[key]);
+  }
+  sourceCache.set(keysCacheKey, properties);
+  return properties;
+}
+
 export function useSignalProperties<
   T extends object,
   const K extends readonly (keyof T & string)[],
 >(source: ReadonlySignal<T>, keys: K): SignalPropertyMap<T, K> {
-  const keysSignature = JSON.stringify(keys);
-  return useMemo(() => {
-    const properties = {} as MutableSignalPropertyMap<T, K>;
-    for (const key of keys) {
-      properties[key] = computed(() => source.value[key]);
-    }
-    return properties;
-  }, [source, keysSignature]);
+  return getOrCreateSignalPropertyMap(source, keys);
 }
