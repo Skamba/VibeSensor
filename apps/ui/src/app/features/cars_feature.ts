@@ -97,8 +97,8 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       await workflow.submitCustomModel(action.value);
       return;
     }
-    if (action.type === "manual-inputs-changed") {
-      workflow.handleManualInputsChanged(action.inputs);
+    if (action.type === "manual-input-changed") {
+      workflow.handleManualInputChanged(action.field, action.value);
       return;
     }
     await workflow.finishWizard();
