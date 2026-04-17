@@ -26,35 +26,36 @@ const PANEL_HOST_SPECS = {
     id: "settingsShellRoot",
     owner: "Settings shell",
   },
-  settings: {
-    cars: {
-      id: "carsPanelRoot",
-      owner: "Cars feature",
-    },
-    analysis: {
-      id: "analysisPanelRoot",
-      owner: "Analysis feature",
-    },
-    internet: {
-      id: "internetPanelRoot",
-      owner: "Internet settings",
-    },
-    update: {
-      id: "updatePanelRoot",
-      owner: "Update feature",
-    },
-    sensors: {
-      id: "sensorsPanelRoot",
-      owner: "Sensors feature",
-    },
-    speedSource: {
-      id: "speedSourcePanelRoot",
-      owner: "Speed source feature",
-    },
-    espFlash: {
-      id: "espFlashPanelRoot",
-      owner: "ESP flash feature",
-    },
+} as const;
+
+const SETTINGS_PANEL_HOST_SPECS = {
+  cars: {
+    id: "carsPanelRoot",
+    owner: "Cars feature",
+  },
+  analysis: {
+    id: "analysisPanelRoot",
+    owner: "Analysis feature",
+  },
+  internet: {
+    id: "internetPanelRoot",
+    owner: "Internet settings",
+  },
+  update: {
+    id: "updatePanelRoot",
+    owner: "Update feature",
+  },
+  sensors: {
+    id: "sensorsPanelRoot",
+    owner: "Sensors feature",
+  },
+  speedSource: {
+    id: "speedSourcePanelRoot",
+    owner: "Speed source feature",
+  },
+  espFlash: {
+    id: "espFlashPanelRoot",
+    owner: "ESP flash feature",
   },
 } as const;
 
@@ -66,7 +67,6 @@ export interface UiPanelHostRegistry {
   };
   history: HTMLElement;
   settingsShell: HTMLElement;
-  resolveSettingsPanels(): UiSettingsPanelHostRegistry;
 }
 
 export interface UiSettingsPanelHostRegistry {
@@ -91,15 +91,16 @@ export interface UiPanelHostRefs {
   };
   history: PanelHostRef<HTMLDivElement>;
   settingsShell: PanelHostRef<HTMLDivElement>;
-  settings: {
-    cars: PanelHostRef<HTMLDivElement>;
-    analysis: PanelHostRef<HTMLDivElement>;
-    internet: PanelHostRef<HTMLDivElement>;
-    update: PanelHostRef<HTMLDivElement>;
-    sensors: PanelHostRef<HTMLDivElement>;
-    speedSource: PanelHostRef<HTMLDivElement>;
-    espFlash: PanelHostRef<HTMLDivElement>;
-  };
+}
+
+export interface UiSettingsPanelHostRefs {
+  cars: PanelHostRef<HTMLDivElement>;
+  analysis: PanelHostRef<HTMLDivElement>;
+  internet: PanelHostRef<HTMLDivElement>;
+  update: PanelHostRef<HTMLDivElement>;
+  sensors: PanelHostRef<HTMLDivElement>;
+  speedSource: PanelHostRef<HTMLDivElement>;
+  espFlash: PanelHostRef<HTMLDivElement>;
 }
 
 function createPanelHostRef<T extends HTMLElement = HTMLDivElement>(): PanelHostRef<T> {
@@ -126,15 +127,18 @@ export function createUiPanelHostRefs(): UiPanelHostRefs {
     },
     history: createPanelHostRef(),
     settingsShell: createPanelHostRef(),
-    settings: {
-      cars: createPanelHostRef(),
-      analysis: createPanelHostRef(),
-      internet: createPanelHostRef(),
-      update: createPanelHostRef(),
-      sensors: createPanelHostRef(),
-      speedSource: createPanelHostRef(),
-      espFlash: createPanelHostRef(),
-    },
+  };
+}
+
+export function createUiSettingsPanelHostRefs(): UiSettingsPanelHostRefs {
+  return {
+    cars: createPanelHostRef(),
+    analysis: createPanelHostRef(),
+    internet: createPanelHostRef(),
+    update: createPanelHostRef(),
+    sensors: createPanelHostRef(),
+    speedSource: createPanelHostRef(),
+    espFlash: createPanelHostRef(),
   };
 }
 
@@ -150,19 +154,19 @@ export function resolveUiPanelHosts(panelHostRefs: UiPanelHostRefs): UiPanelHost
     },
     history: resolvePanelHost(panelHostRefs.history, PANEL_HOST_SPECS.history),
     settingsShell: resolvePanelHost(panelHostRefs.settingsShell, PANEL_HOST_SPECS.settingsShell),
-    resolveSettingsPanels() {
-      return {
-        cars: resolvePanelHost(panelHostRefs.settings.cars, PANEL_HOST_SPECS.settings.cars),
-        analysis: resolvePanelHost(panelHostRefs.settings.analysis, PANEL_HOST_SPECS.settings.analysis),
-        internet: resolvePanelHost(panelHostRefs.settings.internet, PANEL_HOST_SPECS.settings.internet),
-        update: resolvePanelHost(panelHostRefs.settings.update, PANEL_HOST_SPECS.settings.update),
-        sensors: resolvePanelHost(panelHostRefs.settings.sensors, PANEL_HOST_SPECS.settings.sensors),
-        speedSource: resolvePanelHost(
-          panelHostRefs.settings.speedSource,
-          PANEL_HOST_SPECS.settings.speedSource,
-        ),
-        espFlash: resolvePanelHost(panelHostRefs.settings.espFlash, PANEL_HOST_SPECS.settings.espFlash),
-      };
-    },
+  };
+}
+
+export function resolveUiSettingsPanelHosts(
+  panelHostRefs: UiSettingsPanelHostRefs,
+): UiSettingsPanelHostRegistry {
+  return {
+    cars: resolvePanelHost(panelHostRefs.cars, SETTINGS_PANEL_HOST_SPECS.cars),
+    analysis: resolvePanelHost(panelHostRefs.analysis, SETTINGS_PANEL_HOST_SPECS.analysis),
+    internet: resolvePanelHost(panelHostRefs.internet, SETTINGS_PANEL_HOST_SPECS.internet),
+    update: resolvePanelHost(panelHostRefs.update, SETTINGS_PANEL_HOST_SPECS.update),
+    sensors: resolvePanelHost(panelHostRefs.sensors, SETTINGS_PANEL_HOST_SPECS.sensors),
+    speedSource: resolvePanelHost(panelHostRefs.speedSource, SETTINGS_PANEL_HOST_SPECS.speedSource),
+    espFlash: resolvePanelHost(panelHostRefs.espFlash, SETTINGS_PANEL_HOST_SPECS.espFlash),
   };
 }
