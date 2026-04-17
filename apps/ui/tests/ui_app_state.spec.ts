@@ -1,10 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 import {
-  batchAppStateUpdates,
   createAppState,
 } from "../src/app/ui_app_state";
-import { effect } from "../src/app/ui_signals";
+import { batch, effect } from "../src/app/ui_signals";
 
 test.describe("ui_app_state reactivity", () => {
   test("tracks shell writes directly through field signals without slice tracking", () => {
@@ -19,7 +18,7 @@ test.describe("ui_app_state reactivity", () => {
 
     expect(seenShellState).toEqual(["en:kmh:dashboardView"]);
 
-    batchAppStateUpdates(() => {
+    batch(() => {
       state.shell.lang.value = "nl";
       state.shell.speedUnit.value = "mps";
       state.shell.activeViewId.value = "historyView";
@@ -116,7 +115,7 @@ test.describe("ui_app_state reactivity", () => {
 
     expect(seenSnapshots).toEqual(["connecting:false:null"]);
 
-    batchAppStateUpdates(() => {
+    batch(() => {
       state.transport.wsState.value = "connected";
       state.transport.hasReceivedPayload.value = true;
       state.transport.payloadError.value = "frame-error";

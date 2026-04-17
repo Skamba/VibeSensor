@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import { batchAppStateUpdates, createAppState } from "../src/app/ui_app_state";
+import { createAppState } from "../src/app/ui_app_state";
+import { batch } from "../src/app/ui_signals";
 import { createWsClient } from "../src/ws";
 import { installWindowGlobal } from "./async_test_helpers";
 
@@ -134,7 +135,7 @@ test.describe("createWsClient", () => {
       const client = createWsClient({
         url: "ws://example.test/ws",
         onMessage: (payload) => {
-          batchAppStateUpdates(() => {
+          batch(() => {
             state.transport.hasReceivedPayload.value = true;
             state.transport.pendingPayload.value = payload;
           });

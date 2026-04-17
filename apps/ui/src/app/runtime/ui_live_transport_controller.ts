@@ -4,10 +4,9 @@ import { runDemoMode } from "../demo_mode";
 import { createWsClient } from "../../ws";
 import {
   applyLivePayloadUpdate,
-  batchAppStateUpdates,
   type AppState,
 } from "../ui_app_state";
-import { effect, effectOnChange, untracked } from "../ui_signals";
+import { batch, effect, effectOnChange, untracked } from "../ui_signals";
 
 type UiLiveTransportControllerDeps = {
   state: AppState;
@@ -42,7 +41,7 @@ export class UiLiveTransportController {
       if (this.state.transport.wsState.value === nextWsState) {
         return;
       }
-      batchAppStateUpdates(() => {
+      batch(() => {
         this.state.transport.wsState.value = nextWsState;
       });
     });
@@ -87,7 +86,7 @@ export class UiLiveTransportController {
       }
       const payload = this.state.transport.pendingPayload.value;
       if (!payload) return;
-      batchAppStateUpdates(() => {
+      batch(() => {
         this.state.transport.pendingPayload.value = null;
         this.state.transport.lastRenderTsMs.value = now;
       });
@@ -100,7 +99,7 @@ export class UiLiveTransportController {
     try {
       adapted = adaptServerPayload(payload);
     } catch (error) {
-      batchAppStateUpdates(() => {
+      batch(() => {
         this.state.transport.payloadError.value =
           error instanceof Error ? error.message : this.payloadErrorMessage();
         this.state.spectrum.hasSpectrumData.value = false;
@@ -108,9 +107,10 @@ export class UiLiveTransportController {
       return;
     }
 
-    const update = batchAppStateUpdates(() => {
+    let update!: ReturnType<typeof applyLivePayloadUpdate>;
+    batch(() => {
       this.state.transport.payloadError.value = null;
-      return applyLivePayloadUpdate({
+      update = applyLivePayloadUpdate({
         realtime: this.state.realtime,
         spectrum: this.state.spectrum,
         adaptedPayload: adapted,
@@ -122,7 +122,7 @@ export class UiLiveTransportController {
   }
 
   private queueTransportPayload(payload: unknown): void {
-    batchAppStateUpdates(() => {
+    batch(() => {
       this.state.transport.wsState.value = "connected";
       this.state.transport.hasReceivedPayload.value = true;
       this.state.transport.pendingPayload.value = payload;
