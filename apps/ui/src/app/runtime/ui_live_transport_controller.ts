@@ -1,7 +1,7 @@
 import { adaptServerPayload } from "../../server_payload";
 import type { AdaptedPayload } from "../../transport/live_models";
 import { runDemoMode } from "../demo_mode";
-import { WsClient } from "../../ws";
+import { createWsClient } from "../../ws";
 import {
   applyLivePayloadUpdate,
   batchAppStateUpdates,
@@ -34,6 +34,21 @@ export class UiLiveTransportController {
   }
 
   private bindTransportSignalSync(): void {
+    effect(() => {
+      trackAppStateSlice(this.state.transport);
+      const ws = this.state.transport.ws;
+      if (!ws) {
+        return;
+      }
+      const nextWsState = ws.uiState.value;
+      if (this.state.transport.wsState === nextWsState) {
+        return;
+      }
+      batchAppStateUpdates(() => {
+        this.state.transport.wsState = nextWsState;
+      });
+    });
+
     let previousPendingPayload = unwrapAppStateValue(this.state.transport.pendingPayload);
     let pendingPayloadInitialized = false;
     effect(() => {
@@ -141,9 +156,12 @@ export class UiLiveTransportController {
 
   private connectWs(): void {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    this.state.transport.ws = new WsClient({
+    this.state.transport.ws = createWsClient({
       url: `${protocol}//${window.location.host}/ws`,
-      transport: this.state.transport,
+      onMessage: (payload) => {
+        this.state.transport.hasReceivedPayload = true;
+        this.state.transport.pendingPayload = payload;
+      },
     });
     this.state.transport.ws.connect();
   }
