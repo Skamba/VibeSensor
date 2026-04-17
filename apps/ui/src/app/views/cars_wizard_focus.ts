@@ -4,11 +4,22 @@ import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
 import { useSignalEffect, type ReadonlySignal } from "../ui_signals";
 import type { CarsWizardRenderModel } from "./car_wizard_view";
 
-export type CarsWizardOptionRefs = {
+export type CarsWizardFocusElements = {
+  addCarWizard: HTMLDivElement | null;
   brandOption: HTMLButtonElement | null;
+  closeButton: HTMLButtonElement | null;
+  customBrandInput: HTMLInputElement | null;
+  customModelInput: HTMLInputElement | null;
+  customTypeInput: HTMLInputElement | null;
+  finalDriveInput: HTMLInputElement | null;
   gearboxOption: HTMLButtonElement | null;
+  manualAddButton: HTMLButtonElement | null;
   modelOption: HTMLButtonElement | null;
+  rimInput: HTMLInputElement | null;
+  tireAspectInput: HTMLInputElement | null;
   tireOption: HTMLButtonElement | null;
+  tireWidthInput: HTMLInputElement | null;
+  topGearInput: HTMLInputElement | null;
   typeOption: HTMLButtonElement | null;
   variantOption: HTMLButtonElement | null;
 };
@@ -18,46 +29,46 @@ export type CarsWizardFocusRequest = {
   token: number;
 };
 
-type CarsWizardFocusRefs = {
-  closeButton: HTMLButtonElement | null;
-  customBrandInput: HTMLInputElement | null;
-  customModelInput: HTMLInputElement | null;
-  customTypeInput: HTMLInputElement | null;
-  finalDriveInput: HTMLInputElement | null;
-  manualAddButton: HTMLButtonElement | null;
-  optionRefs: CarsWizardOptionRefs;
-  rimInput: HTMLInputElement | null;
-  tireAspectInput: HTMLInputElement | null;
-  tireWidthInput: HTMLInputElement | null;
-  topGearInput: HTMLInputElement | null;
-};
-
 export type CarsWizardElementRefs = {
-  addCarWizardRef: { current: HTMLDivElement | null };
-  optionRefs: { current: CarsWizardOptionRefs };
-  wizardCloseBtnRef: { current: HTMLButtonElement | null };
-  wizardCustomBrandInputRef: { current: HTMLInputElement | null };
-  wizardCustomModelInputRef: { current: HTMLInputElement | null };
-  wizardCustomTypeInputRef: { current: HTMLInputElement | null };
-  wizardManualAddBtnRef: { current: HTMLButtonElement | null };
-  wizFinalDriveInputRef: { current: HTMLInputElement | null };
-  wizGearRatioInputRef: { current: HTMLInputElement | null };
-  wizRimInputRef: { current: HTMLInputElement | null };
-  wizTireAspectInputRef: { current: HTMLInputElement | null };
-  wizTireWidthInputRef: { current: HTMLInputElement | null };
+  elements: { current: CarsWizardFocusElements };
+  setElementRef: <Key extends keyof CarsWizardFocusElements>(
+    key: Key,
+  ) => (element: CarsWizardFocusElements[Key]) => void;
 };
 
 function focusElement(target: HTMLElement | null | undefined): void {
   target?.focus();
 }
 
+function createCarsWizardFocusElements(): CarsWizardFocusElements {
+  return {
+    addCarWizard: null,
+    brandOption: null,
+    closeButton: null,
+    customBrandInput: null,
+    customModelInput: null,
+    customTypeInput: null,
+    finalDriveInput: null,
+    gearboxOption: null,
+    manualAddButton: null,
+    modelOption: null,
+    rimInput: null,
+    tireAspectInput: null,
+    tireOption: null,
+    tireWidthInput: null,
+    topGearInput: null,
+    typeOption: null,
+    variantOption: null,
+  };
+}
+
 export function resolveWizardFocusTarget(
   target: CarsFeatureFocusTarget,
-  refs: CarsWizardFocusRefs,
+  refs: CarsWizardFocusElements,
 ): HTMLElement | null {
   switch (target) {
     case "brand-option":
-      return refs.optionRefs.brandOption ?? refs.customBrandInput;
+      return refs.brandOption ?? refs.customBrandInput;
     case "close":
       return refs.closeButton;
     case "custom-brand":
@@ -69,7 +80,7 @@ export function resolveWizardFocusTarget(
     case "finish":
       return refs.manualAddButton;
     case "gearbox-option":
-      return refs.optionRefs.gearboxOption ?? refs.manualAddButton;
+      return refs.gearboxOption ?? refs.manualAddButton;
     case "manual-final-drive":
       return refs.finalDriveInput;
     case "manual-rim":
@@ -81,13 +92,13 @@ export function resolveWizardFocusTarget(
     case "manual-top-gear":
       return refs.topGearInput;
     case "model-option":
-      return refs.optionRefs.modelOption ?? refs.customModelInput;
+      return refs.modelOption ?? refs.customModelInput;
     case "spec-selection":
-      return refs.optionRefs.tireOption ?? refs.optionRefs.gearboxOption ?? refs.tireWidthInput;
+      return refs.tireOption ?? refs.gearboxOption ?? refs.tireWidthInput;
     case "type-option":
-      return refs.optionRefs.typeOption ?? refs.customTypeInput;
+      return refs.typeOption ?? refs.customTypeInput;
     case "variant-option":
-      return refs.optionRefs.variantOption;
+      return refs.variantOption;
   }
 }
 
@@ -99,28 +110,14 @@ export function useCarsWizardFocusManager(props: {
   wizardRefs: CarsWizardElementRefs;
 } {
   const addCarButtonRef = useRef<HTMLButtonElement | null>(null);
-  const addCarWizardRef = useRef<HTMLDivElement | null>(null);
-  const wizardCloseBtnRef = useRef<HTMLButtonElement | null>(null);
-  const wizardCustomBrandInputRef = useRef<HTMLInputElement | null>(null);
-  const wizardCustomModelInputRef = useRef<HTMLInputElement | null>(null);
-  const wizardCustomTypeInputRef = useRef<HTMLInputElement | null>(null);
-  const wizardManualAddBtnRef = useRef<HTMLButtonElement | null>(null);
-  const wizFinalDriveInputRef = useRef<HTMLInputElement | null>(null);
-  const wizGearRatioInputRef = useRef<HTMLInputElement | null>(null);
-  const wizRimInputRef = useRef<HTMLInputElement | null>(null);
-  const wizTireAspectInputRef = useRef<HTMLInputElement | null>(null);
-  const wizTireWidthInputRef = useRef<HTMLInputElement | null>(null);
-  const optionRefs = useRef<CarsWizardOptionRefs>({
-    brandOption: null,
-    gearboxOption: null,
-    modelOption: null,
-    tireOption: null,
-    typeOption: null,
-    variantOption: null,
-  });
+  const elements = useRef<CarsWizardFocusElements>(createCarsWizardFocusElements());
   const lastReturnFocusTargetRef = useRef<HTMLElement | null>(null);
   const lastHandledFocusRequestTokenRef = useRef(0);
   const lastWizardOpenStateRef = useRef(props.state.value.wizardModel?.value.isOpen ?? false);
+
+  const setElementRef: CarsWizardElementRefs["setElementRef"] = (key) => (element) => {
+    elements.current[key] = element;
+  };
 
   useSignalEffect(() => {
     const isOpen = props.state.value.wizardModel?.value.isOpen ?? false;
@@ -132,8 +129,8 @@ export function useCarsWizardFocusManager(props: {
       lastReturnFocusTargetRef.current =
         activeElement && activeElement !== document.body ? activeElement : addCarButtonRef.current;
       queueMicrotask(() => {
-        if (addCarWizardRef.current) {
-          addCarWizardRef.current.scrollTop = 0;
+        if (elements.current.addCarWizard) {
+          elements.current.addCarWizard.scrollTop = 0;
         }
       });
     }
@@ -158,39 +155,15 @@ export function useCarsWizardFocusManager(props: {
     }
     lastHandledFocusRequestTokenRef.current = wizardFocusRequest.token;
     queueMicrotask(() => {
-      focusElement(
-        resolveWizardFocusTarget(wizardFocusRequest.target, {
-          closeButton: wizardCloseBtnRef.current,
-          customBrandInput: wizardCustomBrandInputRef.current,
-          customModelInput: wizardCustomModelInputRef.current,
-          customTypeInput: wizardCustomTypeInputRef.current,
-          finalDriveInput: wizFinalDriveInputRef.current,
-          manualAddButton: wizardManualAddBtnRef.current,
-          optionRefs: optionRefs.current,
-          rimInput: wizRimInputRef.current,
-          tireAspectInput: wizTireAspectInputRef.current,
-          tireWidthInput: wizTireWidthInputRef.current,
-          topGearInput: wizGearRatioInputRef.current,
-        }),
-      );
+      focusElement(resolveWizardFocusTarget(wizardFocusRequest.target, elements.current));
     });
   });
 
   return {
     addCarButtonRef,
     wizardRefs: {
-      addCarWizardRef,
-      optionRefs,
-      wizardCloseBtnRef,
-      wizardCustomBrandInputRef,
-      wizardCustomModelInputRef,
-      wizardCustomTypeInputRef,
-      wizardManualAddBtnRef,
-      wizFinalDriveInputRef,
-      wizGearRatioInputRef,
-      wizRimInputRef,
-      wizTireAspectInputRef,
-      wizTireWidthInputRef,
+      elements,
+      setElementRef,
     },
   };
 }
