@@ -77,8 +77,9 @@ export async function mountSettingsPanelsLazy(
     import("./views/esp_flash_panel"),
   ]);
   const { mountSettingsShell } = await settingsShellModulePromise;
-  const settingsShell = mountSettingsShell(hosts.settingsShell);
-  const settingsHosts = hosts.resolveSettingsPanels();
+  const settingsShellMount = mountSettingsShell(hosts.settingsShell);
+  const settingsShell = settingsShellMount.view;
+  const settingsHosts = settingsShellMount.panelHosts;
   const [
     { mountCarsPanel },
     { mountAnalysisPanel },

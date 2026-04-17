@@ -3,8 +3,11 @@ import { expect, test } from "@playwright/test";
 import { getUiShellChromeHost } from "../src/app/runtime/ui_shell_chrome";
 import {
   createUiPanelHostRefs,
+  createUiSettingsPanelHostRefs,
   resolveUiPanelHosts,
+  resolveUiSettingsPanelHosts,
   type UiPanelHostRefs,
+  type UiSettingsPanelHostRefs,
 } from "../src/app/ui_panel_host_registry";
 
 function stubElement(id = ""): HTMLElement {
@@ -57,26 +60,33 @@ function createPanelHostRefs(overrides: { missingId?: string } = {}): UiPanelHos
   if (overrides.missingId !== "settingsShellRoot") {
     panelHostRefs.settingsShell.current = stubElement("settingsShellRoot") as HTMLDivElement;
   }
+  return panelHostRefs;
+}
+
+function createSettingsPanelHostRefs(
+  overrides: { missingId?: string } = {},
+): UiSettingsPanelHostRefs {
+  const panelHostRefs = createUiSettingsPanelHostRefs();
   if (overrides.missingId !== "carsPanelRoot") {
-    panelHostRefs.settings.cars.current = stubElement("carsPanelRoot") as HTMLDivElement;
+    panelHostRefs.cars.current = stubElement("carsPanelRoot") as HTMLDivElement;
   }
   if (overrides.missingId !== "analysisPanelRoot") {
-    panelHostRefs.settings.analysis.current = stubElement("analysisPanelRoot") as HTMLDivElement;
+    panelHostRefs.analysis.current = stubElement("analysisPanelRoot") as HTMLDivElement;
   }
   if (overrides.missingId !== "internetPanelRoot") {
-    panelHostRefs.settings.internet.current = stubElement("internetPanelRoot") as HTMLDivElement;
+    panelHostRefs.internet.current = stubElement("internetPanelRoot") as HTMLDivElement;
   }
   if (overrides.missingId !== "updatePanelRoot") {
-    panelHostRefs.settings.update.current = stubElement("updatePanelRoot") as HTMLDivElement;
+    panelHostRefs.update.current = stubElement("updatePanelRoot") as HTMLDivElement;
   }
   if (overrides.missingId !== "espFlashPanelRoot") {
-    panelHostRefs.settings.espFlash.current = stubElement("espFlashPanelRoot") as HTMLDivElement;
+    panelHostRefs.espFlash.current = stubElement("espFlashPanelRoot") as HTMLDivElement;
   }
   if (overrides.missingId !== "sensorsPanelRoot") {
-    panelHostRefs.settings.sensors.current = stubElement("sensorsPanelRoot") as HTMLDivElement;
+    panelHostRefs.sensors.current = stubElement("sensorsPanelRoot") as HTMLDivElement;
   }
   if (overrides.missingId !== "speedSourcePanelRoot") {
-    panelHostRefs.settings.speedSource.current = stubElement("speedSourcePanelRoot") as HTMLDivElement;
+    panelHostRefs.speedSource.current = stubElement("speedSourcePanelRoot") as HTMLDivElement;
   }
   return panelHostRefs;
 }
@@ -109,7 +119,7 @@ test("shell chrome host and panel registry resolve the startup anchors", () => {
     expect(hosts.dashboard.logging.id).toBe("loggingPanelRoot");
     expect(hosts.history.id).toBe("historyPanelRoot");
     expect(hosts.settingsShell.id).toBe("settingsShellRoot");
-    const settingsHosts = hosts.resolveSettingsPanels();
+    const settingsHosts = resolveUiSettingsPanelHosts(createSettingsPanelHostRefs());
     expect(settingsHosts.cars.id).toBe("carsPanelRoot");
     expect(settingsHosts.analysis.id).toBe("analysisPanelRoot");
     expect(settingsHosts.internet.id).toBe("internetPanelRoot");
@@ -149,7 +159,7 @@ test.describe("runtime locator missing required feature anchors", () => {
     test(`fails when ${missingId} is missing from the settings panel registry`, () => {
       const restore = installDomFixture();
       try {
-        expect(() => resolveUiPanelHosts(createPanelHostRefs({ missingId })).resolveSettingsPanels()).toThrow(
+        expect(() => resolveUiSettingsPanelHosts(createSettingsPanelHostRefs({ missingId }))).toThrow(
           message,
         );
       } finally {

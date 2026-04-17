@@ -21,17 +21,6 @@ function createFakeHosts(): UiPanelHostRegistry {
     },
     history: fakeElement(),
     settingsShell: fakeElement(),
-    resolveSettingsPanels() {
-      return {
-        cars: fakeElement(),
-        analysis: fakeElement(),
-        internet: fakeElement(),
-        update: fakeElement(),
-        sensors: fakeElement(),
-        speedSource: fakeElement(),
-        espFlash: fakeElement(),
-      };
-    },
   };
 }
 
