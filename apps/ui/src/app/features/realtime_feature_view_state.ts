@@ -181,6 +181,20 @@ export function createRealtimeFeatureViewState(
     cachedLoggingElapsedTickInputs = nextTickInputs;
     return nextTickInputs;
   });
+  const loggingElapsedShouldTick = computed(() => {
+    const {
+      handlersBound,
+      loggingEnabled,
+      loggingStartTimeUtc,
+    } = loggingElapsedTickInputs.value;
+    return handlersBound && Boolean(loggingEnabled && loggingStartTimeUtc);
+  });
+  const loggingElapsedTimerStartTime = computed(() => {
+    if (!loggingElapsedShouldTick.value) {
+      return null;
+    }
+    return loggingElapsedTickInputs.value.loggingStartTimeUtc;
+  });
   const lastCompletedElapsedText = computed(() => {
     const loggingStatus = realtime.loggingStatus.value;
     if (loggingStatus.enabled) {
@@ -201,14 +215,12 @@ export function createRealtimeFeatureViewState(
   const loggingElapsedTimer = createReplaceableInterval();
 
   effect(() => {
-    const {
-      handlersBound,
-      loggingEnabled,
-      loggingStartTimeUtc,
-    } = loggingElapsedTickInputs.value;
-    const shouldTick =
-      handlersBound && Boolean(loggingEnabled && loggingStartTimeUtc);
-    if (!shouldTick) {
+    if (!loggingElapsedShouldTick.value) {
+      loggingElapsedTimer.clear();
+      return;
+    }
+    const loggingStartTimeUtc = loggingElapsedTimerStartTime.value;
+    if (!loggingStartTimeUtc) {
       loggingElapsedTimer.clear();
       return;
     }
