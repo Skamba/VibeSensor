@@ -1,4 +1,4 @@
-import { effect, type ReadonlySignal } from "../ui_signals";
+import { effect, signal, type ReadonlySignal } from "../ui_signals";
 import { createReplaceableTimeout } from "../timer_cleanup";
 
 export interface PollingController {
@@ -20,10 +20,10 @@ export function createPollingController(
 
   const pollTimer = createReplaceableTimeout();
   let pollGeneration = 0;
-  let pollingActive = false;
+  const pollingActive = signal(false);
 
   function schedulePoll(delayMs: number, generation: number): void {
-    if (!pollingActive || generation !== pollGeneration) return;
+    if (!pollingActive.value || generation !== pollGeneration) return;
     pollTimer.replace(() => {
       void runPoll(generation);
     }, delayMs);
@@ -39,21 +39,21 @@ export function createPollingController(
   }
 
   function restart(): void {
-    if (!pollingActive) return;
+    if (!pollingActive.value) return;
     pollGeneration += 1;
     pollTimer.clear();
     void runPoll(pollGeneration);
   }
 
   function start(): void {
-    if (pollingActive) return;
-    pollingActive = true;
+    if (pollingActive.value) return;
+    pollingActive.value = true;
     restart();
   }
 
   function stop(): void {
-    if (!pollingActive) return;
-    pollingActive = false;
+    if (!pollingActive.value) return;
+    pollingActive.value = false;
     pollGeneration += 1;
     pollTimer.clear();
   }
