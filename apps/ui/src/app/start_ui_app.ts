@@ -3,14 +3,15 @@ import { createAppState } from "./ui_app_state";
 import { UiAppRuntime } from "./ui_app_runtime";
 import { createLazyUiPanels } from "./ui_lazy_panels";
 import {
-  createUiShellChromeActionBridge,
+  DEFAULT_UI_SHELL_CHROME_ACTIONS,
   getUiShellChromeHost,
   mountUiShellChrome,
 } from "./runtime/ui_shell_chrome";
+import { signal } from "./ui_signals";
 
 export function startUiApp(): void {
   const state = createAppState();
-  const shellChromeActions = createUiShellChromeActionBridge();
+  const shellChromeActions = signal({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS });
   const shellChrome = mountUiShellChrome(getUiShellChromeHost(), shellChromeActions);
   const lazyPanels = createLazyUiPanels({ hosts: shellChrome.panelHosts });
   new UiAppRuntime({

@@ -9,8 +9,8 @@ import type { AppState } from "./ui_app_state";
 import { createAppState } from "./ui_app_state";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
 import {
-  createUiShellChromeActionBridge,
-  type UiShellChromeActionBridge,
+  DEFAULT_UI_SHELL_CHROME_ACTIONS,
+  type UiShellChromeActions,
   type UiShellChromeView,
 } from "./runtime/ui_shell_chrome";
 import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
@@ -18,13 +18,14 @@ import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
 import type { UiMountedPanels } from "./ui_panel_bootstrap";
+import { signal, type Signal } from "./ui_signals";
 
 export interface UiAppRuntimeDeps {
   shellChrome: UiShellChromeView;
   panels: UiMountedPanels;
   ensureViewPanels?: (viewId: string) => Promise<void> | void;
   state?: AppState;
-  shellChromeActions?: UiShellChromeActionBridge;
+  shellChromeActions?: Signal<UiShellChromeActions>;
 }
 
 function requireUiRuntimeDependency<T>(value: T | null, name: string): T {
@@ -89,7 +90,7 @@ export class UiAppRuntime {
   constructor(deps: UiAppRuntimeDeps) {
     const state = deps.state ?? createAppState();
     const shellChromeActions =
-      deps.shellChromeActions ?? createUiShellChromeActionBridge();
+      deps.shellChromeActions ?? signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS });
     let spectrum: UiSpectrumController | null = null;
     let shellBindings: AppFeatureBundle["shell"] | null = null;
     const shell = new UiShellController({
