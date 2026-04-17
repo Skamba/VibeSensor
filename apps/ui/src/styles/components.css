@@ -282,22 +282,6 @@ button[hidden],
   color: var(--pill-warn-text);
 }
 
-.matrix-tooltip {
-  position: fixed;
-  z-index: 50;
-  max-width: 320px;
-  display: none;
-  pointer-events: none;
-  background: var(--tooltip-bg);
-  color: var(--tooltip-fg);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-  font-size: 0.82rem;
-  line-height: 1.3;
-  white-space: pre-line;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-}
-
 .app-modal-layer {
   position: fixed;
   inset: 0;
