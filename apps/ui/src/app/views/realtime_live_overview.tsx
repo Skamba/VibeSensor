@@ -7,7 +7,7 @@ import {
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
-import { createBoundViewModel } from "./view_model_binding";
+import { createDeferredViewModel, useDeferredViewModel } from "./view_model_binding";
 
 export interface RealtimeLiveOverviewActiveCarModel {
   text: string;
@@ -175,7 +175,7 @@ function RealtimeLiveOverviewSensorRoster(props: {
 }
 
 function RealtimeLiveOverview(props: {
-  model: ReadonlySignal<RealtimeLiveOverviewRenderModel>;
+  model: ReadonlySignal<ReadonlySignal<RealtimeLiveOverviewRenderModel> | null>;
   speedText: ReadonlySignal<string>;
 }) {
   const titleText = useUiText("dashboard.live_overview", "Live overview");
@@ -191,6 +191,7 @@ function RealtimeLiveOverview(props: {
   const currentSpeedLabel = useUiText("dashboard.current_speed", "Current speed");
   const sensorCoverageLabel = useUiText("dashboard.sensor_coverage", "Sensor coverage");
   const noSensorsText = useUiText("settings.sensors.no_sensors", "No sensors yet.");
+  const model = useDeferredViewModel(props.model, DEFAULT_OVERVIEW_MODEL);
   const {
     activeCar,
     connectedSensorsText,
@@ -199,7 +200,7 @@ function RealtimeLiveOverview(props: {
     runHealth,
     sensorCards,
     strongestSignalText,
-  } = useSignalProperties(props.model, REALTIME_LIVE_OVERVIEW_MODEL_KEYS);
+  } = useSignalProperties(model, REALTIME_LIVE_OVERVIEW_MODEL_KEYS);
 
   return (
     <>
@@ -268,7 +269,7 @@ function RealtimeLiveOverview(props: {
 }
 
 export function mountRealtimeLiveOverview(host: HTMLElement): RealtimeLiveOverviewBridge {
-  const modelBinding = createBoundViewModel(DEFAULT_OVERVIEW_MODEL);
+  const modelBinding = createDeferredViewModel<RealtimeLiveOverviewRenderModel>();
   const speedText = signal(DEFAULT_OVERVIEW_STATE.speedText);
   render(<RealtimeLiveOverview model={modelBinding.model} speedText={speedText} />, host);
 
