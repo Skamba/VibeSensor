@@ -134,7 +134,9 @@ source-of-truth export commands remain the only writers for those files.
 | `app/features/history_download.ts` | Focused blob-download helper for the history PDF/report flow |
 | `app/views/esp_flash_feature_presenter.ts` | ESP flash presenter that derives typed panel models for the island-owned ESP flash bridge while leaving workflow state in the feature workflow |
 | `app/views/history_table_models.ts` | Typed row/detail/finding/heatmap view models that describe history table rendering without HTML fragments |
-| `app/views/history_table_presenters.ts` | Presenter builders that turn runs plus loaded insights/preview detail into typed history row and details models |
+| `app/views/history_heatmap_presenter.ts` | Heatmap presenter helpers that normalize location labels and turn preview intensity stats into typed history heatmap zones |
+| `app/views/history_detail_presenter.ts` | Expanded history detail presenter that builds typed findings, warnings, and heatmap-backed diagnosis sections |
+| `app/views/history_table_presenters.ts` | Top-level history row presenter that composes summary/collapsed row state and delegates expanded detail sections to focused history presenter modules |
 | `app/views/history_panel.tsx` | Signal-backed Preact owner for the history panel shell that renders summary/toolbar chrome and binds typed row actions through a semantic bridge |
 | `app/views/history_table_content.tsx` | History island JSX renderer that turns typed row/detail models into empty state, table rows, expanded evidence cards, and action affordances |
 | `app/views/history_table_view.ts` | Thin history-panel bridge that defines the typed empty/table render contract consumed by the Preact history island |
