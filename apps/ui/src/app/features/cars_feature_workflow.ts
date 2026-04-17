@@ -5,7 +5,6 @@ import type {
   CarLibraryVariant,
 } from "../../api/types";
 import {
-  cloneManualInputs,
   createCarsManualInputStore,
   firstMissingManualInputField,
   tireInputsFromOption,
@@ -225,9 +224,7 @@ export function createCarsFeatureWorkflow(
     variantOptions: variantOptions.value,
   }));
 
-  const manualInputRenderState = computed<CarsFeatureManualInputState>(() =>
-    cloneManualInputs(manualInputs.read())
-  );
+  const manualInputRenderState = computed<CarsFeatureManualInputState>(() => manualInputs.read());
 
   const wizardMetaRenderState = computed<CarsFeatureWizardMetaRenderState>(() => {
     const state = wizardState.value;
