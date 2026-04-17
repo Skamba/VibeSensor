@@ -152,18 +152,6 @@ function normalizeMenuIndex(index: number): number {
   return ((index % SHELL_NAV_ITEMS.length) + SHELL_NAV_ITEMS.length) % SHELL_NAV_ITEMS.length;
 }
 
-function focusMenuButton(
-  event: JSX.TargetedKeyboardEvent<HTMLButtonElement>,
-  nextIndex: number,
-): void {
-  const menu = event.currentTarget.closest(".menu");
-  if (!(menu instanceof HTMLElement)) {
-    return;
-  }
-  const buttons = Array.from(menu.querySelectorAll<HTMLButtonElement>(".menu-btn"));
-  buttons[normalizeMenuIndex(nextIndex)]?.focus();
-}
-
 function SettingsFeedbackSlot(props: {
   id: string;
   message: SettingsFeedbackMessage | null;
@@ -292,6 +280,7 @@ function UiShellChrome(props: UiShellChromeProps) {
   const model = props.model.value;
   const statusHidden = model.activeViewId === "dashboardView";
   const appErrorVariant = model.appErrorBanner.variant ?? undefined;
+  const menuButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useSignalEffect(() => {
     const lang = props.model.value.selectedLanguage;
@@ -301,6 +290,10 @@ function UiShellChrome(props: UiShellChromeProps) {
 
   function activateView(viewId: string): void {
     bridge.current.activateView(viewId);
+  }
+
+  function focusMenuButton(nextIndex: number): void {
+    menuButtonRefs.current[normalizeMenuIndex(nextIndex)]?.focus();
   }
 
   function handleMenuKeyDown(
@@ -316,27 +309,27 @@ function UiShellChrome(props: UiShellChromeProps) {
       event.preventDefault();
       const nextIndex = normalizeMenuIndex(index + 1);
       activateView(model.navItems[nextIndex].viewId);
-      focusMenuButton(event, nextIndex);
+      focusMenuButton(nextIndex);
       return;
     }
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       const nextIndex = normalizeMenuIndex(index - 1);
       activateView(model.navItems[nextIndex].viewId);
-      focusMenuButton(event, nextIndex);
+      focusMenuButton(nextIndex);
       return;
     }
     if (event.key === "Home") {
       event.preventDefault();
       activateView(model.navItems[0].viewId);
-      focusMenuButton(event, 0);
+      focusMenuButton(0);
       return;
     }
     if (event.key === "End") {
       event.preventDefault();
       const nextIndex = model.navItems.length - 1;
       activateView(model.navItems[nextIndex].viewId);
-      focusMenuButton(event, nextIndex);
+      focusMenuButton(nextIndex);
     }
   }
 
@@ -365,6 +358,7 @@ function UiShellChrome(props: UiShellChromeProps) {
                 return (
                   <button
                     key={item.viewId}
+                    ref={(el) => { menuButtonRefs.current[index] = el; }}
                     type="button"
                     class={isActive ? "menu-btn active" : "menu-btn"}
                     data-view={item.viewId}
