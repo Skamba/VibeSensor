@@ -180,7 +180,6 @@ export class UiSpectrumController {
       previousHasReceivedPayload = nextHasReceivedPayload;
       if (spectraChanged) {
         untracked(() => this.renderSpectrum());
-        return;
       }
       if (transportChanged) {
         untracked(() => this.updateSpectrumOverlay());

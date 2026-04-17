@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import type { SpectrumPanelView } from "../src/app/runtime/spectrum_panel_view";
 import { createAppState } from "../src/app/ui_app_state";
+import { batch } from "../src/app/ui_signals";
 import { installWindowGlobal } from "./async_test_helpers";
 import { createElementStub, installDocumentStub } from "./spectrum_test_support";
 
@@ -88,6 +89,39 @@ test.describe("UiSpectrumController", () => {
       state.transport.wsState = "stale";
 
       expect(panel.lastOverlayMessage).toBe("spectrum.stale");
+    } finally {
+      restoreDocument();
+    }
+  });
+
+  test("runs overlay sync when spectra and transport change in the same batch", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const UiSpectrumController = await importUiSpectrumController();
+      const state = createAppState();
+      const panel = createPanelStub();
+      const controller = new UiSpectrumController({
+        state,
+        panel: panel.panel,
+        t: (key) => key,
+      });
+      let renderCalls = 0;
+      let overlayCalls = 0;
+
+      controller.renderSpectrum = () => {
+        renderCalls += 1;
+      };
+      controller.updateSpectrumOverlay = () => {
+        overlayCalls += 1;
+      };
+
+      batch(() => {
+        state.spectrum.spectra = { ...state.spectrum.spectra };
+        state.transport.wsState = "stale";
+      });
+
+      expect(renderCalls).toBe(1);
+      expect(overlayCalls).toBe(1);
     } finally {
       restoreDocument();
     }
