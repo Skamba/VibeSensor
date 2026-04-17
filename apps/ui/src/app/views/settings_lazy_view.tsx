@@ -1,6 +1,20 @@
 import { render } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 
+import "../../styles/maintenance-cards.css";
+import "../../styles/maintenance-readiness.css";
+import "../../styles/maintenance-journey.css";
+import "../../styles/maintenance-details.css";
+import "../../styles/maintenance-layout.css";
+import "../../styles/settings-common.css";
+import "../../styles/settings-shell.css";
+import "../../styles/settings-transport.css";
+import "../../styles/settings-speed-source.css";
+import "../../styles/settings-cars.css";
+import "../../styles/settings-sensors.css";
+import "../../styles/settings-cars-wizard.css";
+import "../../styles/settings-adaptive.css";
+
 import {
   mountAnalysisPanel,
   type AnalysisPanelView,

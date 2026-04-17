@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { UiStartupCoordinator } from "../src/app/runtime/ui_startup_coordinator";
-import { flushAsyncWork } from "./async_test_helpers";
+import { flushAsyncWork, installWindowGlobal } from "./async_test_helpers";
 
 type Deferred<T> = {
   promise: Promise<T>;
@@ -97,51 +97,82 @@ function createCoordinatorHarness() {
   };
 }
 
+function installLocation(search: string): () => void {
+  const target = window as Window & typeof globalThis & { location?: Location };
+  const previousLocation = target.location;
+  target.location = {
+    search,
+    protocol: "http:",
+    host: "localhost",
+  } as Location;
+  return () => {
+    if (previousLocation === undefined) {
+      delete target.location;
+      return;
+    }
+    target.location = previousLocation;
+  };
+}
+
 test.describe("UiStartupCoordinator", () => {
+  test.beforeEach(() => {
+    installWindowGlobal();
+  });
+
   test("runs startup and background activity in the expected order", () => {
+    const restoreLocation = installLocation("");
     const harness = createCoordinatorHarness();
 
-    harness.coordinator.start();
+    try {
+      harness.coordinator.start();
 
-    expect(harness.calls).toEqual([
-      "shell.start:dashboardView",
-      "shell.hydratePersistedPreferences",
-      "realtime.refreshLocationOptions",
-      "settings.loadSpeedSourceFromServer",
-      "settings.loadAnalysisSettingsFromServer",
-      "settings.loadCarsFromServer",
-      "realtime.refreshLoggingStatus",
-      "history.refreshHistory",
-      "transport.startTransportMode",
-    ]);
+      expect(harness.calls).toEqual([
+        "shell.start:dashboardView",
+        "shell.hydratePersistedPreferences",
+        "realtime.refreshLocationOptions",
+        "settings.loadSpeedSourceFromServer",
+        "settings.loadAnalysisSettingsFromServer",
+        "settings.loadCarsFromServer",
+        "realtime.refreshLoggingStatus",
+        "history.refreshHistory",
+        "transport.startTransportMode",
+      ]);
+    } finally {
+      restoreLocation();
+    }
   });
 
   test("async startup failures warn without blocking later startup work", async () => {
+    const restoreLocation = installLocation("");
     const harness = createCoordinatorHarness();
     const hydrateError = new Error("hydrate failed");
     const historyError = new Error("history failed");
 
-    harness.coordinator.start();
-    harness.hydrate.reject(hydrateError);
-    harness.refreshHistory.reject(historyError);
-    harness.refreshLocationOptions.resolve();
-    harness.loadSpeedSource.resolve();
-    harness.loadAnalysisSettings.resolve();
-    harness.loadCars.resolve();
-    harness.refreshLoggingStatus.resolve();
+    try {
+      harness.coordinator.start();
+      harness.hydrate.reject(hydrateError);
+      harness.refreshHistory.reject(historyError);
+      harness.refreshLocationOptions.resolve();
+      harness.loadSpeedSource.resolve();
+      harness.loadAnalysisSettings.resolve();
+      harness.loadCars.resolve();
+      harness.refreshLoggingStatus.resolve();
 
-    await flushAsyncWork();
+      await flushAsyncWork();
 
-    expect(harness.calls).toContain("transport.startTransportMode");
-    expect(harness.warnings).toEqual([
-      {
-        message: "UI startup task failed: hydrate persisted preferences",
-        error: hydrateError,
-      },
-      {
-        message: "UI startup task failed: refresh history",
-        error: historyError,
-      },
-    ]);
+      expect(harness.calls).toContain("transport.startTransportMode");
+      expect(harness.warnings).toEqual([
+        {
+          message: "UI startup task failed: hydrate persisted preferences",
+          error: hydrateError,
+        },
+        {
+          message: "UI startup task failed: refresh history",
+          error: historyError,
+        },
+      ]);
+    } finally {
+      restoreLocation();
+    }
   });
 });

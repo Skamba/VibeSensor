@@ -26,13 +26,13 @@ test.describe("car selection derived state", () => {
     expect(derived.activeCar.value).toBeNull();
     expect(derived.hasResolvedActiveCar.value).toBe(false);
 
-    state.settings.carsLoaded = true;
+    state.settings.carsLoaded.value = true;
     expect(derived.selection.value).toEqual({ kind: "no_cars" });
 
-    state.settings.cars = [makeCar()];
+    state.settings.cars.value = [makeCar()];
     expect(derived.selection.value).toEqual({ kind: "no_active_car" });
 
-    state.settings.activeCarId = "car-1";
+    state.settings.activeCarId.value = "car-1";
     expect(derived.selection.value).toEqual({
       kind: "active",
       car: makeCar(),
@@ -40,7 +40,7 @@ test.describe("car selection derived state", () => {
     expect(derived.activeCar.value?.id).toBe("car-1");
     expect(derived.hasResolvedActiveCar.value).toBe(true);
 
-    state.settings.activeCarId = "missing";
+    state.settings.activeCarId.value = "missing";
     expect(derived.selection.value).toEqual({ kind: "no_active_car" });
     expect(derived.activeCar.value).toBeNull();
     expect(derived.hasResolvedActiveCar.value).toBe(false);

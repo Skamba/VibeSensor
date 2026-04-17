@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { batchAppStateUpdates, createAppState, unwrapAppStateValue } from "../src/app/ui_app_state";
+import { batchAppStateUpdates, createAppState } from "../src/app/ui_app_state";
 import { createWsClient } from "../src/ws";
 import { installWindowGlobal } from "./async_test_helpers";
 
@@ -135,8 +135,8 @@ test.describe("createWsClient", () => {
         url: "ws://example.test/ws",
         onMessage: (payload) => {
           batchAppStateUpdates(() => {
-            state.transport.hasReceivedPayload = true;
-            state.transport.pendingPayload = payload;
+            state.transport.hasReceivedPayload.value = true;
+            state.transport.pendingPayload.value = payload;
           });
         },
       });
@@ -159,8 +159,8 @@ test.describe("createWsClient", () => {
       socket?.emitMessage(payload);
 
       expect(client.uiState.value).toBe("connected");
-      expect(state.transport.hasReceivedPayload).toBe(true);
-      expect(unwrapAppStateValue(state.transport.pendingPayload)).toEqual(payload);
+      expect(state.transport.hasReceivedPayload.value).toBe(true);
+      expect(state.transport.pendingPayload.value).toEqual(payload);
 
       client.close();
     } finally {

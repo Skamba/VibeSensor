@@ -1,0 +1,20 @@
+@media (max-width: 980px) {
+  .settings-entity-table--cars td:nth-child(2) {
+    min-width: 15rem;
+  }
+
+  .car-row__setup {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .car-row__setup {
+    grid-template-columns: 1fr;
+  }
+
+  .car-list-actions,
+  .settings-sensor-row__actions {
+    justify-content: flex-start;
+  }
+}
