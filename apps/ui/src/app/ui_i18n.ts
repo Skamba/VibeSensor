@@ -19,16 +19,6 @@ export function setUiLanguage(lang: string): void {
   currentLanguage.value = normalizedLanguage;
 }
 
-export function useUiTranslation() {
-  const language = currentLanguage.value;
-
-  return (
-    key: string,
-    fallback: string,
-    vars?: Record<string, unknown>,
-  ): string => translate(language, key, vars) || fallback;
-}
-
 export function useUiText(
   key: string,
   fallback: string,

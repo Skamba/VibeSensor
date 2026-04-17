@@ -1,6 +1,6 @@
 import type { JSX } from "preact";
 
-import { useUiTranslation } from "../ui_i18n";
+import { getUiText as t } from "../ui_i18n";
 import {
   settingsFeedbackClassName,
   type SettingsFeedbackMessage,
@@ -75,7 +75,6 @@ function AnalysisField(props: {
   spec: AnalysisFieldSpec;
 }) {
   const { actions, model, onInputRef, spec } = props;
-  const t = useUiTranslation();
   return (
     <div class="field">
       <label htmlFor={spec.inputId}>
@@ -100,7 +99,6 @@ export function AnalysisGuidanceDialog(props: {
   guidanceHelpRef: { current: HTMLDetailsElement | null };
 }) {
   const { guidanceHelpRef } = props;
-  const t = useUiTranslation();
   return (
     <details
       id="analysisGuidanceHelp"
@@ -160,7 +158,6 @@ export function AnalysisFieldGroup(props: {
     titleFallback,
     titleKey,
   } = props;
-  const t = useUiTranslation();
   return (
     <section class="settings-group">
       <h3>

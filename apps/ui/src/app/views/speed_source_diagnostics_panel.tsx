@@ -1,4 +1,4 @@
-import { useUiTranslation } from "../ui_i18n";
+import { getUiText as t } from "../ui_i18n";
 import type {
   SpeedSourceDiagnosticsRenderModel,
   SpeedSourceGpsStatusRenderModel,
@@ -171,7 +171,6 @@ export function SpeedSourceDiagnosticsPanel(props: {
   onDiagnosticsToggle: (event: Event) => void;
 }) {
   const { diagnostics, diagnosticsDisclosureOpen, onDiagnosticsToggle } = props;
-  const t = useUiTranslation();
   return (
     <details
       id="speedSourceDiagnostics"

@@ -1,5 +1,5 @@
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
-import { useUiTranslation } from "../ui_i18n";
+import { getUiText as t } from "../ui_i18n";
 import {
   settingsFeedbackClassName,
   type SettingsFeedbackMessage,
@@ -82,7 +82,6 @@ function SpeedSourceSummarySection(props: {
   summary: SpeedSourcePanelRenderModel["summary"];
 }) {
   const { summary } = props;
-  const t = useUiTranslation();
   return (
     <div class="speed-source-summary">
       <div class="speed-source-summary__eyebrow">
@@ -197,7 +196,6 @@ function ManualSpeedSection(props: {
   model: SpeedSourcePanelRenderModel;
 }) {
   const { actions, manualInputRef, model } = props;
-  const t = useUiTranslation();
   return (
     <div
       id="manualSpeedConfig"
@@ -289,7 +287,6 @@ function ObdConfigSection(props: {
   scanButtonRef: (element: HTMLButtonElement | null) => void;
 }) {
   const { actions, model, obdConfigRef, scanButtonRef } = props;
-  const t = useUiTranslation();
   return (
     <div
       id="obdSpeedConfig"
@@ -349,7 +346,6 @@ function GpsFallbackSection(props: {
   staleTimeoutInputRef: (element: HTMLInputElement | null) => void;
 }) {
   const { actions, model, staleTimeoutInputRef } = props;
-  const t = useUiTranslation();
   return (
     <div
       id="gpsFallbackPanel"
@@ -399,7 +395,6 @@ function SpeedSourceSaveSection(props: {
   saveFeedback: SettingsFeedbackMessage | null;
 }) {
   const { actions, saveFeedback } = props;
-  const t = useUiTranslation();
   return (
     <>
       <SettingsFeedbackSlot
@@ -439,7 +434,6 @@ export function SpeedSourceConfigPanel(props: {
     scanButtonRef,
     staleTimeoutInputRef,
   } = props;
-  const t = useUiTranslation();
   return (
     <div class="panel card">
       <strong>
