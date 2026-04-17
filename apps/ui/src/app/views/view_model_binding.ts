@@ -1,26 +1,28 @@
 import {
-  effect,
   signal,
+  useComputed,
   type ReadonlySignal,
   type Signal,
 } from "../ui_signals";
 
-export interface BoundViewModel<T> {
-  readonly model: Signal<T>;
+export interface DeferredViewModel<T> {
+  readonly model: Signal<ReadonlySignal<T> | null>;
   bind(source: ReadonlySignal<T>): void;
 }
 
-export function createBoundViewModel<T>(initialValue: T): BoundViewModel<T> {
-  const model = signal(initialValue);
-  let stopSync: (() => void) | null = null;
-
+export function createDeferredViewModel<T>(): DeferredViewModel<T> {
+  const model = signal<ReadonlySignal<T> | null>(null);
   return {
     model,
     bind(source) {
-      stopSync?.();
-      stopSync = effect(() => {
-        model.value = source.value;
-      });
+      model.value = source;
     },
   };
+}
+
+export function useDeferredViewModel<T>(
+  source: ReadonlySignal<ReadonlySignal<T> | null>,
+  initialValue: T,
+): ReadonlySignal<T> {
+  return useComputed(() => source.value?.value ?? initialValue);
 }

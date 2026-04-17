@@ -7,7 +7,7 @@ import {
   type ReadonlySignal,
 } from "../ui_signals";
 import { HistoryTableBody } from "./history_table_content";
-import { createBoundViewModel } from "./view_model_binding";
+import { createDeferredViewModel, useDeferredViewModel } from "./view_model_binding";
 import type {
   HistoryPanelActionHandlers,
   HistoryPanelRenderModel,
@@ -28,7 +28,7 @@ const HISTORY_PANEL_MODEL_KEYS = [
 
 function HistoryPanel(props: {
   actions: ReadonlySignal<HistoryPanelActionHandlers | null>;
-  model: ReadonlySignal<HistoryPanelRenderModel>;
+  model: ReadonlySignal<ReadonlySignal<HistoryPanelRenderModel> | null>;
 }) {
   const refreshLabel = useUiText("history.refresh", "Refresh History");
   const deleteAllLabel = useUiText("history.delete_all", "Delete All Runs");
@@ -37,8 +37,9 @@ function HistoryPanel(props: {
   const samplesLabel = useUiText("history.table.size", "Samples");
   const actionsLabel = useUiText("history.table.actions", "Actions");
   const actions = useComputed(() => props.actions.value);
+  const model = useDeferredViewModel(props.model, DEFAULT_PANEL_MODEL);
   const { deleteAllRunsDisabled, historySummaryText, table } = useSignalProperties(
-    props.model,
+    model,
     HISTORY_PANEL_MODEL_KEYS,
   );
   const handleRefreshHistory = () => {
@@ -95,7 +96,7 @@ function HistoryPanel(props: {
 
 export function mountHistoryPanel(host: HTMLElement): HistoryPanelView {
   const actions = signal<HistoryPanelActionHandlers | null>(null);
-  const modelBinding = createBoundViewModel(DEFAULT_PANEL_MODEL);
+  const modelBinding = createDeferredViewModel<HistoryPanelRenderModel>();
   render(<HistoryPanel actions={actions} model={modelBinding.model} />, host);
 
   return {

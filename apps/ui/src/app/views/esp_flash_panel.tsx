@@ -13,7 +13,7 @@ import {
   MaintenanceReadinessPanel,
   type MaintenanceReadinessPanelModel,
 } from "./maintenance_readiness_view";
-import { createBoundViewModel } from "./view_model_binding";
+import { createDeferredViewModel, useDeferredViewModel } from "./view_model_binding";
 
 export interface EspFlashStatusBadgeModel {
   text: string;
@@ -307,7 +307,7 @@ function EspFlashHistoryContent(props: {
 
 function EspFlashPanel(props: {
   actions: ReadonlySignal<EspFlashPanelActionHandlers | null>;
-  model: ReadonlySignal<EspFlashPanelRenderModel>;
+  model: ReadonlySignal<ReadonlySignal<EspFlashPanelRenderModel> | null>;
 }) {
   const titleText = useUiText("settings.esp_flash.title", "ESP Flash");
   const hintText = useUiText("settings.esp_flash.hint", "Flash ESP firmware from local source on this Pi.");
@@ -335,7 +335,7 @@ function EspFlashPanel(props: {
     "Recent flashes stay here so the next operator can see what happened last.",
   );
   const actions = useComputed(() => props.actions.value);
-  const model = useComputed(() => props.model.value);
+  const model = useDeferredViewModel(props.model, DEFAULT_ESP_FLASH_PANEL_MODEL);
   const logPanelRef = useRef<HTMLDivElement | null>(null);
   const handleSelectPort = (value: string) => {
     actions.value?.onSelectPort(value);
@@ -564,7 +564,7 @@ function EspFlashPanel(props: {
 
 export function mountEspFlashPanel(host: HTMLElement): EspFlashPanelView {
   const actions = signal<EspFlashPanelActionHandlers | null>(null);
-  const modelBinding = createBoundViewModel(DEFAULT_ESP_FLASH_PANEL_MODEL);
+  const modelBinding = createDeferredViewModel<EspFlashPanelRenderModel>();
   render(<EspFlashPanel actions={actions} model={modelBinding.model} />, host);
 
   return {
