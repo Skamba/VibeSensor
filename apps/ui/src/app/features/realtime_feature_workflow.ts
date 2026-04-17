@@ -13,7 +13,6 @@ import type {
   LoggingStatusPayload,
 } from "../../api/types";
 import {
-  trackAppStateSlice,
   syncSelectedRealtimeClient,
   type RealtimeState,
 } from "../ui_app_state";
@@ -146,7 +145,7 @@ export function createRealtimeFeatureWorkflow(
   }
 
   function applyLocationCodes(codes: string[]): void {
-    realtime.locationCodes = codes.length ? codes : defaultLocationCodes.slice();
+    realtime.locationCodes.value = codes.length ? codes : defaultLocationCodes.slice();
   }
 
   async function refreshIdleCaptureReadiness(signature: string): Promise<void> {
@@ -158,9 +157,9 @@ export function createRealtimeFeatureWorkflow(
       return;
     }
     if (
-      realtime.loggingStatus.enabled
-      || realtime.loggingStatus.analysis_in_progress
-      || Boolean(realtime.loggingStatus.last_completed_run_id)
+      realtime.loggingStatus.value.enabled
+      || realtime.loggingStatus.value.analysis_in_progress
+      || Boolean(realtime.loggingStatus.value.last_completed_run_id)
     ) {
       return;
     }
@@ -186,7 +185,6 @@ export function createRealtimeFeatureWorkflow(
   }
 
   effect(() => {
-    trackAppStateSlice(realtime);
     const signature = deps.idleCaptureReadinessSignature.value;
     if (
       !state.handlersBound.value
@@ -196,9 +194,9 @@ export function createRealtimeFeatureWorkflow(
       return;
     }
     if (
-      realtime.loggingStatus.enabled
-      || realtime.loggingStatus.analysis_in_progress
-      || Boolean(realtime.loggingStatus.last_completed_run_id)
+      realtime.loggingStatus.value.enabled
+      || realtime.loggingStatus.value.analysis_in_progress
+      || Boolean(realtime.loggingStatus.value.last_completed_run_id)
     ) {
       return;
     }
@@ -208,7 +206,7 @@ export function createRealtimeFeatureWorkflow(
   const loggingStatusPolling = createPolling({
     poll: async () => {
       await refreshLoggingStatus();
-      return realtime.loggingStatus.enabled || realtime.loggingStatus.analysis_in_progress
+      return realtime.loggingStatus.value.enabled || realtime.loggingStatus.value.analysis_in_progress
         ? LOGGING_STATUS_ACTIVE_POLL_MS
         : LOGGING_STATUS_IDLE_POLL_MS;
     },
@@ -231,7 +229,7 @@ export function createRealtimeFeatureWorkflow(
       state.loggingError.value = null;
       return;
     }
-    const previousStatus = realtime.loggingStatus;
+    const previousStatus = realtime.loggingStatus.value;
     let nextStatus: LoggingStatusPayload;
     try {
       nextStatus = await api.getLoggingStatus();
@@ -245,7 +243,7 @@ export function createRealtimeFeatureWorkflow(
       });
       return;
     }
-    realtime.loggingStatus = nextStatus;
+    realtime.loggingStatus.value = nextStatus;
     state.loggingError.value = null;
     if (!didHistoryAffectingStatusChange(previousStatus, nextStatus)) {
       return;
@@ -266,7 +264,7 @@ export function createRealtimeFeatureWorkflow(
       state.loggingError.value = null;
     });
     try {
-      realtime.loggingStatus = await api.startLoggingRun();
+      realtime.loggingStatus.value = await api.startLoggingRun();
       await recording.onRecordingStatusChanged();
       loggingStatusPolling.restart();
     } catch (err) {
@@ -294,7 +292,7 @@ export function createRealtimeFeatureWorkflow(
       state.loggingError.value = null;
     });
     try {
-      realtime.loggingStatus = await api.stopLoggingRun();
+      realtime.loggingStatus.value = await api.stopLoggingRun();
       await recording.onRecordingStatusChanged();
       loggingStatusPolling.restart();
     } catch (err) {
@@ -328,7 +326,7 @@ export function createRealtimeFeatureWorkflow(
 
   async function setClientLocation(clientId: string, locationCode: string): Promise<void> {
     if (!clientId) return;
-    const existing = realtime.clients.find((client) => client.id === clientId);
+    const existing = realtime.clients.value.find((client) => client.id === clientId);
     const existingLocationCode = String(existing?.location_code || "").trim();
     if (existing && existingLocationCode === locationCode) return;
     try {
@@ -337,9 +335,11 @@ export function createRealtimeFeatureWorkflow(
       showError(err instanceof Error ? err.message : t("actions.set_location_failed"));
       return;
     }
-    const client = realtime.clients.find((row) => row.id === clientId);
+    const client = realtime.clients.value.find((row) => row.id === clientId);
     if (client) {
-      client.location_code = locationCode;
+      realtime.clients.value = realtime.clients.value.map((row) =>
+        row.id === clientId ? { ...row, location_code: locationCode } : row
+      );
     }
   }
 
@@ -360,13 +360,13 @@ export function createRealtimeFeatureWorkflow(
       showError(err instanceof Error ? err.message : t("actions.remove_client_failed"));
       return;
     }
-    const previousSelectedClientId = realtime.selectedClientId;
-    realtime.clients = realtime.clients.filter((client) => client.id !== clientId);
-    if (realtime.selectedClientId === clientId) {
-      realtime.selectedClientId = null;
+    const previousSelectedClientId = realtime.selectedClientId.value;
+    realtime.clients.value = realtime.clients.value.filter((client) => client.id !== clientId);
+    if (realtime.selectedClientId.value === clientId) {
+      realtime.selectedClientId.value = null;
     }
     syncSelectedRealtimeClient(realtime);
-    if (previousSelectedClientId !== realtime.selectedClientId) {
+    if (previousSelectedClientId !== realtime.selectedClientId.value) {
       selection.sendSelection();
     }
   }

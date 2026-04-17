@@ -11,7 +11,6 @@ import type {
   SpectrumState,
 } from "../ui_app_state";
 import { createReplaceableInterval } from "../timer_cleanup";
-import { trackAppStateSlice } from "../ui_app_state";
 import { computed, effect, signal, type ReadonlySignal } from "../ui_signals";
 import type { AdaptedClient } from "../../transport/live_models";
 import {
@@ -166,16 +165,15 @@ export function createRealtimeFeatureViewState(
   let cachedLastCompletedElapsedText = "--";
   let cachedLoggingElapsedTickInputs: LoggingElapsedTickInputs = {
     handlersBound: workflow.handlersBound.value,
-    loggingEnabled: realtime.loggingStatus.enabled,
-    loggingStartTimeUtc: realtime.loggingStatus.start_time_utc ?? null,
+    loggingEnabled: realtime.loggingStatus.value.enabled,
+    loggingStartTimeUtc: realtime.loggingStatus.value.start_time_utc ?? null,
   };
   const loggingElapsedTickInputs = computed<LoggingElapsedTickInputs>(() => {
     const handlersBound = workflow.handlersBound.value;
-    trackAppStateSlice(realtime);
     const nextTickInputs = {
       handlersBound,
-      loggingEnabled: realtime.loggingStatus.enabled,
-      loggingStartTimeUtc: realtime.loggingStatus.start_time_utc ?? null,
+      loggingEnabled: realtime.loggingStatus.value.enabled,
+      loggingStartTimeUtc: realtime.loggingStatus.value.start_time_utc ?? null,
     } satisfies LoggingElapsedTickInputs;
     if (sameLoggingElapsedTickInputs(cachedLoggingElapsedTickInputs, nextTickInputs)) {
       return cachedLoggingElapsedTickInputs;
@@ -184,17 +182,17 @@ export function createRealtimeFeatureViewState(
     return nextTickInputs;
   });
   const lastCompletedElapsedText = computed(() => {
-    trackAppStateSlice(realtime);
-    if (realtime.loggingStatus.enabled) {
+    const loggingStatus = realtime.loggingStatus.value;
+    if (loggingStatus.enabled) {
       cachedLastCompletedElapsedText = formatElapsed(
-        realtime.loggingStatus.start_time_utc,
+        loggingStatus.start_time_utc,
         elapsedNowMs.value,
       );
       return cachedLastCompletedElapsedText;
     }
     if (
-      !realtime.loggingStatus.analysis_in_progress
-      && !realtime.loggingStatus.last_completed_run_id
+      !loggingStatus.analysis_in_progress
+      && !loggingStatus.last_completed_run_id
     ) {
       cachedLastCompletedElapsedText = "--";
     }
@@ -231,7 +229,7 @@ export function createRealtimeFeatureViewState(
     return selection.kind === "no_cars" ? "no_cars" : "no_active";
   }
 
-  function recordingRunIdText(status = realtime.loggingStatus): string {
+  function recordingRunIdText(status = realtime.loggingStatus.value): string {
     if (status.enabled && status.run_id) {
       return t("dashboard.logging.run_id", { runId: status.run_id });
     }
@@ -253,7 +251,7 @@ export function createRealtimeFeatureViewState(
     if (!ages.length) {
       return t("dashboard.data_freshness_none");
     }
-    const captureReadiness = realtime.loggingStatus.capture_readiness ?? null;
+    const captureReadiness = realtime.loggingStatus.value.capture_readiness ?? null;
     const referenceCheck = captureReadinessCheck(
       captureReadiness,
       "reference_ready",
@@ -298,8 +296,7 @@ export function createRealtimeFeatureViewState(
   }
 
   const loggingPanelBaseModel = computed(() => {
-    trackAppStateSlice(realtime);
-    const loggingStatus = realtime.loggingStatus;
+    const loggingStatus = realtime.loggingStatus.value;
     const pendingLoggingAction = workflow.pendingLoggingAction.value;
     const liveHealth = sensorState.liveHealth.value;
     const connectedClients = sensorState.connectedClients.value;
@@ -325,7 +322,6 @@ export function createRealtimeFeatureViewState(
   });
 
   const liveOverviewModel = computed<RealtimeLiveOverviewRenderModel>(() => {
-    trackAppStateSlice(realtime);
     const connectedClients = sensorState.connectedClients.value;
     const strongestSignal = sensorState.strongestSignal.value;
     const strongestSignalText = sensorState.strongestSignalText.value;
@@ -334,7 +330,7 @@ export function createRealtimeFeatureViewState(
     const setupBlock = selectionBlockReason();
     const recordingStateText = loggingPanelBaseModel.value.phaseText;
     return {
-      connectedSensorsText: `${formatInt(connectedClients.length)} / ${formatInt(realtime.clients.length)}`,
+      connectedSensorsText: `${formatInt(connectedClients.length)} / ${formatInt(realtime.clients.value.length)}`,
       activeCar: {
         text: activeCar.text,
         warning: setupBlock === null && activeCar.isWarning,
@@ -347,7 +343,7 @@ export function createRealtimeFeatureViewState(
         text: liveHealth.text,
         variant: liveHealth.variant,
       },
-      sensorCards: realtime.clients.map((client) => ({
+      sensorCards: realtime.clients.value.map((client) => ({
         id: client.id,
         label: liveSensorOverviewLabel(client),
         connected: Boolean(client.connected),
@@ -367,10 +363,9 @@ export function createRealtimeFeatureViewState(
   });
 
   const sensorsPanelModel = computed<SensorsPanelRenderModel>(() => {
-    trackAppStateSlice(realtime);
     return {
       table: buildRealtimeSensorTableRenderModel({
-        clients: realtime.clients,
+        clients: realtime.clients.value,
         locationOptions: sensorState.locationOptions.value,
         t,
       }),
@@ -378,9 +373,7 @@ export function createRealtimeFeatureViewState(
   });
 
   const idleCaptureReadinessSignature = computed(() => {
-    trackAppStateSlice(realtime);
-    trackAppStateSlice(settings);
-    const clientsSignature = realtime.clients
+    const clientsSignature = realtime.clients.value
       .map((client) =>
         [
           client.id,
@@ -390,7 +383,7 @@ export function createRealtimeFeatureViewState(
       )
       .sort()
       .join("|");
-    return `${settings.activeCarId ?? ""}##${clientsSignature}`;
+    return `${settings.activeCarId.value ?? ""}##${clientsSignature}`;
   });
 
   return {

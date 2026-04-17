@@ -6,7 +6,6 @@ import type {
   ShellState,
   TransportState,
 } from "../ui_app_state";
-import { trackAppStateSlice } from "../ui_app_state";
 import type { VisualVariant } from "../view_style_types";
 import { computed, type ReadonlySignal } from "../ui_signals";
 import type { UiShellBadgeModel } from "./ui_shell_chrome";
@@ -45,18 +44,17 @@ export function createUiShellStatusModule(
   deps: UiShellStatusDeps,
 ): UiShellStatusModule {
   function speedValueInSelectedUnit(speedMps: number): number {
-    return deps.shell.speedUnit === "mps" ? speedMps : speedMps * 3.6;
+    return deps.shell.speedUnit.value === "mps" ? speedMps : speedMps * 3.6;
   }
 
   function selectedSpeedUnitLabel(): string {
-    return deps.shell.speedUnit === "mps"
+    return deps.shell.speedUnit.value === "mps"
       ? deps.t("speed.unit.mps")
       : deps.t("speed.unit.kmh");
   }
 
   const runtimeSpeedSource = computed(() => {
-    trackAppStateSlice(deps.realtime);
-    return deps.realtime.rotationalSpeeds?.basis_speed_source ?? null;
+    return deps.realtime.rotationalSpeeds.value?.basis_speed_source ?? null;
   });
   const speedSourceState = createSpeedSourceDerivedState(
     deps.settings,
@@ -64,14 +62,13 @@ export function createUiShellStatusModule(
   );
 
   const wsLinkState = computed<UiShellBadgeModel>(() => {
-    trackAppStateSlice(deps.transport);
-    if (deps.transport.payloadError) {
+    if (deps.transport.payloadError.value) {
       return {
         text: deps.t("ws.payload_error_pill"),
         variant: "bad",
       };
     }
-    const wsState = deps.transport.wsState;
+    const wsState = deps.transport.wsState.value;
     return {
       text: deps.t(WS_KEY_BY_STATE[wsState] || "ws.connecting"),
       variant: WS_VARIANT_BY_STATE[wsState] || "muted",
@@ -79,13 +76,12 @@ export function createUiShellStatusModule(
   });
 
   const speedReadoutText = computed(() => {
-    trackAppStateSlice(deps.realtime);
     const unitLabel = selectedSpeedUnitLabel();
     if (
-      typeof deps.realtime.speedMps === "number" &&
-      Number.isFinite(deps.realtime.speedMps)
+      typeof deps.realtime.speedMps.value === "number" &&
+      Number.isFinite(deps.realtime.speedMps.value)
     ) {
-      const value = speedValueInSelectedUnit(deps.realtime.speedMps);
+      const value = speedValueInSelectedUnit(deps.realtime.speedMps.value);
       const labelKey = speedSourceState.speedReadoutLabelKey.value;
       return deps.t(labelKey, {
         unit: unitLabel,
@@ -96,11 +92,10 @@ export function createUiShellStatusModule(
   });
 
   const connectionState = computed(() => {
-    trackAppStateSlice(deps.transport);
     const degraded =
-      deps.transport.payloadError !== null ||
-      deps.transport.wsState === "reconnecting" ||
-      deps.transport.wsState === "stale";
+      deps.transport.payloadError.value !== null ||
+      deps.transport.wsState.value === "reconnecting" ||
+      deps.transport.wsState.value === "stale";
     return degraded ? "degraded" : "live";
   });
 

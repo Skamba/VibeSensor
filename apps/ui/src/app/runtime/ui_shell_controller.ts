@@ -109,7 +109,7 @@ export class UiShellController {
         this.notifications.showError(this.t("status.view_load_failed"));
       },
       onDashboardViewActivated: () => {
-        this.state.spectrum.spectrumPlot?.resize();
+        this.state.spectrum.spectrumPlot.value?.resize();
       },
     });
     this.status = createUiShellStatusModule({
@@ -144,11 +144,11 @@ export class UiShellController {
   }
 
   t(key: string, vars?: Record<string, unknown>): string {
-    return I18N.get(this.state.shell.lang, key, vars);
+    return I18N.get(this.state.shell.lang.value, key, vars);
   }
 
   localFormatInt(value: number): string {
-    return formatIntLocale(value, this.state.shell.lang);
+    return formatIntLocale(value, this.state.shell.lang.value);
   }
 
   showError(message: string): void {
@@ -191,9 +191,9 @@ export class UiShellController {
 
   private bindReactiveLanguageSync(): void {
     let initialized = false;
-    let previousLanguage = this.state.shell.lang;
+    let previousLanguage = this.state.shell.lang.value;
     effect(() => {
-      const currentLanguage = this.state.shell.lang;
+      const currentLanguage = this.state.shell.lang.value;
       if (!initialized) {
         initialized = true;
         previousLanguage = currentLanguage;

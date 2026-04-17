@@ -175,19 +175,22 @@ function testTranslation(key: string, vars?: Record<string, unknown>): string {
 }
 
 function ensureRunDetail(state: ReturnType<typeof createAppState>, runId: string): RunDetail {
-  if (!state.history.runDetailsById[runId]) {
-    state.history.runDetailsById[runId] = {
-      preview: null,
-      previewLoading: false,
-      previewError: "",
-      insights: null,
-      insightsLoading: false,
-      insightsError: "",
-      pdfLoading: false,
-      pdfError: "",
+  if (!state.history.runDetailsById.value[runId]) {
+    state.history.runDetailsById.value = {
+      ...state.history.runDetailsById.value,
+      [runId]: {
+        preview: null,
+        previewLoading: false,
+        previewError: "",
+        insights: null,
+        insightsLoading: false,
+        insightsError: "",
+        pdfLoading: false,
+        pdfError: "",
+      },
     };
   }
-  return state.history.runDetailsById[runId];
+  return state.history.runDetailsById.value[runId];
 }
 
 function latestRowModels(panel: { getLatestModel(): HistoryPanelRenderModel | null }) {
@@ -253,7 +256,7 @@ test.beforeEach(() => {
 
 test("history feature skips deletion when confirmation is declined", async () => {
   const state = createAppState();
-  state.history.runs = [historyListRun("run-42")];
+  state.history.runs.value = [historyListRun("run-42")];
   const confirmationMessages: string[] = [];
   const { feature } = createFeatureHarness(state, {
     requestConfirmation: async (message) => {
@@ -267,7 +270,7 @@ test("history feature skips deletion when confirmation is declined", async () =>
   expect(confirmationMessages).toEqual([
     'history.delete_confirm:{"name":"run-42"}',
   ]);
-  expect(state.history.runs.map((run) => run.run_id)).toEqual(["run-42"]);
+  expect(state.history.runs.value.map((run) => run.run_id)).toEqual(["run-42"]);
 });
 
 test("history feature refreshes runs and renders an empty-state model when no runs exist", async () => {
@@ -316,7 +319,7 @@ test("history feature refreshes runs and renders table state through one owner",
     globalThis.fetch = originalFetch;
   }
 
-  expect(state.history.runs).toHaveLength(1);
+  expect(state.history.runs.value).toHaveLength(1);
   expect(historySummary.textContent).toContain("history.available_count");
   expect(getLatestModel()?.table?.kind).toBe("rows");
   const row = latestRowModels({ getLatestModel })[0];
@@ -344,7 +347,7 @@ test("history feature binds panel actions through the shared owner", () => {
 
 test("history feature reloads the expanded run when the language changes", async () => {
   const state = createAppState();
-  state.history.runs = [historyListRun("run-001")];
+  state.history.runs.value = [historyListRun("run-001")];
   const { feature, getRenderCount } = createFeatureHarness(state);
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
@@ -362,13 +365,13 @@ test("history feature reloads the expanded run when the language changes", async
 
   try {
     feature.toggleRunDetails("run-001");
-    await expect.poll(() => state.history.runDetailsById["run-001"]?.preview?.sensor_count_used ?? null).toBe(1);
+    await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(1);
     await feature.onHistoryTableAction("load-insights", "run-001");
-    expect(state.history.runDetailsById["run-001"]?.insights?.sensor_count_used).toBe(1);
+    expect(state.history.runDetailsById.value["run-001"]?.insights?.sensor_count_used).toBe(1);
 
-    state.shell.lang = "nl";
-    await expect.poll(() => state.history.runDetailsById["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
-    await expect.poll(() => state.history.runDetailsById["run-001"]?.insights?.sensor_count_used ?? null).toBe(2);
+    state.shell.lang.value = "nl";
+    await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
+    await expect.poll(() => state.history.runDetailsById.value["run-001"]?.insights?.sensor_count_used ?? null).toBe(2);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -384,7 +387,7 @@ test("history feature reloads the expanded run when the language changes", async
 
 test("history feature treats analyzing insights responses as not-yet-available", async () => {
   const state = createAppState();
-  state.history.runs = [historyListRun("run-001")];
+  state.history.runs.value = [historyListRun("run-001")];
   const { feature, getRenderCount } = createFeatureHarness(state);
   const originalFetch = globalThis.fetch;
   const requests: string[] = [];
@@ -399,16 +402,16 @@ test("history feature treats analyzing insights responses as not-yet-available",
 
   try {
     feature.toggleRunDetails("run-001");
-    await expect.poll(() => state.history.runDetailsById["run-001"]?.previewLoading ?? false).toBe(false);
+    await expect.poll(() => state.history.runDetailsById.value["run-001"]?.previewLoading ?? false).toBe(false);
     await feature.onHistoryTableAction("load-insights", "run-001");
   } finally {
     globalThis.fetch = originalFetch;
   }
 
-  expect(state.history.runDetailsById["run-001"]?.preview).toBeNull();
-  expect(state.history.runDetailsById["run-001"]?.previewError).toBe("");
-  expect(state.history.runDetailsById["run-001"]?.insights).toBeNull();
-  expect(state.history.runDetailsById["run-001"]?.insightsError).toBe("");
+  expect(state.history.runDetailsById.value["run-001"]?.preview).toBeNull();
+  expect(state.history.runDetailsById.value["run-001"]?.previewError).toBe("");
+  expect(state.history.runDetailsById.value["run-001"]?.insights).toBeNull();
+  expect(state.history.runDetailsById.value["run-001"]?.insightsError).toBe("");
   expect(getRenderCount()).toBeGreaterThanOrEqual(4);
   expect(requests.filter((url) => url.startsWith("/api/history/"))).toEqual([
     "/api/history/run-001/insights?lang=en",
@@ -418,17 +421,20 @@ test("history feature treats analyzing insights responses as not-yet-available",
 
 test("history feature rendering promotes loaded findings ahead of supporting statistics", () => {
   const state = createAppState();
-  state.history.runs = [historyListRun("run-001")];
-  state.history.expandedRunId = "run-001";
-  state.history.runDetailsById["run-001"] = {
-    preview: historyInsightsWithFindingsPayload("run-001", 2) as RunDetail["preview"],
-    previewLoading: false,
-    previewError: "",
+  state.history.runs.value = [historyListRun("run-001")];
+  state.history.expandedRunId.value = "run-001";
+  state.history.runDetailsById.value = {
+    ...state.history.runDetailsById.value,
+    "run-001": {
+      preview: historyInsightsWithFindingsPayload("run-001", 2) as RunDetail["preview"],
+      previewLoading: false,
+      previewError: "",
     insights: historyInsightsWithFindingsPayload("run-001", 2) as RunDetail["insights"],
     insightsLoading: false,
     insightsError: "",
     pdfLoading: false,
-    pdfError: "",
+      pdfError: "",
+    },
   };
   const { getLatestModel } = createFeatureHarness(state);
 
@@ -467,7 +473,7 @@ test("history feature preloads collapsed row context for completed runs", async 
 
   try {
     await feature.refreshHistory();
-    await expect.poll(() => state.history.runDetailsById["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
+    await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -485,11 +491,11 @@ test("history feature preloads collapsed row context for completed runs", async 
 
 test("history feature reports partial delete failures without splitting render ownership", async () => {
   const state = createAppState();
-  state.history.runs = [
+  state.history.runs.value = [
     historyListRun("run-001"),
     historyListRun("run-002"),
   ];
-  state.history.expandedRunId = "run-001";
+  state.history.expandedRunId.value = "run-001";
   ensureRunDetail(state, "run-001");
   ensureRunDetail(state, "run-002");
 
@@ -522,8 +528,8 @@ test("history feature reports partial delete failures without splitting render o
   }
 
   expect(deleteRequests).toEqual(["/api/history/run-001", "/api/history/run-002"]);
-  expect(state.history.deleteAllRunsInFlight).toBe(false);
-  expect(state.history.expandedRunId).toBeNull();
+  expect(state.history.deleteAllRunsInFlight.value).toBe(false);
+  expect(state.history.expandedRunId.value).toBeNull();
   expect(getRenderCount()).toBeGreaterThanOrEqual(2);
   expect(errors).toHaveLength(1);
   expect(errors[0]).toContain("history.delete_all_partial");
