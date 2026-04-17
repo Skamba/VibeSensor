@@ -32,7 +32,10 @@ import {
 import type {
   UiShellBadgeModel,
   UiShellChromeActionBridge,
-  UiShellChromeRenderModel,
+  UiShellChromeDialogModel,
+  UiShellChromeNavigationModel,
+  UiShellChromePreferencesModel,
+  UiShellChromeStatusModel,
   UiShellChromeView,
 } from "./ui_shell_chrome";
 import {
@@ -74,7 +77,13 @@ export class UiShellController {
 
   private readonly confirmation: UiConfirmationModule;
 
-  private readonly chromeRenderModel: ReadonlySignal<UiShellChromeRenderModel>;
+  private readonly navigationRenderModel: ReadonlySignal<UiShellChromeNavigationModel>;
+
+  private readonly preferencesRenderModel: ReadonlySignal<UiShellChromePreferencesModel>;
+
+  private readonly statusRenderModel: ReadonlySignal<UiShellChromeStatusModel>;
+
+  private readonly dialogRenderModel: ReadonlySignal<UiShellChromeDialogModel>;
 
   private readonly bindFeatureHandlers: () => void;
 
@@ -125,9 +134,12 @@ export class UiShellController {
       saveLanguage: (lang) => this.preferences.saveLanguage(lang),
       saveSpeedUnit: (unit) => this.preferences.saveSpeedUnit(unit),
     });
-    this.chromeRenderModel = this.createChromeRenderModel();
+    this.navigationRenderModel = this.createNavigationRenderModel();
+    this.preferencesRenderModel = this.createPreferencesRenderModel();
+    this.statusRenderModel = this.createStatusRenderModel();
+    this.dialogRenderModel = this.createDialogRenderModel();
     this.bindReactiveLanguageSync();
-    this.bindReactiveStatusSync();
+    this.bindReactiveChromeSync();
   }
 
   t(key: string, vars?: Record<string, unknown>): string {
@@ -196,11 +208,32 @@ export class UiShellController {
     });
   }
 
-  private bindReactiveStatusSync(): void {
+  private bindReactiveChromeSync(): void {
     effect(() => {
-      const model = this.chromeRenderModel.value;
+      const model = this.navigationRenderModel.value;
       untracked(() => {
-        this.chrome.setModel(model);
+        this.chrome.setNavigationModel(model);
+      });
+    });
+
+    effect(() => {
+      const model = this.preferencesRenderModel.value;
+      untracked(() => {
+        this.chrome.setPreferencesModel(model);
+      });
+    });
+
+    effect(() => {
+      const model = this.statusRenderModel.value;
+      untracked(() => {
+        this.chrome.setStatusModel(model);
+      });
+    });
+
+    effect(() => {
+      const model = this.dialogRenderModel.value;
+      untracked(() => {
+        this.chrome.setDialogModel(model);
       });
     });
 
@@ -212,34 +245,46 @@ export class UiShellController {
     });
   }
 
-  private createChromeRenderModel(): ReadonlySignal<UiShellChromeRenderModel> {
-    return computed(() => {
-      trackAppStateSlice(this.state.shell);
-      return {
-        activeViewId: this.state.shell.activeViewId,
-        appErrorBanner: this.notifications.bannerModel.value,
-        confirmationDialog: this.confirmation.dialogModel.value,
-        connectionState: this.status.connectionState.value,
-        languageFeedback: this.preferences.languageFeedback.value,
-        languageLabelText: this.t("settings.language"),
-        navItems: SHELL_NAV_ITEMS.map((item) => ({
-          labelText: this.t(item.labelKey) || item.fallbackLabel,
-          tabId: item.tabId,
-          viewId: item.viewId,
-        })),
-        selectedLanguage: this.preferences.selectedLanguage.value,
-        selectedSpeedUnit: this.preferences.selectedSpeedUnit.value,
-        shellLiveStatus: this.liveStatusBadge.value,
-        speedUnitFeedback: this.preferences.speedUnitFeedback.value,
-        speedUnitLabelText: this.t("speed.unit"),
-        speedUnitOptionLabels: Object.fromEntries(
-          SPEED_UNIT_OPTIONS.map((option) => [
-            option.value,
-            this.t(option.labelKey) || option.fallbackLabel,
-          ]),
-        ),
-        wsLinkState: this.status.wsLinkState.value,
-      };
-    });
+  private createNavigationRenderModel(): ReadonlySignal<UiShellChromeNavigationModel> {
+    return computed(() => ({
+      activeViewId: this.navigation.activeViewId.value,
+      navItems: SHELL_NAV_ITEMS.map((item) => ({
+        labelText: this.t(item.labelKey) || item.fallbackLabel,
+        tabId: item.tabId,
+        viewId: item.viewId,
+      })),
+    }));
+  }
+
+  private createPreferencesRenderModel(): ReadonlySignal<UiShellChromePreferencesModel> {
+    return computed(() => ({
+      languageFeedback: this.preferences.languageFeedback.value,
+      languageLabelText: this.t("settings.language"),
+      selectedLanguage: this.preferences.selectedLanguage.value,
+      selectedSpeedUnit: this.preferences.selectedSpeedUnit.value,
+      speedUnitFeedback: this.preferences.speedUnitFeedback.value,
+      speedUnitLabelText: this.t("speed.unit"),
+      speedUnitOptionLabels: Object.fromEntries(
+        SPEED_UNIT_OPTIONS.map((option) => [
+          option.value,
+          this.t(option.labelKey) || option.fallbackLabel,
+        ]),
+      ),
+    }));
+  }
+
+  private createStatusRenderModel(): ReadonlySignal<UiShellChromeStatusModel> {
+    return computed(() => ({
+      connectionState: this.status.connectionState.value,
+      shellLiveStatus: this.liveStatusBadge.value,
+      wsLinkState: this.status.wsLinkState.value,
+    }));
+  }
+
+  private createDialogRenderModel(): ReadonlySignal<UiShellChromeDialogModel> {
+    return computed(() => ({
+      appErrorBanner: this.notifications.bannerModel.value,
+      confirmationDialog: this.confirmation.dialogModel.value,
+    }));
   }
 }
