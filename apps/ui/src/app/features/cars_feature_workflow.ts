@@ -224,7 +224,7 @@ export function createCarsFeatureWorkflow(
     variantOptions: variantOptions.value,
   }));
 
-  const manualInputRenderState = computed<CarsFeatureManualInputState>(() => manualInputs.read());
+  const manualInputRenderState = manualInputs.state;
 
   const wizardMetaRenderState = computed<CarsFeatureWizardMetaRenderState>(() => {
     const state = wizardState.value;
@@ -384,7 +384,7 @@ export function createCarsFeatureWorkflow(
 
   function loadSpecsStep(): void {
     const state = wizardState.value;
-    const currentManualInputs = manualInputs.read();
+    const currentManualInputs = manualInputs.state.value;
     const nextTireOptions = resolveTireOptions(state.selectedModel, state.selectedVariant);
     const nextGearboxOptions = resolveGearboxes(state.selectedModel, state.selectedVariant);
     const nextSelectedTire = nextTireOptions.length > 0
@@ -450,7 +450,7 @@ export function createCarsFeatureWorkflow(
 
     async finishWizard(): Promise<boolean> {
       const state = wizardState.value;
-      const inputs = manualInputs.read();
+      const inputs = manualInputs.state.value;
       const resolvedBranch = getResolvedWizardSpecBranch(state);
       if (resolvedBranch === "library") {
         const tire = state.selectedTire;
@@ -523,7 +523,7 @@ export function createCarsFeatureWorkflow(
     ): void {
       batch(() => {
         manualInputs.write({
-          ...manualInputs.read(),
+          ...manualInputs.state.value,
           [field]: value,
         });
         if (isOpen.value && wizardState.value.step === 4) {
@@ -597,7 +597,7 @@ export function createCarsFeatureWorkflow(
         updateWizardState((state) => {
           state.selectedTire = selectedTire;
         });
-        manualInputs.write(tireInputsFromOption(selectedTire, manualInputs.read()));
+        manualInputs.write(tireInputsFromOption(selectedTire, manualInputs.state.value));
       });
     },
 
