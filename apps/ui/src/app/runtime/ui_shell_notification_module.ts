@@ -1,5 +1,6 @@
 import type { UiShellErrorBannerModel } from "./ui_shell_chrome";
 import { signal, type ReadonlySignal } from "../ui_signals";
+import { createReplaceableTimeout } from "../timer_cleanup";
 
 type UiShellNotificationDeps = {
   window: Pick<Window, "clearTimeout" | "setTimeout">;
@@ -20,14 +21,11 @@ const HIDDEN_BANNER_MODEL: UiShellErrorBannerModel = {
 export function createUiShellNotificationModule(
   deps: UiShellNotificationDeps,
 ): UiShellNotificationModule {
-  let hideBannerTimer: ReturnType<typeof setTimeout> | null = null;
+  const hideBannerTimer = createReplaceableTimeout(deps.window);
   const bannerModel = signal<UiShellErrorBannerModel>(HIDDEN_BANNER_MODEL);
 
   function clearScheduledHide(): void {
-    if (hideBannerTimer !== null) {
-      deps.window.clearTimeout(hideBannerTimer);
-      hideBannerTimer = null;
-    }
+    hideBannerTimer.clear();
   }
 
   function clearError(): void {
@@ -45,9 +43,8 @@ export function createUiShellNotificationModule(
         text: message,
         variant: "bad",
       };
-      hideBannerTimer = deps.window.setTimeout(() => {
+      hideBannerTimer.replace(() => {
         bannerModel.value = HIDDEN_BANNER_MODEL;
-        hideBannerTimer = null;
       }, 5000);
     },
   };
