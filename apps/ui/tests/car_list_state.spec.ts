@@ -5,7 +5,7 @@ import {
   buildCarsGuidanceRenderModel,
   buildSettingsCarListRenderModel,
 } from "../src/app/views/settings_car_list_view";
-import type { CarRecord } from "../src/transport/http_models";
+import type { CarRecord } from "../src/api/types";
 
 function makeCar(overrides: Partial<CarRecord> = {}): CarRecord {
   return {

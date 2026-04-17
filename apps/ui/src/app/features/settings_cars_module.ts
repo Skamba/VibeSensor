@@ -5,7 +5,7 @@ import {
   getCarCompleteness,
 } from "../car_selection_state";
 import type { SettingsState } from "../ui_app_state";
-import type { CarRecord, CarsPayload } from "../../transport/http_models";
+import type { CarRecord, CarsPayload } from "../../api/types";
 import type {
   CarsListPanelView,
   CarsListRenderModel,

@@ -1,5 +1,5 @@
 import { addSettingsCar as addSettingsCarApi, setActiveSettingsCar as setActiveSettingsCarApi } from "../../api";
-import type { CarUpsertRequest, CarsPayload } from "../../transport/http_models";
+import type { CarUpsertRequest, CarsPayload } from "../../api/types";
 
 export interface UiCarCreationCommandDeps {
   getVehicleSettings: () => Record<string, number>;

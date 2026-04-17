@@ -3,7 +3,7 @@ import type {
   SpeedSourceKind,
   SpeedSourcePayload,
   SpeedSourceRequest,
-} from "../../transport/http_models";
+} from "../../api/types";
 import {
   createSpeedSourceDerivedState,
   resolveEffectiveSpeedSource,

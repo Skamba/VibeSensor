@@ -3,7 +3,7 @@ import type {
   CarLibraryModel,
   CarLibraryTireOption,
   CarLibraryVariant,
-} from "../../transport/http_models";
+} from "../../api/types";
 import {
   cloneManualInputs,
   createCarsManualInputStore,

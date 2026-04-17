@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { createUiCarCreationCommand } from "../src/app/runtime/ui_car_creation_command";
-import type { CarUpsertRequest, CarsPayload } from "../src/transport/http_models";
+import type { CarUpsertRequest, CarsPayload } from "../src/api/types";
 
 test.describe("createUiCarCreationCommand", () => {
   test("creates a car through the narrow runtime seam and preserves the activate-and-sync flow", async () => {

@@ -1,6 +1,6 @@
 import { apiJson } from "./http";
 import { cloneTransportValue } from "../transport/clone";
-import type * as Local from "../transport/http_models";
+import type * as Local from "../api/types";
 import type * as Transport from "./types";
 
 const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };

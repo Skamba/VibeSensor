@@ -16,7 +16,7 @@ import type {
   EspFlashPortsPayload,
   EspFlashStatusPayload,
   EspSerialPortPayload,
-  } from "../../transport/http_models";
+  } from "../../api/types";
 import type { EspFlashFeatureRenderState } from "../views/esp_flash_feature_presenter";
 import {
   batch,

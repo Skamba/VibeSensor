@@ -10,7 +10,7 @@ import type {
   EspFlashHistoryAttemptPayload,
   EspFlashStatusPayload,
   EspSerialPortPayload,
-} from "../src/transport/http_models";
+} from "../src/api/types";
 
 function makeStatus(
   overrides: Partial<EspFlashStatusPayload> = {},

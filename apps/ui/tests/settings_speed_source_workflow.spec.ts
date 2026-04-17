@@ -8,7 +8,7 @@ import type {
   ObdDevicePayload,
   SpeedSourcePayload,
   SpeedSourceRequest,
-} from "../src/transport/http_models";
+} from "../src/api/types";
 import { createAppState } from "../src/app/ui_app_state";
 import { effect } from "../src/app/ui_signals";
 

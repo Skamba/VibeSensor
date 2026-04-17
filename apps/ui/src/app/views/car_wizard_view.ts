@@ -2,7 +2,7 @@ import type {
   CarLibraryGearbox,
   CarLibraryTireOption,
   CarLibraryVariant,
-} from "../../transport/http_models";
+} from "../../api/types";
 import type {
   CarsFeatureRenderState,
 } from "../features/cars_feature_workflow";

@@ -5,7 +5,7 @@ import type {
   EspFlashHistoryAttemptPayload,
   EspFlashStatusPayload,
   EspSerialPortPayload,
-} from "../src/transport/http_models";
+} from "../src/api/types";
 
 type WorkflowHarness = {
   errors: string[];

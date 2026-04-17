@@ -10,7 +10,7 @@ import type {
   CarLibraryGearbox,
   CarLibraryModel,
   CarLibraryTireOption,
-} from "../src/transport/http_models";
+} from "../src/api/types";
 
 type WorkflowHarness = {
   focuses: CarsFeatureFocusTarget[];

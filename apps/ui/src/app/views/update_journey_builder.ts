@@ -1,7 +1,7 @@
 import type {
   UpdateIssue,
   UpdateStatusPayload,
-} from "../../transport/http_models";
+} from "../../api/types";
 import type {
   JourneyStageState,
   UpdateFailureSummary,

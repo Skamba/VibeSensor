@@ -10,7 +10,7 @@ import {
 import type {
   HealthStatusPayload,
   UpdateStatusPayload,
-} from "../src/transport/http_models";
+} from "../src/api/types";
 
 function t(key: string, vars?: Record<string, unknown>): string {
   if (!vars || Object.keys(vars).length === 0) {

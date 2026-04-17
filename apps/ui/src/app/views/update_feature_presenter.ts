@@ -3,7 +3,7 @@ import type {
   UpdateStartRequestPayload,
   UpdateStatusPayload,
   UsbInternetStatusPayload,
-} from "../../transport/http_models";
+} from "../../api/types";
 import type {
   InternetPanelRenderModel,
   UpdateTransportChoiceCardRenderModel,
