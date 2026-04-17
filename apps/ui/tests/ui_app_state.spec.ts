@@ -3,8 +3,6 @@ import { expect, test } from "@playwright/test";
 import {
   batchAppStateUpdates,
   createAppState,
-  getAppStateSliceSignal,
-  trackAppStateSlice,
 } from "../src/app/ui_app_state";
 import { effect } from "../src/app/ui_signals";
 
@@ -14,15 +12,17 @@ test.describe("ui_app_state reactivity", () => {
     const seenShellState: string[] = [];
 
     const dispose = effect(() => {
-      seenShellState.push(`${state.shell.lang}:${state.shell.speedUnit}:${state.shell.activeViewId}`);
+      seenShellState.push(
+        `${state.shell.lang.value}:${state.shell.speedUnit.value}:${state.shell.activeViewId.value}`,
+      );
     });
 
     expect(seenShellState).toEqual(["en:kmh:dashboardView"]);
 
     batchAppStateUpdates(() => {
-      state.shell.lang = "nl";
-      state.shell.speedUnit = "mps";
-      state.shell.activeViewId = "historyView";
+      state.shell.lang.value = "nl";
+      state.shell.speedUnit.value = "mps";
+      state.shell.activeViewId.value = "historyView";
     });
 
     expect(seenShellState).toEqual([
@@ -33,22 +33,21 @@ test.describe("ui_app_state reactivity", () => {
     dispose();
   });
 
-  test("tracks direct slice writes through a stable slice signal", () => {
+  test("tracks transport writes directly through stable field signals", () => {
     const state = createAppState();
     const seenStates: string[] = [];
 
-    const transportSignal = getAppStateSliceSignal(state.transport);
-    expect(getAppStateSliceSignal(state.transport)).toBe(transportSignal);
+    const wsStateSignal = state.transport.wsState;
+    expect(state.transport.wsState).toBe(wsStateSignal);
 
     const dispose = effect(() => {
-      trackAppStateSlice(state.transport);
-      seenStates.push(`${state.transport.wsState}:${String(state.transport.payloadError)}`);
+      seenStates.push(`${state.transport.wsState.value}:${String(state.transport.payloadError.value)}`);
     });
 
     expect(seenStates).toEqual(["connecting:null"]);
 
-    state.transport.wsState = "connected";
-    state.transport.payloadError = "boom";
+    state.transport.wsState.value = "connected";
+    state.transport.payloadError.value = "boom";
 
     expect(seenStates).toEqual([
       "connecting:null",
@@ -64,13 +63,15 @@ test.describe("ui_app_state reactivity", () => {
     const seenRatios: number[] = [];
 
     const dispose = effect(() => {
-      trackAppStateSlice(state.settings);
-      seenRatios.push(state.settings.vehicleSettings.current_gear_ratio);
+      seenRatios.push(state.settings.vehicleSettings.value.current_gear_ratio);
     });
 
     expect(seenRatios).toEqual([0.64]);
 
-    state.settings.vehicleSettings.current_gear_ratio = 0.72;
+    state.settings.vehicleSettings.value = {
+      ...state.settings.vehicleSettings.value,
+      current_gear_ratio: 0.72,
+    };
 
     expect(seenRatios).toEqual([0.64, 0.72]);
 
@@ -83,18 +84,18 @@ test.describe("ui_app_state reactivity", () => {
     let settingsRuns = 0;
 
     const disposeTransport = effect(() => {
-      trackAppStateSlice(state.transport);
       transportRuns += 1;
+      void state.transport.wsState.value;
     });
     const disposeSettings = effect(() => {
-      trackAppStateSlice(state.settings);
       settingsRuns += 1;
+      void state.settings.vehicleSettings.value;
     });
 
     expect(transportRuns).toBe(1);
     expect(settingsRuns).toBe(1);
 
-    state.transport.wsState = "stale";
+    state.transport.wsState.value = "stale";
 
     expect(transportRuns).toBe(2);
     expect(settingsRuns).toBe(1);
@@ -108,18 +109,17 @@ test.describe("ui_app_state reactivity", () => {
     const seenSnapshots: string[] = [];
 
     const dispose = effect(() => {
-      trackAppStateSlice(state.transport);
       seenSnapshots.push(
-        `${state.transport.wsState}:${String(state.transport.hasReceivedPayload)}:${String(state.transport.payloadError)}`,
+        `${state.transport.wsState.value}:${String(state.transport.hasReceivedPayload.value)}:${String(state.transport.payloadError.value)}`,
       );
     });
 
     expect(seenSnapshots).toEqual(["connecting:false:null"]);
 
     batchAppStateUpdates(() => {
-      state.transport.wsState = "connected";
-      state.transport.hasReceivedPayload = true;
-      state.transport.payloadError = "frame-error";
+      state.transport.wsState.value = "connected";
+      state.transport.hasReceivedPayload.value = true;
+      state.transport.payloadError.value = "frame-error";
     });
 
     expect(seenSnapshots).toEqual([

@@ -1,5 +1,9 @@
 import { useEffect } from "preact/hooks";
 
+import "../../styles/history-table.css";
+import "../../styles/history-detail.css";
+import "../../styles/history-adaptive.css";
+
 import { HistoryPanel } from "./history_panel";
 import type { HistoryPanelView } from "./history_table_view";
 
