@@ -5,6 +5,7 @@ import type { AppState } from "../ui_app_state";
 import {
   computed,
   effect,
+  effectOnChange,
   signal,
   untracked,
   type Signal,
@@ -191,18 +192,7 @@ export class UiShellController {
   }
 
   private bindReactiveLanguageSync(): void {
-    let initialized = false;
-    let previousLanguage = this.state.shell.lang.value;
-    effect(() => {
-      const currentLanguage = this.state.shell.lang.value;
-      if (!initialized) {
-        initialized = true;
-        previousLanguage = currentLanguage;
-      } else if (currentLanguage === previousLanguage) {
-        return;
-      } else {
-        previousLanguage = currentLanguage;
-      }
+    effectOnChange(this.state.shell.lang, (currentLanguage) => {
       untracked(() => {
         setUiLanguage(currentLanguage);
       });

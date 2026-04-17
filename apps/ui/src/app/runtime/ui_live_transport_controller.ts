@@ -7,7 +7,7 @@ import {
   batchAppStateUpdates,
   type AppState,
 } from "../ui_app_state";
-import { effect, untracked } from "../ui_signals";
+import { effect, effectOnChange, untracked } from "../ui_signals";
 
 type UiLiveTransportControllerDeps = {
   state: AppState;
@@ -47,25 +47,13 @@ export class UiLiveTransportController {
       });
     });
 
-    let previousPendingPayload = this.state.transport.pendingPayload.value;
-    effect(() => {
-      const nextPendingPayload = this.state.transport.pendingPayload.value;
-      if (nextPendingPayload === previousPendingPayload) {
-        return;
-      }
-      previousPendingPayload = nextPendingPayload;
+    effectOnChange(this.state.transport.pendingPayload, (nextPendingPayload) => {
       if (nextPendingPayload !== null) {
         untracked(() => this.queueRender());
       }
     });
 
-    let previousWsState = this.state.transport.wsState.value;
-    effect(() => {
-      const nextWsState = this.state.transport.wsState.value;
-      if (nextWsState === previousWsState) {
-        return;
-      }
-      previousWsState = nextWsState;
+    effectOnChange(this.state.transport.wsState, (nextWsState) => {
       if (nextWsState === "connected" || nextWsState === "no_data") {
         untracked(() => this.sendSelection());
       }
