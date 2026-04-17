@@ -235,4 +235,31 @@ test.describe("createUpdateFeatureWorkflow", () => {
     expect(harness.viewCalls).toEqual(["focusSsidInput"]);
     expect(harness.errors).toEqual([]);
   });
+
+  test("still validates wifi inputs when a recovery retry bypasses readiness blocking", async () => {
+    const harness = createHarness();
+    const workflow = createUpdateFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      view: createViewPorts(harness),
+      api: {
+        async startUpdate() {
+          throw new Error("should not be called");
+        },
+      },
+    });
+
+    await workflow.startUpdate({
+      canStart: true,
+      password: "",
+      ssid: "",
+      transport: "wifi",
+      usbAvailable: false,
+    });
+
+    expect(harness.viewCalls).toEqual(["focusSsidInput"]);
+    expect(harness.errors).toEqual([]);
+  });
 });
