@@ -35,10 +35,10 @@ interface SettingsCarsModulePanels {
 
 interface SettingsCarsModulePorts {
   activeViewId: ReadonlySignal<string>;
+  activeSettingsTabId: ReadonlySignal<string>;
   openAnalysisTab: () => void;
   openCarWizard: () => void;
   renderSpectrum: () => void;
-  subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
   syncAnalysisInputs: () => void;
 }
 
@@ -85,9 +85,10 @@ export function createSettingsCarsModule(
   const carSelection = createCarSelectionDerivedState(settings);
   let handlersBound = false;
   const highlightedCar = signal<CarsListHighlightedFeedback | null>(null);
-  const activeSettingsTabId = signal("carTab");
   const carsContextVisible = computed(
-    () => ctx.ports.activeViewId.value === "settingsView" && activeSettingsTabId.value === "carTab",
+    () =>
+      ctx.ports.activeViewId.value === "settingsView"
+      && ctx.ports.activeSettingsTabId.value === "carTab",
   );
 
   function hasValidActiveCar(): boolean {
@@ -244,9 +245,6 @@ export function createSettingsCarsModule(
       if (highlightedCar.value && !carsContextVisible.value) {
         untracked(clearHighlightedCarFeedback);
       }
-    });
-    ctx.ports.subscribeSettingsTabChanges((tabId) => {
-      activeSettingsTabId.value = tabId;
     });
     ctx.panels.panel.bindActions({
       onAction: (action) => {

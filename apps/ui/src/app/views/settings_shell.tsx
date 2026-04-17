@@ -13,13 +13,10 @@ import {
 } from "../ui_panel_host_registry";
 import { useUiText } from "../ui_i18n";
 import {
-  effect,
   useComputed,
   type ReadonlySignal,
   signal,
 } from "../ui_signals";
-
-type ViewDisposer = () => void;
 
 const SETTINGS_TABS = [
   {
@@ -69,9 +66,8 @@ const SETTINGS_TABS = [
 type SettingsShellTabId = (typeof SETTINGS_TABS)[number]["id"];
 
 export interface SettingsShellView {
+  activeTabId: ReadonlySignal<string>;
   activateTab(tabId: string): void;
-  getActiveTabId(): string;
-  subscribeActiveTabChanges(listener: (tabId: string) => void): ViewDisposer;
 }
 
 type SettingsShellProps = {
@@ -238,25 +234,12 @@ export function mountSettingsShell(
   return {
     panelHosts,
     view: {
+      activeTabId,
       activateTab(tabId: string): void {
         if (!isSettingsShellTabId(tabId)) {
           return;
         }
         setActiveTab(tabId);
-      },
-      getActiveTabId(): string {
-        return activeTabId.value;
-      },
-      subscribeActiveTabChanges(listener: (tabId: string) => void): ViewDisposer {
-        let initialized = false;
-        return effect(() => {
-          const nextTabId = activeTabId.value;
-          if (!initialized) {
-            initialized = true;
-            return;
-          }
-          listener(nextTabId);
-        });
       },
     },
   };

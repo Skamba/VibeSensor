@@ -16,11 +16,10 @@ import {
 import { createPollingController } from "./polling_controller";
 
 interface SettingsGpsStatusModulePorts {
-  getActiveSettingsTabId: () => string;
   activeViewId: ReadonlySignal<string>;
+  activeSettingsTabId: ReadonlySignal<string>;
   syncSpeedSourceSelectionUi: () => void;
   renderSpeedReadout: () => void;
-  subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
 }
 
 export interface SettingsGpsStatusModuleDeps {
@@ -43,7 +42,6 @@ export function createSettingsGpsStatusModule(
   const { panel, settings } = ctx;
   const handlersBound = signal(false);
   const startupReady = signal(false);
-  const activeSettingsTabId = signal(ctx.ports.getActiveSettingsTabId());
   const presenterDeps: SettingsSpeedSourcePresenterDeps = {
     fmt: ctx.formatting.fmt,
     getSpeedUnit: ctx.getSpeedUnit,
@@ -58,14 +56,10 @@ export function createSettingsGpsStatusModule(
       ctx.ports.activeViewId.value === "dashboardView"
       || (
         ctx.ports.activeViewId.value === "settingsView"
-        && activeSettingsTabId.value === "speedSourceTab"
+        && ctx.ports.activeSettingsTabId.value === "speedSourceTab"
       )
     )
   );
-
-  ctx.ports.subscribeSettingsTabChanges((tabId) => {
-    activeSettingsTabId.value = tabId;
-  });
 
   createPollingController({
     enabled: pollingEnabled,

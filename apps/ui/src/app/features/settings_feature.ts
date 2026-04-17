@@ -106,9 +106,8 @@ export function createSettingsFeature(
       getSpeedUnit: () => ctx.state.shell.speedUnit,
       ports: {
         activeViewId: ctx.ports.activeViewId,
+        activeSettingsTabId: ctx.panels.settingsShell.activeTabId,
         renderSpeedReadout: ctx.ports.view.renderSpeedReadout,
-        subscribeSettingsTabChanges:
-          ctx.panels.settingsShell.subscribeActiveTabChanges,
       },
     });
   const gpsStatusModule: SettingsGpsStatusModule =
@@ -121,12 +120,10 @@ export function createSettingsFeature(
       formatting,
       getSpeedUnit: () => ctx.state.shell.speedUnit,
       ports: {
-        getActiveSettingsTabId: () => ctx.panels.settingsShell.getActiveTabId(),
         activeViewId: ctx.ports.activeViewId,
+        activeSettingsTabId: ctx.panels.settingsShell.activeTabId,
         syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
         renderSpeedReadout: ctx.ports.view.renderSpeedReadout,
-        subscribeSettingsTabChanges:
-          ctx.panels.settingsShell.subscribeActiveTabChanges,
       },
     });
   carsModule = createSettingsCarsModule({
@@ -139,9 +136,8 @@ export function createSettingsFeature(
       openAnalysisTab: () => openSettingsTab("analysisTab"),
       openCarWizard: ctx.ports.openCarWizard,
       activeViewId: ctx.ports.activeViewId,
+      activeSettingsTabId: ctx.panels.settingsShell.activeTabId,
       renderSpectrum: ctx.ports.view.renderSpectrum,
-      subscribeSettingsTabChanges:
-        ctx.panels.settingsShell.subscribeActiveTabChanges,
       syncAnalysisInputs: analysisModule.syncSettingsInputs,
     },
     services,

@@ -543,25 +543,15 @@ function renderEspFlashPanelDom(
 
 function createFeatureNavigationHarness(defaultTabId: string) {
   const activeViewId = signal("settingsView");
-  let activeSettingsTabId = defaultTabId;
-  const settingsTabListeners = new Set<(tabId: string) => void>();
+  const activeSettingsTabId = signal(defaultTabId);
 
   return {
     ports: {
-      getActiveSettingsTabId: () => activeSettingsTabId,
       activeViewId,
-      subscribeSettingsTabChanges(listener: (tabId: string) => void) {
-        settingsTabListeners.add(listener);
-        return () => {
-          settingsTabListeners.delete(listener);
-        };
-      },
+      activeSettingsTabId,
     },
     setActiveSettingsTabId(nextTabId: string) {
-      activeSettingsTabId = nextTabId;
-      for (const listener of settingsTabListeners) {
-        listener(nextTabId);
-      }
+      activeSettingsTabId.value = nextTabId;
     },
     setActiveViewId(nextViewId: string) {
       activeViewId.value = nextViewId;
@@ -915,6 +905,7 @@ test.describe("createEspFlashFeature polling", () => {
       const deps = createDeps();
       const feature = createEspFlashFeature(deps);
 
+      feature.bindHandlers();
       feature.startPolling();
       await flushAsyncWork();
 
@@ -984,6 +975,7 @@ test.describe("createEspFlashFeature polling", () => {
       const deps = createDeps();
       const feature = createEspFlashFeature(deps);
 
+      feature.bindHandlers();
       feature.startPolling();
       await flushAsyncWork();
 
@@ -1039,6 +1031,7 @@ test.describe("createEspFlashFeature polling", () => {
       const deps = createDeps();
       const feature = createEspFlashFeature(deps);
 
+      feature.bindHandlers();
       feature.startPolling();
       await flushAsyncWork();
 
@@ -1106,6 +1099,7 @@ test.describe("createEspFlashFeature polling", () => {
       const deps = createDeps();
       const feature = createEspFlashFeature(deps);
 
+      feature.bindHandlers();
       feature.startPolling();
       await flushAsyncWork();
 
@@ -1312,6 +1306,7 @@ test.describe("createEspFlashFeature polling", () => {
       const deps = createDeps();
       const feature = createEspFlashFeature(deps);
 
+      feature.bindHandlers();
       feature.startPolling();
       await flushAsyncWork();
       expect(pendingPollDelays(timers)).toEqual([]);
@@ -1444,6 +1439,7 @@ test.describe("createUpdateFeature polling", () => {
       const deps = createUpdateDeps();
       const feature = createUpdateFeature(deps);
 
+      feature.bindUpdateHandlers();
       feature.startPolling();
       await flushAsyncWork();
 
@@ -1480,6 +1476,7 @@ test.describe("createUpdateFeature polling", () => {
       const deps = createUpdateDeps();
       const feature = createUpdateFeature(deps);
 
+      feature.bindUpdateHandlers();
       feature.startPolling();
       await flushAsyncWork();
 
@@ -1521,6 +1518,7 @@ test.describe("createUpdateFeature polling", () => {
       deps.updateSsidInput.value = "";
       const feature = createUpdateFeature(deps);
 
+      feature.bindUpdateHandlers();
       feature.startPolling();
       await flushAsyncWork();
 
@@ -1837,6 +1835,7 @@ test.describe("createUpdateFeature polling", () => {
       const deps = createUpdateDeps();
       const feature = createUpdateFeature(deps);
 
+      feature.bindUpdateHandlers();
       feature.startPolling();
       await expectTimerDelays(timers, [10_000]);
 

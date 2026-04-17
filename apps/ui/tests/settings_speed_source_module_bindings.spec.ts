@@ -8,7 +8,7 @@ import type { SpeedSourcePanelActionHandlers } from "../src/app/views/speed_sour
 test("bindHandlers uses typed panel actions and navigation subscriptions", () => {
   let handlers: SpeedSourcePanelActionHandlers | null = null;
   const activeViewId = signal("settingsView");
-  let settingsTabListener: ((tabId: string) => void) | null = null;
+  const activeSettingsTabId = signal("speedSourceTab");
 
   const module = createSettingsSpeedSourceModule({
     settings: createAppState().settings,
@@ -36,11 +36,8 @@ test("bindHandlers uses typed panel actions and navigation subscriptions", () =>
     getSpeedUnit: () => "kmh",
     ports: {
       activeViewId,
+      activeSettingsTabId,
       renderSpeedReadout() {},
-      subscribeSettingsTabChanges(listener) {
-        settingsTabListener = listener;
-        return () => undefined;
-      },
     },
   });
 
@@ -52,13 +49,12 @@ test("bindHandlers uses typed panel actions and navigation subscriptions", () =>
   expect(typeof handlers?.onSave).toBe("function");
   expect(typeof handlers?.onScanObdDevices).toBe("function");
   expect(typeof handlers?.onPairObdDevice).toBe("function");
-  expect(settingsTabListener).not.toBeNull();
 
   expect(() => {
     handlers?.onSpeedSourceChanged("manual");
     handlers?.onManualSpeedInput("80");
     handlers?.onStaleTimeoutInput("5");
-    settingsTabListener?.("analysisTab");
+    activeSettingsTabId.value = "analysisTab";
     activeViewId.value = "dashboardView";
   }).not.toThrow();
 });

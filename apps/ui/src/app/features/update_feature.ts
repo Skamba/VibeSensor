@@ -18,9 +18,8 @@ interface UpdateFeaturePanels {
 }
 
 interface UpdateFeaturePorts {
-  getActiveSettingsTabId: () => string;
   activeViewId: ReadonlySignal<string>;
-  subscribeSettingsTabChanges(listener: (tabId: string) => void): () => void;
+  activeSettingsTabId: ReadonlySignal<string>;
 }
 
 export interface UpdateFeatureDeps {
@@ -42,10 +41,9 @@ function isUpdatePollingContext(viewId: string, tabId: string): boolean {
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   const { panels, ports, services } = ctx;
   const handlersBound = signal(false);
-  const activeSettingsTabId = signal(ports.getActiveSettingsTabId());
   const pollingEnabled = computed(() =>
     handlersBound.value
-    && isUpdatePollingContext(ports.activeViewId.value, activeSettingsTabId.value)
+    && isUpdatePollingContext(ports.activeViewId.value, ports.activeSettingsTabId.value)
   );
   let presenter!: UpdateFeaturePresenter;
   const workflow = createUpdateFeatureWorkflow({
@@ -67,10 +65,6 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   });
   panels.internet.bindModel(presenter.internetPanelModel);
   panels.update.bindModel(presenter.updatePanelModel);
-
-  ports.subscribeSettingsTabChanges((tabId) => {
-    activeSettingsTabId.value = tabId;
-  });
 
   function bindUpdateHandlers(): void {
     if (handlersBound.value) {
