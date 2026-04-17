@@ -84,7 +84,11 @@ export function createSettingsCarsModule(
   const transport = createSettingsCarsTransport(ctx.transport);
   const carSelection = createCarSelectionDerivedState(settings);
   let handlersBound = false;
-  const highlightedCarFeedback = signal<CarsListHighlightedFeedback | null>(null);
+  const highlightedCar = signal<CarsListHighlightedFeedback | null>(null);
+  const activeSettingsTabId = signal("carTab");
+  const carsContextVisible = computed(
+    () => ctx.ports.activeViewId.value === "settingsView" && activeSettingsTabId.value === "carTab",
+  );
 
   function hasValidActiveCar(): boolean {
     return carSelection.hasResolvedActiveCar.value;
@@ -100,7 +104,7 @@ export function createSettingsCarsModule(
     return {
       guidance: buildCarsGuidanceRenderModel({
         carSelectionState,
-        highlightedCarFeedback: highlightedCarFeedback.value,
+        highlightedCarFeedback: highlightedCar.value,
         t,
       }),
       table: carSelectionState.kind === "loading"
@@ -108,7 +112,7 @@ export function createSettingsCarsModule(
         : buildSettingsCarListRenderModel({
           activeCarId: settings.activeCarId,
           cars: settings.cars,
-          highlightedCarId: highlightedCarFeedback.value?.carId ?? null,
+          highlightedCarId: highlightedCar.value?.carId ?? null,
           fmt: formatting.fmt,
           t,
         }),
@@ -128,14 +132,7 @@ export function createSettingsCarsModule(
   function renderCarList(): void {}
 
   function clearHighlightedCarFeedback(): void {
-    highlightedCarFeedback.value = null;
-  }
-
-  function dismissHighlightedCarFeedback(): void {
-    if (!highlightedCarFeedback.value) {
-      return;
-    }
-    clearHighlightedCarFeedback();
+    highlightedCar.value = null;
   }
 
   function syncCarsPayload(payload: CarsPayload): void {
@@ -147,10 +144,10 @@ export function createSettingsCarsModule(
       : false;
     settings.activeCarId = hasRequestedActive ? requestedActiveCarId : null;
     if (
-      highlightedCarFeedback.value &&
-      !settings.cars.some((car) => car.id === highlightedCarFeedback.value?.carId)
+      highlightedCar.value
+      && !settings.cars.some((car) => car.id === highlightedCar.value?.carId)
     ) {
-      highlightedCarFeedback.value = null;
+      highlightedCar.value = null;
     }
   }
 
@@ -243,23 +240,13 @@ export function createSettingsCarsModule(
       return;
     }
     handlersBound = true;
-    let hasSeenInitialView = false;
     effect(() => {
-      const activeViewId = ctx.ports.activeViewId.value;
-      if (!hasSeenInitialView) {
-        hasSeenInitialView = true;
-        return;
-      }
-      if (activeViewId !== "settingsView") {
-        untracked(() => {
-          dismissHighlightedCarFeedback();
-        });
+      if (highlightedCar.value && !carsContextVisible.value) {
+        untracked(clearHighlightedCarFeedback);
       }
     });
     ctx.ports.subscribeSettingsTabChanges((tabId) => {
-      if (tabId !== "carTab") {
-        dismissHighlightedCarFeedback();
-      }
+      activeSettingsTabId.value = tabId;
     });
     ctx.panels.panel.bindActions({
       onAction: (action) => {
@@ -292,7 +279,7 @@ export function createSettingsCarsModule(
     loadCarsFromServer,
     renderCarList,
     showCarCreationSuccess(carId: string, carName: string): void {
-      highlightedCarFeedback.value = { carId, carName };
+      highlightedCar.value = { carId, carName };
     },
     syncActiveCarToInputs,
     syncCarsPayload,
