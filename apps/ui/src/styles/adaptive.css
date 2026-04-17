@@ -54,7 +54,6 @@
     align-items: flex-start;
     flex-direction: column;
   }
-  .history-details-preview { grid-template-columns: 1fr; }
   .history-toolbar {
     align-items: flex-start;
   }
