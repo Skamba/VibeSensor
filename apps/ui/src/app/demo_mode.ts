@@ -1,9 +1,11 @@
 import { EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION } from "../transport/live_models";
+import type { LiveWsPayload } from "../contracts/ws_payload_types";
 import { batchAppStateUpdates } from "./ui_app_state";
 import type { AppState } from "./ui_app_state";
 
 type DemoDeps = {
-  state: Pick<AppState, "transport" | "settings">;
+  queueTransportPayload(payload: LiveWsPayload): void;
+  state: Pick<AppState, "settings">;
 };
 
 declare global {
@@ -97,7 +99,7 @@ export function runDemoMode(deps: DemoDeps): void {
     baseNoise.push(0.0008 + (seed % 100) * 0.00004);
   }
 
-  const demoSpectra: Record<string, unknown> = {};
+  const demoSpectra: NonNullable<LiveWsPayload["spectra"]>["clients"] = {};
   const peakConfigs = [
     { hz: 12.3, amp: 0.032, db: 15.1, bucket: "l2" },
     { hz: 12.1, amp: 0.025, db: 14.0, bucket: "l2" },
@@ -128,7 +130,7 @@ export function runDemoMode(deps: DemoDeps): void {
     };
   });
 
-  const demoPayload = {
+  const demoPayload: LiveWsPayload = {
     schema_version: EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION,
     server_time: new Date().toISOString(),
     clients: demoClients,
@@ -162,7 +164,6 @@ export function runDemoMode(deps: DemoDeps): void {
   };
 
   batchAppStateUpdates(() => {
-    state.transport.wsState = "connected";
     state.settings.carsLoaded = true;
     state.settings.cars = [
       {
@@ -174,9 +175,8 @@ export function runDemoMode(deps: DemoDeps): void {
       },
     ];
     state.settings.activeCarId = "demo-car-1";
-    state.transport.hasReceivedPayload = true;
-    state.transport.pendingPayload = demoPayload;
   });
+  deps.queueTransportPayload(demoPayload);
 
   window.__vibesensorDemoCleanup = undefined;
 }

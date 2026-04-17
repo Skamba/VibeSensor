@@ -77,6 +77,7 @@ export class UiLiveTransportController {
     const isDemoMode = new URLSearchParams(window.location.search).has("demo");
     if (isDemoMode) {
       runDemoMode({
+        queueTransportPayload: (payload) => this.queueTransportPayload(payload),
         state: this.state,
       });
       return;
@@ -128,6 +129,14 @@ export class UiLiveTransportController {
     if (update.hasSelectedClientChanged) {
       this.sendSelection();
     }
+  }
+
+  private queueTransportPayload(payload: unknown): void {
+    batchAppStateUpdates(() => {
+      this.state.transport.wsState = "connected";
+      this.state.transport.hasReceivedPayload = true;
+      this.state.transport.pendingPayload = payload;
+    });
   }
 
   private connectWs(): void {
