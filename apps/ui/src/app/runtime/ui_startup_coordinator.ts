@@ -39,6 +39,8 @@ export class UiStartupCoordinator {
 
   private readonly defaultViewId: string;
 
+  private readonly isDemoMode: boolean;
+
   private readonly warn: StartupWarn;
 
   constructor(deps: UiStartupCoordinatorDeps) {
@@ -46,6 +48,7 @@ export class UiStartupCoordinator {
     this.transport = deps.transport;
     this.features = deps.features;
     this.defaultViewId = deps.defaultViewId;
+    this.isDemoMode = new URLSearchParams(window.location.search).has("demo");
     this.warn = deps.warn ?? ((message, error) => console.warn(message, error));
   }
 
@@ -69,6 +72,39 @@ export class UiStartupCoordinator {
   }
 
   private createStartupPlan(): UiStartupPlan {
+    const asyncTasks = this.isDemoMode
+      ? []
+      : [
+          {
+            name: "hydrate persisted preferences",
+            run: () => this.shell.hydratePersistedPreferences(),
+          },
+          {
+            name: "refresh location options",
+            run: () => this.features.realtime.refreshLocationOptions(),
+          },
+          {
+            name: "load speed source",
+            run: () => this.features.settings.loadSpeedSourceFromServer(),
+          },
+          {
+            name: "load analysis settings",
+            run: () => this.features.settings.loadAnalysisSettingsFromServer(),
+          },
+          {
+            name: "load cars",
+            run: () => this.features.settings.loadCarsFromServer(),
+          },
+          {
+            name: "refresh logging status",
+            run: () => this.features.realtime.refreshLoggingStatus(),
+          },
+          {
+            name: "refresh history",
+            run: () => this.features.history.refreshHistory(),
+          },
+        ];
+
     return {
       initialSyncTasks: [
         () => this.shell.start(this.defaultViewId),
@@ -76,36 +112,7 @@ export class UiStartupCoordinator {
       finalSyncTasks: [
         () => this.transport.startTransportMode(),
       ],
-      asyncTasks: [
-        {
-          name: "hydrate persisted preferences",
-          run: () => this.shell.hydratePersistedPreferences(),
-        },
-        {
-          name: "refresh location options",
-          run: () => this.features.realtime.refreshLocationOptions(),
-        },
-        {
-          name: "load speed source",
-          run: () => this.features.settings.loadSpeedSourceFromServer(),
-        },
-        {
-          name: "load analysis settings",
-          run: () => this.features.settings.loadAnalysisSettingsFromServer(),
-        },
-        {
-          name: "load cars",
-          run: () => this.features.settings.loadCarsFromServer(),
-        },
-        {
-          name: "refresh logging status",
-          run: () => this.features.realtime.refreshLoggingStatus(),
-        },
-        {
-          name: "refresh history",
-          run: () => this.features.history.refreshHistory(),
-        },
-      ],
+      asyncTasks,
     };
   }
 }
