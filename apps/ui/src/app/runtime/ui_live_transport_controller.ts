@@ -48,14 +48,8 @@ export class UiLiveTransportController {
     });
 
     let previousPendingPayload = this.state.transport.pendingPayload.value;
-    let pendingPayloadInitialized = false;
     effect(() => {
       const nextPendingPayload = this.state.transport.pendingPayload.value;
-      if (!pendingPayloadInitialized) {
-        pendingPayloadInitialized = true;
-        previousPendingPayload = nextPendingPayload;
-        return;
-      }
       if (nextPendingPayload === previousPendingPayload) {
         return;
       }
@@ -66,14 +60,8 @@ export class UiLiveTransportController {
     });
 
     let previousWsState = this.state.transport.wsState.value;
-    let wsStateInitialized = false;
     effect(() => {
       const nextWsState = this.state.transport.wsState.value;
-      if (!wsStateInitialized) {
-        wsStateInitialized = true;
-        previousWsState = nextWsState;
-        return;
-      }
       if (nextWsState === previousWsState) {
         return;
       }
