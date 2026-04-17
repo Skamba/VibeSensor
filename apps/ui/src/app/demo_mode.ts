@@ -1,10 +1,9 @@
 import { EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION } from "../transport/live_models";
-import type { LiveWsPayload } from "../contracts/ws_payload_types";
 import { batchAppStateUpdates } from "./ui_app_state";
 import type { AppState } from "./ui_app_state";
 
 type DemoDeps = {
-  queueTransportPayload(payload: LiveWsPayload): void;
+  queueTransportPayload(payload: unknown): void;
   state: Pick<AppState, "settings">;
 };
 
@@ -99,7 +98,22 @@ export function runDemoMode(deps: DemoDeps): void {
     baseNoise.push(0.0008 + (seed % 100) * 0.00004);
   }
 
-  const demoSpectra: NonNullable<LiveWsPayload["spectra"]>["clients"] = {};
+  const demoSpectra: Record<string, {
+    combined_spectrum_amp_g: number[];
+    freq: number[];
+    strength_metrics: {
+      noise_floor_amp_g: number;
+      peak_amp_g: number;
+      strength_bucket: string | null;
+      top_peaks: Array<{
+        amp: number;
+        hz: number;
+        strength_bucket: string | null;
+        vibration_strength_db: number;
+      }>;
+      vibration_strength_db: number;
+    };
+  }> = {};
   const peakConfigs = [
     { hz: 12.3, amp: 0.032, db: 15.1, bucket: "l2" },
     { hz: 12.1, amp: 0.025, db: 14.0, bucket: "l2" },
@@ -130,7 +144,7 @@ export function runDemoMode(deps: DemoDeps): void {
     };
   });
 
-  const demoPayload: LiveWsPayload = {
+  const demoPayload = {
     schema_version: EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION,
     server_time: new Date().toISOString(),
     clients: demoClients,
