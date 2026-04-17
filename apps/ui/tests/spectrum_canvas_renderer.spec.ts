@@ -2,7 +2,8 @@ import { expect, test } from "@playwright/test";
 
 import type { SpectrumPanelChartDom } from "../src/app/runtime/spectrum_panel_view";
 import { createAppState } from "../src/app/ui_app_state";
-import type { SpectrumChart } from "../src/spectrum_chart";
+import { effect } from "../src/app/ui_signals";
+import type { CreateSpectrumChartDeps, SpectrumChart } from "../src/spectrum_chart";
 import type { AdaptedClient } from "../src/transport/live_models";
 import { createDeferred, flushSignalUpdates, installWindowGlobal } from "./async_test_helpers";
 import { createElementStub, installDocumentStub } from "./spectrum_test_support";
@@ -128,31 +129,30 @@ test.describe("SpectrumCanvasRenderer", () => {
         },
       };
 
-      const chartModule = createDeferred<{ SpectrumChart: typeof SpectrumChart }>();
-      const createdCharts: FakeSpectrumChart[] = [];
-      class FakeSpectrumChart {
-        private seriesCount = 0;
-        public readonly setDataCalls: Array<readonly unknown[]> = [];
-
-        constructor(..._args: unknown[]) {
-          createdCharts.push(this);
-        }
-
-        ensurePlot(seriesMeta: Array<{ label: string; color: string }>): void {
-          this.seriesCount = seriesMeta.length + 1;
-        }
-
-        setData(data: readonly unknown[]): void {
-          this.setDataCalls.push(data);
-        }
-
-        setSeriesIsolation(): void {}
-
-        getSeriesCount(): number {
-          return this.seriesCount;
-        }
-
-        destroy(): void {}
+      const chartModule = createDeferred<{
+        createSpectrumChart: (deps: CreateSpectrumChartDeps) => SpectrumChart;
+      }>();
+      const createdCharts: Array<{
+        dataSnapshots: Array<readonly unknown[]>;
+        seriesCount: number;
+      }> = [];
+      function createFakeSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChart {
+        const chartState = {
+          dataSnapshots: [] as Array<readonly unknown[]>,
+          seriesCount: 0,
+        };
+        const stop = effect(() => {
+          chartState.seriesCount = deps.seriesMeta.value.length + 1;
+          chartState.dataSnapshots.push(deps.data.value as readonly unknown[]);
+        });
+        createdCharts.push(chartState);
+        return {
+          destroy() {
+            stop();
+          },
+          resize() {},
+          setSeriesIsolation() {},
+        };
       }
 
       const renderer = new SpectrumCanvasRenderer({
@@ -177,16 +177,88 @@ test.describe("SpectrumCanvasRenderer", () => {
       expect(createdCharts).toHaveLength(0);
 
       chartModule.resolve({
-        SpectrumChart: FakeSpectrumChart as unknown as typeof SpectrumChart,
+        createSpectrumChart: createFakeSpectrumChart,
       });
       await flushSignalUpdates();
 
       expect(state.spectrum.chartLoading).toBe(false);
       expect(state.spectrum.chartLoadErrorDetail).toBeNull();
       expect(createdCharts).toHaveLength(1);
-      expect(state.spectrum.spectrumPlot).toBe(createdCharts[0] as unknown as SpectrumChart);
-      expect(createdCharts[0].setDataCalls).toHaveLength(1);
-      expect(createdCharts[0].setDataCalls[0]?.[0]).toEqual([10, 15, 20]);
+      expect(state.spectrum.spectrumPlot).not.toBeNull();
+      expect(createdCharts[0].dataSnapshots.at(-1)?.[0]).toEqual([10, 15, 20]);
+      expect(createdCharts[0].seriesCount).toBe(2);
+    } finally {
+      restoreDocument();
+    }
+  });
+
+  test("passes reactive chart text updates through the factory signals", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const { SpectrumCanvasRenderer } = await import(
+        "../src/app/runtime/spectrum_canvas_renderer"
+      );
+      const state = createAppState();
+      state.realtime.clients = [makeClient("sensor-a", "Front Right Wheel")];
+      state.spectrum.spectra.clients = {
+        "sensor-a": {
+          freq: [10, 15, 20],
+          combined: [1, 0.75, 0.5],
+          strength_metrics: {
+            noise_floor_amp_g: 0.1,
+            peak_amp_g: 1,
+            strength_bucket: null,
+            top_peaks: [{
+              amp: 1,
+              hz: 10,
+              strength_bucket: null,
+              vibration_strength_db: 12,
+            }],
+            vibration_strength_db: 12,
+          },
+        },
+      };
+      const axisTexts: string[] = [];
+      let createCalls = 0;
+
+      const renderer = new SpectrumCanvasRenderer({
+        state,
+        dom: {
+          specChart: createElementStub("div"),
+          specChartWrap: createElementStub("div"),
+        } as unknown as SpectrumPanelChartDom,
+        t: (key) => `${state.shell.lang}:${key}`,
+        getBandsVisible: () => false,
+        getChartBands: () => [],
+        getFocusMarker: () => null,
+        onCursorDataIndexChange: () => undefined,
+        loadChartModule: async () => ({
+          createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChart {
+            createCalls += 1;
+            const stop = effect(() => {
+              axisTexts.push(deps.text.value.axisHz);
+            });
+            return {
+              destroy() {
+                stop();
+              },
+              resize() {},
+              setSeriesIsolation() {},
+            };
+          },
+        }),
+      });
+
+      const prepared = renderer.prepareFrame();
+      renderer.renderPreparedFrame(prepared);
+      await flushSignalUpdates();
+
+      state.shell.lang = "nl";
+      await flushSignalUpdates();
+
+      expect(createCalls).toBe(1);
+      expect(axisTexts).toContain("en:chart.axis.hz");
+      expect(axisTexts.at(-1)).toBe("nl:chart.axis.hz");
     } finally {
       restoreDocument();
     }

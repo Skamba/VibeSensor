@@ -2,6 +2,7 @@ import type uPlot from "uplot";
 
 import { SPECTRUM_TWEEN_DURATION_MS } from "../../config";
 import { convertSpectrumAmplitudesToDbInPlace } from "../../spectrum";
+import type { SpectrumSeriesMeta, SpectrumText } from "../../spectrum_chart";
 import { getSpectrumCssVars } from "../../spectrum_css_vars";
 import { chartSeriesPalette, orderBandFills } from "../../theme";
 import { createRafAnimation } from "../dom/raf_animation";
@@ -10,11 +11,11 @@ import {
   type SpectrumHeavyFrame,
 } from "../spectrum_animation";
 import type { AppState, ChartBand } from "../ui_app_state";
-import { effect, signal, untracked } from "../ui_signals";
+import { computed, effect, signal, untracked, type ReadonlySignal } from "../ui_signals";
 import type { SpectrumPanelChartDom } from "./spectrum_panel_view";
 import { closestFrequencyIndex, freqGridsMatch, type SpectrumFocusMarker, type SpectrumSeriesEntry } from "./spectrum_shared";
 
-type SpectrumChartModule = Pick<typeof import("../../spectrum_chart"), "SpectrumChart">;
+type SpectrumChartModule = Pick<typeof import("../../spectrum_chart"), "createSpectrumChart">;
 
 const bandKeyPresentation: Record<string, { color: string; labelKey: string }> = {
   wheel_1x: { color: orderBandFills.wheel1, labelKey: "bands.wheel_1x" },
@@ -78,12 +79,28 @@ export class SpectrumCanvasRenderer {
 
   private readonly currentFreqAxis = signal<readonly number[]>([]);
 
+  private readonly chartSeriesMeta = signal<readonly SpectrumSeriesMeta[]>([]);
+
+  private readonly chartData = signal<uPlot.AlignedData>([[]]);
+
+  private readonly chartHeight = signal(360);
+
+  private readonly chartPlugins = signal<readonly uPlot.Plugin[]>([]);
+
+  private readonly chartText: ReadonlySignal<SpectrumText>;
+
   constructor(
     private readonly deps: SpectrumCanvasRendererDeps,
   ) {
     this.spectrumBandPlugin = this.createBandPlugin();
     this.onAsyncChartUpdate = deps.onAsyncChartUpdate ?? (() => undefined);
     this.loadChartModule = deps.loadChartModule ?? loadSpectrumChartModule;
+    this.chartPlugins.value = [this.spectrumBandPlugin];
+    this.chartText = computed(() => ({
+      title: this.deps.t("chart.spectrum_title"),
+      axisHz: this.deps.t("chart.axis.hz"),
+      axisAmplitude: this.deps.t("chart.axis.amplitude"),
+    }));
     this.initTweenEffect();
   }
 
@@ -195,6 +212,14 @@ export class SpectrumCanvasRenderer {
     this.pendingPreparedFrame.value = prepared;
     this.currentEntries.value = prepared.entries;
     this.currentFreqAxis.value = prepared.freqAxis;
+    this.chartSeriesMeta.value = prepared.entries.map((entry) => ({
+      label: entry.label,
+      color: entry.color,
+    }));
+    this.chartData.value = [
+      prepared.freqAxis,
+      ...prepared.entries.map((entry) => entry.values),
+    ];
 
     if (!prepared.frame) {
       this.tweenTarget.value = null;
@@ -202,11 +227,10 @@ export class SpectrumCanvasRenderer {
       this.currentFreqAxis.value = [];
       this.spectrumLastFrame.value = null;
       this.pendingPreparedFrame.value = null;
-      this.deps.state.spectrum.spectrumPlot?.setData([[], ...prepared.entries.map(() => [] as number[])]);
       return;
     }
 
-    if (!this.ensureSpectrumPlot(prepared.entries)) {
+    if (!this.ensureSpectrumPlot()) {
       return;
     }
 
@@ -231,10 +255,10 @@ export class SpectrumCanvasRenderer {
     if (!freqAxis.length || !entries.length) {
       return;
     }
-    this.deps.state.spectrum.spectrumPlot?.setData([
+    this.chartData.value = [
       freqAxis.slice(),
       ...entries.map((entry) => entry.values),
-    ]);
+    ];
   }
 
   setSeriesIsolation(seriesIndex: number | null): void {
@@ -250,7 +274,7 @@ export class SpectrumCanvasRenderer {
       return;
     }
     this.currentFreqAxis.value = frame.freq;
-    this.deps.state.spectrum.spectrumPlot.setData([frame.freq, ...frame.values]);
+    this.chartData.value = [frame.freq, ...frame.values];
     this.spectrumLastFrame.value = frame;
   }
 
@@ -361,44 +385,33 @@ export class SpectrumCanvasRenderer {
     };
   }
 
-  private recreateSpectrumPlot(
-    seriesMeta: readonly SpectrumSeriesEntry[],
-    chartModule: SpectrumChartModule,
-  ): void {
+  private createSpectrumPlot(chartModule: SpectrumChartModule): void {
     this.tweenTarget.value = null;
     this.spectrumLastFrame.value = null;
     if (this.deps.state.spectrum.spectrumPlot) {
       this.deps.state.spectrum.spectrumPlot.destroy();
       this.deps.state.spectrum.spectrumPlot = null;
     }
-    this.deps.state.spectrum.spectrumPlot = new chartModule.SpectrumChart(
-      this.deps.dom.specChart,
-      360,
-      this.deps.dom.specChartWrap,
-    );
-    this.deps.state.spectrum.spectrumPlot.ensurePlot(
-      Array.from(seriesMeta),
-      {
-        title: this.deps.t("chart.spectrum_title"),
-        axisHz: this.deps.t("chart.axis.hz"),
-        axisAmplitude: this.deps.t("chart.axis.amplitude"),
-      },
-      [this.spectrumBandPlugin],
-    );
+    this.deps.state.spectrum.spectrumPlot = chartModule.createSpectrumChart({
+      hostEl: this.deps.dom.specChart,
+      measureEl: this.deps.dom.specChartWrap,
+      height: this.chartHeight,
+      seriesMeta: this.chartSeriesMeta,
+      data: this.chartData,
+      text: this.chartText,
+      plugins: this.chartPlugins,
+    });
   }
 
-  private ensureSpectrumPlot(seriesMeta: readonly SpectrumSeriesEntry[]): boolean {
-    if (
-      this.deps.state.spectrum.spectrumPlot
-      && this.deps.state.spectrum.spectrumPlot.getSeriesCount() === seriesMeta.length + 1
-    ) {
+  private ensureSpectrumPlot(): boolean {
+    if (this.deps.state.spectrum.spectrumPlot) {
       this.deps.state.spectrum.chartLoadErrorDetail = null;
       return true;
     }
     if (this.chartModule.value) {
       this.deps.state.spectrum.chartLoading = false;
       this.deps.state.spectrum.chartLoadErrorDetail = null;
-      this.recreateSpectrumPlot(seriesMeta, this.chartModule.value);
+      this.createSpectrumPlot(this.chartModule.value);
       return this.deps.state.spectrum.spectrumPlot !== null;
     }
     if (this.chartLoadPromise) {
@@ -414,7 +427,7 @@ export class SpectrumCanvasRenderer {
         if (!latestPrepared?.frame) {
           return;
         }
-        this.recreateSpectrumPlot(latestPrepared.entries, module);
+        this.createSpectrumPlot(module);
         const rerender = latestPrepared;
         this.pendingPreparedFrame.value = null;
         this.renderPreparedFrame(rerender);
