@@ -49,74 +49,66 @@ export interface SpectrumCanvasRendererDeps {
   loadChartModule?: () => Promise<SpectrumChartModule>;
 }
 
-export class SpectrumCanvasRenderer {
-  private readonly spectrumBandPlugin: uPlot.Plugin;
-  private readonly onAsyncChartUpdate: () => void;
-  private readonly loadChartModule: () => Promise<SpectrumChartModule>;
+export interface SpectrumCanvasRenderer {
+  prepareFrame(): SpectrumPreparedRenderData;
+  renderPreparedFrame(prepared: SpectrumPreparedRenderData): void;
+  refreshDecorations(): void;
+  setSeriesIsolation(seriesIndex: number | null): void;
+}
 
-  private chartLoadPromise: Promise<void> | null = null;
+export function createSpectrumCanvasRenderer(
+  deps: SpectrumCanvasRendererDeps,
+): SpectrumCanvasRenderer {
+  const onAsyncChartUpdate = deps.onAsyncChartUpdate ?? (() => undefined);
+  const loadChartModule = deps.loadChartModule ?? loadSpectrumChartModule;
 
-  private readonly spectrumLastFrame = signal<SpectrumHeavyFrame | null>(null);
-  private readonly pendingPreparedFrame = signal<SpectrumPreparedRenderData | null>(null);
-  private readonly chartModule = signal<SpectrumChartModule | null>(null);
+  let chartLoadPromise: Promise<void> | null = null;
 
-  private readonly tweenAlpha = signal(1);
+  const spectrumLastFrame = signal<SpectrumHeavyFrame | null>(null);
+  const pendingPreparedFrame = signal<SpectrumPreparedRenderData | null>(null);
+  const chartModule = signal<SpectrumChartModule | null>(null);
 
-  private readonly tweenFromFrame = signal<SpectrumHeavyFrame | null>(null);
-
-  private readonly tweenToFrame = signal<SpectrumHeavyFrame | null>(null);
-
-  private readonly tweenState = createSpectrumTweenDerivedState(
-    this.tweenFromFrame,
-    this.tweenToFrame,
-    this.tweenAlpha,
+  const tweenAlpha = signal(1);
+  const tweenFromFrame = signal<SpectrumHeavyFrame | null>(null);
+  const tweenToFrame = signal<SpectrumHeavyFrame | null>(null);
+  const tweenState = createSpectrumTweenDerivedState(
+    tweenFromFrame,
+    tweenToFrame,
+    tweenAlpha,
   );
 
-  /** Signals that a new tween animation should start toward this frame. */
-  private readonly tweenTarget = signal<SpectrumHeavyFrame | null>(null);
+  const tweenTarget = signal<SpectrumHeavyFrame | null>(null);
+  const currentEntries = signal<readonly SpectrumSeriesEntry[]>([]);
+  const currentFreqAxis = signal<readonly number[]>([]);
+  const chartSeriesMeta = signal<readonly SpectrumSeriesMeta[]>([]);
+  const chartData = signal<uPlot.AlignedData>([[]]);
+  const chartHeight = signal(360);
+  const chartPlugins = signal<readonly uPlot.Plugin[]>([]);
+  const chartText: ReadonlySignal<SpectrumText> = computed(() => ({
+    title: deps.t("chart.spectrum_title"),
+    axisHz: deps.t("chart.axis.hz"),
+    axisAmplitude: deps.t("chart.axis.amplitude"),
+  }));
 
-  private readonly currentEntries = signal<readonly SpectrumSeriesEntry[]>([]);
+  const spectrumBandPlugin = createBandPlugin();
+  chartPlugins.value = [spectrumBandPlugin];
+  initTweenEffect();
 
-  private readonly currentFreqAxis = signal<readonly number[]>([]);
-
-  private readonly chartSeriesMeta = signal<readonly SpectrumSeriesMeta[]>([]);
-
-  private readonly chartData = signal<uPlot.AlignedData>([[]]);
-
-  private readonly chartHeight = signal(360);
-
-  private readonly chartPlugins = signal<readonly uPlot.Plugin[]>([]);
-
-  private readonly chartText: ReadonlySignal<SpectrumText>;
-
-  constructor(
-    private readonly deps: SpectrumCanvasRendererDeps,
-  ) {
-    this.spectrumBandPlugin = this.createBandPlugin();
-    this.onAsyncChartUpdate = deps.onAsyncChartUpdate ?? (() => undefined);
-    this.loadChartModule = deps.loadChartModule ?? loadSpectrumChartModule;
-    this.chartPlugins.value = [this.spectrumBandPlugin];
-    this.chartText = computed(() => ({
-      title: this.deps.t("chart.spectrum_title"),
-      axisHz: this.deps.t("chart.axis.hz"),
-      axisAmplitude: this.deps.t("chart.axis.amplitude"),
-    }));
-    this.initTweenEffect();
-  }
-
-  private initTweenEffect(): void {
+  function initTweenEffect(): void {
     effect(() => {
-      const to = this.tweenTarget.value;
+      const to = tweenTarget.value;
       if (!to) return;
       const anim = createRafAnimation({
         durationMs: SPECTRUM_TWEEN_DURATION_MS,
         onFrame: (alpha) => {
-          this.tweenAlpha.value = alpha;
-          const frame = this.tweenState.frame.value;
-          if (frame) this.setSpectrumDataFromFrame(frame);
+          tweenAlpha.value = alpha;
+          const frame = tweenState.frame.value;
+          if (frame) {
+            setSpectrumDataFromFrame(frame);
+          }
         },
         onComplete: () => {
-          untracked(() => this.setSpectrumDataFromFrame(to));
+          untracked(() => setSpectrumDataFromFrame(to));
         },
       });
       anim.start();
@@ -124,16 +116,16 @@ export class SpectrumCanvasRenderer {
     });
   }
 
-  prepareFrame(): SpectrumPreparedRenderData {
+  function prepareFrame(): SpectrumPreparedRenderData {
     const fallbackFreq: number[] = [];
     const entries: SpectrumSeriesEntry[] = [];
     let targetFreq: number[] = [];
 
-    for (const [index, client] of this.deps.state.realtime.clients.entries()) {
+    for (const [index, client] of deps.state.realtime.clients.entries()) {
       if (!client?.connected) {
         continue;
       }
-      const spectrum = this.deps.state.spectrum.spectra.clients?.[client.id];
+      const spectrum = deps.state.spectrum.spectra.clients?.[client.id];
       if (!spectrum || !Array.isArray(spectrum.combined)) {
         continue;
       }
@@ -174,12 +166,12 @@ export class SpectrumCanvasRenderer {
       entries.push({
         id: client.id,
         label: client.name || client.id,
-        color: this.colorForClient(index),
+        color: colorForClient(index),
         values: blended,
       });
     }
 
-    const chartBands = this.calculateBands();
+    const chartBands = calculateBands();
     if (!targetFreq.length || !entries.length) {
       return {
         entries: [],
@@ -208,78 +200,78 @@ export class SpectrumCanvasRenderer {
     };
   }
 
-  renderPreparedFrame(prepared: SpectrumPreparedRenderData): void {
-    this.pendingPreparedFrame.value = prepared;
-    this.currentEntries.value = prepared.entries;
-    this.currentFreqAxis.value = prepared.freqAxis;
-    this.chartSeriesMeta.value = prepared.entries.map((entry) => ({
+  function renderPreparedFrame(prepared: SpectrumPreparedRenderData): void {
+    pendingPreparedFrame.value = prepared;
+    currentEntries.value = prepared.entries;
+    currentFreqAxis.value = prepared.freqAxis;
+    chartSeriesMeta.value = prepared.entries.map((entry) => ({
       label: entry.label,
       color: entry.color,
     }));
-    this.chartData.value = [
+    chartData.value = [
       prepared.freqAxis,
       ...prepared.entries.map((entry) => entry.values),
     ];
 
     if (!prepared.frame) {
-      this.tweenTarget.value = null;
-      this.currentEntries.value = [];
-      this.currentFreqAxis.value = [];
-      this.spectrumLastFrame.value = null;
-      this.pendingPreparedFrame.value = null;
+      tweenTarget.value = null;
+      currentEntries.value = [];
+      currentFreqAxis.value = [];
+      spectrumLastFrame.value = null;
+      pendingPreparedFrame.value = null;
       return;
     }
 
-    if (!this.ensureSpectrumPlot()) {
+    if (!ensureSpectrumPlot()) {
       return;
     }
 
     const nextFrame = prepared.frame;
-    this.tweenFromFrame.value = this.spectrumLastFrame.value;
-    this.tweenToFrame.value = nextFrame;
-    this.tweenTarget.value = null; // cancel any in-flight animation
-    const canTween = this.deps.state.transport.wsState === "connected"
-      && this.tweenState.canTween.value;
-    if (!canTween || !this.spectrumLastFrame.value) {
-      this.setSpectrumDataFromFrame(nextFrame);
+    tweenFromFrame.value = spectrumLastFrame.value;
+    tweenToFrame.value = nextFrame;
+    tweenTarget.value = null; // cancel any in-flight animation
+    const canTween = deps.state.transport.wsState === "connected"
+      && tweenState.canTween.value;
+    if (!canTween || !spectrumLastFrame.value) {
+      setSpectrumDataFromFrame(nextFrame);
       return;
     }
 
-    this.tweenAlpha.value = 0;
-    this.tweenTarget.value = nextFrame; // triggers RAF effect
+    tweenAlpha.value = 0;
+    tweenTarget.value = nextFrame; // triggers RAF effect
   }
 
-  refreshDecorations(): void {
-    const freqAxis = this.currentFreqAxis.value;
-    const entries = this.currentEntries.value;
+  function refreshDecorations(): void {
+    const freqAxis = currentFreqAxis.value;
+    const entries = currentEntries.value;
     if (!freqAxis.length || !entries.length) {
       return;
     }
-    this.chartData.value = [
+    chartData.value = [
       freqAxis.slice(),
       ...entries.map((entry) => entry.values),
     ];
   }
 
-  setSeriesIsolation(seriesIndex: number | null): void {
-    this.deps.state.spectrum.spectrumPlot?.setSeriesIsolation(seriesIndex);
+  function setSeriesIsolation(seriesIndex: number | null): void {
+    deps.state.spectrum.spectrumPlot?.setSeriesIsolation(seriesIndex);
   }
 
-  private colorForClient(index: number): string {
+  function colorForClient(index: number): string {
     return chartSeriesPalette[index % chartSeriesPalette.length];
   }
 
-  private setSpectrumDataFromFrame(frame: SpectrumHeavyFrame): void {
-    if (!this.deps.state.spectrum.spectrumPlot) {
+  function setSpectrumDataFromFrame(frame: SpectrumHeavyFrame): void {
+    if (!deps.state.spectrum.spectrumPlot) {
       return;
     }
-    this.currentFreqAxis.value = frame.freq;
-    this.chartData.value = [frame.freq, ...frame.values];
-    this.spectrumLastFrame.value = frame;
+    currentFreqAxis.value = frame.freq;
+    chartData.value = [frame.freq, ...frame.values];
+    spectrumLastFrame.value = frame;
   }
 
-  private calculateBandsFromBackend(): ChartBand[] | null {
-    const bands = this.deps.state.realtime.rotationalSpeeds?.order_bands;
+  function calculateBandsFromBackend(): ChartBand[] | null {
+    const bands = deps.state.realtime.rotationalSpeeds?.order_bands;
     if (!Array.isArray(bands) || !bands.length) {
       return null;
     }
@@ -292,7 +284,7 @@ export class SpectrumCanvasRenderer {
       }
       const presentation = bandKeyPresentation[band.key];
       output.push({
-        label: this.deps.t(presentation?.labelKey ?? band.key),
+        label: deps.t(presentation?.labelKey ?? band.key),
         min_hz: Math.max(0, center * (1 - tolerance)),
         max_hz: center * (1 + tolerance),
         color: presentation?.color ?? orderBandFills.wheel1,
@@ -301,16 +293,16 @@ export class SpectrumCanvasRenderer {
     return output.length ? output : null;
   }
 
-  private calculateBands(): ChartBand[] {
-    return this.calculateBandsFromBackend() ?? [];
+  function calculateBands(): ChartBand[] {
+    return calculateBandsFromBackend() ?? [];
   }
 
-  private createBandPlugin(): uPlot.Plugin {
+  function createBandPlugin(): uPlot.Plugin {
     return {
       hooks: {
         setCursor: [
           (plot: uPlot) => {
-            this.deps.onCursorDataIndexChange(
+            deps.onCursorDataIndexChange(
               typeof plot.cursor.idx === "number" && plot.cursor.idx >= 0
                 ? plot.cursor.idx
                 : null,
@@ -321,8 +313,8 @@ export class SpectrumCanvasRenderer {
           (plot: uPlot) => {
             const top = plot.bbox.top;
             const height = plot.bbox.height;
-            if (this.deps.getBandsVisible()) {
-              for (const band of this.deps.getChartBands()) {
+            if (deps.getBandsVisible()) {
+              for (const band of deps.getChartBands()) {
                 if (!(band.max_hz > band.min_hz)) {
                   continue;
                 }
@@ -338,18 +330,18 @@ export class SpectrumCanvasRenderer {
               }
             }
 
-            const focusMarker = this.deps.getFocusMarker();
+            const focusMarker = deps.getFocusMarker();
             if (!focusMarker) {
               return;
             }
-            const freqAxis = this.currentFreqAxis.value;
+            const freqAxis = currentFreqAxis.value;
             const peakIndex = closestFrequencyIndex(freqAxis, focusMarker.freq);
             if (peakIndex === null) {
               return;
             }
             const x = plot.valToPos(freqAxis[peakIndex], "x", true);
             const y = plot.valToPos(focusMarker.value, "y", true);
-            const label = `${this.formatHz(focusMarker.freq)} Hz`;
+            const label = `${formatHz(focusMarker.freq)} Hz`;
             const labelPaddingX = 6;
             const labelHeight = 20;
             const labelTop = top + 8;
@@ -385,68 +377,75 @@ export class SpectrumCanvasRenderer {
     };
   }
 
-  private createSpectrumPlot(chartModule: SpectrumChartModule): void {
-    this.tweenTarget.value = null;
-    this.spectrumLastFrame.value = null;
-    if (this.deps.state.spectrum.spectrumPlot) {
-      this.deps.state.spectrum.spectrumPlot.destroy();
-      this.deps.state.spectrum.spectrumPlot = null;
+  function createSpectrumPlot(loadedChartModule: SpectrumChartModule): void {
+    tweenTarget.value = null;
+    spectrumLastFrame.value = null;
+    if (deps.state.spectrum.spectrumPlot) {
+      deps.state.spectrum.spectrumPlot.destroy();
+      deps.state.spectrum.spectrumPlot = null;
     }
-    this.deps.state.spectrum.spectrumPlot = chartModule.createSpectrumChart({
-      hostEl: this.deps.dom.specChart,
-      measureEl: this.deps.dom.specChartWrap,
-      height: this.chartHeight,
-      seriesMeta: this.chartSeriesMeta,
-      data: this.chartData,
-      text: this.chartText,
-      plugins: this.chartPlugins,
+    deps.state.spectrum.spectrumPlot = loadedChartModule.createSpectrumChart({
+      hostEl: deps.dom.specChart,
+      measureEl: deps.dom.specChartWrap,
+      height: chartHeight,
+      seriesMeta: chartSeriesMeta,
+      data: chartData,
+      text: chartText,
+      plugins: chartPlugins,
     });
   }
 
-  private ensureSpectrumPlot(): boolean {
-    if (this.deps.state.spectrum.spectrumPlot) {
-      this.deps.state.spectrum.chartLoadErrorDetail = null;
+  function ensureSpectrumPlot(): boolean {
+    if (deps.state.spectrum.spectrumPlot) {
+      deps.state.spectrum.chartLoadErrorDetail = null;
       return true;
     }
-    if (this.chartModule.value) {
-      this.deps.state.spectrum.chartLoading = false;
-      this.deps.state.spectrum.chartLoadErrorDetail = null;
-      this.createSpectrumPlot(this.chartModule.value);
-      return this.deps.state.spectrum.spectrumPlot !== null;
+    if (chartModule.value) {
+      deps.state.spectrum.chartLoading = false;
+      deps.state.spectrum.chartLoadErrorDetail = null;
+      createSpectrumPlot(chartModule.value);
+      return deps.state.spectrum.spectrumPlot !== null;
     }
-    if (this.chartLoadPromise) {
+    if (chartLoadPromise) {
       return false;
     }
 
-    this.deps.state.spectrum.chartLoading = true;
-    this.deps.state.spectrum.chartLoadErrorDetail = null;
-    this.chartLoadPromise = this.loadChartModule()
+    deps.state.spectrum.chartLoading = true;
+    deps.state.spectrum.chartLoadErrorDetail = null;
+    chartLoadPromise = loadChartModule()
       .then((module) => {
-        this.chartModule.value = module;
-        const latestPrepared = this.pendingPreparedFrame.value;
+        chartModule.value = module;
+        const latestPrepared = pendingPreparedFrame.value;
         if (!latestPrepared?.frame) {
           return;
         }
-        this.createSpectrumPlot(module);
+        createSpectrumPlot(module);
         const rerender = latestPrepared;
-        this.pendingPreparedFrame.value = null;
-        this.renderPreparedFrame(rerender);
+        pendingPreparedFrame.value = null;
+        renderPreparedFrame(rerender);
       })
       .catch((error: unknown) => {
-        this.deps.state.spectrum.chartLoadErrorDetail = getChartLoadErrorDetail(error);
+        deps.state.spectrum.chartLoadErrorDetail = getChartLoadErrorDetail(error);
       })
       .finally(() => {
-        this.deps.state.spectrum.chartLoading = false;
-        this.chartLoadPromise = null;
-        this.onAsyncChartUpdate();
+        deps.state.spectrum.chartLoading = false;
+        chartLoadPromise = null;
+        onAsyncChartUpdate();
       });
 
     return false;
   }
 
-  private formatHz(value: number): string {
+  function formatHz(value: number): string {
     return value >= 100 ? value.toFixed(0) : value.toFixed(1);
   }
+
+  return {
+    prepareFrame,
+    renderPreparedFrame,
+    refreshDecorations,
+    setSeriesIsolation,
+  };
 }
 
 let spectrumChartModulePromise: Promise<SpectrumChartModule> | null = null;
