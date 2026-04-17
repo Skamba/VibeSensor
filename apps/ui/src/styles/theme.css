@@ -92,9 +92,6 @@
 
   .uplot .u-select { background: rgba(167, 139, 250, 0.15); }
 
-  .matrix-tooltip {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  }
 }
 
 /* ── Drive / tablet sizing mode ────────────────────────────── */
