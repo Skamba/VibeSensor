@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-import { fromTransportPayload, toTransportPayload } from "../src/transport/http_adapters";
+import { cloneTransportValue } from "../src/transport/clone";
 import type { CarUpsertRequest, CarsPayload } from "../src/transport/http_models";
 
-test("fromTransportPayload clones nested response payloads into local transport DTOs", () => {
+test("cloneTransportValue clones nested response payloads", () => {
   const transportPayload: CarsPayload = {
     active_car_id: "car-1",
     cars: [
@@ -20,7 +20,7 @@ test("fromTransportPayload clones nested response payloads into local transport 
     ],
   };
 
-  const localPayload = fromTransportPayload<CarsPayload, CarsPayload>(transportPayload);
+  const localPayload = cloneTransportValue(transportPayload);
   localPayload.cars[0].name = "Track";
   localPayload.cars[0].aspects.tire_width_mm = 275;
 
@@ -28,7 +28,7 @@ test("fromTransportPayload clones nested response payloads into local transport 
   expect(transportPayload.cars[0].aspects.tire_width_mm).toBe(255);
 });
 
-test("toTransportPayload clones request payloads before boundary serialization", () => {
+test("cloneTransportValue clones request payloads before boundary serialization", () => {
   const localPayload: CarUpsertRequest = {
     name: "Project Car",
     type: "Sedan",
@@ -39,7 +39,7 @@ test("toTransportPayload clones request payloads before boundary serialization",
     variant: "Prototype",
   };
 
-  const transportPayload = toTransportPayload<CarUpsertRequest, CarUpsertRequest>(localPayload);
+  const transportPayload = cloneTransportValue(localPayload);
   transportPayload.name = "Prototype";
   transportPayload.aspects.current_gear_ratio = 0.71;
 
