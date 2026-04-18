@@ -73,9 +73,9 @@ function activeSourceLabel(
   t: SettingsSpeedSourceWorkflowDeps["t"],
 ): string {
   const effectiveSource = resolveEffectiveSpeedSource({
-    speedSource: settings.speedSource.value,
-    manualSpeedKph: settings.manualSpeedKph.value,
-    resolvedSpeedSource: settings.resolvedSpeedSource.value,
+    speedSource: settings.speed.source.value,
+    manualSpeedKph: settings.speed.manualSpeedKph.value,
+    resolvedSpeedSource: settings.speed.resolvedSource.value,
   });
   if (effectiveSource === "fallback_manual") {
     return t("settings.speed.current_source_fallback_manual");
@@ -138,7 +138,7 @@ export function createSettingsSpeedSourceWorkflow(
 ): SettingsSpeedSourceWorkflow {
   const transport = createSettingsSpeedSourceTransport(deps.transport);
   const createPolling = deps.createPollingController ?? createPollingController;
-  const speedSourceState = createSpeedSourceDerivedState(deps.settings);
+  const speedSourceState = createSpeedSourceDerivedState(deps.settings.speed);
   const selectedModeDraft = signal<DisplayedSpeedSourceMode | null>(null);
   const manualSpeedInputDraft = signal<string | null>(null);
   const selectedMode = computed<DisplayedSpeedSourceMode>(() =>
@@ -149,8 +149,8 @@ export function createSettingsSpeedSourceWorkflow(
     if (draft != null) {
       return draft;
     }
-    return deps.settings.manualSpeedKph.value != null
-      ? String(deps.settings.manualSpeedKph.value)
+    return deps.settings.speed.manualSpeedKph.value != null
+      ? String(deps.settings.speed.manualSpeedKph.value)
       : "";
   });
   const staleTimeoutInputValue = signal("");
@@ -172,13 +172,13 @@ export function createSettingsSpeedSourceWorkflow(
       obdDeviceMac: string | null;
       obdDeviceName: string | null;
     } = {
-      gpsFallbackActive: deps.settings.gpsFallbackActive.value,
-      gpsEffectiveSpeedKph: deps.settings.gpsEffectiveSpeedKph.value,
-      manualSpeedKph: deps.settings.manualSpeedKph.value,
-      obdDeviceMac: deps.settings.obdDeviceMac.value,
-      obdDeviceName: deps.settings.obdDeviceName.value,
-      resolvedSpeedSource: deps.settings.resolvedSpeedSource.value,
-      speedSource: deps.settings.speedSource.value,
+      gpsFallbackActive: deps.settings.speed.gpsFallbackActive.value,
+      gpsEffectiveSpeedKph: deps.settings.speed.gpsEffectiveSpeedKph.value,
+      manualSpeedKph: deps.settings.speed.manualSpeedKph.value,
+      obdDeviceMac: deps.settings.speed.obdDeviceMac.value,
+      obdDeviceName: deps.settings.speed.obdDeviceName.value,
+      resolvedSpeedSource: deps.settings.speed.resolvedSource.value,
+      speedSource: deps.settings.speed.source.value,
     };
     return {
       diagnosticsOpen: diagnosticsOpen.value,
@@ -307,11 +307,11 @@ export function createSettingsSpeedSourceWorkflow(
 
   function applyPayload(payload: SpeedSourcePayload): void {
     batch(() => {
-      deps.settings.speedSource.value = payload.speed_source;
-      deps.settings.manualSpeedKph.value = payload.manual_speed_kph;
-      deps.settings.obdDeviceMac.value = payload.obd_device_mac ?? null;
-      deps.settings.obdDeviceName.value = payload.obd_device_name ?? null;
-      deps.settings.resolvedSpeedSource.value = null;
+      deps.settings.speed.source.value = payload.speed_source;
+      deps.settings.speed.manualSpeedKph.value = payload.manual_speed_kph;
+      deps.settings.speed.obdDeviceMac.value = payload.obd_device_mac ?? null;
+      deps.settings.speed.obdDeviceName.value = payload.obd_device_name ?? null;
+      deps.settings.speed.resolvedSource.value = null;
       staleTimeoutInputValue.value = String(payload.stale_timeout_s);
       syncInputsFromSettings();
     });
@@ -352,7 +352,7 @@ export function createSettingsSpeedSourceWorkflow(
     clearAllFeedback();
 
     const source: SpeedSourceKind =
-      selectedModeDraft.value ?? deps.settings.speedSource.value;
+      selectedModeDraft.value ?? deps.settings.speed.source.value;
     const manualInputValue = manualSpeedInputValue.value.trim();
     const manualSpeedKph = parseManualSpeedKph(Number(manualInputValue));
     const staleValueRaw = staleTimeoutInputValue.value.trim();
@@ -400,7 +400,7 @@ export function createSettingsSpeedSourceWorkflow(
       return;
     }
 
-    if (source === "obd2" && !deps.settings.obdDeviceMac.value) {
+    if (source === "obd2" && !deps.settings.speed.obdDeviceMac.value) {
       batch(() => {
         obdSelectionError.value = true;
         showSaveFeedback(
@@ -478,8 +478,8 @@ export function createSettingsSpeedSourceWorkflow(
     try {
       const payload = await transport.pairObdDevice(macAddress);
       batch(() => {
-        deps.settings.obdDeviceMac.value = payload.configured_device_mac ?? null;
-        deps.settings.obdDeviceName.value = payload.configured_device_name ?? null;
+        deps.settings.speed.obdDeviceMac.value = payload.configured_device_mac ?? null;
+        deps.settings.speed.obdDeviceName.value = payload.configured_device_name ?? null;
         mergeScannedDevices([{
           connected: payload.connected,
           mac_address: payload.configured_device_mac ?? macAddress,

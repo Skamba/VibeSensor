@@ -13,9 +13,9 @@ const REQUIRED_CAR_ASPECT_KEYS = [
 export type RequiredCarAspectKey = (typeof REQUIRED_CAR_ASPECT_KEYS)[number];
 
 export interface CarSelectionStateSource {
-  cars: SettingsState["cars"];
-  activeCarId: SettingsState["activeCarId"];
-  carsLoaded: SettingsState["carsLoaded"];
+  cars: SettingsState["car"]["cars"];
+  activeCarId: SettingsState["car"]["activeCarId"];
+  carsLoaded: SettingsState["car"]["carsLoaded"];
 }
 
 export type CarSelectionState =

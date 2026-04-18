@@ -17,7 +17,7 @@ import {
 } from "./features/settings_feature";
 import { createUpdateFeature } from "./features/update_feature";
 import type { FeatureFormatting, FeatureServices } from "./feature_deps_base";
-import type { AppState } from "./ui_app_state";
+import { composeVehicleSettings, type AppState } from "./ui_app_state";
 import type { UiMountedPanels } from "./ui_lazy_panels";
 import type { ReadonlySignal } from "./ui_signals";
 import { createUiCarCreationCommand } from "./runtime/ui_car_creation_command";
@@ -123,7 +123,11 @@ export function createAppFeatureBundle(
   });
 
   const carCreation = createUiCarCreationCommand({
-    getVehicleSettings: () => state.settings.vehicleSettings.value,
+    getVehicleSettings: () =>
+      composeVehicleSettings(
+        state.settings.car.activeVehicleSettings.value,
+        state.settings.analysis.vehicleSettings.value,
+      ),
     syncCarsPayload: (payload) => settings.syncCarsPayload(payload),
     syncActiveCarToInputs: () => settings.syncActiveCarToInputs(),
     showCarCreationSuccess: (carId, carName) =>

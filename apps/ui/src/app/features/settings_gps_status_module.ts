@@ -66,15 +66,15 @@ export function createSettingsGpsStatusModule(
     enabled: pollingEnabled,
     poll: async () => {
       const shouldLoadObdStatus =
-        settings.speedSource.value === "obd2" || settings.obdDeviceMac.value != null;
+        settings.speed.source.value === "obd2" || settings.speed.obdDeviceMac.value != null;
       const [status, obdStatus] = await Promise.all([
         getSpeedSourceStatus(),
         shouldLoadObdStatus ? getSettingsObdStatus() : Promise.resolve(null),
       ]);
       batch(() => {
-        settings.gpsFallbackActive.value = status.fallback_active;
-        settings.gpsEffectiveSpeedKph.value = status.effective_speed_kmh;
-        settings.resolvedSpeedSource.value = status.speed_source;
+        settings.speed.gpsFallbackActive.value = status.fallback_active;
+        settings.speed.gpsEffectiveSpeedKph.value = status.effective_speed_kmh;
+        settings.speed.resolvedSource.value = status.speed_source;
         diagnosticsModel.value = buildSpeedSourceDiagnosticsRenderModel(
           status,
           obdStatus,
