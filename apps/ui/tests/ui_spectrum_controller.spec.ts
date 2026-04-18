@@ -13,10 +13,10 @@ async function importUiSpectrumController() {
 function createPanelStub(): {
   panel: SpectrumPanelView;
   lastHeaderModel: { hintText: string; titleText: string } | null;
-  lastOverlayMessage: string | null;
+  lastOverlayModel: { hidden: boolean; text: string } | null;
 } {
   let lastHeaderModel: { hintText: string; titleText: string } | null = null;
-  let lastOverlayMessage: string | null = null;
+  let lastOverlayModel: { hidden: boolean; text: string } | null = null;
 
   return {
       panel: {
@@ -31,16 +31,16 @@ function createPanelStub(): {
         renderHeader(model) {
           lastHeaderModel = model;
         },
-        renderOverlay(message: string | null) {
-          lastOverlayMessage = message;
+        renderOverlay(model) {
+          lastOverlayModel = model;
         },
         renderInspectorText() {},
       },
     get lastHeaderModel() {
       return lastHeaderModel;
     },
-    get lastOverlayMessage() {
-      return lastOverlayMessage;
+    get lastOverlayModel() {
+      return lastOverlayModel;
     },
   };
 }
@@ -65,7 +65,10 @@ test.describe("UiSpectrumController", () => {
         t: (key) => key,
       });
 
-      expect(panel.lastOverlayMessage).toBe("spectrum.loading");
+      expect(panel.lastOverlayModel).toEqual({
+        hidden: false,
+        text: "spectrum.loading",
+      });
     } finally {
       restoreDocument();
     }
@@ -88,7 +91,10 @@ test.describe("UiSpectrumController", () => {
 
       state.transport.wsState.value = "stale";
 
-      expect(panel.lastOverlayMessage).toBe("spectrum.stale");
+      expect(panel.lastOverlayModel).toEqual({
+        hidden: false,
+        text: "spectrum.stale",
+      });
     } finally {
       restoreDocument();
     }
@@ -144,7 +150,10 @@ test.describe("UiSpectrumController", () => {
         t: (key) => key,
       });
 
-      expect(panel.lastOverlayMessage).toBe("spectrum.loading");
+      expect(panel.lastOverlayModel).toEqual({
+        hidden: false,
+        text: "spectrum.loading",
+      });
     } finally {
       restoreDocument();
     }
@@ -172,7 +181,10 @@ test.describe("UiSpectrumController", () => {
         },
       });
 
-      expect(panel.lastOverlayMessage).toBe("chart load failed: chunk timeout");
+      expect(panel.lastOverlayModel).toEqual({
+        hidden: false,
+        text: "chart load failed: chunk timeout",
+      });
     } finally {
       restoreDocument();
     }
@@ -196,7 +208,10 @@ test.describe("UiSpectrumController", () => {
         titleText: "en:chart.spectrum_title",
         hintText: "en:spectrum.controls_hint",
       });
-      expect(panel.lastOverlayMessage).toBe("en:spectrum.stale");
+      expect(panel.lastOverlayModel).toEqual({
+        hidden: false,
+        text: "en:spectrum.stale",
+      });
 
       state.shell.lang.value = "nl";
 
@@ -204,7 +219,10 @@ test.describe("UiSpectrumController", () => {
         titleText: "nl:chart.spectrum_title",
         hintText: "nl:spectrum.controls_hint",
       });
-      expect(panel.lastOverlayMessage).toBe("nl:spectrum.stale");
+      expect(panel.lastOverlayModel).toEqual({
+        hidden: false,
+        text: "nl:spectrum.stale",
+      });
     } finally {
       restoreDocument();
     }

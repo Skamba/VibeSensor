@@ -13,6 +13,7 @@ import type {
   SpectrumPanelBandToggleModel,
   SpectrumPanelChartDom,
   SpectrumPanelHeaderModel,
+  SpectrumPanelOverlayModel,
   SpectrumPanelView,
   SpectrumSensorLegendModel,
 } from "../runtime/spectrum_panel_view";
@@ -23,16 +24,30 @@ type MutableSpectrumPanelChartDom = {
 };
 
 const DEFAULT_SPECTRUM_BAND_TOGGLE_MODEL: SpectrumPanelBandToggleModel = {
+  disabled: true,
   hasBands: false,
   bandsVisible: false,
+  hidden: true,
+  pressed: "false",
   text: "Show reference bands",
+};
+const DEFAULT_SPECTRUM_OVERLAY_MODEL: SpectrumPanelOverlayModel = {
+  hidden: true,
+  text: "Waiting for sensor data...",
 };
 const DEFAULT_SPECTRUM_BAND_LEGEND_MODEL: SpectrumBandLegendModel = {
   visible: false,
   items: [],
   emptyText: "No reference band",
 };
-const SPECTRUM_BAND_TOGGLE_KEYS = ["bandsVisible", "hasBands", "text"] as const;
+const SPECTRUM_BAND_TOGGLE_KEYS = [
+  "bandsVisible",
+  "disabled",
+  "hasBands",
+  "hidden",
+  "pressed",
+  "text",
+] as const;
 const SPECTRUM_BAND_LEGEND_KEYS = ["emptyText", "items", "visible"] as const;
 
 function requireSpectrumElement<T extends HTMLElement>(
@@ -142,28 +157,24 @@ function SpectrumPanel(props: {
   header: ReadonlySignal<SpectrumPanelHeaderModel>;
   inspectorText: ReadonlySignal<string>;
   onBandToggle: ReadonlySignal<(() => void) | null>;
-  overlayMessage: ReadonlySignal<string | null>;
+  overlayModel: ReadonlySignal<SpectrumPanelOverlayModel>;
   sensorLegendHandlersModel: ReadonlySignal<ReadonlySignal<SpectrumLegendHandlers | null> | null>;
   sensorLegendModel: ReadonlySignal<ReadonlySignal<SpectrumSensorLegendModel | null> | null>;
 }) {
   const { chartDom } = props;
   const bandLegend = useComputed(() => props.bandLegendModel.value?.value ?? DEFAULT_SPECTRUM_BAND_LEGEND_MODEL);
   const bandToggle = useComputed(() => props.bandToggleModel.value?.value ?? DEFAULT_SPECTRUM_BAND_TOGGLE_MODEL);
+  const overlayModel = useComputed(() => props.overlayModel.value ?? DEFAULT_SPECTRUM_OVERLAY_MODEL);
   const sensorLegend = useComputed(() => props.sensorLegendModel.value?.value ?? null);
   const sensorLegendHandlers = useComputed(() => props.sensorLegendHandlersModel.value?.value ?? null);
   const titleText = useComputed(() => getUiText("chart.spectrum_title", props.header.value.titleText));
   const hintText = useComputed(() => getUiText("spectrum.controls_hint", props.header.value.hintText));
-  const overlayHidden = useComputed(() => props.overlayMessage.value === null);
-  const overlayText = useComputed(() => props.overlayMessage.value ?? "Waiting for sensor data...");
   const {
-    bandsVisible: bandToggleBandsVisible,
-    hasBands: bandToggleHasBands,
+    disabled: bandToggleDisabled,
+    hidden: bandToggleHidden,
+    pressed: bandTogglePressed,
     text: bandToggleText,
   } = useSignalProperties(bandToggle, SPECTRUM_BAND_TOGGLE_KEYS);
-  const bandTogglePressed = useComputed(() =>
-      bandToggleHasBands.value && bandToggleBandsVisible.value ? "true" : "false"
-  );
-  const bandToggleHidden = useComputed(() => !bandToggleHasBands.value);
 
   return (
     <>
@@ -185,8 +196,8 @@ function SpectrumPanel(props: {
             chartDom.specChart = element;
           }}
         />
-        <div id="spectrumOverlay" class="empty-state" hidden={overlayHidden}>
-          {overlayText}
+        <div id="spectrumOverlay" class="empty-state" hidden={overlayModel.value.hidden}>
+          {overlayModel.value.text}
         </div>
       </div>
       <div class="spectrum-controls-panel">
@@ -203,7 +214,7 @@ function SpectrumPanel(props: {
               aria-pressed={bandTogglePressed}
               aria-expanded={bandTogglePressed}
               hidden={bandToggleHidden}
-              disabled={bandToggleHidden}
+              disabled={bandToggleDisabled}
               onClick={() => props.onBandToggle.peek()?.()}
             >
               {bandToggleText}
@@ -230,7 +241,7 @@ export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
     titleText: "Multi-Sensor Blended Spectrum",
     hintText: "Use the trace chips to isolate one sensor at a time. Turn on reference bands when you need order context.",
   });
-  const overlayMessage = signal<string | null>(null);
+  const overlayModel = signal<SpectrumPanelOverlayModel>(DEFAULT_SPECTRUM_OVERLAY_MODEL);
   const bandToggleModel = createDeferredModelSignal<SpectrumPanelBandToggleModel>();
   const sensorLegendModel = createDeferredModelSignal<SpectrumSensorLegendModel | null>();
   const sensorLegendHandlersModel = createDeferredModelSignal<SpectrumLegendHandlers | null>();
@@ -249,7 +260,7 @@ export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
       header={header}
       inspectorText={inspectorText}
       onBandToggle={onBandToggle}
-      overlayMessage={overlayMessage}
+      overlayModel={overlayModel}
       sensorLegendHandlersModel={sensorLegendHandlersModel}
       sensorLegendModel={sensorLegendModel}
     />,
@@ -284,8 +295,8 @@ export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
     renderHeader(model: SpectrumPanelHeaderModel): void {
       header.value = model;
     },
-    renderOverlay(message: string | null): void {
-      overlayMessage.value = message;
+    renderOverlay(model: SpectrumPanelOverlayModel): void {
+      overlayModel.value = model;
     },
     renderInspectorText(text: string): void {
       inspectorText.value = text;

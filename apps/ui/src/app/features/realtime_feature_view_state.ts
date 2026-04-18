@@ -79,23 +79,8 @@ function formatElapsed(
 }
 
 function buildLoggingRenderModel(model: ReturnType<typeof buildRealtimeLoggingPanelViewModel>) {
-  return {
-    pillVariant: model.pillVariant,
-    pillText: model.pillText,
-    showPill: model.showPill,
-    summaryText: model.summaryText,
-    summaryPanel: model.summaryPanel,
-    runIdText: model.runIdText,
-    phaseText: model.phaseText,
-    elapsedText: model.elapsedText,
-    samplesText: model.samplesText,
-    checklist: model.checklist,
-    showStart: model.showStart,
-    showStop: model.showStop,
-    startDisabled: model.startDisabled,
-    stopDisabled: model.stopDisabled,
-    setupMode: model.setupMode,
-  } satisfies RealtimeLoggingPanelRenderModel;
+  const { nextLastCompletedElapsedText: _nextLastCompletedElapsedText, ...renderModel } = model;
+  return renderModel satisfies RealtimeLoggingPanelRenderModel;
 }
 
 function buildLoggingUnavailableModel(
@@ -107,16 +92,27 @@ function buildLoggingUnavailableModel(
     showPill: true,
     summaryText: t("status.unavailable"),
     summaryPanel: null,
+    summaryAction: null,
+    summaryHidden: false,
+    summaryLayout: undefined,
     runIdText: "",
+    runIdHidden: true,
+    loggingRowHidden: false,
     phaseText: t("status.unavailable"),
     elapsedText: "--",
     samplesText: "--",
     checklist: null,
+    checklistHidden: true,
+    showProgressSection: true,
     showStart: true,
+    startHidden: false,
     showStop: false,
+    stopHidden: true,
     startDisabled: true,
     stopDisabled: true,
     setupMode: false,
+    pillHidden: false,
+    shellLayout: undefined,
   };
 }
 
@@ -134,8 +130,12 @@ function buildLoggingErrorModel(
     pillVariant: "bad",
     pillText: errorText,
     showPill: true,
+    pillHidden: false,
     summaryText: errorText,
     summaryPanel: null,
+    summaryAction: null,
+    summaryHidden: false,
+    summaryLayout: undefined,
   };
 }
 

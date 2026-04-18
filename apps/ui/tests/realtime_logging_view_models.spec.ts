@@ -107,6 +107,10 @@ test.describe("realtime logging view models", () => {
       },
     });
     expect(model.checklist).toBeNull();
+    expect(model.summaryAction?.action).toBe("open-add-car");
+    expect(model.summaryHidden).toBe(false);
+    expect(model.shellLayout).toBe("setup");
+    expect(model.showProgressSection).toBe(false);
     expect(model.setupMode).toBe(true);
     expect(model.startDisabled).toBe(true);
   });
@@ -154,6 +158,9 @@ test.describe("realtime logging view models", () => {
       "reference_ready",
       "speed_stable",
     ]);
+    expect(model.summaryLayout).toBe("panel");
+    expect(model.checklistHidden).toBe(false);
+    expect(model.showProgressSection).toBe(true);
   });
 
   test("preserves the last completed elapsed value when processing begins", () => {
@@ -191,5 +198,8 @@ test.describe("realtime logging view models", () => {
       },
     });
     expect(model.nextLastCompletedElapsedText).toBe("1:23");
+    expect(model.loggingRowHidden).toBe(false);
+    expect(model.pillHidden).toBe(true);
+    expect(model.runIdHidden).toBe(false);
   });
 });

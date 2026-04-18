@@ -59,9 +59,14 @@ export class SpectrumInteractionController {
       const bands = this.currentBands.value;
       const entries = this.currentEntries.value;
       const visible = this.bandsVisible.value;
+      const hasBands = bands.length > 0 && entries.length > 0;
+      const pressed = hasBands && visible ? "true" : "false";
       return {
-        hasBands: bands.length > 0 && entries.length > 0,
+        hasBands,
         bandsVisible: visible,
+        disabled: !hasBands,
+        hidden: !hasBands,
+        pressed,
         text: this.deps.t(visible ? "spectrum.bands.hide" : "spectrum.bands.show"),
       };
     });

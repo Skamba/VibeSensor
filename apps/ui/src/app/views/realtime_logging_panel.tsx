@@ -19,18 +19,29 @@ export interface RealtimeLoggingPanelRenderModel {
   pillVariant: "muted" | "ok" | "warn" | "bad";
   pillText: string;
   showPill: boolean;
+  pillHidden: boolean;
   summaryText: string;
   summaryPanel: RealtimeLoggingSummaryPanelModel | null;
+  summaryAction: RealtimeLoggingSummaryPanelModel["action"] | null;
+  summaryHidden: boolean;
+  summaryLayout: "panel" | undefined;
   runIdText: string;
+  runIdHidden: boolean;
+  loggingRowHidden: boolean;
   phaseText: string;
   elapsedText: string;
   samplesText: string;
   checklist: RealtimeCaptureReadinessChecklistModel | null;
+  checklistHidden: boolean;
+  showProgressSection: boolean;
   showStart: boolean;
+  startHidden: boolean;
   showStop: boolean;
+  stopHidden: boolean;
   startDisabled: boolean;
   stopDisabled: boolean;
   setupMode: boolean;
+  shellLayout: "setup" | undefined;
 }
 
 export interface RealtimeLoggingPanelActionHandlers {
@@ -48,34 +59,56 @@ const DEFAULT_PANEL_MODEL: RealtimeLoggingPanelRenderModel = {
   pillVariant: "muted",
   pillText: "Stopped",
   showPill: true,
+  pillHidden: false,
   summaryText: "Connect sensors to begin a trustworthy run.",
   summaryPanel: null,
+  summaryAction: null,
+  summaryHidden: false,
+  summaryLayout: undefined,
   runIdText: "",
+  runIdHidden: true,
+  loggingRowHidden: false,
   phaseText: "--",
   elapsedText: "--",
   samplesText: "0",
   checklist: null,
+  checklistHidden: true,
+  showProgressSection: true,
   showStart: true,
+  startHidden: false,
   showStop: false,
+  stopHidden: true,
   startDisabled: false,
   stopDisabled: true,
   setupMode: false,
+  shellLayout: undefined,
 };
 
 const REALTIME_LOGGING_PANEL_MODEL_KEYS = [
   "checklist",
+  "checklistHidden",
   "elapsedText",
+  "loggingRowHidden",
   "phaseText",
+  "pillHidden",
   "pillText",
   "pillVariant",
+  "runIdHidden",
   "runIdText",
   "samplesText",
+  "shellLayout",
   "setupMode",
+  "showProgressSection",
   "showPill",
   "showStart",
   "showStop",
   "startDisabled",
+  "startHidden",
+  "stopHidden",
   "stopDisabled",
+  "summaryAction",
+  "summaryHidden",
+  "summaryLayout",
   "summaryPanel",
   "summaryText",
 ] as const;
@@ -84,16 +117,15 @@ function RealtimeLoggingSummarySection(props: {
   actions: ReadonlySignal<RealtimeLoggingPanelActionHandlers | null>;
   model: ReadonlySignal<RealtimeLoggingPanelRenderModel>;
 }) {
-  const { summaryPanel, summaryText } = useSignalProperties(
+  const {
+    summaryAction,
+    summaryHidden,
+    summaryLayout,
+    summaryPanel,
+    summaryText,
+  } = useSignalProperties(
     props.model,
-    ["summaryPanel", "summaryText"] as const,
-  );
-  const summaryAction = useComputed(() => summaryPanel.value?.action ?? null);
-  const hidden = useComputed(() =>
-    summaryText.value === "" && summaryPanel.value === null
-  );
-  const summaryLayout = useComputed(() =>
-    summaryPanel.value ? "panel" : undefined
+    ["summaryAction", "summaryHidden", "summaryLayout", "summaryPanel", "summaryText"] as const,
   );
   const handleAction = (action: RealtimeLoggingSummaryAction) => {
     props.actions.peek()?.onSummaryAction(action);
@@ -103,7 +135,7 @@ function RealtimeLoggingSummarySection(props: {
     <div
       id="loggingSummary"
       class="card__subtle"
-      hidden={hidden.value}
+      hidden={summaryHidden.value}
       data-summary-layout={summaryLayout.value}
     >
       {summaryPanel.value
@@ -136,18 +168,21 @@ function RealtimeLoggingSummarySection(props: {
 }
 
 function RealtimeLoggingChecklist(props: {
-  checklist: ReadonlySignal<RealtimeCaptureReadinessChecklistModel | null>;
+  model: ReadonlySignal<RealtimeLoggingPanelRenderModel>;
 }) {
-  const hidden = useComputed(() => props.checklist.value === null);
+  const { checklist, checklistHidden } = useSignalProperties(
+    props.model,
+    ["checklist", "checklistHidden"] as const,
+  );
 
   return (
-    <div id="loggingChecklist" class="capture-readiness" hidden={hidden.value}>
-      {props.checklist.value
+    <div id="loggingChecklist" class="capture-readiness" hidden={checklistHidden.value}>
+      {checklist.value
         ? (
           <>
-            <div class="capture-readiness__title">{props.checklist.value.titleText}</div>
+            <div class="capture-readiness__title">{checklist.value.titleText}</div>
             <div class="capture-readiness__list">
-              {props.checklist.value.items.map((item) => (
+              {checklist.value.items.map((item) => (
                 <div
                   key={item.checkKey}
                   class="capture-readiness__item"
@@ -171,13 +206,17 @@ function RealtimeLoggingChecklist(props: {
 function RealtimeLoggingStatusRow(props: {
   model: ReadonlySignal<RealtimeLoggingPanelRenderModel>;
 }) {
-  const { pillText, pillVariant, runIdText, showPill } = useSignalProperties(
+  const {
+    loggingRowHidden,
+    pillHidden,
+    pillText,
+    pillVariant,
+    runIdHidden,
+    runIdText,
+  } = useSignalProperties(
     props.model,
-    ["pillText", "pillVariant", "runIdText", "showPill"] as const,
+    ["loggingRowHidden", "pillHidden", "pillText", "pillVariant", "runIdHidden", "runIdText"] as const,
   );
-  const loggingRowHidden = useComputed(() => !showPill.value && runIdText.value === "");
-  const pillHidden = useComputed(() => !showPill.value);
-  const runIdHidden = useComputed(() => runIdText.value === "");
 
   return (
     <div class="logging-row" hidden={loggingRowHidden.value}>
@@ -206,11 +245,10 @@ function RealtimeLoggingProgressSection(props: {
   };
   model: ReadonlySignal<RealtimeLoggingPanelRenderModel>;
 }) {
-  const { checklist, elapsedText, phaseText, samplesText, setupMode } = useSignalProperties(
+  const { elapsedText, phaseText, samplesText, showProgressSection } = useSignalProperties(
     props.model,
-    ["checklist", "elapsedText", "phaseText", "samplesText", "setupMode"] as const,
+    ["elapsedText", "phaseText", "samplesText", "showProgressSection"] as const,
   );
-  const showProgressSection = useComputed(() => !setupMode.value || checklist.value !== null);
 
   if (!showProgressSection.value) {
     return null;
@@ -247,7 +285,7 @@ function RealtimeLoggingProgressSection(props: {
           </div>
         </div>
       </div>
-      <RealtimeLoggingChecklist checklist={checklist} />
+      <RealtimeLoggingChecklist model={props.model} />
     </>
   );
 }
@@ -260,12 +298,10 @@ function RealtimeLoggingActionRow(props: {
   };
   model: ReadonlySignal<RealtimeLoggingPanelRenderModel>;
 }) {
-  const { showStart, showStop, startDisabled, stopDisabled } = useSignalProperties(
+  const { startDisabled, startHidden, stopDisabled, stopHidden } = useSignalProperties(
     props.model,
-    ["showStart", "showStop", "startDisabled", "stopDisabled"] as const,
+    ["startDisabled", "startHidden", "stopDisabled", "stopHidden"] as const,
   );
-  const startHidden = useComputed(() => !showStart.value);
-  const stopHidden = useComputed(() => !showStop.value);
   const handleStartLogging = () => {
     props.actions.peek()?.onStartLogging();
   };
@@ -314,8 +350,7 @@ function RealtimeLoggingPanel(props: {
     titleText: getUiText("dashboard.run_recording", "Run Recording"),
   }));
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_PANEL_MODEL);
-  const { setupMode } = useSignalProperties(model, ["setupMode"] as const);
-  const shellLayout = useComputed(() => setupMode.value ? "setup" : undefined);
+  const { shellLayout } = useSignalProperties(model, ["shellLayout"] as const);
   const labelTexts = labels.value;
 
   return (

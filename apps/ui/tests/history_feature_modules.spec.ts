@@ -8,7 +8,6 @@ import type {
   HistoryPanelRenderModel,
   HistoryPanelView,
 } from "../src/app/views/history_table_view";
-import { buildHistoryTableRowsViewModel } from "../src/app/views/history_table_presenters";
 import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
 
 type ButtonStub = HTMLButtonElement & {
@@ -199,7 +198,7 @@ function latestRowModels(panel: { getLatestModel(): HistoryPanelRenderModel | nu
   if (!model?.table || model.table.kind !== "rows") {
     throw new Error("Expected rendered history rows");
   }
-  return buildHistoryTableRowsViewModel(model.table.params);
+  return model.table.rows;
 }
 
 function createFeatureHarness(

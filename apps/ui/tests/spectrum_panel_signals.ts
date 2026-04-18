@@ -38,7 +38,10 @@ async function runSpectrumPanelSignalProjectionTest(): Promise<void> {
 
       const bandToggleModel = signal<SpectrumPanelBandToggleModel>({
         bandsVisible: true,
+        disabled: false,
         hasBands: true,
+        hidden: false,
+        pressed: "true",
         text: "Hide reference bands",
       });
       harness.view.bindBandToggleModel(bandToggleModel);

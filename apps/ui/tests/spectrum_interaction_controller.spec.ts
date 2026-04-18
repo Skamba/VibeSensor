@@ -91,8 +91,11 @@ test.describe("SpectrumInteractionController", () => {
     });
 
     expect(controller.bandToggleModel.value).toEqual({
+      disabled: true,
       hasBands: false,
       bandsVisible: false,
+      hidden: true,
+      pressed: "false",
       text: "Show reference bands",
     });
     expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe("12.0 dB");
