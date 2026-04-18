@@ -154,12 +154,9 @@ button[hidden],
   display: none !important;
 }
 
-.pill[data-variant="muted"] { background: var(--pill-muted-bg); color: var(--pill-muted-text); }
-.pill[data-variant="ok"],
+.pill[data-variant] { background: var(--variant-surface); color: var(--variant-text); }
 .status-pill.online,
 .badge.on { background: var(--pill-ok-bg); color: var(--pill-ok-text); }
-.pill[data-variant="warn"] { background: var(--pill-warn-bg); color: var(--pill-warn-text); }
-.pill[data-variant="bad"],
 .status-pill.offline,
 .badge.off { background: var(--pill-bad-bg); color: var(--pill-bad-text); }
 
@@ -257,7 +254,7 @@ button[hidden],
 .stat { min-height: 72px; }
 .stat__label { font-size: 0.76rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .stat__value { margin-top: var(--space-1); font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
-.stat__value[data-variant="warn"] { color: var(--warning-text); }
+.stat__value[data-variant] { color: var(--variant-text); }
 .stat__value[data-has-icon="true"] {
   display: inline-flex;
   align-items: flex-start;
@@ -276,10 +273,10 @@ button[hidden],
   line-height: 1;
   margin-top: 2px;
 }
-.stat__value-icon[data-variant="warn"] {
-  border: 1px solid var(--warning-border);
-  background: var(--pill-warn-bg);
-  color: var(--pill-warn-text);
+.stat__value-icon[data-variant] {
+  border: 1px solid var(--variant-border);
+  background: var(--variant-surface);
+  color: var(--variant-text);
 }
 
 .app-modal-layer {

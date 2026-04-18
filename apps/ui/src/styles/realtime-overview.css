@@ -24,15 +24,15 @@
   line-height: 1.25;
 }
 
-.stat[data-variant="warn"] {
-  border: 1px solid var(--warning-border);
+.stat[data-variant] {
+  border: 1px solid var(--variant-border);
   border-radius: var(--radius-sm);
-  background: var(--warning-surface);
+  background: var(--variant-surface);
   padding-inline: var(--space-3);
 }
 
-.stat[data-variant="warn"] .stat__label {
-  color: var(--warning-text);
+.stat[data-variant] .stat__label {
+  color: var(--variant-text);
 }
 
 .live-sensor-roster__header {

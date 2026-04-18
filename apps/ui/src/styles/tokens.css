@@ -97,3 +97,70 @@ body {
   color: var(--text);
   font-size: 15px;
 }
+
+[data-variant] {
+  --variant-surface: transparent;
+  --variant-banner-surface: var(--variant-surface);
+  --variant-text: inherit;
+  --variant-border: transparent;
+}
+
+[data-variant="muted"] {
+  --variant-surface: var(--pill-muted-bg);
+  --variant-banner-surface: var(--pill-muted-bg);
+  --variant-text: var(--pill-muted-text);
+  --variant-border: var(--border);
+}
+
+[data-variant="ok"] {
+  --variant-surface: var(--pill-ok-bg);
+  --variant-banner-surface: var(--pill-ok-bg);
+  --variant-text: var(--pill-ok-text);
+  --variant-border: transparent;
+}
+
+[data-variant="warn"] {
+  --variant-surface: var(--pill-warn-bg);
+  --variant-banner-surface: var(--warning-surface);
+  --variant-text: var(--pill-warn-text);
+  --variant-border: var(--warning-border);
+}
+
+[data-variant="bad"] {
+  --variant-surface: var(--pill-bad-bg);
+  --variant-banner-surface: var(--pill-bad-bg);
+  --variant-text: var(--pill-bad-text);
+  --variant-border: #f0c4c4;
+}
+
+[data-readiness-state] {
+  --readiness-surface: var(--surface-2);
+  --readiness-text: var(--text);
+  --readiness-border: var(--border);
+  --readiness-marker-surface: var(--pill-muted-bg);
+  --readiness-marker-text: var(--pill-muted-text);
+}
+
+[data-readiness-state="ready"] {
+  --readiness-surface: var(--pill-ok-bg);
+  --readiness-text: var(--pill-ok-text);
+  --readiness-border: rgba(11, 122, 68, 0.18);
+  --readiness-marker-surface: var(--success);
+  --readiness-marker-text: var(--on-fill);
+}
+
+[data-readiness-state="attention"] {
+  --readiness-surface: var(--pill-warn-bg);
+  --readiness-text: var(--pill-warn-text);
+  --readiness-border: rgba(170, 108, 26, 0.28);
+  --readiness-marker-surface: var(--warning);
+  --readiness-marker-text: var(--text);
+}
+
+[data-readiness-state="blocked"] {
+  --readiness-surface: var(--pill-bad-bg);
+  --readiness-text: var(--pill-bad-text);
+  --readiness-border: #f0c4c4;
+  --readiness-marker-surface: var(--danger);
+  --readiness-marker-text: var(--on-fill);
+}
