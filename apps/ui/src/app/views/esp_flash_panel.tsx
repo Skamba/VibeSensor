@@ -5,6 +5,7 @@ import { getUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalEffect,
+  useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
 import {
@@ -18,6 +19,8 @@ import {
   type EspFlashPanelActionHandlers,
   type EspFlashPanelRenderModel,
   type EspFlashPanelView,
+  type EspFlashPortOptionModel,
+  type EspFlashStatusBadgeModel,
 } from "./esp_flash_panel_shared";
 import { EspFlashReadinessSection } from "./esp_flash_readiness_section";
 
@@ -37,6 +40,231 @@ export type {
   EspFlashStatusBadgeModel,
   EspFlashStatusGridRowModel,
 } from "./esp_flash_panel_shared";
+
+const ESP_FLASH_PANEL_KEYS = [
+  "cancelButtonDisabled",
+  "cancelButtonHidden",
+  "history",
+  "journey",
+  "log",
+  "portOptions",
+  "portSelectDisabled",
+  "readiness",
+  "refreshPortsDisabled",
+  "selectedPortValue",
+  "startButtonDisabled",
+  "startButtonHidden",
+  "startButtonLabelText",
+  "startSummary",
+  "statusBanner",
+] as const;
+
+const ESP_FLASH_STATUS_BANNER_KEYS = ["text", "variant"] as const;
+
+function EspFlashStatusBanner(props: {
+  badge: ReadonlySignal<EspFlashStatusBadgeModel>;
+}) {
+  const { text, variant } = useSignalProperties(
+    props.badge,
+    ESP_FLASH_STATUS_BANNER_KEYS,
+  );
+  return (
+    <span id="espFlashStatusBanner" class="pill" data-variant={variant.value}>
+      {text.value}
+    </span>
+  );
+}
+
+function EspFlashPortRow(props: {
+  actions: ReadonlySignal<EspFlashPanelActionHandlers | null>;
+  portLabel: string;
+  portOptions: ReadonlySignal<readonly EspFlashPortOptionModel[]>;
+  portSelectDisabled: ReadonlySignal<boolean>;
+  refreshLabel: string;
+  refreshPortsDisabled: ReadonlySignal<boolean>;
+  selectedPortValue: ReadonlySignal<string>;
+}) {
+  const handleSelectPort = (value: string) => {
+    props.actions.value?.onSelectPort(value);
+  };
+  const handleRefreshPorts = () => {
+    props.actions.value?.onRefreshPorts();
+  };
+  return (
+    <div class="manual-speed-row">
+      <label htmlFor="espFlashPortSelect">
+        {props.portLabel}
+      </label>
+      <select
+        id="espFlashPortSelect"
+        disabled={props.portSelectDisabled.value}
+        value={props.selectedPortValue.value}
+        onChange={(event) => handleSelectPort(event.currentTarget.value)}
+      >
+        {props.portOptions.value.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.labelText}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        id="espFlashRefreshPortsBtn"
+        class="btn btn--muted"
+        disabled={props.refreshPortsDisabled.value}
+        onClick={handleRefreshPorts}
+      >
+        {props.refreshLabel}
+      </button>
+    </div>
+  );
+}
+
+function EspFlashStartSummarySection(props: {
+  model: ReadonlySignal<EspFlashPanelRenderModel["startSummary"]>;
+}) {
+  return <MaintenanceReadinessPanel model={props.model.value} />;
+}
+
+function EspFlashActionRow(props: {
+  actions: ReadonlySignal<EspFlashPanelActionHandlers | null>;
+  cancelButtonDisabled: ReadonlySignal<boolean>;
+  cancelButtonHidden: ReadonlySignal<boolean>;
+  cancelLabel: string;
+  startButtonDisabled: ReadonlySignal<boolean>;
+  startButtonHidden: ReadonlySignal<boolean>;
+  startButtonLabelText: ReadonlySignal<string>;
+}) {
+  const handleStart = () => {
+    props.actions.value?.onStart();
+  };
+  const handleCancel = () => {
+    props.actions.value?.onCancel();
+  };
+  return (
+    <div class="maintenance-action-row">
+      <button
+        type="button"
+        id="espFlashStartBtn"
+        class="btn btn--success"
+        hidden={props.startButtonHidden.value}
+        disabled={props.startButtonDisabled.value}
+        onClick={handleStart}
+      >
+        {props.startButtonLabelText.value}
+      </button>
+      <button
+        type="button"
+        id="espFlashCancelBtn"
+        class="btn btn--danger"
+        hidden={props.cancelButtonHidden.value}
+        disabled={props.cancelButtonDisabled.value}
+        onClick={handleCancel}
+      >
+        {props.cancelLabel}
+      </button>
+    </div>
+  );
+}
+
+function EspFlashJourneyCard(props: {
+  model: ReadonlySignal<EspFlashPanelRenderModel["journey"]>;
+  titleText: string;
+}) {
+  return (
+    <section class="maintenance-card">
+      <div class="maintenance-card__header">
+        <div>
+          <div class="maintenance-card__title">
+            {props.titleText}
+          </div>
+        </div>
+      </div>
+      <div
+        id="espFlashJourneyPanel"
+        class="maintenance-stack maintenance-stack--tight"
+        aria-live="polite"
+      >
+        <EspFlashJourneySection model={props.model} />
+      </div>
+    </section>
+  );
+}
+
+function EspFlashLogCard(props: {
+  introText: string;
+  model: ReadonlySignal<EspFlashPanelRenderModel["log"]>;
+  titleText: string;
+}) {
+  const { emptyState, text } = useSignalProperties(props.model, ["emptyState", "text"] as const);
+  const logPanelRef = useRef<HTMLDivElement | null>(null);
+
+  useSignalEffect(() => {
+    const logPanel = logPanelRef.current;
+    if (!logPanel || emptyState.value !== null) {
+      return;
+    }
+    text.value;
+    const animationFrameId = globalThis.requestAnimationFrame(() => {
+      logPanel.scrollTop = logPanel.scrollHeight;
+    });
+    return () => globalThis.cancelAnimationFrame(animationFrameId);
+  });
+
+  return (
+    <section class="maintenance-card">
+      <div class="maintenance-card__header">
+        <div>
+          <div class="maintenance-card__title">
+            {props.titleText}
+          </div>
+          <div class="subtle">
+            {props.introText}
+          </div>
+        </div>
+      </div>
+      <div
+        ref={logPanelRef}
+        id="espFlashLogPanel"
+        class={
+          emptyState.value
+            ? "maintenance-log-slot"
+            : "maintenance-log-slot maintenance-log-panel"
+        }
+        aria-live="polite"
+      >
+        <EspFlashLogContent model={props.model} />
+      </div>
+    </section>
+  );
+}
+
+function EspFlashHistoryCard(props: {
+  introText: string;
+  model: ReadonlySignal<EspFlashPanelRenderModel["history"]>;
+  titleText: string;
+}) {
+  return (
+    <section class="maintenance-card">
+      <div class="maintenance-card__header">
+        <div>
+          <div class="maintenance-card__title">
+            {props.titleText}
+          </div>
+          <div class="subtle">
+            {props.introText}
+          </div>
+        </div>
+      </div>
+      <div
+        id="espFlashHistoryPanel"
+        class="maintenance-stack maintenance-stack--tight"
+      >
+        <EspFlashHistoryContent model={props.model} />
+      </div>
+    </section>
+  );
+}
 
 function EspFlashPanel(props: {
   actions: ReadonlySignal<EspFlashPanelActionHandlers | null>;
@@ -74,31 +302,23 @@ function EspFlashPanel(props: {
     titleText: getUiText("settings.esp_flash.title", "ESP Flash"),
   }));
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_ESP_FLASH_PANEL_MODEL);
-  const logEndRef = useRef<HTMLDivElement | null>(null);
-  const handleSelectPort = (value: string) => {
-    actions.value?.onSelectPort(value);
-  };
-  const handleRefreshPorts = () => {
-    actions.value?.onRefreshPorts();
-  };
-  const handleStart = () => {
-    actions.value?.onStart();
-  };
-  const handleCancel = () => {
-    actions.value?.onCancel();
-  };
-
-  useSignalEffect(() => {
-    const log = model.value.log;
-    const logEnd = logEndRef.current;
-    if (!logEnd || log.emptyState !== null) {
-      return;
-    }
-    const animationFrameId = globalThis.requestAnimationFrame(() => {
-      logEnd.scrollIntoView({ block: "end", inline: "nearest" });
-    });
-    return () => globalThis.cancelAnimationFrame(animationFrameId);
-  });
+  const {
+    cancelButtonDisabled,
+    cancelButtonHidden,
+    history,
+    journey,
+    log,
+    portOptions,
+    portSelectDisabled,
+    readiness,
+    refreshPortsDisabled,
+    selectedPortValue,
+    startButtonDisabled,
+    startButtonHidden,
+    startButtonLabelText,
+    startSummary,
+    statusBanner,
+  } = useSignalProperties(model, ESP_FLASH_PANEL_KEYS);
   const labelTexts = labels.value;
 
   return (
@@ -110,201 +330,88 @@ function EspFlashPanel(props: {
               <div>
                 <div
                   class="maintenance-card__title"
-
                 >
                   {labelTexts.titleText}
                 </div>
                 <div
                   class="subtle"
-
                 >
                   {labelTexts.hintText}
                 </div>
               </div>
-              <span
-                id="espFlashStatusBanner"
-                class="pill"
-                data-variant={model.value.statusBanner.variant}
-              >
-                {model.value.statusBanner.text}
-              </span>
+              <EspFlashStatusBanner badge={statusBanner} />
             </div>
             <div class="maintenance-card__body maintenance-card__body--hero">
-              <div class="manual-speed-row">
-                <label
-                  htmlFor="espFlashPortSelect"
-
-                >
-                  {labelTexts.portLabel}
-                </label>
-                <select
-                  id="espFlashPortSelect"
-                  disabled={model.value.portSelectDisabled}
-                  value={model.value.selectedPortValue}
-                  onChange={(event) => handleSelectPort(event.currentTarget.value)}
-                >
-                  {model.value.portOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.labelText}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  id="espFlashRefreshPortsBtn"
-                  class="btn btn--muted"
-                  disabled={model.value.refreshPortsDisabled}
-                  onClick={handleRefreshPorts}
-                >
-                  {labelTexts.refreshLabel}
-                </button>
-              </div>
+              <EspFlashPortRow
+                actions={actions}
+                portLabel={labelTexts.portLabel}
+                portOptions={portOptions}
+                portSelectDisabled={portSelectDisabled}
+                refreshLabel={labelTexts.refreshLabel}
+                refreshPortsDisabled={refreshPortsDisabled}
+                selectedPortValue={selectedPortValue}
+              />
               <div
                 id="espFlashStartSummary"
                 class="maintenance-stack maintenance-stack--tight"
                 aria-live="polite"
               >
-                <MaintenanceReadinessPanel model={model.value.startSummary} />
+                <EspFlashStartSummarySection model={startSummary} />
               </div>
               <div
                 id="espFlashReadinessPanel"
                 class="maintenance-stack maintenance-stack--tight"
                 aria-live="polite"
               >
-                <EspFlashReadinessSection model={model.value.readiness} />
+                <EspFlashReadinessSection model={readiness} />
               </div>
               <details class="settings-help-disclosure settings-help-disclosure--inline">
                 <summary class="settings-help-disclosure__summary">
                   <span class="settings-help-disclosure__heading">
                     <span
                       class="settings-help-disclosure__title"
-
                     >
                       {labelTexts.detailsTitle}
                     </span>
                     <span
                       class="settings-help-disclosure__caption"
-
                     >
                       {labelTexts.detailsCaption}
                     </span>
                   </span>
                 </summary>
                 <div class="settings-help-disclosure__body">
-                  <div
-                    class="maintenance-note"
-
-                  >
+                  <div class="maintenance-note">
                     {labelTexts.preflightNote}
                   </div>
                 </div>
               </details>
-              <div class="maintenance-action-row">
-                <button
-                  type="button"
-                  id="espFlashStartBtn"
-                  class="btn btn--success"
-                  hidden={model.value.startButtonHidden}
-                  disabled={model.value.startButtonDisabled}
-                  onClick={handleStart}
-                >
-                  {model.value.startButtonLabelText}
-                </button>
-                <button
-                  type="button"
-                  id="espFlashCancelBtn"
-                  class="btn btn--danger"
-                  hidden={model.value.cancelButtonHidden}
-                  disabled={model.value.cancelButtonDisabled}
-                  onClick={handleCancel}
-                >
-                  {labelTexts.cancelLabel}
-                </button>
-              </div>
+              <EspFlashActionRow
+                actions={actions}
+                cancelButtonDisabled={cancelButtonDisabled}
+                cancelButtonHidden={cancelButtonHidden}
+                cancelLabel={labelTexts.cancelLabel}
+                startButtonDisabled={startButtonDisabled}
+                startButtonHidden={startButtonHidden}
+                startButtonLabelText={startButtonLabelText}
+              />
             </div>
           </section>
 
           <div class="maintenance-pair-grid maintenance-pair-grid--focus">
-            <section class="maintenance-card">
-              <div class="maintenance-card__header">
-                <div>
-                  <div
-                    class="maintenance-card__title"
-
-                  >
-                    {labelTexts.journeyTitle}
-                  </div>
-                </div>
-              </div>
-              <div
-                id="espFlashJourneyPanel"
-                class="maintenance-stack maintenance-stack--tight"
-                aria-live="polite"
-              >
-                <EspFlashJourneySection model={model.value.journey} />
-              </div>
-            </section>
-            <section class="maintenance-card">
-              <div class="maintenance-card__header">
-                <div>
-                  <div
-                    class="maintenance-card__title"
-
-                  >
-                    {labelTexts.logsTitle}
-                  </div>
-                  <div
-                    class="subtle"
-
-                  >
-                    {labelTexts.logsIntro}
-                  </div>
-                </div>
-              </div>
-              <div
-                id="espFlashLogPanel"
-                class={
-                  model.value.log.emptyState
-                    ? "maintenance-log-slot"
-                    : "maintenance-log-slot maintenance-log-panel"
-                }
-                aria-live="polite"
-              >
-                <EspFlashLogContent model={model.value.log} />
-                {model.value.log.emptyState === null ? (
-                  <div
-                    ref={logEndRef}
-                    class="maintenance-log-anchor"
-                    data-log-end="true"
-                    aria-hidden="true"
-                  />
-                ) : null}
-              </div>
-            </section>
+            <EspFlashJourneyCard model={journey} titleText={labelTexts.journeyTitle} />
+            <EspFlashLogCard
+              introText={labelTexts.logsIntro}
+              model={log}
+              titleText={labelTexts.logsTitle}
+            />
           </div>
 
-          <section class="maintenance-card">
-            <div class="maintenance-card__header">
-              <div>
-                <div
-                  class="maintenance-card__title"
-                >
-                  {labelTexts.historyTitle}
-                </div>
-                <div
-                  class="subtle"
-                >
-                  {labelTexts.historyIntro}
-                </div>
-              </div>
-            </div>
-            <div
-              id="espFlashHistoryPanel"
-              class="maintenance-stack maintenance-stack--tight"
-            >
-              <EspFlashHistoryContent model={model.value.history} />
-            </div>
-          </section>
+          <EspFlashHistoryCard
+            introText={labelTexts.historyIntro}
+            model={history}
+            titleText={labelTexts.historyTitle}
+          />
         </div>
       </div>
     </div>
