@@ -53,6 +53,62 @@ export const defaultVehicleSettings: Readonly<VehicleSettings> = {
   tire_deflection_factor: 0.97,
 };
 
+export const carOwnedVehicleSettingKeys = [
+  "tire_width_mm",
+  "tire_aspect_pct",
+  "rim_in",
+  "final_drive_ratio",
+  "current_gear_ratio",
+  "tire_deflection_factor",
+] as const satisfies readonly (keyof VehicleSettings)[];
+
+export const analysisOwnedVehicleSettingKeys = [
+  "wheel_bandwidth_pct",
+  "driveshaft_bandwidth_pct",
+  "engine_bandwidth_pct",
+  "speed_uncertainty_pct",
+  "tire_diameter_uncertainty_pct",
+  "final_drive_uncertainty_pct",
+  "gear_uncertainty_pct",
+  "min_abs_band_hz",
+  "max_band_half_width_pct",
+] as const satisfies readonly (keyof VehicleSettings)[];
+
+type VehicleSettingsNumericPatch = Partial<
+  Record<keyof VehicleSettings, number | null | undefined>
+>;
+
+function mergeVehicleSettingsPatch<
+  TKeys extends readonly (keyof VehicleSettings)[],
+>(
+  current: VehicleSettings,
+  source: VehicleSettingsNumericPatch,
+  keys: TKeys,
+): VehicleSettings {
+  const next = { ...current };
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "number") {
+      next[key] = value;
+    }
+  }
+  return next;
+}
+
+export function mergeCarOwnedVehicleSettings(
+  current: VehicleSettings,
+  source: VehicleSettingsNumericPatch,
+): VehicleSettings {
+  return mergeVehicleSettingsPatch(current, source, carOwnedVehicleSettingKeys);
+}
+
+export function mergeAnalysisOwnedVehicleSettings(
+  current: VehicleSettings,
+  source: VehicleSettingsNumericPatch,
+): VehicleSettings {
+  return mergeVehicleSettingsPatch(current, source, analysisOwnedVehicleSettingKeys);
+}
+
 export interface RunDetail {
   preview: HistoryInsightsPayload | null;
   previewLoading: boolean;
