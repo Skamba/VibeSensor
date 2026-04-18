@@ -28,7 +28,7 @@ from typing import Final, TypedDict, cast
 import numpy as np
 import numpy.typing as npt
 
-from vibesensor.strength_bands import bucket_for_strength
+from vibesensor.strength_bands import _buckets_for_strength_db_aligned, bucket_for_strength
 
 __all__ = [
     "compute_db",
@@ -521,8 +521,15 @@ def compute_vibration_strength_db(
         peak_band_rms_amp_g_values=np.asarray(candidate_band_rms, dtype=np.float64),
         floor_amp_g=floor_strength,
     )
+    candidate_buckets = _buckets_for_strength_db_aligned(candidate_db)
     candidates: list[StrengthPeak] = []
-    for hz, band_rms, db in zip(candidate_hz, candidate_band_rms, candidate_db, strict=True):
+    for hz, band_rms, db, strength_bucket in zip(
+        candidate_hz,
+        candidate_band_rms,
+        candidate_db,
+        candidate_buckets,
+        strict=True,
+    ):
         db_value = float(db)
         if not isfinite(db_value):
             continue
@@ -531,7 +538,7 @@ def compute_vibration_strength_db(
                 "hz": hz,
                 "amp": band_rms,
                 "vibration_strength_db": db_value,
-                "strength_bucket": bucket_for_strength(db_value),
+                "strength_bucket": strength_bucket,
             }
         )
     candidates.sort(
@@ -554,15 +561,18 @@ def compute_vibration_strength_db(
         top_db = float(_db_val) if _db_val is not None else 0.0
         _amp_val = top_peak.get("amp")
         peak_amp_g = float(_amp_val) if _amp_val is not None else 0.0
+        _bucket_val = top_peak.get("strength_bucket")
+        strength_bucket = _bucket_val if _bucket_val is not None else bucket_for_strength(top_db)
     else:
         top_db = 0.0
         peak_amp_g = 0.0
+        strength_bucket = bucket_for_strength(top_db)
 
     return {
         "vibration_strength_db": top_db,
         "peak_amp_g": peak_amp_g,
         "noise_floor_amp_g": float(floor_strength),
-        "strength_bucket": bucket_for_strength(top_db),
+        "strength_bucket": strength_bucket,
         "top_peaks": list(chosen),
     }
 

@@ -4,10 +4,17 @@ import json
 import re
 from pathlib import Path
 
+import numpy as np
 import pytest
 from _paths import REPO_ROOT
 
-from vibesensor.strength_bands import BANDS, band_by_key, band_rank, bucket_for_strength
+from vibesensor.strength_bands import (
+    BANDS,
+    _buckets_for_strength_db_aligned,
+    band_by_key,
+    band_rank,
+    bucket_for_strength,
+)
 
 # -- bucket_for_strength -------------------------------------------------------
 
@@ -29,6 +36,13 @@ def test_bucket_returns_highest_matching() -> None:
     # Meets L1-L3 thresholds → returns L3
     result = bucket_for_strength(vibration_strength_db=26.0)
     assert result == "l3"
+
+
+def test_batch_buckets_match_scalar_helper() -> None:
+    values = np.array([-5.0, 0.0, 7.9, 8.0, 15.9, 16.0, 45.9, 46.0, 120.0], dtype=np.float64)
+    result = _buckets_for_strength_db_aligned(values)
+    expected = [bucket_for_strength(float(value)) for value in values]
+    assert result == expected
 
 
 # -- band_by_key ---------------------------------------------------------------
