@@ -18,6 +18,7 @@ import { createUiShellNotificationModule } from "../src/app/runtime/ui_shell_not
 import { createUiShellPreferencesModule } from "../src/app/runtime/ui_shell_preferences_module";
 import { createUiShellStatusModule } from "../src/app/runtime/ui_shell_status_module";
 import { signal, type ReadonlySignal } from "../src/app/ui_signals";
+import { installDocumentStub } from "./spectrum_test_support";
 
 function jsonResponse(body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -204,6 +205,32 @@ test.describe("UiShellController", () => {
 
     chromeActions.value.activateView("historyView");
     expect(state.shell.activeViewId.value).toBe("historyView");
+  });
+
+  test("syncs the document language from shell state without a chrome component", () => {
+    const restoreDocument = installDocumentStub();
+    const state = createAppState();
+    const chrome = createChromeViewRecorder();
+    try {
+      new UiShellController({
+        bindFeatureHandlers: () => undefined,
+        chrome: chrome.view,
+        chromeActions: signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS }),
+        liveOverview: {
+          model: signal(null),
+          speedText: signal("--"),
+        },
+        state,
+      });
+
+      expect(globalThis.document.documentElement.lang).toBe("en");
+
+      state.shell.lang.value = "nl";
+
+      expect(globalThis.document.documentElement.lang).toBe("nl");
+    } finally {
+      restoreDocument();
+    }
   });
 
   test("routes live status updates through the status model only", () => {

@@ -8,7 +8,6 @@ import {
   useComputed,
   type Signal,
   type ReadonlySignal,
-  useSignalEffect,
 } from "../ui_signals";
 import {
   createDeferredModelSignal,
@@ -61,20 +60,6 @@ type UiShellChromeProps = {
   statusModel: ReadonlySignal<ReadonlySignal<UiShellChromeStatusModel> | null>;
 };
 
-function DocumentLanguageSync(props: {
-  preferencesModel: ReadonlySignal<UiShellChromePreferencesModel>;
-}) {
-  const { preferencesModel } = props;
-
-  useSignalEffect(() => {
-    const lang = preferencesModel.value.selectedLanguage;
-    const documentElement = globalThis.document?.documentElement;
-    if (documentElement) documentElement.lang = lang;
-  });
-
-  return null;
-}
-
 function UiShellChrome(props: UiShellChromeProps) {
   const {
     actions,
@@ -87,7 +72,6 @@ function UiShellChrome(props: UiShellChromeProps) {
 
   return (
     <ShellChromeFrame statusModel={statusModel}>
-      <DocumentLanguageSync preferencesModel={preferencesModel} />
       <header class="site-header">
         <div class="site-header__main">
           <ShellNavigation actions={actions} navigationModel={navigationModel} />
