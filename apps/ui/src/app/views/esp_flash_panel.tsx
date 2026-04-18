@@ -1,7 +1,7 @@
 import { render } from "preact";
 import { useRef } from "preact/hooks";
 
-import { useUiText } from "../ui_i18n";
+import { getUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalEffect,
@@ -42,32 +42,37 @@ function EspFlashPanel(props: {
   actions: ReadonlySignal<EspFlashPanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<EspFlashPanelRenderModel> | null>;
 }) {
-  const titleText = useUiText("settings.esp_flash.title", "ESP Flash");
-  const hintText = useUiText("settings.esp_flash.hint", "Flash ESP firmware from local source on this Pi.");
-  const portLabel = useUiText("settings.esp_flash.port", "Serial Port");
-  const refreshLabel = useUiText("settings.esp_flash.refresh_ports", "Refresh");
-  const detailsTitle = useUiText("settings.esp_flash.details_title", "What happens next");
-  const detailsCaption = useUiText(
-    "settings.esp_flash.details_caption",
-    "Build, erase, and write the current firmware over USB.",
-  );
-  const preflightNote = useUiText(
-    "settings.esp_flash.preflight_note",
-    "Starting a flash builds the latest firmware on this Pi, erases the selected board, and writes the new image over USB. Keep the board powered until the staged progress reaches Done.",
-  );
-  const cancelLabel = useUiText("settings.esp_flash.cancel", "Cancel");
-  const journeyTitle = useUiText("settings.esp_flash.journey_title", "Expected stages");
-  const logsTitle = useUiText("settings.esp_flash.logs_title", "Live flash output");
-  const logsIntro = useUiText(
-    "settings.esp_flash.logs_intro",
-    "Build, erase, and upload output appears here while the toolchain runs.",
-  );
-  const historyTitle = useUiText("settings.esp_flash.history", "Recent attempts");
-  const historyIntro = useUiText(
-    "settings.esp_flash.history_intro",
-    "Recent flashes stay here so the next operator can see what happened last.",
-  );
   const actions = useComputed(() => props.actions.value);
+  const labels = useComputed(() => ({
+    cancelLabel: getUiText("settings.esp_flash.cancel", "Cancel"),
+    detailsCaption: getUiText(
+      "settings.esp_flash.details_caption",
+      "Build, erase, and write the current firmware over USB.",
+    ),
+    detailsTitle: getUiText("settings.esp_flash.details_title", "What happens next"),
+    hintText: getUiText(
+      "settings.esp_flash.hint",
+      "Flash ESP firmware from local source on this Pi.",
+    ),
+    historyIntro: getUiText(
+      "settings.esp_flash.history_intro",
+      "Recent flashes stay here so the next operator can see what happened last.",
+    ),
+    historyTitle: getUiText("settings.esp_flash.history", "Recent attempts"),
+    journeyTitle: getUiText("settings.esp_flash.journey_title", "Expected stages"),
+    logsIntro: getUiText(
+      "settings.esp_flash.logs_intro",
+      "Build, erase, and upload output appears here while the toolchain runs.",
+    ),
+    logsTitle: getUiText("settings.esp_flash.logs_title", "Live flash output"),
+    portLabel: getUiText("settings.esp_flash.port", "Serial Port"),
+    preflightNote: getUiText(
+      "settings.esp_flash.preflight_note",
+      "Starting a flash builds the latest firmware on this Pi, erases the selected board, and writes the new image over USB. Keep the board powered until the staged progress reaches Done.",
+    ),
+    refreshLabel: getUiText("settings.esp_flash.refresh_ports", "Refresh"),
+    titleText: getUiText("settings.esp_flash.title", "ESP Flash"),
+  }));
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_ESP_FLASH_PANEL_MODEL);
   const logEndRef = useRef<HTMLDivElement | null>(null);
   const handleSelectPort = (value: string) => {
@@ -94,6 +99,7 @@ function EspFlashPanel(props: {
     });
     return () => globalThis.cancelAnimationFrame(animationFrameId);
   });
+  const labelTexts = labels.value;
 
   return (
     <div class="panel card">
@@ -106,13 +112,13 @@ function EspFlashPanel(props: {
                   class="maintenance-card__title"
 
                 >
-                  {titleText}
+                  {labelTexts.titleText}
                 </div>
                 <div
                   class="subtle"
 
                 >
-                  {hintText}
+                  {labelTexts.hintText}
                 </div>
               </div>
               <span
@@ -129,7 +135,7 @@ function EspFlashPanel(props: {
                   htmlFor="espFlashPortSelect"
 
                 >
-                  {portLabel}
+                  {labelTexts.portLabel}
                 </label>
                 <select
                   id="espFlashPortSelect"
@@ -150,7 +156,7 @@ function EspFlashPanel(props: {
                   disabled={model.value.refreshPortsDisabled}
                   onClick={handleRefreshPorts}
                 >
-                  {refreshLabel}
+                  {labelTexts.refreshLabel}
                 </button>
               </div>
               <div
@@ -174,13 +180,13 @@ function EspFlashPanel(props: {
                       class="settings-help-disclosure__title"
 
                     >
-                      {detailsTitle}
+                      {labelTexts.detailsTitle}
                     </span>
                     <span
                       class="settings-help-disclosure__caption"
 
                     >
-                      {detailsCaption}
+                      {labelTexts.detailsCaption}
                     </span>
                   </span>
                 </summary>
@@ -189,7 +195,7 @@ function EspFlashPanel(props: {
                     class="maintenance-note"
 
                   >
-                    {preflightNote}
+                    {labelTexts.preflightNote}
                   </div>
                 </div>
               </details>
@@ -212,7 +218,7 @@ function EspFlashPanel(props: {
                   disabled={model.value.cancelButtonDisabled}
                   onClick={handleCancel}
                 >
-                  {cancelLabel}
+                  {labelTexts.cancelLabel}
                 </button>
               </div>
             </div>
@@ -226,7 +232,7 @@ function EspFlashPanel(props: {
                     class="maintenance-card__title"
 
                   >
-                    {journeyTitle}
+                    {labelTexts.journeyTitle}
                   </div>
                 </div>
               </div>
@@ -245,13 +251,13 @@ function EspFlashPanel(props: {
                     class="maintenance-card__title"
 
                   >
-                    {logsTitle}
+                    {labelTexts.logsTitle}
                   </div>
                   <div
                     class="subtle"
 
                   >
-                    {logsIntro}
+                    {labelTexts.logsIntro}
                   </div>
                 </div>
               </div>
@@ -283,12 +289,12 @@ function EspFlashPanel(props: {
                 <div
                   class="maintenance-card__title"
                 >
-                  {historyTitle}
+                  {labelTexts.historyTitle}
                 </div>
                 <div
                   class="subtle"
                 >
-                  {historyIntro}
+                  {labelTexts.historyIntro}
                 </div>
               </div>
             </div>
