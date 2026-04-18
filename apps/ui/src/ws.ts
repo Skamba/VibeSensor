@@ -1,5 +1,9 @@
 import type { LiveWsPayload } from "./contracts/ws_payload_types";
-import { batch, effect, signal, type ReadonlySignal } from "./app/ui_signals";
+import {
+  bindReplaceableTimerEffect,
+  createReplaceableTimeout,
+} from "./app/timer_cleanup";
+import { batch, signal, type ReadonlySignal } from "./app/ui_signals";
 
 export type WsUiState = "connecting" | "connected" | "reconnecting" | "stale" | "no_data";
 
@@ -42,7 +46,9 @@ export function createWsClient(options: WsClientOptions): WsClient {
   const manuallyClosed = signal(false);
   const reconnectAttempt = signal(0);
   const reconnectDelayMs = signal<number | null>(null);
+  const reconnectTimer = createReplaceableTimeout();
   const socketOpen = signal(false);
+  const staleTimer = createReplaceableTimeout();
 
   bindReconnectLifecycle();
   bindStaleLifecycle();
@@ -144,44 +150,44 @@ export function createWsClient(options: WsClientOptions): WsClient {
   }
 
   function bindReconnectLifecycle(): void {
-    effect(() => {
+    bindReplaceableTimerEffect(reconnectTimer, () => {
       const pendingReconnectDelayMs = reconnectDelayMs.value;
       if (pendingReconnectDelayMs === null || manuallyClosed.value) {
-        return;
+        return null;
       }
-      const timeoutId = window.setTimeout(() => {
-        batch(() => {
-          reconnectDelayMs.value = null;
-        });
-        open("reconnecting");
-      }, pendingReconnectDelayMs);
-      return () => {
-        window.clearTimeout(timeoutId);
+      return {
+        delayMs: pendingReconnectDelayMs,
+        callback: () => {
+          batch(() => {
+            reconnectDelayMs.value = null;
+          });
+          open("reconnecting");
+        },
       };
     });
   }
 
   function bindStaleLifecycle(): void {
-    effect(() => {
+    bindReplaceableTimerEffect(staleTimer, () => {
       if (
         !socketOpen.value
         || manuallyClosed.value
         || !hasReceivedData.value
         || lastMessageAtMs.value <= 0
       ) {
-        return;
+        return null;
       }
       const elapsedMs = Date.now() - lastMessageAtMs.value;
       const remainingMs = resolvedOptions.staleAfterMs - elapsedMs;
       if (remainingMs <= 0) {
         setState("stale");
-        return;
+        return null;
       }
-      const timeoutId = window.setTimeout(() => {
-        setState("stale");
-      }, remainingMs);
-      return () => {
-        window.clearTimeout(timeoutId);
+      return {
+        delayMs: remainingMs,
+        callback: () => {
+          setState("stale");
+        },
       };
     });
   }

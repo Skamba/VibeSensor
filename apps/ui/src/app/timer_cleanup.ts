@@ -1,3 +1,5 @@
+import { effect } from "./ui_signals";
+
 type TimeoutApi = Pick<typeof globalThis, "clearTimeout" | "setTimeout">;
 type IntervalApi = Pick<typeof globalThis, "clearInterval" | "setInterval">;
 
@@ -10,6 +12,12 @@ type ScheduledHandleStore<Handle> = {
 export interface ReplaceableTimer {
   clear(): void;
   replace(callback: () => void, delayMs: number): void;
+}
+
+export interface ReplaceableTimerEffectSchedule {
+  callback: () => void;
+  delayMs: number;
+  fireImmediately?: boolean;
 }
 
 function createScheduledHandleStore<Handle>(
@@ -72,4 +80,24 @@ export function createReplaceableInterval(
       store.replace(api.setInterval(callback, delayMs));
     },
   };
+}
+
+export function bindReplaceableTimerEffect(
+  timer: ReplaceableTimer,
+  resolveSchedule: () => ReplaceableTimerEffectSchedule | null,
+): () => void {
+  return effect(() => {
+    const schedule = resolveSchedule();
+    if (schedule === null) {
+      timer.clear();
+      return;
+    }
+    if (schedule.fireImmediately) {
+      schedule.callback();
+    }
+    timer.replace(schedule.callback, schedule.delayMs);
+    return () => {
+      timer.clear();
+    };
+  });
 }
