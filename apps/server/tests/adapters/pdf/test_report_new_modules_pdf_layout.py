@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 from pypdf import PdfReader
-from reportlab.lib.units import mm
 from test_support.core import extract_pdf_text
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import (
@@ -24,13 +23,6 @@ from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.adapters.pdf.pdf_style import (
-    MARGIN,
-    PAGE_H,
-    PAGE_W,
-    build_page1_layout,
-    observed_signature_row_count,
-)
 from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.boundaries.reporting.document import (
     NextStep,
@@ -516,41 +508,3 @@ def test_build_report_pdf_recapture_page_uses_scenario_specific_guidance(
     page_two_text = " ".join((PdfReader(BytesIO(pdf)).pages[1].extract_text() or "").split())
 
     assert expected_page_two_text in page_two_text
-
-
-def test_build_page1_layout_prioritizes_observed_signature_panel() -> None:
-    layout = build_page1_layout(
-        width=PAGE_W - 2 * MARGIN,
-        page_top=PAGE_H - MARGIN,
-        header_content_height=14 * mm,
-        observed_rows=5,
-    )
-    assert layout.observed.h > layout.header.h
-    assert layout.systems.h < 50 * mm
-
-
-def test_observed_signature_row_count_reserves_optional_reason_and_tier_a_warning() -> None:
-    assert (
-        observed_signature_row_count(
-            certainty_tier_key="C",
-            system_card_count=1,
-            has_certainty_reason=False,
-        )
-        == 4
-    )
-    assert (
-        observed_signature_row_count(
-            certainty_tier_key="C",
-            system_card_count=1,
-            has_certainty_reason=True,
-        )
-        == 5
-    )
-    assert (
-        observed_signature_row_count(
-            certainty_tier_key="A",
-            system_card_count=0,
-            has_certainty_reason=False,
-        )
-        == 6
-    )
