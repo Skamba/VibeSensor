@@ -11,6 +11,7 @@ from vibesensor.vibration_strength import VibrationStrengthMetrics
 
 type FloatArray = npt.NDArray[np.float32]
 type IntIndexArray = npt.NDArray[np.intp]
+type BoolArray = npt.NDArray[np.bool_]
 
 Axis = Literal["x", "y", "z"]
 

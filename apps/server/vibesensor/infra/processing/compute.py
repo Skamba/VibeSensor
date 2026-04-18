@@ -14,6 +14,7 @@ from vibesensor.infra.processing.fft import (
     medfilt3,
 )
 from vibesensor.infra.processing.models import (
+    BoolArray,
     ClientMetrics,
     FftSpectrumResult,
     FloatArray,
@@ -29,6 +30,7 @@ from vibesensor.vibration_strength import empty_vibration_strength_metrics
 LOGGER = logging.getLogger(__name__)
 _FFT_CACHE_MAXSIZE = 64
 _EMPTY_F32: FloatArray = np.array([], dtype=np.float32)
+_EMPTY_BOOL: BoolArray = np.empty(0, dtype=np.bool_)
 
 
 def _finite_or_zero(value: float) -> float:
@@ -42,10 +44,12 @@ class SignalMetricsComputer:
         self._config = config
         self.fft_window: FloatArray = np.hanning(config.fft_n).astype(np.float32)
         self.fft_scale = float(2.0 / max(1.0, float(np.sum(self.fft_window))))
-        self.fft_cache: OrderedDict[int, tuple[FloatArray, IntIndexArray]] = OrderedDict()
+        self.fft_cache: OrderedDict[int, tuple[FloatArray, IntIndexArray, BoolArray]] = (
+            OrderedDict()
+        )
         self.fft_cache_lock = RLock()
 
-    def fft_params(self, sample_rate_hz: int) -> tuple[FloatArray, IntIndexArray]:
+    def _fft_cache_entry(self, sample_rate_hz: int) -> tuple[FloatArray, IntIndexArray, BoolArray]:
         with self.fft_cache_lock:
             cached = self.fft_cache.get(sample_rate_hz)
             if cached is not None:
@@ -57,17 +61,26 @@ class SignalMetricsComputer:
                     "returning empty frequency slice.",
                     sample_rate_hz,
                 )
-                return _EMPTY_F32, np.empty(0, dtype=np.intp)
+                return _EMPTY_F32, np.empty(0, dtype=np.intp), _EMPTY_BOOL
             freqs = np.fft.rfftfreq(self._config.fft_n, d=1.0 / sample_rate_hz)
             valid = (freqs >= self._config.spectrum_min_hz) & (
                 freqs <= self._config.spectrum_max_hz
             )
             freq_slice = freqs[valid].astype(np.float32)
             valid_idx = np.flatnonzero(valid)
-            self.fft_cache[sample_rate_hz] = (freq_slice, valid_idx)
+            strength_range_mask = np.ones(freq_slice.shape, dtype=np.bool_)
+            self.fft_cache[sample_rate_hz] = (freq_slice, valid_idx, strength_range_mask)
             if len(self.fft_cache) > _FFT_CACHE_MAXSIZE:
                 self.fft_cache.popitem(last=False)
-            return freq_slice, valid_idx
+            return freq_slice, valid_idx, strength_range_mask
+
+    def fft_params(self, sample_rate_hz: int) -> tuple[FloatArray, IntIndexArray]:
+        freq_slice, valid_idx, _ = self._fft_cache_entry(sample_rate_hz)
+        return freq_slice, valid_idx
+
+    def strength_range_mask(self, sample_rate_hz: int) -> BoolArray:
+        _, _, strength_range_mask = self._fft_cache_entry(sample_rate_hz)
+        return strength_range_mask
 
     def compute_fft_spectrum(
         self,
@@ -76,7 +89,7 @@ class SignalMetricsComputer:
         *,
         spike_filter_enabled: bool = True,
     ) -> FftSpectrumResult:
-        freq_slice, valid_idx = self.fft_params(sample_rate_hz)
+        freq_slice, valid_idx, strength_range_mask = self._fft_cache_entry(sample_rate_hz)
         return compute_fft_spectrum(
             fft_block,
             sample_rate_hz,
@@ -84,6 +97,7 @@ class SignalMetricsComputer:
             fft_scale=self.fft_scale,
             freq_slice=freq_slice,
             valid_idx=valid_idx,
+            strength_range_mask=strength_range_mask,
             spike_filter_enabled=spike_filter_enabled,
         )
 

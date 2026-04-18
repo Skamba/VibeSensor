@@ -13,7 +13,13 @@ import math
 import numpy as np
 import numpy.typing as npt
 
-from vibesensor.infra.processing.models import Axis, AxisPeak, FftSpectrumResult, SpectrumByAxis
+from vibesensor.infra.processing.models import (
+    Axis,
+    AxisPeak,
+    BoolArray,
+    FftSpectrumResult,
+    SpectrumByAxis,
+)
 from vibesensor.shared.constants.dsp import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 from vibesensor.vibration_strength import (
     VibrationStrengthMetrics,
@@ -184,6 +190,7 @@ def compute_fft_spectrum(
     fft_scale: float,
     freq_slice: FloatArray,
     valid_idx: IntIndexArray,
+    strength_range_mask: BoolArray | None = None,
     spike_filter_enabled: bool = True,
 ) -> FftSpectrumResult:
     """Compute per-axis and combined FFT spectra from a sample block.
@@ -266,6 +273,7 @@ def compute_fft_spectrum(
             peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
             peak_separation_hz=PEAK_SEPARATION_HZ,
             top_n=8,
+            strength_range_mask=strength_range_mask,
         )
 
     return {
