@@ -143,7 +143,8 @@ def _combined_spectrum_amp_g_array(
         if axis_count_for_mean is not None
         else max(1.0, float(arr.shape[0]))
     )
-    return np.sqrt(np.sum(arr**2, axis=0) / divisor)
+    result: npt.NDArray[np.float64] = np.sqrt(np.sum(arr**2, axis=0) / divisor)
+    return result
 
 
 def combined_spectrum_amp_g(
