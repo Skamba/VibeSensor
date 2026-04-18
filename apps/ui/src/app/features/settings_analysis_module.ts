@@ -365,13 +365,9 @@ export function createSettingsAnalysisModule(
   }
 
   async function loadAnalysisSettingsFromServer(): Promise<void> {
-    try {
-      const serverSettings = await getAnalysisSettings();
-      if (serverSettings) {
-        applyAnalysisSettingsPayload(serverSettings);
-      }
-    } catch (_err) {
-      /* ignore */
+    const serverSettings = await getAnalysisSettings();
+    if (serverSettings) {
+      applyAnalysisSettingsPayload(serverSettings);
     }
   }
 

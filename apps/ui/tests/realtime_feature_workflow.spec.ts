@@ -171,7 +171,7 @@ test.describe("createRealtimeFeatureWorkflow", () => {
     ]);
   });
 
-  test("falls back to default location codes when refreshing locations fails", async () => {
+test("keeps the last known location codes and rejects when refreshing locations fails", async () => {
     const harness = createHarness();
     harness.state.realtime.locationCodes.value = ["custom-code"];
     const workflow = createRealtimeFeatureWorkflow({
@@ -200,10 +200,10 @@ test.describe("createRealtimeFeatureWorkflow", () => {
       },
     });
 
-    await workflow.refreshLocationOptions();
+    await expect(workflow.refreshLocationOptions()).rejects.toThrow("network unavailable");
 
-    expect(harness.state.realtime.locationCodes.value).toEqual(defaultLocationCodes);
-  });
+  expect(harness.state.realtime.locationCodes.value).toEqual(["custom-code"]);
+});
 
   test("refreshes history once when polling observes analysis completion", async () => {
     const harness = createHarness();
