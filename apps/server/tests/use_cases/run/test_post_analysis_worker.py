@@ -107,6 +107,45 @@ class TestPostAnalysisWorkerSchedule:
         assert worker.wait(timeout_s=5.0)
         assert seen == [f"run-{index}" for index in range(105)]
 
+    def test_schedule_restarts_worker_when_run_is_queued_during_worker_exit(
+        self,
+        make_worker,
+    ) -> None:
+        seen: list[str] = []
+        ready_to_schedule = threading.Event()
+        scheduled_during_exit = threading.Event()
+        loop_calls = 0
+
+        worker = make_worker(history_db=None)
+
+        def _controlled_worker_loop() -> None:
+            nonlocal loop_calls
+            loop_calls += 1
+            if loop_calls == 1:
+                with worker._lock:
+                    run_id = worker._state.start_next(started_at=time.time())
+                    assert run_id == "run-1"
+                    worker._state.finish_active(run_id)
+                seen.append("run-1")
+                ready_to_schedule.set()
+                assert scheduled_during_exit.wait(timeout=2.0)
+                return
+            with worker._lock:
+                run_id = worker._state.start_next(started_at=time.time())
+                assert run_id == "run-2"
+                worker._state.finish_active(run_id)
+            seen.append("run-2")
+
+        worker._worker_loop = _controlled_worker_loop
+
+        worker.schedule("run-1")
+        assert ready_to_schedule.wait(timeout=2.0)
+        worker.schedule("run-2")
+        scheduled_during_exit.set()
+
+        assert worker.wait(timeout_s=2.0)
+        assert seen == ["run-1", "run-2"]
+
 
 class TestPostAnalysisWorkerIsActive:
     def test_inactive_when_idle(self) -> None:
