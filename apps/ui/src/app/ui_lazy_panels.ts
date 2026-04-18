@@ -80,6 +80,12 @@ export interface CreateUiLazyPanelsDeps {
 }
 
 function scheduleDeferredWork(task: () => void): void {
+  if (typeof globalThis.requestIdleCallback === "function") {
+    globalThis.requestIdleCallback(() => {
+      task();
+    });
+    return;
+  }
   setTimeout(task, 0);
 }
 
