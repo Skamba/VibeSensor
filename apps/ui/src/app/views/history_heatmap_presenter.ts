@@ -77,11 +77,18 @@ export function buildHistoryHeatmapViewModel(
       labelByLocation[key] = label;
     }
   }
-  const values = Object.values(metricByLocation).filter((value) => typeof value === "number");
-  const min = values.length ? Math.min(...values) : null;
-  const max = values.length ? Math.max(...values) : null;
+  let min: number | null = null;
+  let max: number | null = null;
+  for (const value of Object.values(metricByLocation)) {
+    if (min === null || value < min) {
+      min = value;
+    }
+    if (max === null || value > max) {
+      max = value;
+    }
+  }
   const knownPositionKeys = new Set<string>(HISTORY_HEATMAP_POSITIONS.map((point) => point.key));
-  const strongestValue = values.length ? Math.max(...values) : null;
+  const strongestValue = max;
   const zones: HistoryHeatmapZoneViewModel[] = HISTORY_HEATMAP_POSITIONS.map((point) => {
     const value = metricByLocation[point.key];
     const label = labelByLocation[point.key] || humanizeHeatmapLocationKey(point.key);
