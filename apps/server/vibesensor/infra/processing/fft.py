@@ -17,7 +17,7 @@ from vibesensor.infra.processing.models import Axis, AxisPeak, FftSpectrumResult
 from vibesensor.shared.constants.dsp import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 from vibesensor.vibration_strength import (
     VibrationStrengthMetrics,
-    combined_spectrum_amp_g,
+    _combined_spectrum_amp_g_array,
     compute_vibration_strength_db,
     empty_vibration_strength_metrics,
 )
@@ -253,12 +253,12 @@ def compute_fft_spectrum(
     strength_metrics: VibrationStrengthMetrics = empty_vibration_strength_metrics()
     if spectrum_by_axis:
         amp_slices = [spectrum_by_axis[axis]["amp"] for axis in spectrum_by_axis]
-        combined_amp = np.asarray(
-            combined_spectrum_amp_g(
-                axis_spectra_amp_g=amp_slices,
-                axis_count_for_mean=len(amp_slices),
-            ),
-            dtype=np.float32,
+        combined_amp = _combined_spectrum_amp_g_array(
+            axis_spectra_amp_g=amp_slices,
+            axis_count_for_mean=len(amp_slices),
+        ).astype(
+            np.float32,
+            copy=False,
         )
         strength_metrics = compute_vibration_strength_db(
             freq_hz=freq_slice,
