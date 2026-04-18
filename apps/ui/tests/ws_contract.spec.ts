@@ -10,7 +10,10 @@
 
 import { expect, test } from "@playwright/test";
 import { adaptServerPayload } from "../src/server_payload";
-import { EXPECTED_SCHEMA_VERSION, type StrengthMetricsPayload } from "../src/contracts/ws_payload_types";
+import {
+  EXPECTED_SCHEMA_VERSION,
+  type StrengthMetricsPayload,
+} from "../src/contracts/ws_payload_types";
 
 function makeStrengthMetrics(
   overrides: Partial<StrengthMetricsPayload> = {},
@@ -35,7 +38,9 @@ const basePayload = {
 };
 
 function expectInvalidPayload(payload: unknown): void {
-  expect(() => adaptServerPayload(payload)).toThrow(/Invalid websocket payload/);
+  expect(() => adaptServerPayload(payload)).toThrow(
+    /Invalid websocket payload/,
+  );
 }
 
 function requireSpectra(adapted: ReturnType<typeof adaptServerPayload>) {
@@ -67,7 +72,7 @@ test.describe("schema_version handling", () => {
     expect(adapted).toBeDefined();
   });
 
-  test("rejects invalid field types via AJV validation", () => {
+  test("rejects invalid field types via runtime validation", () => {
     expectInvalidPayload({
       ...basePayload,
       speed_mps: "10",
@@ -106,7 +111,9 @@ test.describe("shared freq optimization", () => {
         clients: {
           sensor1: {
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
+            strength_metrics: makeStrengthMetrics({
+              vibration_strength_db: 12,
+            }),
           },
           sensor2: {
             combined_spectrum_amp_g: [0.04, 0.05, 0.06],
@@ -132,7 +139,9 @@ test.describe("shared freq optimization", () => {
           sensor1: {
             freq: [15, 25, 35],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
+            strength_metrics: makeStrengthMetrics({
+              vibration_strength_db: 12,
+            }),
           },
         },
       },
@@ -151,7 +160,9 @@ test.describe("shared freq optimization", () => {
           sensor1: {
             freq: [10, 20, 30],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
+            strength_metrics: makeStrengthMetrics({
+              vibration_strength_db: 12,
+            }),
           },
         },
       },
@@ -168,7 +179,9 @@ test.describe("shared freq optimization", () => {
         clients: {
           sensor1: {
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
+            strength_metrics: makeStrengthMetrics({
+              vibration_strength_db: 12,
+            }),
           },
         },
       },
@@ -186,7 +199,9 @@ test.describe("shared freq optimization", () => {
           sensor1: {
             freq: [10, "bad", 30],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
+            strength_metrics: makeStrengthMetrics({
+              vibration_strength_db: 12,
+            }),
           },
         },
       },
@@ -201,7 +216,9 @@ test.describe("shared freq optimization", () => {
           sensor1: {
             freq: [10, 20],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
+            strength_metrics: makeStrengthMetrics({
+              vibration_strength_db: 12,
+            }),
           },
         },
       },
@@ -218,7 +235,9 @@ test.describe("shared freq optimization", () => {
         clients: {
           sensor1: {
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
+            strength_metrics: makeStrengthMetrics({
+              vibration_strength_db: 12,
+            }),
           },
           sensor2: {
             freq: [15, 25, 35],
@@ -249,7 +268,12 @@ test.describe("shared freq optimization", () => {
               noise_floor_amp_g: 0.01,
               strength_bucket: null,
               top_peaks: [
-                { hz: 10, amp: 0.1, vibration_strength_db: 12, strength_bucket: "l2" },
+                {
+                  hz: 10,
+                  amp: 0.1,
+                  vibration_strength_db: 12,
+                  strength_bucket: "l2",
+                },
                 { hz: 20, amp: 0.2 },
               ],
             },
@@ -278,9 +302,7 @@ test.describe("shared freq optimization", () => {
       wheel: { rpm: 738, mode: "calculated", reason: null },
       driveshaft: { rpm: 1476, mode: "calculated", reason: null },
       engine: { rpm: 2208, mode: "calculated", reason: null },
-      order_bands: [
-        { key: "wheel_1x", center_hz: 12.3, tolerance: 0.08 },
-      ],
+      order_bands: [{ key: "wheel_1x", center_hz: 12.3, tolerance: 0.08 }],
     };
 
     const adapted = adaptServerPayload({
