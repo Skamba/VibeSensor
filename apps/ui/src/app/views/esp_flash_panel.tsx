@@ -69,7 +69,7 @@ function EspFlashPanel(props: {
   );
   const actions = useComputed(() => props.actions.value);
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_ESP_FLASH_PANEL_MODEL);
-  const logPanelRef = useRef<HTMLDivElement | null>(null);
+  const logEndRef = useRef<HTMLDivElement | null>(null);
   const handleSelectPort = (value: string) => {
     actions.value?.onSelectPort(value);
   };
@@ -84,12 +84,15 @@ function EspFlashPanel(props: {
   };
 
   useSignalEffect(() => {
-    const logPanel = logPanelRef.current;
     const log = model.value.log;
-    if (!logPanel || log.emptyState !== null) {
+    const logEnd = logEndRef.current;
+    if (!logEnd || log.emptyState !== null) {
       return;
     }
-    logPanel.scrollTop = logPanel.scrollHeight;
+    const animationFrameId = globalThis.requestAnimationFrame(() => {
+      logEnd.scrollIntoView({ block: "end", inline: "nearest" });
+    });
+    return () => globalThis.cancelAnimationFrame(animationFrameId);
   });
 
   return (
@@ -254,7 +257,6 @@ function EspFlashPanel(props: {
               </div>
               <div
                 id="espFlashLogPanel"
-                ref={logPanelRef}
                 class={
                   model.value.log.emptyState
                     ? "maintenance-log-slot"
@@ -263,6 +265,14 @@ function EspFlashPanel(props: {
                 aria-live="polite"
               >
                 <EspFlashLogContent model={model.value.log} />
+                {model.value.log.emptyState === null ? (
+                  <div
+                    ref={logEndRef}
+                    class="maintenance-log-anchor"
+                    data-log-end="true"
+                    aria-hidden="true"
+                  />
+                ) : null}
               </div>
             </section>
           </div>
