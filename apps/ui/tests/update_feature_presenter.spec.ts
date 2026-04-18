@@ -315,6 +315,35 @@ test.describe("buildUpdateFeaturePanelModels", () => {
 });
 
 test.describe("createUpdateFeaturePresenter", () => {
+  test("hydrates Wi-Fi inputs from initial render state once", () => {
+    const renderState = signal({
+      internetStatus: makeInternet(),
+      healthStatus: makeHealth(),
+      updateStatus: makeStatus({
+        transport: "wifi",
+        ssid: "persisted-ssid",
+      }),
+      updateState: "idle" as const,
+      updateTransport: "wifi" as const,
+    });
+    const presenter = createUpdateFeaturePresenter({
+      renderState,
+      t,
+    });
+
+    expect(presenter.internetPanelModel.value.ssidInputValue).toBe("persisted-ssid");
+
+    renderState.value = {
+      ...renderState.value,
+      updateStatus: makeStatus({
+        transport: "wifi",
+        ssid: "next-ssid",
+      }),
+    };
+
+    expect(presenter.internetPanelModel.value.ssidInputValue).toBe("persisted-ssid");
+  });
+
   test("reads and clears presenter-owned form state instead of DOM values", () => {
     const renderState = signal({
       internetStatus: makeInternet({
