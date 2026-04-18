@@ -1,7 +1,7 @@
 import type { JSX } from "preact";
 
 import { render } from "preact";
-import { getUiText } from "../ui_i18n";
+import { useUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalProperties,
@@ -110,7 +110,7 @@ function SensorsTableRow(props: {
 
 function SensorsTableBody(props: {
   actions: SensorsPanelActionHandlers | null;
-  emptyText: string;
+  emptyText: ReadonlySignal<string>;
   table: RealtimeSensorTableRenderModel | null;
 }) {
   const { actions, emptyText, table } = props;
@@ -118,7 +118,7 @@ function SensorsTableBody(props: {
     return (
       <tr>
         <td colSpan={3}>
-          {table?.emptyText ?? emptyText}
+          {table?.emptyText ?? emptyText.value}
         </td>
       </tr>
     );
@@ -133,49 +133,46 @@ function SensorsPanel(props: {
   model: ReadonlySignal<ReadonlySignal<SensorsPanelRenderModel> | null>;
 }) {
   const actions = useComputed(() => props.actions.value);
-  const labels = useComputed(() => ({
-    actionsLabel: getUiText("settings.sensors.actions", "Actions"),
-    emptyText: getUiText("settings.sensors.no_sensors", "No sensors detected yet."),
-    hintText: getUiText(
-      "settings.sensors.hint",
-      "Manage sensor names and locations. Default name is the MAC address.",
-    ),
-    locationLabel: getUiText("settings.sensors.location", "Location"),
-    nameLabel: getUiText("settings.sensors.name", "Name"),
-    titleText: getUiText("settings.sensors.title", "Sensors"),
-  }));
+  const actionsLabel = useUiText("settings.sensors.actions", "Actions");
+  const emptyText = useUiText("settings.sensors.no_sensors", "No sensors detected yet.");
+  const hintText = useUiText(
+    "settings.sensors.hint",
+    "Manage sensor names and locations. Default name is the MAC address.",
+  );
+  const locationLabel = useUiText("settings.sensors.location", "Location");
+  const nameLabel = useUiText("settings.sensors.name", "Name");
+  const titleText = useUiText("settings.sensors.title", "Sensors");
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_SENSORS_PANEL_MODEL);
   const { table } = useSignalProperties(model, SENSORS_PANEL_MODEL_KEYS);
-  const labelTexts = labels.value;
   return (
     <div class="panel card">
       <strong>
-        {labelTexts.titleText}
+        {titleText}
       </strong>
       <div class="subtle">
-        {labelTexts.hintText}
+        {hintText}
       </div>
       <div class="settings-table-wrap">
         <table class="clients-table settings-entity-table settings-entity-table--sensors">
           <thead>
             <tr>
                 <th>
-                 {labelTexts.nameLabel}
+                 {nameLabel}
                 </th>
                 <th>
-                 {labelTexts.locationLabel}
+                 {locationLabel}
                 </th>
                 <th>
-                 {labelTexts.actionsLabel}
+                 {actionsLabel}
                 </th>
               </tr>
             </thead>
             <tbody id="sensorsSettingsBody">
-             <SensorsTableBody
-               actions={actions.value}
-               emptyText={labelTexts.emptyText}
-               table={table.value}
-             />
+              <SensorsTableBody
+                actions={actions.value}
+                emptyText={emptyText}
+                table={table.value}
+              />
             </tbody>
           </table>
         </div>
