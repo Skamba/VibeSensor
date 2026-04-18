@@ -25,7 +25,7 @@ import {
 import {
   batch,
   computed,
-  effect,
+  effectOnChange,
   signal,
   untracked,
   type ReadonlySignal,
@@ -356,8 +356,7 @@ export function createUpdateFeaturePresenter(
   const ssidInputValue = signal("");
   let hasHydratedPersistedWifiSettings = false;
 
-  effect(() => {
-    const state = renderState.value;
+  function syncDerivedFormState(state: UpdateFeatureRenderState): void {
     const currentSelectedTransport = untracked(() => selectedTransportInput.value);
     const currentSsid = untracked(() => ssidInputValue.value);
     let nextSelectedTransport: UpdateStartRequestPayload["transport"] | null = null;
@@ -388,6 +387,11 @@ export function createUpdateFeaturePresenter(
         }
       });
     }
+  }
+
+  syncDerivedFormState(renderState.peek());
+  effectOnChange(renderState, (state) => {
+    syncDerivedFormState(state);
   });
 
   const actionSummaryModel = computed(() =>

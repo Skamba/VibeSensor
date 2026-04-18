@@ -18,7 +18,8 @@ import {
 } from "../ui_app_state";
 import {
   batch,
-  effect,
+  computed,
+  effectOnChange,
   signal,
   type ReadonlySignal,
   type Signal,
@@ -138,6 +139,16 @@ export function createRealtimeFeatureWorkflow(
   let idleCaptureReadinessRefreshInFlight = false;
   let lastIdleCaptureReadinessSignature: string | null = null;
   let queuedIdleCaptureReadinessSignature: string | null = null;
+  const idleCaptureReadinessTrigger = computed(() =>
+    [
+      deps.idleCaptureReadinessSignature.value,
+      state.handlersBound.value ? "1" : "0",
+      state.pendingLoggingAction.value ?? "",
+      realtime.loggingStatus.value.enabled ? "1" : "0",
+      realtime.loggingStatus.value.analysis_in_progress ? "1" : "0",
+      Boolean(realtime.loggingStatus.value.last_completed_run_id) ? "1" : "0",
+    ].join("::")
+  );
 
   function syncIdleCaptureReadinessSignature(): void {
     lastIdleCaptureReadinessSignature = deps.idleCaptureReadinessSignature.peek();
@@ -187,23 +198,8 @@ export function createRealtimeFeatureWorkflow(
     }
   }
 
-  effect(() => {
-    const signature = deps.idleCaptureReadinessSignature.value;
-    if (
-      !state.handlersBound.value
-      || isDemoMode
-      || state.pendingLoggingAction.value !== null
-    ) {
-      return;
-    }
-    if (
-      realtime.loggingStatus.value.enabled
-      || realtime.loggingStatus.value.analysis_in_progress
-      || Boolean(realtime.loggingStatus.value.last_completed_run_id)
-    ) {
-      return;
-    }
-    void refreshIdleCaptureReadiness(signature);
+  effectOnChange(idleCaptureReadinessTrigger, () => {
+    void refreshIdleCaptureReadiness(deps.idleCaptureReadinessSignature.peek());
   });
 
   const loggingStatusPolling = createPolling({
