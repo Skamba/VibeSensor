@@ -3,7 +3,6 @@ import { expect, test } from "@playwright/test";
 import { getUiShellChromeHost } from "../src/app/runtime/ui_shell_chrome";
 import {
   createUiSettingsPanelHostRefs,
-  resolveUiPanelHosts,
   resolveUiSettingsPanelHosts,
   type UiSettingsPanelHostRefs,
 } from "../src/app/ui_panel_host_registry";
@@ -41,44 +40,6 @@ function installDomFixture(overrides: { missingId?: string } = {}): () => void {
   return () => {
     (globalThis as { document?: Document }).document = originalDocument;
   };
-}
-
-function createPanelHosts(
-  overrides: { missingId?: string } = {},
-): Parameters<typeof resolveUiPanelHosts>[0] {
-  const panelHosts: Parameters<typeof resolveUiPanelHosts>[0] = {
-    dashboard: {
-      spectrum: null,
-      liveOverview: null,
-      logging: null,
-    },
-    history: null,
-    settingsShell: null,
-  };
-  if (overrides.missingId !== "spectrumPanelRoot") {
-    panelHosts.dashboard.spectrum = stubElement(
-      "spectrumPanelRoot",
-    ) as HTMLDivElement;
-  }
-  if (overrides.missingId !== "liveOverviewRoot") {
-    panelHosts.dashboard.liveOverview = stubElement(
-      "liveOverviewRoot",
-    ) as HTMLDivElement;
-  }
-  if (overrides.missingId !== "loggingPanelRoot") {
-    panelHosts.dashboard.logging = stubElement(
-      "loggingPanelRoot",
-    ) as HTMLDivElement;
-  }
-  if (overrides.missingId !== "historyPanelRoot") {
-    panelHosts.history = stubElement("historyPanelRoot") as HTMLDivElement;
-  }
-  if (overrides.missingId !== "settingsShellRoot") {
-    panelHosts.settingsShell = stubElement(
-      "settingsShellRoot",
-    ) as HTMLDivElement;
-  }
-  return panelHosts;
 }
 
 function createSettingsPanelHostRefs(
@@ -121,14 +82,6 @@ function createSettingsPanelHostRefs(
   return panelHostRefs;
 }
 
-const missingTopLevelPanelHostCases = [
-  ["spectrumPanelRoot", "Spectrum UI requires #spectrumPanelRoot"],
-  ["loggingPanelRoot", "Realtime feature requires #loggingPanelRoot"],
-  ["liveOverviewRoot", "Realtime feature requires #liveOverviewRoot"],
-  ["historyPanelRoot", "History feature requires #historyPanelRoot"],
-  ["settingsShellRoot", "Settings shell requires #settingsShellRoot"],
-] as const;
-
 const missingSettingsPanelHostCases = [
   ["carsPanelRoot", "Cars feature requires #carsPanelRoot"],
   ["analysisPanelRoot", "Analysis feature requires #analysisPanelRoot"],
@@ -146,12 +99,6 @@ test("shell chrome host and panel registry resolve the startup anchors", () => {
   const restore = installDomFixture();
   try {
     expect(getUiShellChromeHost().id).toBe("appShellChromeRoot");
-    const hosts = resolveUiPanelHosts(createPanelHosts());
-    expect(hosts.dashboard.spectrum.id).toBe("spectrumPanelRoot");
-    expect(hosts.dashboard.liveOverview.id).toBe("liveOverviewRoot");
-    expect(hosts.dashboard.logging.id).toBe("loggingPanelRoot");
-    expect(hosts.history.id).toBe("historyPanelRoot");
-    expect(hosts.settingsShell.id).toBe("settingsShellRoot");
     const settingsHosts = resolveUiSettingsPanelHosts(
       createSettingsPanelHostRefs(),
     );
@@ -178,19 +125,6 @@ test.describe("runtime locator missing required feature anchors", () => {
       restore();
     }
   });
-
-  for (const [missingId, message] of missingTopLevelPanelHostCases) {
-    test(`fails when ${missingId} is missing from the top-level panel registry`, () => {
-      const restore = installDomFixture();
-      try {
-        expect(() =>
-          resolveUiPanelHosts(createPanelHosts({ missingId })),
-        ).toThrow(message);
-      } finally {
-        restore();
-      }
-    });
-  }
 
   for (const [missingId, message] of missingSettingsPanelHostCases) {
     test(`fails when ${missingId} is missing from the settings panel registry`, () => {

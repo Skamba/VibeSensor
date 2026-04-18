@@ -52,7 +52,6 @@ type UiShellControllerDeps = {
   chrome: UiShellChromeView;
   chromeActions: Signal<UiShellChromeActions>;
   liveOverview: RealtimeLiveOverviewBridge;
-  onViewActivated?: (viewId: string) => Promise<void> | void;
   state: AppState;
 };
 
@@ -102,11 +101,6 @@ export class UiShellController {
     this.navigation = createUiShellNavigationModule({
       shell: this.state.shell,
       viewIds: SHELL_NAV_ITEMS.map((item) => item.viewId),
-      onViewActivated: deps.onViewActivated,
-      onViewActivationFailed: (viewId, error) => {
-        console.error(`[VibeSensor] Failed to activate view "${viewId}".`, error);
-        this.notifications.showError(this.t("status.view_load_failed"));
-      },
       onDashboardViewActivated: () => {
         this.state.spectrum.spectrumPlot.value?.resize();
       },

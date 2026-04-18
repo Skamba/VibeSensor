@@ -112,16 +112,6 @@ export interface UiShellChromeView {
   bindStatusModel(model: ReadonlySignal<UiShellChromeStatusModel>): void;
 }
 
-export type UiShellChromePendingPanelHosts = {
-  dashboard: {
-    spectrum: HTMLDivElement | null;
-    liveOverview: HTMLDivElement | null;
-    logging: HTMLDivElement | null;
-  };
-  history: HTMLDivElement | null;
-  settingsShell: HTMLDivElement | null;
-};
-
 export const DEFAULT_NAVIGATION_MODEL: UiShellChromeNavigationModel = {
   activeViewId: "dashboardView",
   navItems: SHELL_NAV_ITEMS.map((item) => ({
@@ -164,18 +154,6 @@ export const DEFAULT_DIALOG_MODEL: UiShellChromeDialogModel = {
   },
   confirmationDialog: null,
 };
-
-export function createPendingUiPanelHosts(): UiShellChromePendingPanelHosts {
-  return {
-    dashboard: {
-      spectrum: null,
-      liveOverview: null,
-      logging: null,
-    },
-    history: null,
-    settingsShell: null,
-  };
-}
 
 function noop(): void {
   return;
