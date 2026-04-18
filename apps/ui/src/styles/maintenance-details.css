@@ -14,6 +14,10 @@
   padding: var(--space-3);
 }
 
+.maintenance-log-anchor {
+  transform: translateY(calc(var(--space-3) - 1px));
+}
+
 .log-pre {
   margin: 0;
   max-height: 15rem;
@@ -26,6 +30,15 @@
   background: var(--surface);
   padding: var(--space-3);
   white-space: pre-wrap;
+}
+
+.log-pre--contained {
+  max-height: none;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .issue-list,

@@ -89,7 +89,10 @@ function EspFlashPanel(props: {
     if (!logEnd || log.emptyState !== null) {
       return;
     }
-    logEnd.scrollIntoView({ block: "end" });
+    const animationFrameId = globalThis.requestAnimationFrame(() => {
+      logEnd.scrollIntoView({ block: "end", inline: "nearest" });
+    });
+    return () => globalThis.cancelAnimationFrame(animationFrameId);
   });
 
   return (
@@ -262,7 +265,14 @@ function EspFlashPanel(props: {
                 aria-live="polite"
               >
                 <EspFlashLogContent model={model.value.log} />
-                {model.value.log.emptyState === null ? <div ref={logEndRef} aria-hidden="true" /> : null}
+                {model.value.log.emptyState === null ? (
+                  <div
+                    ref={logEndRef}
+                    class="maintenance-log-anchor"
+                    data-log-end="true"
+                    aria-hidden="true"
+                  />
+                ) : null}
               </div>
             </section>
           </div>
