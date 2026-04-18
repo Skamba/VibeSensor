@@ -77,7 +77,6 @@ function createUiAppFeatureRuntimePorts(deps: {
 export interface UiAppRuntime {
   attachSettingsPanels(handles: UiMountedLazyPanelHandles): void;
   panels: UiMountedPanels;
-  prefetchHiddenPanels(): void;
   shellChrome: UiShellChromeBindings;
   spectrumPanel: UiLazyPanels["spectrumPanel"];
   start(): void;
@@ -135,7 +134,6 @@ export function createUiAppRuntime(
   return {
     attachSettingsPanels: lazyPanels.attachSettingsPanels,
     panels: lazyPanels.panels,
-    prefetchHiddenPanels: lazyPanels.prefetchHiddenPanels,
     shellChrome,
     spectrumPanel: lazyPanels.spectrumPanel,
     start() {
