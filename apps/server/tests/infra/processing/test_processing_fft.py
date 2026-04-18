@@ -189,6 +189,26 @@ class TestFloatList:
         assert result == [1.0, 2.0, 3.0]
         assert all(type(value) is float for value in result)
 
+    def test_ndarray_finite_values_skip_sanitize_copy(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        nan_to_num_calls = 0
+        original = np.nan_to_num
+        arr = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+
+        def counting_nan_to_num(*args: object, **kwargs: object) -> np.ndarray:
+            nonlocal nan_to_num_calls
+            nan_to_num_calls += 1
+            return original(*args, **kwargs)
+
+        monkeypatch.setattr("vibesensor.infra.processing.fft.np.nan_to_num", counting_nan_to_num)
+
+        result = float_list(arr)
+
+        assert result == [1.0, 2.0, 3.0]
+        assert nan_to_num_calls == 0
+
     def test_python_list(self) -> None:
         result = float_list([1, 2, 3])
         assert result == [1.0, 2.0, 3.0]
@@ -200,6 +220,26 @@ class TestFloatList:
         assert np.isnan(arr[1])
         assert np.isposinf(arr[2])
         assert np.isneginf(arr[3])
+
+    def test_ndarray_non_finite_values_use_sanitize_fallback(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        nan_to_num_calls = 0
+        original = np.nan_to_num
+        arr = np.array([1.0, np.nan], dtype=np.float32)
+
+        def counting_nan_to_num(*args: object, **kwargs: object) -> np.ndarray:
+            nonlocal nan_to_num_calls
+            nan_to_num_calls += 1
+            return original(*args, **kwargs)
+
+        monkeypatch.setattr("vibesensor.infra.processing.fft.np.nan_to_num", counting_nan_to_num)
+
+        result = float_list(arr)
+
+        assert result == [1.0, 0.0]
+        assert nan_to_num_calls == 1
 
 
 class TestComputeFftSpectrum:
