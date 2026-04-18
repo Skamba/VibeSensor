@@ -3,6 +3,7 @@ import { GPS_POLL_FAST_MS, GPS_POLL_SLOW_MS } from "../../config";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import type { SettingsState } from "../ui_app_state";
 import {
+  batch,
   computed,
   signal,
   type ReadonlySignal,
@@ -70,10 +71,16 @@ export function createSettingsGpsStatusModule(
         getSpeedSourceStatus(),
         shouldLoadObdStatus ? getSettingsObdStatus() : Promise.resolve(null),
       ]);
-      settings.gpsFallbackActive.value = status.fallback_active;
-      settings.gpsEffectiveSpeedKph.value = status.effective_speed_kmh;
-      settings.resolvedSpeedSource.value = status.speed_source;
-      diagnosticsModel.value = buildSpeedSourceDiagnosticsRenderModel(status, obdStatus, presenterDeps);
+      batch(() => {
+        settings.gpsFallbackActive.value = status.fallback_active;
+        settings.gpsEffectiveSpeedKph.value = status.effective_speed_kmh;
+        settings.resolvedSpeedSource.value = status.speed_source;
+        diagnosticsModel.value = buildSpeedSourceDiagnosticsRenderModel(
+          status,
+          obdStatus,
+          presenterDeps,
+        );
+      });
       ctx.ports.syncSpeedSourceSelectionUi();
       ctx.ports.renderSpeedReadout();
       return status.connection_state === "connected"
