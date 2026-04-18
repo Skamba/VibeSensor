@@ -58,7 +58,9 @@ const SensorsTableRow = memo(function SensorsTableRow(props: {
         <div class="settings-sensor-row__identity">
           <div class="settings-sensor-row__heading">
             <strong>{row.displayName}</strong>
-            <span class={`status-pill settings-entity-status ${row.statusClass}`}>{row.statusText}</span>
+            <span class="status-pill settings-entity-status" data-status={row.statusClass}>
+              {row.statusText}
+            </span>
           </div>
           <div class="settings-sensor-row__meta">
             <code>{row.macAddress}</code>

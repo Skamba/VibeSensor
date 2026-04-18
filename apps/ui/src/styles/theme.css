@@ -88,7 +88,7 @@
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
   }
 
-  .history-row--expanded td { background: var(--surface-2) !important; }
+  .history-row[data-expanded="true"] td { background: var(--surface-2) !important; }
 
   .uplot .u-select { background: rgba(167, 139, 250, 0.15); }
 
