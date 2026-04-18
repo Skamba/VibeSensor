@@ -28,10 +28,10 @@ function buildSummaryChips(
   const { t } = params;
   const statusBadge = historyRowStatusBadge(run, detail, t);
   const chips: HistorySummaryChipViewModel[] = [
-    { text: statusBadge.label, tone: statusBadge.tone },
+    { key: "status", text: statusBadge.label, tone: statusBadge.tone },
   ];
   if (run.status === "error" && run.error_message) {
-    chips.push({ text: run.error_message, tone: "muted" });
+    chips.push({ key: "error-message", text: run.error_message, tone: "muted" });
   }
   return chips;
 }
