@@ -8,20 +8,17 @@ from tests._paths import REPO_ROOT
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
 _UI_APP_STATE_TS = REPO_ROOT / "apps" / "ui" / "src" / "app" / "ui_app_state.ts"
-_SETTINGS_ANALYSIS_MODULE_TS = (
-    REPO_ROOT / "apps" / "ui" / "src" / "app" / "features" / "settings_analysis_module.ts"
-)
 
 
-def _parse_ui_vehicle_defaults() -> dict[str, float]:
-    """Extract defaultVehicleSettings from ui_app_state.ts."""
+def _parse_ts_numeric_block(name: str, type_name: str) -> dict[str, float]:
+    """Extract a numeric object literal block from ui_app_state.ts."""
     text = _UI_APP_STATE_TS.read_text()
     match = re.search(
-        r"defaultVehicleSettings:\s*Readonly<VehicleSettings>\s*=\s*\{([^}]+)\}",
+        rf"{name}:\s*Readonly<{type_name}>\s*=\s*\{{([^}}]+)\}}",
         text,
         re.DOTALL,
     )
-    assert match, "Could not find defaultVehicleSettings block in ui_app_state.ts"
+    assert match, f"Could not find {name} block in ui_app_state.ts"
     block = match.group(1)
     pairs: dict[str, float] = {}
     for line_match in re.finditer(r"(\w+):\s*([0-9.]+)", block):
@@ -29,26 +26,41 @@ def _parse_ui_vehicle_defaults() -> dict[str, float]:
     return pairs
 
 
-def _parse_ui_setting_keys() -> list[str]:
-    """Extract ANALYSIS_SETTING_KEYS from settings_analysis_module.ts."""
-    text = _SETTINGS_ANALYSIS_MODULE_TS.read_text()
+def _parse_ui_vehicle_defaults() -> dict[str, float]:
+    """Extract the composed vehicle defaults from ui_app_state.ts."""
+    return {
+        **_parse_ts_numeric_block("defaultCarAspectSettings", "CarAspectSettings"),
+        **_parse_ts_numeric_block("defaultAnalysisTuningSettings", "AnalysisTuningSettings"),
+    }
+
+
+def _parse_ts_string_array(name: str) -> list[str]:
+    """Extract a string array constant from ui_app_state.ts."""
+    text = _UI_APP_STATE_TS.read_text()
     match = re.search(
-        r"ANALYSIS_SETTING_KEYS\s*=\s*\[([^\]]+)\]",
+        rf"{name}\s*=\s*\[([^\]]+)\]",
         text,
         re.DOTALL,
     )
-    assert match, "Could not find ANALYSIS_SETTING_KEYS in settings_analysis_module.ts"
+    assert match, f"Could not find {name} in ui_app_state.ts"
     return re.findall(r'"(\w+)"', match.group(1))
 
 
+def _parse_ui_setting_keys() -> list[str]:
+    """Extract the composed vehicle-setting key set from ui_app_state.ts."""
+    return [
+        *_parse_ts_string_array("carAspectSettingKeys"),
+        *_parse_ts_string_array("analysisTuningSettingKeys"),
+    ]
+
+
 def test_ui_defaults_match_backend() -> None:
-    """Every backend DEFAULTS key must appear in UI vehicleSettings with the
-    same value."""
+    """Every backend DEFAULTS key must appear in UI vehicle defaults with the same value."""
     backend = AnalysisSettingsSnapshot.DEFAULTS
     frontend = _parse_ui_vehicle_defaults()
 
     missing = set(backend) - set(frontend)
-    assert not missing, f"UI vehicleSettings is missing keys: {sorted(missing)}"
+    assert not missing, f"UI vehicle defaults are missing keys: {sorted(missing)}"
 
     mismatched: list[str] = []
     for key, be_val in backend.items():
@@ -61,12 +73,12 @@ def test_ui_defaults_match_backend() -> None:
 
 
 def test_ui_setting_keys_match_backend() -> None:
-    """ANALYSIS_SETTING_KEYS must list every backend DEFAULTS key."""
+    """UI vehicle-setting key unions must list every backend DEFAULTS key."""
     backend_keys = set(AnalysisSettingsSnapshot.DEFAULTS)
     frontend_keys = set(_parse_ui_setting_keys())
 
     missing = backend_keys - frontend_keys
-    assert not missing, f"ANALYSIS_SETTING_KEYS missing: {sorted(missing)}"
+    assert not missing, f"UI vehicle-setting keys missing: {sorted(missing)}"
 
     extra = frontend_keys - backend_keys
-    assert not extra, f"ANALYSIS_SETTING_KEYS has extra keys: {sorted(extra)}"
+    assert not extra, f"UI vehicle-setting keys have extra entries: {sorted(extra)}"
