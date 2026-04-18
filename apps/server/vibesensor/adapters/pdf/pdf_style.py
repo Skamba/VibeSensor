@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 
@@ -59,17 +57,8 @@ FS_CARD_TITLE = 9.0
 
 R_CARD = 8
 GAP = 4 * mm
-DATA_TRUST_WIDTH_RATIO = 0.32
 PANEL_HEADER_H = 10.5 * mm
 
 _HELVETICA_AVG_CHAR_RATIO = 0.48
 
 # ── Page Geometry ────────────────────────────────────────────────────────────
-
-
-@dataclass(frozen=True)
-class PanelLayout:
-    x: float
-    y: float
-    w: float
-    h: float
