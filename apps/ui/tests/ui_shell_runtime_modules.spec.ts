@@ -198,13 +198,42 @@ test.describe("UiShellController", () => {
       chromeActions,
       liveOverview: {
         model: signal(null),
-        speedText: signal("--"),
+        speedText: signal<ReadonlySignal<string> | null>(null),
       },
       state,
     });
 
     chromeActions.value.activateView("historyView");
     expect(state.shell.activeViewId.value).toBe("historyView");
+  });
+
+  test("binds live overview speed text to the shell status signal", () => {
+    const state = createAppState();
+    const chrome = createChromeViewRecorder();
+    const liveOverview = {
+      model: signal(null),
+      speedText: signal<ReadonlySignal<string> | null>(null),
+    };
+
+    state.realtime.speedMps.value = 12.3;
+    new UiShellController({
+      bindFeatureHandlers: () => undefined,
+      chrome: chrome.view,
+      chromeActions: signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS }),
+      liveOverview,
+      state,
+    });
+
+    const speedText = liveOverview.speedText.value;
+    expect(speedText).not.toBeNull();
+    expect(speedText?.value).toBe("44.3 km/h · GPS");
+
+    state.shell.speedUnit.value = "mps";
+    expect(liveOverview.speedText.value).toBe(speedText);
+    expect(speedText?.value).toBe("12.3 m/s · GPS");
+
+    state.settings.resolvedSpeedSource.value = "obd2";
+    expect(speedText?.value).toBe("12.3 m/s · OBD2");
   });
 
   test("syncs the document language from shell state without a chrome component", () => {
@@ -218,7 +247,7 @@ test.describe("UiShellController", () => {
         chromeActions: signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS }),
         liveOverview: {
           model: signal(null),
-          speedText: signal("--"),
+          speedText: signal<ReadonlySignal<string> | null>(null),
         },
         state,
       });
@@ -242,7 +271,7 @@ test.describe("UiShellController", () => {
       chromeActions: signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS }),
       liveOverview: {
         model: signal(null),
-        speedText: signal("--"),
+        speedText: signal<ReadonlySignal<string> | null>(null),
       },
       state,
     });
@@ -281,7 +310,7 @@ test.describe("UiShellController", () => {
       chromeActions: signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS }),
       liveOverview: {
         model: signal(null),
-        speedText: signal("--"),
+        speedText: signal<ReadonlySignal<string> | null>(null),
       },
       state,
     });

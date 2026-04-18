@@ -76,7 +76,6 @@ function createUiAppFeatureRuntimePorts(deps: {
     },
     view: {
       renderSpectrum: () => spectrum.renderSpectrum(),
-      renderSpeedReadout: () => shell.renderSpeedReadout(),
     },
     transport: {
       sendSelection: () => transport.sendSelection(),
