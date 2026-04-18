@@ -161,22 +161,10 @@
 
 .connection-banner[hidden] { display: none; }
 
-.connection-banner[data-variant="warn"] {
-  background: var(--warning-surface);
-  color: var(--warning-text);
-  border-bottom-color: var(--warning-border);
-}
-
-.connection-banner[data-variant="bad"] {
-  background: var(--pill-bad-bg);
-  color: var(--pill-bad-text);
-  border-bottom-color: #f0c4c4;
-}
-
-.connection-banner[data-variant="muted"] {
-  background: var(--pill-muted-bg);
-  color: var(--pill-muted-text);
-  border-bottom-color: var(--border);
+.connection-banner[data-variant] {
+  background: var(--variant-banner-surface);
+  color: var(--variant-text);
+  border-bottom-color: var(--variant-border);
 }
 
 .app-error-banner {
