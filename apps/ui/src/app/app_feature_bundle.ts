@@ -133,7 +133,7 @@ export function createAppFeatureBundle(
     showCarCreationSuccess: (carId, carName) =>
       settings.showCarCreationSuccess(carId, carName),
     renderCarList: () => settings.renderCarList(),
-    renderSpectrum: runtime.view.renderSpectrum,
+    refreshSpectrumDecorations: runtime.view.refreshSpectrumDecorations,
   });
 
   const cars: CarsFeature = createCarsFeature({

@@ -67,6 +67,7 @@ function createUiAppFeatureRuntimePorts(deps: {
     },
     view: {
       renderSpectrum: () => spectrum.renderSpectrum(),
+      refreshSpectrumDecorations: () => spectrum.refreshSpectrumDecorations(),
     },
     transport: {
       sendSelection: () => transport.sendSelection(),

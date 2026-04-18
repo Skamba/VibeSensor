@@ -210,6 +210,57 @@ test.describe("UiSpectrumController", () => {
     }
   });
 
+  test("refreshes decorations without rebuilding spectrum data", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const UiSpectrumController = await importUiSpectrumController();
+      const state = createAppState();
+      const panel = createPanelStub();
+      const controller = new UiSpectrumController({
+        state,
+        panel: panel.panel,
+        t: (key) => key,
+      });
+      const canvas = (controller as unknown as {
+        canvas: {
+          prepareFrame: () => unknown;
+          refreshPreparedFrameMetadata: () => {
+            entries: [];
+            freqAxis: [];
+            chartBands: [];
+            frame: null;
+            hasData: false;
+          };
+          refreshDecorations: () => void;
+        };
+      }).canvas;
+      let prepareCalls = 0;
+      let refreshCalls = 0;
+
+      canvas.prepareFrame = () => {
+        prepareCalls += 1;
+        return null;
+      };
+      canvas.refreshPreparedFrameMetadata = () => ({
+        entries: [],
+        freqAxis: [],
+        chartBands: [],
+        frame: null,
+        hasData: false,
+      });
+      canvas.refreshDecorations = () => {
+        refreshCalls += 1;
+      };
+
+      controller.refreshSpectrumDecorations();
+
+      expect(prepareCalls).toBe(0);
+      expect(refreshCalls).toBe(1);
+    } finally {
+      restoreDocument();
+    }
+  });
+
   test("shows the loading overlay while the chart chunk is still loading", async () => {
     const restoreDocument = installDocumentStub();
     try {

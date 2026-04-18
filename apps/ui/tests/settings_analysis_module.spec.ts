@@ -78,7 +78,7 @@ test("settings analysis module renders guidance and surfaces invalid input throu
     hasValidActiveCar: () => true,
     onMissingActiveCar: () => undefined,
     onSaveError: () => undefined,
-    renderSpectrum: () => undefined,
+    refreshSpectrumDecorations: () => undefined,
     settings: state,
     services: {
       t: translate,
@@ -131,7 +131,7 @@ test("settings analysis module renders guidance and surfaces invalid input throu
 test("settings analysis module keeps active-car geometry when loading server analysis settings", async () => {
   const originalFetch = globalThis.fetch;
   const state = createAppState().settings;
-  let renderSpectrumCalls = 0;
+  let refreshSpectrumDecorationCalls = 0;
 
   state.car.activeVehicleSettings.value = {
     ...state.car.activeVehicleSettings.value,
@@ -173,8 +173,8 @@ test("settings analysis module keeps active-car geometry when loading server ana
     hasValidActiveCar: () => true,
     onMissingActiveCar: () => undefined,
     onSaveError: () => undefined,
-    renderSpectrum: () => {
-      renderSpectrumCalls += 1;
+    refreshSpectrumDecorations: () => {
+      refreshSpectrumDecorationCalls += 1;
     },
     settings: state,
     services: {
@@ -203,5 +203,5 @@ test("settings analysis module keeps active-car geometry when loading server ana
     speed_uncertainty_pct: 2.5,
     min_abs_band_hz: 1.5,
   });
-  expect(renderSpectrumCalls).toBe(1);
+  expect(refreshSpectrumDecorationCalls).toBe(1);
 });

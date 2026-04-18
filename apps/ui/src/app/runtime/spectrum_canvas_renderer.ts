@@ -61,6 +61,7 @@ export interface SpectrumCanvasRendererDeps {
 export interface SpectrumCanvasRenderer {
   dispose(): void;
   prepareFrame(): SpectrumPreparedRenderData;
+  refreshPreparedFrameMetadata(): SpectrumPreparedRenderData;
   renderPreparedFrame(prepared: SpectrumPreparedRenderData): void;
   refreshDecorations(): void;
   setSeriesIsolation(seriesIndex: number | null): void;
@@ -77,6 +78,7 @@ export function createSpectrumCanvasRenderer(
   let chartLoadPromise: Promise<void> | null = null;
   let disposed = false;
   let lastAcceptedFrameAtMs: number | null = null;
+  let lastPreparedFrame: SpectrumPreparedRenderData | null = null;
 
   const spectrumLastFrame = signal<SpectrumHeavyFrame | null>(null);
   const pendingPreparedFrame = signal<SpectrumPreparedRenderData | null>(null);
@@ -238,6 +240,7 @@ export function createSpectrumCanvasRenderer(
     if (disposed) {
       return;
     }
+    lastPreparedFrame = prepared;
     pendingPreparedFrame.value = prepared;
     currentEntries.value = prepared.entries;
     currentFreqAxis.value = prepared.freqAxis;
@@ -281,6 +284,25 @@ export function createSpectrumCanvasRenderer(
     tweenAlpha.value = 0;
     tweenDurationMs.value = tweenDurationForFrameMs;
     tweenTarget.value = nextFrame; // triggers RAF effect
+  }
+
+  function refreshPreparedFrameMetadata(): SpectrumPreparedRenderData {
+    const chartBands = calculateBands();
+    if (!lastPreparedFrame) {
+      return {
+        entries: [],
+        freqAxis: [],
+        chartBands,
+        frame: null,
+        hasData: false,
+      };
+    }
+    const refreshed = {
+      ...lastPreparedFrame,
+      chartBands,
+    };
+    lastPreparedFrame = refreshed;
+    return refreshed;
   }
 
   function refreshDecorations(): void {
@@ -479,6 +501,7 @@ export function createSpectrumCanvasRenderer(
     tweenTarget.value = null;
     spectrumLastFrame.value = null;
     lastAcceptedFrameAtMs = null;
+    lastPreparedFrame = null;
     if (deps.state.spectrum.spectrumPlot.value) {
       deps.state.spectrum.spectrumPlot.value.destroy();
       deps.state.spectrum.spectrumPlot.value = null;
@@ -567,6 +590,7 @@ export function createSpectrumCanvasRenderer(
       deps.state.spectrum.chartLoading.value = false;
     },
     prepareFrame,
+    refreshPreparedFrameMetadata,
     renderPreparedFrame,
     refreshDecorations,
     setSeriesIsolation,
