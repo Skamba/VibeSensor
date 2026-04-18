@@ -11,6 +11,7 @@ import {
   type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
+import type { VisualVariant } from "../visual_variant";
 import {
   createUiConfirmationModule,
   type UiConfirmationModule,
@@ -45,8 +46,6 @@ import {
   SPEED_UNIT_OPTIONS,
 } from "./ui_shell_chrome";
 import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
-
-type VisualVariant = "bad" | "muted" | "ok" | "warn";
 
 type UiShellControllerDeps = {
   bindFeatureHandlers: () => void;

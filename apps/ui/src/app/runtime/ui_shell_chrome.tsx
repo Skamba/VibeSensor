@@ -16,6 +16,7 @@ import {
   type ReadonlySignal,
   useSignalEffect,
 } from "../ui_signals";
+import type { VisualVariant } from "../visual_variant";
 import type { UiConfirmationDialogModel } from "./ui_confirmation_module";
 import {
   settingsFeedbackClassName,
@@ -26,8 +27,6 @@ import {
 } from "../views/view_model_binding";
 const SHELL_OWNER = "UI shell";
 const SHELL_CHROME_HOST_ID = "appShellChromeRoot";
-
-type VisualVariant = "bad" | "muted" | "ok" | "warn";
 
 export const SHELL_NAV_ITEMS = [
   {
