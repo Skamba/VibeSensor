@@ -28,6 +28,18 @@ class CheckSnapshot:
     details_url: str
 
 
+@dataclass(frozen=True)
+class PrStatusSnapshot:
+    checks: dict[str, CheckSnapshot]
+    merge_state: str
+    mergeable: str
+    head_sha: str
+
+
+class MergeFailed(RuntimeError):
+    """Raised when merge-on-green cannot complete the PR merge."""
+
+
 def _now_utc() -> str:
     return datetime.now(timezone.utc).strftime("%H:%M:%S")
 
@@ -44,25 +56,26 @@ def _upper(value: object) -> str:
     return str(value or "").strip().upper()
 
 
-def _fetch_pr_status(
-    pr: str, repo: str | None
-) -> tuple[list[dict[str, object]], str, str]:
+def _fetch_pr_status(pr: str, repo: str | None) -> PrStatusSnapshot:
     cmd = [
         "gh",
         "pr",
         "view",
         pr,
         "--json",
-        "statusCheckRollup,mergeStateStatus,mergeable",
+        "statusCheckRollup,mergeStateStatus,mergeable,headRefOid",
     ]
     if repo:
         cmd.extend(["--repo", repo])
     raw = subprocess.check_output(cmd, text=True)
     payload = json.loads(raw)
-    checks = payload.get("statusCheckRollup")
-    merge_state = str(payload.get("mergeStateStatus") or "")
-    mergeable = str(payload.get("mergeable") or "")
-    return (checks if isinstance(checks, list) else [], merge_state, mergeable)
+    checks_raw = payload.get("statusCheckRollup")
+    return PrStatusSnapshot(
+        checks=_snapshot_checks(checks_raw) if isinstance(checks_raw, list) else {},
+        merge_state=str(payload.get("mergeStateStatus") or ""),
+        mergeable=str(payload.get("mergeable") or ""),
+        head_sha=str(payload.get("headRefOid") or "").strip(),
+    )
 
 
 def _actionable_merge_issue(merge_state: str, mergeable: str) -> str | None:
@@ -219,6 +232,39 @@ def _all_green(checks: dict[str, CheckSnapshot]) -> bool:
     return bool(checks) and all(snapshot.bucket == "ok" for snapshot in checks.values())
 
 
+def _short_sha(head_sha: str) -> str:
+    return head_sha[:12] if head_sha else "unknown"
+
+
+def _compact_error_message(text: str, *, limit: int = 200) -> str:
+    collapsed = " ".join(text.split())
+    if not collapsed:
+        return "gh pr merge failed without an error message"
+    if len(collapsed) <= limit:
+        return collapsed
+    return f"{collapsed[: limit - 3]}..."
+
+
+def _merge_pr(pr: str, repo: str | None, head_sha: str) -> None:
+    cmd = ["gh", "pr", "merge", pr]
+    if repo:
+        cmd.extend(["--repo", repo])
+    cmd.extend(["--merge", "--delete-branch"])
+    if head_sha:
+        cmd.extend(["--match-head-commit", head_sha])
+
+    proc = subprocess.run(
+        cmd,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if proc.returncode == 0:
+        return
+
+    raise MergeFailed(_compact_error_message(proc.stderr or proc.stdout))
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Watch GitHub PR checks with compact state-change output."
@@ -239,6 +285,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--repo", default=None, help="Optional repo in OWNER/REPO format"
     )
+    parser.add_argument(
+        "--merge-on-green",
+        action="store_true",
+        help="Merge the PR via gh as soon as checks are green",
+    )
     return parser
 
 
@@ -258,9 +309,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     last_summary_at = 0.0
 
     while True:
-        checks, merge_state, mergeable = _fetch_pr_status(args.pr, args.repo)
-        current_checks = _snapshot_checks(checks)
-        current_merge_issue = _actionable_merge_issue(merge_state, mergeable)
+        snapshot = _fetch_pr_status(args.pr, args.repo)
+        current_checks = snapshot.checks
+        current_merge_issue = _actionable_merge_issue(
+            snapshot.merge_state, snapshot.mergeable
+        )
         changes = _change_lines(
             previous_checks,
             current_checks,
@@ -292,6 +345,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 3
 
         if _all_green(current_checks):
+            if args.merge_on_green:
+                try:
+                    _merge_pr(args.pr, args.repo, snapshot.head_sha)
+                except MergeFailed as exc:
+                    print(f"RESULT=MERGE_FAILED ({exc})")
+                    return 4
+                print(f"MERGED PR {args.pr} head={_short_sha(snapshot.head_sha)}")
+                print("RESULT=MERGED")
+                return 0
             print("RESULT=ALL_GREEN")
             return 0
 
