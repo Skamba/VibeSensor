@@ -8,9 +8,9 @@ export interface SpeedSourceStateSnapshot {
 }
 
 export interface SpeedSourceStateSource {
-  speedSource: ReadonlySignal<SpeedSourceKind>;
+  source: ReadonlySignal<SpeedSourceKind>;
   manualSpeedKph: ReadonlySignal<number | null>;
-  resolvedSpeedSource: ReadonlySignal<SpeedSourceStatusPayload["speed_source"] | null>;
+  resolvedSource: ReadonlySignal<SpeedSourceStatusPayload["speed_source"] | null>;
 }
 
 export type DisplayedSpeedSourceMode = "gps" | "manual" | "obd2";
@@ -76,9 +76,9 @@ export function createSpeedSourceDerivedState(
   runtimeSpeedSource?: ReadonlySignal<string | null>,
 ): SpeedSourceDerivedState {
   const snapshot = (): SpeedSourceStateSnapshot => ({
-    speedSource: settings.speedSource.value,
+    speedSource: settings.source.value,
     manualSpeedKph: settings.manualSpeedKph.value,
-    resolvedSpeedSource: settings.resolvedSpeedSource.value,
+    resolvedSpeedSource: settings.resolvedSource.value,
   });
   const effectiveSource = computed(() =>
     resolveEffectiveSpeedSource(snapshot(), runtimeSpeedSource?.value)
@@ -91,7 +91,7 @@ export function createSpeedSourceDerivedState(
     if (isManualLikeSpeedSource(resolvedSource)) {
       return "manual";
     }
-    return settings.speedSource.value;
+    return settings.source.value;
   });
   const isManualEffective = computed(() =>
     isManualLikeSpeedSource(effectiveSource.value),

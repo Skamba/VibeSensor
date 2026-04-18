@@ -74,7 +74,7 @@ export function createSettingsFeature(
 ): SettingsFeature {
   const { services, formatting } = ctx;
   const settings = ctx.state.settings;
-  const carSelection = createCarSelectionDerivedState(settings);
+  const carSelection = createCarSelectionDerivedState(settings.car);
   let handlersBound = false;
   let carsModule!: SettingsCarsModule;
 

@@ -133,14 +133,17 @@ test("settings analysis module keeps active-car geometry when loading server ana
   const state = createAppState().settings;
   let renderSpectrumCalls = 0;
 
-  state.vehicleSettings.value = {
-    ...state.vehicleSettings.value,
+  state.car.activeVehicleSettings.value = {
+    ...state.car.activeVehicleSettings.value,
     tire_width_mm: 245,
     tire_aspect_pct: 40,
     rim_in: 19,
     final_drive_ratio: 3.23,
     current_gear_ratio: 0.72,
     tire_deflection_factor: 0.95,
+  };
+  state.analysis.vehicleSettings.value = {
+    ...state.analysis.vehicleSettings.value,
     wheel_bandwidth_pct: 5,
     speed_uncertainty_pct: 1,
     min_abs_band_hz: 0.2,
@@ -187,13 +190,15 @@ test("settings analysis module keeps active-car geometry when loading server ana
     globalThis.fetch = originalFetch;
   }
 
-  expect(state.vehicleSettings.value).toMatchObject({
+  expect(state.car.activeVehicleSettings.value).toMatchObject({
     tire_width_mm: 245,
     tire_aspect_pct: 40,
     rim_in: 19,
     final_drive_ratio: 3.23,
     current_gear_ratio: 0.72,
     tire_deflection_factor: 0.95,
+  });
+  expect(state.analysis.vehicleSettings.value).toMatchObject({
     wheel_bandwidth_pct: 7.5,
     speed_uncertainty_pct: 2.5,
     min_abs_band_hz: 1.5,

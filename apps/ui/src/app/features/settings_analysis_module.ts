@@ -6,7 +6,7 @@ import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { FeatureServices } from "../feature_deps_base";
 import {
   defaultVehicleSettings,
-  mergeAnalysisOwnedVehicleSettings,
+  mergeAnalysisTuningSettings,
   type SettingsState,
 } from "../ui_app_state";
 import { batch, computed, signal } from "../ui_signals";
@@ -165,7 +165,7 @@ function analysisFieldConfig(key: AnalysisPanelFieldKey): AnalysisFieldConfig {
 }
 
 function buildDraftValues(settings: SettingsState): EditableAnalysisDrafts {
-  const vehicleSettings = settings.vehicleSettings.value;
+  const vehicleSettings = settings.analysis.vehicleSettings.value;
   return {
     wheel_bandwidth_pct: formatSettingValue(vehicleSettings.wheel_bandwidth_pct),
     driveshaft_bandwidth_pct: formatSettingValue(
@@ -337,8 +337,8 @@ export function createSettingsAnalysisModule(
   function applyAnalysisSettingsPayload(
     serverSettings: AnalysisSettingsPayload,
   ): void {
-    settings.vehicleSettings.value = mergeAnalysisOwnedVehicleSettings(
-      settings.vehicleSettings.value,
+    settings.analysis.vehicleSettings.value = mergeAnalysisTuningSettings(
+      settings.analysis.vehicleSettings.value,
       serverSettings,
     );
     syncSettingsInputs();

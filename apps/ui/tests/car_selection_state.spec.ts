@@ -20,19 +20,19 @@ function makeCar(overrides: Partial<CarRecord> = {}): CarRecord {
 test.describe("car selection derived state", () => {
   test("tracks loading, empty, missing-active, and active states reactively", () => {
     const state = createAppState();
-    const derived = createCarSelectionDerivedState(state.settings);
+    const derived = createCarSelectionDerivedState(state.settings.car);
 
     expect(derived.selection.value).toEqual({ kind: "loading" });
     expect(derived.activeCar.value).toBeNull();
     expect(derived.hasResolvedActiveCar.value).toBe(false);
 
-    state.settings.carsLoaded.value = true;
+    state.settings.car.carsLoaded.value = true;
     expect(derived.selection.value).toEqual({ kind: "no_cars" });
 
-    state.settings.cars.value = [makeCar()];
+    state.settings.car.cars.value = [makeCar()];
     expect(derived.selection.value).toEqual({ kind: "no_active_car" });
 
-    state.settings.activeCarId.value = "car-1";
+    state.settings.car.activeCarId.value = "car-1";
     expect(derived.selection.value).toEqual({
       kind: "active",
       car: makeCar(),
@@ -40,7 +40,7 @@ test.describe("car selection derived state", () => {
     expect(derived.activeCar.value?.id).toBe("car-1");
     expect(derived.hasResolvedActiveCar.value).toBe(true);
 
-    state.settings.activeCarId.value = "missing";
+    state.settings.car.activeCarId.value = "missing";
     expect(derived.selection.value).toEqual({ kind: "no_active_car" });
     expect(derived.activeCar.value).toBeNull();
     expect(derived.hasResolvedActiveCar.value).toBe(false);
