@@ -141,7 +141,7 @@ test.describe("UiLiveTransportController", () => {
     }
   });
 
-  test("sends the current client selection when websocket state becomes ready", async () => {
+  test("sends the current client selection once per ready cycle", async () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
     const wsUiState = signal("connecting");
@@ -165,6 +165,41 @@ test.describe("UiLiveTransportController", () => {
     wsUiState.value = "connected";
     await flushAsyncWork();
     wsUiState.value = "stale";
+    await flushAsyncWork();
+
+    expect(sentSelections).toEqual([
+      { client_id: "client-7" },
+    ]);
+  });
+
+  test("resends the current selection after leaving and re-entering a ready cycle", async () => {
+    const state = createAppState();
+    const sentSelections: Array<{ client_id: string | null }> = [];
+    const wsUiState = signal("connecting");
+    state.transport.ws.value = {
+      uiState: wsUiState,
+      close() {},
+      connect() {},
+      send(selection: { client_id: string | null }) {
+        sentSelections.push(selection);
+      },
+    } as typeof state.transport.ws.value;
+    state.realtime.selectedClientId.value = "client-7";
+
+    new UiLiveTransportController({
+      state,
+      payloadErrorMessage: () => "payload error",
+    });
+
+    wsUiState.value = "no_data";
+    await flushAsyncWork();
+    wsUiState.value = "connected";
+    await flushAsyncWork();
+    wsUiState.value = "stale";
+    await flushAsyncWork();
+    wsUiState.value = "reconnecting";
+    await flushAsyncWork();
+    wsUiState.value = "connected";
     await flushAsyncWork();
 
     expect(sentSelections).toEqual([

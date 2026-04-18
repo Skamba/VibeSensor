@@ -18,6 +18,12 @@ export class UiLiveTransportController {
 
   private readonly payloadErrorMessage: () => string;
 
+  private readySelectionCycle = 0;
+
+  private lastSentSelectionClientId: string | null | undefined = undefined;
+
+  private lastSentSelectionCycle = -1;
+
   constructor(deps: UiLiveTransportControllerDeps) {
     this.state = deps.state;
     this.payloadErrorMessage = deps.payloadErrorMessage;
@@ -26,9 +32,19 @@ export class UiLiveTransportController {
 
   sendSelection(): void {
     const ws = this.state.transport.ws.value;
-    if (ws) {
-      ws.send({ client_id: this.state.realtime.selectedClientId.value });
+    const clientId = this.state.realtime.selectedClientId.value;
+    if (
+      !ws
+      || (
+        this.lastSentSelectionCycle === this.readySelectionCycle
+        && Object.is(this.lastSentSelectionClientId, clientId)
+      )
+    ) {
+      return;
     }
+    this.lastSentSelectionCycle = this.readySelectionCycle;
+    this.lastSentSelectionClientId = clientId;
+    ws.send({ client_id: clientId });
   }
 
   private bindTransportSignalSync(): void {
@@ -52,10 +68,17 @@ export class UiLiveTransportController {
       }
     });
 
-    effectOnChange(this.state.transport.wsState, (nextWsState) => {
-      if (nextWsState === "connected" || nextWsState === "no_data") {
+    effectOnChange(this.state.transport.wsState, (nextWsState, previousWsState) => {
+      const nextReady = nextWsState === "connected" || nextWsState === "no_data";
+      const previousReady = previousWsState === "connected" || previousWsState === "no_data";
+      if (nextReady && !previousReady) {
+        this.readySelectionCycle += 1;
         untracked(() => this.sendSelection());
       }
+    });
+
+    effectOnChange(this.state.realtime.selectedClientId, () => {
+      untracked(() => this.sendSelection());
     });
   }
 
@@ -107,18 +130,14 @@ export class UiLiveTransportController {
       return;
     }
 
-    let update!: ReturnType<typeof applyLivePayloadUpdate>;
     batch(() => {
       this.state.transport.payloadError.value = null;
-      update = applyLivePayloadUpdate({
+      applyLivePayloadUpdate({
         realtime: this.state.realtime,
         spectrum: this.state.spectrum,
         adaptedPayload: adapted,
       });
     });
-    if (update.hasSelectedClientChanged) {
-      this.sendSelection();
-    }
   }
 
   private queueTransportPayload(payload: unknown): void {
