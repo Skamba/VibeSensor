@@ -11,29 +11,32 @@ export interface AppShellFeatureBindings {
 }
 
 export interface AppFeatureBundle {
+  dispose(): void;
   shell: AppShellFeatureBindings;
   startup: UiStartupFeaturePorts;
 }
 
 interface AppFeatureBundlePortSources {
-  history: Pick<HistoryFeature, "bindHandlers" | "refreshHistory">;
+  history: Pick<HistoryFeature, "bindHandlers" | "dispose" | "refreshHistory">;
   realtime: Pick<
     RealtimeFeature,
     | "bindHandlers"
+    | "dispose"
     | "refreshLocationOptions"
     | "refreshLoggingStatus"
   >;
   settings: Pick<
     SettingsFeature,
     | "bindHandlers"
+    | "dispose"
     | "syncSettingsInputs"
     | "loadSpeedSourceFromServer"
     | "loadAnalysisSettingsFromServer"
     | "loadCarsFromServer"
   >;
-  cars: Pick<CarsFeature, "bindWizardHandlers">;
-  update: Pick<UpdateFeature, "bindUpdateHandlers">;
-  espFlash: Pick<EspFlashFeature, "bindHandlers">;
+  cars: Pick<CarsFeature, "bindWizardHandlers" | "dispose">;
+  update: Pick<UpdateFeature, "bindUpdateHandlers" | "dispose">;
+  espFlash: Pick<EspFlashFeature, "bindHandlers" | "dispose">;
 }
 
 export function createRealtimeFeatureRecordingPorts(
@@ -48,6 +51,14 @@ export function createAppFeatureBundlePorts(
   features: AppFeatureBundlePortSources,
 ): AppFeatureBundle {
   return {
+    dispose: () => {
+      features.espFlash.dispose();
+      features.update.dispose();
+      features.history.dispose();
+      features.realtime.dispose();
+      features.settings.dispose();
+      features.cars.dispose();
+    },
     shell: {
       bindHandlers: () => {
         features.settings.bindHandlers();

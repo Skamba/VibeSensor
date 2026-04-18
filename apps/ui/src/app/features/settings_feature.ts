@@ -56,6 +56,7 @@ export interface SettingsFeatureViewPorts {
 
 export interface SettingsFeature {
   bindHandlers(): void;
+  dispose(): void;
   syncSettingsInputs(): void;
   loadSpeedSourceFromServer(): Promise<void>;
   loadAnalysisSettingsFromServer(): Promise<void>;
@@ -141,7 +142,7 @@ export function createSettingsFeature(
     formatting,
   });
 
-  effectOnChange(ctx.state.shell.lang, () => {
+  const disposeLanguageSync = effectOnChange(ctx.state.shell.lang, () => {
     untracked(() => {
       analysisModule.syncSettingsInputs();
     });
@@ -168,6 +169,12 @@ export function createSettingsFeature(
 
   return {
     bindHandlers,
+    dispose(): void {
+      disposeLanguageSync();
+      gpsStatusModule.dispose();
+      speedSourceModule.dispose();
+      carsModule.dispose();
+    },
     syncSettingsInputs: analysisModule.syncSettingsInputs,
     loadSpeedSourceFromServer,
     loadAnalysisSettingsFromServer:

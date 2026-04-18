@@ -22,6 +22,7 @@ export interface EspFlashFeatureDeps {
 
 export interface EspFlashFeature {
   bindHandlers(): void;
+  dispose(): void;
   startPolling(): void;
   stopPolling(): void;
 }
@@ -50,7 +51,7 @@ export function createEspFlashFeature(
   });
   panel.model.value = presenter.model;
 
-  effectOnChange(pollingEnabled, (enabled) => {
+  const disposePollingContextSync = effectOnChange(pollingEnabled, (enabled) => {
     if (enabled) {
       void workflow.refreshPorts();
     }
@@ -79,6 +80,10 @@ export function createEspFlashFeature(
 
   return {
     bindHandlers,
+    dispose(): void {
+      disposePollingContextSync();
+      workflow.dispose();
+    },
     startPolling: () => workflow.startPolling(),
     stopPolling: () => workflow.stopPolling(),
   };

@@ -54,6 +54,7 @@ export interface SettingsCarsModuleDeps {
 
 export interface SettingsCarsModule {
   bindHandlers(): void;
+  dispose(): void;
   hasValidActiveCar(): boolean;
   loadCarsFromServer(): Promise<void>;
   renderCarList(): void;
@@ -86,6 +87,7 @@ export function createSettingsCarsModule(
   const transport = createSettingsCarsTransport(ctx.transport);
   const carSelection = createCarSelectionDerivedState(settings);
   let handlersBound = false;
+  let disposeHighlightedCarSync: (() => void) | null = null;
   const highlightedCar = signal<CarsListHighlightedFeedback | null>(null);
   const carsContextVisible = computed(
     () =>
@@ -247,7 +249,7 @@ export function createSettingsCarsModule(
       return;
     }
     handlersBound = true;
-    effect(() => {
+    disposeHighlightedCarSync = effect(() => {
       if (highlightedCar.value && !carsContextVisible.value) {
         untracked(clearHighlightedCarFeedback);
       }
@@ -279,6 +281,10 @@ export function createSettingsCarsModule(
 
   return {
     bindHandlers,
+    dispose(): void {
+      disposeHighlightedCarSync?.();
+      disposeHighlightedCarSync = null;
+    },
     hasValidActiveCar,
     loadCarsFromServer,
     renderCarList,

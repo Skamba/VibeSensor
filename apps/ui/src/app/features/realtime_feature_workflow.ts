@@ -87,6 +87,7 @@ export interface RealtimeFeatureWorkflowDeps {
 export interface RealtimeFeatureWorkflow {
   readonly signals: RealtimeFeatureWorkflowSignals;
   bindHandlers(): void;
+  dispose(): void;
   refreshLoggingStatus(): Promise<void>;
   startLogging(): Promise<void>;
   stopLogging(): Promise<void>;
@@ -198,7 +199,7 @@ export function createRealtimeFeatureWorkflow(
     }
   }
 
-  effectOnChange(idleCaptureReadinessTrigger, () => {
+  const disposeIdleCaptureReadinessSync = effectOnChange(idleCaptureReadinessTrigger, () => {
     void refreshIdleCaptureReadiness(deps.idleCaptureReadinessSignature.peek());
   });
 
@@ -373,6 +374,10 @@ export function createRealtimeFeatureWorkflow(
   }
 
   return {
+    dispose(): void {
+      loggingStatusPolling.dispose();
+      disposeIdleCaptureReadinessSync();
+    },
     signals: state,
     bindHandlers,
     refreshLoggingStatus,

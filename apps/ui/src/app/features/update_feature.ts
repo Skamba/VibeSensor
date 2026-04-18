@@ -30,6 +30,7 @@ export interface UpdateFeatureDeps {
 
 export interface UpdateFeature {
   bindUpdateHandlers(): void;
+  dispose(): void;
   startPolling(): void;
   stopPolling(): void;
 }
@@ -97,6 +98,9 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
 
   return {
     bindUpdateHandlers,
+    dispose(): void {
+      workflow.dispose();
+    },
     startPolling: () => workflow.startPolling(),
     stopPolling: () => workflow.stopPolling(),
   };

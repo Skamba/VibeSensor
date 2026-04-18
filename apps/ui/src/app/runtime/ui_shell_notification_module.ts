@@ -9,6 +9,7 @@ type UiShellNotificationDeps = {
 export interface UiShellNotificationModule {
   readonly bannerModel: ReadonlySignal<UiShellErrorBannerModel>;
   clearError(): void;
+  dispose(): void;
   showError(message: string): void;
 }
 
@@ -36,6 +37,9 @@ export function createUiShellNotificationModule(
   return {
     bannerModel,
     clearError,
+    dispose(): void {
+      clearScheduledHide();
+    },
     showError(message) {
       clearScheduledHide();
       bannerModel.value = {

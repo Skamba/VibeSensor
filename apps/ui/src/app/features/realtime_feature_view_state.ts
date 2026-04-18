@@ -40,6 +40,7 @@ interface RealtimeFeatureViewStateDeps {
 }
 
 export interface RealtimeFeatureViewState {
+  dispose(): void;
   readonly idleCaptureReadinessSignature: ReadonlySignal<string>;
   readonly liveOverviewModel: ReadonlySignal<RealtimeLiveOverviewRenderModel>;
   readonly loggingPanelModel: ReadonlySignal<RealtimeLoggingPanelRenderModel>;
@@ -215,7 +216,7 @@ export function createRealtimeFeatureViewState(
   });
   const loggingElapsedTimer = createReplaceableInterval();
 
-  bindReplaceableTimerEffect(loggingElapsedTimer, () => {
+  const disposeLoggingElapsedTimer = bindReplaceableTimerEffect(loggingElapsedTimer, () => {
     if (!loggingElapsedShouldTick.value) {
       return null;
     }
@@ -398,6 +399,10 @@ export function createRealtimeFeatureViewState(
   });
 
   return {
+    dispose(): void {
+      disposeLoggingElapsedTimer();
+      loggingElapsedTimer.clear();
+    },
     idleCaptureReadinessSignature,
     liveOverviewModel,
     loggingPanelModel,
