@@ -10,6 +10,7 @@ import {
 import { createDeferredModelSignal, useDeferredModel } from "./view_model_binding";
 import type {
   SpectrumBandLegendModel,
+  SpectrumInspectorRenderModel,
   SpectrumLegendHandlers,
   SpectrumPanelBandToggleModel,
   SpectrumPanelChartDom,
@@ -64,6 +65,17 @@ const SPECTRUM_BAND_TOGGLE_KEYS = [
   "text",
 ] as const;
 const SPECTRUM_BAND_LEGEND_KEYS = ["emptyText", "items", "visible"] as const;
+const SCREEN_READER_ONLY_STYLE = {
+  border: "0",
+  clip: "rect(0 0 0 0)",
+  height: "1px",
+  margin: "-1px",
+  overflow: "hidden",
+  padding: "0",
+  position: "absolute",
+  whiteSpace: "nowrap",
+  width: "1px",
+} as const satisfies JSX.CSSProperties;
 
 function requireSpectrumElement<T extends HTMLElement>(
   element: T | null,
@@ -192,6 +204,7 @@ type SpectrumPanelProps = {
   bandToggleModel: ReadonlySignal<ReadonlySignal<SpectrumPanelBandToggleModel> | null>;
   chartDom: MutableSpectrumPanelChartDom;
   header: ReadonlySignal<SpectrumPanelHeaderModel>;
+  inspectorAnnouncement: ReadonlySignal<string>;
   inspectorText: ReadonlySignal<string>;
   onBandToggle: ReadonlySignal<(() => void) | null>;
   overlayModel: ReadonlySignal<SpectrumPanelOverlayModel>;
@@ -239,7 +252,7 @@ function SpectrumPanel(props: SpectrumPanelProps) {
           {overlayModel.value.text}
         </div>
       </div>
-      <div class="spectrum-controls-panel">
+        <div class="spectrum-controls-panel">
         <div class="spectrum-toolbar">
           <div class="card__subtle spectrum-toolbar__hint">
             {hintText}
@@ -261,8 +274,16 @@ function SpectrumPanel(props: SpectrumPanelProps) {
             <SpectrumBandLegend bandLegend={bandLegend} />
           </div>
         </div>
-        <div id="spectrumInspector" class="spectrum-inspector" aria-live="polite">
+        <div id="spectrumInspector" class="spectrum-inspector">
           {props.inspectorText}
+        </div>
+        <div
+          class="spectrum-inspector-announcer"
+          aria-live="polite"
+          aria-atomic="true"
+          style={SCREEN_READER_ONLY_STYLE}
+        >
+          {props.inspectorAnnouncement}
         </div>
         <div id="legend" class="legend">
           <SpectrumSensorLegend
@@ -290,6 +311,7 @@ export function createSpectrumPanel(): CreatedSpectrumPanel {
   const sensorLegendModel = createDeferredModelSignal<SpectrumSensorLegendModel | null>();
   const sensorLegendHandlersModel = createDeferredModelSignal<SpectrumLegendHandlers | null>();
   const bandLegendModel = createDeferredModelSignal<SpectrumBandLegendModel>();
+  const inspectorAnnouncement = signal("");
   const inspectorText = signal("Use the trace chips or hover the chart to inspect the current peak.");
   const onBandToggle = signal<(() => void) | null>(null);
   const chartDom: MutableSpectrumPanelChartDom = {
@@ -302,6 +324,7 @@ export function createSpectrumPanel(): CreatedSpectrumPanel {
       bandToggleModel,
       chartDom,
       header,
+      inspectorAnnouncement,
       inspectorText,
       onBandToggle,
       overlayModel,
@@ -339,8 +362,11 @@ export function createSpectrumPanel(): CreatedSpectrumPanel {
       renderOverlay(model: SpectrumPanelOverlayModel): void {
         overlayModel.value = model;
       },
-      renderInspectorText(text: string): void {
-        inspectorText.value = text;
+      renderInspector(model: SpectrumInspectorRenderModel): void {
+        inspectorText.value = model.text;
+        if (model.announce) {
+          inspectorAnnouncement.value = model.text;
+        }
       },
     },
   };

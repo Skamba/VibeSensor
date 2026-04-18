@@ -62,6 +62,11 @@ export interface SpectrumPanelOverlayModel {
   text: string;
 }
 
+export interface SpectrumInspectorRenderModel {
+  text: string;
+  announce: boolean;
+}
+
 export interface SpectrumLegendHandlers {
   onReset: () => void;
   onSelect: (entryId: string) => void;
@@ -78,5 +83,5 @@ export interface SpectrumPanelView {
   bindBandLegendModel(model: ReadonlySignal<SpectrumBandLegendModel>): void;
   renderHeader(model: SpectrumPanelHeaderModel): void;
   renderOverlay(model: SpectrumPanelOverlayModel): void;
-  renderInspectorText(text: string): void;
+  renderInspector(model: SpectrumInspectorRenderModel): void;
 }

@@ -70,7 +70,7 @@ function createPanelStub(): {
         renderOverlay(model) {
           lastOverlayModel = model;
         },
-        renderInspectorText() {},
+        renderInspector() {},
       },
     get lastHeaderModel() {
       return lastHeaderModel;
