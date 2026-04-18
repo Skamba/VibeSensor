@@ -132,12 +132,6 @@ export interface UiShellChromeDialogModel {
   confirmationDialog: UiConfirmationDialogModel | null;
 }
 
-export type UiShellChromeRenderModel =
-  & UiShellChromeNavigationModel
-  & UiShellChromePreferencesModel
-  & UiShellChromeStatusModel
-  & UiShellChromeDialogModel;
-
 export interface UiShellChromeView {
   bindDialogModel(model: ReadonlySignal<UiShellChromeDialogModel>): void;
   bindNavigationModel(model: ReadonlySignal<UiShellChromeNavigationModel>): void;
