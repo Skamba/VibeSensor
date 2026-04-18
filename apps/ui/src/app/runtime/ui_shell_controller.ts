@@ -141,6 +141,7 @@ export class UiShellController {
     this.statusRenderModel = this.createStatusRenderModel();
     this.dialogRenderModel = this.createDialogRenderModel();
     this.bindChromeModelSignals();
+    this.bindDocumentLanguageSync();
     this.bindReactiveLanguageSync();
     this.bindReactiveSpeedReadoutSync();
   }
@@ -195,6 +196,18 @@ export class UiShellController {
     effectOnChange(this.state.shell.lang, (currentLanguage) => {
       untracked(() => {
         setUiLanguage(currentLanguage);
+      });
+    });
+  }
+
+  private bindDocumentLanguageSync(): void {
+    effect(() => {
+      const currentLanguage = this.state.shell.lang.value;
+      untracked(() => {
+        const documentElement = globalThis.document?.documentElement;
+        if (documentElement) {
+          documentElement.lang = currentLanguage;
+        }
       });
     });
   }
