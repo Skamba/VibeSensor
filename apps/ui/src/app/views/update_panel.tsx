@@ -7,7 +7,7 @@ import {
   type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import { type DeferredModelSignal } from "./view_model_binding";
+import { type DeferredModelSignal, useDeferredModel } from "./view_model_binding";
 import type {
   UpdateCurrentStatusSectionModel,
   UpdateHealthSectionModel,
@@ -508,7 +508,7 @@ function UpdatePanel(props: {
     "Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.",
   );
   const titleText = useUiText("settings.update.title", "System Update");
-  const model = useComputed(() => props.model.value?.value ?? DEFAULT_UPDATE_PANEL_MODEL);
+  const model = useDeferredModel(props.model, DEFAULT_UPDATE_PANEL_MODEL);
   const {
     cancelButtonDisabled,
     cancelButtonHidden,

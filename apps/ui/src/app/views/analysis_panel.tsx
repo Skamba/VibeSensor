@@ -23,7 +23,7 @@ import {
   AnalysisGuidanceDialog,
   AnalysisSaveFeedback,
 } from "./analysis_panel_sections";
-import type { DeferredModelSignal } from "./view_model_binding";
+import { readDeferredModel, type DeferredModelSignal } from "./view_model_binding";
 
 export type {
   AnalysisPanelActionHandlers,
@@ -242,8 +242,8 @@ export function mountAnalysisPanel(
 ): Pick<AnalysisPanelView, "focusField" | "openGuidance"> {
   const bridgeState = computed<AnalysisPanelBridgeState>(() => ({
     actions: bindings.actions.value,
-    availability: bindings.carAvailability.value?.value ?? DEFAULT_ANALYSIS_CAR_AVAILABILITY,
-    model: bindings.model.value?.value ?? DEFAULT_ANALYSIS_PANEL_MODEL,
+    availability: readDeferredModel(bindings.carAvailability, DEFAULT_ANALYSIS_CAR_AVAILABILITY),
+    model: readDeferredModel(bindings.model, DEFAULT_ANALYSIS_PANEL_MODEL),
   }));
   const inputFocusRequest = signal<AnalysisFieldFocusRequest | null>(null);
   const guidanceOpenRequest = signal(0);
