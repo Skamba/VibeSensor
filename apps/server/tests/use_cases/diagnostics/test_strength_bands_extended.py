@@ -11,8 +11,6 @@ from _paths import REPO_ROOT
 from vibesensor.strength_bands import (
     BANDS,
     _buckets_for_strength_db_aligned,
-    band_by_key,
-    band_rank,
     bucket_for_strength,
 )
 
@@ -43,39 +41,6 @@ def test_batch_buckets_match_scalar_helper() -> None:
     result = _buckets_for_strength_db_aligned(values)
     expected = [bucket_for_strength(float(value)) for value in values]
     assert result == expected
-
-
-# -- band_by_key ---------------------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("key", "expected_min_db"),
-    [("l0", 0.0), ("l1", 8.0), ("l5", 46.0)],
-    ids=["l0", "l1", "l5"],
-)
-def test_band_by_key_valid(key: str, expected_min_db: float) -> None:
-    band = band_by_key(key)
-    assert band is not None
-    assert band["min_db"] == expected_min_db
-
-
-@pytest.mark.parametrize("key", ["l99", ""], ids=["l99", "empty"])
-def test_band_by_key_unknown(key: str) -> None:
-    assert band_by_key(key) is None
-
-
-# -- band_rank -----------------------------------------------------------------
-
-
-def test_band_rank_ordering() -> None:
-    assert band_rank("l0") == 0
-    assert band_rank("l1") == 1
-    assert band_rank("l5") == 5
-    assert band_rank("l3") == 3
-
-
-def test_band_rank_unknown_returns_neg1() -> None:
-    assert band_rank("unknown") == -1
 
 
 # -- UI i18n severity labels match core BANDS -----------------------------------

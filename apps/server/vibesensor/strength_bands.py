@@ -13,12 +13,7 @@ import numpy.typing as npt
 
 __all__ = [
     "BANDS",
-    "DECAY_TICKS",
-    "HYSTERESIS_DB",
-    "PERSISTENCE_TICKS",
     "StrengthBand",
-    "band_by_key",
-    "band_rank",
     "bucket_for_strength",
 ]
 
@@ -39,12 +34,6 @@ BANDS: Final[tuple[StrengthBand, ...]] = (
     {"key": "l5", "min_db": 46.0},
 )
 
-HYSTERESIS_DB: Final[float] = 2.0
-PERSISTENCE_TICKS: Final[int] = 3
-DECAY_TICKS: Final[int] = 5
-
-_BAND_BY_KEY: dict[str, StrengthBand] = {b["key"]: b for b in BANDS}
-_BAND_RANK: dict[str, int] = {b["key"]: i for i, b in enumerate(BANDS)}
 _BAND_KEYS: Final[tuple[str, ...]] = tuple(b["key"] for b in BANDS)
 _BAND_MIN_DB_VALUES: Final[npt.NDArray[np.float64]] = np.array(
     [b["min_db"] for b in BANDS],
@@ -76,13 +65,3 @@ def bucket_for_strength(vibration_strength_db: float) -> str:
         if vibration_strength_db >= band["min_db"]:
             return band["key"]
     return "l0"
-
-
-def band_by_key(key: str) -> StrengthBand | None:
-    """Return the :class:`StrengthBand` for *key*, or ``None`` if unknown."""
-    return _BAND_BY_KEY.get(key)
-
-
-def band_rank(key: str) -> int:
-    """Return the 0-based rank of *key* in ``BANDS``, or ``-1`` if unknown."""
-    return _BAND_RANK.get(key, -1)
