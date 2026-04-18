@@ -227,12 +227,12 @@ def _strength_floor_amp_g_aligned(
     selected_mask = in_range & valid_amp
     peak_idx = [idx for idx in peak_indexes if 0 <= idx < freq.size]
     if peak_idx:
-        peak_hz = freq[np.asarray(peak_idx, dtype=np.intp)]
-        if peak_hz.size:
-            selected_mask &= ~np.any(
-                np.abs(freq[:, None] - peak_hz[None, :]) <= exclusion_hz,
-                axis=1,
-            )
+        _exclude_peak_regions_aligned(
+            selected_mask=selected_mask,
+            freq_hz=freq,
+            peak_indexes=peak_idx,
+            exclusion_hz=exclusion_hz,
+        )
     selected = amps[selected_mask]
     if selected.size == 0:
         # All bins were within peak exclusion zones.  Compute P20 of all
@@ -242,6 +242,52 @@ def _strength_floor_amp_g_aligned(
         # the caller has already stripped the DC bin from the spectrum.
         return _quantile_or_zero(amps[in_range & valid_amp], 0.20)
     return float(np.median(selected))
+
+
+def _exclude_peak_regions_aligned(
+    *,
+    selected_mask: npt.NDArray[np.bool_],
+    freq_hz: npt.NDArray[np.float64],
+    peak_indexes: list[int],
+    exclusion_hz: float,
+) -> None:
+    peak_ranges = _peak_band_index_ranges_aligned(
+        freq_hz=freq_hz,
+        center_indexes=peak_indexes,
+        bandwidth_hz=exclusion_hz,
+    )
+    if peak_ranges is None:
+        peak_hz = freq_hz[np.asarray(peak_indexes, dtype=np.intp)]
+        if peak_hz.size:
+            selected_mask &= ~_peak_exclusion_mask_broadcast_aligned(
+                freq_hz=freq_hz,
+                peak_hz=peak_hz,
+                exclusion_hz=exclusion_hz,
+            )
+        return
+    left_bounds, right_bounds = peak_ranges
+    for start_idx, stop_idx in zip(
+        left_bounds.tolist(),
+        right_bounds.tolist(),
+        strict=True,
+    ):
+        selected_mask[start_idx:stop_idx] = False
+
+
+def _peak_exclusion_mask_broadcast_aligned(
+    *,
+    freq_hz: npt.NDArray[np.float64],
+    peak_hz: npt.NDArray[np.float64],
+    exclusion_hz: float,
+) -> npt.NDArray[np.bool_]:
+    return cast(
+        npt.NDArray[np.bool_],
+        np.count_nonzero(
+            np.abs(freq_hz[:, None] - peak_hz[None, :]) <= exclusion_hz,
+            axis=1,
+        )
+        > 0,
+    )
 
 
 def peak_band_rms_amp_g(
