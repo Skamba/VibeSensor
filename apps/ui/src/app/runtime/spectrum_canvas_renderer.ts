@@ -23,6 +23,7 @@ import { closestFrequencyIndex, freqGridsMatch, type SpectrumFocusMarker, type S
 type SpectrumChartModule = Pick<typeof import("../../spectrum_chart"), "createSpectrumChart">;
 const EMPTY_FREQ_AXIS: number[] = [];
 const EMPTY_SERIES_VALUES: number[][] = [];
+const EMPTY_CHART_DATA: uPlot.AlignedData = [[]];
 
 const bandKeyPresentation: Record<string, { color: string; labelKey: string }> = {
   wheel_1x: { color: orderBandFills.wheel1, labelKey: "bands.wheel_1x" },
@@ -98,7 +99,7 @@ export function createSpectrumCanvasRenderer(
   const currentEntries = signal<readonly SpectrumSeriesEntry[]>([]);
   const currentFreqAxis = signal<readonly number[]>([]);
   const chartSeriesMeta = signal<readonly SpectrumSeriesMeta[]>([]);
-  const chartData = signal<uPlot.AlignedData>([[]]);
+  const chartData = signal<uPlot.AlignedData>(EMPTY_CHART_DATA);
   const chartHeight = signal(360);
   const chartPlugins = signal<readonly uPlot.Plugin[]>([]);
   const chartText: ReadonlySignal<SpectrumText> = computed(() => ({
@@ -213,12 +214,14 @@ export function createSpectrumCanvasRenderer(
     if (minLen < targetFreq.length) {
       targetFreq = targetFreq.slice(0, minLen);
       for (let index = 0; index < frameValues.length; index += 1) {
-        if (frameValues[index]!.length === minLen) {
+        const frameValuesEntry = frameValues[index];
+        const entry = entries[index];
+        if (!frameValuesEntry || !entry || frameValuesEntry.length === minLen) {
           continue;
         }
-        const trimmedValues = frameValues[index]!.slice(0, minLen);
+        const trimmedValues = frameValuesEntry.slice(0, minLen);
         frameValues[index] = trimmedValues;
-        entries[index]!.values = trimmedValues;
+        entry.values = trimmedValues;
       }
     }
     const frame: SpectrumHeavyFrame = {
@@ -245,7 +248,7 @@ export function createSpectrumCanvasRenderer(
     currentEntries.value = prepared.entries;
     currentFreqAxis.value = prepared.freqAxis;
     syncChartSeriesMeta(prepared.entries);
-    chartData.value = buildChartData(
+    syncChartDataBuffer(
       prepared.frame?.freq ?? prepared.freqAxis,
       prepared.frame?.values ?? EMPTY_SERIES_VALUES,
     );
@@ -256,6 +259,7 @@ export function createSpectrumCanvasRenderer(
       currentFreqAxis.value = [];
       spectrumLastFrame.value = null;
       pendingPreparedFrame.value = null;
+      deps.state.spectrum.spectrumPlot.value?.setData(chartData.value, false);
       return;
     }
 
@@ -309,12 +313,10 @@ export function createSpectrumCanvasRenderer(
     if (disposed) {
       return;
     }
-    const freqAxis = currentFreqAxis.value;
-    const entries = currentEntries.value;
-    if (!freqAxis.length || !entries.length) {
+    if (!currentFreqAxis.value.length || !currentEntries.value.length) {
       return;
     }
-    chartData.value = buildChartDataWithClonedFreqAxis(freqAxis, entries);
+    deps.state.spectrum.spectrumPlot.value?.redraw(false, false);
   }
 
   function setSeriesIsolation(seriesIndex: number | null): void {
@@ -333,7 +335,8 @@ export function createSpectrumCanvasRenderer(
       return;
     }
     currentFreqAxis.value = frame.freq;
-    chartData.value = buildChartData(frame.freq, frame.values);
+    syncChartDataBuffer(frame.freq, frame.values);
+    deps.state.spectrum.spectrumPlot.value.setData(chartData.value, false);
     spectrumLastFrame.value = frame;
   }
 
@@ -356,8 +359,7 @@ export function createSpectrumCanvasRenderer(
     }
 
     const nextMeta = new Array<SpectrumSeriesMeta>(entries.length);
-    for (let index = 0; index < entries.length; index += 1) {
-      const entry = entries[index]!;
+    for (const [index, entry] of entries.entries()) {
       nextMeta[index] = {
         label: entry.label,
         color: entry.color,
@@ -366,25 +368,41 @@ export function createSpectrumCanvasRenderer(
     chartSeriesMeta.value = nextMeta;
   }
 
-  function buildChartData(freqAxis: number[], seriesValues: readonly number[][]): uPlot.AlignedData {
-    const alignedData = new Array(seriesValues.length + 1) as uPlot.AlignedData;
-    alignedData[0] = freqAxis;
-    for (let index = 0; index < seriesValues.length; index += 1) {
-      alignedData[index + 1] = seriesValues[index]!;
+  function syncChartDataBuffer(freqAxis: readonly number[], seriesValues: readonly number[][]): void {
+    if (freqAxis.length === 0 || seriesValues.length === 0) {
+      chartData.value = EMPTY_CHART_DATA;
+      return;
     }
-    return alignedData;
+    const currentData = chartData.value;
+    const nextSeriesCount = seriesValues.length + 1;
+    const canReuse = currentData.length === nextSeriesCount
+      && currentData[0]?.length === freqAxis.length
+      && seriesValues.every((seriesValuesEntry, index) => currentData[index + 1]?.length === seriesValuesEntry.length);
+
+    if (!canReuse) {
+      const nextData = new Array(nextSeriesCount) as uPlot.AlignedData;
+      nextData[0] = Array.from(freqAxis);
+      for (const [index, seriesValuesEntry] of seriesValues.entries()) {
+        nextData[index + 1] = Array.from(seriesValuesEntry);
+      }
+      chartData.value = nextData;
+      return;
+    }
+
+    copyNumbersInto(currentData[0] as number[], freqAxis);
+    for (const [index, seriesValuesEntry] of seriesValues.entries()) {
+      copyNumbersInto(currentData[index + 1] as number[], seriesValuesEntry);
+    }
   }
 
-  function buildChartDataWithClonedFreqAxis(
-    freqAxis: readonly number[],
-    entries: readonly SpectrumSeriesEntry[],
-  ): uPlot.AlignedData {
-    const alignedData = new Array(entries.length + 1) as uPlot.AlignedData;
-    alignedData[0] = Array.from(freqAxis);
-    for (let index = 0; index < entries.length; index += 1) {
-      alignedData[index + 1] = entries[index]!.values;
+  function copyNumbersInto(target: number[], source: readonly number[]): void {
+    for (let index = 0; index < source.length; index += 1) {
+      const value = source[index];
+      if (value === undefined) {
+        continue;
+      }
+      target[index] = value;
     }
-    return alignedData;
   }
 
   function calculateBandsFromBackend(): ChartBand[] | null {
