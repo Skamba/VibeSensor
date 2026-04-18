@@ -1,7 +1,7 @@
 import type { JSX } from "preact";
 
 import { useComputed, useSignal, type ReadonlySignal } from "../ui_signals";
-import { inlineStateActionClass } from "./dom_helpers";
+import { inlineStateActionClass } from "./inline_state_panel_models";
 import { HistoryDetailsRow } from "./history_detail_expansion";
 import { HistorySummaryChips } from "./history_summary_chips";
 import type {

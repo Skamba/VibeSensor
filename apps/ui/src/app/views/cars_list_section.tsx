@@ -1,5 +1,5 @@
 import { getUiText as t } from "../ui_i18n";
-import { inlineStateActionClass } from "./dom_helpers";
+import { inlineStateActionClass } from "./inline_state_panel_models";
 import type {
   CarsInlineStateViewModel,
   CarsListAction,
