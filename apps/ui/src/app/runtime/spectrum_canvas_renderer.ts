@@ -68,6 +68,14 @@ export interface SpectrumCanvasRenderer {
   setSeriesIsolation(seriesIndex: number | null): void;
 }
 
+interface PreparedSpectrumCacheEntry {
+  sourceCombined: readonly number[];
+  sourceFreq: readonly number[];
+  sourceLength: number;
+  targetFreq: readonly number[];
+  values: number[];
+}
+
 export function createSpectrumCanvasRenderer(
   deps: SpectrumCanvasRendererDeps,
 ): SpectrumCanvasRenderer {
@@ -80,6 +88,7 @@ export function createSpectrumCanvasRenderer(
   let disposed = false;
   let lastAcceptedFrameAtMs: number | null = null;
   let lastPreparedFrame: SpectrumPreparedRenderData | null = null;
+  const preparedSpectrumCache = new Map<string, PreparedSpectrumCacheEntry>();
 
   const spectrumLastFrame = signal<SpectrumHeavyFrame | null>(null);
   const pendingPreparedFrame = signal<SpectrumPreparedRenderData | null>(null);
@@ -155,37 +164,26 @@ export function createSpectrumCanvasRenderer(
         continue;
       }
 
-      let blended: number[];
-      let needsInterpolation = false;
       if (!targetFreq.length) {
         targetFreq = clientFreq.length === length ? clientFreq : clientFreq.slice(0, length);
-        blended = spectrum.combined.length === length
-          ? spectrum.combined
-          : spectrum.combined.slice(0, length);
-      } else {
-        needsInterpolation = clientFreq.length !== targetFreq.length
-          || !freqGridsMatch(clientFreq, targetFreq, length);
-        if (needsInterpolation) {
-          blended = interpolateToTarget(clientFreq, spectrum.combined, targetFreq, length);
-        } else {
-          blended = spectrum.combined.length === length
-            ? spectrum.combined
-            : spectrum.combined.slice(0, length);
-        }
       }
-      if (!blended.length) {
+
+      const preparedValues = getPreparedSpectrumValues(
+        client.id,
+        spectrum.combined,
+        clientFreq,
+        length,
+        targetFreq,
+      );
+      if (!preparedValues.length) {
         continue;
       }
-      if (!needsInterpolation && blended === spectrum.combined) {
-        blended = blended.slice();
-      }
-      convertSpectrumAmplitudesToDbInPlace(blended);
 
       entries.push({
         id: client.id,
         label: client.name || client.id,
         color: colorForClient(index),
-        values: blended,
+        values: preparedValues,
       });
     }
 
@@ -328,6 +326,50 @@ export function createSpectrumCanvasRenderer(
 
   function colorForClient(index: number): string {
     return chartSeriesPalette[index % chartSeriesPalette.length];
+  }
+
+  function getPreparedSpectrumValues(
+    clientId: string,
+    combined: readonly number[],
+    clientFreq: readonly number[],
+    sourceLength: number,
+    targetFreq: readonly number[],
+  ): number[] {
+    const cached = preparedSpectrumCache.get(clientId);
+    if (
+      cached
+      && cached.sourceCombined === combined
+      && cached.sourceFreq === clientFreq
+      && cached.sourceLength === sourceLength
+      && cached.targetFreq.length === targetFreq.length
+      && (
+        cached.targetFreq === targetFreq
+        || freqGridsMatch(cached.targetFreq, targetFreq, targetFreq.length)
+      )
+    ) {
+      return cached.values;
+    }
+
+    const needsInterpolation = clientFreq.length !== targetFreq.length
+      || !freqGridsMatch(clientFreq, targetFreq, sourceLength);
+    const preparedValues = needsInterpolation
+      ? interpolateToTarget(clientFreq, combined, targetFreq, sourceLength)
+      : combined.slice(0, sourceLength);
+
+    if (!preparedValues.length) {
+      preparedSpectrumCache.delete(clientId);
+      return preparedValues;
+    }
+
+    convertSpectrumAmplitudesToDbInPlace(preparedValues);
+    preparedSpectrumCache.set(clientId, {
+      sourceCombined: combined,
+      sourceFreq: clientFreq,
+      sourceLength,
+      targetFreq,
+      values: preparedValues,
+    });
+    return preparedValues;
   }
 
   function setSpectrumDataFromFrame(frame: SpectrumHeavyFrame): void {
@@ -601,6 +643,7 @@ export function createSpectrumCanvasRenderer(
       disposeTweenEffect();
       tweenTarget.value = null;
       pendingPreparedFrame.value = null;
+      preparedSpectrumCache.clear();
       if (deps.state.spectrum.spectrumPlot.value) {
         deps.state.spectrum.spectrumPlot.value.destroy();
         deps.state.spectrum.spectrumPlot.value = null;
