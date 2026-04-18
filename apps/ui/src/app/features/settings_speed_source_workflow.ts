@@ -28,6 +28,7 @@ import {
   createSettingsSpeedSourceTransport,
   type SettingsSpeedSourceTransport,
 } from "./settings_speed_source_transport";
+import { createApiLoader } from "./api_loader";
 
 const OBD_BACKGROUND_RESCAN_DELAY_MS = 2_000;
 
@@ -317,13 +318,13 @@ export function createSettingsSpeedSourceWorkflow(
     deps.renderSpeedReadout();
   }
 
+  const speedSourceLoader = createApiLoader({
+    load: () => transport.loadSpeedSource(),
+    apply: applyPayload,
+  });
+
   async function loadSpeedSourceFromServer(): Promise<void> {
-    try {
-      const payload = await transport.loadSpeedSource();
-      applyPayload(payload);
-    } catch {
-      /* keep the current UI state on transient load errors */
-    }
+    await speedSourceLoader.load();
   }
 
   function handleSpeedSourceChanged(mode: DisplayedSpeedSourceMode): void {

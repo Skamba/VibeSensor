@@ -34,6 +34,7 @@ import {
   createCarsFeatureTransport,
   type CarsFeatureTransport,
 } from "./cars_feature_transport";
+import { createApiLoader } from "./api_loader";
 import {
   batch,
   computed,
@@ -334,39 +335,61 @@ export function createCarsFeatureWorkflow(
     });
   }
 
-  async function loadBrandStep(): Promise<void> {
-    brandOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
-    try {
-      brandOptions.value = createReadyOptionsState(await transport.loadBrands());
+  const brandStepLoader = createApiLoader({
+    beforeLoad: () => {
+      brandOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
+    },
+    load: () => transport.loadBrands(),
+    apply: (brands) => {
+      brandOptions.value = createReadyOptionsState(brands);
       deps.view.focus("brand-option");
-    } catch (_err) {
+    },
+    onError: () => {
       brandOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_brands"));
       deps.view.focus("custom-brand");
-    }
+    },
+  });
+
+  const typeStepLoader = createApiLoader({
+    beforeLoad: () => {
+      typeOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
+    },
+    load: () => transport.loadTypes(wizardState.value.brand),
+    apply: (types) => {
+      typeOptions.value = createReadyOptionsState(types);
+      deps.view.focus("type-option");
+    },
+    onError: () => {
+      typeOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_types"));
+      deps.view.focus("custom-type");
+    },
+  });
+
+  const modelStepLoader = createApiLoader({
+    beforeLoad: () => {
+      modelOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
+    },
+    load: () => transport.loadModels(wizardState.value.brand, wizardState.value.carType),
+    apply: (models) => {
+      modelOptions.value = createReadyOptionsState(models);
+      deps.view.focus("model-option");
+    },
+    onError: () => {
+      modelOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_models"));
+      deps.view.focus("custom-model");
+    },
+  });
+
+  async function loadBrandStep(): Promise<void> {
+    await brandStepLoader.load();
   }
 
   async function loadTypeStep(): Promise<void> {
-    typeOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
-    try {
-      typeOptions.value = createReadyOptionsState(await transport.loadTypes(wizardState.value.brand));
-      deps.view.focus("type-option");
-    } catch (_err) {
-      typeOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_types"));
-      deps.view.focus("custom-type");
-    }
+    await typeStepLoader.load();
   }
 
   async function loadModelStep(): Promise<void> {
-    modelOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
-    try {
-      modelOptions.value = createReadyOptionsState(
-        await transport.loadModels(wizardState.value.brand, wizardState.value.carType),
-      );
-      deps.view.focus("model-option");
-    } catch (_err) {
-      modelOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_models"));
-      deps.view.focus("custom-model");
-    }
+    await modelStepLoader.load();
   }
 
   function loadVariantStep(): void {
