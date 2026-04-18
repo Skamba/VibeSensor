@@ -5,9 +5,14 @@ import { convertSpectrumAmplitudesToDbInPlace } from "../../spectrum";
 import type { SpectrumSeriesMeta, SpectrumText } from "../../spectrum_chart";
 import { getSpectrumCssVars } from "../../spectrum_css_vars";
 import { chartSeriesPalette, orderBandFills } from "../../theme";
-import { createRafAnimation } from "../dom/raf_animation";
+import {
+  createRafAnimation,
+  type RafAnimation,
+  type RafAnimationCallbacks,
+} from "../dom/raf_animation";
 import {
   createSpectrumTweenDerivedState,
+  resolveSpectrumTweenDurationMs,
   type SpectrumHeavyFrame,
 } from "../spectrum_animation";
 import type { AppState, ChartBand } from "../ui_app_state";
@@ -49,6 +54,8 @@ export interface SpectrumCanvasRendererDeps {
   onCursorDataIndexChange: (cursorDataIdx: number | null) => void;
   onAsyncChartUpdate?: () => void;
   loadChartModule?: () => Promise<SpectrumChartModule>;
+  createAnimation?: (callbacks: RafAnimationCallbacks) => RafAnimation;
+  nowMs?: () => number;
 }
 
 export interface SpectrumCanvasRenderer {
@@ -64,15 +71,19 @@ export function createSpectrumCanvasRenderer(
 ): SpectrumCanvasRenderer {
   const onAsyncChartUpdate = deps.onAsyncChartUpdate ?? (() => undefined);
   const loadChartModule = deps.loadChartModule ?? loadSpectrumChartModule;
+  const createAnimation = deps.createAnimation ?? ((callbacks) => createRafAnimation(callbacks));
+  const nowMs = deps.nowMs ?? (() => performance.now());
 
   let chartLoadPromise: Promise<void> | null = null;
   let disposed = false;
+  let lastAcceptedFrameAtMs: number | null = null;
 
   const spectrumLastFrame = signal<SpectrumHeavyFrame | null>(null);
   const pendingPreparedFrame = signal<SpectrumPreparedRenderData | null>(null);
   const chartModule = signal<SpectrumChartModule | null>(null);
 
   const tweenAlpha = signal(1);
+  const tweenDurationMs = signal(SPECTRUM_TWEEN_DURATION_MS);
   const tweenFromFrame = signal<SpectrumHeavyFrame | null>(null);
   const tweenToFrame = signal<SpectrumHeavyFrame | null>(null);
   const tweenState = createSpectrumTweenDerivedState(
@@ -101,9 +112,10 @@ export function createSpectrumCanvasRenderer(
   function initTweenEffect(): () => void {
     return effect(() => {
       const to = tweenTarget.value;
-      if (!to) return;
-      const anim = createRafAnimation({
-        durationMs: SPECTRUM_TWEEN_DURATION_MS,
+      const durationMs = tweenDurationMs.value;
+      if (!to || durationMs <= 0) return;
+      const anim = createAnimation({
+        durationMs,
         onFrame: (alpha) => {
           tweenAlpha.value = alpha;
           const frame = tweenState.frame.value;
@@ -249,17 +261,25 @@ export function createSpectrumCanvasRenderer(
     }
 
     const nextFrame = prepared.frame;
+    const renderAtMs = nowMs();
+    const previousFrameAtMs = lastAcceptedFrameAtMs;
+    lastAcceptedFrameAtMs = renderAtMs;
     tweenFromFrame.value = spectrumLastFrame.value;
     tweenToFrame.value = nextFrame;
     tweenTarget.value = null; // cancel any in-flight animation
+    const tweenDurationForFrameMs = resolveSpectrumTweenDurationMs(
+      SPECTRUM_TWEEN_DURATION_MS,
+      previousFrameAtMs === null ? null : renderAtMs - previousFrameAtMs,
+    );
     const canTween = deps.state.transport.wsState.value === "connected"
       && tweenState.canTween.value;
-    if (!canTween || !spectrumLastFrame.value) {
+    if (!canTween || !spectrumLastFrame.value || tweenDurationForFrameMs <= 0) {
       setSpectrumDataFromFrame(nextFrame);
       return;
     }
 
     tweenAlpha.value = 0;
+    tweenDurationMs.value = tweenDurationForFrameMs;
     tweenTarget.value = nextFrame; // triggers RAF effect
   }
 
@@ -458,6 +478,7 @@ export function createSpectrumCanvasRenderer(
     }
     tweenTarget.value = null;
     spectrumLastFrame.value = null;
+    lastAcceptedFrameAtMs = null;
     if (deps.state.spectrum.spectrumPlot.value) {
       deps.state.spectrum.spectrumPlot.value.destroy();
       deps.state.spectrum.spectrumPlot.value = null;
