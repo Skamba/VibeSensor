@@ -1,4 +1,5 @@
 import { render } from "preact";
+import { memo } from "preact/compat";
 import { getUiText } from "../ui_i18n";
 import {
   signal,
@@ -60,7 +61,7 @@ function requireSpectrumElement<T extends HTMLElement>(
   throw new Error(`Spectrum UI requires ${target}`);
 }
 
-function SpectrumBandLegend(props: {
+const SpectrumBandLegend = memo(function SpectrumBandLegend(props: {
   bandLegend: ReadonlySignal<SpectrumBandLegendModel>;
 }) {
   const {
@@ -93,9 +94,9 @@ function SpectrumBandLegend(props: {
         : null}
     </div>
   );
-}
+});
 
-function SpectrumSensorLegend(props: {
+const SpectrumSensorLegend = memo(function SpectrumSensorLegend(props: {
   sensorLegend: ReadonlySignal<SpectrumSensorLegendModel | null>;
   sensorLegendHandlers: ReadonlySignal<SpectrumLegendHandlers | null>;
 }) {
@@ -148,7 +149,7 @@ function SpectrumSensorLegend(props: {
       ))}
     </>
   );
-}
+});
 
 function SpectrumPanel(props: {
   bandLegendModel: ReadonlySignal<ReadonlySignal<SpectrumBandLegendModel> | null>;

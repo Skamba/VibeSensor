@@ -4,7 +4,7 @@ import { test, expect } from "@playwright/test";
 async function assertSpectrumHasData(
   page: import("@playwright/test").Page,
 ): Promise<void> {
-  const hasData = await page.evaluate(() => {
+  await expect.poll(async () => page.evaluate(() => {
     const canvas =
       document.querySelector<HTMLCanvasElement>("#specChart canvas");
     if (!canvas) return false;
@@ -33,8 +33,10 @@ async function assertSpectrumHasData(
         return true;
     }
     return false;
-  });
-  expect(hasData, "Spectrum chart must contain visible graph data").toBe(true);
+  }), {
+    message: "Spectrum chart must contain visible graph data",
+    timeout: 5_000,
+  }).toBe(true);
 }
 
 test.describe("Live view", () => {
