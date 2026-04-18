@@ -11,6 +11,7 @@ export interface PollingController {
 export interface PollingControllerOptions {
   enabled?: ReadonlySignal<boolean>;
   poll: () => Promise<number>;
+  onError?: (error: unknown) => void;
   onErrorDelayMs: number;
 }
 
@@ -18,6 +19,11 @@ export function createPollingController(
   options: PollingControllerOptions,
 ): PollingController {
   const { enabled, poll, onErrorDelayMs } = options;
+  const onError = options.onError ?? ((error: unknown) => {
+    if (typeof window !== "undefined") {
+      console.warn("Polling task failed", error);
+    }
+  });
 
   const pollTimer = createReplaceableTimeout();
   let pollGeneration = 0;
@@ -39,7 +45,8 @@ export function createPollingController(
     try {
       const delayMs = await poll();
       schedulePoll(delayMs, generation);
-    } catch {
+    } catch (error) {
+      onError(error);
       schedulePoll(onErrorDelayMs, generation);
     }
   }

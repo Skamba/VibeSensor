@@ -134,6 +134,10 @@ export function createEspFlashFeatureWorkflow(
     apply: (payload) => {
       latestAttempts.value = payload.attempts || [];
     },
+    onError: (error) => {
+      deps.showError(error instanceof Error ? error.message : String(error));
+    },
+    swallowError: true,
   });
 
   const portsLoader = createApiLoader({
@@ -147,6 +151,10 @@ export function createEspFlashFeatureWorkflow(
         }
       });
     },
+    onError: (error) => {
+      deps.showError(error instanceof Error ? error.message : String(error));
+    },
+    swallowError: true,
   });
 
   async function refreshHistory(): Promise<void> {
