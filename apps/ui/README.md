@@ -119,7 +119,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that splits heavy data refreshes from lighter settings-driven decoration refreshes while wiring overlay, canvas, interaction, and panel modules |
 | `app/runtime/ui_startup_coordinator.ts` | Declarative startup-task runner that lets the shell own its initial bind/language/view boot while startup loads and transport start from a named sync/async plan |
 | `app/runtime/ui_startup_feature_ports.ts` | Narrow startup-only feature contract for initial refresh/load work |
-| `app/runtime/spectrum_canvas_renderer.ts` | Spectrum frame preparation, plot lifecycle, cadence-aware tween scheduling, and canvas draw plugin orchestration |
+| `app/runtime/spectrum_canvas_renderer.ts` | Spectrum frame preparation, plot lifecycle, cadence-aware tween scheduling, stable uPlot buffer reuse for same-shape frames, and canvas draw plugin orchestration |
 | `app/runtime/spectrum_interaction_controller.ts` | Spectrum focus, band-toggle, cursor, and legend/isolation interaction state with explicit ports |
 | `app/runtime/spectrum_panel_view.ts` | Typed spectrum panel contract for the signal-backed legend, band legend, inspector, band-toggle, and chart-host refs |
 | `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
@@ -187,7 +187,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `config.ts` | Centralized UI tuning constants for polling intervals, spectrum ranges, and history heatmap positions |
 | `i18n.ts` | Internationalization dictionary (English, Dutch) |
 | `spectrum.ts` | Shared spectrum math helpers such as amplitude-to-dB conversion that stay safe to import on the startup path |
-| `spectrum_chart.ts` | Lazy-loaded uPlot chart wrapper and stylesheet entry for interactive spectrum visualization |
+| `spectrum_chart.ts` | Lazy-loaded uPlot chart wrapper, explicit `setData`/`redraw` bridge, and stylesheet entry for interactive spectrum visualization |
 | `spectrum_css_vars.ts` | Shared cached spectrum CSS-variable snapshot for chart and canvas renderer colors |
 | `server_payload.ts` | Transport-boundary WebSocket payload adaptation and schema-version guardrails around the generated WS types |
 | `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
