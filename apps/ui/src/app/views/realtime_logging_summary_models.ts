@@ -1,7 +1,7 @@
 import type {
   InlineStateActionVariant,
   InlineStatePanelElement,
-} from "./dom_helpers";
+} from "./inline_state_panel_models";
 import {
   captureReadinessCheck,
   captureReadinessDetailText,

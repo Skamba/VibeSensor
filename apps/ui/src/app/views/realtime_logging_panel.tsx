@@ -7,7 +7,7 @@ import {
   type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import { inlineStateActionClass } from "./dom_helpers";
+import { inlineStateActionClass } from "./inline_state_panel_models";
 import { type DeferredModelSignal } from "./view_model_binding";
 import type {
   RealtimeCaptureReadinessChecklistModel,
