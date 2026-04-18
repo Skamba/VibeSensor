@@ -166,6 +166,9 @@ def combined_spectrum_amp_g(
     return cast(list[float], result.tolist())
 
 
+# Public helper APIs accept ArrayLike for callers and tests. Once
+# compute_vibration_strength_db() normalizes its inputs, the hot path should stay
+# on the private ndarray-only helpers below.
 def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: ArrayLike) -> float:
     """Return the P20 amplitude floor in g, skipping the DC bin (index 0).
 
@@ -176,6 +179,11 @@ def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: ArrayLike) -> float:
     real vibration findings.
     """
     band = np.asarray(combined_spectrum_amp_g, dtype=np.float64)
+    return _noise_floor_amp_p20_g_aligned(combined_spectrum_amp_g=band)
+
+
+def _noise_floor_amp_p20_g_aligned(*, combined_spectrum_amp_g: npt.NDArray[np.float64]) -> float:
+    band = combined_spectrum_amp_g
     if band.size <= 1:
         # Empty spectrum or DC-only: no frequency content to estimate noise from.
         return 0.0
@@ -423,7 +431,7 @@ def compute_vibration_strength_db(
 
     freq = freq_arr[:n]
     combined = np.where(np.isfinite(combined_arr[:n]), np.maximum(combined_arr[:n], 0.0), 0.0)
-    floor_p20 = noise_floor_amp_p20_g(combined_spectrum_amp_g=combined)
+    floor_p20 = _noise_floor_amp_p20_g_aligned(combined_spectrum_amp_g=combined)
     threshold = max(
         floor_p20 * PEAK_THRESHOLD_FLOOR_RATIO,
         floor_p20 + STRENGTH_EPSILON_MIN_G,

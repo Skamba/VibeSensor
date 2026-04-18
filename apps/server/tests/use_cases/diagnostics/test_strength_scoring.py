@@ -259,6 +259,55 @@ def test_compute_vibration_strength_db_skips_repeated_alignment(
     assert result["vibration_strength_db"] > 0.0
 
 
+def test_compute_vibration_strength_db_skips_public_noise_floor_wrapper(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    noise_floor_calls = 0
+    original = vibration_strength_module.noise_floor_amp_p20_g
+
+    def counting_noise_floor_amp_p20_g(
+        *, combined_spectrum_amp_g: vibration_strength_module.ArrayLike
+    ) -> float:
+        nonlocal noise_floor_calls
+        noise_floor_calls += 1
+        return original(combined_spectrum_amp_g=combined_spectrum_amp_g)
+
+    monkeypatch.setattr(
+        vibration_strength_module,
+        "noise_floor_amp_p20_g",
+        counting_noise_floor_amp_p20_g,
+    )
+
+    result = compute_vibration_strength_db(
+        freq_hz=[float(index) for index in range(20)],
+        combined_spectrum_amp_g_values=[
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.002,
+            0.004,
+            0.01,
+            0.03,
+            0.06,
+            0.12,
+            0.03,
+            0.01,
+            0.004,
+            0.002,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+        ],
+    )
+
+    assert noise_floor_calls == 0
+    assert result["vibration_strength_db"] > 0.0
+
+
 def test_compute_vibration_strength_db_skips_full_scan_band_helper(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
