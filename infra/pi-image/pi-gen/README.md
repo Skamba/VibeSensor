@@ -86,9 +86,13 @@ COPY_ARTIFACT_DIR=/tmp/pi-images ./infra/pi-image/pi-gen/build.sh
 SSH_FIRST_BOOT_DEBUG=1 ./infra/pi-image/pi-gen/build.sh
 ```
 
-Default SSH credentials in generated images:
+Default access endpoints and SSH credentials in generated images:
+- hotspot address: `10.4.0.1`
+- HTTP UI and API: `http://10.4.0.1` (port `80` default); if the primary listener is unavailable, try `http://10.4.0.1:8000`
 - user: `pi`
 - password: `vibesensor`
+- remote simulator quick run: `vibesensor-sim --count 5 --duration 60 --server-host 10.4.0.1 --server-http-port 80 --speed-kmh 0 --no-interactive --no-auto-server`
+- use `--speed-kmh 0` when you only need UDP traffic or the Pi HTTP API is not answering; non-zero speed override performs an HTTP POST before streaming
 
 SSH first-boot behavior:
 - `openssh-server` is installed and `ssh.service` is enabled at image build time.
