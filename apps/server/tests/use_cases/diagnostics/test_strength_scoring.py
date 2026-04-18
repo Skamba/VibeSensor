@@ -457,6 +457,53 @@ def test_compute_vibration_strength_db_skips_scalar_db_helper(
     assert result["vibration_strength_db"] > 0.0
 
 
+def test_compute_vibration_strength_db_skips_scalar_bucket_helper(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bucket_calls = 0
+    original = vibration_strength_module.bucket_for_strength
+
+    def counting_bucket_for_strength(vibration_strength_db: float) -> str:
+        nonlocal bucket_calls
+        bucket_calls += 1
+        return original(vibration_strength_db)
+
+    monkeypatch.setattr(
+        vibration_strength_module,
+        "bucket_for_strength",
+        counting_bucket_for_strength,
+    )
+
+    result = compute_vibration_strength_db(
+        freq_hz=[float(index) for index in range(20)],
+        combined_spectrum_amp_g_values=[
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.002,
+            0.004,
+            0.01,
+            0.03,
+            0.06,
+            0.12,
+            0.03,
+            0.01,
+            0.004,
+            0.002,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+        ],
+    )
+
+    assert bucket_calls == 0
+    assert result["strength_bucket"] == result["top_peaks"][0]["strength_bucket"]
+
+
 # -- vibration_strength_db_scalar --------------------------------------------
 
 
