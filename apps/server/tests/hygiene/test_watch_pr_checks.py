@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
 
 from tests._paths import REPO_ROOT
@@ -20,6 +21,22 @@ def _load_watch_pr_checks_module():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _pr_status(
+    module,
+    checks: list[dict[str, object]],
+    *,
+    merge_state: str = "BLOCKED",
+    mergeable: str = "UNKNOWN",
+    head_sha: str = "abc123def4567890",
+):
+    return module.PrStatusSnapshot(
+        checks=module._snapshot_checks(checks),
+        merge_state=merge_state,
+        mergeable=mergeable,
+        head_sha=head_sha,
+    )
 
 
 def test_snapshot_check_treats_skipped_and_commit_status_success_as_ok() -> None:
@@ -94,9 +111,9 @@ def test_main_emits_compact_state_changes_without_repeating_unchanged_pending_po
     ]
     responses = iter(
         [
-            (pending_checks, "BLOCKED", "UNKNOWN"),
-            (pending_checks, "BLOCKED", "UNKNOWN"),
-            (green_checks, "BLOCKED", "UNKNOWN"),
+            _pr_status(module, pending_checks),
+            _pr_status(module, pending_checks),
+            _pr_status(module, green_checks),
         ]
     )
     monotonic_times = iter([0.0, 10.0, 20.0])
@@ -127,7 +144,8 @@ def test_main_reports_real_failures_with_details_url(monkeypatch, capsys) -> Non
     monkeypatch.setattr(
         module,
         "_fetch_pr_status",
-        lambda pr, repo: (
+        lambda pr, repo: _pr_status(
+            module,
             [
                 {
                     "name": "Backend lint",
@@ -137,8 +155,6 @@ def test_main_reports_real_failures_with_details_url(monkeypatch, capsys) -> Non
                     "detailsUrl": "https://example.invalid/backend-lint",
                 }
             ],
-            "BLOCKED",
-            "UNKNOWN",
         ),
     )
     monkeypatch.setattr(module, "_now_monotonic", lambda: 0.0)
@@ -152,4 +168,113 @@ def test_main_reports_real_failures_with_details_url(monkeypatch, capsys) -> Non
         "[12:34:56] PR 321 failing ok=0 running=0 queued=0 failed=1 total=1",
         "FAIL CI/Backend lint (failure) https://example.invalid/backend-lint",
         "RESULT=NON_GREEN",
+    ]
+
+
+def test_merge_pr_uses_match_head_commit_and_deletes_branch(monkeypatch) -> None:
+    module = _load_watch_pr_checks_module()
+    observed: dict[str, object] = {}
+
+    def _fake_run(cmd, *, text, capture_output, check):
+        observed["cmd"] = cmd
+        observed["text"] = text
+        observed["capture_output"] = capture_output
+        observed["check"] = check
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(module.subprocess, "run", _fake_run)
+
+    module._merge_pr("2719", "Skamba/VibeSensor", "abc123def4567890")
+
+    assert observed == {
+        "cmd": [
+            "gh",
+            "pr",
+            "merge",
+            "2719",
+            "--repo",
+            "Skamba/VibeSensor",
+            "--merge",
+            "--delete-branch",
+            "--match-head-commit",
+            "abc123def4567890",
+        ],
+        "text": True,
+        "capture_output": True,
+        "check": False,
+    }
+
+
+def test_main_merges_on_green_when_requested(monkeypatch, capsys) -> None:
+    module = _load_watch_pr_checks_module()
+    merged: list[tuple[str, str | None, str]] = []
+    green_checks = [
+        {
+            "name": "Repo hygiene",
+            "workflowName": "CI",
+            "status": "COMPLETED",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://example.invalid/repo-hygiene",
+        }
+    ]
+
+    monkeypatch.setattr(
+        module,
+        "_fetch_pr_status",
+        lambda pr, repo: _pr_status(module, green_checks, head_sha="deadbeefcafebabe"),
+    )
+    monkeypatch.setattr(
+        module,
+        "_merge_pr",
+        lambda pr, repo, head_sha: merged.append((pr, repo, head_sha)),
+    )
+    monkeypatch.setattr(module, "_now_monotonic", lambda: 0.0)
+    monkeypatch.setattr(module, "_now_utc", lambda: "13:00:00")
+
+    rc = module.main(["--pr", "456", "--repo", "Skamba/VibeSensor", "--merge-on-green"])
+    output_lines = capsys.readouterr().out.splitlines()
+
+    assert rc == 0
+    assert merged == [("456", "Skamba/VibeSensor", "deadbeefcafebabe")]
+    assert output_lines == [
+        "[13:00:00] PR 456 green ok=1 total=1",
+        "MERGED PR 456 head=deadbeefcafe",
+        "RESULT=MERGED",
+    ]
+
+
+def test_main_reports_merge_failure_when_merge_on_green_fails(monkeypatch, capsys) -> None:
+    module = _load_watch_pr_checks_module()
+    green_checks = [
+        {
+            "name": "Repo hygiene",
+            "workflowName": "CI",
+            "status": "COMPLETED",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://example.invalid/repo-hygiene",
+        }
+    ]
+
+    monkeypatch.setattr(
+        module,
+        "_fetch_pr_status",
+        lambda pr, repo: _pr_status(module, green_checks),
+    )
+    monkeypatch.setattr(
+        module,
+        "_merge_pr",
+        lambda pr, repo, head_sha: (_ for _ in ()).throw(
+            module.MergeFailed("pull request is still a draft")
+        ),
+    )
+    monkeypatch.setattr(module, "_now_monotonic", lambda: 0.0)
+    monkeypatch.setattr(module, "_now_utc", lambda: "13:05:00")
+
+    rc = module.main(["--pr", "789", "--merge-on-green"])
+    output_lines = capsys.readouterr().out.splitlines()
+
+    assert rc == 4
+    assert output_lines == [
+        "[13:05:00] PR 789 green ok=1 total=1",
+        "RESULT=MERGE_FAILED (pull request is still a draft)",
     ]
