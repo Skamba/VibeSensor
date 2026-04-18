@@ -1,4 +1,4 @@
-import { render } from "preact";
+import { render, type JSX } from "preact";
 import { memo } from "preact/compat";
 import { getUiText } from "../ui_i18n";
 import {
@@ -41,6 +41,19 @@ const DEFAULT_SPECTRUM_BAND_LEGEND_MODEL: SpectrumBandLegendModel = {
   items: [],
   emptyText: "No reference band",
 };
+type SpectrumCssVariableStyle = JSX.CSSProperties & {
+  "--band-color"?: string;
+  "--swatch-color"?: string;
+};
+
+function bandColorStyle(color: string): SpectrumCssVariableStyle {
+  return { "--band-color": color };
+}
+
+function swatchColorStyle(color: string): SpectrumCssVariableStyle {
+  return { "--swatch-color": color };
+}
+
 const SPECTRUM_BAND_TOGGLE_KEYS = [
   "bandsVisible",
   "disabled",
@@ -80,9 +93,9 @@ const SpectrumBandLegend = memo(function SpectrumBandLegend(props: {
               key={item.labelText}
               class="legend-item legend-item--band"
               data-band-state="active"
-              style={`--band-color: ${item.color}`}
+              style={bandColorStyle(item.color)}
             >
-              <span class="swatch" style={`--swatch-color: ${item.color}`} />
+              <span class="swatch" style={swatchColorStyle(item.color)} />
               <span>{item.labelText}</span>
             </div>
           ))
@@ -138,7 +151,7 @@ const SpectrumSensorLegend = memo(function SpectrumSensorLegend(props: {
           data-legend-state={item.active ? "active" : item.muted ? "muted" : undefined}
           onClick={() => sensorLegendHandlers.onSelect(item.id)}
         >
-          <span class="swatch" style={`--swatch-color: ${item.color}`} />
+          <span class="swatch" style={swatchColorStyle(item.color)} />
           <span class="legend-item__text-group">
             <span class="legend-item__label">{item.labelText}</span>
             {item.detailText
