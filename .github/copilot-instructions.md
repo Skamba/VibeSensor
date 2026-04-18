@@ -53,7 +53,7 @@ Commands
 - `act -l -W .github/workflows/ci.yml` (list CI jobs)
 - `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5` (faster backend-focused CI subset)
 - `pytest -q apps/server/tests/<module>/` (run tests for a single feature area)
-- `python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
+- `python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --repo Skamba/VibeSensor` (compact state-change watcher; default `--interval 10`, `--heartbeat 120`)
 - `cd apps/ui && npm ci && npm run typecheck && npm run build`
 - `cd apps/ui && npm run test:visual`
 - `cd firmware/esp && pio run`
