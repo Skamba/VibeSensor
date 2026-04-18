@@ -57,8 +57,8 @@ Updater deployment policy
 - After any emergency in-place patch, complete the follow-up loop in the same run when feasible: repo fix + tests/lint + PR green + merge + successful updater rerun on device.
 
 Validation (always required)
-- Pull request default mode: after opening or updating a PR, check CI/review status, fix all blocking issues, push updates, and keep monitoring until required checks are green.
-- Use the command list (defined in the copilot instructions "Commands" section) for PR check watching, lint/type checks, CI-parity runs, single-area pytest runs, and local Docker bring-up; use `docs/testing.md` for test layout, CI limitations, and the optional `act` wrapper, and follow targeted → broader → local-GitHub-workflow validation before finalizing any task.
+- Pull request default mode: after opening or updating a PR, start the compact watcher from the command list, use its state-change output as the default CI monitor, fix all blocking issues, push updates, and keep monitoring until required checks are green.
+- Use the command list (defined in the copilot instructions "Commands" section) for PR check watching, lint/type checks, CI-parity runs, single-area pytest runs, and local Docker bring-up; prefer the watcher over repeated full PR-status dumps, use `docs/testing.md` for test layout, CI limitations, and the optional `act` wrapper, and follow targeted → broader → local-GitHub-workflow validation before finalizing any task.
 - Treat watcher exit `RESULT=NON_GREEN` as immediate action: inspect the latest failing run promptly, determine root cause, implement the smallest complete maintainable fix, push, and restart the watcher.
 - Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
 - If an intentional refactor changes function-level seams or helper boundaries, refactor the affected tests in the same change set so they validate current behavior instead of pinning obsolete internals.
