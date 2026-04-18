@@ -125,8 +125,8 @@ test("settings cars module loads cars through the shared async loader without ov
   const renders: CarsListRenderModel[] = [];
   let syncAnalysisInputsCalls = 0;
 
-  state.vehicleSettings.value = {
-    ...state.vehicleSettings.value,
+  state.analysis.vehicleSettings.value = {
+    ...state.analysis.vehicleSettings.value,
     wheel_bandwidth_pct: 7.5,
     speed_uncertainty_pct: 2.5,
     min_abs_band_hz: 1.5,
@@ -197,15 +197,17 @@ test("settings cars module loads cars through the shared async loader without ov
 
   await module.loadCarsFromServer();
 
-  expect(state.activeCarId.value).toBe("car-1");
-  expect(state.vehicleSettings.value).toMatchObject({
+  expect(state.car.activeCarId.value).toBe("car-1");
+  expect(state.car.activeVehicleSettings.value).toMatchObject({
     current_gear_ratio: 0.72,
     final_drive_ratio: 3.23,
     rim_in: 19,
-    min_abs_band_hz: 1.5,
-    speed_uncertainty_pct: 2.5,
     tire_aspect_pct: 40,
     tire_width_mm: 245,
+  });
+  expect(state.analysis.vehicleSettings.value).toMatchObject({
+    min_abs_band_hz: 1.5,
+    speed_uncertainty_pct: 2.5,
     wheel_bandwidth_pct: 7.5,
   });
   expect(syncAnalysisInputsCalls).toBe(1);

@@ -80,7 +80,7 @@ test.describe("speed source state helpers", () => {
     const state = createAppState();
     const runtimeSpeedSource = signal<string | null>(null);
     const derived = createSpeedSourceDerivedState(
-      state.settings,
+      state.settings.speed,
       runtimeSpeedSource,
     );
 
@@ -93,7 +93,7 @@ test.describe("speed source state helpers", () => {
     expect(derived.speedReadoutLabelKey.value).toBe("speed.override");
     expect(derived.isManualEffective.value).toBe(true);
 
-    state.settings.resolvedSpeedSource.value = "obd2";
+    state.settings.speed.resolvedSource.value = "obd2";
     expect(derived.effectiveSource.value).toBe("obd2");
     expect(derived.displayedMode.value).toBe("obd2");
     expect(derived.speedReadoutLabelKey.value).toBe("speed.obd2");

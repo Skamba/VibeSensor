@@ -5,7 +5,7 @@ import {
   getCarCompleteness,
 } from "../car_selection_state";
 import {
-  mergeCarOwnedVehicleSettings,
+  mergeCarAspectSettings,
   type SettingsState,
 } from "../ui_app_state";
 import type { CarRecord, CarsPayload } from "../../api/types";
@@ -73,8 +73,8 @@ function copyActiveCarAspects(
   if (!car?.aspects || typeof car.aspects !== "object") {
     return;
   }
-  settings.vehicleSettings.value = mergeCarOwnedVehicleSettings(
-    settings.vehicleSettings.value,
+  settings.car.activeVehicleSettings.value = mergeCarAspectSettings(
+    settings.car.activeVehicleSettings.value,
     car.aspects,
   );
 }
@@ -85,7 +85,7 @@ export function createSettingsCarsModule(
   const { settings, services, formatting } = ctx;
   const { t } = services;
   const transport = createSettingsCarsTransport(ctx.transport);
-  const carSelection = createCarSelectionDerivedState(settings);
+  const carSelection = createCarSelectionDerivedState(settings.car);
   let handlersBound = false;
   let disposeHighlightedCarSync: (() => void) | null = null;
   const highlightedCar = signal<CarsListHighlightedFeedback | null>(null);
@@ -116,8 +116,8 @@ export function createSettingsCarsModule(
       table: carSelectionState.kind === "loading"
         ? null
         : buildCarListRenderModel({
-          activeCarId: settings.activeCarId.value,
-          cars: settings.cars.value,
+          activeCarId: settings.car.activeCarId.value,
+          cars: settings.car.cars.value,
           highlightedCarId: highlightedCar.value?.carId ?? null,
           fmt: formatting.fmt,
           t,
@@ -142,23 +142,23 @@ export function createSettingsCarsModule(
   }
 
   function syncCarsPayload(payload: CarsPayload): void {
-    settings.cars.value = payload.cars;
-    settings.carsLoaded.value = true;
+    settings.car.cars.value = payload.cars;
+    settings.car.carsLoaded.value = true;
     const requestedActiveCarId = payload.active_car_id;
     const hasRequestedActive = requestedActiveCarId
-      ? settings.cars.value.some((car) => car.id === requestedActiveCarId)
+      ? settings.car.cars.value.some((car) => car.id === requestedActiveCarId)
       : false;
-    settings.activeCarId.value = hasRequestedActive ? requestedActiveCarId : null;
+    settings.car.activeCarId.value = hasRequestedActive ? requestedActiveCarId : null;
     if (
       highlightedCar.value
-      && !settings.cars.value.some((car) => car.id === highlightedCar.value?.carId)
+      && !settings.car.cars.value.some((car) => car.id === highlightedCar.value?.carId)
     ) {
       highlightedCar.value = null;
     }
   }
 
   function findCar(carId: string): CarRecord | null {
-    return settings.cars.value.find((entry) => entry.id === carId) ?? null;
+    return settings.car.cars.value.find((entry) => entry.id === carId) ?? null;
   }
 
   function syncActiveCarToInputs(): void {
@@ -211,7 +211,7 @@ export function createSettingsCarsModule(
       return;
     }
     try {
-      if (car.id !== settings.activeCarId.value) {
+      if (car.id !== settings.car.activeCarId.value) {
         syncCarsPayload(await transport.activateCar(carId));
         syncActiveCarToInputs();
         ctx.ports.renderSpectrum();

@@ -11,7 +11,7 @@ import type {
   SpectrumState,
 } from "../ui_app_state";
 import { bindReplaceableTimerEffect, createReplaceableInterval } from "../timer_cleanup";
-import { computed, effect, signal, type ReadonlySignal } from "../ui_signals";
+import { computed, signal, type ReadonlySignal } from "../ui_signals";
 import type { AdaptedClient } from "../../transport/live_models";
 import {
   buildRealtimeLoggingPanelViewModel,
@@ -395,7 +395,7 @@ export function createRealtimeFeatureViewState(
       )
       .sort()
       .join("|");
-    return `${settings.activeCarId.value ?? ""}##${clientsSignature}`;
+    return `${settings.car.activeCarId.value ?? ""}##${clientsSignature}`;
   });
 
   return {

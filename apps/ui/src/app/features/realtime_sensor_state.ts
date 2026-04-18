@@ -62,7 +62,7 @@ const SHORTHAND_LOCATION_MAP: Record<string, string> = {
 
 export function createRealtimeSensorState(ctx: RealtimeSensorStateDeps): RealtimeSensorState {
   const { realtime, settings, shell, spectrum, t, formatInt } = ctx;
-  const carSelection = createCarSelectionDerivedState(settings);
+  const carSelection = createCarSelectionDerivedState(settings.car);
 
   function locationLabelForLang(lang: string, code: string): string {
     return I18N.get(lang, `location.${code}`, { code });

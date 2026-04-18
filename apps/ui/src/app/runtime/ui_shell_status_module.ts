@@ -57,7 +57,7 @@ export function createUiShellStatusModule(
     return deps.realtime.rotationalSpeeds.value?.basis_speed_source ?? null;
   });
   const speedSourceState = createSpeedSourceDerivedState(
-    deps.settings,
+    deps.settings.speed,
     runtimeSpeedSource,
   );
 

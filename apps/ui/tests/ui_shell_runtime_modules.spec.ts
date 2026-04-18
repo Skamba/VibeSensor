@@ -232,7 +232,7 @@ test.describe("UiShellController", () => {
     expect(liveOverview.speedText.value).toBe(speedText);
     expect(speedText?.value).toBe("12.3 m/s · GPS");
 
-    state.settings.resolvedSpeedSource.value = "obd2";
+    state.settings.speed.resolvedSource.value = "obd2";
     expect(speedText?.value).toBe("12.3 m/s · OBD2");
   });
 
@@ -543,12 +543,12 @@ test.describe("createUiShellStatusModule", () => {
   test("renders speed override after car bootstrap resolves", () => {
     const state = createAppState();
     state.realtime.speedMps.value = 12;
-    state.settings.speedSource.value = "manual";
-    state.settings.manualSpeedKph.value = 43.2;
+    state.settings.speed.source.value = "manual";
+    state.settings.speed.manualSpeedKph.value = 43.2;
     state.shell.speedUnit.value = "kmh";
-    state.settings.carsLoaded.value = true;
-    state.settings.cars.value = [];
-    state.settings.activeCarId.value = null;
+    state.settings.car.carsLoaded.value = true;
+    state.settings.car.cars.value = [];
+    state.settings.car.activeCarId.value = null;
 
     const module = createUiShellStatusModule({
       realtime: state.realtime,
@@ -565,8 +565,8 @@ test.describe("createUiShellStatusModule", () => {
   test("renders OBD2 when OBD2 is the resolved speed source", () => {
     const state = createAppState();
     state.realtime.speedMps.value = 22.5;
-    state.settings.speedSource.value = "obd2";
-    state.settings.resolvedSpeedSource.value = "obd2";
+    state.settings.speed.source.value = "obd2";
+    state.settings.speed.resolvedSource.value = "obd2";
     state.shell.speedUnit.value = "kmh";
 
     const module = createUiShellStatusModule({

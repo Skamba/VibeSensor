@@ -1,5 +1,5 @@
 import { EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION } from "../transport/live_models";
-import type { AppState } from "./ui_app_state";
+import { composeVehicleSettings, type AppState } from "./ui_app_state";
 import { batch } from "./ui_signals";
 
 type DemoDeps = {
@@ -178,17 +178,20 @@ export function runDemoMode(deps: DemoDeps): void {
   };
 
   batch(() => {
-    state.settings.carsLoaded.value = true;
-    state.settings.cars.value = [
+    state.settings.car.carsLoaded.value = true;
+    state.settings.car.cars.value = [
       {
         id: "demo-car-1",
         name: "Demo Hatch",
         type: "Simulated setup",
         variant: "Audit baseline",
-        aspects: { ...state.settings.vehicleSettings.value },
+        aspects: composeVehicleSettings(
+          state.settings.car.activeVehicleSettings.value,
+          state.settings.analysis.vehicleSettings.value,
+        ),
       },
     ];
-    state.settings.activeCarId.value = "demo-car-1";
+    state.settings.car.activeCarId.value = "demo-car-1";
   });
   deps.queueTransportPayload(demoPayload);
 

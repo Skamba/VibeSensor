@@ -17,12 +17,16 @@ import type {
 } from "../api/types";
 import { batch, signal, type Signal } from "./ui_signals";
 
-export interface VehicleSettings {
+export interface CarAspectSettings {
   tire_width_mm: number;
   tire_aspect_pct: number;
   rim_in: number;
   final_drive_ratio: number;
   current_gear_ratio: number;
+  tire_deflection_factor: number;
+}
+
+export interface AnalysisTuningSettings {
   wheel_bandwidth_pct: number;
   driveshaft_bandwidth_pct: number;
   engine_bandwidth_pct: number;
@@ -32,15 +36,20 @@ export interface VehicleSettings {
   gear_uncertainty_pct: number;
   min_abs_band_hz: number;
   max_band_half_width_pct: number;
-  tire_deflection_factor: number;
 }
 
-export const defaultVehicleSettings: Readonly<VehicleSettings> = {
+export interface VehicleSettings extends CarAspectSettings, AnalysisTuningSettings {}
+
+export const defaultCarAspectSettings: Readonly<CarAspectSettings> = {
   tire_width_mm: 285.0,
   tire_aspect_pct: 30.0,
   rim_in: 21.0,
   final_drive_ratio: 3.08,
   current_gear_ratio: 0.64,
+  tire_deflection_factor: 0.97,
+};
+
+export const defaultAnalysisTuningSettings: Readonly<AnalysisTuningSettings> = {
   wheel_bandwidth_pct: 5.0,
   driveshaft_bandwidth_pct: 4.5,
   engine_bandwidth_pct: 5.2,
@@ -50,19 +59,23 @@ export const defaultVehicleSettings: Readonly<VehicleSettings> = {
   gear_uncertainty_pct: 0.2,
   min_abs_band_hz: 0.2,
   max_band_half_width_pct: 6.0,
-  tire_deflection_factor: 0.97,
 };
 
-export const carOwnedVehicleSettingKeys = [
+export const defaultVehicleSettings: Readonly<VehicleSettings> = {
+  ...defaultCarAspectSettings,
+  ...defaultAnalysisTuningSettings,
+};
+
+export const carAspectSettingKeys = [
   "tire_width_mm",
   "tire_aspect_pct",
   "rim_in",
   "final_drive_ratio",
   "current_gear_ratio",
   "tire_deflection_factor",
-] as const satisfies readonly (keyof VehicleSettings)[];
+] as const satisfies readonly (keyof CarAspectSettings)[];
 
-export const analysisOwnedVehicleSettingKeys = [
+export const analysisTuningSettingKeys = [
   "wheel_bandwidth_pct",
   "driveshaft_bandwidth_pct",
   "engine_bandwidth_pct",
@@ -72,21 +85,28 @@ export const analysisOwnedVehicleSettingKeys = [
   "gear_uncertainty_pct",
   "min_abs_band_hz",
   "max_band_half_width_pct",
-] as const satisfies readonly (keyof VehicleSettings)[];
+] as const satisfies readonly (keyof AnalysisTuningSettings)[];
 
 type VehicleSettingsNumericPatch = Partial<
   Record<keyof VehicleSettings, number | null | undefined>
 >;
 
-function mergeVehicleSettingsPatch<
-  TKeys extends readonly (keyof VehicleSettings)[],
->(
-  current: VehicleSettings,
-  source: VehicleSettingsNumericPatch,
-  keys: TKeys,
+export function composeVehicleSettings(
+  car: CarAspectSettings,
+  analysis: AnalysisTuningSettings,
 ): VehicleSettings {
+  return {
+    ...car,
+    ...analysis,
+  };
+}
+
+export function mergeCarAspectSettings(
+  current: CarAspectSettings,
+  source: VehicleSettingsNumericPatch,
+): CarAspectSettings {
   const next = { ...current };
-  for (const key of keys) {
+  for (const key of carAspectSettingKeys) {
     const value = source[key];
     if (typeof value === "number") {
       next[key] = value;
@@ -95,18 +115,18 @@ function mergeVehicleSettingsPatch<
   return next;
 }
 
-export function mergeCarOwnedVehicleSettings(
-  current: VehicleSettings,
+export function mergeAnalysisTuningSettings(
+  current: AnalysisTuningSettings,
   source: VehicleSettingsNumericPatch,
-): VehicleSettings {
-  return mergeVehicleSettingsPatch(current, source, carOwnedVehicleSettingKeys);
-}
-
-export function mergeAnalysisOwnedVehicleSettings(
-  current: VehicleSettings,
-  source: VehicleSettingsNumericPatch,
-): VehicleSettings {
-  return mergeVehicleSettingsPatch(current, source, analysisOwnedVehicleSettingKeys);
+): AnalysisTuningSettings {
+  const next = { ...current };
+  for (const key of analysisTuningSettingKeys) {
+    const value = source[key];
+    if (typeof value === "number") {
+      next[key] = value;
+    }
+  }
+  return next;
 }
 
 export interface RunDetail {
@@ -250,16 +270,23 @@ export interface HistoryStateValue {
   runDetailsById: Record<string, RunDetail>;
 }
 
-export interface SettingsStateValue {
-  vehicleSettings: VehicleSettings;
+export interface CarSettingsValue {
+  activeVehicleSettings: CarAspectSettings;
   cars: CarRecord[];
   carsLoaded: boolean;
   activeCarId: string | null;
-  speedSource: SpeedSourceKind;
+}
+
+export interface AnalysisSettingsValue {
+  vehicleSettings: AnalysisTuningSettings;
+}
+
+export interface SpeedSettingsValue {
+  source: SpeedSourceKind;
   manualSpeedKph: number | null;
   obdDeviceMac: string | null;
   obdDeviceName: string | null;
-  resolvedSpeedSource: SpeedSourceStatusPayload["speed_source"] | null;
+  resolvedSource: SpeedSourceStatusPayload["speed_source"] | null;
   gpsFallbackActive: boolean;
   gpsEffectiveSpeedKph: number | null;
 }
@@ -277,7 +304,14 @@ export type ShellState = SignalState<ShellStateValue>;
 export type TransportState = SignalState<TransportStateValue>;
 export type RealtimeState = SignalState<RealtimeStateValue>;
 export type HistoryState = SignalState<HistoryStateValue>;
-export type SettingsState = SignalState<SettingsStateValue>;
+export type CarSettingsState = SignalState<CarSettingsValue>;
+export type AnalysisSettingsState = SignalState<AnalysisSettingsValue>;
+export type SpeedSettingsState = SignalState<SpeedSettingsValue>;
+export interface SettingsState {
+  car: CarSettingsState;
+  analysis: AnalysisSettingsState;
+  speed: SpeedSettingsState;
+}
 export type SpectrumState = SignalState<SpectrumStateValue>;
 
 export interface AppState {
@@ -332,17 +366,24 @@ export function createAppState(): AppState {
       runDetailsById: signal<Record<string, RunDetail>>({}),
     },
     settings: {
-      vehicleSettings: signal<VehicleSettings>({ ...defaultVehicleSettings }),
-      cars: signal<CarRecord[]>([]),
-      carsLoaded: signal(false),
-      activeCarId: signal<string | null>(null),
-      speedSource: signal<SpeedSourceKind>("gps"),
-      manualSpeedKph: signal<number | null>(null),
-      obdDeviceMac: signal<string | null>(null),
-      obdDeviceName: signal<string | null>(null),
-      resolvedSpeedSource: signal<SpeedSourceStatusPayload["speed_source"] | null>(null),
-      gpsFallbackActive: signal(false),
-      gpsEffectiveSpeedKph: signal<number | null>(null),
+      car: {
+        activeVehicleSettings: signal<CarAspectSettings>({ ...defaultCarAspectSettings }),
+        cars: signal<CarRecord[]>([]),
+        carsLoaded: signal(false),
+        activeCarId: signal<string | null>(null),
+      },
+      analysis: {
+        vehicleSettings: signal<AnalysisTuningSettings>({ ...defaultAnalysisTuningSettings }),
+      },
+      speed: {
+        source: signal<SpeedSourceKind>("gps"),
+        manualSpeedKph: signal<number | null>(null),
+        obdDeviceMac: signal<string | null>(null),
+        obdDeviceName: signal<string | null>(null),
+        resolvedSource: signal<SpeedSourceStatusPayload["speed_source"] | null>(null),
+        gpsFallbackActive: signal(false),
+        gpsEffectiveSpeedKph: signal<number | null>(null),
+      },
     },
     spectrum: {
       spectrumPlot: signal<SpectrumChart | null>(null),
