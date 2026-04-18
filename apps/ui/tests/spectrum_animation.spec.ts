@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import {
   createSpectrumTweenDerivedState,
+  resolveSpectrumTweenDurationMs,
   type SpectrumHeavyFrame,
 } from "../src/app/spectrum_animation";
 import { signal } from "../src/app/ui_signals";
@@ -34,5 +35,12 @@ test.describe("spectrum tween derived state", () => {
 
     expect(tween.canTween.value).toBe(false);
     expect(tween.frame.value).toBe(next.value);
+  });
+
+  test("suppresses tweening when heavy frames arrive faster than the tween budget", () => {
+    expect(resolveSpectrumTweenDurationMs(180, null)).toBe(180);
+    expect(resolveSpectrumTweenDurationMs(180, 220)).toBe(180);
+    expect(resolveSpectrumTweenDurationMs(180, 100)).toBe(0);
+    expect(resolveSpectrumTweenDurationMs(180, 0)).toBe(0);
   });
 });

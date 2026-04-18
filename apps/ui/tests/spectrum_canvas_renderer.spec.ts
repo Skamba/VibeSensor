@@ -358,4 +358,168 @@ test.describe("createSpectrumCanvasRenderer", () => {
       restoreDocument();
     }
   });
+
+  test("suppresses tween animations when heavy frames arrive faster than the tween budget", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const { createSpectrumCanvasRenderer } = await import(
+        "../src/app/runtime/spectrum_canvas_renderer"
+      );
+      const state = createAppState();
+      state.transport.wsState.value = "connected";
+      state.realtime.clients.value = [makeClient("sensor-a", "Front Right Wheel")];
+      state.spectrum.spectra.value = {
+        clients: {
+          "sensor-a": {
+            freq: [10, 15, 20],
+            combined: [1, 0.75, 0.5],
+            strength_metrics: {
+              noise_floor_amp_g: 0.1,
+              peak_amp_g: 1,
+              strength_bucket: null,
+              top_peaks: [{
+                amp: 1,
+                hz: 10,
+                strength_bucket: null,
+                vibration_strength_db: 12,
+              }],
+              vibration_strength_db: 12,
+            },
+          },
+        },
+      };
+      const animationStarts: number[] = [];
+      const renderTimesMs = [1_000, 1_100];
+
+      const renderer = createSpectrumCanvasRenderer({
+        state,
+        dom: {
+          specChart: createElementStub("div"),
+          specChartWrap: createElementStub("div"),
+        } as unknown as SpectrumPanelChartDom,
+        t: (key) => key,
+        getBandsVisible: () => false,
+        getChartBands: () => [],
+        getFocusMarker: () => null,
+        onCursorDataIndexChange: () => undefined,
+        loadChartModule: async () => ({
+          createSpectrumChart(): SpectrumChart {
+            return {
+              destroy() {},
+              resize() {},
+              setSeriesIsolation() {},
+            };
+          },
+        }),
+        createAnimation: ({ durationMs }) => ({
+          start() {
+            animationStarts.push(durationMs);
+          },
+          stop() {},
+        }),
+        nowMs: () => renderTimesMs.shift() ?? 0,
+      });
+
+      renderer.renderPreparedFrame(renderer.prepareFrame());
+      await flushSignalUpdates();
+
+      state.spectrum.spectra.value = {
+        clients: {
+          "sensor-a": {
+            ...state.spectrum.spectra.value.clients["sensor-a"]!,
+            combined: [0.9, 0.7, 0.45],
+          },
+        },
+      };
+
+      renderer.renderPreparedFrame(renderer.prepareFrame());
+      await flushSignalUpdates();
+
+      expect(animationStarts).toEqual([]);
+    } finally {
+      restoreDocument();
+    }
+  });
+
+  test("keeps tween animations enabled when heavy frames arrive slower than the tween budget", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const { createSpectrumCanvasRenderer } = await import(
+        "../src/app/runtime/spectrum_canvas_renderer"
+      );
+      const state = createAppState();
+      state.transport.wsState.value = "connected";
+      state.realtime.clients.value = [makeClient("sensor-a", "Front Right Wheel")];
+      state.spectrum.spectra.value = {
+        clients: {
+          "sensor-a": {
+            freq: [10, 15, 20],
+            combined: [1, 0.75, 0.5],
+            strength_metrics: {
+              noise_floor_amp_g: 0.1,
+              peak_amp_g: 1,
+              strength_bucket: null,
+              top_peaks: [{
+                amp: 1,
+                hz: 10,
+                strength_bucket: null,
+                vibration_strength_db: 12,
+              }],
+              vibration_strength_db: 12,
+            },
+          },
+        },
+      };
+      const animationStarts: number[] = [];
+      const renderTimesMs = [1_000, 1_250];
+
+      const renderer = createSpectrumCanvasRenderer({
+        state,
+        dom: {
+          specChart: createElementStub("div"),
+          specChartWrap: createElementStub("div"),
+        } as unknown as SpectrumPanelChartDom,
+        t: (key) => key,
+        getBandsVisible: () => false,
+        getChartBands: () => [],
+        getFocusMarker: () => null,
+        onCursorDataIndexChange: () => undefined,
+        loadChartModule: async () => ({
+          createSpectrumChart(): SpectrumChart {
+            return {
+              destroy() {},
+              resize() {},
+              setSeriesIsolation() {},
+            };
+          },
+        }),
+        createAnimation: ({ durationMs }) => ({
+          start() {
+            animationStarts.push(durationMs);
+          },
+          stop() {},
+        }),
+        nowMs: () => renderTimesMs.shift() ?? 0,
+      });
+
+      renderer.renderPreparedFrame(renderer.prepareFrame());
+      await flushSignalUpdates();
+
+      state.spectrum.spectra.value = {
+        clients: {
+          "sensor-a": {
+            ...state.spectrum.spectra.value.clients["sensor-a"]!,
+            combined: [0.9, 0.7, 0.45],
+          },
+        },
+      };
+
+      renderer.renderPreparedFrame(renderer.prepareFrame());
+      await flushSignalUpdates();
+
+      expect(animationStarts).toEqual([180]);
+    } finally {
+      restoreDocument();
+    }
+  });
 });
