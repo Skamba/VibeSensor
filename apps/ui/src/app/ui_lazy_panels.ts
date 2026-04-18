@@ -162,15 +162,15 @@ function createDeferredAnalysisPanelView(): {
   const guidanceOpenRequested = signal(false);
   effect(() => {
     const view = realView.value;
-    if (view !== null && guidanceOpenRequested.value) {
+    if (view === null) {
+      return;
+    }
+    if (guidanceOpenRequested.value) {
       view.openGuidance();
       guidanceOpenRequested.value = false;
     }
-  });
-  effect(() => {
-    const view = realView.value;
     const nextFocusField = focusField.value;
-    if (view !== null && nextFocusField !== null) {
+    if (nextFocusField !== null) {
       view.focusField(nextFocusField);
       focusField.value = null;
     }
