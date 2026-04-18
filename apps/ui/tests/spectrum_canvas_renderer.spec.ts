@@ -24,6 +24,14 @@ function makeClient(id: string, name: string): AdaptedClient {
   };
 }
 
+function getRequiredClientSpectrum(state: ReturnType<typeof createAppState>, clientId: string) {
+  const spectrum = state.spectrum.spectra.value.clients[clientId];
+  if (!spectrum) {
+    throw new Error(`Expected spectrum for ${clientId}`);
+  }
+  return spectrum;
+}
+
 test.describe("createSpectrumCanvasRenderer", () => {
   test.beforeEach(() => {
     installWindowGlobal();
@@ -157,7 +165,9 @@ test.describe("createSpectrumCanvasRenderer", () => {
           destroy() {
             stop();
           },
+          redraw() {},
           resize() {},
+          setData() {},
           setSeriesIsolation() {},
         };
       }
@@ -253,7 +263,9 @@ test.describe("createSpectrumCanvasRenderer", () => {
               destroy() {
                 stop();
               },
+              redraw() {},
               resize() {},
+              setData() {},
               setSeriesIsolation() {},
             };
           },
@@ -305,7 +317,7 @@ test.describe("createSpectrumCanvasRenderer", () => {
         },
       };
       const seriesMetaSnapshots: CreateSpectrumChartDeps["seriesMeta"]["value"][] = [];
-      const dataSnapshots: readonly unknown[][] = [];
+      const setDataSnapshots: readonly unknown[][] = [];
 
       const renderer = createSpectrumCanvasRenderer({
         state,
@@ -322,13 +334,16 @@ test.describe("createSpectrumCanvasRenderer", () => {
           createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChart {
             const stop = effect(() => {
               seriesMetaSnapshots.push(deps.seriesMeta.value);
-              dataSnapshots.push(deps.data.value as readonly unknown[]);
             });
             return {
               destroy() {
                 stop();
               },
+              redraw() {},
               resize() {},
+              setData(data) {
+                setDataSnapshots.push(data as readonly unknown[]);
+              },
               setSeriesIsolation() {},
             };
           },
@@ -342,7 +357,7 @@ test.describe("createSpectrumCanvasRenderer", () => {
       state.spectrum.spectra.value = {
         clients: {
           "sensor-a": {
-            ...state.spectrum.spectra.value.clients["sensor-a"]!,
+            ...getRequiredClientSpectrum(state, "sensor-a"),
             combined: [0.9, 0.7, 0.45],
           },
         },
@@ -353,7 +368,8 @@ test.describe("createSpectrumCanvasRenderer", () => {
       await flushSignalUpdates();
 
       expect(new Set(seriesMetaSnapshots).size).toBe(1);
-      expect(new Set(dataSnapshots).size).toBeGreaterThan(1);
+      expect(setDataSnapshots).toHaveLength(2);
+      expect(setDataSnapshots[0]).toBe(setDataSnapshots[1]);
     } finally {
       restoreDocument();
     }
@@ -403,7 +419,9 @@ test.describe("createSpectrumCanvasRenderer", () => {
           createSpectrumChart(): SpectrumChart {
             return {
               destroy() {},
+              redraw() {},
               resize() {},
+              setData() {},
               setSeriesIsolation() {},
             };
           },
@@ -432,6 +450,164 @@ test.describe("createSpectrumCanvasRenderer", () => {
       expect(refreshed.frame).toBe(prepared.frame);
       expect(refreshed.hasData).toBe(true);
       expect(refreshed.chartBands).toHaveLength(1);
+    } finally {
+      restoreDocument();
+    }
+  });
+
+  test("rebuilds chart data buffers when the frame shape changes", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const { createSpectrumCanvasRenderer } = await import(
+        "../src/app/runtime/spectrum_canvas_renderer"
+      );
+      const state = createAppState();
+      state.transport.wsState.value = "connected";
+      state.realtime.clients.value = [makeClient("sensor-a", "Front Right Wheel")];
+      state.spectrum.spectra.value = {
+        clients: {
+          "sensor-a": {
+            freq: [10, 15, 20],
+            combined: [1, 0.75, 0.5],
+            strength_metrics: {
+              noise_floor_amp_g: 0.1,
+              peak_amp_g: 1,
+              strength_bucket: null,
+              top_peaks: [{
+                amp: 1,
+                hz: 10,
+                strength_bucket: null,
+                vibration_strength_db: 12,
+              }],
+              vibration_strength_db: 12,
+            },
+          },
+        },
+      };
+      const setDataSnapshots: readonly unknown[][] = [];
+
+      const renderer = createSpectrumCanvasRenderer({
+        state,
+        dom: {
+          specChart: createElementStub("div"),
+          specChartWrap: createElementStub("div"),
+        } as unknown as SpectrumPanelChartDom,
+        t: (key) => key,
+        getBandsVisible: () => false,
+        getChartBands: () => [],
+        getFocusMarker: () => null,
+        onCursorDataIndexChange: () => undefined,
+        loadChartModule: async () => ({
+          createSpectrumChart(): SpectrumChart {
+            return {
+              destroy() {},
+              redraw() {},
+              resize() {},
+              setData(data) {
+                setDataSnapshots.push(data as readonly unknown[]);
+              },
+              setSeriesIsolation() {},
+            };
+          },
+        }),
+      });
+
+      renderer.renderPreparedFrame(renderer.prepareFrame());
+      await flushSignalUpdates();
+
+      state.spectrum.spectra.value = {
+        clients: {
+          "sensor-a": {
+            ...getRequiredClientSpectrum(state, "sensor-a"),
+            freq: [10, 20, 30, 40],
+            combined: [1, 0.7, 0.4, 0.2],
+          },
+        },
+      };
+
+      renderer.renderPreparedFrame(renderer.prepareFrame());
+      await flushSignalUpdates();
+
+      expect(setDataSnapshots).toHaveLength(2);
+      expect(setDataSnapshots[0]).not.toBe(setDataSnapshots[1]);
+    } finally {
+      restoreDocument();
+    }
+  });
+
+  test("uses redraw instead of setData for decoration-only refreshes", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const { createSpectrumCanvasRenderer } = await import(
+        "../src/app/runtime/spectrum_canvas_renderer"
+      );
+      const state = createAppState();
+      state.transport.wsState.value = "connected";
+      state.realtime.clients.value = [makeClient("sensor-a", "Front Right Wheel")];
+      state.spectrum.spectra.value = {
+        clients: {
+          "sensor-a": {
+            freq: [10, 15, 20],
+            combined: [1, 0.75, 0.5],
+            strength_metrics: {
+              noise_floor_amp_g: 0.1,
+              peak_amp_g: 1,
+              strength_bucket: null,
+              top_peaks: [{
+                amp: 1,
+                hz: 10,
+                strength_bucket: null,
+                vibration_strength_db: 12,
+              }],
+              vibration_strength_db: 12,
+            },
+          },
+        },
+      };
+      let redrawCalls = 0;
+      let setDataCalls = 0;
+
+      const renderer = createSpectrumCanvasRenderer({
+        state,
+        dom: {
+          specChart: createElementStub("div"),
+          specChartWrap: createElementStub("div"),
+        } as unknown as SpectrumPanelChartDom,
+        t: (key) => key,
+        getBandsVisible: () => true,
+        getChartBands: () => [{
+          label: "Wheel",
+          min_hz: 9,
+          max_hz: 11,
+          color: "#fff",
+        }],
+        getFocusMarker: () => null,
+        onCursorDataIndexChange: () => undefined,
+        loadChartModule: async () => ({
+          createSpectrumChart(): SpectrumChart {
+            return {
+              destroy() {},
+              redraw() {
+                redrawCalls += 1;
+              },
+              resize() {},
+              setData() {
+                setDataCalls += 1;
+              },
+              setSeriesIsolation() {},
+            };
+          },
+        }),
+      });
+
+      renderer.renderPreparedFrame(renderer.prepareFrame());
+      await flushSignalUpdates();
+      setDataCalls = 0;
+
+      renderer.refreshDecorations();
+
+      expect(redrawCalls).toBe(1);
+      expect(setDataCalls).toBe(0);
     } finally {
       restoreDocument();
     }
@@ -484,7 +660,9 @@ test.describe("createSpectrumCanvasRenderer", () => {
           createSpectrumChart(): SpectrumChart {
             return {
               destroy() {},
+              redraw() {},
               resize() {},
+              setData() {},
               setSeriesIsolation() {},
             };
           },
@@ -504,7 +682,7 @@ test.describe("createSpectrumCanvasRenderer", () => {
       state.spectrum.spectra.value = {
         clients: {
           "sensor-a": {
-            ...state.spectrum.spectra.value.clients["sensor-a"]!,
+            ...getRequiredClientSpectrum(state, "sensor-a"),
             combined: [0.9, 0.7, 0.45],
           },
         },
@@ -566,7 +744,9 @@ test.describe("createSpectrumCanvasRenderer", () => {
           createSpectrumChart(): SpectrumChart {
             return {
               destroy() {},
+              redraw() {},
               resize() {},
+              setData() {},
               setSeriesIsolation() {},
             };
           },
@@ -586,7 +766,7 @@ test.describe("createSpectrumCanvasRenderer", () => {
       state.spectrum.spectra.value = {
         clients: {
           "sensor-a": {
-            ...state.spectrum.spectra.value.clients["sensor-a"]!,
+            ...getRequiredClientSpectrum(state, "sensor-a"),
             combined: [0.9, 0.7, 0.45],
           },
         },
