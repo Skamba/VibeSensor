@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import math
 
+import numpy as np
 import pytest
 
 from vibesensor.vibration_strength import (
+    _combined_spectrum_amp_g_array,
     combined_spectrum_amp_g,
     median,
     noise_floor_amp_p20_g,
@@ -56,6 +58,14 @@ class TestPercentile:
 
 
 class TestCombinedSpectrumAmpG:
+    def test_internal_helper_returns_ndarray(self) -> None:
+        result = _combined_spectrum_amp_g_array(
+            axis_spectra_amp_g=[[3.0], [4.0], [0.0]],
+        )
+        assert isinstance(result, np.ndarray)
+        assert result.dtype == np.float64
+        assert result[0] == pytest.approx(math.sqrt(25.0 / 3.0))
+
     def test_empty_input(self) -> None:
         assert combined_spectrum_amp_g(axis_spectra_amp_g=[]) == []
 
