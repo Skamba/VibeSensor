@@ -40,12 +40,19 @@ export function createSettingsSpeedSourceModule(
   ctx: SettingsSpeedSourceModuleDeps,
 ): SettingsSpeedSourceModule {
   const { settings, services } = ctx;
+  let workflow!: ReturnType<typeof createSettingsSpeedSourceWorkflow>;
   const presenterDeps: SettingsSpeedSourcePresenterDeps = {
     fmt: ctx.formatting.fmt,
     getSpeedUnit: ctx.getSpeedUnit,
     t: services.t,
   };
-  const workflow = createSettingsSpeedSourceWorkflow({
+  const obdConfigVisible = computed(() =>
+    ctx.ports.activeViewId.value === "settingsView"
+    && ctx.ports.activeSettingsTabId.value === "speedSourceTab"
+    && buildSettingsSpeedSourcePanelModel(workflow.renderState.value, presenterDeps).obdConfigVisible
+  );
+  workflow = createSettingsSpeedSourceWorkflow({
+    obdConfigVisible,
     renderSpeedReadout: ctx.ports.renderSpeedReadout,
     settings,
     showError: services.showError,
@@ -54,7 +61,6 @@ export function createSettingsSpeedSourceModule(
       focusManualSpeedInput: ctx.panel.focusManualSpeedInput,
       focusScanObdDevices: ctx.panel.focusScanObdDevices,
       focusStaleTimeoutInput: ctx.panel.focusStaleTimeoutInput,
-      isObdConfigVisible: ctx.panel.isObdConfigVisible,
     },
   });
   const panelModel = computed(() =>

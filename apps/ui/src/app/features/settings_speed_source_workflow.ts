@@ -35,11 +35,11 @@ export interface SettingsSpeedSourceWorkflowViewPorts {
   focusManualSpeedInput(): void;
   focusScanObdDevices(): void;
   focusStaleTimeoutInput(): void;
-  isObdConfigVisible(): boolean;
 }
 
 export interface SettingsSpeedSourceWorkflowDeps {
   createPollingController?: (options: PollingControllerOptions) => PollingController;
+  obdConfigVisible: ReadonlySignal<boolean>;
   renderSpeedReadout: () => void;
   settings: SettingsState;
   showError: (message: string) => void;
@@ -218,7 +218,7 @@ export function createSettingsSpeedSourceWorkflow(
   }
 
   function syncContextVisibility(): void {
-    speedSourceContextVisible = deps.view.isObdConfigVisible();
+    speedSourceContextVisible = deps.obdConfigVisible.value;
     syncBackgroundRescan();
   }
 
