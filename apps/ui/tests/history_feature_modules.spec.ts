@@ -487,6 +487,64 @@ test("history feature preloads collapsed row context for completed runs", async 
   ]);
 });
 
+test("history feature prefetches collapsed run previews in parallel batches", async () => {
+  const state = createAppState();
+  const { feature } = createFeatureHarness(state);
+  const originalFetch = globalThis.fetch;
+  const previewRequests: string[] = [];
+  const previewResolvers = new Map<string, (response: Response) => void>();
+
+  globalThis.fetch = (async (input: string | URL | RequestInfo) => {
+    const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
+    if (url === "/api/history") {
+      return jsonResponse({
+        runs: [
+          historyListRun("run-001"),
+          historyListRun("run-002"),
+          historyListRun("run-003"),
+          historyListRun("run-004"),
+        ],
+      });
+    }
+    if (url.startsWith("/api/history/run-") && url.endsWith("/insights?lang=en")) {
+      previewRequests.push(url);
+      return await new Promise<Response>((resolve) => {
+        previewResolvers.set(url, resolve);
+      });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  }) as typeof fetch;
+
+  try {
+    await feature.refreshHistory();
+    await expect.poll(() => previewRequests.length).toBe(3);
+
+    previewResolvers.get("/api/history/run-001/insights?lang=en")
+      ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-001", 2)));
+    previewResolvers.get("/api/history/run-002/insights?lang=en")
+      ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-002", 2)));
+    previewResolvers.get("/api/history/run-003/insights?lang=en")
+      ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-003", 2)));
+
+    await expect.poll(() => previewRequests.length).toBe(4);
+
+    previewResolvers.get("/api/history/run-004/insights?lang=en")
+      ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-004", 2)));
+
+    await expect.poll(() => state.history.runDetailsById.value["run-004"]?.preview?.sensor_count_used ?? null)
+      .toBe(2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  expect(previewRequests).toEqual([
+    "/api/history/run-001/insights?lang=en",
+    "/api/history/run-002/insights?lang=en",
+    "/api/history/run-003/insights?lang=en",
+    "/api/history/run-004/insights?lang=en",
+  ]);
+});
+
 
 test("history feature reports partial delete failures without splitting render ownership", async () => {
   const state = createAppState();

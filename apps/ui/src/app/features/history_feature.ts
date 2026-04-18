@@ -44,6 +44,7 @@ export interface HistoryFeature {
 
 export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   const { history, panel, shell, services, formatting } = ctx;
+  const COLLAPSED_RUN_PREVIEW_PREFETCH_CONCURRENCY = 3;
   let handlersBound = false;
   let previewPrefetchToken = 0;
   const rowsMemo = createHistoryTableRowsMemo();
@@ -248,14 +249,20 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   function prefetchCollapsedRunContext(): void {
     const token = ++previewPrefetchToken;
     void (async () => {
-      for (const run of history.runs.value) {
+      const completedRuns = history.runs.value.filter((run) => run.status === "complete");
+      for (
+        let index = 0;
+        index < completedRuns.length;
+        index += COLLAPSED_RUN_PREVIEW_PREFETCH_CONCURRENCY
+      ) {
         if (token !== previewPrefetchToken) {
           return;
         }
-        if (run.status !== "complete") {
-          continue;
-        }
-        await loadRunPreview(run.run_id);
+        const batch = completedRuns.slice(
+          index,
+          index + COLLAPSED_RUN_PREVIEW_PREFETCH_CONCURRENCY,
+        );
+        await Promise.all(batch.map((run) => loadRunPreview(run.run_id)));
       }
     })();
   }
