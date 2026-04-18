@@ -162,6 +162,8 @@ def float_list(values: FloatArray | list[float]) -> list[float]:
     """
     _isfinite = math.isfinite
     if isinstance(values, np.ndarray):
+        if np.all(np.isfinite(values)):
+            return values.ravel().tolist()
         sanitized: FloatArray = np.nan_to_num(
             values,
             copy=True,
