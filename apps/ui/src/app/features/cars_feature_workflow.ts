@@ -348,6 +348,7 @@ export function createCarsFeatureWorkflow(
       brandOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_brands"));
       deps.view.focus("custom-brand");
     },
+    swallowError: true,
   });
 
   const typeStepLoader = createApiLoader({
@@ -363,6 +364,7 @@ export function createCarsFeatureWorkflow(
       typeOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_types"));
       deps.view.focus("custom-type");
     },
+    swallowError: true,
   });
 
   const modelStepLoader = createApiLoader({
@@ -378,6 +380,7 @@ export function createCarsFeatureWorkflow(
       modelOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_models"));
       deps.view.focus("custom-model");
     },
+    swallowError: true,
   });
 
   async function loadBrandStep(): Promise<void> {

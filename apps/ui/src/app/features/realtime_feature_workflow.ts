@@ -313,15 +313,11 @@ export function createRealtimeFeatureWorkflow(
   }
 
   async function refreshLocationOptions(): Promise<void> {
-    try {
-      const payload = await api.getClientLocations();
-      const codes = Array.isArray(payload.locations)
-        ? payload.locations.map((row) => row.code).filter((code): code is string => typeof code === "string")
-        : [];
-      applyLocationCodes(codes);
-    } catch {
-      applyLocationCodes([]);
-    }
+    const payload = await api.getClientLocations();
+    const codes = Array.isArray(payload.locations)
+      ? payload.locations.map((row) => row.code).filter((code): code is string => typeof code === "string")
+      : [];
+    applyLocationCodes(codes);
   }
 
   async function setClientLocation(clientId: string, locationCode: string): Promise<void> {

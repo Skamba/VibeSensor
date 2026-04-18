@@ -31,7 +31,7 @@ test.describe("createApiLoader", () => {
     dispose();
   });
 
-  test("returns null and calls onError when the load fails", async () => {
+  test("rethrows and calls onError when the load fails", async () => {
     const events: string[] = [];
     const loader = createApiLoader({
       load: async () => {
@@ -43,6 +43,26 @@ test.describe("createApiLoader", () => {
       onError: (error) => {
         events.push(error instanceof Error ? error.message : String(error));
       },
+    });
+
+    await expect(loader.load()).rejects.toThrow("offline");
+    expect(events).toEqual(["offline"]);
+    expect(loader.loading.value).toBe(false);
+  });
+
+  test("can swallow a handled load failure when the caller opts in", async () => {
+    const events: string[] = [];
+    const loader = createApiLoader({
+      load: async () => {
+        throw new Error("offline");
+      },
+      apply: () => {
+        events.push("apply");
+      },
+      onError: (error) => {
+        events.push(error instanceof Error ? error.message : String(error));
+      },
+      swallowError: true,
     });
 
     await expect(loader.load()).resolves.toBeNull();
