@@ -111,3 +111,14 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     "settings.loadCarsFromServer",
   ]);
 });
+
+test("realtime recording port preserves history refresh failures", async () => {
+  const error = new Error("history refresh failed");
+  const recording = createRealtimeFeatureRecordingPorts({
+    async refreshHistory() {
+      throw error;
+    },
+  });
+
+  await expect(recording.onRecordingStatusChanged()).rejects.toThrow(error);
+});

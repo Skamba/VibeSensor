@@ -1,4 +1,3 @@
-import { createUiRecordingHistoryRefresh } from "./runtime/ui_recording_history_refresh";
 import type { UiStartupFeaturePorts } from "./runtime/ui_startup_feature_ports";
 import type { CarsFeature } from "./features/cars_feature";
 import type { EspFlashFeature } from "./features/esp_flash_feature";
@@ -40,11 +39,8 @@ interface AppFeatureBundlePortSources {
 export function createRealtimeFeatureRecordingPorts(
   history: Pick<HistoryFeature, "refreshHistory">,
 ): RealtimeFeatureRecordingPorts {
-  const refresh = createUiRecordingHistoryRefresh({
-    refreshHistory: () => history.refreshHistory(),
-  });
   return {
-    onRecordingStatusChanged: () => refresh.onRecordingStatusChanged(),
+    onRecordingStatusChanged: () => history.refreshHistory(),
   };
 }
 
