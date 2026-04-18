@@ -79,6 +79,22 @@ export function interpolateHeavyFrame(previous: SpectrumHeavyFrame, next: Spectr
   };
 }
 
+export function resolveSpectrumTweenDurationMs(
+  baseDurationMs: number,
+  frameIntervalMs: number | null,
+): number {
+  if (!Number.isFinite(baseDurationMs) || baseDurationMs <= 0) {
+    return 0;
+  }
+  if (frameIntervalMs === null) {
+    return baseDurationMs;
+  }
+  if (!Number.isFinite(frameIntervalMs) || frameIntervalMs <= 0) {
+    return 0;
+  }
+  return frameIntervalMs < baseDurationMs ? 0 : baseDurationMs;
+}
+
 export interface SpectrumTweenDerivedState {
   canTween: ReadonlySignal<boolean>;
   frame: ReadonlySignal<SpectrumHeavyFrame | null>;
