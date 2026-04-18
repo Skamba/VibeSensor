@@ -11,6 +11,8 @@ export interface SpectrumHeavyFrame {
 const FREQ_EPSILON = 1e-6;
 const MAX_INTERIOR_FINGERPRINT_SAMPLES = 4;
 const FINGERPRINT_SAMPLE_SEGMENTS = MAX_INTERIOR_FINGERPRINT_SAMPLES + 1;
+const MIN_TWEEN_DURATION_MS = 60;
+const FAST_FRAME_TWEEN_FRACTION = 0.75;
 
 /** Compute a lightweight fingerprint (length + sampled values) for a freq array. */
 function freqFingerprint(freq: number[]): string {
@@ -92,7 +94,14 @@ export function resolveSpectrumTweenDurationMs(
   if (!Number.isFinite(frameIntervalMs) || frameIntervalMs <= 0) {
     return 0;
   }
-  return frameIntervalMs < baseDurationMs ? 0 : baseDurationMs;
+  if (frameIntervalMs >= baseDurationMs) {
+    return baseDurationMs;
+  }
+  const shortenedDurationMs = Math.min(
+    baseDurationMs,
+    frameIntervalMs * FAST_FRAME_TWEEN_FRACTION,
+  );
+  return shortenedDurationMs >= MIN_TWEEN_DURATION_MS ? shortenedDurationMs : 0;
 }
 
 export interface SpectrumTweenDerivedState {

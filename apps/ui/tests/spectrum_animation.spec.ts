@@ -37,10 +37,12 @@ test.describe("spectrum tween derived state", () => {
     expect(tween.frame.value).toBe(next.value);
   });
 
-  test("suppresses tweening when heavy frames arrive faster than the tween budget", () => {
+  test("shortens tweening for near-budget heavy frames and still guards very fast updates", () => {
     expect(resolveSpectrumTweenDurationMs(180, null)).toBe(180);
     expect(resolveSpectrumTweenDurationMs(180, 220)).toBe(180);
-    expect(resolveSpectrumTweenDurationMs(180, 100)).toBe(0);
+    expect(resolveSpectrumTweenDurationMs(180, 165)).toBe(123.75);
+    expect(resolveSpectrumTweenDurationMs(180, 100)).toBe(75);
+    expect(resolveSpectrumTweenDurationMs(180, 50)).toBe(0);
     expect(resolveSpectrumTweenDurationMs(180, 0)).toBe(0);
   });
 });
