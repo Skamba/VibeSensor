@@ -42,7 +42,7 @@ interface SettingsCarsModulePorts {
   activeSettingsTabId: ReadonlySignal<string>;
   openAnalysisTab: () => void;
   openCarWizard: () => void;
-  renderSpectrum: () => void;
+  refreshSpectrumDecorations: () => void;
   syncAnalysisInputs: () => void;
 }
 
@@ -196,7 +196,7 @@ export function createSettingsCarsModule(
       syncCarsPayload(await transport.activateCar(carId));
       syncActiveCarToInputs();
       clearHighlightedCarFeedback();
-      ctx.ports.renderSpectrum();
+      ctx.ports.refreshSpectrumDecorations();
     } catch (_err) {
       services.showError(t("settings.car.activate_failed"));
     }
@@ -214,7 +214,7 @@ export function createSettingsCarsModule(
       if (car.id !== settings.car.activeCarId.value) {
         syncCarsPayload(await transport.activateCar(carId));
         syncActiveCarToInputs();
-        ctx.ports.renderSpectrum();
+        ctx.ports.refreshSpectrumDecorations();
       }
       clearHighlightedCarFeedback();
       ctx.ports.openAnalysisTab();
@@ -238,7 +238,7 @@ export function createSettingsCarsModule(
       syncCarsPayload(await transport.deleteCar(carId));
       syncActiveCarToInputs();
       clearHighlightedCarFeedback();
-      ctx.ports.renderSpectrum();
+      ctx.ports.refreshSpectrumDecorations();
     } catch (_err) {
       services.showError(t("settings.car.delete_failed"));
     }
