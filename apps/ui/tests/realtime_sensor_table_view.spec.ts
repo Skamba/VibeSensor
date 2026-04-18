@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-import { buildRealtimeSensorTableRenderModel } from "../src/app/views/realtime_sensor_table_view";
+import {
+  buildRealtimeSensorTableRenderModel,
+  createRealtimeSensorTableRenderModelMemo,
+} from "../src/app/views/realtime_sensor_table_view";
 import type { AdaptedClient } from "../src/transport/live_models";
 
 const labels: Record<string, string> = {
@@ -73,4 +76,57 @@ test("buildRealtimeSensorTableRenderModel uses the compact three-column empty st
     kind: "empty",
     emptyText: "No sensors detected yet.",
   });
+});
+
+test("createRealtimeSensorTableRenderModelMemo preserves unchanged row references", () => {
+  const buildMemoizedModel = createRealtimeSensorTableRenderModelMemo();
+  const firstModel = buildMemoizedModel({
+    clients: [
+      makeClient({
+        id: "sensor-1",
+        mac_address: "001122334455",
+        name: "Chassis Sensor A",
+      }),
+      makeClient({
+        connected: false,
+        id: "sensor-2",
+        mac_address: "66778899AABB",
+        name: "Chassis Sensor B",
+      }),
+    ],
+    locationOptions: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
+    t,
+  });
+
+  expect(firstModel.kind).toBe("rows");
+  if (firstModel.kind !== "rows") {
+    throw new Error("Expected sensor rows");
+  }
+
+  const secondModel = buildMemoizedModel({
+    clients: [
+      makeClient({
+        id: "sensor-1",
+        last_seen_age_ms: 250,
+        mac_address: "001122334455",
+        name: "Chassis Sensor A",
+      }),
+      makeClient({
+        connected: true,
+        id: "sensor-2",
+        mac_address: "66778899AABB",
+        name: "Chassis Sensor B",
+      }),
+    ],
+    locationOptions: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
+    t,
+  });
+
+  expect(secondModel.kind).toBe("rows");
+  if (secondModel.kind !== "rows") {
+    throw new Error("Expected sensor rows");
+  }
+
+  expect(secondModel.rows[0]).toBe(firstModel.rows[0]);
+  expect(secondModel.rows[1]).not.toBe(firstModel.rows[1]);
 });

@@ -1,6 +1,7 @@
 import type { JSX } from "preact";
 
 import { render } from "preact";
+import { memo } from "preact/compat";
 import { useUiText } from "../ui_i18n";
 import {
   useComputed,
@@ -46,7 +47,7 @@ function handleSensorAction(
   actions?.onSensorTableAction({ type: action, clientId });
 }
 
-function SensorsTableRow(props: {
+const SensorsTableRow = memo(function SensorsTableRow(props: {
   actions: SensorsPanelActionHandlers | null;
   row: RealtimeSensorTableRowViewModel;
 }) {
@@ -106,7 +107,7 @@ function SensorsTableRow(props: {
       </td>
     </tr>
   );
-}
+});
 
 function SensorsTableBody(props: {
   actions: SensorsPanelActionHandlers | null;
