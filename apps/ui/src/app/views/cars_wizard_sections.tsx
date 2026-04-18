@@ -3,6 +3,11 @@ import { useMemo } from "preact/hooks";
 
 import type { CarsFeatureManualInputState } from "../features/cars_manual_input";
 import { getUiText as t } from "../ui_i18n";
+import {
+  useComputed,
+  useSignalProperties,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type {
   CarsWizardOptionItem,
   CarsWizardOptionsRenderModel,
@@ -16,6 +21,29 @@ const WIZARD_STEP_LABELS = [
   { key: "settings.car.step_model_short", fallback: "Model" },
   { key: "settings.car.step_variant_short", fallback: "Variant" },
   { key: "settings.car.step_specs_short", fallback: "Specs" },
+] as const;
+const CARS_WIZARD_STEPS_KEYS = [
+  "brandOptions",
+  "gearboxOptions",
+  "manualInputs",
+  "modelOptions",
+  "step",
+  "tireOptions",
+  "typeOptions",
+  "variantOptions",
+] as const;
+const WIZARD_OPTIONS_KEYS = ["attribute", "layout", "messageText", "options"] as const;
+const WIZARD_MANUAL_INPUT_KEYS = [
+  "finalDrive",
+  "rim",
+  "tireAspect",
+  "tireWidth",
+  "topGear",
+] as const;
+const WIZARD_SUMMARY_KEYS = [
+  "profileNameLabelText",
+  "profileNameValueText",
+  "rows",
 ] as const;
 
 function parseWizardOptionIndex(value: string): number | null {
@@ -90,19 +118,23 @@ function WizardOptions(props: {
   firstOptionRef?: (element: HTMLButtonElement | null) => void;
   id: string;
   onSelectOption?: (item: CarsWizardOptionItem) => void;
-  section: CarsWizardOptionsRenderModel;
+  section: ReadonlySignal<CarsWizardOptionsRenderModel>;
 }) {
-  const { firstOptionRef, id, onSelectOption, section } = props;
-  const className = section.layout === "list"
+  const { firstOptionRef, id, onSelectOption } = props;
+  const { attribute, layout, messageText, options } = useSignalProperties(
+    props.section,
+    WIZARD_OPTIONS_KEYS,
+  );
+  const className = layout.value === "list"
     ? "wizard-options wizard-options--list"
     : "wizard-options";
   return (
     <div class={className} id={id}>
-      {section.messageText ? <em>{section.messageText}</em> : null}
-      {section.options.map((item, index) => (
+      {messageText.value ? <em>{messageText.value}</em> : null}
+      {options.value.map((item, index) => (
         <WizardOptionButton
-          key={`${section.attribute}-${item.value}`}
-          attribute={section.attribute}
+          key={`${attribute.value}-${item.value}`}
+          attribute={attribute.value}
           item={item}
           onSelect={() => onSelectOption?.(item)}
           optionRef={index === 0 ? firstOptionRef : undefined}
@@ -150,10 +182,10 @@ function WizardCustomEntry(props: {
 
 function CarsManualInputForm(props: {
   emitManualInputs(field: ManualInputField, value: string): void;
+  manualInputs: ReadonlySignal<CarsWizardRenderModel["manualInputs"]>;
   refs: CarsWizardElementRefs;
-  wizardModel: CarsWizardRenderModel;
 }) {
-  const { emitManualInputs, refs, wizardModel } = props;
+  const { emitManualInputs, refs } = props;
   const inputHandlers = useMemo<Record<ManualInputField, ManualInputHandler>>(
     () => ({
       tireWidth: createManualInputHandler(emitManualInputs, "tireWidth"),
@@ -163,6 +195,10 @@ function CarsManualInputForm(props: {
       topGear: createManualInputHandler(emitManualInputs, "topGear"),
     }),
     [emitManualInputs],
+  );
+  const { finalDrive, rim, tireAspect, tireWidth, topGear } = useSignalProperties(
+    props.manualInputs,
+    WIZARD_MANUAL_INPUT_KEYS,
   );
   return (
     <div class="settings-subgrid">
@@ -175,7 +211,7 @@ function CarsManualInputForm(props: {
           type="number"
           min="100"
           step="1"
-          value={wizardModel.manualInputs.tireWidth}
+          value={tireWidth.value}
           onInput={inputHandlers.tireWidth}
           ref={refs.setElementRef("tireWidthInput")}
         />
@@ -189,7 +225,7 @@ function CarsManualInputForm(props: {
           type="number"
           min="20"
           step="1"
-          value={wizardModel.manualInputs.tireAspect}
+          value={tireAspect.value}
           onInput={inputHandlers.tireAspect}
           ref={refs.setElementRef("tireAspectInput")}
         />
@@ -203,7 +239,7 @@ function CarsManualInputForm(props: {
           type="number"
           min="10"
           step="0.5"
-          value={wizardModel.manualInputs.rim}
+          value={rim.value}
           onInput={inputHandlers.rim}
           ref={refs.setElementRef("rimInput")}
         />
@@ -217,7 +253,7 @@ function CarsManualInputForm(props: {
           type="number"
           step="0.01"
           min="0.1"
-          value={wizardModel.manualInputs.finalDrive}
+          value={finalDrive.value}
           onInput={inputHandlers.finalDrive}
           ref={refs.setElementRef("finalDriveInput")}
         />
@@ -231,7 +267,7 @@ function CarsManualInputForm(props: {
           type="number"
           step="0.01"
           min="0.1"
-          value={wizardModel.manualInputs.topGear}
+          value={topGear.value}
           onInput={inputHandlers.topGear}
           ref={refs.setElementRef("topGearInput")}
         />
@@ -241,15 +277,15 @@ function CarsManualInputForm(props: {
 }
 
 function WizardBrandStep(props: {
-  hidden: boolean;
+  hidden: ReadonlySignal<boolean>;
   refs: CarsWizardElementRefs;
-  section: CarsWizardOptionsRenderModel;
+  section: ReadonlySignal<CarsWizardOptionsRenderModel>;
   onSelectBrand(value: string): void;
   onSubmitCustomBrand(value: string): void;
 }) {
-  const { hidden, onSelectBrand, onSubmitCustomBrand, refs, section } = props;
+  const { onSelectBrand, onSubmitCustomBrand, refs, section } = props;
   return (
-    <div id="wizardStep0" class="wizard-step" hidden={hidden}>
+    <div id="wizardStep0" class="wizard-step" hidden={props.hidden.value}>
       <h3>
         {t("settings.car.step_brand", "Select Brand")}
       </h3>
@@ -274,15 +310,15 @@ function WizardBrandStep(props: {
 }
 
 function WizardTypeStep(props: {
-  hidden: boolean;
+  hidden: ReadonlySignal<boolean>;
   refs: CarsWizardElementRefs;
-  section: CarsWizardOptionsRenderModel;
+  section: ReadonlySignal<CarsWizardOptionsRenderModel>;
   onSelectType(value: string): void;
   onSubmitCustomType(value: string): void;
 }) {
-  const { hidden, onSelectType, onSubmitCustomType, refs, section } = props;
+  const { onSelectType, onSubmitCustomType, refs, section } = props;
   return (
-    <div id="wizardStep1" class="wizard-step" hidden={hidden}>
+    <div id="wizardStep1" class="wizard-step" hidden={props.hidden.value}>
       <h3>
         {t("settings.car.step_type", "Select Type")}
       </h3>
@@ -307,15 +343,15 @@ function WizardTypeStep(props: {
 }
 
 function WizardModelStep(props: {
-  hidden: boolean;
+  hidden: ReadonlySignal<boolean>;
   refs: CarsWizardElementRefs;
-  section: CarsWizardOptionsRenderModel;
+  section: ReadonlySignal<CarsWizardOptionsRenderModel>;
   onSelectModel(index: number): void;
   onSubmitCustomModel(value: string): void;
 }) {
-  const { hidden, onSelectModel, onSubmitCustomModel, refs, section } = props;
+  const { onSelectModel, onSubmitCustomModel, refs, section } = props;
   return (
-    <div id="wizardStep2" class="wizard-step" hidden={hidden}>
+    <div id="wizardStep2" class="wizard-step" hidden={props.hidden.value}>
       <h3>
         {t("settings.car.step_model", "Select Model")}
       </h3>
@@ -360,14 +396,14 @@ function WizardModelStep(props: {
 }
 
 function WizardVariantStep(props: {
-  hidden: boolean;
+  hidden: ReadonlySignal<boolean>;
   refs: CarsWizardElementRefs;
-  section: CarsWizardOptionsRenderModel;
+  section: ReadonlySignal<CarsWizardOptionsRenderModel>;
   onSelectVariant(index: number): void;
 }) {
-  const { hidden, onSelectVariant, refs, section } = props;
+  const { onSelectVariant, refs, section } = props;
   return (
-    <div id="wizardStep3" class="wizard-step" hidden={hidden}>
+    <div id="wizardStep3" class="wizard-step" hidden={props.hidden.value}>
       <h3>
         {t("settings.car.step_variant", "Select Variant")}
       </h3>
@@ -389,15 +425,24 @@ function WizardVariantStep(props: {
 
 function WizardSpecsStep(props: {
   emitManualInputs(field: keyof CarsFeatureManualInputState, value: string): void;
-  hidden: boolean;
+  gearboxOptions: ReadonlySignal<CarsWizardOptionsRenderModel>;
+  hidden: ReadonlySignal<boolean>;
+  manualInputs: ReadonlySignal<CarsWizardRenderModel["manualInputs"]>;
   refs: CarsWizardElementRefs;
-  wizardModel: CarsWizardRenderModel;
   onSelectGearbox(index: number): void;
   onSelectTire(index: number): void;
+  tireOptions: ReadonlySignal<CarsWizardOptionsRenderModel>;
 }) {
-  const { emitManualInputs, hidden, onSelectGearbox, onSelectTire, refs, wizardModel } = props;
+  const {
+    emitManualInputs,
+    gearboxOptions,
+    onSelectGearbox,
+    onSelectTire,
+    refs,
+    tireOptions,
+  } = props;
   return (
-    <div id="wizardStep4" class="wizard-step" hidden={hidden}>
+    <div id="wizardStep4" class="wizard-step" hidden={props.hidden.value}>
       <div class="wizard-branch-card wizard-branch-card--library">
         <div class="wizard-branch-card__header">
           <strong class="wizard-branch-label">
@@ -422,7 +467,7 @@ function WizardSpecsStep(props: {
           }
           onSelectTire(index);
         }}
-        section={wizardModel.tireOptions}
+        section={tireOptions}
         firstOptionRef={refs.setElementRef("tireOption")}
       />
         <h3 class="wizard-section-title">
@@ -437,7 +482,7 @@ function WizardSpecsStep(props: {
           }
           onSelectGearbox(index);
         }}
-        section={wizardModel.gearboxOptions}
+        section={gearboxOptions}
         firstOptionRef={refs.setElementRef("gearboxOption")}
       />
       </div>
@@ -460,16 +505,15 @@ function WizardSpecsStep(props: {
         </div>
         <CarsManualInputForm
           emitManualInputs={emitManualInputs}
+          manualInputs={props.manualInputs}
           refs={refs}
-          wizardModel={wizardModel}
         />
       </div>
     </div>
   );
 }
 
-export function CarsWizardStepNav(props: { step: number }) {
-  const { step } = props;
+export function CarsWizardStepNav(props: { step: ReadonlySignal<number> }) {
   return (
     <div class="wizard-step-indicators" aria-label="Add car progress">
       {WIZARD_STEP_LABELS.map((label, index) => (
@@ -477,8 +521,8 @@ export function CarsWizardStepNav(props: { step: number }) {
           key={label.key}
           class="wizard-step-dot"
           data-step={String(index)}
-          data-step-state={wizardStepState(index, step)}
-          aria-current={index === step ? "step" : undefined}
+          data-step-state={wizardStepState(index, props.step.value)}
+          aria-current={index === props.step.value ? "step" : undefined}
         >
           <span class="wizard-step-dot__number">{index + 1}</span>
           <span class="wizard-step-dot__label">
@@ -493,7 +537,7 @@ export function CarsWizardStepNav(props: { step: number }) {
 export function CarsWizardSteps(props: {
   emitManualInputs(field: keyof CarsFeatureManualInputState, value: string): void;
   refs: CarsWizardElementRefs;
-  wizardModel: CarsWizardRenderModel;
+  wizardModel: ReadonlySignal<CarsWizardRenderModel>;
   onSelectBrand(value: string): void;
   onSelectGearbox(index: number): void;
   onSelectModel(index: number): void;
@@ -516,60 +560,81 @@ export function CarsWizardSteps(props: {
     onSubmitCustomModel,
     onSubmitCustomType,
     refs,
-    wizardModel,
   } = props;
+  const {
+    brandOptions,
+    gearboxOptions,
+    manualInputs,
+    modelOptions,
+    step,
+    tireOptions,
+    typeOptions,
+    variantOptions,
+  } = useSignalProperties(props.wizardModel, CARS_WIZARD_STEPS_KEYS);
+  const brandHidden = useComputed(() => step.value !== 0);
+  const typeHidden = useComputed(() => step.value !== 1);
+  const modelHidden = useComputed(() => step.value !== 2);
+  const variantHidden = useComputed(() => step.value !== 3);
+  const specsHidden = useComputed(() => step.value !== 4);
 
   return (
     <>
       <WizardBrandStep
-        hidden={wizardModel.step !== 0}
+        hidden={brandHidden}
         refs={refs}
-        section={wizardModel.brandOptions}
+        section={brandOptions}
         onSelectBrand={onSelectBrand}
         onSubmitCustomBrand={onSubmitCustomBrand}
       />
       <WizardTypeStep
-        hidden={wizardModel.step !== 1}
+        hidden={typeHidden}
         refs={refs}
-        section={wizardModel.typeOptions}
+        section={typeOptions}
         onSelectType={onSelectType}
         onSubmitCustomType={onSubmitCustomType}
       />
       <WizardModelStep
-        hidden={wizardModel.step !== 2}
+        hidden={modelHidden}
         refs={refs}
-        section={wizardModel.modelOptions}
+        section={modelOptions}
         onSelectModel={onSelectModel}
         onSubmitCustomModel={onSubmitCustomModel}
       />
       <WizardVariantStep
-        hidden={wizardModel.step !== 3}
+        hidden={variantHidden}
         refs={refs}
-        section={wizardModel.variantOptions}
+        section={variantOptions}
         onSelectVariant={onSelectVariant}
       />
       <WizardSpecsStep
         emitManualInputs={emitManualInputs}
-        hidden={wizardModel.step !== 4}
+        gearboxOptions={gearboxOptions}
+        hidden={specsHidden}
+        manualInputs={manualInputs}
         refs={refs}
-        wizardModel={wizardModel}
         onSelectGearbox={onSelectGearbox}
         onSelectTire={onSelectTire}
+        tireOptions={tireOptions}
       />
     </>
   );
 }
 
-export function CarsWizardSummaryPanel(props: { summary: CarsWizardRenderModel["summary"] }) {
-  const { summary } = props;
+export function CarsWizardSummaryPanel(props: {
+  summary: ReadonlySignal<CarsWizardRenderModel["summary"]>;
+}) {
+  const { profileNameLabelText, profileNameValueText, rows } = useSignalProperties(
+    props.summary,
+    WIZARD_SUMMARY_KEYS,
+  );
   return (
     <div id="wizardSummaryPanel">
       <div class="wizard-summary-preview">
-        <div class="wizard-summary-preview__label">{summary.profileNameLabelText}</div>
-        <div class="wizard-summary-preview__value">{summary.profileNameValueText}</div>
+        <div class="wizard-summary-preview__label">{profileNameLabelText.value}</div>
+        <div class="wizard-summary-preview__value">{profileNameValueText.value}</div>
       </div>
       <dl class="wizard-summary-list">
-        {summary.rows.map((row) => (
+        {rows.value.map((row) => (
           <div key={row.labelText} class="wizard-summary-item">
             <dt>{row.labelText}</dt>
             <dd>{row.valueText}</dd>
