@@ -6,8 +6,8 @@ import { getAnalysisSettings, setAnalysisSettings } from "../../api";
 import type { FeatureServices } from "../feature_deps_base";
 import {
   defaultVehicleSettings,
+  mergeAnalysisOwnedVehicleSettings,
   type SettingsState,
-  type VehicleSettings,
 } from "../ui_app_state";
 import { batch, computed, signal } from "../ui_signals";
 import type {
@@ -17,24 +17,6 @@ import type {
   SettingsAnalysisGuidanceRenderModel,
 } from "../views/analysis_panel";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
-
-export const ANALYSIS_SETTING_KEYS = [
-  "tire_width_mm",
-  "tire_aspect_pct",
-  "rim_in",
-  "final_drive_ratio",
-  "current_gear_ratio",
-  "wheel_bandwidth_pct",
-  "driveshaft_bandwidth_pct",
-  "engine_bandwidth_pct",
-  "speed_uncertainty_pct",
-  "tire_diameter_uncertainty_pct",
-  "final_drive_uncertainty_pct",
-  "gear_uncertainty_pct",
-  "min_abs_band_hz",
-  "max_band_half_width_pct",
-  "tire_deflection_factor",
-] as const satisfies readonly (keyof AnalysisSettingsPayload & keyof VehicleSettings)[];
 
 export interface SettingsAnalysisModuleDeps {
   panel: AnalysisPanelView;
@@ -352,25 +334,13 @@ export function createSettingsAnalysisModule(
     saveFeedback.value = null;
   }
 
-  function updateVehicleSettings(
-    updater: (current: VehicleSettings) => VehicleSettings,
-  ): void {
-    settings.vehicleSettings.value = updater(settings.vehicleSettings.value);
-  }
-
   function applyAnalysisSettingsPayload(
     serverSettings: AnalysisSettingsPayload,
   ): void {
-    updateVehicleSettings((current) => {
-      const next = { ...current };
-      for (const key of ANALYSIS_SETTING_KEYS) {
-        const value = serverSettings[key];
-        if (typeof value === "number") {
-          next[key] = value;
-        }
-      }
-      return next;
-    });
+    settings.vehicleSettings.value = mergeAnalysisOwnedVehicleSettings(
+      settings.vehicleSettings.value,
+      serverSettings,
+    );
     syncSettingsInputs();
     ctx.renderSpectrum();
   }
@@ -476,12 +446,6 @@ export function createSettingsAnalysisModule(
       }
     }
     const payload = buildEditableAnalysisPayload(fieldStates);
-    const vehicleSettings = settings.vehicleSettings.value;
-    for (const key of ANALYSIS_SETTING_KEYS) {
-      if (!(key in payload)) {
-        payload[key] = vehicleSettings[key];
-      }
-    }
     void syncAnalysisSettingsToServer(payload);
   }
 

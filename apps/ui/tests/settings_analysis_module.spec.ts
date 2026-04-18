@@ -9,6 +9,7 @@ import type {
   AnalysisPanelRenderModel,
   AnalysisPanelView,
 } from "../src/app/views/analysis_panel";
+import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
 
 function lastRender(renders: AnalysisPanelRenderModel[]): AnalysisPanelRenderModel {
   const render = renders.at(-1);
@@ -38,6 +39,10 @@ function translate(key: string, vars?: Record<string, unknown>): string {
       return key;
   }
 }
+
+test.beforeEach(() => {
+  installWindowGlobal();
+});
 
 test("settings analysis module renders guidance and surfaces invalid input through the typed panel bridge", () => {
   const state = createAppState().settings;
@@ -121,4 +126,77 @@ test("settings analysis module renders guidance and surfaces invalid input throu
   const recoveredRender = lastRender(renders);
   expect(recoveredRender.fields.wheel_bandwidth_pct.invalid).toBe(false);
   expect(recoveredRender.fields.wheel_bandwidth_pct.guidance.error).toBeNull();
+});
+
+test("settings analysis module keeps active-car geometry when loading server analysis settings", async () => {
+  const originalFetch = globalThis.fetch;
+  const state = createAppState().settings;
+  let renderSpectrumCalls = 0;
+
+  state.vehicleSettings.value = {
+    ...state.vehicleSettings.value,
+    tire_width_mm: 245,
+    tire_aspect_pct: 40,
+    rim_in: 19,
+    final_drive_ratio: 3.23,
+    current_gear_ratio: 0.72,
+    tire_deflection_factor: 0.95,
+    wheel_bandwidth_pct: 5,
+    speed_uncertainty_pct: 1,
+    min_abs_band_hz: 0.2,
+  };
+
+  globalThis.fetch = (async () =>
+    jsonResponse({
+      tire_width_mm: 999,
+      tire_aspect_pct: 99,
+      rim_in: 24,
+      final_drive_ratio: 9.99,
+      current_gear_ratio: 2.22,
+      tire_deflection_factor: 0.5,
+      wheel_bandwidth_pct: 7.5,
+      speed_uncertainty_pct: 2.5,
+      min_abs_band_hz: 1.5,
+    })) as typeof fetch;
+
+  const module = createSettingsAnalysisModule({
+    panel: {
+      actions: signal(null),
+      carAvailability: signal(null),
+      model: signal(null),
+      focusField: () => undefined,
+      openGuidance: () => undefined,
+    },
+    hasValidActiveCar: () => true,
+    onMissingActiveCar: () => undefined,
+    onSaveError: () => undefined,
+    renderSpectrum: () => {
+      renderSpectrumCalls += 1;
+    },
+    settings: state,
+    services: {
+      t: translate,
+      requestConfirmation: async () => true,
+      showError: () => undefined,
+    },
+  });
+
+  try {
+    await module.loadAnalysisSettingsFromServer();
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  expect(state.vehicleSettings.value).toMatchObject({
+    tire_width_mm: 245,
+    tire_aspect_pct: 40,
+    rim_in: 19,
+    final_drive_ratio: 3.23,
+    current_gear_ratio: 0.72,
+    tire_deflection_factor: 0.95,
+    wheel_bandwidth_pct: 7.5,
+    speed_uncertainty_pct: 2.5,
+    min_abs_band_hz: 1.5,
+  });
+  expect(renderSpectrumCalls).toBe(1);
 });
