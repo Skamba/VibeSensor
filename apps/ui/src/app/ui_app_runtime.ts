@@ -76,6 +76,7 @@ function createUiAppFeatureRuntimePorts(deps: {
 
 export interface UiAppRuntime {
   attachSettingsPanels(handles: UiMountedLazyPanelHandles): void;
+  dispose(): void;
   panels: UiMountedPanels;
   shellChrome: UiShellChromeBindings;
   spectrumPanel: UiLazyPanels["spectrumPanel"];
@@ -130,13 +131,28 @@ export function createUiAppRuntime(
     features: featurePorts.startup,
     defaultViewId: DEFAULT_SHELL_VIEW_ID,
   });
+  let disposed = false;
 
   return {
     attachSettingsPanels: lazyPanels.attachSettingsPanels,
+    dispose() {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      featurePorts.dispose();
+      transport.dispose();
+      spectrum.dispose();
+      shell.dispose();
+      lazyPanels.dispose();
+    },
     panels: lazyPanels.panels,
     shellChrome,
     spectrumPanel: lazyPanels.spectrumPanel,
     start() {
+      if (disposed) {
+        return;
+      }
       startup.start();
     },
   };

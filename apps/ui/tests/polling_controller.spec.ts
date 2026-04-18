@@ -110,4 +110,35 @@ test.describe("createPollingController", () => {
       timers.restore();
     }
   });
+
+  test("dispose tears down enabled-signal polling permanently", async () => {
+    const timers = installTimerHarness();
+    const enabled = signal(true);
+    let pollCalls = 0;
+    const controller = createPollingController({
+      enabled,
+      poll: async () => {
+        pollCalls += 1;
+        return 500;
+      },
+      onErrorDelayMs: 2_000,
+    });
+
+    try {
+      await flushAsyncWork();
+      expect(pollCalls).toBe(1);
+      expect(timers.pendingDelays()).toEqual([500]);
+
+      controller.dispose();
+      expect(timers.pendingDelays()).toEqual([]);
+
+      enabled.value = false;
+      enabled.value = true;
+      await flushAsyncWork();
+      expect(pollCalls).toBe(1);
+      expect(timers.pendingDelays()).toEqual([]);
+    } finally {
+      timers.restore();
+    }
+  });
 });

@@ -55,6 +55,7 @@ export interface UpdateFeatureWorkflowDeps {
 
 export interface UpdateFeatureWorkflow {
   cancelUpdate(): Promise<void>;
+  dispose(): void;
   getRenderState(): UpdateFeatureRenderState;
   readonly renderState: ReadonlySignal<UpdateFeatureRenderState>;
   refreshStatus(): Promise<void>;
@@ -241,6 +242,9 @@ export function createUpdateFeatureWorkflow(
 
   return {
     cancelUpdate,
+    dispose(): void {
+      polling.dispose();
+    },
     getRenderState,
     renderState,
     refreshStatus,

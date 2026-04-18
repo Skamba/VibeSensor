@@ -63,6 +63,7 @@ export interface RealtimeFeatureRecordingPorts {
 
 export interface RealtimeFeature {
   bindHandlers(): void;
+  dispose(): void;
   refreshLoggingStatus(): Promise<void>;
   refreshLocationOptions(): Promise<void>;
 }
@@ -117,7 +118,7 @@ export function createRealtimeFeature(
     activateSettingsTab(tabId);
   }
 
-  effect(() => {
+  const disposeLiveStatusSync = effect(() => {
     const model = viewState.liveOverviewModel.value;
     untracked(() => {
       ports.chrome.setShellLiveStatus(model.runHealth.variant, model.runHealth.text);
@@ -174,6 +175,11 @@ export function createRealtimeFeature(
 
   return {
     bindHandlers,
+    dispose(): void {
+      disposeLiveStatusSync();
+      workflow.dispose();
+      viewState.dispose();
+    },
     refreshLoggingStatus: () => workflow.refreshLoggingStatus(),
     refreshLocationOptions: () => workflow.refreshLocationOptions(),
   };

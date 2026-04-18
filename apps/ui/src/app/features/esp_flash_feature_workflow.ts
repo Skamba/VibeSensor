@@ -50,6 +50,7 @@ export interface EspFlashFeatureWorkflowDeps {
 
 export interface EspFlashFeatureWorkflow {
   cancelFlash(): Promise<void>;
+  dispose(): void;
   getRenderState(): EspFlashFeatureRenderState;
   readonly renderState: ReadonlySignal<EspFlashFeatureRenderState>;
   refreshPorts(): Promise<void>;
@@ -235,6 +236,9 @@ export function createEspFlashFeatureWorkflow(
 
   return {
     cancelFlash,
+    dispose(): void {
+      polling.dispose();
+    },
     getRenderState,
     renderState,
     refreshPorts,

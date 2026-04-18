@@ -19,6 +19,7 @@ export interface WsClient {
   readonly uiState: ReadonlySignal<WsUiState>;
   connect(): void;
   close(): void;
+  dispose(): void;
   send(payload: { client_id: string | null }): void;
 }
 
@@ -49,18 +50,22 @@ export function createWsClient(options: WsClientOptions): WsClient {
   const reconnectTimer = createReplaceableTimeout();
   const socketOpen = signal(false);
   const staleTimer = createReplaceableTimeout();
-
-  bindReconnectLifecycle();
-  bindStaleLifecycle();
+  const disposeReconnectLifecycle = bindReconnectLifecycle();
+  const disposeStaleLifecycle = bindStaleLifecycle();
+  let disposed = false;
 
   return {
     uiState,
     connect,
     close,
+    dispose,
     send,
   };
 
   function connect(): void {
+    if (disposed) {
+      return;
+    }
     batch(() => {
       manuallyClosed.value = false;
       reconnectDelayMs.value = null;
@@ -78,6 +83,18 @@ export function createWsClient(options: WsClientOptions): WsClient {
       ws.close();
       ws = null;
     }
+    reconnectTimer.clear();
+    staleTimer.clear();
+  }
+
+  function dispose(): void {
+    if (disposed) {
+      return;
+    }
+    disposed = true;
+    close();
+    disposeReconnectLifecycle();
+    disposeStaleLifecycle();
   }
 
   function send(payload: { client_id: string | null }): void {
@@ -137,6 +154,9 @@ export function createWsClient(options: WsClientOptions): WsClient {
   }
 
   function scheduleReconnect(): void {
+    if (disposed) {
+      return;
+    }
     reconnectDelayMs.value = nextReconnectDelayMs();
   }
 
@@ -149,8 +169,8 @@ export function createWsClient(options: WsClientOptions): WsClient {
     return Math.round(raw + jitter);
   }
 
-  function bindReconnectLifecycle(): void {
-    bindReplaceableTimerEffect(reconnectTimer, () => {
+  function bindReconnectLifecycle(): () => void {
+    return bindReplaceableTimerEffect(reconnectTimer, () => {
       const pendingReconnectDelayMs = reconnectDelayMs.value;
       if (pendingReconnectDelayMs === null || manuallyClosed.value) {
         return null;
@@ -167,8 +187,8 @@ export function createWsClient(options: WsClientOptions): WsClient {
     });
   }
 
-  function bindStaleLifecycle(): void {
-    bindReplaceableTimerEffect(staleTimer, () => {
+  function bindStaleLifecycle(): () => void {
+    return bindReplaceableTimerEffect(staleTimer, () => {
       if (
         !socketOpen.value
         || manuallyClosed.value

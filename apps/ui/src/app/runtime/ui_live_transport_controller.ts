@@ -24,13 +24,32 @@ export class UiLiveTransportController {
 
   private lastSentSelectionCycle = -1;
 
+  private readonly disposeTransportStateSync: () => void;
+
+  private readonly disposePendingPayloadSync: () => void;
+
+  private readonly disposeWsStateSync: () => void;
+
+  private readonly disposeSelectionSync: () => void;
+
+  private disposed = false;
+
+  private queuedRenderFrameId: number | null = null;
+
   constructor(deps: UiLiveTransportControllerDeps) {
     this.state = deps.state;
     this.payloadErrorMessage = deps.payloadErrorMessage;
-    this.bindTransportSignalSync();
+    const disposers = this.bindTransportSignalSync();
+    this.disposeTransportStateSync = disposers.transportStateSync;
+    this.disposePendingPayloadSync = disposers.pendingPayloadSync;
+    this.disposeWsStateSync = disposers.wsStateSync;
+    this.disposeSelectionSync = disposers.selectionSync;
   }
 
   sendSelection(): void {
+    if (this.disposed) {
+      return;
+    }
     const ws = this.state.transport.ws.value;
     const clientId = this.state.realtime.selectedClientId.value;
     if (
@@ -47,8 +66,30 @@ export class UiLiveTransportController {
     ws.send({ client_id: clientId });
   }
 
-  private bindTransportSignalSync(): void {
-    effect(() => {
+  dispose(): void {
+    if (this.disposed) {
+      return;
+    }
+    this.disposed = true;
+    if (this.queuedRenderFrameId !== null) {
+      globalThis.cancelAnimationFrame(this.queuedRenderFrameId);
+      this.queuedRenderFrameId = null;
+    }
+    this.state.transport.ws.value?.dispose();
+    this.state.transport.ws.value = null;
+    this.disposeSelectionSync();
+    this.disposeWsStateSync();
+    this.disposePendingPayloadSync();
+    this.disposeTransportStateSync();
+  }
+
+  private bindTransportSignalSync(): {
+    pendingPayloadSync: () => void;
+    selectionSync: () => void;
+    transportStateSync: () => void;
+    wsStateSync: () => void;
+  } {
+    const transportStateSync = effect(() => {
       const ws = this.state.transport.ws.value;
       if (!ws) {
         return;
@@ -62,13 +103,13 @@ export class UiLiveTransportController {
       });
     });
 
-    effectOnChange(this.state.transport.pendingPayload, (nextPendingPayload) => {
+    const pendingPayloadSync = effectOnChange(this.state.transport.pendingPayload, (nextPendingPayload) => {
       if (nextPendingPayload !== null) {
         untracked(() => this.queueRender());
       }
     });
 
-    effectOnChange(this.state.transport.wsState, (nextWsState, previousWsState) => {
+    const wsStateSync = effectOnChange(this.state.transport.wsState, (nextWsState, previousWsState) => {
       const nextReady = nextWsState === "connected" || nextWsState === "no_data";
       const previousReady = previousWsState === "connected" || previousWsState === "no_data";
       if (nextReady && !previousReady) {
@@ -77,12 +118,22 @@ export class UiLiveTransportController {
       }
     });
 
-    effectOnChange(this.state.realtime.selectedClientId, () => {
+    const selectionSync = effectOnChange(this.state.realtime.selectedClientId, () => {
       untracked(() => this.sendSelection());
     });
+
+    return {
+      pendingPayloadSync,
+      selectionSync,
+      transportStateSync,
+      wsStateSync,
+    };
   }
 
   startTransportMode(): void {
+    if (this.disposed) {
+      return;
+    }
     const isDemoMode = new URLSearchParams(window.location.search).has("demo");
     if (isDemoMode) {
       runDemoMode({
@@ -95,9 +146,14 @@ export class UiLiveTransportController {
   }
 
   private queueRender(): void {
-    if (this.state.transport.renderQueued.value) return;
+    if (this.disposed || this.state.transport.renderQueued.value) return;
     this.state.transport.renderQueued.value = true;
-    window.requestAnimationFrame(() => {
+    this.queuedRenderFrameId = globalThis.requestAnimationFrame(() => {
+      this.queuedRenderFrameId = null;
+      if (this.disposed) {
+        this.state.transport.renderQueued.value = false;
+        return;
+      }
       this.state.transport.renderQueued.value = false;
       const now = Date.now();
       if (
@@ -118,6 +174,9 @@ export class UiLiveTransportController {
   }
 
   private applyPayload(payload: unknown): void {
+    if (this.disposed) {
+      return;
+    }
     let adapted: AdaptedPayload;
     try {
       adapted = adaptServerPayload(payload);
@@ -141,6 +200,9 @@ export class UiLiveTransportController {
   }
 
   private queueTransportPayload(payload: unknown): void {
+    if (this.disposed) {
+      return;
+    }
     batch(() => {
       this.state.transport.wsState.value = "connected";
       this.state.transport.hasReceivedPayload.value = true;
@@ -149,6 +211,9 @@ export class UiLiveTransportController {
   }
 
   private connectWs(): void {
+    if (this.disposed) {
+      return;
+    }
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     this.state.transport.ws.value = createWsClient({
       url: `${protocol}//${window.location.host}/ws`,
