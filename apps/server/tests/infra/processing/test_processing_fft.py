@@ -12,6 +12,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+import vibesensor.infra.processing.fft as fft_module
 from vibesensor.infra.processing.fft import (
     compute_fft_spectrum,
     float_list,
@@ -330,6 +331,40 @@ class TestComputeFftSpectrum:
             "axis_peaks",
         }
         assert set(result.keys()) == expected_keys
+
+    def test_uses_internal_ndarray_combined_spectrum_helper(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        sr = 256
+        fft_n = 256
+        params = _make_fft_params(sr=sr, fft_n=fft_n)
+        block = np.random.default_rng(42).standard_normal((3, fft_n)).astype(np.float32) * 0.01
+        expected = np.linspace(
+            0.1,
+            0.3,
+            num=params["freq_slice"].size,
+            dtype=np.float64,
+        )
+        helper_calls = 0
+
+        def fake_combined(
+            *,
+            axis_spectra_amp_g: object,
+            axis_count_for_mean: int | None = None,
+        ) -> np.ndarray:
+            del axis_spectra_amp_g, axis_count_for_mean
+            nonlocal helper_calls
+            helper_calls += 1
+            return expected
+
+        monkeypatch.setattr(fft_module, "_combined_spectrum_amp_g_array", fake_combined)
+
+        result = compute_fft_spectrum(block, sr, **params)
+
+        assert helper_calls == 1
+        assert result["combined_amp"].dtype == np.float32
+        np.testing.assert_allclose(result["combined_amp"], expected.astype(np.float32))
 
     def test_zero_length_fft_block_returns_empty_result(self) -> None:
         result = compute_fft_spectrum(

@@ -116,6 +116,36 @@ def _quantile_or_zero(values: npt.NDArray[np.float64], q: float) -> float:
     return float(np.quantile(values, q))
 
 
+def _combined_spectrum_amp_g_array(
+    *,
+    axis_spectra_amp_g: Sequence[ArrayLike] | npt.NDArray[np.floating],
+    axis_count_for_mean: int | None = None,
+) -> npt.NDArray[np.float64]:
+    if isinstance(axis_spectra_amp_g, np.ndarray):
+        if axis_spectra_amp_g.size == 0:
+            return np.empty(0, dtype=np.float64)
+        arr = np.asarray(axis_spectra_amp_g, dtype=np.float64)
+        if arr.ndim == 1:
+            arr = arr.reshape(1, -1)
+    else:
+        if not axis_spectra_amp_g:
+            return np.empty(0, dtype=np.float64)
+        target_len = min((len(a) for a in axis_spectra_amp_g), default=0)
+        if target_len <= 0:
+            return np.empty(0, dtype=np.float64)
+        arr = np.empty((len(axis_spectra_amp_g), target_len), dtype=np.float64)
+        for i, a in enumerate(axis_spectra_amp_g):
+            arr[i] = np.asarray(a, dtype=np.float64)[:target_len]
+
+    arr = np.where(np.isfinite(arr), arr, 0.0)
+    divisor = (
+        max(1.0, float(axis_count_for_mean))
+        if axis_count_for_mean is not None
+        else max(1.0, float(arr.shape[0]))
+    )
+    return np.sqrt(np.sum(arr**2, axis=0) / divisor)
+
+
 def combined_spectrum_amp_g(
     *,
     axis_spectra_amp_g: Sequence[ArrayLike] | npt.NDArray[np.floating],
@@ -140,29 +170,10 @@ def combined_spectrum_amp_g(
         denominator fixed (e.g. always divide by 3 even when only 2 axes are
         valid), which preserves comparability across partial-axis frames.
     """
-    if isinstance(axis_spectra_amp_g, np.ndarray):
-        if axis_spectra_amp_g.size == 0:
-            return []
-        arr = np.asarray(axis_spectra_amp_g, dtype=np.float64)
-        if arr.ndim == 1:
-            arr = arr.reshape(1, -1)
-    else:
-        if not axis_spectra_amp_g:
-            return []
-        target_len = min((len(a) for a in axis_spectra_amp_g), default=0)
-        if target_len <= 0:
-            return []
-        arr = np.empty((len(axis_spectra_amp_g), target_len), dtype=np.float64)
-        for i, a in enumerate(axis_spectra_amp_g):
-            arr[i] = np.asarray(a, dtype=np.float64)[:target_len]
-
-    arr = np.where(np.isfinite(arr), arr, 0.0)
-    divisor = (
-        max(1.0, float(axis_count_for_mean))
-        if axis_count_for_mean is not None
-        else max(1.0, float(arr.shape[0]))
+    result = _combined_spectrum_amp_g_array(
+        axis_spectra_amp_g=axis_spectra_amp_g,
+        axis_count_for_mean=axis_count_for_mean,
     )
-    result: npt.NDArray[np.floating] = np.sqrt(np.sum(arr**2, axis=0) / divisor)
     return cast(list[float], result.tolist())
 
 
