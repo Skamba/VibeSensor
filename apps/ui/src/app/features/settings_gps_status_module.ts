@@ -33,6 +33,7 @@ export interface SettingsGpsStatusModuleDeps {
 
 export interface SettingsGpsStatusModule {
   bindHandlers(): void;
+  dispose(): void;
   markStartupReady(): void;
 }
 
@@ -61,7 +62,7 @@ export function createSettingsGpsStatusModule(
     )
   );
 
-  createPollingController({
+  const polling = createPollingController({
     enabled: pollingEnabled,
     poll: async () => {
       const shouldLoadObdStatus =
@@ -91,6 +92,9 @@ export function createSettingsGpsStatusModule(
   return {
     bindHandlers(): void {
       handlersBound.value = true;
+    },
+    dispose(): void {
+      polling.dispose();
     },
     markStartupReady(): void {
       startupReady.value = true;

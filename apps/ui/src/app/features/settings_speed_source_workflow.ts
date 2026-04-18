@@ -49,6 +49,7 @@ export interface SettingsSpeedSourceWorkflowDeps {
 }
 
 export interface SettingsSpeedSourceWorkflow {
+  dispose(): void;
   getRenderState(): SettingsSpeedSourceRenderState;
   readonly renderState: ReadonlySignal<SettingsSpeedSourceRenderState>;
   handleManualSpeedInput(value: string): void;
@@ -514,6 +515,9 @@ export function createSettingsSpeedSourceWorkflow(
   });
 
   return {
+    dispose(): void {
+      obdBackgroundRescan.dispose();
+    },
     getRenderState,
     renderState,
     handleManualSpeedInput,

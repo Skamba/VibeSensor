@@ -21,6 +21,7 @@ export interface CarsFeatureDeps {
 
 export interface CarsFeature {
   bindWizardHandlers(): void;
+  dispose(): void;
   openWizard(): void;
 }
 
@@ -116,6 +117,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         },
       };
     },
+    dispose(): void {},
     openWizard,
   };
 }

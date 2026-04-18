@@ -20,6 +20,12 @@ export class UiSpectrumController {
 
   private readonly canvas: SpectrumCanvasRenderer;
 
+  private readonly disposeLanguageSync: () => void;
+
+  private readonly disposeSpectraSync: () => void;
+
+  private readonly disposeTransportOverlaySync: () => void;
+
   constructor(
     private readonly deps: UiSpectrumControllerDeps,
   ) {
@@ -52,8 +58,9 @@ export class UiSpectrumController {
     this.bindInteractionModelSignals();
     this.renderSpectrumHeader();
     this.updateSpectrumOverlay();
-    this.bindReactiveTransportSync();
-    this.bindReactiveLanguageSync();
+    this.disposeSpectraSync = this.bindReactiveTransportSync();
+    this.disposeLanguageSync = this.bindReactiveLanguageSync();
+    this.disposeTransportOverlaySync = this.bindReactiveOverlaySync();
   }
 
   private get state(): AppState {
@@ -88,6 +95,14 @@ export class UiSpectrumController {
     this.canvas.renderPreparedFrame(prepared);
     this.interaction.applyPlotSelection();
     this.updateSpectrumOverlay();
+  }
+
+  dispose(): void {
+    this.disposeTransportOverlaySync();
+    this.disposeSpectraSync();
+    this.disposeLanguageSync();
+    this.interaction.dispose();
+    this.canvas.dispose();
   }
 
   private spectrumOverlayModel(): { hidden: boolean; text: string } {
@@ -134,8 +149,8 @@ export class UiSpectrumController {
     this.panel.bindBandLegendModel(this.interaction.bandLegendModel);
   }
 
-  private bindReactiveLanguageSync(): void {
-    effectOnChange(this.state.shell.lang, () => {
+  private bindReactiveLanguageSync(): () => void {
+    return effectOnChange(this.state.shell.lang, () => {
       untracked(() => {
         this.renderSpectrumHeader();
         this.updateSpectrumOverlay();
@@ -143,16 +158,19 @@ export class UiSpectrumController {
     });
   }
 
-  private bindReactiveTransportSync(): void {
-    effectOnChange(this.state.spectrum.spectra, () => {
+  private bindReactiveTransportSync(): () => void {
+    return effectOnChange(this.state.spectrum.spectra, () => {
       untracked(() => this.renderSpectrum());
     });
+  }
+
+  private bindReactiveOverlaySync(): () => void {
     const transportOverlayState = computed(() => ({
       hasReceivedPayload: this.state.transport.hasReceivedPayload.value,
       payloadError: this.state.transport.payloadError.value,
       wsState: this.state.transport.wsState.value,
     }));
-    effectOnChange(transportOverlayState, () => {
+    return effectOnChange(transportOverlayState, () => {
       untracked(() => this.updateSpectrumOverlay());
     });
   }

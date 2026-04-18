@@ -29,6 +29,7 @@ export interface SettingsSpeedSourceModuleDeps {
 
 export interface SettingsSpeedSourceModule {
   bindHandlers(): void;
+  dispose(): void;
   syncSpeedSourceSelectionUi(): void;
   syncSpeedSourceInputs(): void;
   loadSpeedSourceFromServer(): Promise<void>;
@@ -69,13 +70,14 @@ export function createSettingsSpeedSourceModule(
   );
   ctx.panel.model.value = panelModel;
   let handlersBound = false;
+  let disposeNavigationContextSync: (() => void) | null = null;
 
   function bindHandlers(): void {
     if (handlersBound) {
       return;
     }
     handlersBound = true;
-    effectOnChange(navigationContextKey, () => {
+    disposeNavigationContextSync = effectOnChange(navigationContextKey, () => {
       untracked(() => {
         workflow.handleNavigateContext();
       });
@@ -105,6 +107,11 @@ export function createSettingsSpeedSourceModule(
 
   return {
     bindHandlers,
+    dispose(): void {
+      disposeNavigationContextSync?.();
+      disposeNavigationContextSync = null;
+      workflow.dispose();
+    },
     loadSpeedSourceFromServer: workflow.loadSpeedSourceFromServer,
     saveSpeedSourceFromInputs(): void {
       void workflow.saveSpeedSource();

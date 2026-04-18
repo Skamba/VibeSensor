@@ -2,6 +2,7 @@ import { effect, signal, type ReadonlySignal } from "../ui_signals";
 import { createReplaceableTimeout } from "../timer_cleanup";
 
 export interface PollingController {
+  dispose(): void;
   start(): void;
   stop(): void;
   restart(): void;
@@ -21,15 +22,20 @@ export function createPollingController(
   const pollTimer = createReplaceableTimeout();
   let pollGeneration = 0;
   const pollingActive = signal(false);
+  let disposeEnabledSync: (() => void) | null = null;
+  let disposed = false;
 
   function schedulePoll(delayMs: number, generation: number): void {
-    if (!pollingActive.value || generation !== pollGeneration) return;
+    if (disposed || !pollingActive.value || generation !== pollGeneration) return;
     pollTimer.replace(() => {
       void runPoll(generation);
     }, delayMs);
   }
 
   async function runPoll(generation: number = pollGeneration): Promise<void> {
+    if (disposed) {
+      return;
+    }
     try {
       const delayMs = await poll();
       schedulePoll(delayMs, generation);
@@ -39,14 +45,14 @@ export function createPollingController(
   }
 
   function restart(): void {
-    if (!pollingActive.value) return;
+    if (disposed || !pollingActive.value) return;
     pollGeneration += 1;
     pollTimer.clear();
     void runPoll(pollGeneration);
   }
 
   function start(): void {
-    if (pollingActive.value) return;
+    if (disposed || pollingActive.value) return;
     pollingActive.value = true;
     restart();
   }
@@ -58,8 +64,18 @@ export function createPollingController(
     pollTimer.clear();
   }
 
+  function dispose(): void {
+    if (disposed) {
+      return;
+    }
+    disposed = true;
+    stop();
+    disposeEnabledSync?.();
+    disposeEnabledSync = null;
+  }
+
   if (enabled) {
-    effect(() => {
+    disposeEnabledSync = effect(() => {
       if (enabled.value) {
         start();
         return;
@@ -69,6 +85,7 @@ export function createPollingController(
   }
 
   return {
+    dispose,
     start,
     stop,
     restart,

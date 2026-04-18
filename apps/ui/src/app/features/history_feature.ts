@@ -36,6 +36,7 @@ export interface HistoryFeatureDeps {
 
 export interface HistoryFeature {
   bindHandlers(): void;
+  dispose(): void;
   refreshHistory(): Promise<void>;
   deleteAllRuns(): Promise<void>;
   onHistoryTableAction(action: HistoryRunAction, runId: string): Promise<void>;
@@ -238,8 +239,8 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     });
   }
 
-  function bindReactiveLanguageSync(): void {
-    effectOnChange(shell.lang, () => {
+  function bindReactiveLanguageSync(): () => void {
+    return effectOnChange(shell.lang, () => {
       untracked(() => {
         reloadExpandedRunOnLanguageChange();
       });
@@ -425,10 +426,14 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     };
   }
 
-  bindReactiveLanguageSync();
+  const disposeLanguageSync = bindReactiveLanguageSync();
 
   return {
     bindHandlers,
+    dispose(): void {
+      previewPrefetchToken += 1;
+      disposeLanguageSync();
+    },
     refreshHistory,
     deleteAllRuns,
     onHistoryTableAction,

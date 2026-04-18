@@ -52,6 +52,7 @@ export interface SpectrumCanvasRendererDeps {
 }
 
 export interface SpectrumCanvasRenderer {
+  dispose(): void;
   prepareFrame(): SpectrumPreparedRenderData;
   renderPreparedFrame(prepared: SpectrumPreparedRenderData): void;
   refreshDecorations(): void;
@@ -65,6 +66,7 @@ export function createSpectrumCanvasRenderer(
   const loadChartModule = deps.loadChartModule ?? loadSpectrumChartModule;
 
   let chartLoadPromise: Promise<void> | null = null;
+  let disposed = false;
 
   const spectrumLastFrame = signal<SpectrumHeavyFrame | null>(null);
   const pendingPreparedFrame = signal<SpectrumPreparedRenderData | null>(null);
@@ -94,10 +96,10 @@ export function createSpectrumCanvasRenderer(
 
   const spectrumBandPlugin = createBandPlugin();
   chartPlugins.value = [spectrumBandPlugin];
-  initTweenEffect();
+  const disposeTweenEffect = initTweenEffect();
 
-  function initTweenEffect(): void {
-    effect(() => {
+  function initTweenEffect(): () => void {
+    return effect(() => {
       const to = tweenTarget.value;
       if (!to) return;
       const anim = createRafAnimation({
@@ -221,6 +223,9 @@ export function createSpectrumCanvasRenderer(
   }
 
   function renderPreparedFrame(prepared: SpectrumPreparedRenderData): void {
+    if (disposed) {
+      return;
+    }
     pendingPreparedFrame.value = prepared;
     currentEntries.value = prepared.entries;
     currentFreqAxis.value = prepared.freqAxis;
@@ -259,6 +264,9 @@ export function createSpectrumCanvasRenderer(
   }
 
   function refreshDecorations(): void {
+    if (disposed) {
+      return;
+    }
     const freqAxis = currentFreqAxis.value;
     const entries = currentEntries.value;
     if (!freqAxis.length || !entries.length) {
@@ -268,6 +276,9 @@ export function createSpectrumCanvasRenderer(
   }
 
   function setSeriesIsolation(seriesIndex: number | null): void {
+    if (disposed) {
+      return;
+    }
     deps.state.spectrum.spectrumPlot.value?.setSeriesIsolation(seriesIndex);
   }
 
@@ -442,6 +453,9 @@ export function createSpectrumCanvasRenderer(
   }
 
   function createSpectrumPlot(loadedChartModule: SpectrumChartModule): void {
+    if (disposed) {
+      return;
+    }
     tweenTarget.value = null;
     spectrumLastFrame.value = null;
     if (deps.state.spectrum.spectrumPlot.value) {
@@ -460,6 +474,9 @@ export function createSpectrumCanvasRenderer(
   }
 
   function ensureSpectrumPlot(): boolean {
+    if (disposed) {
+      return false;
+    }
     if (deps.state.spectrum.spectrumPlot.value) {
       deps.state.spectrum.chartLoadErrorDetail.value = null;
       return true;
@@ -478,6 +495,9 @@ export function createSpectrumCanvasRenderer(
     deps.state.spectrum.chartLoadErrorDetail.value = null;
     chartLoadPromise = loadChartModule()
       .then((module) => {
+        if (disposed) {
+          return;
+        }
         chartModule.value = module;
         const latestPrepared = pendingPreparedFrame.value;
         if (!latestPrepared?.frame) {
@@ -489,9 +509,15 @@ export function createSpectrumCanvasRenderer(
         renderPreparedFrame(rerender);
       })
       .catch((error: unknown) => {
+        if (disposed) {
+          return;
+        }
         deps.state.spectrum.chartLoadErrorDetail.value = getChartLoadErrorDetail(error);
       })
       .finally(() => {
+        if (disposed) {
+          return;
+        }
         deps.state.spectrum.chartLoading.value = false;
         chartLoadPromise = null;
         onAsyncChartUpdate();
@@ -505,6 +531,20 @@ export function createSpectrumCanvasRenderer(
   }
 
   return {
+    dispose() {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      disposeTweenEffect();
+      tweenTarget.value = null;
+      pendingPreparedFrame.value = null;
+      if (deps.state.spectrum.spectrumPlot.value) {
+        deps.state.spectrum.spectrumPlot.value.destroy();
+        deps.state.spectrum.spectrumPlot.value = null;
+      }
+      deps.state.spectrum.chartLoading.value = false;
+    },
     prepareFrame,
     renderPreparedFrame,
     refreshDecorations,

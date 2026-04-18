@@ -12,6 +12,9 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     bindHandlers() {
       calls.push("history.bindHandlers");
     },
+    dispose() {
+      calls.push("history.dispose");
+    },
     async refreshHistory() {
       calls.push("history.refreshHistory");
     },
@@ -19,6 +22,9 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
   const realtime = {
     bindHandlers() {
       calls.push("realtime.bindHandlers");
+    },
+    dispose() {
+      calls.push("realtime.dispose");
     },
     async refreshLocationOptions() {
       calls.push("realtime.refreshLocationOptions");
@@ -30,6 +36,9 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
   const settings = {
     bindHandlers() {
       calls.push("settings.bindHandlers");
+    },
+    dispose() {
+      calls.push("settings.dispose");
     },
     syncSettingsInputs() {
       calls.push("settings.syncSettingsInputs");
@@ -60,15 +69,24 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     bindWizardHandlers() {
       calls.push("cars.bindWizardHandlers");
     },
+    dispose() {
+      calls.push("cars.dispose");
+    },
   };
   const update = {
     bindUpdateHandlers() {
       calls.push("update.bindUpdateHandlers");
     },
+    dispose() {
+      calls.push("update.dispose");
+    },
   };
   const espFlash = {
     bindHandlers() {
       calls.push("espFlash.bindHandlers");
+    },
+    dispose() {
+      calls.push("espFlash.dispose");
     },
   };
 
@@ -82,7 +100,7 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     espFlash,
   });
 
-  expect(Object.keys(bundle).sort()).toEqual(["shell", "startup"]);
+  expect(Object.keys(bundle).sort()).toEqual(["dispose", "shell", "startup"]);
 
   await recording.onRecordingStatusChanged();
 
@@ -94,6 +112,7 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
   await bundle.startup.settings.loadSpeedSourceFromServer();
   await bundle.startup.settings.loadAnalysisSettingsFromServer();
   await bundle.startup.settings.loadCarsFromServer();
+  bundle.dispose();
 
   expect(calls).toEqual([
     "history.refreshHistory",
@@ -109,6 +128,12 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     "settings.loadSpeedSourceFromServer",
     "settings.loadAnalysisSettingsFromServer",
     "settings.loadCarsFromServer",
+    "espFlash.dispose",
+    "update.dispose",
+    "history.dispose",
+    "realtime.dispose",
+    "settings.dispose",
+    "cars.dispose",
   ]);
 });
 
