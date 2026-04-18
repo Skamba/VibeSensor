@@ -191,6 +191,7 @@ def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: ArrayLike) -> float:
     real vibration findings.
     """
     band = np.asarray(combined_spectrum_amp_g, dtype=np.float64)
+    band = np.where(np.isfinite(band), np.maximum(band, 0.0), 0.0)
     return _noise_floor_amp_p20_g_aligned(combined_spectrum_amp_g=band)
 
 
@@ -199,9 +200,7 @@ def _noise_floor_amp_p20_g_aligned(*, combined_spectrum_amp_g: npt.NDArray[np.fl
     if band.size <= 1:
         # Empty spectrum or DC-only: no frequency content to estimate noise from.
         return 0.0
-    finite = band[1:]
-    finite = finite[np.isfinite(finite) & (finite >= 0.0)]
-    return _quantile_or_zero(finite, 0.20)
+    return _quantile_or_zero(band[1:], 0.20)
 
 
 def strength_floor_amp_g(
@@ -219,13 +218,13 @@ def strength_floor_amp_g(
     Falls back to :func:`noise_floor_amp_p20_g` when all bins are excluded.
     """
     freq, amps = _aligned_float_arrays(freq_hz, combined_spectrum_amp_g)
+    clean_amps = np.where(np.isfinite(amps), np.maximum(amps, 0.0), 0.0)
     return _strength_floor_amp_g_aligned(
         freq_hz=freq,
-        combined_spectrum_amp_g=amps,
+        combined_spectrum_amp_g=clean_amps,
         peak_indexes=peak_indexes,
         exclusion_hz=exclusion_hz,
-        min_hz=min_hz,
-        max_hz=max_hz,
+        in_range_mask=(freq >= min_hz) & (freq <= max_hz),
     )
 
 
@@ -235,16 +234,21 @@ def _strength_floor_amp_g_aligned(
     combined_spectrum_amp_g: npt.NDArray[np.float64],
     peak_indexes: list[int],
     exclusion_hz: float,
-    min_hz: float,
-    max_hz: float,
+    in_range_mask: npt.NDArray[np.bool_] | None = None,
 ) -> float:
     freq = freq_hz
     amps = combined_spectrum_amp_g
     if freq.size == 0:
         return 0.0
-    in_range = (freq >= min_hz) & (freq <= max_hz)
-    valid_amp = np.isfinite(amps) & (amps >= 0.0)
-    selected_mask = in_range & valid_amp
+    base_mask = in_range_mask
+    if base_mask is None:
+        base_mask = np.ones(freq.shape, dtype=np.bool_)
+    elif base_mask.shape != freq.shape:
+        raise ValueError(
+            "strength floor range mask shape does not match aligned spectrum size "
+            f"{base_mask.shape} != {freq.shape}"
+        )
+    selected_mask = base_mask.copy()
     peak_idx = [idx for idx in peak_indexes if 0 <= idx < freq.size]
     if peak_idx:
         _exclude_peak_regions_aligned(
@@ -260,7 +264,7 @@ def _strength_floor_amp_g_aligned(
         # noise_floor_amp_p20_g, which unconditionally skips index 0
         # (assuming DC content at 0 Hz) — an assumption that breaks when
         # the caller has already stripped the DC bin from the spectrum.
-        return _quantile_or_zero(amps[in_range & valid_amp], 0.20)
+        return _quantile_or_zero(amps[base_mask], 0.20)
     return float(np.median(selected))
 
 
@@ -446,6 +450,7 @@ def compute_vibration_strength_db(
     peak_bandwidth_hz: float = PEAK_BANDWIDTH_HZ,
     peak_separation_hz: float = PEAK_SEPARATION_HZ,
     top_n: int = 5,
+    strength_range_mask: npt.NDArray[np.bool_] | None = None,
 ) -> VibrationStrengthMetrics:
     """Run the full vibration-strength pipeline on a combined spectrum.
 
@@ -486,8 +491,7 @@ def compute_vibration_strength_db(
         combined_spectrum_amp_g=combined,
         peak_indexes=floor_peak_indexes,
         exclusion_hz=peak_separation_hz,
-        min_hz=float(freq[0]) if freq.size else 0.0,
-        max_hz=float(freq[-1]) if freq.size else 0.0,
+        in_range_mask=strength_range_mask,
     )
     peak_band_ranges = _peak_band_index_ranges_aligned(
         freq_hz=freq,
