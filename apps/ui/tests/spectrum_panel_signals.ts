@@ -48,10 +48,15 @@ async function runSpectrumPanelSignalProjectionTest(): Promise<void> {
   };
 
   const harness = await mountSignalView(async () => {
-    const { mountSpectrumPanel } = await import(
+    const { h, render } = await import("preact");
+    const { createSpectrumPanel, SpectrumPanelHost } = await import(
       "../src/app/views/spectrum_panel"
     );
-    return mountSpectrumPanel;
+    return (host) => {
+      const panel = createSpectrumPanel();
+      render(h(SpectrumPanelHost, { panel }), host);
+      return panel.view;
+    };
   });
 
   try {

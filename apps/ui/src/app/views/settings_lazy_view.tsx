@@ -63,16 +63,14 @@ interface SettingsLazyViewReadyHandles {
 
 export interface SettingsLazyViewProps {
   onReady(handles: SettingsLazyViewReadyHandles): void;
-  panels: {
-    settings: {
-      analysis: AnalysisPanelView;
-      cars: CarsPanelView;
-      espFlash: EspFlashPanelView;
-      internet: InternetPanelView;
-      sensors: SensorsPanelView;
-      speedSource: SpeedSourcePanelView;
-      update: UpdatePanelView;
-    };
+  settings: {
+    analysis: AnalysisPanelView;
+    cars: CarsPanelView;
+    espFlash: EspFlashPanelView;
+    internet: InternetPanelView;
+    sensors: SensorsPanelView;
+    speedSource: SpeedSourcePanelView;
+    update: UpdatePanelView;
   };
 }
 
@@ -88,16 +86,16 @@ export default function SettingsLazyView(props: SettingsLazyViewProps) {
     const settingsShellMount = mountSettingsShell(host);
     const settingsShell = settingsShellMount.view;
     const settingsHosts = settingsShellMount.panelHosts;
-    const cars = mountCarsPanel(settingsHosts.cars, props.panels.settings.cars);
-    const analysis = mountAnalysisPanel(settingsHosts.analysis, props.panels.settings.analysis);
-    const internet = mountInternetPanel(settingsHosts.internet, props.panels.settings.internet);
-    mountUpdatePanel(settingsHosts.update, props.panels.settings.update);
-    mountSensorsPanel(settingsHosts.sensors, props.panels.settings.sensors);
+    const cars = mountCarsPanel(settingsHosts.cars, props.settings.cars);
+    const analysis = mountAnalysisPanel(settingsHosts.analysis, props.settings.analysis);
+    const internet = mountInternetPanel(settingsHosts.internet, props.settings.internet);
+    mountUpdatePanel(settingsHosts.update, props.settings.update);
+    mountSensorsPanel(settingsHosts.sensors, props.settings.sensors);
     const speedSource = mountSpeedSourcePanel(
       settingsHosts.speedSource,
-      props.panels.settings.speedSource,
+      props.settings.speedSource,
     );
-    mountEspFlashPanel(settingsHosts.espFlash, props.panels.settings.espFlash);
+    mountEspFlashPanel(settingsHosts.espFlash, props.settings.espFlash);
     props.onReady({
       settingsShell,
       settings: {
@@ -111,7 +109,7 @@ export default function SettingsLazyView(props: SettingsLazyViewProps) {
     return () => {
       render(null, host);
     };
-  }, [props.onReady, props.panels]);
+  }, [props.onReady, props.settings]);
 
   return <div ref={hostRef} />;
 }

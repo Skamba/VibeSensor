@@ -133,8 +133,11 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
     strongestSignalText: reboundStrongestSignalText.value,
   }));
   const harness = await mountSignalView(async () => {
-    const { mountRealtimeLiveOverview } = await import("../src/app/views/realtime_live_overview");
-    return mountRealtimeLiveOverview;
+    const { h, render } = await import("preact");
+    const { RealtimeLiveOverviewPanel } = await import("../src/app/views/realtime_live_overview");
+    return (host, view) => {
+      render(h(RealtimeLiveOverviewPanel, { view }), host);
+    };
   }, (): RealtimeLiveOverviewBridge => ({
     model: signal(null),
     speedText: signal<ReadonlySignal<string> | null>(null),

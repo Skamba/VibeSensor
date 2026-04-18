@@ -1,5 +1,3 @@
-import { render } from "preact";
-
 import { useUiText } from "../ui_i18n";
 import {
   useComputed,
@@ -382,9 +380,8 @@ function RealtimeLoggingPanel(props: {
   );
 }
 
-export function mountRealtimeLoggingPanel(
-  host: HTMLElement,
-  view: RealtimeLoggingPanelBridge,
-): void {
-  render(<RealtimeLoggingPanel actions={view.actions} model={view.model} />, host);
+export function RealtimeLoggingPanelView(props: {
+  view: RealtimeLoggingPanelBridge;
+}) {
+  return <RealtimeLoggingPanel actions={props.view.actions} model={props.view.model} />;
 }

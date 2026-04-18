@@ -1,4 +1,4 @@
-import { render, type JSX } from "preact";
+import type { JSX } from "preact";
 import { memo } from "preact/compat";
 import { getUiText } from "../ui_i18n";
 import {
@@ -187,7 +187,7 @@ const SpectrumSensorLegendContent = memo(function SpectrumSensorLegendContent(
   );
 });
 
-function SpectrumPanel(props: {
+type SpectrumPanelProps = {
   bandLegendModel: ReadonlySignal<ReadonlySignal<SpectrumBandLegendModel> | null>;
   bandToggleModel: ReadonlySignal<ReadonlySignal<SpectrumPanelBandToggleModel> | null>;
   chartDom: MutableSpectrumPanelChartDom;
@@ -197,7 +197,9 @@ function SpectrumPanel(props: {
   overlayModel: ReadonlySignal<SpectrumPanelOverlayModel>;
   sensorLegendHandlersModel: ReadonlySignal<ReadonlySignal<SpectrumLegendHandlers | null> | null>;
   sensorLegendModel: ReadonlySignal<ReadonlySignal<SpectrumSensorLegendModel | null> | null>;
-}) {
+};
+
+function SpectrumPanel(props: SpectrumPanelProps) {
   const { chartDom } = props;
   const bandLegend = useDeferredModel(props.bandLegendModel, DEFAULT_SPECTRUM_BAND_LEGEND_MODEL);
   const bandToggle = useDeferredModel(props.bandToggleModel, DEFAULT_SPECTRUM_BAND_TOGGLE_MODEL);
@@ -273,7 +275,12 @@ function SpectrumPanel(props: {
   );
 }
 
-export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
+export interface CreatedSpectrumPanel {
+  props: SpectrumPanelProps;
+  view: SpectrumPanelView;
+}
+
+export function createSpectrumPanel(): CreatedSpectrumPanel {
   const header = signal<SpectrumPanelHeaderModel>({
     titleText: "Multi-Sensor Blended Spectrum",
     hintText: "Use the trace chips to isolate one sensor at a time. Turn on reference bands when you need order context.",
@@ -289,54 +296,62 @@ export function mountSpectrumPanel(host: HTMLElement): SpectrumPanelView {
     specChartWrap: null,
     specChart: null,
   };
-  render(
-    <SpectrumPanel
-      bandLegendModel={bandLegendModel}
-      bandToggleModel={bandToggleModel}
-      chartDom={chartDom}
-      header={header}
-      inspectorText={inspectorText}
-      onBandToggle={onBandToggle}
-      overlayModel={overlayModel}
-      sensorLegendHandlersModel={sensorLegendHandlersModel}
-      sensorLegendModel={sensorLegendModel}
-    />,
-    host,
-  );
-
   return {
-    chartDom: {
-      get specChartWrap(): HTMLElement {
-        return requireSpectrumElement(chartDom.specChartWrap, "#specChartWrap");
+    props: {
+      bandLegendModel,
+      bandToggleModel,
+      chartDom,
+      header,
+      inspectorText,
+      onBandToggle,
+      overlayModel,
+      sensorLegendHandlersModel,
+      sensorLegendModel,
+    },
+    view: {
+      chartDom: {
+        get specChartWrap(): HTMLElement {
+          return requireSpectrumElement(chartDom.specChartWrap, "#specChartWrap");
+        },
+        get specChart(): HTMLElement {
+          return requireSpectrumElement(chartDom.specChart, "#specChart");
+        },
+      } satisfies SpectrumPanelChartDom,
+      bindBandToggle(onToggle: () => void): void {
+        onBandToggle.value = onToggle;
       },
-      get specChart(): HTMLElement {
-        return requireSpectrumElement(chartDom.specChart, "#specChart");
+      bindBandToggleModel(model: ReadonlySignal<SpectrumPanelBandToggleModel>): void {
+        bandToggleModel.value = model;
       },
-    } satisfies SpectrumPanelChartDom,
-    bindBandToggle(onToggle: () => void): void {
-      onBandToggle.value = onToggle;
-    },
-    bindBandToggleModel(model: ReadonlySignal<SpectrumPanelBandToggleModel>): void {
-      bandToggleModel.value = model;
-    },
-    bindSensorLegendModel(
-      model: ReadonlySignal<SpectrumSensorLegendModel | null>,
-      handlers: ReadonlySignal<SpectrumLegendHandlers | null>,
-    ): void {
-      sensorLegendModel.value = model;
-      sensorLegendHandlersModel.value = handlers;
-    },
-    bindBandLegendModel(model: ReadonlySignal<SpectrumBandLegendModel>): void {
-      bandLegendModel.value = model;
-    },
-    renderHeader(model: SpectrumPanelHeaderModel): void {
-      header.value = model;
-    },
-    renderOverlay(model: SpectrumPanelOverlayModel): void {
-      overlayModel.value = model;
-    },
-    renderInspectorText(text: string): void {
-      inspectorText.value = text;
+      bindSensorLegendModel(
+        model: ReadonlySignal<SpectrumSensorLegendModel | null>,
+        handlers: ReadonlySignal<SpectrumLegendHandlers | null>,
+      ): void {
+        sensorLegendModel.value = model;
+        sensorLegendHandlersModel.value = handlers;
+      },
+      bindBandLegendModel(model: ReadonlySignal<SpectrumBandLegendModel>): void {
+        bandLegendModel.value = model;
+      },
+      renderHeader(model: SpectrumPanelHeaderModel): void {
+        header.value = model;
+      },
+      renderOverlay(model: SpectrumPanelOverlayModel): void {
+        overlayModel.value = model;
+      },
+      renderInspectorText(text: string): void {
+        inspectorText.value = text;
+      },
     },
   };
+}
+
+export function SpectrumPanelHost(props: {
+  panel: CreatedSpectrumPanel;
+}) {
+  return (
+    <div id="spectrumPanelRoot">
+      <SpectrumPanel {...props.panel.props} />
+    </div>
+  );
 }

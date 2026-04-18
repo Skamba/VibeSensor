@@ -104,10 +104,10 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | File | Purpose |
 |------|---------|
 | `main.ts` | Thin Vite entry that boots the UI runtime |
-| `app/start_ui_app.ts` | CSS-aware startup entry that mounts the Preact shell first, boots dashboard panels immediately, then starts the runtime with deferred history/settings panel loaders |
-| `app/ui_panel_host_registry.ts` | Ref-backed host registry for dashboard, history, and settings panel mount points resolved from the shell chrome instead of global document queries |
-| `app/ui_panel_bootstrap.ts` | Centralized panel bootstrap that keeps dashboard mounts synchronous while exposing lazy history/settings loaders from the shared host registry |
-| `app/ui_lazy_panels.ts` | Deferred panel manager that gives the runtime full panel contracts up front, then attaches real history/settings islands on first activation or idle prefetch |
+| `app/start_ui_app.ts` | CSS-aware startup entry that renders one `UiAppRoot`, then starts the runtime and hidden-view prefetch |
+| `app/ui_app_root.tsx` | Single rendered app tree that owns the shell frame plus the dashboard/history/settings sections and lazy section loading |
+| `app/ui_panel_host_registry.ts` | Ref-backed settings-shell host registry for the per-tab settings panels mounted inside the settings subtree |
+| `app/ui_lazy_panels.ts` | Typed panel binding factory that gives the runtime full dashboard/history/settings contracts up front, then attaches the real settings shell handles when that subtree mounts |
 | `app/dom/` | Focused DOM-only utilities for download and RAF lifecycles after removing the shared global query helper |
 | `app/ui_app_runtime.ts` | Thin UI composition root that creates the shell, spectrum, transport, feature bundle, and startup coordinator from local helper wiring instead of deferred attachment seams |
 | `app/ui_app_state.ts` | Canonical AppState shape plus reactive slice helpers that keep object-style reads/writes working while shared shell/transport/realtime/history/settings/spectrum state becomes signal-observable |
@@ -210,29 +210,29 @@ budget, attach the analyzer output to the PR review and explain the growth.
 
 The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
 composition root instead of becoming a single-file owner for transport, shell,
-chart behavior, or page-wide DOM state. Startup now mounts the top-level shell
-first so it can render the shared header plus dashboard/history/settings
-container frames, then resolves those shell-owned hosts for the centralized
-panel bootstrap that mounts the dashboard/history shells, the shared settings
-shell, and the per-settings-tab panel hosts. The spectrum island now owns the
-chart host refs internally and passes that typed bridge to the runtime.
-`app_feature_bundle.ts` creates the concrete features, wires explicit
-cross-feature ports, and returns only the shell, transport, and startup
-contracts the runtime needs, while `ui_app_runtime.ts` uses local helper
-factories and constructor-time callbacks instead of late `attach*` calls.
-`ui_startup_coordinator.ts` then runs those
-startup-only load/refresh ports from a small declarative sync/async plan
-instead of a handwritten boot call chain, while long-lived update, ESP flash,
-and GPS-status polling now start and stop from feature-owned reactive context.
+chart behavior, or page-wide DOM state. Startup now renders one `UiAppRoot`
+tree up front, so the shared shell frame and the dashboard/history/settings
+sections all live inside a single Preact render path instead of a multi-root
+bootstrap layer. `ui_lazy_panels.ts` still gives the runtime typed panel
+contracts immediately, but history/settings lazy loading is now just component
+loading inside that one tree; only the settings subtree keeps its internal
+tab-panel mount path so the per-tab settings panels can keep their existing
+typed view bindings. The spectrum island owns its chart host refs internally
+and passes that typed bridge to the runtime. `app_feature_bundle.ts` creates
+the concrete features, wires explicit cross-feature ports, and returns only the
+shell, transport, and startup contracts the runtime needs, while
+`ui_startup_coordinator.ts` runs the startup-only load/refresh ports from a
+small declarative sync/async plan instead of a handwritten boot call chain.
+Long-lived update, ESP flash, and GPS-status polling still start and stop from
+feature-owned reactive context.
 
-The live UI architecture is now fully Preact for every page, tab, and
-feature surface.
-`app/runtime/ui_shell_chrome.tsx` owns the primary navigation, header
-preferences, pills, app banner, the top-level view containers, and the
-startup panel-host refs;
-`app/views/settings_shell.tsx` owns the shared settings tab strip and panel
-wrappers; and the individual page/settings panel islands own their local chrome
-plus typed bridges. The remaining
+The live UI architecture is now fully Preact for the top-level shell and
+primary page composition. `app/runtime/ui_shell_chrome.tsx` owns the primary
+navigation, header preferences, pills, and app banner; `app/ui_app_root.tsx`
+owns the top-level view sections and lazy section loading; `app/views/settings_shell.tsx`
+owns the shared settings tab strip and per-tab host wrappers; and the
+individual page/settings panel islands own their local chrome plus typed
+bridges. The remaining
 imperative paths are deliberate runtime integrations rather than alternate UI
 renderers: the shell controller still owns app-level status/preference state,
 the spectrum controller still owns the uPlot/canvas lifecycle through
