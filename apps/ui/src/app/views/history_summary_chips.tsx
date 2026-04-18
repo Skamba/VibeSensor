@@ -14,9 +14,9 @@ function chipModifier(tone: HistorySummaryChipTone): string {
 export function HistorySummaryChips(props: { row: HistoryRowViewModel }) {
   return (
     <div class="history-row__summary-chips">
-      {props.row.summaryChips.map((chip, index) => (
+      {props.row.summaryChips.map((chip) => (
         <span
-          key={`${chip.tone}:${chip.text}:${index}`}
+          key={chip.key}
           class={`history-row__summary-chip${chipModifier(chip.tone)}`}
         >
           {chip.text}
