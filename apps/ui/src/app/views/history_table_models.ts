@@ -2,6 +2,7 @@ export type HistorySummaryChipTone = "ok" | "warn" | "bad" | "muted" | "source" 
 export type HistoryFindingTone = "success" | "warn" | "neutral";
 
 export interface HistorySummaryChipViewModel {
+  key: string;
   text: string;
   tone: HistorySummaryChipTone;
 }
