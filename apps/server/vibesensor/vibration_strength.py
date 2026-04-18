@@ -284,6 +284,36 @@ def _peak_band_rms_amp_g_aligned(
     return float(np.sqrt(np.mean(np.square(band, dtype=np.float64))))
 
 
+def _peak_band_index_ranges_aligned(
+    *,
+    freq_hz: npt.NDArray[np.float64],
+    center_indexes: list[int],
+    bandwidth_hz: float,
+) -> tuple[npt.NDArray[np.intp], npt.NDArray[np.intp]] | None:
+    if not center_indexes:
+        empty = np.empty(0, dtype=np.intp)
+        return empty, empty
+    if np.any(freq_hz[1:] < freq_hz[:-1]):
+        return None
+    center_idx_array = np.asarray(center_indexes, dtype=np.intp)
+    center_hz = freq_hz[center_idx_array]
+    left_bounds = np.searchsorted(freq_hz, center_hz - bandwidth_hz, side="left")
+    right_bounds = np.searchsorted(freq_hz, center_hz + bandwidth_hz, side="right")
+    return left_bounds, right_bounds
+
+
+def _peak_band_rms_amp_g_from_bounds(
+    *,
+    combined_spectrum_amp_g: npt.NDArray[np.float64],
+    start_idx: int,
+    stop_idx: int,
+) -> float:
+    band = combined_spectrum_amp_g[start_idx:stop_idx]
+    if band.size == 0:
+        return 0.0
+    return float(np.sqrt(np.mean(np.square(band, dtype=np.float64))))
+
+
 def _local_maxima_indexes(values: npt.NDArray[np.float64], threshold: float) -> list[int]:
     maxima: list[int] = []
     if values.size > 2:
@@ -369,29 +399,57 @@ def compute_vibration_strength_db(
         min_hz=float(freq[0]) if freq.size else 0.0,
         max_hz=float(freq[-1]) if freq.size else 0.0,
     )
+    peak_band_ranges = _peak_band_index_ranges_aligned(
+        freq_hz=freq,
+        center_indexes=local_maxima,
+        bandwidth_hz=peak_bandwidth_hz,
+    )
 
     candidates: list[StrengthPeak] = []
-    for idx in local_maxima:
-        band_rms = _peak_band_rms_amp_g_aligned(
-            freq_hz=freq,
-            combined_spectrum_amp_g=combined,
-            center_idx=idx,
-            bandwidth_hz=peak_bandwidth_hz,
-        )
-        db = vibration_strength_db_scalar(
-            peak_band_rms_amp_g=band_rms,
-            floor_amp_g=floor_strength,
-        )
-        if not isfinite(db):
-            continue
-        candidates.append(
-            {
-                "hz": float(freq[idx]),
-                "amp": float(band_rms),
-                "vibration_strength_db": float(db),
-                "strength_bucket": bucket_for_strength(float(db)),
-            }
-        )
+    if peak_band_ranges is None:
+        for idx in local_maxima:
+            band_rms = _peak_band_rms_amp_g_aligned(
+                freq_hz=freq,
+                combined_spectrum_amp_g=combined,
+                center_idx=idx,
+                bandwidth_hz=peak_bandwidth_hz,
+            )
+            db = vibration_strength_db_scalar(
+                peak_band_rms_amp_g=band_rms,
+                floor_amp_g=floor_strength,
+            )
+            if not isfinite(db):
+                continue
+            candidates.append(
+                {
+                    "hz": float(freq[idx]),
+                    "amp": float(band_rms),
+                    "vibration_strength_db": float(db),
+                    "strength_bucket": bucket_for_strength(float(db)),
+                }
+            )
+    else:
+        left_bounds, right_bounds = peak_band_ranges
+        for candidate_idx, idx in enumerate(local_maxima):
+            band_rms = _peak_band_rms_amp_g_from_bounds(
+                combined_spectrum_amp_g=combined,
+                start_idx=int(left_bounds[candidate_idx]),
+                stop_idx=int(right_bounds[candidate_idx]),
+            )
+            db = vibration_strength_db_scalar(
+                peak_band_rms_amp_g=band_rms,
+                floor_amp_g=floor_strength,
+            )
+            if not isfinite(db):
+                continue
+            candidates.append(
+                {
+                    "hz": float(freq[idx]),
+                    "amp": float(band_rms),
+                    "vibration_strength_db": float(db),
+                    "strength_bucket": bucket_for_strength(float(db)),
+                }
+            )
     candidates.sort(
         key=lambda item: item["vibration_strength_db"],
         reverse=True,
