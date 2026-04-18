@@ -47,7 +47,7 @@
   Reduces data loss from brief lock contention.
 - **Stale-run recovery logging** — `create_run()` now logs a warning when it
   recovers stale recording runs, providing visibility into interrupted sessions.
-- **Export NaN/Inf sanitization** — `build_run_details_json()` scrubs
+- **Export NaN/Inf sanitization** — export JSON serialization scrubs
   non-finite float values before JSON serialization, preventing export failures.
 - **Docker resource limits** — `docker-compose.yml` now sets `mem_limit`,
   `memswap_limit` (384MB), and `pids_limit` (200) for Pi deployment safety.
