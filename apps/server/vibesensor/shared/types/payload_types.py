@@ -62,12 +62,6 @@ class ClientMetrics(TypedDict, total=False):
     combined: CombinedMetrics
 
 
-class TimingHealthPayload(TypedDict, total=False):
-    jitter_us_ema: float
-    drift_us_total: float
-    last_t0_us: int
-
-
 class ClientApiRow(TypedDict, total=True):
     id: str
     mac_address: str

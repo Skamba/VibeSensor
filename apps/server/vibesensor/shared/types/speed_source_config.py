@@ -19,14 +19,12 @@ __all__ = [
     "SpeedSourceConfig",
     "SpeedSourcePayload",
     "SpeedSourceUpdatePayload",
-    "VALID_SPEED_SOURCES",
     "_parse_manual_speed",
 ]
 
 _isfinite = math.isfinite
 
 type ResolvedSpeedSource = Literal["gps", "obd2", "manual", "fallback_manual", "none"]
-VALID_SPEED_SOURCES: tuple[str, ...] = tuple(kind.value for kind in SpeedSourceKind)
 
 
 class SpeedSourceUpdatePayload(TypedDict, total=False):

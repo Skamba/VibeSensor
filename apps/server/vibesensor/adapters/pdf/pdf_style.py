@@ -37,13 +37,6 @@ REPORT_COLORS = {
     "card_error_border": "#f5a6a2",
 }
 
-FINDING_SOURCE_COLORS: dict[str, str] = {
-    "wheel/tire": "#0f9d58",
-    "driveline": "#7c3aed",
-    "engine": "#c5221f",
-    "unknown": "#52555e",
-}
-
 # ── Style Constants ──────────────────────────────────────────────────────────
 
 PAGE_SIZE = A4
@@ -55,8 +48,6 @@ SUB_CLR = REPORT_COLORS["text_secondary"]
 MUTED_CLR = REPORT_COLORS["text_muted"]
 LINE_CLR = REPORT_COLORS["border"]
 PANEL_BG = "#ffffff"
-SOFT_BG = REPORT_COLORS["surface"]
-WARN_CLR = REPORT_COLORS["warning"]
 
 FONT = "Helvetica"
 FONT_B = "Helvetica-Bold"
@@ -68,10 +59,7 @@ FS_CARD_TITLE = 9.0
 
 R_CARD = 8
 GAP = 4 * mm
-OBSERVED_LABEL_W = 28 * mm
 DATA_TRUST_WIDTH_RATIO = 0.32
-DATA_TRUST_LABEL_W = 27 * mm
-DISCLAIMER_Y_OFFSET = 5.5 * mm
 PANEL_HEADER_H = 10.5 * mm
 
 _HELVETICA_AVG_CHAR_RATIO = 0.48
