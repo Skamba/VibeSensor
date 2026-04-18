@@ -52,7 +52,6 @@ export interface SettingsFeatureDeps {
 
 export interface SettingsFeatureViewPorts {
   renderSpectrum: () => void;
-  renderSpeedReadout: () => void;
 }
 
 export interface SettingsFeature {
@@ -107,7 +106,6 @@ export function createSettingsFeature(
       ports: {
         activeViewId: ctx.ports.activeViewId,
         activeSettingsTabId: ctx.panels.settingsShell.activeTabId,
-        renderSpeedReadout: ctx.ports.view.renderSpeedReadout,
       },
     });
   const gpsStatusModule: SettingsGpsStatusModule =
@@ -123,7 +121,6 @@ export function createSettingsFeature(
         activeViewId: ctx.ports.activeViewId,
         activeSettingsTabId: ctx.panels.settingsShell.activeTabId,
         syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
-        renderSpeedReadout: ctx.ports.view.renderSpeedReadout,
       },
     });
   carsModule = createSettingsCarsModule({

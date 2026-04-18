@@ -41,7 +41,6 @@ export interface SettingsSpeedSourceWorkflowViewPorts {
 export interface SettingsSpeedSourceWorkflowDeps {
   createPollingController?: (options: PollingControllerOptions) => PollingController;
   obdConfigVisible: ReadonlySignal<boolean>;
-  renderSpeedReadout: () => void;
   settings: SettingsState;
   showError: (message: string) => void;
   t: (key: string, vars?: Record<string, unknown>) => string;
@@ -315,7 +314,6 @@ export function createSettingsSpeedSourceWorkflow(
       staleTimeoutInputValue.value = String(payload.stale_timeout_s);
       syncInputsFromSettings();
     });
-    deps.renderSpeedReadout();
   }
 
   const speedSourceLoader = createApiLoader({

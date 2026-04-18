@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { createLazyUiPanels } from "../src/app/ui_lazy_panels";
 import type { UiMountedDashboardPanels } from "../src/app/ui_panel_bootstrap";
 import type { UiPanelHostRegistry } from "../src/app/ui_panel_host_registry";
-import { signal } from "../src/app/ui_signals";
+import { signal, type ReadonlySignal } from "../src/app/ui_signals";
 import type { AnalysisPanelView } from "../src/app/views/analysis_panel";
 import type { CarsPanelView } from "../src/app/views/cars_panel";
 import type { HistoryPanelView } from "../src/app/views/history_table_view";
@@ -32,7 +32,7 @@ function createDashboardPanels(): UiMountedDashboardPanels {
     spectrum: {} as UiMountedDashboardPanels["spectrum"],
     liveOverview: {
       model: signal(null),
-      speedText: signal("--"),
+      speedText: signal<ReadonlySignal<string> | null>(null),
     } as UiMountedDashboardPanels["liveOverview"],
     logging: {
       actions: signal(null),
