@@ -1,4 +1,4 @@
-import { computed, signal } from "./app/ui_signals";
+import { computed, effect, signal } from "./app/ui_signals";
 
 export interface SpectrumCssVars {
   surface: string;
@@ -22,8 +22,8 @@ const spectrumCssVars = computed<Readonly<SpectrumCssVars>>(() => {
   spectrumCssVarsVersion.value;
   return readSpectrumCssVars();
 });
-let spectrumCssVarsThemeListenerInitialized = false;
 let cachedSpectrumCssVars: Readonly<SpectrumCssVars> | null = null;
+let stopSpectrumCssVarsThemeTracking: (() => void) | null = null;
 
 function readSpectrumCssVars(): Readonly<SpectrumCssVars> {
   const rootStyle = getComputedStyle(document.documentElement);
@@ -62,16 +62,21 @@ export function refreshSpectrumCssVars(): Readonly<SpectrumCssVars> {
 }
 
 function ensureSpectrumCssVarsThemeTracking(): void {
-  if (spectrumCssVarsThemeListenerInitialized) {
+  if (stopSpectrumCssVarsThemeTracking) {
     return;
   }
   if (typeof globalThis.matchMedia !== "function") {
     return;
   }
-  spectrumCssVarsThemeListenerInitialized = true;
-  const mediaQuery = globalThis.matchMedia(THEME_MEDIA_QUERY);
-  const refresh = () => {
-    spectrumCssVarsVersion.value += 1;
-  };
-  mediaQuery.addEventListener("change", refresh);
+  stopSpectrumCssVarsThemeTracking = effect(() => {
+    const mediaQuery = globalThis.matchMedia(THEME_MEDIA_QUERY);
+    const refresh = () => {
+      spectrumCssVarsVersion.value += 1;
+    };
+    mediaQuery.addEventListener("change", refresh);
+    return () => {
+      mediaQuery.removeEventListener("change", refresh);
+      stopSpectrumCssVarsThemeTracking = null;
+    };
+  });
 }
