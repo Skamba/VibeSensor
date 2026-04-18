@@ -189,6 +189,11 @@ class PostAnalysisWorker:
         finally:
             with self._lock:
                 self._analysis_thread = None
+                if not self._shutdown_event.is_set() and self._state.snapshot().queue_depth > 0:
+                    # A run can be scheduled after the worker decides the queue
+                    # is empty but before the thread clears `_analysis_thread`.
+                    # Restart immediately so that queued work cannot strand.
+                    self._ensure_worker_running()
 
     def _worker_loop(self) -> None:
         while True:

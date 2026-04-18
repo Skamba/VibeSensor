@@ -95,6 +95,66 @@ def test_floor_rms_peak_index_out_of_range_ignored() -> None:
     assert result > 0
 
 
+def test_floor_rms_skips_broadcast_peak_exclusion_on_sorted_freq(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    broadcast_calls = 0
+    original = vibration_strength_module._peak_exclusion_mask_broadcast_aligned
+
+    def counting_peak_exclusion_mask_broadcast_aligned(**kwargs: object) -> object:
+        nonlocal broadcast_calls
+        broadcast_calls += 1
+        return original(**kwargs)
+
+    monkeypatch.setattr(
+        vibration_strength_module,
+        "_peak_exclusion_mask_broadcast_aligned",
+        counting_peak_exclusion_mask_broadcast_aligned,
+    )
+
+    result = strength_floor_amp_g(
+        freq_hz=[10.0, 20.0, 30.0, 40.0, 50.0],
+        combined_spectrum_amp_g=[0.1, 0.2, 5.0, 0.3, 0.4],
+        peak_indexes=[2],
+        exclusion_hz=5.0,
+        min_hz=0.0,
+        max_hz=100.0,
+    )
+
+    assert broadcast_calls == 0
+    assert result == pytest.approx(0.25)
+
+
+def test_floor_rms_uses_broadcast_fallback_for_non_monotonic_freq(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    broadcast_calls = 0
+    original = vibration_strength_module._peak_exclusion_mask_broadcast_aligned
+
+    def counting_peak_exclusion_mask_broadcast_aligned(**kwargs: object) -> object:
+        nonlocal broadcast_calls
+        broadcast_calls += 1
+        return original(**kwargs)
+
+    monkeypatch.setattr(
+        vibration_strength_module,
+        "_peak_exclusion_mask_broadcast_aligned",
+        counting_peak_exclusion_mask_broadcast_aligned,
+    )
+
+    result = strength_floor_amp_g(
+        freq_hz=[10.0, 30.0, 20.0, 40.0, 50.0],
+        combined_spectrum_amp_g=[0.1, 5.0, 0.2, 0.3, 0.4],
+        peak_indexes=[1],
+        exclusion_hz=5.0,
+        min_hz=0.0,
+        max_hz=100.0,
+    )
+
+    assert broadcast_calls == 1
+    assert result == pytest.approx(0.25)
+
+
 # -- peak_band_rms_amp_g ----------------------------------------------------
 
 
