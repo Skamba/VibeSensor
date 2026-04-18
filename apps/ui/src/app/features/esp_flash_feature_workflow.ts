@@ -29,6 +29,7 @@ import {
   type PollingController,
   type PollingControllerOptions,
 } from "./polling_controller";
+import { createApiLoader } from "./api_loader";
 
 export interface EspFlashFeatureWorkflowApi {
   cancelEspFlash(): Promise<unknown>;
@@ -127,13 +128,28 @@ export function createEspFlashFeatureWorkflow(
     }
   }
 
-  async function refreshHistory(): Promise<void> {
-    try {
-      const payload = await api.getEspFlashHistory();
+  const historyLoader = createApiLoader({
+    load: () => api.getEspFlashHistory(),
+    apply: (payload) => {
       latestAttempts.value = payload.attempts || [];
-    } catch {
-      /* keep existing history on transient error */
-    }
+    },
+  });
+
+  const portsLoader = createApiLoader({
+    load: () => api.getEspFlashPorts(),
+    apply: (payload) => {
+      const ports = payload.ports || [];
+      batch(() => {
+        availablePorts.value = ports;
+        if (!ports.some((port) => port.port === selectedPortValue.peek())) {
+          selectedPortValue.value = "__auto__";
+        }
+      });
+    },
+  });
+
+  async function refreshHistory(): Promise<void> {
+    await historyLoader.load();
   }
 
   async function refreshLogs(status: EspFlashStatusPayload): Promise<void> {
@@ -170,18 +186,7 @@ export function createEspFlashFeatureWorkflow(
   }
 
   async function refreshPorts(): Promise<void> {
-    try {
-      const payload = await api.getEspFlashPorts();
-      const ports = payload.ports || [];
-      batch(() => {
-        availablePorts.value = ports;
-        if (!ports.some((port) => port.port === selectedPortValue.peek())) {
-          selectedPortValue.value = "__auto__";
-        }
-      });
-    } catch {
-      /* keep existing options on transient error */
-    }
+    await portsLoader.load();
   }
 
   const polling = createPolling({
