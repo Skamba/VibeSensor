@@ -29,7 +29,7 @@ function screenshotPath(fileName: string): string {
 }
 
 async function assertSpectrumHasData(page: Page): Promise<void> {
-  const hasData = await page.evaluate(() => {
+  await expect.poll(async () => page.evaluate(() => {
     const canvas = document.querySelector<HTMLCanvasElement>("#specChart canvas");
     if (!canvas) return false;
     const ctx = canvas.getContext("2d");
@@ -51,8 +51,10 @@ async function assertSpectrumHasData(page: Page): Promise<void> {
       }
     }
     return false;
-  });
-  expect(hasData, "Spectrum chart must contain visible graph data").toBe(true);
+  }), {
+    message: "Spectrum chart must contain visible graph data",
+    timeout: 5_000,
+  }).toBe(true);
 }
 
 async function installWikiRoutes(page: Page): Promise<void> {
