@@ -7,7 +7,7 @@ import {
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
-import { createDeferredModelSignal } from "./view_model_binding";
+import { createDeferredModelSignal, useDeferredModel } from "./view_model_binding";
 import type {
   SpectrumBandLegendModel,
   SpectrumLegendHandlers,
@@ -199,11 +199,11 @@ function SpectrumPanel(props: {
   sensorLegendModel: ReadonlySignal<ReadonlySignal<SpectrumSensorLegendModel | null> | null>;
 }) {
   const { chartDom } = props;
-  const bandLegend = useComputed(() => props.bandLegendModel.value?.value ?? DEFAULT_SPECTRUM_BAND_LEGEND_MODEL);
-  const bandToggle = useComputed(() => props.bandToggleModel.value?.value ?? DEFAULT_SPECTRUM_BAND_TOGGLE_MODEL);
+  const bandLegend = useDeferredModel(props.bandLegendModel, DEFAULT_SPECTRUM_BAND_LEGEND_MODEL);
+  const bandToggle = useDeferredModel(props.bandToggleModel, DEFAULT_SPECTRUM_BAND_TOGGLE_MODEL);
   const overlayModel = useComputed(() => props.overlayModel.value ?? DEFAULT_SPECTRUM_OVERLAY_MODEL);
-  const sensorLegend = useComputed(() => props.sensorLegendModel.value?.value ?? null);
-  const sensorLegendHandlers = useComputed(() => props.sensorLegendHandlersModel.value?.value ?? null);
+  const sensorLegend = useDeferredModel(props.sensorLegendModel, null);
+  const sensorLegendHandlers = useDeferredModel(props.sensorLegendHandlersModel, null);
   const titleText = useComputed(() => getUiText("chart.spectrum_title", props.header.value.titleText));
   const hintText = useComputed(() => getUiText("spectrum.controls_hint", props.header.value.hintText));
   const {

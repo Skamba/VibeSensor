@@ -5,12 +5,12 @@ import {
   type UiPanelHostRegistry,
 } from "../ui_panel_host_registry";
 import {
-  useComputed,
   type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
 import {
   createDeferredModelSignal,
+  useDeferredModel,
 } from "../views/view_model_binding";
 import { AppErrorBanner, ConfirmationDialogLayer } from "./shell/ui_shell_chrome_dialog";
 import { ShellViewHostsContainer } from "./shell/ui_shell_chrome_hosts";
@@ -65,10 +65,10 @@ function UiShellChrome(props: UiShellChromeProps) {
     actions,
     panelHosts,
   } = props;
-  const dialogModel = useComputed(() => props.dialogModel.value?.value ?? DEFAULT_DIALOG_MODEL);
-  const navigationModel = useComputed(() => props.navigationModel.value?.value ?? DEFAULT_NAVIGATION_MODEL);
-  const preferencesModel = useComputed(() => props.preferencesModel.value?.value ?? DEFAULT_PREFERENCES_MODEL);
-  const statusModel = useComputed(() => props.statusModel.value?.value ?? DEFAULT_STATUS_MODEL);
+  const dialogModel = useDeferredModel(props.dialogModel, DEFAULT_DIALOG_MODEL);
+  const navigationModel = useDeferredModel(props.navigationModel, DEFAULT_NAVIGATION_MODEL);
+  const preferencesModel = useDeferredModel(props.preferencesModel, DEFAULT_PREFERENCES_MODEL);
+  const statusModel = useDeferredModel(props.statusModel, DEFAULT_STATUS_MODEL);
 
   return (
     <ShellChromeFrame statusModel={statusModel}>

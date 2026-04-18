@@ -14,7 +14,7 @@ import { DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL } from "./speed_source_panel_def
 import type {
   SettingsFeedbackMessage,
 } from "./settings_feedback";
-import type { DeferredModelSignal } from "./view_model_binding";
+import { readDeferredModel, type DeferredModelSignal } from "./view_model_binding";
 
 type ChoiceCardState = "active" | "draft" | "error";
 
@@ -199,15 +199,15 @@ export function mountSpeedSourcePanel(
 > {
   const diagnosticsDisclosureOpen = signal(false);
   effect(() => {
-    if (bindings.model.value?.value.diagnosticsShouldOpen) {
+    if (readDeferredModel(bindings.model, DEFAULT_SPEED_SOURCE_PANEL_MODEL).diagnosticsShouldOpen) {
       diagnosticsDisclosureOpen.value = true;
     }
   });
   const bridgeState = computed<SpeedSourcePanelBridgeState>(() => ({
     actions: bindings.actions.value,
-    diagnostics: bindings.diagnostics.value?.value ?? DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL,
+    diagnostics: readDeferredModel(bindings.diagnostics, DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL),
     diagnosticsDisclosureOpen: diagnosticsDisclosureOpen.value,
-    model: bindings.model.value?.value ?? DEFAULT_SPEED_SOURCE_PANEL_MODEL,
+    model: readDeferredModel(bindings.model, DEFAULT_SPEED_SOURCE_PANEL_MODEL),
   }));
   let manualSpeedInput: HTMLInputElement | null = null;
   let scanObdDevicesBtn: HTMLButtonElement | null = null;
@@ -243,7 +243,7 @@ export function mountSpeedSourcePanel(
       staleTimeoutInput?.focus();
     },
     isObdConfigVisible(): boolean {
-      return bindings.model.value?.value.obdConfigVisible ?? false;
+      return readDeferredModel(bindings.model, DEFAULT_SPEED_SOURCE_PANEL_MODEL).obdConfigVisible;
     },
   };
 }
