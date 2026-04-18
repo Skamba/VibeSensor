@@ -82,9 +82,10 @@ export class UiSpectrumController {
     });
   }
 
-  renderSpectrum(): void {
-    this.renderSpectrumHeader();
-    const prepared = this.canvas.prepareFrame();
+  private applyPreparedSpectrum(
+    prepared: ReturnType<SpectrumCanvasRenderer["prepareFrame"]>,
+    mode: "data" | "decorations",
+  ): void {
     this.state.spectrum.chartBands.value = prepared.chartBands;
     this.state.spectrum.hasSpectrumData.value = prepared.hasData;
     this.interaction.sync({
@@ -92,9 +93,25 @@ export class UiSpectrumController {
       freqAxis: prepared.freqAxis,
       chartBands: prepared.chartBands,
     }, { applyPlotIsolation: false });
-    this.canvas.renderPreparedFrame(prepared);
+    if (mode === "data") {
+      this.canvas.renderPreparedFrame(prepared);
+    } else {
+      this.canvas.refreshDecorations();
+    }
     this.interaction.applyPlotSelection();
     this.updateSpectrumOverlay();
+  }
+
+  renderSpectrum(): void {
+    this.renderSpectrumHeader();
+    const prepared = this.canvas.prepareFrame();
+    this.applyPreparedSpectrum(prepared, "data");
+  }
+
+  refreshSpectrumDecorations(): void {
+    this.renderSpectrumHeader();
+    const prepared = this.canvas.refreshPreparedFrameMetadata();
+    this.applyPreparedSpectrum(prepared, "decorations");
   }
 
   dispose(): void {

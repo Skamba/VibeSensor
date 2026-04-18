@@ -52,6 +52,7 @@ export interface SettingsFeatureDeps {
 
 export interface SettingsFeatureViewPorts {
   renderSpectrum: () => void;
+  refreshSpectrumDecorations: () => void;
 }
 
 export interface SettingsFeature {
@@ -92,7 +93,7 @@ export function createSettingsFeature(
     panel: ctx.panels.analysisPanel,
     settings,
     services,
-    renderSpectrum: ctx.ports.view.renderSpectrum,
+    refreshSpectrumDecorations: ctx.ports.view.refreshSpectrumDecorations,
     hasValidActiveCar: () => carSelection.hasResolvedActiveCar.value,
     onMissingActiveCar: () => carsModule.renderCarList(),
     onSaveError: showSettingsSaveError,
@@ -135,7 +136,7 @@ export function createSettingsFeature(
       openCarWizard: ctx.ports.openCarWizard,
       activeViewId: ctx.ports.activeViewId,
       activeSettingsTabId: ctx.panels.settingsShell.activeTabId,
-      renderSpectrum: ctx.ports.view.renderSpectrum,
+      refreshSpectrumDecorations: ctx.ports.view.refreshSpectrumDecorations,
       syncAnalysisInputs: analysisModule.syncSettingsInputs,
     },
     services,

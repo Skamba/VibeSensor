@@ -45,7 +45,7 @@ test("settings cars module dismisses transient creation feedback through typed t
       activeSettingsTabId,
       openAnalysisTab: () => undefined,
       openCarWizard: () => undefined,
-      renderSpectrum: () => undefined,
+      refreshSpectrumDecorations: () => undefined,
       syncAnalysisInputs: () => undefined,
     },
     services: {
@@ -157,7 +157,7 @@ test("settings cars module loads cars through the shared async loader without ov
       activeSettingsTabId: signal("carTab"),
       openAnalysisTab: () => undefined,
       openCarWizard: () => undefined,
-      renderSpectrum: () => undefined,
+      refreshSpectrumDecorations: () => undefined,
       syncAnalysisInputs: () => {
         syncAnalysisInputsCalls += 1;
       },

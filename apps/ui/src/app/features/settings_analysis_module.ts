@@ -22,7 +22,7 @@ export interface SettingsAnalysisModuleDeps {
   panel: AnalysisPanelView;
   settings: SettingsState;
   services: FeatureServices;
-  renderSpectrum: () => void;
+  refreshSpectrumDecorations: () => void;
   hasValidActiveCar: () => boolean;
   onMissingActiveCar: () => void;
   onSaveError: (error: unknown) => void;
@@ -342,7 +342,7 @@ export function createSettingsAnalysisModule(
       serverSettings,
     );
     syncSettingsInputs();
-    ctx.renderSpectrum();
+    ctx.refreshSpectrumDecorations();
   }
 
   async function syncAnalysisSettingsToServer(
