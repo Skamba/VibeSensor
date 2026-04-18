@@ -108,7 +108,8 @@ function HistoryRow(props: {
   const { handlers, row } = props;
   return (
     <tr
-      class={`history-row${row.isExpanded ? " history-row--expanded" : ""}`}
+      class="history-row"
+      data-expanded={row.isExpanded ? "true" : undefined}
       data-run-row="1"
       data-run={row.runId}
       onClick={() => handlers?.onTableInteraction({ type: "toggle-run", runId: row.runId })}
@@ -126,7 +127,8 @@ function HistoryRow(props: {
           <div class="history-row__detail-affordance">
             <HistoryDiagnosisSummary row={row} />
             <button
-              class={`history-row__toggle${row.isExpanded ? " history-row__toggle--expanded" : ""}`}
+              class="history-row__toggle"
+              data-expanded={row.isExpanded ? "true" : undefined}
               type="button"
               aria-expanded={row.isExpanded ? "true" : "false"}
               aria-label={row.toggleTitle}

@@ -243,7 +243,7 @@ test("dashboard removes repeated ready and online status badges while keeping st
   await expect(page.locator("#liveRunHealth")).toBeHidden();
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#liveSensorRoster .status-pill")).toHaveCount(0);
-  await expect(page.locator("#liveSensorRoster .live-sensor-card__status-dot--online")).toHaveCount(1);
+  await expect(page.locator('#liveSensorRoster .live-sensor-card__status-dot[data-status="online"]')).toHaveCount(1);
 
   await page.locator("#tab-history").click();
   await expect(page.locator(".site-header__status")).toBeVisible();

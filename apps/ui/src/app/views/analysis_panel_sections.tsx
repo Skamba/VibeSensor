@@ -2,7 +2,7 @@ import type { JSX } from "preact";
 
 import { getUiText as t } from "../ui_i18n";
 import {
-  settingsFeedbackClassName,
+  settingsFeedbackAttrs,
   type SettingsFeedbackMessage,
 } from "./settings_feedback";
 import type {
@@ -24,7 +24,7 @@ function SettingsFeedbackBlock(props: {
   const { message } = props;
   return (
     <div
-      class={settingsFeedbackClassName(message)}
+      {...settingsFeedbackAttrs(message)}
       aria-live={message.tone === "error" ? "assertive" : "polite"}
     >
       {message.title ? (
