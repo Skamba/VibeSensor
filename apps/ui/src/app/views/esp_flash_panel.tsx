@@ -5,305 +5,38 @@ import { useUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalEffect,
-  type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import type { VisualVariant } from "../visual_variant";
 import {
   MaintenanceReadinessPanel,
-  type MaintenanceReadinessPanelModel,
 } from "./maintenance_readiness_view";
-import { type DeferredModelSignal } from "./view_model_binding";
+import { EspFlashHistoryContent } from "./esp_flash_history_section";
+import { EspFlashJourneySection } from "./esp_flash_journey_section";
+import { EspFlashLogContent } from "./esp_flash_log_section";
+import {
+  DEFAULT_ESP_FLASH_PANEL_MODEL,
+  type EspFlashPanelActionHandlers,
+  type EspFlashPanelRenderModel,
+  type EspFlashPanelView,
+} from "./esp_flash_panel_shared";
+import { EspFlashReadinessSection } from "./esp_flash_readiness_section";
 
-export interface EspFlashStatusBadgeModel {
-  text: string;
-  variant: VisualVariant;
-}
-
-export interface EspFlashStatusGridRowModel {
-  labelText: string;
-  valueText: string;
-}
-
-export interface EspFlashPortOptionModel {
-  labelText: string;
-  value: string;
-}
-
-export type EspFlashJourneyStageState =
-  | "active"
-  | "attention"
-  | "done"
-  | "upcoming";
-
-export interface EspFlashJourneyStageModel {
-  current: boolean;
-  detailText: string;
-  markerText: string;
-  phase: string;
-  state: EspFlashJourneyStageState;
-  stateText: string;
-  titleText: string;
-}
-
-export interface EspFlashJourneyPanelModel {
-  stages: readonly EspFlashJourneyStageModel[];
-  terminalNoteText: string | null;
-}
-
-export interface EspFlashEmptyStateModel {
-  bodyText: string;
-  titleText: string;
-}
-
-export interface EspFlashHistoryAttemptModel {
-  badge: EspFlashStatusBadgeModel;
-  errorText: string | null;
-  metaText: string;
-  portText: string;
-}
-
-export interface EspFlashHistoryPanelModel {
-  attempts: readonly EspFlashHistoryAttemptModel[];
-  emptyState: EspFlashEmptyStateModel | null;
-}
-
-export interface EspFlashLogPanelModel {
-  emptyState: EspFlashEmptyStateModel | null;
-  text: string;
-}
-
-export interface EspFlashReadinessPanelModel {
-  errorText: string | null;
-  rows: readonly EspFlashStatusGridRowModel[];
-  summaryText: string;
-}
-
-export interface EspFlashPanelDom {
-  espFlashPortSelect: HTMLSelectElement | null;
-  espFlashRefreshPortsBtn: HTMLButtonElement | null;
-  espFlashStartBtn: HTMLButtonElement;
-  espFlashCancelBtn: HTMLButtonElement | null;
-  espFlashStartSummary: HTMLElement | null;
-  espFlashStatusBanner: HTMLElement | null;
-  espFlashReadinessPanel: HTMLElement | null;
-  espFlashJourneyPanel: HTMLElement | null;
-  espFlashLogPanel: HTMLElement | null;
-  espFlashHistoryPanel: HTMLElement | null;
-}
-
-export interface EspFlashPanelRenderModel {
-  cancelButtonDisabled: boolean;
-  cancelButtonHidden: boolean;
-  history: EspFlashHistoryPanelModel;
-  journey: EspFlashJourneyPanelModel;
-  log: EspFlashLogPanelModel;
-  portOptions: readonly EspFlashPortOptionModel[];
-  portSelectDisabled: boolean;
-  readiness: EspFlashReadinessPanelModel;
-  refreshPortsDisabled: boolean;
-  selectedPortValue: string;
-  startButtonDisabled: boolean;
-  startButtonHidden: boolean;
-  startButtonLabelText: string;
-  startSummary: MaintenanceReadinessPanelModel;
-  statusBanner: EspFlashStatusBadgeModel;
-}
-
-export interface EspFlashPanelActionHandlers {
-  onCancel(): void;
-  onRefreshPorts(): void;
-  onSelectPort(value: string): void;
-  onStart(): void;
-}
-
-export interface EspFlashPanelView {
-  actions: Signal<EspFlashPanelActionHandlers | null>;
-  model: DeferredModelSignal<EspFlashPanelRenderModel>;
-}
-
-const DEFAULT_ESP_FLASH_PANEL_MODEL: EspFlashPanelRenderModel = {
-  cancelButtonDisabled: true,
-  cancelButtonHidden: true,
-  history: {
-    attempts: [],
-    emptyState: null,
-  },
-  journey: {
-    stages: [],
-    terminalNoteText: null,
-  },
-  log: {
-    emptyState: null,
-    text: "",
-  },
-  portOptions: [
-    {
-      labelText: "Auto-detect",
-      value: "__auto__",
-    },
-  ],
-  portSelectDisabled: false,
-  readiness: {
-    errorText: null,
-    rows: [],
-    summaryText: "",
-  },
-  refreshPortsDisabled: false,
-  selectedPortValue: "__auto__",
-  startButtonDisabled: true,
-  startButtonHidden: false,
-  startButtonLabelText: "Flash latest",
-  startSummary: {
-    items: [],
-    stateLabel: "",
-    stateVariant: "muted",
-    summary: "",
-    title: "",
-  },
-  statusBanner: {
-    text: "Idle",
-    variant: "muted",
-  },
-};
-
-function StatusBadge(props: {
-  badge: EspFlashStatusBadgeModel;
-}) {
-  const { badge } = props;
-  return (
-    <span class="pill" data-variant={badge.variant}>
-      {badge.text}
-    </span>
-  );
-}
-
-function StatusGrid(props: {
-  rows: readonly EspFlashStatusGridRowModel[];
-}) {
-  const { rows } = props;
-  return (
-    <div class="status-grid">
-      {rows.map((row) => (
-        <div class="status-grid__row" key={`${row.labelText}:${row.valueText}`}>
-          <span class="status-grid__label">{row.labelText}</span>
-          <span>{row.valueText}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MaintenanceNote(props: {
-  text: string;
-  variant?: "bad";
-}) {
-  const className = props.variant
-    ? `maintenance-note maintenance-note--${props.variant}`
-    : "maintenance-note";
-  return <div class={className}>{props.text}</div>;
-}
-
-function InlineEmptyState(props: {
-  model: EspFlashEmptyStateModel;
-}) {
-  const { model } = props;
-  return (
-    <div class="empty-state empty-state--inline">
-      <strong class="empty-state__title">{model.titleText}</strong>
-      <span class="empty-state__body">{model.bodyText}</span>
-    </div>
-  );
-}
-
-function EspFlashReadinessSection(props: {
-  model: EspFlashReadinessPanelModel;
-}) {
-  const { model } = props;
-  return (
-    <div class="maintenance-stack maintenance-stack--tight">
-      <div class="subtle">{model.summaryText}</div>
-      {model.rows.length > 0 ? <StatusGrid rows={model.rows} /> : null}
-      {model.errorText ? (
-        <MaintenanceNote text={model.errorText} variant="bad" />
-      ) : null}
-    </div>
-  );
-}
-
-function JourneyStageItem(props: {
-  stage: EspFlashJourneyStageModel;
-}) {
-  const { stage } = props;
-  return (
-    <li
-      class="maintenance-stage"
-      data-stage-phase={stage.phase}
-      data-stage-state={stage.state}
-      aria-current={stage.current ? "step" : undefined}
-    >
-      <span class="maintenance-stage__marker">{stage.markerText}</span>
-      <div class="maintenance-stage__body">
-        <div class="maintenance-stage__title">{stage.titleText}</div>
-        <div class="maintenance-stage__detail">{stage.detailText}</div>
-      </div>
-      <span class="maintenance-stage__state">{stage.stateText}</span>
-    </li>
-  );
-}
-
-function EspFlashJourneySection(props: {
-  model: EspFlashJourneyPanelModel;
-}) {
-  const { model } = props;
-  return (
-    <div class="maintenance-journey">
-      {model.terminalNoteText ? (
-        <MaintenanceNote text={model.terminalNoteText} variant="bad" />
-      ) : null}
-      <ol class="maintenance-stage-list">
-        {model.stages.map((stage) => (
-          <JourneyStageItem key={stage.phase} stage={stage} />
-        ))}
-      </ol>
-    </div>
-  );
-}
-
-function EspFlashLogContent(props: {
-  model: EspFlashLogPanelModel;
-}) {
-  const { model } = props;
-  if (model.emptyState) {
-    return <InlineEmptyState model={model.emptyState} />;
-  }
-  return <pre class="log-pre">{model.text}</pre>;
-}
-
-function EspFlashHistoryContent(props: {
-  model: EspFlashHistoryPanelModel;
-}) {
-  const { model } = props;
-  if (model.emptyState) {
-    return <InlineEmptyState model={model.emptyState} />;
-  }
-  return (
-    <ul class="maintenance-attempt-list">
-      {model.attempts.map((attempt, index) => (
-        <li class="maintenance-attempt" key={`${attempt.portText}:${index}`}>
-          <div class="maintenance-attempt__header">
-            <StatusBadge badge={attempt.badge} />
-            <strong>{attempt.portText}</strong>
-          </div>
-          <div class="maintenance-attempt__meta subtle">{attempt.metaText}</div>
-          {attempt.errorText ? (
-            <MaintenanceNote text={attempt.errorText} variant="bad" />
-          ) : null}
-        </li>
-      ))}
-    </ul>
-  );
-}
+export type {
+  EspFlashEmptyStateModel,
+  EspFlashHistoryAttemptModel,
+  EspFlashHistoryPanelModel,
+  EspFlashJourneyPanelModel,
+  EspFlashJourneyStageModel,
+  EspFlashJourneyStageState,
+  EspFlashLogPanelModel,
+  EspFlashPanelActionHandlers,
+  EspFlashPanelRenderModel,
+  EspFlashPanelView,
+  EspFlashPortOptionModel,
+  EspFlashReadinessPanelModel,
+  EspFlashStatusBadgeModel,
+  EspFlashStatusGridRowModel,
+} from "./esp_flash_panel_shared";
 
 function EspFlashPanel(props: {
   actions: ReadonlySignal<EspFlashPanelActionHandlers | null>;
