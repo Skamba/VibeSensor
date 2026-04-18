@@ -41,6 +41,7 @@ const DEFAULT_SPECTRUM_BAND_LEGEND_MODEL: SpectrumBandLegendModel = {
   items: [],
   emptyText: "No reference band",
 };
+const EMPTY_SPECTRUM_SENSOR_LEGEND_ITEMS: SpectrumSensorLegendModel["items"] = [];
 type SpectrumCssVariableStyle = JSX.CSSProperties & {
   "--band-color"?: string;
   "--swatch-color"?: string;
@@ -115,52 +116,74 @@ const SpectrumSensorLegend = memo(function SpectrumSensorLegend(props: {
 }) {
   const hasLegend = useComputed(() => {
     const legend = props.sensorLegend.value;
-    return legend !== null && legend.items.length > 0 && props.sensorLegendHandlers.value !== null;
+    return (
+      legend !== null
+      && legend.items.length > 0
+      && props.sensorLegendHandlers.value !== null
+    );
   });
-  if (!hasLegend.value) {
-    return null;
-  }
-
-  const sensorLegend = props.sensorLegend.value;
-  const sensorLegendHandlers = props.sensorLegendHandlers.value;
-  if (sensorLegend === null || sensorLegendHandlers === null) {
-    return null;
-  }
 
   return (
-    <>
-      <button
-        type="button"
-        class="legend-item legend-item--interactive legend-item--reset"
-        aria-pressed={sensorLegend.reset.ariaPressed ? "true" : "false"}
-        title={sensorLegend.reset.titleText}
-        aria-label={sensorLegend.reset.ariaLabel}
-        data-legend-state={sensorLegend.reset.active ? "active" : undefined}
-        onClick={() => sensorLegendHandlers.onReset()}
-      >
-        <span class="legend-item__label">{sensorLegend.reset.labelText}</span>
-      </button>
-      {sensorLegend.items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          class="legend-item legend-item--interactive"
-          aria-pressed={item.ariaPressed ? "true" : "false"}
-          title={item.titleText}
-          aria-label={item.ariaLabel}
-          data-legend-state={item.active ? "active" : item.muted ? "muted" : undefined}
-          onClick={() => sensorLegendHandlers.onSelect(item.id)}
-        >
-          <span class="swatch" style={swatchColorStyle(item.color)} />
-          <span class="legend-item__text-group">
-            <span class="legend-item__label">{item.labelText}</span>
-            {item.detailText
-              ? <span class="legend-item__meta">{item.detailText}</span>
-              : null}
-          </span>
-        </button>
-      ))}
-    </>
+    hasLegend.value
+      ? (
+        <SpectrumSensorLegendContent
+          sensorLegend={props.sensorLegend}
+          sensorLegendHandlers={props.sensorLegendHandlers}
+        />
+      )
+      : null
+  );
+});
+
+const SpectrumSensorLegendContent = memo(function SpectrumSensorLegendContent(
+  props: {
+    sensorLegend: ReadonlySignal<SpectrumSensorLegendModel | null>;
+    sensorLegendHandlers: ReadonlySignal<SpectrumLegendHandlers | null>;
+  },
+) {
+  const items = useComputed(
+    () => props.sensorLegend.value?.items ?? EMPTY_SPECTRUM_SENSOR_LEGEND_ITEMS,
+  );
+  const reset = useComputed(() => props.sensorLegend.value?.reset ?? null);
+
+  return (
+    reset.value !== null && props.sensorLegendHandlers.value !== null
+      ? (
+        <>
+          <button
+            type="button"
+            class="legend-item legend-item--interactive legend-item--reset"
+            aria-pressed={reset.value.ariaPressed ? "true" : "false"}
+            title={reset.value.titleText}
+            aria-label={reset.value.ariaLabel}
+            data-legend-state={reset.value.active ? "active" : undefined}
+            onClick={() => props.sensorLegendHandlers.peek()?.onReset()}
+          >
+            <span class="legend-item__label">{reset.value.labelText}</span>
+          </button>
+          {items.value.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              class="legend-item legend-item--interactive"
+              aria-pressed={item.ariaPressed ? "true" : "false"}
+              title={item.titleText}
+              aria-label={item.ariaLabel}
+              data-legend-state={item.active ? "active" : item.muted ? "muted" : undefined}
+              onClick={() => props.sensorLegendHandlers.peek()?.onSelect(item.id)}
+            >
+              <span class="swatch" style={swatchColorStyle(item.color)} />
+              <span class="legend-item__text-group">
+                <span class="legend-item__label">{item.labelText}</span>
+                {item.detailText
+                  ? <span class="legend-item__meta">{item.detailText}</span>
+                  : null}
+              </span>
+            </button>
+          ))}
+        </>
+      )
+      : null
   );
 });
 

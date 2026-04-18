@@ -11,7 +11,10 @@ import type {
 } from "../src/app/runtime/spectrum_panel_view";
 import { mountSignalView } from "./dom_render_test_support";
 
-function requireElement<T extends Element = HTMLElement>(root: ParentNode, selector: string): T {
+function requireElement<T extends Element = HTMLElement>(
+  root: ParentNode,
+  selector: string,
+): T {
   const element = root.querySelector<T>(selector);
   assert.ok(element, `Expected element matching ${selector}`);
   return element;
@@ -23,134 +26,201 @@ async function runSpectrumPanelSignalProjectionTest(): Promise<void> {
   let bandLegendRenderCount = 0;
   let sensorLegendRenderCount = 0;
   options.diffed = (vnode) => {
-    if (typeof vnode.type === "function" && vnode.type.name === "SpectrumPanel") {
+    if (
+      typeof vnode.type === "function" &&
+      vnode.type.name === "SpectrumPanel"
+    ) {
       spectrumPanelRenderCount += 1;
     }
-    if (typeof vnode.type === "function" && vnode.type.displayName === "Memo(SpectrumBandLegend)") {
+    if (
+      typeof vnode.type === "function" &&
+      vnode.type.displayName === "Memo(SpectrumBandLegend)"
+    ) {
       bandLegendRenderCount += 1;
     }
-    if (typeof vnode.type === "function" && vnode.type.displayName === "Memo(SpectrumSensorLegend)") {
+    if (
+      typeof vnode.type === "function" &&
+      vnode.type.displayName === "Memo(SpectrumSensorLegend)"
+    ) {
       sensorLegendRenderCount += 1;
     }
     previousDiffed?.(vnode);
   };
 
   const harness = await mountSignalView(async () => {
-    const { mountSpectrumPanel } = await import("../src/app/views/spectrum_panel");
+    const { mountSpectrumPanel } = await import(
+      "../src/app/views/spectrum_panel"
+    );
     return mountSpectrumPanel;
   });
 
-    try {
-      await harness.flush();
-      assert.equal(spectrumPanelRenderCount, 1);
+  try {
+    await harness.flush();
+    assert.equal(spectrumPanelRenderCount, 1);
 
-      const bandToggleModel = signal<SpectrumPanelBandToggleModel>({
-        bandsVisible: true,
-        disabled: false,
-        hasBands: true,
-        hidden: false,
-        pressed: "true",
-        text: "Hide reference bands",
-      });
-      harness.view.bindBandToggleModel(bandToggleModel);
-      await harness.flush();
+    const bandToggleModel = signal<SpectrumPanelBandToggleModel>({
+      bandsVisible: true,
+      disabled: false,
+      hasBands: true,
+      hidden: false,
+      pressed: "true",
+      text: "Hide reference bands",
+    });
+    harness.view.bindBandToggleModel(bandToggleModel);
+    await harness.flush();
 
-      const bandToggleBaseline = spectrumPanelRenderCount;
-      assert.equal(requireElement<HTMLButtonElement>(harness.host, "#spectrumBandToggle").textContent, "Hide reference bands");
+    const bandToggleBaseline = spectrumPanelRenderCount;
+    assert.equal(
+      requireElement<HTMLButtonElement>(harness.host, "#spectrumBandToggle")
+        .textContent,
+      "Hide reference bands",
+    );
 
-      const bandLegendModel = signal<SpectrumBandLegendModel>({
-        visible: true,
-        items: [{ color: "#f59e0b", labelText: "Wheel 1x" }],
-        emptyText: "No reference band",
-      });
-      harness.view.bindBandLegendModel(bandLegendModel);
-      await harness.flush();
+    const bandLegendModel = signal<SpectrumBandLegendModel>({
+      visible: true,
+      items: [{ color: "#f59e0b", labelText: "Wheel 1x" }],
+      emptyText: "No reference band",
+    });
+    harness.view.bindBandLegendModel(bandLegendModel);
+    await harness.flush();
 
-      assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
-      assert.equal(bandLegendRenderCount, 1);
-      assert.match(requireElement(harness.host, "#bandLegend").textContent ?? "", /Wheel 1x/);
+    assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
+    assert.equal(bandLegendRenderCount, 1);
+    assert.match(
+      requireElement(harness.host, "#bandLegend").textContent ?? "",
+      /Wheel 1x/,
+    );
 
-      let resetClicks = 0;
-      const selectedIds: string[] = [];
-      const sensorLegendModel = signal<SpectrumSensorLegendModel | null>({
-        reset: {
-          labelText: "All sensor traces",
-          titleText: "Show all traces",
+    let resetClicks = 0;
+    const selectedIds: string[] = [];
+    const sensorLegendModel = signal<SpectrumSensorLegendModel | null>({
+      reset: {
+        labelText: "All sensor traces",
+        titleText: "Show all traces",
         ariaLabel: "Show all sensor traces",
         ariaPressed: true,
         active: true,
       },
-      items: [{
-        id: "front-left",
-        labelText: "Front Left",
-        color: "#2563eb",
-        detailText: "12.0 dB",
-        titleText: "Focus Front Left",
-        ariaLabel: "Focus Front Left",
-        ariaPressed: false,
-        active: false,
+      items: [
+        {
+          id: "front-left",
+          labelText: "Front Left",
+          color: "#2563eb",
+          detailText: "12.0 dB",
+          titleText: "Focus Front Left",
+          ariaLabel: "Focus Front Left",
+          ariaPressed: false,
+          active: false,
           muted: false,
-        }],
-      });
-      const sensorLegendHandlers = signal<SpectrumLegendHandlers | null>({
-        onReset: () => {
-          resetClicks += 1;
         },
-        onSelect: (entryId) => {
-          selectedIds.push(entryId);
-        },
-      });
-      harness.view.bindSensorLegendModel(sensorLegendModel, sensorLegendHandlers);
-      await harness.flush();
+      ],
+    });
+    const sensorLegendHandlers = signal<SpectrumLegendHandlers | null>({
+      onReset: () => {
+        resetClicks += 1;
+      },
+      onSelect: (entryId) => {
+        selectedIds.push(entryId);
+      },
+    });
+    harness.view.bindSensorLegendModel(sensorLegendModel, sensorLegendHandlers);
+    await harness.flush();
 
-      assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
-      assert.equal(sensorLegendRenderCount, 1);
-      assert.match(requireElement(harness.host, "#legend").textContent ?? "", /Front Left/);
-      assert.match(requireElement(harness.host, "#legend").textContent ?? "", /12.0 dB/);
+    assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
+    assert.equal(sensorLegendRenderCount, 1);
+    assert.match(
+      requireElement(harness.host, "#legend").textContent ?? "",
+      /Front Left/,
+    );
+    assert.match(
+      requireElement(harness.host, "#legend").textContent ?? "",
+      /12.0 dB/,
+    );
 
-      requireElement<HTMLButtonElement>(harness.host, ".legend-item--reset").click();
-      requireElement<HTMLButtonElement>(harness.host, '[aria-label="Focus Front Left"]').click();
-      assert.equal(resetClicks, 1);
-      assert.deepEqual(selectedIds, ["front-left"]);
+    requireElement<HTMLButtonElement>(
+      harness.host,
+      ".legend-item--reset",
+    ).click();
+    requireElement<HTMLButtonElement>(
+      harness.host,
+      '[aria-label="Focus Front Left"]',
+    ).click();
+    assert.equal(resetClicks, 1);
+    assert.deepEqual(selectedIds, ["front-left"]);
 
-      const bandLegendSignalBaseline = bandLegendRenderCount;
-      const sensorLegendSignalBaseline = sensorLegendRenderCount;
-      sensorLegendModel.value = {
-        ...sensorLegendModel.value!,
-        items: [{
+    const bandLegendSignalBaseline = bandLegendRenderCount;
+    const sensorLegendSignalBaseline = sensorLegendRenderCount;
+    sensorLegendModel.value = {
+      ...sensorLegendModel.value!,
+      items: [
+        {
           ...sensorLegendModel.value!.items[0],
           detailText: "13.0 dB",
           active: true,
           ariaPressed: true,
-        }],
-      };
-      await harness.flush();
+        },
+      ],
+    };
+    await harness.flush();
 
-      assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
-      assert.equal(sensorLegendRenderCount, sensorLegendSignalBaseline);
-      assert.match(requireElement(harness.host, "#legend").textContent ?? "", /13.0 dB/);
+    assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
+    assert.equal(sensorLegendRenderCount, sensorLegendSignalBaseline);
+    assert.match(
+      requireElement(harness.host, "#legend").textContent ?? "",
+      /13.0 dB/,
+    );
 
-      bandLegendModel.value = {
-        ...bandLegendModel.value,
-        items: [{ color: "#22c55e", labelText: "Wheel 2x" }],
-      };
-      await harness.flush();
+    sensorLegendHandlers.value = null;
+    await harness.flush();
 
-      assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
-      assert.equal(bandLegendRenderCount, bandLegendSignalBaseline);
-      assert.match(requireElement(harness.host, "#bandLegend").textContent ?? "", /Wheel 2x/);
+    assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
+    assert.equal(sensorLegendRenderCount, sensorLegendSignalBaseline);
+    assert.equal(
+      (requireElement(harness.host, "#legend").textContent ?? "").trim(),
+      "",
+    );
 
-      const bandLegendParentBaseline = bandLegendRenderCount;
-      const sensorLegendParentBaseline = sensorLegendRenderCount;
-      harness.view.renderHeader({
-        titleText: "Updated title",
-        hintText: "Updated hint",
-      });
-      await harness.flush();
+    sensorLegendHandlers.value = {
+      onReset: () => {
+        resetClicks += 1;
+      },
+      onSelect: (entryId) => {
+        selectedIds.push(entryId);
+      },
+    };
+    await harness.flush();
 
-      assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
-      assert.equal(bandLegendRenderCount, bandLegendParentBaseline);
-      assert.equal(sensorLegendRenderCount, sensorLegendParentBaseline);
+    assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
+    assert.equal(sensorLegendRenderCount, sensorLegendSignalBaseline);
+    assert.match(
+      requireElement(harness.host, "#legend").textContent ?? "",
+      /13.0 dB/,
+    );
+
+    bandLegendModel.value = {
+      ...bandLegendModel.value,
+      items: [{ color: "#22c55e", labelText: "Wheel 2x" }],
+    };
+    await harness.flush();
+
+    assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
+    assert.equal(bandLegendRenderCount, bandLegendSignalBaseline);
+    assert.match(
+      requireElement(harness.host, "#bandLegend").textContent ?? "",
+      /Wheel 2x/,
+    );
+
+    const bandLegendParentBaseline = bandLegendRenderCount;
+    const sensorLegendParentBaseline = sensorLegendRenderCount;
+    harness.view.renderHeader({
+      titleText: "Updated title",
+      hintText: "Updated hint",
+    });
+    await harness.flush();
+
+    assert.equal(spectrumPanelRenderCount, bandToggleBaseline);
+    assert.equal(bandLegendRenderCount, bandLegendParentBaseline);
+    assert.equal(sensorLegendRenderCount, sensorLegendParentBaseline);
   } finally {
     options.diffed = previousDiffed;
     harness.cleanup();
