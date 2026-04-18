@@ -1,5 +1,5 @@
 import type { AppState } from "../ui_app_state";
-import { effect, effectOnChange, untracked } from "../ui_signals";
+import { computed, effectOnChange, untracked } from "../ui_signals";
 import {
   createSpectrumCanvasRenderer,
   type SpectrumCanvasRenderer,
@@ -136,39 +136,16 @@ export class UiSpectrumController {
   }
 
   private bindReactiveTransportSync(): void {
-    let previousSpectra = this.state.spectrum.spectra.value;
-    let previousWsState = this.state.transport.wsState.value;
-    let previousPayloadError = this.state.transport.payloadError.value;
-    let previousHasReceivedPayload = this.state.transport.hasReceivedPayload.value;
-    let initialized = false;
-    effect(() => {
-      const nextSpectra = this.state.spectrum.spectra.value;
-      const nextWsState = this.state.transport.wsState.value;
-      const nextPayloadError = this.state.transport.payloadError.value;
-      const nextHasReceivedPayload = this.state.transport.hasReceivedPayload.value;
-      if (!initialized) {
-        initialized = true;
-        previousSpectra = nextSpectra;
-        previousWsState = nextWsState;
-        previousPayloadError = nextPayloadError;
-        previousHasReceivedPayload = nextHasReceivedPayload;
-        return;
-      }
-      const spectraChanged = nextSpectra !== previousSpectra;
-      const transportChanged =
-        nextWsState !== previousWsState
-        || nextPayloadError !== previousPayloadError
-        || nextHasReceivedPayload !== previousHasReceivedPayload;
-      previousSpectra = nextSpectra;
-      previousWsState = nextWsState;
-      previousPayloadError = nextPayloadError;
-      previousHasReceivedPayload = nextHasReceivedPayload;
-      if (spectraChanged) {
-        untracked(() => this.renderSpectrum());
-      }
-      if (transportChanged) {
-        untracked(() => this.updateSpectrumOverlay());
-      }
+    effectOnChange(this.state.spectrum.spectra, () => {
+      untracked(() => this.renderSpectrum());
+    });
+    const transportOverlayState = computed(() => ({
+      hasReceivedPayload: this.state.transport.hasReceivedPayload.value,
+      payloadError: this.state.transport.payloadError.value,
+      wsState: this.state.transport.wsState.value,
+    }));
+    effectOnChange(transportOverlayState, () => {
+      untracked(() => this.updateSpectrumOverlay());
     });
   }
 }
