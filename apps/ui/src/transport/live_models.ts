@@ -2,8 +2,6 @@ import {
   EXPECTED_SCHEMA_VERSION,
   type StrengthMetricsPayload,
   type WsClientInfo,
-  type WsOrderBand,
-  type WsRotationalSpeedValue,
   type WsRotationalSpeeds,
 } from "../contracts/ws_payload_types";
 
@@ -32,11 +30,7 @@ export type AdaptedClient = Pick<
   | "firmware_version"
 >;
 
-export type RotationalSpeedValue = WsRotationalSpeedValue;
-
 export type RotationalSpeeds = WsRotationalSpeeds;
-
-export type OrderBand = WsOrderBand;
 
 export interface AdaptedPayload {
   clients: AdaptedClient[];
