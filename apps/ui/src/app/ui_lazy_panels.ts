@@ -19,8 +19,6 @@ import {
 
 const DEFAULT_SETTINGS_TAB_ID = "carTab";
 
-type DeferredWorkScheduler = (task: () => void) => void;
-
 export interface UiMountedDashboardPanels {
   spectrum: CreatedSpectrumPanel["view"];
   liveOverview: RealtimeLiveOverviewBridge;
@@ -58,32 +56,7 @@ export interface UiMountedLazyPanelHandles {
 export interface UiLazyPanels {
   attachSettingsPanels(mountedPanels: UiMountedLazyPanelHandles): void;
   panels: UiMountedPanels;
-  prefetchHiddenPanels(): void;
   spectrumPanel: CreatedSpectrumPanel;
-}
-
-export interface CreateUiLazyPanelsDeps {
-  preloadHistoryView?: () => Promise<unknown> | void;
-  preloadSettingsView?: () => Promise<unknown> | void;
-  scheduleDeferredWork?: DeferredWorkScheduler;
-}
-
-function scheduleDeferredWork(task: () => void): void {
-  if (typeof globalThis.requestIdleCallback === "function") {
-    globalThis.requestIdleCallback(() => {
-      task();
-    });
-    return;
-  }
-  setTimeout(task, 0);
-}
-
-function preloadHistoryView(): Promise<unknown> {
-  return import("./views/history_lazy_view");
-}
-
-function preloadSettingsView(): Promise<unknown> {
-  return import("./views/settings_lazy_view");
 }
 
 function createDeferredTargetAction<TView, TTarget>(
@@ -307,7 +280,7 @@ function createDeferredInternetPanelView(): {
   };
 }
 
-export function createLazyUiPanels(deps: CreateUiLazyPanelsDeps = {}): UiLazyPanels {
+export function createLazyUiPanels(): UiLazyPanels {
   const history = {
     view: createModelActionPanelBindings<HistoryPanelRenderModel, HistoryPanelActionHandlers>(),
   };
@@ -364,12 +337,6 @@ export function createLazyUiPanels(deps: CreateUiLazyPanelsDeps = {}): UiLazyPan
       },
     },
     attachSettingsPanels,
-    prefetchHiddenPanels() {
-      (deps.scheduleDeferredWork ?? scheduleDeferredWork)(() => {
-        void (deps.preloadHistoryView ?? preloadHistoryView)();
-        void (deps.preloadSettingsView ?? preloadSettingsView)();
-      });
-    },
     spectrumPanel,
   };
 }

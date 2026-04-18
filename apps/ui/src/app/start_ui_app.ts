@@ -26,5 +26,4 @@ export function startUiApp(): void {
     host,
   );
   runtime.start();
-  runtime.prefetchHiddenPanels();
 }

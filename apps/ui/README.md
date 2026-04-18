@@ -105,7 +105,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 |------|---------|
 | `main.ts` | Thin Vite entry that boots the UI runtime |
 | `app/start_ui_app.ts` | CSS-aware startup entry that renders one `UiAppRoot`, then starts the runtime and hidden-view prefetch |
-| `app/ui_app_root.tsx` | Single rendered app tree that owns the shell frame plus the dashboard/history/settings sections and lazy section loading |
+| `app/ui_app_root.tsx` | Single rendered app tree that owns the shell frame plus the dashboard/history/settings sections |
 | `app/ui_panel_host_registry.ts` | Ref-backed settings-shell host registry for the per-tab settings panels mounted inside the settings subtree |
 | `app/ui_lazy_panels.ts` | Typed panel binding factory that gives the runtime full dashboard/history/settings contracts up front, then attaches the real settings shell handles when that subtree mounts |
 | `app/dom/` | Focused DOM-only utilities for download and RAF lifecycles after removing the shared global query helper |
@@ -229,7 +229,7 @@ feature-owned reactive context.
 The live UI architecture is now fully Preact for the top-level shell and
 primary page composition. `app/runtime/ui_shell_chrome.tsx` owns the primary
 navigation, header preferences, pills, and app banner; `app/ui_app_root.tsx`
-owns the top-level view sections and lazy section loading; `app/views/settings_shell.tsx`
+owns the top-level view sections; `app/views/settings_shell.tsx`
 owns the shared settings tab strip and per-tab host wrappers; and the
 individual page/settings panel islands own their local chrome plus typed
 bridges. The remaining
