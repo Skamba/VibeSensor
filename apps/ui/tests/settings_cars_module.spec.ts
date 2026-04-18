@@ -119,3 +119,82 @@ test("settings cars module dismisses transient creation feedback through typed t
   expect(dismissedByView.table.rows[0].isHighlighted).toBe(false);
   expect(dismissedByView.table.rows[0].highlightedStatusText).toBeNull();
 });
+
+test("settings cars module loads cars through the shared async loader and syncs active-car inputs", async () => {
+  const state = createAppState().settings;
+  const renders: CarsListRenderModel[] = [];
+  let syncAnalysisInputsCalls = 0;
+
+  const panel: CarsListPanelView = {
+    actions: signal(null),
+    model: signal(null),
+  };
+  effect(() => {
+    const model = panel.model.value;
+    if (model === null) {
+      return;
+    }
+    renders.push(model.value);
+  });
+
+  const module = createSettingsCarsModule({
+    settings: state,
+    panels: {
+      analysisPanel: {
+        carAvailability: signal(null),
+      },
+      panel,
+    },
+    ports: {
+      activeViewId: signal("settingsView"),
+      activeSettingsTabId: signal("carTab"),
+      openAnalysisTab: () => undefined,
+      openCarWizard: () => undefined,
+      renderSpectrum: () => undefined,
+      syncAnalysisInputs: () => {
+        syncAnalysisInputsCalls += 1;
+      },
+    },
+    services: {
+      t: (key) => key,
+      requestConfirmation: async () => true,
+      showError: () => undefined,
+    },
+    formatting: {
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+    },
+    transport: {
+      async loadCars() {
+        return {
+          active_car_id: "car-1",
+          cars: [{
+            id: "car-1",
+            name: "Track Demo",
+            type: "Coupe",
+            variant: null,
+            aspects: {
+              tire_width_mm: 245,
+              tire_aspect_pct: 40,
+              rim_in: 19,
+              final_drive_ratio: 3.23,
+              current_gear_ratio: 0.72,
+            },
+          }],
+        };
+      },
+    },
+  });
+
+  await module.loadCarsFromServer();
+
+  expect(state.activeCarId.value).toBe("car-1");
+  expect(state.vehicleSettings.value).toMatchObject({
+    current_gear_ratio: 0.72,
+    final_drive_ratio: 3.23,
+    rim_in: 19,
+    tire_aspect_pct: 40,
+    tire_width_mm: 245,
+  });
+  expect(syncAnalysisInputsCalls).toBe(1);
+  expect(lastRender(renders).table?.kind).toBe("rows");
+});

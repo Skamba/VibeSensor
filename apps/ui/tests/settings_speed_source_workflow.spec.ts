@@ -10,17 +10,17 @@ import type {
   SpeedSourceRequest,
 } from "../src/api/types";
 import { createAppState } from "../src/app/ui_app_state";
-import { effect } from "../src/app/ui_signals";
+import { effect, signal, type Signal } from "../src/app/ui_signals";
 
 type WorkflowHarness = {
-  contextVisible: boolean;
+  obdConfigVisible: Signal<boolean>;
   errors: string[];
   focuses: string[];
 };
 
 function createHarness(): WorkflowHarness {
   return {
-    contextVisible: false,
+    obdConfigVisible: signal(false),
     errors: [],
     focuses: [],
   };
@@ -38,9 +38,6 @@ function createViewPorts(
     },
     focusStaleTimeoutInput(): void {
       harness.focuses.push("stale-timeout");
-    },
-    isObdConfigVisible(): boolean {
-      return harness.contextVisible;
     },
   };
 }
@@ -89,6 +86,7 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
     const harness = createHarness();
     const appState = createAppState();
     const workflow = createSettingsSpeedSourceWorkflow({
+      obdConfigVisible: harness.obdConfigVisible,
       renderSpeedReadout: () => undefined,
       settings: appState.settings,
       showError: (message) => {
@@ -144,6 +142,7 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
     let savedPayload: SpeedSourceRequest | null = null;
 
     const workflow = createSettingsSpeedSourceWorkflow({
+      obdConfigVisible: harness.obdConfigVisible,
       renderSpeedReadout: () => undefined,
       settings: appState.settings,
       showError: (message) => {
@@ -184,6 +183,7 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
     const harness = createHarness();
     const appState = createAppState();
     const workflow = createSettingsSpeedSourceWorkflow({
+      obdConfigVisible: harness.obdConfigVisible,
       renderSpeedReadout: () => undefined,
       settings: appState.settings,
       showError: (message) => {
@@ -214,6 +214,7 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
     const harness = createHarness();
     const appState = createAppState();
     const workflow = createSettingsSpeedSourceWorkflow({
+      obdConfigVisible: harness.obdConfigVisible,
       renderSpeedReadout: () => undefined,
       settings: appState.settings,
       showError: (message) => {
@@ -291,10 +292,11 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
           };
         },
       },
+      obdConfigVisible: harness.obdConfigVisible,
       view: createViewPorts(harness),
     });
 
-    harness.contextVisible = true;
+    harness.obdConfigVisible.value = true;
     workflow.handleSpeedSourceChanged("obd2");
     await workflow.scanObdDevices();
     await workflow.pairObdDevice(scannedDevice.mac_address);
@@ -342,21 +344,22 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
           };
         },
       },
+      obdConfigVisible: harness.obdConfigVisible,
       view: createViewPorts(harness),
     });
 
-    harness.contextVisible = true;
+    harness.obdConfigVisible.value = true;
     workflow.handleSpeedSourceChanged("obd2");
     await workflow.scanObdDevices();
 
     expect(pollingStarts).toBeGreaterThan(0);
 
-    harness.contextVisible = false;
+    harness.obdConfigVisible.value = false;
     workflow.handleNavigateContext();
 
     expect(pollingStops).toBeGreaterThan(0);
 
-    harness.contextVisible = true;
+    harness.obdConfigVisible.value = true;
     workflow.handleNavigateContext();
 
     expect(pollingStarts).toBeGreaterThan(1);
@@ -372,6 +375,7 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
         start() {},
         stop() {},
       }),
+      obdConfigVisible: harness.obdConfigVisible,
       renderSpeedReadout: () => undefined,
       settings: appState.settings,
       showError: (message) => {
@@ -398,6 +402,7 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
         start() {},
         stop() {},
       }),
+      obdConfigVisible: harness.obdConfigVisible,
       renderSpeedReadout: () => undefined,
       settings: appState.settings,
       showError: (message) => {
@@ -435,6 +440,7 @@ test.describe("createSettingsSpeedSourceWorkflow", () => {
         start() {},
         stop() {},
       }),
+      obdConfigVisible: harness.obdConfigVisible,
       renderSpeedReadout: () => undefined,
       settings: appState.settings,
       showError: (message) => {
