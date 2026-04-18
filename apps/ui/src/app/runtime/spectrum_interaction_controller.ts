@@ -1,10 +1,13 @@
-import { batch, effect, signal } from "../ui_signals";
+import { batch, computed, effect, signal, type ReadonlySignal } from "../ui_signals";
 import type { ChartBand } from "../ui_app_state";
 import type { SpectrumFocusMarker, SpectrumSeriesEntry } from "./spectrum_shared";
 import { closestFrequencyIndex } from "./spectrum_shared";
 import type {
+  SpectrumBandLegendModel,
   SpectrumLegendItemModel,
+  SpectrumLegendHandlers,
   SpectrumLegendState,
+  SpectrumPanelBandToggleModel,
   SpectrumPanelView,
   SpectrumSensorLegendModel,
 } from "./spectrum_panel_view";
@@ -41,32 +44,36 @@ export class SpectrumInteractionController {
 
   private readonly bandsVisible = signal(false);
 
+  readonly bandToggleModel: ReadonlySignal<SpectrumPanelBandToggleModel>;
+
+  readonly sensorLegendModel: ReadonlySignal<SpectrumSensorLegendModel | null>;
+
+  readonly sensorLegendHandlersModel: ReadonlySignal<SpectrumLegendHandlers | null>;
+
+  readonly bandLegendModel: ReadonlySignal<SpectrumBandLegendModel>;
+
   constructor(
     private readonly deps: SpectrumInteractionControllerDeps,
   ) {
-    this.deps.panel.bindBandToggle(() => this.toggleBands());
-
-    effect(() => {
+    this.bandToggleModel = computed(() => {
       const bands = this.currentBands.value;
       const entries = this.currentEntries.value;
       const visible = this.bandsVisible.value;
-      const hasBands = bands.length > 0 && entries.length > 0;
-      this.deps.panel.renderBandToggle({
-        hasBands,
+      return {
+        hasBands: bands.length > 0 && entries.length > 0,
         bandsVisible: visible,
         text: this.deps.t(visible ? "spectrum.bands.hide" : "spectrum.bands.show"),
-      });
+      };
     });
 
-    effect(() => {
+    this.sensorLegendModel = computed(() => {
       const entries = this.currentEntries.value;
       const pinnedId = this.pinnedSeriesId.value;
       if (!entries.length) {
-        this.deps.panel.renderSensorLegend(null);
-        return;
+        return null;
       }
       const allActive = pinnedId === null;
-      const model: SpectrumSensorLegendModel = {
+      return {
         reset: {
           labelText: this.deps.t("spectrum.legend.all_series"),
           titleText: this.deps.t("spectrum.legend.clear_focus"),
@@ -113,31 +120,41 @@ export class SpectrumInteractionController {
             muted,
           } satisfies SpectrumLegendItemModel;
         }),
-      };
-      this.deps.panel.renderSensorLegend(model, {
-        onReset: () => {
-          this.pinnedSeriesId.value = null;
-          this.applyPlotSelection();
-        },
-        onSelect: (entryId) => {
-          this.pinnedSeriesId.value = this.pinnedSeriesId.value === entryId ? null : entryId;
-          this.applyPlotSelection();
-        },
-      });
+      } satisfies SpectrumSensorLegendModel;
     });
 
-    effect(() => {
+    this.sensorLegendHandlersModel = computed(() =>
+      this.sensorLegendModel.value === null
+        ? null
+        : {
+          onReset: () => {
+            this.pinnedSeriesId.value = null;
+            this.applyPlotSelection();
+          },
+          onSelect: (entryId: string) => {
+            this.pinnedSeriesId.value = this.pinnedSeriesId.value === entryId ? null : entryId;
+            this.applyPlotSelection();
+          },
+        } satisfies SpectrumLegendHandlers
+    );
+
+    this.bandLegendModel = computed(() => {
       const activeFreq = this.activeFrequency();
       const activeBands = activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
-      this.deps.panel.renderBandLegend({
+      return {
         visible: this.bandsVisible.value && this.currentBands.value.length > 0 && this.currentEntries.value.length > 0,
         items: activeBands.map((band) => ({
           labelText: band.label,
           color: band.color,
         })),
         emptyText: this.deps.t("spectrum.bands.none"),
-      });
+      };
+    });
 
+    this.deps.panel.bindBandToggle(() => this.toggleBands());
+    effect(() => {
+      const activeFreq = this.activeFrequency();
+      const activeBands = activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
       const focusEntry = this.focusEntry();
       if (!focusEntry) {
         this.deps.panel.renderInspectorText(this.deps.t("spectrum.inspector_idle"));
