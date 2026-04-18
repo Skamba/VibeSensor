@@ -83,11 +83,11 @@
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65);
 }
 
-.live-sensor-card__status-dot--online {
+.live-sensor-card__status-dot[data-status="online"] {
   background: var(--pill-ok-text);
 }
 
-.live-sensor-card__status-dot--offline {
+.live-sensor-card__status-dot[data-status="offline"] {
   background: var(--pill-bad-text);
 }
 

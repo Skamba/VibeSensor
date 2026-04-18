@@ -150,7 +150,8 @@ function RealtimeLiveOverviewSensorRoster(props: {
               <div class="live-sensor-card__header">
                 <strong>{card.label}</strong>
                 <span
-                  class={`live-sensor-card__status-dot live-sensor-card__status-dot--${statusClass}`}
+                  class="live-sensor-card__status-dot"
+                  data-status={statusClass}
                   role="img"
                   aria-label={card.statusText}
                   title={card.statusText}

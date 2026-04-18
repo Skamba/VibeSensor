@@ -155,9 +155,9 @@ button[hidden],
 }
 
 .pill[data-variant] { background: var(--variant-surface); color: var(--variant-text); }
-.status-pill.online,
+.status-pill[data-status="online"],
 .badge.on { background: var(--pill-ok-bg); color: var(--pill-ok-text); }
-.status-pill.offline,
+.status-pill[data-status="offline"],
 .badge.off { background: var(--pill-bad-bg); color: var(--pill-bad-text); }
 
 .card,
