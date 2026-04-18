@@ -16,6 +16,8 @@ import type { SpectrumPanelChartDom } from "./spectrum_panel_view";
 import { closestFrequencyIndex, freqGridsMatch, type SpectrumFocusMarker, type SpectrumSeriesEntry } from "./spectrum_shared";
 
 type SpectrumChartModule = Pick<typeof import("../../spectrum_chart"), "createSpectrumChart">;
+const EMPTY_FREQ_AXIS: number[] = [];
+const EMPTY_SERIES_VALUES: number[][] = [];
 
 const bandKeyPresentation: Record<string, { color: string; labelKey: string }> = {
   wheel_1x: { color: orderBandFills.wheel1, labelKey: "bands.wheel_1x" },
@@ -117,7 +119,6 @@ export function createSpectrumCanvasRenderer(
   }
 
   function prepareFrame(): SpectrumPreparedRenderData {
-    const fallbackFreq: number[] = [];
     const entries: SpectrumSeriesEntry[] = [];
     let targetFreq: number[] = [];
 
@@ -131,7 +132,7 @@ export function createSpectrumCanvasRenderer(
       }
       const clientFreq = Array.isArray(spectrum.freq) && spectrum.freq.length
         ? spectrum.freq
-        : fallbackFreq;
+        : EMPTY_FREQ_AXIS;
       const length = Math.min(clientFreq.length, spectrum.combined.length);
       if (!length) {
         continue;
@@ -182,13 +183,32 @@ export function createSpectrumCanvasRenderer(
       };
     }
 
-    const minLen = Math.min(targetFreq.length, ...entries.map((entry) => entry.values.length));
+    let minLen = targetFreq.length;
+    const seriesIds = new Array<string>(entries.length);
+    const frameValues = new Array<number[]>(entries.length);
+    for (let index = 0; index < entries.length; index += 1) {
+      const entry = entries[index];
+      seriesIds[index] = entry.id;
+      frameValues[index] = entry.values;
+      if (entry.values.length < minLen) {
+        minLen = entry.values.length;
+      }
+    }
+    if (minLen < targetFreq.length) {
+      targetFreq = targetFreq.slice(0, minLen);
+      for (let index = 0; index < frameValues.length; index += 1) {
+        if (frameValues[index]!.length === minLen) {
+          continue;
+        }
+        const trimmedValues = frameValues[index]!.slice(0, minLen);
+        frameValues[index] = trimmedValues;
+        entries[index]!.values = trimmedValues;
+      }
+    }
     const frame: SpectrumHeavyFrame = {
-      seriesIds: entries.map((entry) => entry.id),
-      freq: targetFreq.length === minLen ? targetFreq : targetFreq.slice(0, minLen),
-      values: entries.map((entry) =>
-        entry.values.length === minLen ? entry.values : entry.values.slice(0, minLen),
-      ),
+      seriesIds,
+      freq: targetFreq,
+      values: frameValues,
     };
 
     return {
@@ -204,14 +224,11 @@ export function createSpectrumCanvasRenderer(
     pendingPreparedFrame.value = prepared;
     currentEntries.value = prepared.entries;
     currentFreqAxis.value = prepared.freqAxis;
-    chartSeriesMeta.value = prepared.entries.map((entry) => ({
-      label: entry.label,
-      color: entry.color,
-    }));
-    chartData.value = [
-      prepared.freqAxis,
-      ...prepared.entries.map((entry) => entry.values),
-    ];
+    syncChartSeriesMeta(prepared.entries);
+    chartData.value = buildChartData(
+      prepared.frame?.freq ?? prepared.freqAxis,
+      prepared.frame?.values ?? EMPTY_SERIES_VALUES,
+    );
 
     if (!prepared.frame) {
       tweenTarget.value = null;
@@ -247,10 +264,7 @@ export function createSpectrumCanvasRenderer(
     if (!freqAxis.length || !entries.length) {
       return;
     }
-    chartData.value = [
-      freqAxis.slice(),
-      ...entries.map((entry) => entry.values),
-    ];
+    chartData.value = buildChartDataWithClonedFreqAxis(freqAxis, entries);
   }
 
   function setSeriesIsolation(seriesIndex: number | null): void {
@@ -266,8 +280,58 @@ export function createSpectrumCanvasRenderer(
       return;
     }
     currentFreqAxis.value = frame.freq;
-    chartData.value = [frame.freq, ...frame.values];
+    chartData.value = buildChartData(frame.freq, frame.values);
     spectrumLastFrame.value = frame;
+  }
+
+  function syncChartSeriesMeta(entries: readonly SpectrumSeriesEntry[]): void {
+    const currentMeta = chartSeriesMeta.value;
+    if (currentMeta.length === entries.length) {
+      let changed = false;
+      for (let index = 0; index < entries.length; index += 1) {
+        if (
+          currentMeta[index]?.label !== entries[index]?.label
+          || currentMeta[index]?.color !== entries[index]?.color
+        ) {
+          changed = true;
+          break;
+        }
+      }
+      if (!changed) {
+        return;
+      }
+    }
+
+    const nextMeta = new Array<SpectrumSeriesMeta>(entries.length);
+    for (let index = 0; index < entries.length; index += 1) {
+      const entry = entries[index]!;
+      nextMeta[index] = {
+        label: entry.label,
+        color: entry.color,
+      };
+    }
+    chartSeriesMeta.value = nextMeta;
+  }
+
+  function buildChartData(freqAxis: number[], seriesValues: readonly number[][]): uPlot.AlignedData {
+    const alignedData = new Array(seriesValues.length + 1) as uPlot.AlignedData;
+    alignedData[0] = freqAxis;
+    for (let index = 0; index < seriesValues.length; index += 1) {
+      alignedData[index + 1] = seriesValues[index]!;
+    }
+    return alignedData;
+  }
+
+  function buildChartDataWithClonedFreqAxis(
+    freqAxis: readonly number[],
+    entries: readonly SpectrumSeriesEntry[],
+  ): uPlot.AlignedData {
+    const alignedData = new Array(entries.length + 1) as uPlot.AlignedData;
+    alignedData[0] = Array.from(freqAxis);
+    for (let index = 0; index < entries.length; index += 1) {
+      alignedData[index + 1] = entries[index]!.values;
+    }
+    return alignedData;
   }
 
   function calculateBandsFromBackend(): ChartBand[] | null {
