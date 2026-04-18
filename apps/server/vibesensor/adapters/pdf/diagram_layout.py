@@ -174,68 +174,6 @@ def resolve_marker_states(
     return states
 
 
-# ── Label collision resolution ───────────────────────────────────────────────
-
-_INLINE_LABEL_GAP = 16.0
-
-_LABEL_CANDIDATES_RIGHT: tuple[tuple[float, float, str], ...] = (
-    (_INLINE_LABEL_GAP, -2.0, "start"),
-    (-_INLINE_LABEL_GAP, -2.0, "end"),
-    (0.0, 9.0, "middle"),
-    (0.0, -11.0, "middle"),
-)
-_LABEL_CANDIDATES_LEFT: tuple[tuple[float, float, str], ...] = (
-    (-_INLINE_LABEL_GAP, -2.0, "end"),
-    (-_INLINE_LABEL_GAP, 18.0, "end"),
-    (-_INLINE_LABEL_GAP, -20.0, "end"),
-    (_INLINE_LABEL_GAP, -2.0, "start"),
-    (0.0, 9.0, "middle"),
-    (0.0, -11.0, "middle"),
-)
-
-
-def choose_label_plan(
-    *,
-    name: str,
-    px: float,
-    py: float,
-    width: float,
-    height: float,
-    occupied_boxes: list[tuple[float, float, float, float]],
-    font_size: float,
-    color: str,
-) -> LabelRenderPlan:
-    """Choose the best label position for *name* at pixel (px, py).
-
-    Tries several candidate offsets and picks the one with the lowest
-    overlap + overflow penalty.
-    """
-    ordered_candidates = _LABEL_CANDIDATES_RIGHT if px < (width * 0.5) else _LABEL_CANDIDATES_LEFT
-    best: tuple[float, LabelRenderPlan] | None = None
-    for idx, (dx, dy, anchor) in enumerate(ordered_candidates):
-        x = px + dx
-        y = py + dy
-        bbox = label_bbox(x=x, y=y, text=name, anchor=anchor, font_size=font_size)
-        overlap_penalty = sum(1 for box in occupied_boxes if boxes_overlap(bbox, box))
-        overflow_penalty = bounds_overflow(bbox, width=width, height=height)
-        score = (overlap_penalty * 1000.0) + (overflow_penalty * 10.0) + float(idx)
-        candidate = LabelRenderPlan(
-            name=name,
-            text=name,
-            x=x,
-            y=y,
-            anchor=anchor,
-            color=color,
-            font_size=font_size,
-            bbox=bbox,
-        )
-        if best is None or score < best[0]:
-            best = (score, candidate)
-    if best is None:
-        raise ValueError(f"No valid label placement found for {name!r} in diagram")
-    return best[1]
-
-
 # ── Full sensor render plan ─────────────────────────────────────────────────
 
 
