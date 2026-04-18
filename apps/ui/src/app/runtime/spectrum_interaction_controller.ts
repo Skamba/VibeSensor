@@ -12,6 +12,9 @@ import type {
   SpectrumSensorLegendModel,
 } from "./spectrum_panel_view";
 
+type TimeoutHandle = ReturnType<typeof globalThis.setTimeout>;
+const HOVER_INSPECTOR_THROTTLE_MS = 33;
+
 export interface SpectrumInteractionSyncParams {
   entries: readonly SpectrumSeriesEntry[];
   freqAxis: readonly number[];
@@ -25,6 +28,9 @@ export interface SpectrumInteractionControllerDeps {
   getTopPeakHz: (entryId: string) => number | null;
   setSeriesIsolation: (seriesIndex: number | null) => void;
   requestPlotRefresh: () => void;
+  scheduleTimeout?: (callback: () => void, delayMs: number) => TimeoutHandle;
+  cancelTimeout?: (handle: TimeoutHandle) => void;
+  nowMs?: () => number;
 }
 
 export interface SpectrumInteractionSyncOptions {
@@ -54,9 +60,28 @@ export class SpectrumInteractionController {
 
   private readonly disposeInspectorSync: () => void;
 
+  private readonly scheduleTimeout: (callback: () => void, delayMs: number) => TimeoutHandle;
+
+  private readonly cancelTimeout: (handle: TimeoutHandle) => void;
+
+  private readonly nowMs: () => number;
+
+  private pendingHoverTimeoutHandle: TimeoutHandle | null = null;
+
+  private pendingHoverInspectorText: string | null = null;
+
+  private lastHoverInspectorCommitAtMs: number | null = null;
+
+  private lastInspectorText: string | null = null;
+
+  private lastAnnouncedInspectorText: string | null = null;
+
   constructor(
     private readonly deps: SpectrumInteractionControllerDeps,
   ) {
+    this.scheduleTimeout = this.deps.scheduleTimeout ?? ((callback, delayMs) => globalThis.setTimeout(callback, delayMs));
+    this.cancelTimeout = this.deps.cancelTimeout ?? ((handle) => globalThis.clearTimeout(handle));
+    this.nowMs = this.deps.nowMs ?? (() => performance.now());
     this.bandToggleModel = computed(() => {
       const bands = this.currentBands.value;
       const entries = this.currentEntries.value;
@@ -164,7 +189,7 @@ export class SpectrumInteractionController {
       const activeBands = activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
       const focusEntry = this.focusEntry();
       if (!focusEntry) {
-        this.deps.panel.renderInspectorText(this.deps.t("spectrum.inspector_idle"));
+        this.renderInspectorText(this.deps.t("spectrum.inspector_idle"), { announce: false });
         return;
       }
       const cursorIdx = this.cursorDataIdx.value;
@@ -173,20 +198,20 @@ export class SpectrumInteractionController {
         const valueText = typeof currentValue === "number" && Number.isFinite(currentValue)
           ? this.formatDb(currentValue)
           : "--";
-        this.deps.panel.renderInspectorText(this.deps.t("spectrum.inspector_hover", {
+        this.renderInspectorText(this.deps.t("spectrum.inspector_hover", {
           sensor: focusEntry.label,
           freq: this.formatHz(activeFreq),
           value: valueText,
           bands: this.bandSummaryText(activeBands),
-        }));
+        }), { announce: false, throttleHover: true });
         return;
       }
       const peak = this.focusPeakInfo(focusEntry);
       if (!peak) {
-        this.deps.panel.renderInspectorText(this.deps.t("spectrum.inspector_idle"));
+        this.renderInspectorText(this.deps.t("spectrum.inspector_idle"), { announce: false });
         return;
       }
-      this.deps.panel.renderInspectorText(this.deps.t(
+      this.renderInspectorText(this.deps.t(
         this.pinnedSeriesId.value ? "spectrum.inspector_focus_selected" : "spectrum.inspector_focus_strongest",
         {
           sensor: focusEntry.label,
@@ -194,11 +219,12 @@ export class SpectrumInteractionController {
           value: this.formatDb(peak.value),
           bands: this.bandSummaryText(this.activeBandsForFrequency(peak.freq)),
         },
-      ));
+      ), { announce: true });
     });
   }
 
   dispose(): void {
+    this.cancelPendingHoverInspector();
     this.disposeInspectorSync();
   }
 
@@ -276,6 +302,72 @@ export class SpectrumInteractionController {
     }
     this.bandsVisible.value = !this.bandsVisible.value;
     this.deps.requestPlotRefresh();
+  }
+
+  private renderInspectorText(
+    text: string,
+    options: { announce: boolean; throttleHover?: boolean },
+  ): void {
+    if (options.throttleHover) {
+      this.queueHoverInspectorText(text);
+      return;
+    }
+    this.cancelPendingHoverInspector();
+    this.commitInspectorText(text, options.announce);
+  }
+
+  private queueHoverInspectorText(text: string): void {
+    this.pendingHoverInspectorText = text;
+    const lastCommitAtMs = this.lastHoverInspectorCommitAtMs;
+    const nowMs = this.nowMs();
+    if (
+      lastCommitAtMs === null
+      || (nowMs - lastCommitAtMs) >= HOVER_INSPECTOR_THROTTLE_MS
+    ) {
+      this.flushPendingHoverInspector();
+      return;
+    }
+    if (this.pendingHoverTimeoutHandle !== null) {
+      return;
+    }
+    const delayMs = HOVER_INSPECTOR_THROTTLE_MS - (nowMs - lastCommitAtMs);
+    this.pendingHoverTimeoutHandle = this.scheduleTimeout(() => {
+      this.pendingHoverTimeoutHandle = null;
+      this.flushPendingHoverInspector();
+    }, delayMs);
+  }
+
+  private flushPendingHoverInspector(): void {
+    const text = this.pendingHoverInspectorText;
+    if (text === null) {
+      return;
+    }
+    this.pendingHoverInspectorText = null;
+    this.lastHoverInspectorCommitAtMs = this.nowMs();
+    this.commitInspectorText(text, false);
+  }
+
+  private cancelPendingHoverInspector(): void {
+    if (this.pendingHoverTimeoutHandle !== null) {
+      this.cancelTimeout(this.pendingHoverTimeoutHandle);
+      this.pendingHoverTimeoutHandle = null;
+    }
+    this.pendingHoverInspectorText = null;
+  }
+
+  private commitInspectorText(text: string, announce: boolean): void {
+    const shouldAnnounce = announce && text !== this.lastAnnouncedInspectorText;
+    if (text === this.lastInspectorText && !shouldAnnounce) {
+      return;
+    }
+    this.deps.panel.renderInspector({
+      text,
+      announce: shouldAnnounce,
+    });
+    this.lastInspectorText = text;
+    if (shouldAnnounce) {
+      this.lastAnnouncedInspectorText = text;
+    }
   }
 
   private activeBandsForFrequency(freqHz: number): ChartBand[] {
