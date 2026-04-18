@@ -99,7 +99,7 @@ def test_no_pre_reset_samples_contaminate_post_reset_fft() -> None:
     proc.ingest("c1", pre_reset, sample_rate_hz=800)
 
     pre_metrics = proc.compute_metrics("c1", sample_rate_hz=800)
-    pre_peaks = pre_metrics.get("x", {}).get("peaks", [])
+    pre_peaks = pre_metrics.get("combined", {}).get("peaks", [])
     assert any(abs(p["hz"] - 50.0) < 2.0 for p in pre_peaks), "Pre-reset should detect 50 Hz"
 
     # --- Sensor reset ---
@@ -112,7 +112,7 @@ def test_no_pre_reset_samples_contaminate_post_reset_fft() -> None:
     proc.ingest("c1", post_reset, sample_rate_hz=800)
 
     post_metrics = proc.compute_metrics("c1", sample_rate_hz=800)
-    post_peaks = post_metrics.get("x", {}).get("peaks", [])
+    post_peaks = post_metrics.get("combined", {}).get("peaks", [])
     # Should see 120 Hz, NOT 50 Hz residual
     assert any(abs(p["hz"] - 120.0) < 2.0 for p in post_peaks), "Post-reset should detect 120 Hz"
     # No residual 50 Hz peak
