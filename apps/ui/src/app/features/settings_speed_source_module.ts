@@ -16,7 +16,6 @@ import { createSettingsSpeedSourceWorkflow } from "./settings_speed_source_workf
 interface SettingsSpeedSourceModulePorts {
   activeViewId: ReadonlySignal<string>;
   activeSettingsTabId: ReadonlySignal<string>;
-  renderSpeedReadout: () => void;
 }
 
 export interface SettingsSpeedSourceModuleDeps {
@@ -53,7 +52,6 @@ export function createSettingsSpeedSourceModule(
   );
   workflow = createSettingsSpeedSourceWorkflow({
     obdConfigVisible,
-    renderSpeedReadout: ctx.ports.renderSpeedReadout,
     settings,
     showError: services.showError,
     t: services.t,

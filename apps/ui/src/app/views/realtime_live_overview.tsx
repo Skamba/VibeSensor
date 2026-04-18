@@ -4,7 +4,6 @@ import { getUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalProperties,
-  type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
 import { type DeferredModelSignal } from "./view_model_binding";
@@ -38,13 +37,9 @@ export interface RealtimeLiveOverviewRenderModel {
   sensorCards: RealtimeLiveOverviewSensorCardModel[];
 }
 
-interface RealtimeLiveOverviewBridgeState {
-  speedText: string;
-}
-
 export interface RealtimeLiveOverviewBridge {
   model: DeferredModelSignal<RealtimeLiveOverviewRenderModel>;
-  speedText: Signal<string>;
+  speedText: DeferredModelSignal<string>;
 }
 
 const DEFAULT_OVERVIEW_MODEL: RealtimeLiveOverviewRenderModel = {
@@ -64,9 +59,7 @@ const DEFAULT_OVERVIEW_MODEL: RealtimeLiveOverviewRenderModel = {
   sensorCards: [],
 };
 
-const DEFAULT_OVERVIEW_STATE: RealtimeLiveOverviewBridgeState = {
-  speedText: "--",
-};
+const DEFAULT_SPEED_TEXT = "--";
 
 const REALTIME_LIVE_OVERVIEW_MODEL_KEYS = [
   "activeCar",
@@ -177,7 +170,7 @@ function RealtimeLiveOverviewSensorRoster(props: {
 
 function RealtimeLiveOverview(props: {
   model: ReadonlySignal<ReadonlySignal<RealtimeLiveOverviewRenderModel> | null>;
-  speedText: ReadonlySignal<string>;
+  speedText: ReadonlySignal<ReadonlySignal<string> | null>;
 }) {
   const labels = useComputed(() => ({
     activeCarLabel: getUiText("dashboard.active_car", "Active car"),
@@ -195,6 +188,7 @@ function RealtimeLiveOverview(props: {
     titleText: getUiText("dashboard.live_overview", "Live overview"),
   }));
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_OVERVIEW_MODEL);
+  const speedText = useComputed(() => props.speedText.value?.value ?? DEFAULT_SPEED_TEXT);
   const {
     activeCar,
     connectedSensorsText,
@@ -258,7 +252,7 @@ function RealtimeLiveOverview(props: {
               {labelTexts.currentSpeedLabel}
             </div>
           <div id="speed" class="stat__value speed" aria-live="polite">
-            {props.speedText}
+            {speedText}
           </div>
         </div>
       </div>

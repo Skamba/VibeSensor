@@ -67,8 +67,6 @@ export class UiShellController {
 
   private readonly chrome: UiShellChromeView;
 
-  private readonly liveOverview: RealtimeLiveOverviewBridge;
-
   private readonly navigation: UiShellNavigationModule;
 
   private readonly notifications: UiShellNotificationModule;
@@ -97,7 +95,6 @@ export class UiShellController {
   constructor(deps: UiShellControllerDeps) {
     this.state = deps.state;
     this.chrome = deps.chrome;
-    this.liveOverview = deps.liveOverview;
     this.bindFeatureHandlers = deps.bindFeatureHandlers;
     this.notifications = createUiShellNotificationModule({
       window,
@@ -140,10 +137,10 @@ export class UiShellController {
     this.preferencesRenderModel = this.createPreferencesRenderModel();
     this.statusRenderModel = this.createStatusRenderModel();
     this.dialogRenderModel = this.createDialogRenderModel();
+    deps.liveOverview.speedText.value = this.status.speedReadoutText;
     this.bindChromeModelSignals();
     this.bindDocumentLanguageSync();
     this.bindReactiveLanguageSync();
-    this.bindReactiveSpeedReadoutSync();
   }
 
   t(key: string, vars?: Record<string, unknown>): string {
@@ -160,12 +157,6 @@ export class UiShellController {
 
   requestConfirmation(message: string): Promise<boolean> {
     return this.confirmation.requestConfirmation(message);
-  }
-
-  renderSpeedReadout(): void {
-    untracked(() => {
-      this.liveOverview.speedText.value = this.status.speedReadoutText.value;
-    });
   }
 
   setLiveStatus(variant: string, text: string): void {
@@ -217,15 +208,6 @@ export class UiShellController {
     this.chrome.bindPreferencesModel(this.preferencesRenderModel);
     this.chrome.bindStatusModel(this.statusRenderModel);
     this.chrome.bindDialogModel(this.dialogRenderModel);
-  }
-
-  private bindReactiveSpeedReadoutSync(): void {
-    effect(() => {
-      const speedText = this.status.speedReadoutText.value;
-      untracked(() => {
-        this.liveOverview.speedText.value = speedText;
-      });
-    });
   }
 
   private createNavigationRenderModel(): ReadonlySignal<UiShellChromeNavigationModel> {
