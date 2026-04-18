@@ -258,4 +258,61 @@ test.describe("shared freq optimization", () => {
       },
     });
   });
+
+  test("reuses validated client and rotational speed references in hot path", () => {
+    const client = {
+      id: "sensor1",
+      name: "Front Left",
+      connected: true,
+      mac_address: "001122334455",
+      location_code: "front_left_wheel",
+      last_seen_age_ms: 5,
+      dropped_frames: 0,
+      frames_total: 100,
+      frame_samples: 512,
+      sample_rate_hz: 1600,
+      firmware_version: "fw-1.0.0",
+    };
+    const rotationalSpeeds = {
+      basis_speed_source: "gps",
+      wheel: { rpm: 738, mode: "calculated", reason: null },
+      driveshaft: { rpm: 1476, mode: "calculated", reason: null },
+      engine: { rpm: 2208, mode: "calculated", reason: null },
+      order_bands: [
+        { key: "wheel_1x", center_hz: 12.3, tolerance: 0.08 },
+      ],
+    };
+
+    const adapted = adaptServerPayload({
+      ...basePayload,
+      clients: [client],
+      rotational_speeds: rotationalSpeeds,
+    });
+
+    expect(adapted.clients).toHaveLength(1);
+    expect(adapted.clients[0]).toBe(client);
+    expect(adapted.rotational_speeds).toBe(rotationalSpeeds);
+  });
+
+  test("reuses shared frequency and strength metric references for accepted spectra", () => {
+    const sharedFreq = [10, 20, 30];
+    const strengthMetrics = makeStrengthMetrics({ vibration_strength_db: 12 });
+
+    const adapted = adaptServerPayload({
+      ...basePayload,
+      spectra: {
+        freq: sharedFreq,
+        clients: {
+          sensor1: {
+            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            strength_metrics: strengthMetrics,
+          },
+        },
+      },
+    });
+    const spectra = requireSpectra(adapted);
+
+    expect(spectra.clients.sensor1.freq).toBe(sharedFreq);
+    expect(spectra.clients.sensor1.strength_metrics).toBe(strengthMetrics);
+  });
 });

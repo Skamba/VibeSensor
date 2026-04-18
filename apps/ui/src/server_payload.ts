@@ -2,7 +2,6 @@ import {
   EXPECTED_SCHEMA_VERSION,
   type LiveWsPayload,
 } from "./contracts/ws_payload_types";
-import { cloneTransportValue } from "./transport/clone";
 import type { AdaptedClient, AdaptedPayload, SpectrumClientData } from "./transport/live_models";
 import { validateLiveWsPayload } from "./ws_payload_validator";
 
@@ -30,7 +29,7 @@ function adaptSpectra(spectra: LiveWsPayload["spectra"]): AdaptedPayload["spectr
     adaptedClients[clientId] = {
       freq,
       combined,
-      strength_metrics: cloneTransportValue(strengthMetrics),
+      strength_metrics: strengthMetrics,
     };
   }
 
@@ -59,10 +58,10 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
   warnOnUnknownSchemaVersion(validatedPayload.schema_version);
 
   return {
-    clients: validatedPayload.clients.map((client) => cloneTransportValue<AdaptedClient>(client)),
+    clients: validatedPayload.clients as AdaptedClient[],
     speed_mps: validatedPayload.speed_mps,
     rotational_speeds: validatedPayload.rotational_speeds
-      ? cloneTransportValue(validatedPayload.rotational_speeds)
+      ? validatedPayload.rotational_speeds
       : null,
     spectra: adaptSpectra(validatedPayload.spectra),
   };
