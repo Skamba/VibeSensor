@@ -54,6 +54,7 @@ import type {
 import {
   createDeferredModelSignal,
   createModelActionPanelBindings,
+  readDeferredModelValue,
 } from "./views/view_model_binding";
 
 const HISTORY_VIEW_ID = "historyView";
@@ -294,7 +295,7 @@ function createDeferredSpeedSourcePanelView(): {
         createDeferredModelSignal<SpeedSourceDiagnosticsRenderModel>(),
       model,
       isObdConfigVisible() {
-        return model.value?.value.obdConfigVisible ?? false;
+        return readDeferredModelValue(model)?.obdConfigVisible ?? false;
       },
       focusManualSpeedInput() {
         requestFocusTarget("manual");

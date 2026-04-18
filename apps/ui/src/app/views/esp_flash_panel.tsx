@@ -23,6 +23,7 @@ import {
   type EspFlashStatusBadgeModel,
 } from "./esp_flash_panel_shared";
 import { EspFlashReadinessSection } from "./esp_flash_readiness_section";
+import { useDeferredModel } from "./view_model_binding";
 
 export type {
   EspFlashEmptyStateModel,
@@ -299,7 +300,7 @@ function EspFlashPanel(props: {
   );
   const refreshLabel = useUiText("settings.esp_flash.refresh_ports", "Refresh");
   const titleText = useUiText("settings.esp_flash.title", "ESP Flash");
-  const model = useComputed(() => props.model.value?.value ?? DEFAULT_ESP_FLASH_PANEL_MODEL);
+  const model = useDeferredModel(props.model, DEFAULT_ESP_FLASH_PANEL_MODEL);
   const {
     cancelButtonDisabled,
     cancelButtonHidden,

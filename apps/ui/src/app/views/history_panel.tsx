@@ -11,6 +11,7 @@ import type {
   HistoryPanelView,
   HistoryPanelRenderModel,
 } from "./history_table_view";
+import { useDeferredModel } from "./view_model_binding";
 
 const DEFAULT_PANEL_MODEL: HistoryPanelRenderModel = {
   deleteAllRunsDisabled: true,
@@ -35,7 +36,7 @@ export function HistoryPanel(props: {
   const runLabel = useUiText("history.table.file", "Run");
   const samplesLabel = useUiText("history.table.size", "Samples");
   const startedLabel = useUiText("history.table.updated", "Started");
-  const model = useComputed(() => props.model.value?.value ?? DEFAULT_PANEL_MODEL);
+  const model = useDeferredModel(props.model, DEFAULT_PANEL_MODEL);
   const { deleteAllRunsDisabled, historySummaryText, table } = useSignalProperties(
     model,
     HISTORY_PANEL_MODEL_KEYS,
