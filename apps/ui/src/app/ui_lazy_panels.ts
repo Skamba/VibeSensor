@@ -83,17 +83,6 @@ function scheduleDeferredWork(task: () => void): void {
   setTimeout(task, 0);
 }
 
-function createDeferredHistoryPanelView(): {
-  view: HistoryPanelView;
-} {
-  return {
-    view: createModelActionPanelBindings<
-      HistoryPanelRenderModel,
-      HistoryPanelActionHandlers
-    >(),
-  };
-}
-
 function createDeferredSettingsShellView(): {
   attach(realView: SettingsShellView): void;
   view: SettingsShellView;
@@ -205,17 +194,6 @@ function createDeferredAnalysisPanelView(): {
   };
 }
 
-function createDeferredSensorsPanelView(): {
-  view: SensorsPanelView;
-} {
-  return {
-    view: createModelActionPanelBindings<
-      SensorsPanelRenderModel,
-      SensorsPanelActionHandlers
-    >(),
-  };
-}
-
 function createDeferredSpeedSourcePanelView(): {
   attach(
     realView: Pick<
@@ -253,6 +231,9 @@ function createDeferredSpeedSourcePanelView(): {
       actions: signal<SpeedSourcePanelActionHandlers | null>(null),
       diagnostics: createDeferredModelSignal<SpeedSourceDiagnosticsRenderModel>(),
       model,
+      isObdConfigVisible() {
+        return model.value?.value.obdConfigVisible ?? false;
+      },
       focusManualSpeedInput() {
         pendingFocusTarget.value = "manual";
       },
@@ -266,17 +247,6 @@ function createDeferredSpeedSourcePanelView(): {
     attach(nextRealView) {
       realView.value = nextRealView;
     },
-  };
-}
-
-function createDeferredUpdatePanelView(): {
-  view: UpdatePanelView;
-} {
-  return {
-    view: createModelActionPanelBindings<
-      UpdatePanelRenderModel,
-      UpdatePanelActionHandlers
-    >(),
   };
 }
 
@@ -308,30 +278,39 @@ function createDeferredInternetPanelView(): {
   };
 }
 
-function createDeferredEspFlashPanelView(): {
-  view: EspFlashPanelView;
-} {
-  return {
-    view: createModelActionPanelBindings<
-      EspFlashPanelRenderModel,
-      EspFlashPanelActionHandlers
-    >(),
-  };
-}
-
 export function createLazyUiPanels(deps: CreateUiLazyPanelsDeps): UiLazyPanels {
   const { hosts } = deps;
   const dashboard = (deps.mountDashboardPanels ?? mountDashboardPanels)(hosts);
-  const history = createDeferredHistoryPanelView();
+  const history = {
+    view: createModelActionPanelBindings<
+      HistoryPanelRenderModel,
+      HistoryPanelActionHandlers
+    >(),
+  };
   const settingsShell = createDeferredSettingsShellView();
   const settings = {
     analysis: createDeferredAnalysisPanelView(),
     cars: createDeferredCarsPanelView(),
-    espFlash: createDeferredEspFlashPanelView(),
+    espFlash: {
+      view: createModelActionPanelBindings<
+        EspFlashPanelRenderModel,
+        EspFlashPanelActionHandlers
+      >(),
+    },
     internet: createDeferredInternetPanelView(),
-    sensors: createDeferredSensorsPanelView(),
+    sensors: {
+      view: createModelActionPanelBindings<
+        SensorsPanelRenderModel,
+        SensorsPanelActionHandlers
+      >(),
+    },
     speedSource: createDeferredSpeedSourcePanelView(),
-    update: createDeferredUpdatePanelView(),
+    update: {
+      view: createModelActionPanelBindings<
+        UpdatePanelRenderModel,
+        UpdatePanelActionHandlers
+      >(),
+    },
   };
   let historyMountPromise: Promise<void> | null = null;
   let settingsMountPromise: Promise<void> | null = null;
