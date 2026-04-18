@@ -125,24 +125,6 @@ def medfilt3(block: FloatArray) -> FloatArray:
     return _sanitize_float_array(filtered)
 
 
-def smooth_spectrum(amps: FloatArray, bins: int = 5) -> FloatArray:
-    """Smooth a spectrum using a sliding-average convolution kernel."""
-    if amps.size == 0:
-        return amps
-    sanitized = _sanitize_float_array(amps)
-    width = max(1, int(bins))
-    if width <= 1:
-        return sanitized
-    if (width % 2) == 0:
-        width += 1
-    if sanitized.size < width:
-        return sanitized
-    kernel = np.ones(width, dtype=np.float32) / np.float32(width)
-    half = width // 2
-    padded = np.pad(sanitized, (half, half), mode="edge")
-    return np.convolve(padded, kernel, mode="valid").astype(np.float32)
-
-
 def noise_floor(amps: FloatArray) -> float:
     """Compute the P20 noise floor from the provided analysis-band amplitudes.
 

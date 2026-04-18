@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from vibesensor.infra.processing import MAX_CLIENT_SAMPLE_RATE_HZ, SignalProcessor
-from vibesensor.infra.processing.fft import noise_floor, smooth_spectrum
+from vibesensor.infra.processing.fft import noise_floor
 
 
 def _make_processor(**kwargs) -> SignalProcessor:
@@ -285,27 +285,6 @@ def test_compute_metrics_with_data() -> None:
     assert "z" in metrics
     assert "combined" in metrics
     assert metrics["x"]["rms"] > 0
-
-
-# -- _smooth_spectrum edge cases -----------------------------------------------
-
-
-def test_smooth_spectrum_empty() -> None:
-    result = smooth_spectrum(np.array([], dtype=np.float32))
-    assert result.size == 0
-
-
-def test_smooth_spectrum_small_array() -> None:
-    arr = np.array([1.0, 2.0], dtype=np.float32)
-    result = smooth_spectrum(arr, bins=5)
-    # Array smaller than kernel → returns copy
-    assert result.size == 2
-
-
-def test_smooth_spectrum_single_bin() -> None:
-    arr = np.array([1.0, 2.0, 3.0], dtype=np.float32)
-    result = smooth_spectrum(arr, bins=1)
-    np.testing.assert_array_equal(result, arr)
 
 
 # -- _noise_floor edge cases ---------------------------------------------------
