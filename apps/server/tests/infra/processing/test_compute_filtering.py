@@ -114,3 +114,39 @@ def test_compute_filters_short_fft_block_only_once(monkeypatch) -> None:
     assert len(fft_calls) == 1
     np.testing.assert_array_equal(fft_calls[0][0], filtered_fft_block)
     assert fft_calls[0][1] is False
+
+
+def test_compute_reuses_single_square_call_for_rms_and_combined_metrics(
+    monkeypatch,
+) -> None:
+    metrics = SignalMetricsComputer(_config(fft_n=4))
+    time_window = np.array(
+        [
+            [1.0, 3.0, 5.0, 7.0],
+            [2.0, 4.0, 6.0, 8.0],
+            [0.5, 1.5, 2.5, 3.5],
+        ],
+        dtype=np.float32,
+    )
+    snapshot = MetricsSnapshot(
+        client_id="client-1",
+        sample_rate_hz=800,
+        ingest_generation=1,
+        time_window=time_window,
+        fft_block=None,
+    )
+    square_calls = 0
+    original_square = np.square
+
+    def counting_square(*args: object, **kwargs: object) -> np.ndarray:
+        nonlocal square_calls
+        square_calls += 1
+        return original_square(*args, **kwargs)
+
+    monkeypatch.setattr("vibesensor.infra.processing.compute.np.square", counting_square)
+
+    result = metrics.compute(snapshot)
+
+    assert square_calls == 1
+    assert result.metrics["x"]["rms"] > 0.0
+    assert result.metrics["combined"]["vib_mag_rms"] > 0.0

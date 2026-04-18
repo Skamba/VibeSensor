@@ -108,9 +108,12 @@ class SignalMetricsComputer:
         time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
 
         metrics: ClientMetrics = {}
-        if time_window_detrended.shape[1] > 0:
-            rms_vals = np.sqrt(np.mean(np.square(time_window_detrended, dtype=np.float64), axis=1))
-            p2p_vals = np.max(time_window_detrended, axis=1) - np.min(time_window_detrended, axis=1)
+        if time_window_detrended.size > 0:
+            squared = np.empty_like(time_window_detrended, dtype=np.float64)
+            np.square(time_window_detrended, out=squared, dtype=np.float64)
+
+            rms_vals = np.sqrt(np.mean(squared, axis=1))
+            p2p_vals = np.ptp(time_window_detrended, axis=1)
             for axis_idx, axis in enumerate(AXES):
                 metrics[axis] = {
                     "rms": _finite_or_zero(float(rms_vals[axis_idx])),
@@ -118,12 +121,12 @@ class SignalMetricsComputer:
                     "peaks": [],
                 }
 
-        if time_window_detrended.size > 0:
-            vib_mag = np.sqrt(np.sum(np.square(time_window_detrended, dtype=np.float64), axis=0))
+            vib_mag_sq = np.sum(squared, axis=0)
+            vib_mag = np.sqrt(vib_mag_sq)
             vib_mag_rms = _finite_or_zero(
-                float(np.sqrt(np.mean(np.square(vib_mag), dtype=np.float64))),
+                float(np.sqrt(np.mean(vib_mag_sq, dtype=np.float64))),
             )
-            vib_mag_p2p = _finite_or_zero(float(np.max(vib_mag) - np.min(vib_mag)))
+            vib_mag_p2p = _finite_or_zero(float(np.ptp(vib_mag)))
         else:
             vib_mag_rms = 0.0
             vib_mag_p2p = 0.0
