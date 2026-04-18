@@ -1,6 +1,6 @@
 import { render, type ComponentChildren } from "preact";
 
-import { useUiText } from "../ui_i18n";
+import { getUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalProperties,
@@ -335,17 +335,19 @@ function UpdatePanel(props: {
   actions: ReadonlySignal<UpdatePanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<UpdatePanelRenderModel> | null>;
 }) {
-  const titleText = useUiText("settings.update.title", "System Update");
-  const hintText = useUiText(
-    "settings.update.hint",
-    "Use either temporary Wi-Fi credentials or an already-connected USB internet uplink to update from GitHub. The hotspot only pauses for the Wi-Fi path.",
-  );
-  const reconnectNote = useUiText(
-    "settings.update.reconnect_note",
-    "Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.",
-  );
-  const cancelLabel = useUiText("settings.update.cancel", "Cancel Update");
   const actions = useComputed(() => props.actions.value);
+  const labels = useComputed(() => ({
+    cancelLabel: getUiText("settings.update.cancel", "Cancel Update"),
+    hintText: getUiText(
+      "settings.update.hint",
+      "Use either temporary Wi-Fi credentials or an already-connected USB internet uplink to update from GitHub. The hotspot only pauses for the Wi-Fi path.",
+    ),
+    reconnectNote: getUiText(
+      "settings.update.reconnect_note",
+      "Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.",
+    ),
+    titleText: getUiText("settings.update.title", "System Update"),
+  }));
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_UPDATE_PANEL_MODEL);
   const {
     cancelButtonDisabled,
@@ -361,23 +363,24 @@ function UpdatePanel(props: {
   const handleCancel = () => {
     actions.value?.onCancel();
   };
+  const labelTexts = labels.value;
   return (
     <div class="panel card">
       <div class="maintenance-layout maintenance-layout--compact">
         <section class="maintenance-card maintenance-card--hero">
           <div class="maintenance-card__header">
             <div>
-              <div class="maintenance-card__title">
-                {titleText}
-              </div>
-              <div class="subtle">
-                {hintText}
-              </div>
+                <div class="maintenance-card__title">
+                 {labelTexts.titleText}
+                </div>
+                <div class="subtle">
+                 {labelTexts.hintText}
+                </div>
             </div>
           </div>
           <div class="maintenance-card__body maintenance-card__body--hero">
             <div class="maintenance-note">
-              {reconnectNote}
+              {labelTexts.reconnectNote}
             </div>
             <div
               id="updateOverviewPanel"
@@ -405,7 +408,7 @@ function UpdatePanel(props: {
                 disabled={cancelButtonDisabled}
                 onClick={handleCancel}
               >
-                {cancelLabel}
+                {labelTexts.cancelLabel}
               </button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { render } from "preact";
-import { useUiText } from "../ui_i18n";
+import { getUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalProperties,
@@ -28,13 +28,15 @@ export function HistoryPanel(props: {
   actions: ReadonlySignal<HistoryPanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<HistoryPanelRenderModel> | null>;
 }) {
-  const refreshLabel = useUiText("history.refresh", "Refresh History");
-  const deleteAllLabel = useUiText("history.delete_all", "Delete All Runs");
-  const runLabel = useUiText("history.table.file", "Run");
-  const startedLabel = useUiText("history.table.updated", "Started");
-  const samplesLabel = useUiText("history.table.size", "Samples");
-  const actionsLabel = useUiText("history.table.actions", "Actions");
   const actions = useComputed(() => props.actions.value);
+  const labels = useComputed(() => ({
+    actionsLabel: getUiText("history.table.actions", "Actions"),
+    deleteAllLabel: getUiText("history.delete_all", "Delete All Runs"),
+    refreshLabel: getUiText("history.refresh", "Refresh History"),
+    runLabel: getUiText("history.table.file", "Run"),
+    samplesLabel: getUiText("history.table.size", "Samples"),
+    startedLabel: getUiText("history.table.updated", "Started"),
+  }));
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_PANEL_MODEL);
   const { deleteAllRunsDisabled, historySummaryText, table } = useSignalProperties(
     model,
@@ -46,6 +48,7 @@ export function HistoryPanel(props: {
   const handleDeleteAllRuns = () => {
     actions.value?.onDeleteAllRuns();
   };
+  const labelTexts = labels.value;
 
   return (
     <>
@@ -62,7 +65,7 @@ export function HistoryPanel(props: {
             type="button"
             onClick={handleRefreshHistory}
           >
-            {refreshLabel}
+            {labelTexts.refreshLabel}
           </button>
           <button
             id="deleteAllRunsBtn"
@@ -71,17 +74,17 @@ export function HistoryPanel(props: {
             disabled={deleteAllRunsDisabled}
             onClick={handleDeleteAllRuns}
           >
-            {deleteAllLabel}
+            {labelTexts.deleteAllLabel}
           </button>
         </div>
       </div>
       <table class="history-table">
         <thead>
           <tr>
-            <th>{runLabel}</th>
-            <th>{startedLabel}</th>
-            <th class="numeric">{samplesLabel}</th>
-            <th>{actionsLabel}</th>
+            <th>{labelTexts.runLabel}</th>
+            <th>{labelTexts.startedLabel}</th>
+            <th class="numeric">{labelTexts.samplesLabel}</th>
+            <th>{labelTexts.actionsLabel}</th>
           </tr>
         </thead>
         <tbody id="historyTableBody">

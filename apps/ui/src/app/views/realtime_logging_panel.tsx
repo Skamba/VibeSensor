@@ -1,6 +1,6 @@
 import { render } from "preact";
 
-import { useUiText } from "../ui_i18n";
+import { getUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalProperties,
@@ -166,14 +166,16 @@ function RealtimeLoggingPanel(props: {
   actions: ReadonlySignal<RealtimeLoggingPanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<RealtimeLoggingPanelRenderModel> | null>;
 }) {
-  const titleText = useUiText("dashboard.run_recording", "Run Recording");
-  const runProgressLabel = useUiText("dashboard.recording_progress", "Run progress");
-  const runPhaseLabel = useUiText("dashboard.recording_phase", "Run phase");
-  const elapsedLabel = useUiText("dashboard.recording_elapsed", "Elapsed");
-  const samplesLabel = useUiText("dashboard.recording_samples", "Samples recorded");
-  const startLabel = useUiText("dashboard.start_recording", "Start Recording");
-  const stopLabel = useUiText("dashboard.stop_recording", "Stop Recording");
   const actions = useComputed(() => props.actions.value);
+  const labels = useComputed(() => ({
+    elapsedLabel: getUiText("dashboard.recording_elapsed", "Elapsed"),
+    runPhaseLabel: getUiText("dashboard.recording_phase", "Run phase"),
+    runProgressLabel: getUiText("dashboard.recording_progress", "Run progress"),
+    samplesLabel: getUiText("dashboard.recording_samples", "Samples recorded"),
+    startLabel: getUiText("dashboard.start_recording", "Start Recording"),
+    stopLabel: getUiText("dashboard.stop_recording", "Stop Recording"),
+    titleText: getUiText("dashboard.run_recording", "Run Recording"),
+  }));
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_PANEL_MODEL);
   const {
     checklist,
@@ -208,13 +210,14 @@ function RealtimeLoggingPanel(props: {
   const handleStopLogging = () => {
     actions.value?.onStopLogging();
   };
+  const labelTexts = labels.value;
 
   return (
     <div class="realtime-logging-shell" data-layout={shellLayout}>
       <div class="card__header card__header--stack">
         <div>
           <div class="card__title">
-            {titleText}
+            {labelTexts.titleText}
           </div>
           <RealtimeLoggingSummary
             summaryText={summaryText}
@@ -240,13 +243,13 @@ function RealtimeLoggingPanel(props: {
       {showProgressSection.value
         ? (
           <>
-            <div class="mini-label">
-              {runProgressLabel}
-            </div>
+              <div class="mini-label">
+               {labelTexts.runProgressLabel}
+              </div>
             <div class="stat-grid stat-grid--compact">
               <div id="loggingPhase" class="stat stat--compact" hidden>
                 <div class="stat__label">
-                  {runPhaseLabel}
+                  {labelTexts.runPhaseLabel}
                 </div>
                 <div class="stat__value" data-value>
                   {phaseText}
@@ -254,7 +257,7 @@ function RealtimeLoggingPanel(props: {
               </div>
               <div id="loggingElapsed" class="stat stat--compact">
                 <div class="stat__label">
-                  {elapsedLabel}
+                  {labelTexts.elapsedLabel}
                 </div>
                 <div class="stat__value" data-value>
                   {elapsedText}
@@ -262,7 +265,7 @@ function RealtimeLoggingPanel(props: {
               </div>
               <div id="loggingSamples" class="stat stat--compact">
                 <div class="stat__label">
-                  {samplesLabel}
+                  {labelTexts.samplesLabel}
                 </div>
                 <div class="stat__value" data-value>
                   {samplesText}
@@ -283,7 +286,7 @@ function RealtimeLoggingPanel(props: {
           disabled={startDisabled}
           onClick={handleStartLogging}
         >
-          {startLabel}
+          {labelTexts.startLabel}
         </button>
         <button
           id="stopLoggingBtn"
@@ -294,7 +297,7 @@ function RealtimeLoggingPanel(props: {
           disabled={stopDisabled}
           onClick={handleStopLogging}
         >
-          {stopLabel}
+          {labelTexts.stopLabel}
         </button>
       </div>
     </div>
