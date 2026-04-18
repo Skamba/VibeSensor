@@ -1,5 +1,4 @@
 import type { ComponentChildren } from "preact";
-import { useRef } from "preact/hooks";
 
 import {
   useComputed,
@@ -59,16 +58,12 @@ function DashboardViewHosts(props: {
   panelHosts: UiShellChromePendingPanelHosts["dashboard"];
 }) {
   const { panelHosts } = props;
-  const liveOverviewHostRef = useRef<HTMLDivElement | null>(null);
-  const spectrumHostRef = useRef<HTMLDivElement | null>(null);
-  const loggingHostRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <div class="dashboard-grid">
       <div
         id="liveOverviewRoot"
         ref={(element) => {
-          liveOverviewHostRef.current = element;
           panelHosts.liveOverview = element;
         }}
         class="panel card dashboard-grid__overview"
@@ -76,7 +71,6 @@ function DashboardViewHosts(props: {
       <div
         id="spectrumPanelRoot"
         ref={(element) => {
-          spectrumHostRef.current = element;
           panelHosts.spectrum = element;
         }}
         class="panel card dashboard-grid__main"
@@ -84,7 +78,6 @@ function DashboardViewHosts(props: {
       <div
         id="loggingPanelRoot"
         ref={(element) => {
-          loggingHostRef.current = element;
           panelHosts.logging = element;
         }}
         class="panel card dashboard-grid__controls"
@@ -96,13 +89,10 @@ function DashboardViewHosts(props: {
 function HistoryViewHosts(props: {
   panelHosts: UiShellChromePendingPanelHosts;
 }) {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-
   return (
     <div
       id="historyPanelRoot"
       ref={(element) => {
-        hostRef.current = element;
         props.panelHosts.history = element;
       }}
       class="panel card"
@@ -113,13 +103,10 @@ function HistoryViewHosts(props: {
 function SettingsViewHosts(props: {
   panelHosts: UiShellChromePendingPanelHosts;
 }) {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-
   return (
     <div
       id="settingsShellRoot"
       ref={(element) => {
-        hostRef.current = element;
         props.panelHosts.settingsShell = element;
       }}
     ></div>
