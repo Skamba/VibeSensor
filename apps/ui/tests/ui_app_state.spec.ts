@@ -62,13 +62,13 @@ test.describe("ui_app_state reactivity", () => {
     const seenRatios: number[] = [];
 
     const dispose = effect(() => {
-      seenRatios.push(state.settings.vehicleSettings.value.current_gear_ratio);
+      seenRatios.push(state.settings.car.activeVehicleSettings.value.current_gear_ratio);
     });
 
     expect(seenRatios).toEqual([0.64]);
 
-    state.settings.vehicleSettings.value = {
-      ...state.settings.vehicleSettings.value,
+    state.settings.car.activeVehicleSettings.value = {
+      ...state.settings.car.activeVehicleSettings.value,
       current_gear_ratio: 0.72,
     };
 
@@ -88,7 +88,7 @@ test.describe("ui_app_state reactivity", () => {
     });
     const disposeSettings = effect(() => {
       settingsRuns += 1;
-      void state.settings.vehicleSettings.value;
+      void state.settings.analysis.vehicleSettings.value;
     });
 
     expect(transportRuns).toBe(1);
