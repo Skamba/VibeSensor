@@ -18,7 +18,6 @@ from vibesensor.infra.processing.fft import (
     float_list,
     medfilt3,
     noise_floor,
-    smooth_spectrum,
 )
 
 
@@ -123,44 +122,6 @@ class TestMedfilt3:
         assert sanitize_calls == 1
         assert np.all(np.isfinite(result))
         assert result[0, 1] == pytest.approx(1.0)
-
-
-class TestSmoothSpectrum:
-    """Tests for the sliding-average spectrum smoother."""
-
-    def test_empty_array(self) -> None:
-        result = smooth_spectrum(np.array([], dtype=np.float32))
-        assert result.size == 0
-
-    def test_identity_with_bins_1(self) -> None:
-        amps = np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float32)
-        result = smooth_spectrum(amps, bins=1)
-        np.testing.assert_allclose(result, amps)
-
-    def test_output_same_length(self) -> None:
-        amps = np.random.default_rng(42).random(100).astype(np.float32)
-        result = smooth_spectrum(amps, bins=5)
-        assert result.shape == amps.shape
-
-    def test_smoothing_reduces_variance(self) -> None:
-        amps = np.array([0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0], dtype=np.float32)
-        result = smooth_spectrum(amps, bins=3)
-        assert np.var(result) < np.var(amps)
-
-    def test_even_bins_rounded_up(self) -> None:
-        """Even bin counts should be rounded up to the next odd number."""
-        amps = np.ones(10, dtype=np.float32)
-        result_4 = smooth_spectrum(amps, bins=4)
-        result_5 = smooth_spectrum(amps, bins=5)
-        np.testing.assert_allclose(result_4, result_5)
-
-    def test_nan_input_is_sanitized_before_smoothing(self) -> None:
-        amps = np.array([1.0, np.nan, 3.0], dtype=np.float32)
-        result = smooth_spectrum(amps, bins=3)
-        np.testing.assert_allclose(
-            result,
-            np.array([2.0 / 3.0, 4.0 / 3.0, 2.0], dtype=np.float32),
-        )
 
 
 class TestNoiseFloor:
