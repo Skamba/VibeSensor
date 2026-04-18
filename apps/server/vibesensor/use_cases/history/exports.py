@@ -17,10 +17,7 @@ from vibesensor.shared.json_utils import sanitize_for_json
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.use_cases.history.helpers import (
-    async_require_run,
-    strip_internal_fields,
-)
+from vibesensor.use_cases.history.helpers import async_require_run
 
 LOGGER = logging.getLogger(__name__)
 
@@ -168,15 +165,3 @@ def serialize_run_details_json(run_details: JsonObject, *, sample_count: int, ru
         sort_keys=True,
         allow_nan=False,
     )
-
-
-def build_run_details_json(
-    run: StoredHistoryRun,
-    sample_count: int,
-    run_id: str,
-) -> str:
-    """Build the exported JSON metadata document for a history run."""
-    run_details = run.to_json_object()
-    if run.analysis is not None:
-        run_details["analysis"] = strip_internal_fields(run.analysis.payload)
-    return serialize_run_details_json(run_details, sample_count=sample_count, run_id=run_id)

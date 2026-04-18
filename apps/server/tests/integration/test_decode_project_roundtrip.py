@@ -205,7 +205,7 @@ def test_report_from_reconstructed_aggregate(tmp_path: Path) -> None:
 
 
 def test_export_from_reconstructed_aggregate(tmp_path: Path) -> None:
-    """build_run_details_json must produce valid JSON from a history run
+    """build_projected_run_details_json must produce valid JSON from a history run
     whose analysis was projected through domain."""
     _analysis, result = _run_analysis()
     direct_summary = analysis_result_to_summary(result)
