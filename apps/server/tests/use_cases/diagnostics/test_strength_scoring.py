@@ -4,7 +4,9 @@ from math import sqrt
 
 import pytest
 
+import vibesensor.vibration_strength as vibration_strength_module
 from vibesensor.vibration_strength import (
+    compute_vibration_strength_db,
     median,
     peak_band_rms_amp_g,
     strength_floor_amp_g,
@@ -142,6 +144,59 @@ def test_band_rms_last_bin_uses_available_neighbors() -> None:
     )
     expected = sqrt((1.0 + 4.0) / 2)
     assert result == pytest.approx(expected)
+
+
+def test_compute_vibration_strength_db_skips_repeated_alignment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    aligned_calls = 0
+    original = vibration_strength_module._aligned_float_arrays
+
+    def counting_aligned_float_arrays(
+        left: vibration_strength_module.ArrayLike,
+        right: vibration_strength_module.ArrayLike,
+    ) -> tuple[
+        vibration_strength_module.npt.NDArray[vibration_strength_module.np.float64],
+        vibration_strength_module.npt.NDArray[vibration_strength_module.np.float64],
+    ]:
+        nonlocal aligned_calls
+        aligned_calls += 1
+        return original(left, right)
+
+    monkeypatch.setattr(
+        vibration_strength_module,
+        "_aligned_float_arrays",
+        counting_aligned_float_arrays,
+    )
+
+    result = compute_vibration_strength_db(
+        freq_hz=[float(index) for index in range(20)],
+        combined_spectrum_amp_g_values=[
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.002,
+            0.004,
+            0.01,
+            0.03,
+            0.06,
+            0.12,
+            0.03,
+            0.01,
+            0.004,
+            0.002,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+        ],
+    )
+
+    assert aligned_calls == 0
+    assert result["vibration_strength_db"] > 0.0
 
 
 # -- vibration_strength_db_scalar --------------------------------------------
