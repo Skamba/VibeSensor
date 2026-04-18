@@ -43,10 +43,10 @@ export function HistoryPanel(props: {
     HISTORY_PANEL_MODEL_KEYS,
   );
   const handleRefreshHistory = () => {
-    actions.value?.onRefreshHistory();
+    actions.peek()?.onRefreshHistory();
   };
   const handleDeleteAllRuns = () => {
-    actions.value?.onDeleteAllRuns();
+    actions.peek()?.onDeleteAllRuns();
   };
   const labelTexts = labels.value;
 

@@ -74,6 +74,9 @@ function CarsPanel(props: {
     state: props.state,
     wizardFocusRequest: props.wizardFocusRequest,
   });
+  const openWizard = () => {
+    wizardActions.peek()?.onAction({ type: "open" });
+  };
 
   return (
     <>
@@ -81,7 +84,7 @@ function CarsPanel(props: {
         actions={listActions.value}
         addCarButtonRef={addCarButtonRef}
         model={listModel.value}
-        onOpenWizard={() => wizardActions.value?.onAction({ type: "open" })}
+        onOpenWizard={openWizard}
       />
       <CarsWizardPanel
         actions={wizardActions}
