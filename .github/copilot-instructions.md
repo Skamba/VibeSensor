@@ -49,11 +49,11 @@ Commands
 - `make docs-lint`
 - `make test-changed` (heuristic changed-file runner vs `origin/main`, falling back to `main`)
 - `make test-all` (CI-parity local suite: `python3 tools/tests/run_ci_parallel.py`)
-- `act -j backend-quality -W .github/workflows/ci.yml` (run a single CI job locally via `act`; requires Docker)
+- `act -j backend-lint -W .github/workflows/ci.yml` (run a single CI job locally via `act`; requires Docker)
 - `act -l -W .github/workflows/ci.yml` (list CI jobs)
-- `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5` (faster backend-focused CI subset)
+- `python3 tools/tests/run_ci_parallel.py --job backend-lint --job repo-hygiene --job backend-static-guards --job backend-preflight --job docs-lint --job backend-contract-drift --job backend-typecheck --job backend-tests-1 --job backend-tests-2 --job backend-tests-3 --job backend-tests-4 --job backend-tests-5` (faster backend-focused CI subset)
 - `pytest -q apps/server/tests/<module>/` (run tests for a single feature area)
-- `python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --repo Skamba/VibeSensor` (compact state-change watcher; default `--interval 10`, `--heartbeat 120`)
+- `python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --repo Skamba/VibeSensor --merge-on-green` (compact state-change watcher; default `--interval 10`, `--heartbeat 120`; omit `--merge-on-green` for watch-only mode)
 - `cd apps/ui && npm ci && npm run typecheck && npm run build`
 - `cd apps/ui && npm run test:visual`
 - `cd firmware/esp && pio run`
