@@ -6,6 +6,7 @@ import asyncio
 import json
 from unittest.mock import MagicMock, patch
 
+import orjson
 import pytest
 
 from vibesensor.adapters.websocket.payload_orchestrator import PayloadBuildOrchestrator
@@ -85,16 +86,16 @@ async def test_prepare_reuses_serialized_template_across_selected_clients() -> N
 
     orchestrator = PayloadBuildOrchestrator(payload_builder, capture_debug=False)
     dict_dump_calls = 0
-    real_dumps = json.dumps
+    real_dumps = orjson.dumps
 
-    def counting_dumps(value: object, *args, **kwargs) -> str:
+    def counting_dumps(value: object) -> str:
         nonlocal dict_dump_calls
         if isinstance(value, dict):
             dict_dump_calls += 1
-        return real_dumps(value, *args, **kwargs)
+        return real_dumps(value).decode()
 
     with patch(
-        "vibesensor.adapters.websocket.payload_orchestrator.json.dumps",
+        "vibesensor.adapters.websocket.payload_orchestrator._dump_json_text",
         side_effect=counting_dumps,
     ):
         await orchestrator.prepare(["sensor-a", "sensor-b"])

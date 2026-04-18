@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
+import math
 from collections.abc import Callable, Iterable, Mapping
+from typing import cast
+
+import orjson
 
 from vibesensor.shared.json_utils import sanitize_for_json
 from vibesensor.shared.types.payload_types import LiveWsPayload, WsErrorPayload
@@ -15,8 +18,38 @@ LOGGER = logging.getLogger("vibesensor.adapters.websocket.hub")
 __all__ = ["PayloadBuildOrchestrator"]
 
 _ERROR_PAYLOAD_BODY: WsErrorPayload = {"error": "payload_build_failed"}
-_ERROR_PAYLOAD: str = json.dumps(_ERROR_PAYLOAD_BODY, separators=(",", ":"))
+_ERROR_PAYLOAD: str = orjson.dumps(_ERROR_PAYLOAD_BODY).decode()
 _SELECTED_CLIENT_ID_NULL_JSON = '"selected_client_id":null'
+
+
+def _dump_json_text(value: object) -> str:
+    return orjson.dumps(value).decode()
+
+
+def _payload_contains_non_finite(obj: object, *, _max_depth: int = 128) -> bool:
+    _isfinite = math.isfinite
+
+    def _walk(value: object, depth: int = 0) -> bool:
+        if depth > _max_depth:
+            return True
+        t = type(value)
+        if t is int or t is str or t is bool or value is None:
+            return False
+        if hasattr(value, "tolist") and hasattr(value, "ndim"):
+            value = value.tolist()
+            t = type(value)
+        elif hasattr(value, "item"):
+            value = value.item()
+            t = type(value)
+        if t is float:
+            return not _isfinite(cast(float, value))
+        if isinstance(value, dict):
+            return any(_walk(item, depth + 1) for item in value.values())
+        if isinstance(value, (list, tuple)):
+            return any(_walk(item, depth + 1) for item in value)
+        return False
+
+    return _walk(obj)
 
 
 class PayloadBuildOrchestrator:
@@ -84,15 +117,23 @@ class PayloadBuildOrchestrator:
         """Serialize *raw_payload* off the event loop and report debug metadata."""
 
         payload_for_debug: object = raw_payload
-        _dumps = json.dumps
+        _dumps = _dump_json_text
         try:
             try:
+                if _payload_contains_non_finite(raw_payload):
+                    payload_for_debug, had_non_finite = sanitize_for_json(raw_payload)
+                    LOGGER.warning(
+                        "WebSocket payload for client %r contained NaN/Inf values; "
+                        "replaced with null.",
+                        selected_client_id,
+                    )
+                else:
+                    had_non_finite = False
                 text = self._serialize_selected_client_payload(
                     selected_client_id,
-                    raw_payload,
+                    payload_for_debug,
                     _dumps,
                 )
-                had_non_finite = False
             except (TypeError, ValueError, OverflowError):
                 payload_for_debug, had_non_finite = sanitize_for_json(raw_payload)
                 if had_non_finite:
@@ -137,10 +178,10 @@ class PayloadBuildOrchestrator:
         self,
         selected_client_id: str | None,
         raw_payload: object,
-        dumps: Callable[..., str],
+        dumps: Callable[[object], str],
     ) -> str:
         if not isinstance(raw_payload, dict) or "selected_client_id" not in raw_payload:
-            return dumps(raw_payload, separators=(",", ":"), allow_nan=False)
+            return dumps(raw_payload)
         template_key = self._payload_template_key(raw_payload)
         template_text = self._payload_template_cache.get(template_key)
         if template_text is None:
@@ -149,13 +190,11 @@ class PayloadBuildOrchestrator:
                     **raw_payload,
                     "selected_client_id": None,
                 },
-                separators=(",", ":"),
-                allow_nan=False,
             )
             self._payload_template_cache[template_key] = template_text
         if selected_client_id is None:
             return template_text
-        selected_client_text = dumps(selected_client_id, separators=(",", ":"), allow_nan=False)
+        selected_client_text = dumps(selected_client_id)
         selected_client_payload = template_text.replace(
             _SELECTED_CLIENT_ID_NULL_JSON,
             f'"selected_client_id":{selected_client_text}',
@@ -163,7 +202,7 @@ class PayloadBuildOrchestrator:
         )
         if selected_client_payload != template_text:
             return selected_client_payload
-        return dumps(raw_payload, separators=(",", ":"), allow_nan=False)
+        return dumps(raw_payload)
 
     async def prepare(self, selected_client_ids: Iterable[str | None]) -> None:
         """Prime cached payloads for the current snapshot's unique client selections."""
