@@ -27,6 +27,7 @@ npm run dev          # Dev server on http://localhost:5173
 npm run dev:open     # Same dev server, but opens the browser on local desktops
 npm run dev:docker   # Docker-oriented wrapper: contract check + guarded npm ci + Vite
 npm run build        # Production build to dist/
+npm run analyze      # Production build + bundle analysis report at dist/bundle-analysis.html
 npm run typecheck    # Type check without emitting
 ```
 
@@ -78,6 +79,25 @@ Those derivative outputs are materialized locally from the tracked inputs and ar
 
 Generated contract artifacts stay out of the lint/format path on purpose so the
 source-of-truth export commands remain the only writers for those files.
+
+## Bundle analysis
+
+Run `npm run analyze` to build the production bundle and emit
+`dist/bundle-analysis.html`. The report auto-opens when the build is running in
+a desktop session; on headless or CI hosts, open the generated HTML file
+manually after the build finishes.
+
+Treat these gzip budgets as review thresholds for the named build artifacts:
+
+| Asset | Budget |
+|------|--------|
+| `vendor.js` | `< 40 KB` |
+| `chart.js` | `< 20 KB` |
+| `index.js` | `< 60 KB` |
+| Total CSS | `< 15 KB` |
+
+These budgets are guidance, not hard CI gates. If a change pushes a chunk over
+budget, attach the analyzer output to the PR review and explain the growth.
 
 ## Source Modules
 
