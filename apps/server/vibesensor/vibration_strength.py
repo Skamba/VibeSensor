@@ -199,6 +199,27 @@ def strength_floor_amp_g(
     Falls back to :func:`noise_floor_amp_p20_g` when all bins are excluded.
     """
     freq, amps = _aligned_float_arrays(freq_hz, combined_spectrum_amp_g)
+    return _strength_floor_amp_g_aligned(
+        freq_hz=freq,
+        combined_spectrum_amp_g=amps,
+        peak_indexes=peak_indexes,
+        exclusion_hz=exclusion_hz,
+        min_hz=min_hz,
+        max_hz=max_hz,
+    )
+
+
+def _strength_floor_amp_g_aligned(
+    *,
+    freq_hz: npt.NDArray[np.float64],
+    combined_spectrum_amp_g: npt.NDArray[np.float64],
+    peak_indexes: list[int],
+    exclusion_hz: float,
+    min_hz: float,
+    max_hz: float,
+) -> float:
+    freq = freq_hz
+    amps = combined_spectrum_amp_g
     if freq.size == 0:
         return 0.0
     in_range = (freq >= min_hz) & (freq <= max_hz)
@@ -235,6 +256,23 @@ def peak_band_rms_amp_g(
     Raises ``ValueError`` when *center_idx* is outside the aligned spectrum.
     """
     freq, amps = _aligned_float_arrays(freq_hz, combined_spectrum_amp_g)
+    return _peak_band_rms_amp_g_aligned(
+        freq_hz=freq,
+        combined_spectrum_amp_g=amps,
+        center_idx=center_idx,
+        bandwidth_hz=bandwidth_hz,
+    )
+
+
+def _peak_band_rms_amp_g_aligned(
+    *,
+    freq_hz: npt.NDArray[np.float64],
+    combined_spectrum_amp_g: npt.NDArray[np.float64],
+    center_idx: int,
+    bandwidth_hz: float,
+) -> float:
+    freq = freq_hz
+    amps = combined_spectrum_amp_g
     if not (0 <= center_idx < freq.size):
         raise ValueError(
             f"center_idx {center_idx} out of range for aligned spectrum size {freq.size}"
@@ -323,7 +361,7 @@ def compute_vibration_strength_db(
         )
     peak_indexes = [int(idx) for idx in local_maxima[: max(1, top_n)]]
 
-    floor_strength = strength_floor_amp_g(
+    floor_strength = _strength_floor_amp_g_aligned(
         freq_hz=freq,
         combined_spectrum_amp_g=combined,
         peak_indexes=peak_indexes,
@@ -334,7 +372,7 @@ def compute_vibration_strength_db(
 
     candidates: list[StrengthPeak] = []
     for idx in local_maxima:
-        band_rms = peak_band_rms_amp_g(
+        band_rms = _peak_band_rms_amp_g_aligned(
             freq_hz=freq,
             combined_spectrum_amp_g=combined,
             center_idx=idx,
