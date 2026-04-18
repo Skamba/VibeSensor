@@ -90,7 +90,7 @@ async function runRealtimeLiveOverviewSignalProjectionTest(): Promise<void> {
     await harness.flush();
 
     assert.equal(overviewRenderCount, 1);
-    assert.equal(harness.host.querySelectorAll(".live-sensor-card--strongest").length, 1);
+    assert.equal(harness.host.querySelectorAll("[data-strongest='true']").length, 1);
     assert.match(harness.host.textContent ?? "", /Front Left/);
   } finally {
     options.diffed = previousDiffed;

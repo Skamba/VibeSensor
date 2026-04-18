@@ -178,7 +178,7 @@ async function runRealtimeLiveOverviewReferenceTest(): Promise<void> {
       requireElement(harness.host, "#liveActiveCar [data-value]").getAttribute("data-variant"),
       "warn",
     );
-    assert.equal(harness.host.querySelectorAll(".live-sensor-card--strongest").length, 1);
+    assert.equal(harness.host.querySelectorAll("[data-strongest='true']").length, 1);
     assert.match(harness.host.textContent ?? "", /Front Left/);
     assert.doesNotMatch(harness.host.textContent ?? "", /No sensors/i);
 

@@ -91,7 +91,6 @@ function SettingsShellTabButton(props: {
   const { index, onActivateTab, tab } = props;
   const isActive = useComputed(() => tab.id === props.activeTabId.value);
   const labelText = useUiText(tab.labelKey, tab.fallbackLabel);
-  const tabClass = useComputed(() => isActive.value ? "settings-tab active" : "settings-tab");
   const ariaSelected = useComputed(() => isActive.value ? "true" : "false");
   const tabIndex = useComputed(() => isActive.value ? 0 : -1);
 
@@ -112,7 +111,7 @@ function SettingsShellTabButton(props: {
     <button
       ref={props.onRef}
       type="button"
-      class={tabClass}
+      class="settings-tab"
       data-settings-tab={tab.id}
       role="tab"
       aria-controls={tab.id}
@@ -132,13 +131,12 @@ function SettingsShellTabPanel(props: {
   tab: (typeof SETTINGS_TABS)[number];
 }) {
   const isActive = useComputed(() => props.tab.id === props.activeTabId.value);
-  const panelClass = useComputed(() => isActive.value ? "settings-tab-panel active" : "settings-tab-panel");
   const hidden = useComputed(() => !isActive.value);
 
   return (
     <div
       id={props.tab.id}
-      class={panelClass}
+      class="settings-tab-panel"
       role="tabpanel"
       hidden={hidden}
     >
