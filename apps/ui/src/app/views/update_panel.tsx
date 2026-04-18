@@ -1,6 +1,6 @@
 import { render, type ComponentChildren } from "preact";
 
-import { getUiText } from "../ui_i18n";
+import { useUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalProperties,
@@ -456,7 +456,7 @@ function UpdateActionRow(props: {
   actions: ReadonlySignal<UpdatePanelActionHandlers | null>;
   cancelButtonDisabled: ReadonlySignal<boolean>;
   cancelButtonHidden: ReadonlySignal<boolean>;
-  cancelLabel: string;
+  cancelLabel: ReadonlySignal<string>;
   startButtonDisabled: ReadonlySignal<boolean>;
   startButtonHidden: ReadonlySignal<boolean>;
   startButtonLabelText: ReadonlySignal<string>;
@@ -498,18 +498,16 @@ function UpdatePanel(props: {
   model: ReadonlySignal<ReadonlySignal<UpdatePanelRenderModel> | null>;
 }) {
   const actions = useComputed(() => props.actions.value);
-  const labels = useComputed(() => ({
-    cancelLabel: getUiText("settings.update.cancel", "Cancel Update"),
-    hintText: getUiText(
-      "settings.update.hint",
-      "Use either temporary Wi-Fi credentials or an already-connected USB internet uplink to update from GitHub. The hotspot only pauses for the Wi-Fi path.",
-    ),
-    reconnectNote: getUiText(
-      "settings.update.reconnect_note",
-      "Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.",
-    ),
-    titleText: getUiText("settings.update.title", "System Update"),
-  }));
+  const cancelLabel = useUiText("settings.update.cancel", "Cancel Update");
+  const hintText = useUiText(
+    "settings.update.hint",
+    "Use either temporary Wi-Fi credentials or an already-connected USB internet uplink to update from GitHub. The hotspot only pauses for the Wi-Fi path.",
+  );
+  const reconnectNote = useUiText(
+    "settings.update.reconnect_note",
+    "Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.",
+  );
+  const titleText = useUiText("settings.update.title", "System Update");
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_UPDATE_PANEL_MODEL);
   const {
     cancelButtonDisabled,
@@ -519,7 +517,6 @@ function UpdatePanel(props: {
     startButtonLabelText,
     status,
   } = useSignalProperties(model, UPDATE_PANEL_MODEL_KEYS);
-  const labelTexts = labels.value;
   return (
     <div class="panel card">
       <div class="maintenance-layout maintenance-layout--compact">
@@ -527,16 +524,16 @@ function UpdatePanel(props: {
           <div class="maintenance-card__header">
             <div>
                 <div class="maintenance-card__title">
-                 {labelTexts.titleText}
+                 {titleText}
                 </div>
                 <div class="subtle">
-                 {labelTexts.hintText}
+                 {hintText}
                 </div>
             </div>
           </div>
           <div class="maintenance-card__body maintenance-card__body--hero">
             <div class="maintenance-note">
-              {labelTexts.reconnectNote}
+              {reconnectNote}
             </div>
             <div
               id="updateOverviewPanel"
@@ -549,7 +546,7 @@ function UpdatePanel(props: {
               actions={actions}
               cancelButtonDisabled={cancelButtonDisabled}
               cancelButtonHidden={cancelButtonHidden}
-              cancelLabel={labelTexts.cancelLabel}
+              cancelLabel={cancelLabel}
               startButtonDisabled={startButtonDisabled}
               startButtonHidden={startButtonHidden}
               startButtonLabelText={startButtonLabelText}

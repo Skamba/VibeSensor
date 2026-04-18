@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 import { options } from "preact";
 
+import { setUiLanguage } from "../src/app/ui_i18n";
 import { computed, signal, type ReadonlySignal } from "../src/app/ui_signals";
 import type {
   RealtimeLiveOverviewBridge,
@@ -17,6 +18,7 @@ function requireElement<T extends Element = HTMLElement>(root: ParentNode, selec
 }
 
 async function runRealtimeLiveOverviewSignalProjectionTest(): Promise<void> {
+  const previousLanguage = "en";
   const connectedSensorsText = signal("2 / 4");
   const activeCarText = signal("Roadster");
   const activeCarWarning = signal(false);
@@ -71,6 +73,16 @@ async function runRealtimeLiveOverviewSignalProjectionTest(): Promise<void> {
     assert.equal(requireElement(harness.host, "#speed").textContent, "43 km/h");
     assert.equal(requireElement(harness.host, "#liveRunHealth").textContent, "Ready");
 
+    setUiLanguage("nl");
+    await harness.flush();
+
+    assert.equal(overviewRenderCount, 1);
+    assert.equal(requireElement(harness.host, ".card__title").textContent, "Live overzicht");
+    assert.equal(
+      requireElement(harness.host, ".card__subtle").textContent,
+      "Controleer de gereedheid, runstatus en het sterkste signaal voordat je de grafiek leest.",
+    );
+
     connectedSensorsText.value = "4 / 4";
     strongestSignalText.value = "82 dB";
     await harness.flush();
@@ -94,6 +106,7 @@ async function runRealtimeLiveOverviewSignalProjectionTest(): Promise<void> {
     assert.equal(harness.host.querySelectorAll("[data-strongest='true']").length, 1);
     assert.match(harness.host.textContent ?? "", /Front Left/);
   } finally {
+    setUiLanguage(previousLanguage);
     options.diffed = previousDiffed;
     harness.cleanup();
   }

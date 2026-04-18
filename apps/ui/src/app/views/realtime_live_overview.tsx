@@ -1,6 +1,6 @@
 import { render } from "preact";
 
-import { getUiText } from "../ui_i18n";
+import { useUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalProperties,
@@ -94,7 +94,7 @@ function RealtimeLiveOverviewRunHealthPill(props: {
 
 function RealtimeLiveOverviewActiveCarStat(props: {
   activeCar: ReadonlySignal<RealtimeLiveOverviewActiveCarModel>;
-  labelText: string;
+  labelText: ReadonlySignal<string>;
 }) {
   const { text, warning } = useSignalProperties(props.activeCar, ["text", "warning"] as const);
   const variant = useComputed(() => warning.value ? "warn" : undefined);
@@ -132,7 +132,7 @@ function RealtimeLiveOverviewActiveCarStat(props: {
 
 function RealtimeLiveOverviewSensorRoster(props: {
   sensorCards: ReadonlySignal<RealtimeLiveOverviewSensorCardModel[]>;
-  noSensorsText: string;
+  noSensorsText: ReadonlySignal<string>;
 }) {
   const hasSensorCards = useComputed(() => props.sensorCards.value.length > 0);
 
@@ -172,21 +172,19 @@ function RealtimeLiveOverview(props: {
   model: ReadonlySignal<ReadonlySignal<RealtimeLiveOverviewRenderModel> | null>;
   speedText: ReadonlySignal<ReadonlySignal<string> | null>;
 }) {
-  const labels = useComputed(() => ({
-    activeCarLabel: getUiText("dashboard.active_car", "Active car"),
-    connectedSensorsLabel: getUiText("dashboard.connected_sensors", "Sensors online"),
-    currentSpeedLabel: getUiText("dashboard.current_speed", "Current speed"),
-    dataFreshnessLabel: getUiText("dashboard.data_freshness", "Feed freshness"),
-    hintText: getUiText(
-      "dashboard.live_overview_hint",
-      "Check readiness, current run state, and the strongest sensor level before reading the chart.",
-    ),
-    noSensorsText: getUiText("settings.sensors.no_sensors", "No sensors yet."),
-    recordingStateLabel: getUiText("dashboard.recording_state", "Run state"),
-    sensorCoverageLabel: getUiText("dashboard.sensor_coverage", "Sensor coverage"),
-    strongestSignalLabel: getUiText("dashboard.strongest_signal", "Strongest signal"),
-    titleText: getUiText("dashboard.live_overview", "Live overview"),
-  }));
+  const activeCarLabel = useUiText("dashboard.active_car", "Active car");
+  const connectedSensorsLabel = useUiText("dashboard.connected_sensors", "Sensors online");
+  const currentSpeedLabel = useUiText("dashboard.current_speed", "Current speed");
+  const dataFreshnessLabel = useUiText("dashboard.data_freshness", "Feed freshness");
+  const hintText = useUiText(
+    "dashboard.live_overview_hint",
+    "Check readiness, current run state, and the strongest sensor level before reading the chart.",
+  );
+  const noSensorsText = useUiText("settings.sensors.no_sensors", "No sensors yet.");
+  const recordingStateLabel = useUiText("dashboard.recording_state", "Run state");
+  const sensorCoverageLabel = useUiText("dashboard.sensor_coverage", "Sensor coverage");
+  const strongestSignalLabel = useUiText("dashboard.strongest_signal", "Strongest signal");
+  const titleText = useUiText("dashboard.live_overview", "Live overview");
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_OVERVIEW_MODEL);
   const speedText = useComputed(() => props.speedText.value?.value ?? DEFAULT_SPEED_TEXT);
   const {
@@ -198,17 +196,15 @@ function RealtimeLiveOverview(props: {
     sensorCards,
     strongestSignalText,
   } = useSignalProperties(model, REALTIME_LIVE_OVERVIEW_MODEL_KEYS);
-  const labelTexts = labels.value;
-
   return (
     <>
       <div class="card__header card__header--stack">
         <div>
           <div class="card__title">
-            {labelTexts.titleText}
+            {titleText}
           </div>
           <div class="card__subtle">
-            {labelTexts.hintText}
+            {hintText}
           </div>
         </div>
         <RealtimeLiveOverviewRunHealthPill runHealth={runHealth} />
@@ -216,16 +212,16 @@ function RealtimeLiveOverview(props: {
       <div class="stat-grid live-overview__stats">
         <div id="liveConnectedSensors" class="stat">
             <div class="stat__label">
-              {labelTexts.connectedSensorsLabel}
+              {connectedSensorsLabel}
             </div>
           <div class="stat__value" data-value>
             {connectedSensorsText}
           </div>
         </div>
-        <RealtimeLiveOverviewActiveCarStat activeCar={activeCar} labelText={labelTexts.activeCarLabel} />
+        <RealtimeLiveOverviewActiveCarStat activeCar={activeCar} labelText={activeCarLabel} />
         <div id="liveRecordingState" class="stat">
             <div class="stat__label">
-              {labelTexts.recordingStateLabel}
+              {recordingStateLabel}
             </div>
           <div class="stat__value" data-value>
             {recordingStateText}
@@ -233,7 +229,7 @@ function RealtimeLiveOverview(props: {
         </div>
         <div id="liveDataFreshness" class="stat">
             <div class="stat__label">
-              {labelTexts.dataFreshnessLabel}
+              {dataFreshnessLabel}
             </div>
           <div class="stat__value" data-value>
             {dataFreshnessText}
@@ -241,7 +237,7 @@ function RealtimeLiveOverview(props: {
         </div>
         <div id="liveStrongestSignal" class="stat">
             <div class="stat__label">
-              {labelTexts.strongestSignalLabel}
+              {strongestSignalLabel}
             </div>
           <div class="stat__value" data-value>
             {strongestSignalText}
@@ -249,7 +245,7 @@ function RealtimeLiveOverview(props: {
         </div>
         <div class="stat">
             <div class="stat__label">
-              {labelTexts.currentSpeedLabel}
+              {currentSpeedLabel}
             </div>
           <div id="speed" class="stat__value speed" aria-live="polite">
             {speedText}
@@ -258,12 +254,12 @@ function RealtimeLiveOverview(props: {
       </div>
       <div class="live-sensor-roster__header">
         <div class="mini-label">
-          {labelTexts.sensorCoverageLabel}
+          {sensorCoverageLabel}
         </div>
       </div>
       <RealtimeLiveOverviewSensorRoster
         sensorCards={sensorCards}
-        noSensorsText={labelTexts.noSensorsText}
+        noSensorsText={noSensorsText}
       />
     </>
   );
