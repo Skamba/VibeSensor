@@ -119,6 +119,7 @@ export interface SpeedSourcePanelView extends SpeedSourcePanelBindings {
   focusManualSpeedInput(): void;
   focusScanObdDevices(): void;
   focusStaleTimeoutInput(): void;
+  isObdConfigVisible(): boolean;
 }
 
 type SpeedSourcePanelBridgeState = {
@@ -194,7 +195,7 @@ export function mountSpeedSourcePanel(
   bindings: SpeedSourcePanelBindings,
 ): Pick<
   SpeedSourcePanelView,
-  "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput"
+  "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput" | "isObdConfigVisible"
 > {
   const diagnosticsDisclosureOpen = signal(false);
   effect(() => {
@@ -240,6 +241,9 @@ export function mountSpeedSourcePanel(
     },
     focusStaleTimeoutInput(): void {
       staleTimeoutInput?.focus();
+    },
+    isObdConfigVisible(): boolean {
+      return bindings.model.value?.value.obdConfigVisible ?? false;
     },
   };
 }
