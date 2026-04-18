@@ -1,6 +1,6 @@
 import {
   computed,
-  effect,
+  effectOnChange,
   signal,
   type ReadonlySignal,
 } from "../ui_signals";
@@ -50,13 +50,10 @@ export function createEspFlashFeature(
   });
   panel.model.value = presenter.model;
 
-  let wasPollingEnabled = false;
-  effect(() => {
-    const enabled = pollingEnabled.value;
-    if (enabled && !wasPollingEnabled) {
+  effectOnChange(pollingEnabled, (enabled) => {
+    if (enabled) {
       void workflow.refreshPorts();
     }
-    wasPollingEnabled = enabled;
   });
 
   function bindHandlers(): void {
