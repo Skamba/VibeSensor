@@ -10,6 +10,7 @@ export interface CreateApiLoaderOptions<TValue> {
   load: () => Promise<TValue>;
   apply: (value: TValue) => void;
   onError?: (error: unknown) => void;
+  swallowError?: boolean;
 }
 
 export function createApiLoader<TValue>(
@@ -28,7 +29,10 @@ export function createApiLoader<TValue>(
         return value;
       } catch (error) {
         options.onError?.(error);
-        return null;
+        if (options.swallowError) {
+          return null;
+        }
+        throw error;
       } finally {
         loading.value = false;
       }

@@ -63,9 +63,13 @@ test.describe("createPollingController", () => {
 
   test("errors schedule the configured retry delay", async () => {
     const timers = installTimerHarness();
+    const seenErrors: string[] = [];
     const controller = createPollingController({
       poll: async () => {
         throw new Error("temporary failure");
+      },
+      onError: (error) => {
+        seenErrors.push(error instanceof Error ? error.message : String(error));
       },
       onErrorDelayMs: 3_000,
     });
@@ -73,6 +77,7 @@ test.describe("createPollingController", () => {
     try {
       controller.start();
       await flushAsyncWork();
+      expect(seenErrors).toEqual(["temporary failure"]);
       expect(timers.pendingDelays()).toEqual([3_000]);
     } finally {
       timers.restore();
