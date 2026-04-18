@@ -359,6 +359,84 @@ test.describe("createSpectrumCanvasRenderer", () => {
     }
   });
 
+  test("reuses cached prepared data when only chart-band metadata changes", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const { createSpectrumCanvasRenderer } = await import(
+        "../src/app/runtime/spectrum_canvas_renderer"
+      );
+      const state = createAppState();
+      state.realtime.clients.value = [makeClient("sensor-a", "Front Right Wheel")];
+      state.spectrum.spectra.value = {
+        clients: {
+          "sensor-a": {
+            freq: [10, 15, 20],
+            combined: [1, 0.75, 0.5],
+            strength_metrics: {
+              noise_floor_amp_g: 0.1,
+              peak_amp_g: 1,
+              strength_bucket: null,
+              top_peaks: [{
+                amp: 1,
+                hz: 10,
+                strength_bucket: null,
+                vibration_strength_db: 12,
+              }],
+              vibration_strength_db: 12,
+            },
+          },
+        },
+      };
+
+      const renderer = createSpectrumCanvasRenderer({
+        state,
+        dom: {
+          specChart: createElementStub("div"),
+          specChartWrap: createElementStub("div"),
+        } as unknown as SpectrumPanelChartDom,
+        t: (key) => key,
+        getBandsVisible: () => false,
+        getChartBands: () => [],
+        getFocusMarker: () => null,
+        onCursorDataIndexChange: () => undefined,
+        loadChartModule: async () => ({
+          createSpectrumChart(): SpectrumChart {
+            return {
+              destroy() {},
+              resize() {},
+              setSeriesIsolation() {},
+            };
+          },
+        }),
+      });
+
+      const prepared = renderer.prepareFrame();
+      renderer.renderPreparedFrame(prepared);
+      await flushSignalUpdates();
+
+      state.realtime.rotationalSpeeds.value = {
+        wheel_rpm: 600,
+        engine_rpm: 1800,
+        driveshaft_rpm: 600,
+        order_bands: [{
+          key: "wheel_1x",
+          center_hz: 10,
+          tolerance: 0.1,
+        }],
+      };
+
+      const refreshed = renderer.refreshPreparedFrameMetadata();
+
+      expect(refreshed.entries).toBe(prepared.entries);
+      expect(refreshed.freqAxis).toBe(prepared.freqAxis);
+      expect(refreshed.frame).toBe(prepared.frame);
+      expect(refreshed.hasData).toBe(true);
+      expect(refreshed.chartBands).toHaveLength(1);
+    } finally {
+      restoreDocument();
+    }
+  });
+
   test("suppresses tween animations when heavy frames arrive faster than the tween budget", async () => {
     const restoreDocument = installDocumentStub();
     try {

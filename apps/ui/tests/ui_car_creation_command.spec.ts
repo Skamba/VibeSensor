@@ -55,8 +55,8 @@ test.describe("createUiCarCreationCommand", () => {
       renderCarList: () => {
         lifecycleCalls.push("renderCarList");
       },
-      renderSpectrum: () => {
-        lifecycleCalls.push("renderSpectrum");
+      refreshSpectrumDecorations: () => {
+        lifecycleCalls.push("refreshSpectrumDecorations");
       },
       addSettingsCar: async (payload) => {
         addRequests.push(payload);
@@ -104,7 +104,7 @@ test.describe("createUiCarCreationCommand", () => {
       "syncActiveCarToInputs",
       "showCarCreationSuccess:car-2:Volvo XC40 Recharge",
       "renderCarList",
-      "renderSpectrum",
+      "refreshSpectrumDecorations",
     ]);
   });
 
@@ -124,8 +124,8 @@ test.describe("createUiCarCreationCommand", () => {
       renderCarList: () => {
         lifecycleCalls.push("renderCarList");
       },
-      renderSpectrum: () => {
-        lifecycleCalls.push("renderSpectrum");
+      refreshSpectrumDecorations: () => {
+        lifecycleCalls.push("refreshSpectrumDecorations");
       },
       addSettingsCar: async () => {
         throw new Error("network failed");

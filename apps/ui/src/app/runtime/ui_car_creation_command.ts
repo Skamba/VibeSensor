@@ -8,7 +8,7 @@ export interface UiCarCreationCommandDeps {
   syncActiveCarToInputs: () => void;
   showCarCreationSuccess?: (carId: string, carName: string) => void;
   renderCarList: () => void;
-  renderSpectrum: () => void;
+  refreshSpectrumDecorations: () => void;
   addSettingsCar?: (payload: CarUpsertRequest) => Promise<CarsPayload>;
   setActiveSettingsCar?: (carId: string) => Promise<CarsPayload>;
 }
@@ -56,7 +56,7 @@ export function createUiCarCreationCommand(
           deps.showCarCreationSuccess?.(newCar.id, newCar.name);
         }
         deps.renderCarList();
-        deps.renderSpectrum();
+        deps.refreshSpectrumDecorations();
       } catch (_err) {
         // Preserve the current silent wizard failure behavior while removing
         // the cross-feature dependency from CarsFeature to SettingsFeature.
