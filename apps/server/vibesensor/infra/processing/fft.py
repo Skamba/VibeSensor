@@ -89,6 +89,8 @@ def medfilt3(block: FloatArray) -> FloatArray:
     np.maximum(left, mid, out=center)
     np.minimum(center, right, out=center)
     np.maximum(scratch, center, out=center)
+    if not np.any(np.isnan(block)):
+        return filtered
 
     left_valid = ~np.isnan(left)
     mid_valid = ~np.isnan(mid)
