@@ -53,44 +53,19 @@ class FakeWebSocket {
   }
 }
 
-function installIntervalHarness() {
-  const originalSetInterval = globalThis.setInterval;
-  const originalClearInterval = globalThis.clearInterval;
-  let intervalHandler: (() => void) | null = null;
-
-  globalThis.setInterval = ((handler: TimerHandler) => {
-    intervalHandler = handler as () => void;
-    return 1 as unknown as ReturnType<typeof setInterval>;
-  }) as typeof setInterval;
-
-  globalThis.clearInterval = (() => {
-    intervalHandler = null;
-  }) as typeof clearInterval;
-
-  return {
-    tick(): void {
-      if (!intervalHandler) {
-        throw new Error("No interval handler installed");
-      }
-      intervalHandler();
-    },
-    restore(): void {
-      globalThis.setInterval = originalSetInterval;
-      globalThis.clearInterval = originalClearInterval;
-    },
-  };
-}
-
 function installTimeoutHarness() {
   const originalSetTimeout = globalThis.setTimeout;
   const originalClearTimeout = globalThis.clearTimeout;
   let nextId = 1;
-  const callbacks = new Map<number, () => void>();
+  const callbacks = new Map<number, { callback: () => void; delayMs: number }>();
 
-  globalThis.setTimeout = ((handler: TimerHandler) => {
+  globalThis.setTimeout = ((handler: TimerHandler, delay?: number) => {
     const timeoutId = nextId;
     nextId += 1;
-    callbacks.set(timeoutId, handler as () => void);
+    callbacks.set(timeoutId, {
+      callback: handler as () => void,
+      delayMs: Number(delay ?? 0),
+    });
     return timeoutId as unknown as ReturnType<typeof setTimeout>;
   }) as typeof setTimeout;
 
@@ -105,14 +80,17 @@ function installTimeoutHarness() {
     pendingTimeoutCount(): number {
       return callbacks.size;
     },
+    pendingDelays(): number[] {
+      return [...callbacks.values()].map((entry) => entry.delayMs);
+    },
     fireNext(): void {
       const next = callbacks.entries().next();
       if (next.done) {
         throw new Error("No timeout callback installed");
       }
-      const [timeoutId, callback] = next.value;
+      const [timeoutId, entry] = next.value;
       callbacks.delete(timeoutId);
-      callback();
+      entry.callback();
     },
     restore(): void {
       globalThis.setTimeout = originalSetTimeout;
@@ -173,7 +151,7 @@ test.describe("createWsClient", () => {
     const originalWebSocket = globalThis.WebSocket;
     const originalDateNow = Date.now;
     globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-    const interval = installIntervalHarness();
+    const timeouts = installTimeoutHarness();
     let now = 1_000;
     Date.now = () => now;
     try {
@@ -196,15 +174,30 @@ test.describe("createWsClient", () => {
       });
 
       expect(client.uiState.value).toBe("connected");
+      expect(timeouts.pendingTimeoutCount()).toBe(1);
+      expect(timeouts.pendingDelays()).toEqual([10]);
+
+      now += 5;
+      socket?.emitMessage({
+        spectra: {
+          clients: {
+            "client-1": {},
+          },
+        },
+      });
+
+      expect(client.uiState.value).toBe("connected");
+      expect(timeouts.pendingTimeoutCount()).toBe(1);
+      expect(timeouts.pendingDelays()).toEqual([10]);
 
       now += 25;
-      interval.tick();
+      timeouts.fireNext();
 
       expect(client.uiState.value).toBe("stale");
       client.close();
     } finally {
       Date.now = originalDateNow;
-      interval.restore();
+      timeouts.restore();
       globalThis.WebSocket = originalWebSocket;
     }
   });
