@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "@preact/signals": "^2.9.0",
-    "ajv": "^8.18.0",
     "preact": "^10.29.1",
     "uplot": "^1.6.31"
   },
