@@ -7,7 +7,7 @@ import type { SpeedSourcePanelView } from "../views/speed_source_panel";
 import type { SettingsState } from "../ui_app_state";
 import {
   computed,
-  effect,
+  effectOnChange,
   untracked,
   type ReadonlySignal,
 } from "../ui_signals";
@@ -66,6 +66,9 @@ export function createSettingsSpeedSourceModule(
   const panelModel = computed(() =>
     buildSettingsSpeedSourcePanelModel(workflow.renderState.value, presenterDeps)
   );
+  const navigationContextKey = computed(
+    () => `${ctx.ports.activeViewId.value}::${ctx.ports.activeSettingsTabId.value}`,
+  );
   ctx.panel.model.value = panelModel;
   let handlersBound = false;
 
@@ -74,14 +77,7 @@ export function createSettingsSpeedSourceModule(
       return;
     }
     handlersBound = true;
-    let hasSeenInitialContext = false;
-    effect(() => {
-      ctx.ports.activeViewId.value;
-      ctx.ports.activeSettingsTabId.value;
-      if (!hasSeenInitialContext) {
-        hasSeenInitialContext = true;
-        return;
-      }
+    effectOnChange(navigationContextKey, () => {
       untracked(() => {
         workflow.handleNavigateContext();
       });
