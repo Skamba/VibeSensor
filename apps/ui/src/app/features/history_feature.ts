@@ -17,6 +17,10 @@ import type {
   HistoryPanelView,
   HistoryRunAction,
 } from "../views/history_table_view";
+import {
+  buildHistoryRowsTableRenderModel,
+  createHistoryTableRowsMemo,
+} from "../views/history_table_presenters";
 import { downloadBlobFile } from "./history_download";
 
 export interface HistoryFeatureDeps {
@@ -42,6 +46,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   const { history, panel, shell, services, formatting } = ctx;
   let handlersBound = false;
   let previewPrefetchToken = 0;
+  const rowsMemo = createHistoryTableRowsMemo();
 
   function activatePrimaryView(viewId: string): void {
     ctx.navigation.activatePrimaryView(viewId);
@@ -117,9 +122,8 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         count: runs.length,
       }),
       deleteAllRunsDisabled,
-      table: {
-        kind: "rows",
-        params: {
+      table: (() => {
+        const params = {
           runs,
           expandedRunId,
           runDetailsById: history.runDetailsById.value,
@@ -128,8 +132,9 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
           fmtTs: formatting.fmtTs,
           formatInt: formatting.formatInt,
           historyExportUrl,
-        },
-      },
+        };
+        return buildHistoryRowsTableRenderModel(params, rowsMemo(params));
+      })(),
     };
   }
 
