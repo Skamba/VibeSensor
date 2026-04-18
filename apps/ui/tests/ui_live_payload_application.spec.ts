@@ -103,4 +103,51 @@ test.describe("applyLivePayloadUpdate", () => {
     expect(update.hasNewSpectrumFrame).toBe(false);
     expect(update.selectedClient?.id).toBe("client-1");
   });
+
+  test("preserves the previous spectrum frame when the heavy payload is unchanged", () => {
+    const state = createAppState();
+    const previousSpectra = {
+      clients: {
+        "client-1": {
+          freq: [1, 2, 3],
+          combined: [0.01, 0.02, 0.03],
+          strength_metrics: {
+            vibration_strength_db: 5,
+            peak_amp_g: 0,
+            noise_floor_amp_g: 0,
+            strength_bucket: null,
+            top_peaks: [{ amp: 0.03, hz: 3, strength_bucket: null, vibration_strength_db: 5 }],
+          },
+        },
+      },
+    };
+    state.spectrum.spectra.value = previousSpectra;
+    state.spectrum.hasSpectrumData.value = true;
+
+    const update = applyLivePayloadUpdate({
+      realtime: state.realtime,
+      spectrum: state.spectrum,
+      adaptedPayload: makeAdaptedPayload({
+        clients: [makeClient("client-1")],
+        spectra: {
+          clients: {
+            "client-1": {
+              freq: [1, 2, 3],
+              combined: [0.01, 0.02, 0.03],
+              strength_metrics: {
+                vibration_strength_db: 5,
+                peak_amp_g: 0,
+                noise_floor_amp_g: 0,
+                strength_bucket: null,
+                top_peaks: [{ amp: 0.03, hz: 3, strength_bucket: null, vibration_strength_db: 5 }],
+              },
+            },
+          },
+        },
+      }),
+    });
+
+    expect(state.spectrum.spectra.value).toBe(previousSpectra);
+    expect(update.hasNewSpectrumFrame).toBe(false);
+  });
 });
