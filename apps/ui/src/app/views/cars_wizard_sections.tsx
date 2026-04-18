@@ -1,4 +1,5 @@
-import type { ComponentChildren } from "preact";
+import type { ComponentChildren, JSX } from "preact";
+import { useMemo } from "preact/hooks";
 
 import type { CarsFeatureManualInputState } from "../features/cars_manual_input";
 import { getUiText as t } from "../ui_i18n";
@@ -48,6 +49,18 @@ function submitCurrentInputValue(
   onSubmit: (value: string) => void,
 ): void {
   onSubmit(input?.value?.trim() ?? "");
+}
+
+type ManualInputField = keyof CarsFeatureManualInputState;
+type ManualInputHandler = (event: JSX.TargetedEvent<HTMLInputElement, Event>) => void;
+
+function createManualInputHandler(
+  emitManualInputs: (field: ManualInputField, value: string) => void,
+  field: ManualInputField,
+): ManualInputHandler {
+  return (event) => {
+    emitManualInputs(field, event.currentTarget.value);
+  };
 }
 
 function WizardOptionButton(props: {
@@ -136,11 +149,21 @@ function WizardCustomEntry(props: {
 }
 
 function CarsManualInputForm(props: {
-  emitManualInputs(field: keyof CarsFeatureManualInputState, value: string): void;
+  emitManualInputs(field: ManualInputField, value: string): void;
   refs: CarsWizardElementRefs;
   wizardModel: CarsWizardRenderModel;
 }) {
   const { emitManualInputs, refs, wizardModel } = props;
+  const inputHandlers = useMemo<Record<ManualInputField, ManualInputHandler>>(
+    () => ({
+      tireWidth: createManualInputHandler(emitManualInputs, "tireWidth"),
+      tireAspect: createManualInputHandler(emitManualInputs, "tireAspect"),
+      rim: createManualInputHandler(emitManualInputs, "rim"),
+      finalDrive: createManualInputHandler(emitManualInputs, "finalDrive"),
+      topGear: createManualInputHandler(emitManualInputs, "topGear"),
+    }),
+    [emitManualInputs],
+  );
   return (
     <div class="settings-subgrid">
       <div class="field">
@@ -153,7 +176,7 @@ function CarsManualInputForm(props: {
           min="100"
           step="1"
           value={wizardModel.manualInputs.tireWidth}
-          onInput={(event) => emitManualInputs("tireWidth", event.currentTarget.value)}
+          onInput={inputHandlers.tireWidth}
           ref={refs.setElementRef("tireWidthInput")}
         />
       </div>
@@ -167,7 +190,7 @@ function CarsManualInputForm(props: {
           min="20"
           step="1"
           value={wizardModel.manualInputs.tireAspect}
-          onInput={(event) => emitManualInputs("tireAspect", event.currentTarget.value)}
+          onInput={inputHandlers.tireAspect}
           ref={refs.setElementRef("tireAspectInput")}
         />
       </div>
@@ -181,7 +204,7 @@ function CarsManualInputForm(props: {
           min="10"
           step="0.5"
           value={wizardModel.manualInputs.rim}
-          onInput={(event) => emitManualInputs("rim", event.currentTarget.value)}
+          onInput={inputHandlers.rim}
           ref={refs.setElementRef("rimInput")}
         />
       </div>
@@ -195,7 +218,7 @@ function CarsManualInputForm(props: {
           step="0.01"
           min="0.1"
           value={wizardModel.manualInputs.finalDrive}
-          onInput={(event) => emitManualInputs("finalDrive", event.currentTarget.value)}
+          onInput={inputHandlers.finalDrive}
           ref={refs.setElementRef("finalDriveInput")}
         />
       </div>
@@ -209,7 +232,7 @@ function CarsManualInputForm(props: {
           step="0.01"
           min="0.1"
           value={wizardModel.manualInputs.topGear}
-          onInput={(event) => emitManualInputs("topGear", event.currentTarget.value)}
+          onInput={inputHandlers.topGear}
           ref={refs.setElementRef("topGearInput")}
         />
       </div>
