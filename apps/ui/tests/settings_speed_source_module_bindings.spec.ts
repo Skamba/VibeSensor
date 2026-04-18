@@ -35,7 +35,6 @@ test("bindHandlers uses typed panel actions and navigation subscriptions", () =>
     ports: {
       activeViewId,
       activeSettingsTabId,
-      renderSpeedReadout() {},
     },
   });
 

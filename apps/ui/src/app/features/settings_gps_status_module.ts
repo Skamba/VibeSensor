@@ -20,7 +20,6 @@ interface SettingsGpsStatusModulePorts {
   activeViewId: ReadonlySignal<string>;
   activeSettingsTabId: ReadonlySignal<string>;
   syncSpeedSourceSelectionUi: () => void;
-  renderSpeedReadout: () => void;
 }
 
 export interface SettingsGpsStatusModuleDeps {
@@ -82,7 +81,6 @@ export function createSettingsGpsStatusModule(
         );
       });
       ctx.ports.syncSpeedSourceSelectionUi();
-      ctx.ports.renderSpeedReadout();
       return status.connection_state === "connected"
         ? GPS_POLL_FAST_MS
         : GPS_POLL_SLOW_MS;

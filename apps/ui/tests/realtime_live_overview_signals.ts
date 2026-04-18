@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 import { options } from "preact";
 
-import { computed, signal } from "../src/app/ui_signals";
+import { computed, signal, type ReadonlySignal } from "../src/app/ui_signals";
 import type {
   RealtimeLiveOverviewBridge,
   RealtimeLiveOverviewRenderModel,
@@ -56,12 +56,13 @@ async function runRealtimeLiveOverviewSignalProjectionTest(): Promise<void> {
     return mountRealtimeLiveOverview;
   }, (): RealtimeLiveOverviewBridge => ({
     model: signal(null),
-    speedText: signal("--"),
+    speedText: signal<ReadonlySignal<string> | null>(null),
   }));
+  const speedText = signal("43 km/h");
 
   try {
     harness.view.model.value = model;
-    harness.view.speedText.value = "43 km/h";
+    harness.view.speedText.value = speedText;
     await harness.flush();
 
     assert.equal(overviewRenderCount, 1);

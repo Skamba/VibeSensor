@@ -1,7 +1,6 @@
 import { Suspense, lazy } from "preact/compat";
 
 import { render } from "preact";
-import { signal } from "./ui_signals";
 import {
   createDeferredModelSignal,
   createModelActionPanelBindings,
@@ -84,7 +83,7 @@ export function mountDashboardPanels(
 ): UiMountedDashboardPanels {
   const liveOverview: RealtimeLiveOverviewBridge = {
     model: createDeferredModelSignal<RealtimeLiveOverviewRenderModel>(),
-    speedText: signal("--"),
+    speedText: createDeferredModelSignal<string>(),
   };
   const logging: RealtimeLoggingPanelBridge = createModelActionPanelBindings<
     RealtimeLoggingPanelRenderModel,
