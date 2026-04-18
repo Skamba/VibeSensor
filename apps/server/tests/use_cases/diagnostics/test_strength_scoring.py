@@ -355,6 +355,52 @@ def test_compute_vibration_strength_db_skips_full_scan_band_helper(
     assert result["vibration_strength_db"] > 0.0
 
 
+def test_compute_vibration_strength_db_limits_scored_candidates_before_band_rms(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scored_candidate_calls = 0
+    original = vibration_strength_module._peak_band_rms_amp_g_from_bounds
+
+    def counting_peak_band_rms_amp_g_from_bounds(
+        *,
+        combined_spectrum_amp_g: vibration_strength_module.npt.NDArray[
+            vibration_strength_module.np.float64
+        ],
+        start_idx: int,
+        stop_idx: int,
+    ) -> float:
+        nonlocal scored_candidate_calls
+        scored_candidate_calls += 1
+        return original(
+            combined_spectrum_amp_g=combined_spectrum_amp_g,
+            start_idx=start_idx,
+            stop_idx=stop_idx,
+        )
+
+    monkeypatch.setattr(
+        vibration_strength_module,
+        "_peak_band_rms_amp_g_from_bounds",
+        counting_peak_band_rms_amp_g_from_bounds,
+    )
+
+    combined = [
+        value
+        for peak in [0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21]
+        for value in (0.001, peak)
+    ]
+    combined.append(0.001)
+
+    result = compute_vibration_strength_db(
+        freq_hz=[float(index) for index in range(len(combined))],
+        combined_spectrum_amp_g_values=combined,
+        top_n=4,
+    )
+
+    assert scored_candidate_calls == 8
+    assert [peak["hz"] for peak in result["top_peaks"]] == [23.0, 21.0, 19.0, 17.0]
+    assert result["vibration_strength_db"] == result["top_peaks"][0]["vibration_strength_db"]
+
+
 # -- vibration_strength_db_scalar --------------------------------------------
 
 

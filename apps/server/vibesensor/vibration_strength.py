@@ -443,25 +443,28 @@ def compute_vibration_strength_db(
         raise ValueError(
             f"peak index {invalid_idx} out of range for aligned spectrum size {freq.size}"
         )
-    peak_indexes = [int(idx) for idx in local_maxima[: max(1, top_n)]]
+    floor_peak_limit = max(1, top_n)
+    scored_candidate_limit = max(1, top_n * 2)
+    scored_candidate_indexes = [int(idx) for idx in local_maxima[:scored_candidate_limit]]
+    floor_peak_indexes = scored_candidate_indexes[:floor_peak_limit]
 
     floor_strength = _strength_floor_amp_g_aligned(
         freq_hz=freq,
         combined_spectrum_amp_g=combined,
-        peak_indexes=peak_indexes,
+        peak_indexes=floor_peak_indexes,
         exclusion_hz=peak_separation_hz,
         min_hz=float(freq[0]) if freq.size else 0.0,
         max_hz=float(freq[-1]) if freq.size else 0.0,
     )
     peak_band_ranges = _peak_band_index_ranges_aligned(
         freq_hz=freq,
-        center_indexes=local_maxima,
+        center_indexes=scored_candidate_indexes,
         bandwidth_hz=peak_bandwidth_hz,
     )
 
     candidates: list[StrengthPeak] = []
     if peak_band_ranges is None:
-        for idx in local_maxima:
+        for idx in scored_candidate_indexes:
             band_rms = _peak_band_rms_amp_g_aligned(
                 freq_hz=freq,
                 combined_spectrum_amp_g=combined,
@@ -484,7 +487,7 @@ def compute_vibration_strength_db(
             )
     else:
         left_bounds, right_bounds = peak_band_ranges
-        for candidate_idx, idx in enumerate(local_maxima):
+        for candidate_idx, idx in enumerate(scored_candidate_indexes):
             band_rms = _peak_band_rms_amp_g_from_bounds(
                 combined_spectrum_amp_g=combined,
                 start_idx=int(left_bounds[candidate_idx]),
