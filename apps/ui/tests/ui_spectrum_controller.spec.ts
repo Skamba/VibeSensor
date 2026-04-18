@@ -1,13 +1,49 @@
 import { expect, test } from "@playwright/test";
 
 import type { SpectrumPanelView } from "../src/app/runtime/spectrum_panel_view";
-import { createAppState } from "../src/app/ui_app_state";
+import { applyLivePayloadUpdate, createAppState } from "../src/app/ui_app_state";
 import { batch } from "../src/app/ui_signals";
+import type { AdaptedPayload } from "../src/transport/live_models";
 import { installWindowGlobal } from "./async_test_helpers";
 import { createElementStub, installDocumentStub } from "./spectrum_test_support";
 
 async function importUiSpectrumController() {
   return (await import("../src/app/runtime/ui_spectrum_controller")).UiSpectrumController;
+}
+
+function makeSpectrumPayload(values: readonly number[]): AdaptedPayload {
+  return {
+    clients: [{
+      id: "sensor-a",
+      name: "Sensor A",
+      connected: true,
+      mac_address: "00:11:22:33:44:55",
+      location_code: "",
+      last_seen_age_ms: 0,
+      dropped_frames: 0,
+      frames_total: 1,
+      frame_samples: 0,
+      sample_rate_hz: 1600,
+      firmware_version: "1.0.0",
+    }],
+    speed_mps: 10,
+    rotational_speeds: null,
+    spectra: {
+      clients: {
+        "sensor-a": {
+          freq: [10, 20, 30],
+          combined: [...values],
+          strength_metrics: {
+            vibration_strength_db: 12,
+            peak_amp_g: 0,
+            noise_floor_amp_g: 0,
+            strength_bucket: null,
+            top_peaks: [],
+          },
+        },
+      },
+    },
+  };
 }
 
 function createPanelStub(): {
@@ -128,6 +164,47 @@ test.describe("UiSpectrumController", () => {
 
       expect(renderCalls).toBe(1);
       expect(overlayCalls).toBe(1);
+    } finally {
+      restoreDocument();
+    }
+  });
+
+  test("skips redraws for repeated heavy frames and redraws when the frame changes", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const UiSpectrumController = await importUiSpectrumController();
+      const state = createAppState();
+      const panel = createPanelStub();
+      const controller = new UiSpectrumController({
+        state,
+        panel: panel.panel,
+        t: (key) => key,
+      });
+      let renderCalls = 0;
+      controller.renderSpectrum = () => {
+        renderCalls += 1;
+      };
+
+      applyLivePayloadUpdate({
+        realtime: state.realtime,
+        spectrum: state.spectrum,
+        adaptedPayload: makeSpectrumPayload([0.1, 0.2, 0.3]),
+      });
+      expect(renderCalls).toBe(1);
+
+      applyLivePayloadUpdate({
+        realtime: state.realtime,
+        spectrum: state.spectrum,
+        adaptedPayload: makeSpectrumPayload([0.1, 0.2, 0.3]),
+      });
+      expect(renderCalls).toBe(1);
+
+      applyLivePayloadUpdate({
+        realtime: state.realtime,
+        spectrum: state.spectrum,
+        adaptedPayload: makeSpectrumPayload([0.1, 0.2, 0.4]),
+      });
+      expect(renderCalls).toBe(2);
     } finally {
       restoreDocument();
     }
