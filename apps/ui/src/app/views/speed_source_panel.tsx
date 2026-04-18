@@ -119,7 +119,6 @@ export interface SpeedSourcePanelView extends SpeedSourcePanelBindings {
   focusManualSpeedInput(): void;
   focusScanObdDevices(): void;
   focusStaleTimeoutInput(): void;
-  isObdConfigVisible(): boolean;
 }
 
 type SpeedSourcePanelBridgeState = {
@@ -159,7 +158,6 @@ const DEFAULT_SPEED_SOURCE_PANEL_MODEL: SpeedSourcePanelRenderModel = {
 
 function SpeedSourcePanel(props: {
   manualInputRef: (element: HTMLInputElement | null) => void;
-  obdConfigRef: (element: HTMLElement | null) => void;
   onDiagnosticsToggle: (event: Event) => void;
   scanButtonRef: (element: HTMLButtonElement | null) => void;
   staleTimeoutInputRef: (element: HTMLInputElement | null) => void;
@@ -167,7 +165,6 @@ function SpeedSourcePanel(props: {
 }) {
   const {
     manualInputRef,
-    obdConfigRef,
     onDiagnosticsToggle,
     scanButtonRef,
     staleTimeoutInputRef,
@@ -180,7 +177,6 @@ function SpeedSourcePanel(props: {
         actions={state.actions}
         manualInputRef={manualInputRef}
         model={state.model}
-        obdConfigRef={obdConfigRef}
         scanButtonRef={scanButtonRef}
         staleTimeoutInputRef={staleTimeoutInputRef}
       />
@@ -198,7 +194,7 @@ export function mountSpeedSourcePanel(
   bindings: SpeedSourcePanelBindings,
 ): Pick<
   SpeedSourcePanelView,
-  "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput" | "isObdConfigVisible"
+  "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput"
 > {
   const diagnosticsDisclosureOpen = signal(false);
   effect(() => {
@@ -213,16 +209,12 @@ export function mountSpeedSourcePanel(
     model: bindings.model.value?.value ?? DEFAULT_SPEED_SOURCE_PANEL_MODEL,
   }));
   let manualSpeedInput: HTMLInputElement | null = null;
-  let obdConfig: HTMLElement | null = null;
   let scanObdDevicesBtn: HTMLButtonElement | null = null;
   let staleTimeoutInput: HTMLInputElement | null = null;
   render(
     <SpeedSourcePanel
       manualInputRef={(element) => {
         manualSpeedInput = element;
-      }}
-      obdConfigRef={(element) => {
-        obdConfig = element;
       }}
       onDiagnosticsToggle={(event) => {
         diagnosticsDisclosureOpen.value =
@@ -248,17 +240,6 @@ export function mountSpeedSourcePanel(
     },
     focusStaleTimeoutInput(): void {
       staleTimeoutInput?.focus();
-    },
-    isObdConfigVisible(): boolean {
-      if (!obdConfig || obdConfig.hidden) {
-        return false;
-      }
-      const activePanel = obdConfig.closest<HTMLElement>(".settings-tab-panel");
-      if (!activePanel || activePanel.hidden) {
-        return false;
-      }
-      const activeView = activePanel.closest<HTMLElement>(".view");
-      return activeView == null || !activeView.hidden;
     },
   };
 }
