@@ -1,6 +1,6 @@
 import { render } from "preact";
 
-import { getUiText } from "../ui_i18n";
+import { useUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalProperties,
@@ -238,10 +238,10 @@ function RealtimeLoggingStatusRow(props: {
 
 function RealtimeLoggingProgressSection(props: {
   labels: {
-    elapsedLabel: string;
-    runPhaseLabel: string;
-    runProgressLabel: string;
-    samplesLabel: string;
+    elapsedLabel: ReadonlySignal<string>;
+    runPhaseLabel: ReadonlySignal<string>;
+    runProgressLabel: ReadonlySignal<string>;
+    samplesLabel: ReadonlySignal<string>;
   };
   model: ReadonlySignal<RealtimeLoggingPanelRenderModel>;
 }) {
@@ -293,8 +293,8 @@ function RealtimeLoggingProgressSection(props: {
 function RealtimeLoggingActionRow(props: {
   actions: ReadonlySignal<RealtimeLoggingPanelActionHandlers | null>;
   labels: {
-    startLabel: string;
-    stopLabel: string;
+    startLabel: ReadonlySignal<string>;
+    stopLabel: ReadonlySignal<string>;
   };
   model: ReadonlySignal<RealtimeLoggingPanelRenderModel>;
 }) {
@@ -340,25 +340,22 @@ function RealtimeLoggingPanel(props: {
   model: ReadonlySignal<ReadonlySignal<RealtimeLoggingPanelRenderModel> | null>;
 }) {
   const actions = useComputed(() => props.actions.value);
-  const labels = useComputed(() => ({
-    elapsedLabel: getUiText("dashboard.recording_elapsed", "Elapsed"),
-    runPhaseLabel: getUiText("dashboard.recording_phase", "Run phase"),
-    runProgressLabel: getUiText("dashboard.recording_progress", "Run progress"),
-    samplesLabel: getUiText("dashboard.recording_samples", "Samples recorded"),
-    startLabel: getUiText("dashboard.start_recording", "Start Recording"),
-    stopLabel: getUiText("dashboard.stop_recording", "Stop Recording"),
-    titleText: getUiText("dashboard.run_recording", "Run Recording"),
-  }));
+  const elapsedLabel = useUiText("dashboard.recording_elapsed", "Elapsed");
+  const runPhaseLabel = useUiText("dashboard.recording_phase", "Run phase");
+  const runProgressLabel = useUiText("dashboard.recording_progress", "Run progress");
+  const samplesLabel = useUiText("dashboard.recording_samples", "Samples recorded");
+  const startLabel = useUiText("dashboard.start_recording", "Start Recording");
+  const stopLabel = useUiText("dashboard.stop_recording", "Stop Recording");
+  const titleText = useUiText("dashboard.run_recording", "Run Recording");
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_PANEL_MODEL);
   const { shellLayout } = useSignalProperties(model, ["shellLayout"] as const);
-  const labelTexts = labels.value;
 
   return (
     <div class="realtime-logging-shell" data-layout={shellLayout.value}>
       <div class="card__header card__header--stack">
         <div>
           <div class="card__title">
-            {labelTexts.titleText}
+            {titleText}
           </div>
           <RealtimeLoggingSummarySection actions={actions} model={model} />
         </div>
@@ -366,18 +363,18 @@ function RealtimeLoggingPanel(props: {
       <RealtimeLoggingStatusRow model={model} />
       <RealtimeLoggingProgressSection
         labels={{
-          elapsedLabel: labelTexts.elapsedLabel,
-          runPhaseLabel: labelTexts.runPhaseLabel,
-          runProgressLabel: labelTexts.runProgressLabel,
-          samplesLabel: labelTexts.samplesLabel,
+          elapsedLabel,
+          runPhaseLabel,
+          runProgressLabel,
+          samplesLabel,
         }}
         model={model}
       />
       <RealtimeLoggingActionRow
         actions={actions}
         labels={{
-          startLabel: labelTexts.startLabel,
-          stopLabel: labelTexts.stopLabel,
+          startLabel,
+          stopLabel,
         }}
         model={model}
       />
