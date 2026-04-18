@@ -25,7 +25,9 @@ export interface SpectrumText {
 
 export interface SpectrumChart {
   destroy(): void;
+  redraw(rebuildPaths?: boolean, recalcAxes?: boolean): void;
   resize(): void;
+  setData(data: uPlot.AlignedData, resetScales?: boolean): void;
   setSeriesIsolation(seriesIdx: number | null): void;
 }
 
@@ -136,14 +138,6 @@ export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChar
     };
   });
 
-  const stopDataSync = effect(() => {
-    const currentPlot = plot.value;
-    if (!currentPlot) {
-      return;
-    }
-    currentPlot.setData(deps.data.value);
-  });
-
   const stopSizeSync = effect(() => {
     const currentPlot = plot.value;
     if (!currentPlot) {
@@ -162,13 +156,26 @@ export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChar
       }
       disposed = true;
       stopSizeSync();
-      stopDataSync();
       stopPlotLifecycle();
       stopResizeObserver();
       plot.value = null;
     },
+    redraw(rebuildPaths?: boolean, recalcAxes?: boolean): void {
+      const currentPlot = plot.value;
+      if (!currentPlot) {
+        return;
+      }
+      currentPlot.redraw(rebuildPaths, recalcAxes);
+    },
     resize(): void {
       width.value = computeWidth(measureEl);
+    },
+    setData(data: uPlot.AlignedData, resetScales?: boolean): void {
+      const currentPlot = plot.value;
+      if (!currentPlot) {
+        return;
+      }
+      currentPlot.setData(data, resetScales);
     },
     setSeriesIsolation(seriesIdx: number | null): void {
       const currentPlot = plot.value;
