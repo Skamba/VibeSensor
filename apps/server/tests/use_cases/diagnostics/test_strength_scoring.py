@@ -401,7 +401,88 @@ def test_compute_vibration_strength_db_limits_scored_candidates_before_band_rms(
     assert result["vibration_strength_db"] == result["top_peaks"][0]["vibration_strength_db"]
 
 
+def test_compute_vibration_strength_db_skips_scalar_db_helper(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scalar_calls = 0
+    original = vibration_strength_module.vibration_strength_db_scalar
+
+    def counting_vibration_strength_db_scalar(
+        *,
+        peak_band_rms_amp_g: float,
+        floor_amp_g: float,
+        epsilon_g: float | None = None,
+    ) -> float:
+        nonlocal scalar_calls
+        scalar_calls += 1
+        return original(
+            peak_band_rms_amp_g=peak_band_rms_amp_g,
+            floor_amp_g=floor_amp_g,
+            epsilon_g=epsilon_g,
+        )
+
+    monkeypatch.setattr(
+        vibration_strength_module,
+        "vibration_strength_db_scalar",
+        counting_vibration_strength_db_scalar,
+    )
+
+    result = compute_vibration_strength_db(
+        freq_hz=[float(index) for index in range(20)],
+        combined_spectrum_amp_g_values=[
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.002,
+            0.004,
+            0.01,
+            0.03,
+            0.06,
+            0.12,
+            0.03,
+            0.01,
+            0.004,
+            0.002,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+        ],
+    )
+
+    assert scalar_calls == 0
+    assert result["vibration_strength_db"] > 0.0
+
+
 # -- vibration_strength_db_scalar --------------------------------------------
+
+
+def test_batch_vibration_strength_db_matches_scalar() -> None:
+    floor = 0.01
+    band_rms = vibration_strength_module.np.array(
+        [0.0, 0.01, 0.5, float("nan"), float("inf"), -1.0],
+        dtype=vibration_strength_module.np.float64,
+    )
+
+    batch = vibration_strength_module._batch_vibration_strength_db_aligned(
+        peak_band_rms_amp_g_values=band_rms,
+        floor_amp_g=floor,
+    )
+    expected = vibration_strength_module.np.array(
+        [
+            vibration_strength_db_scalar(
+                peak_band_rms_amp_g=float(value),
+                floor_amp_g=floor,
+            )
+            for value in band_rms
+        ],
+        dtype=vibration_strength_module.np.float64,
+    )
+
+    vibration_strength_module.np.testing.assert_allclose(batch, expected)
 
 
 def test_strength_db_equal_band_and_floor() -> None:
