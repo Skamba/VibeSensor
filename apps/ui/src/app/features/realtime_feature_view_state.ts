@@ -10,7 +10,7 @@ import type {
   ShellState,
   SpectrumState,
 } from "../ui_app_state";
-import { createReplaceableInterval } from "../timer_cleanup";
+import { bindReplaceableTimerEffect, createReplaceableInterval } from "../timer_cleanup";
 import { computed, effect, signal, type ReadonlySignal } from "../ui_signals";
 import type { AdaptedClient } from "../../transport/live_models";
 import {
@@ -214,22 +214,20 @@ export function createRealtimeFeatureViewState(
   });
   const loggingElapsedTimer = createReplaceableInterval();
 
-  effect(() => {
+  bindReplaceableTimerEffect(loggingElapsedTimer, () => {
     if (!loggingElapsedShouldTick.value) {
-      loggingElapsedTimer.clear();
-      return;
+      return null;
     }
     const loggingStartTimeUtc = loggingElapsedTimerStartTime.value;
     if (!loggingStartTimeUtc) {
-      loggingElapsedTimer.clear();
-      return;
+      return null;
     }
-    elapsedNowMs.value = Date.now();
-    loggingElapsedTimer.replace(() => {
-      elapsedNowMs.value = Date.now();
-    }, 1_000);
-    return () => {
-      loggingElapsedTimer.clear();
+    return {
+      fireImmediately: true,
+      delayMs: 1_000,
+      callback: () => {
+        elapsedNowMs.value = Date.now();
+      },
     };
   });
 
