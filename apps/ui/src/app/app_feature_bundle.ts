@@ -18,9 +18,9 @@ import {
 import { createUpdateFeature } from "./features/update_feature";
 import type { FeatureFormatting, FeatureServices } from "./feature_deps_base";
 import type { AppState } from "./ui_app_state";
+import type { UiMountedPanels } from "./ui_lazy_panels";
 import type { ReadonlySignal } from "./ui_signals";
 import { createUiCarCreationCommand } from "./runtime/ui_car_creation_command";
-import type { UiMountedPanels } from "./ui_panel_bootstrap";
 import type { AppFeatureBundle } from "./app_feature_bundle_ports";
 export type { AppFeatureBundle } from "./app_feature_bundle_ports";
 

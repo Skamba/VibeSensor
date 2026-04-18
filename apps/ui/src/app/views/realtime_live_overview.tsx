@@ -1,5 +1,3 @@
-import { render } from "preact";
-
 import { useUiText } from "../ui_i18n";
 import {
   useComputed,
@@ -266,9 +264,8 @@ function RealtimeLiveOverview(props: {
   );
 }
 
-export function mountRealtimeLiveOverview(
-  host: HTMLElement,
-  view: RealtimeLiveOverviewBridge,
-): void {
-  render(<RealtimeLiveOverview model={view.model} speedText={view.speedText} />, host);
+export function RealtimeLiveOverviewPanel(props: {
+  view: RealtimeLiveOverviewBridge;
+}) {
+  return <RealtimeLiveOverview model={props.view.model} speedText={props.view.speedText} />;
 }

@@ -1,25 +1,30 @@
 import "../styles/app.css";
+import { h, render } from "preact";
+
+import { UiAppRoot } from "./ui_app_root";
 import { createAppState } from "./ui_app_state";
-import { UiAppRuntime } from "./ui_app_runtime";
-import { createLazyUiPanels } from "./ui_lazy_panels";
-import {
-  DEFAULT_UI_SHELL_CHROME_ACTIONS,
-  getUiShellChromeHost,
-  mountUiShellChrome,
-} from "./runtime/ui_shell_chrome";
-import { signal } from "./ui_signals";
+import { createUiAppRuntime } from "./ui_app_runtime";
+import { getUiShellChromeHost } from "./runtime/ui_shell_chrome";
+
+const UI_APP_MOUNTED_ATTR = "data-ui-app-mounted";
 
 export function startUiApp(): void {
+  const host = getUiShellChromeHost();
+  if (host.getAttribute(UI_APP_MOUNTED_ATTR) === "true") {
+    return;
+  }
+  host.setAttribute(UI_APP_MOUNTED_ATTR, "true");
   const state = createAppState();
-  const shellChromeActions = signal({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS });
-  const shellChrome = mountUiShellChrome(getUiShellChromeHost(), shellChromeActions);
-  const lazyPanels = createLazyUiPanels({ hosts: shellChrome.panelHosts });
-  new UiAppRuntime({
-    shellChrome,
-    panels: lazyPanels.panels,
-    ensureViewPanels: lazyPanels.ensureViewPanels,
-    state,
-    shellChromeActions,
-  }).start();
-  lazyPanels.prefetchHiddenPanels();
+  const runtime = createUiAppRuntime({ state });
+  render(
+    h(UiAppRoot, {
+      attachSettingsPanels: runtime.attachSettingsPanels,
+      panels: runtime.panels,
+      shellChrome: runtime.shellChrome,
+      spectrumPanel: runtime.spectrumPanel,
+    }),
+    host,
+  );
+  runtime.start();
+  runtime.prefetchHiddenPanels();
 }

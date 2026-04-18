@@ -1,23 +1,3 @@
-export interface UiPanelHostRegistry {
-  dashboard: {
-    spectrum: HTMLElement;
-    liveOverview: HTMLElement;
-    logging: HTMLElement;
-  };
-  history: HTMLElement;
-  settingsShell: HTMLElement;
-}
-
-type UiPendingPanelHostRegistry = {
-  dashboard: {
-    spectrum: HTMLDivElement | null;
-    liveOverview: HTMLDivElement | null;
-    logging: HTMLDivElement | null;
-  };
-  history: HTMLDivElement | null;
-  settingsShell: HTMLDivElement | null;
-};
-
 export interface UiSettingsPanelHostRegistry {
   cars: HTMLElement;
   analysis: HTMLElement;
@@ -44,30 +24,6 @@ export interface UiSettingsPanelHostRefs {
 
 function missingElement(message: string): never {
   throw new Error(message);
-}
-
-export function resolveUiPanelHosts(
-  panelHosts: UiPendingPanelHostRegistry,
-): UiPanelHostRegistry {
-  return {
-    dashboard: {
-      spectrum:
-        panelHosts.dashboard.spectrum ??
-        missingElement("Spectrum UI requires #spectrumPanelRoot"),
-      liveOverview:
-        panelHosts.dashboard.liveOverview ??
-        missingElement("Realtime feature requires #liveOverviewRoot"),
-      logging:
-        panelHosts.dashboard.logging ??
-        missingElement("Realtime feature requires #loggingPanelRoot"),
-    },
-    history:
-      panelHosts.history ??
-      missingElement("History feature requires #historyPanelRoot"),
-    settingsShell:
-      panelHosts.settingsShell ??
-      missingElement("Settings shell requires #settingsShellRoot"),
-  };
 }
 
 export function createUiSettingsPanelHostRefs(): UiSettingsPanelHostRefs {
