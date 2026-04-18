@@ -1,6 +1,10 @@
 import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
 import type { CarsFeatureManualInputState } from "../features/cars_manual_input";
 import { getUiText as t } from "../ui_i18n";
+import {
+  useSignalProperties,
+  type ReadonlySignal,
+} from "../ui_signals";
 import type { CarsWizardRenderModel } from "./car_wizard_view";
 import {
   CarsWizardStepNav,
@@ -29,22 +33,45 @@ export interface CarsFeatureInteractionHandlers {
   onAction(action: CarsFeatureInteraction): void;
 }
 
+const CARS_WIZARD_PANEL_KEYS = [
+  "actionHintText",
+  "backVisible",
+  "finishEnabled",
+  "finishVisible",
+  "isOpen",
+  "progressText",
+  "specBranch",
+  "step",
+  "summary",
+] as const;
+
 export function CarsWizardPanel(props: {
-  actions: CarsFeatureInteractionHandlers | null;
+  actions: ReadonlySignal<CarsFeatureInteractionHandlers | null>;
   refs: CarsWizardElementRefs;
-  wizardModel: CarsWizardRenderModel;
+  wizardModel: ReadonlySignal<CarsWizardRenderModel>;
 }) {
-  const { actions, refs, wizardModel } = props;
+  const { refs } = props;
+  const {
+    actionHintText,
+    backVisible,
+    finishEnabled,
+    finishVisible,
+    isOpen,
+    progressText,
+    specBranch,
+    step,
+    summary,
+  } = useSignalProperties(props.wizardModel, CARS_WIZARD_PANEL_KEYS);
 
   function closeWizard(): void {
-    actions?.onAction({ type: "close" });
+    props.actions.value?.onAction({ type: "close" });
   }
 
   function emitManualInputs(
     field: keyof CarsFeatureManualInputState,
     value: string,
   ): void {
-    actions?.onAction({
+    props.actions.value?.onAction({
       type: "manual-input-changed",
       field,
       value,
@@ -60,21 +87,21 @@ export function CarsWizardPanel(props: {
   }
 
   return (
-    <div class="wizard-modal-layer" hidden={!wizardModel.isOpen}>
+    <div class="wizard-modal-layer" hidden={!isOpen.value}>
       <div
         id="wizardBackdrop"
         class="wizard-backdrop"
-        hidden={!wizardModel.isOpen}
+        hidden={!isOpen.value}
         onClick={closeWizard}
       />
       <div
         id="addCarWizard"
         class="panel card add-car-wizard"
-        hidden={!wizardModel.isOpen}
+        hidden={!isOpen.value}
         role="dialog"
         aria-modal="true"
         aria-labelledby="wizardTitle"
-        data-spec-branch={wizardModel.specBranch ?? undefined}
+        data-spec-branch={specBranch.value ?? undefined}
         tabIndex={-1}
         onKeyDown={handleWizardKeyDown}
         ref={refs.setElementRef("addCarWizard")}
@@ -84,16 +111,16 @@ export function CarsWizardPanel(props: {
             <strong id="wizardTitle">
               {t("settings.car.add_title", "Add a Car")}
             </strong>
-            <div class="subtle">
-              {t(
-                "settings.car.wizard_intro",
-                "Use the library when it fits, or branch into manual specs without losing your place.",
-              )}
-            </div>
-              <div id="wizardProgressText" class="wizard-progress-text">
-                {wizardModel.progressText}
+              <div class="subtle">
+                {t(
+                  "settings.car.wizard_intro",
+                  "Use the library when it fits, or branch into manual specs without losing your place.",
+                )}
               </div>
-          </div>
+              <div id="wizardProgressText" class="wizard-progress-text">
+                {progressText.value}
+              </div>
+            </div>
           <button
             id="wizardCloseBtn"
             class="btn btn--muted wizard-close"
@@ -104,51 +131,51 @@ export function CarsWizardPanel(props: {
             {"\u00d7"}
           </button>
         </div>
-        <div class="wizard-shell">
+          <div class="wizard-shell">
             <div class="wizard-main">
               <div class="wizard-steps">
-                <CarsWizardStepNav step={wizardModel.step} />
+                <CarsWizardStepNav step={step} />
                 <CarsWizardSteps
                   emitManualInputs={emitManualInputs}
                   refs={refs}
-                  wizardModel={wizardModel}
-                  onSelectBrand={(value) => actions?.onAction({ type: "select-brand", value })}
-                  onSelectGearbox={(index) => actions?.onAction({ type: "select-gearbox", index })}
-                  onSelectModel={(index) => actions?.onAction({ type: "select-model", index })}
-                  onSelectTire={(index) => actions?.onAction({ type: "select-tire", index })}
-                  onSelectType={(value) => actions?.onAction({ type: "select-type", value })}
-                  onSelectVariant={(index) => actions?.onAction({ type: "select-variant", index })}
+                  wizardModel={props.wizardModel}
+                  onSelectBrand={(value) => props.actions.value?.onAction({ type: "select-brand", value })}
+                  onSelectGearbox={(index) => props.actions.value?.onAction({ type: "select-gearbox", index })}
+                  onSelectModel={(index) => props.actions.value?.onAction({ type: "select-model", index })}
+                  onSelectTire={(index) => props.actions.value?.onAction({ type: "select-tire", index })}
+                  onSelectType={(value) => props.actions.value?.onAction({ type: "select-type", value })}
+                  onSelectVariant={(index) => props.actions.value?.onAction({ type: "select-variant", index })}
                   onSubmitCustomBrand={(value) =>
-                    actions?.onAction({ type: "submit-custom-brand", value })}
+                    props.actions.value?.onAction({ type: "submit-custom-brand", value })}
                   onSubmitCustomModel={(value) =>
-                    actions?.onAction({ type: "submit-custom-model", value })}
+                    props.actions.value?.onAction({ type: "submit-custom-model", value })}
                   onSubmitCustomType={(value) =>
-                    actions?.onAction({ type: "submit-custom-type", value })}
+                    props.actions.value?.onAction({ type: "submit-custom-type", value })}
                 />
               </div>
 
               <div class="wizard-nav">
-              <div id="wizardActionHint" class="subtle wizard-nav__status" aria-live="polite">
-                {wizardModel.actionHintText}
-              </div>
-              <div class="wizard-nav__actions">
-                <button
-                  id="wizardBackBtn"
-                  class="btn btn--muted"
-                  hidden={!wizardModel.backVisible}
-                  onClick={() => actions?.onAction({ type: "back" })}
-                >
-                  {t("settings.car.back", "Back")}
-                </button>
-                <button
-                  id="wizardManualAddBtn"
-                  class="btn btn--success"
-                  hidden={!wizardModel.finishVisible}
-                  disabled={!wizardModel.finishEnabled}
-                  onClick={() => actions?.onAction({ type: "finish" })}
-                  ref={refs.setElementRef("manualAddButton")}
-                >
-                  {t("settings.car.finish_add", "Add Car")}
+                <div id="wizardActionHint" class="subtle wizard-nav__status" aria-live="polite">
+                  {actionHintText.value}
+                </div>
+                <div class="wizard-nav__actions">
+                  <button
+                    id="wizardBackBtn"
+                    class="btn btn--muted"
+                    hidden={!backVisible.value}
+                    onClick={() => props.actions.value?.onAction({ type: "back" })}
+                  >
+                    {t("settings.car.back", "Back")}
+                  </button>
+                  <button
+                    id="wizardManualAddBtn"
+                    class="btn btn--success"
+                    hidden={!finishVisible.value}
+                    disabled={!finishEnabled.value}
+                    onClick={() => props.actions.value?.onAction({ type: "finish" })}
+                    ref={refs.setElementRef("manualAddButton")}
+                  >
+                    {t("settings.car.finish_add", "Add Car")}
                 </button>
               </div>
             </div>
@@ -173,11 +200,11 @@ export function CarsWizardPanel(props: {
               {t(
                 "settings.car.wizard_summary_intro",
                 "Your choices stay visible here while the profile comes together.",
-              )}
-            </div>
-            <CarsWizardSummaryPanel summary={wizardModel.summary} />
-          </aside>
-        </div>
+                )}
+              </div>
+              <CarsWizardSummaryPanel summary={summary} />
+            </aside>
+          </div>
       </div>
     </div>
   );
