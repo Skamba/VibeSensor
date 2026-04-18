@@ -19,6 +19,7 @@ import type {
   HistoryRowViewModel,
   HistorySummaryChipViewModel,
 } from "./history_table_models";
+import type { HistoryPanelTableRenderModel, HistoryTableViewParams } from "./history_table_view";
 
 function buildSummaryChips(
   run: HistoryEntry,
@@ -129,6 +130,17 @@ export function buildHistoryTableRowsViewModel(params: PresenterParams): History
   return params.runs.map((run) =>
     buildRowViewModel(run, params.runDetailsById[run.run_id] ?? EMPTY_RUN_DETAIL, params),
   );
+}
+
+export function buildHistoryRowsTableRenderModel(
+  params: HistoryTableViewParams,
+  rows: HistoryRowViewModel[],
+): HistoryPanelTableRenderModel {
+  return {
+    kind: "rows",
+    historyExportUrl: params.historyExportUrl,
+    rows,
+  };
 }
 
 type HistoryRowsMemoKey = Pick<

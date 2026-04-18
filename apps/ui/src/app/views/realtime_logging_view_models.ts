@@ -36,16 +36,27 @@ export interface RealtimeLoggingPanelViewModel {
   phaseText: string;
   summaryText: string;
   summaryPanel: RealtimeLoggingSummaryPanelModel | null;
+  summaryAction: RealtimeLoggingSummaryPanelModel["action"] | null;
+  summaryHidden: boolean;
+  summaryLayout: "panel" | undefined;
   runIdText: string;
+  runIdHidden: boolean;
   elapsedText: string;
   samplesText: string;
   showStart: boolean;
+  startHidden: boolean;
   showStop: boolean;
+  stopHidden: boolean;
   startDisabled: boolean;
   stopDisabled: boolean;
   showPill: boolean;
+  pillHidden: boolean;
+  loggingRowHidden: boolean;
   checklist: RealtimeCaptureReadinessChecklistModel | null;
+  checklistHidden: boolean;
   setupMode: boolean;
+  showProgressSection: boolean;
+  shellLayout: "setup" | undefined;
   nextLastCompletedElapsedText: string;
 }
 
@@ -82,6 +93,50 @@ export function buildRealtimeLoggingPanelViewModel(
   const captureReadiness = status.capture_readiness ?? null;
   const recordingReady = Boolean(captureReadiness?.is_ready);
   const readinessSummary = captureReadinessSummaryText(captureReadiness, { t, formatInt });
+  function finalize(model: {
+    pillVariant: "muted" | "ok" | "warn" | "bad";
+    pillText: string;
+    phaseText: string;
+    summaryText: string;
+    summaryPanel: RealtimeLoggingSummaryPanelModel | null;
+    runIdText: string;
+    elapsedText: string;
+    samplesText: string;
+    showStart: boolean;
+    showStop: boolean;
+    startDisabled: boolean;
+    stopDisabled: boolean;
+    showPill: boolean;
+    checklist: RealtimeCaptureReadinessChecklistModel | null;
+    setupMode: boolean;
+    nextLastCompletedElapsedText: string;
+  }): RealtimeLoggingPanelViewModel {
+    const summaryAction = model.summaryPanel?.action ?? null;
+    const summaryHidden = model.summaryText === "" && model.summaryPanel === null;
+    const summaryLayout = model.summaryPanel ? "panel" : undefined;
+    const runIdHidden = model.runIdText === "";
+    const startHidden = !model.showStart;
+    const stopHidden = !model.showStop;
+    const pillHidden = !model.showPill;
+    const loggingRowHidden = pillHidden && runIdHidden;
+    const checklistHidden = model.checklist === null;
+    const showProgressSection = !model.setupMode || model.checklist !== null;
+    const shellLayout = model.setupMode ? "setup" : undefined;
+    return {
+      ...model,
+      summaryAction,
+      summaryHidden,
+      summaryLayout,
+      runIdHidden,
+      startHidden,
+      stopHidden,
+      pillHidden,
+      loggingRowHidden,
+      checklistHidden,
+      showProgressSection,
+      shellLayout,
+    };
+  }
   let nextLastCompletedElapsedText = params.lastCompletedElapsedText;
 
   if (status.enabled) {
@@ -91,7 +146,7 @@ export function buildRealtimeLoggingPanelViewModel(
   }
 
   if (pendingLoggingAction === "starting") {
-    return {
+    return finalize({
       pillVariant: "muted",
       pillText: t("dashboard.recording_phase.starting"),
       phaseText: t("dashboard.recording_phase.starting"),
@@ -108,11 +163,11 @@ export function buildRealtimeLoggingPanelViewModel(
       checklist: null,
       setupMode: false,
       nextLastCompletedElapsedText,
-    };
+    });
   }
 
   if (pendingLoggingAction === "stopping") {
-    return {
+    return finalize({
       pillVariant: "warn",
       pillText: t("dashboard.recording_phase.stopping"),
       phaseText: t("dashboard.recording_phase.stopping"),
@@ -129,11 +184,11 @@ export function buildRealtimeLoggingPanelViewModel(
       checklist: null,
       setupMode: false,
       nextLastCompletedElapsedText,
-    };
+    });
   }
 
   if (status.enabled) {
-    return {
+    return finalize({
       pillVariant: status.write_error ? "bad" : "ok",
       pillText: status.write_error || t("dashboard.recording_phase.recording"),
       phaseText: status.write_error ? t("dashboard.health.attention") : t("dashboard.recording_phase.recording"),
@@ -152,12 +207,12 @@ export function buildRealtimeLoggingPanelViewModel(
       checklist: null,
       setupMode: false,
       nextLastCompletedElapsedText,
-    };
+    });
   }
 
   if (status.analysis_in_progress) {
     const runId = status.last_completed_run_id ?? t("status.unavailable");
-    return {
+    return finalize({
       pillVariant: "warn",
       pillText: t("dashboard.recording_phase.processing"),
       phaseText: t("dashboard.recording_phase.processing"),
@@ -174,11 +229,11 @@ export function buildRealtimeLoggingPanelViewModel(
       checklist: null,
       setupMode: false,
       nextLastCompletedElapsedText,
-    };
+    });
   }
 
   if (status.last_completed_run_id) {
-    return {
+    return finalize({
       pillVariant: "ok",
       pillText: t("dashboard.recording_phase.saved"),
       phaseText: t("dashboard.recording_phase.saved"),
@@ -195,11 +250,11 @@ export function buildRealtimeLoggingPanelViewModel(
       checklist: null,
       setupMode: false,
       nextLastCompletedElapsedText,
-    };
+    });
   }
 
   if (selectionBlockReason) {
-    return {
+    return finalize({
       pillVariant: "warn",
       pillText: t("dashboard.recording_phase.blocked"),
       phaseText: t("dashboard.recording_phase.blocked"),
@@ -216,11 +271,11 @@ export function buildRealtimeLoggingPanelViewModel(
       checklist: null,
       setupMode: true,
       nextLastCompletedElapsedText,
-    };
+    });
   }
 
   const waitingOnReadiness = captureReadiness !== null && !captureReadiness.is_ready;
-  return {
+  return finalize({
     pillVariant: waitingOnReadiness ? "muted" : "ok",
     pillText: waitingOnReadiness
       ? t("dashboard.recording_phase.preparing")
@@ -245,5 +300,5 @@ export function buildRealtimeLoggingPanelViewModel(
     }),
     setupMode: waitingOnReadiness,
     nextLastCompletedElapsedText,
-  };
+  });
 }

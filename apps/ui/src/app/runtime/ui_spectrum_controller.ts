@@ -65,7 +65,7 @@ export class UiSpectrumController {
   }
 
   updateSpectrumOverlay(): void {
-    this.setSpectrumOverlay(this.spectrumOverlayMessage());
+    this.setSpectrumOverlay(this.spectrumOverlayModel());
   }
 
   private renderSpectrumHeader(): void {
@@ -90,41 +90,39 @@ export class UiSpectrumController {
     this.updateSpectrumOverlay();
   }
 
-  private spectrumOverlayMessage(): string | null {
+  private spectrumOverlayModel(): { hidden: boolean; text: string } {
+    let message: string | null = null;
     if (this.state.spectrum.chartLoadErrorDetail.value) {
-      return this.t("spectrum.chart_load_error", {
+      message = this.t("spectrum.chart_load_error", {
         message: this.state.spectrum.chartLoadErrorDetail.value,
       });
-    }
-    if (this.state.transport.payloadError.value) {
-      return this.state.transport.payloadError.value;
-    }
-    if (
+    } else if (this.state.transport.payloadError.value) {
+      message = this.state.transport.payloadError.value;
+    } else if (
       !this.state.transport.hasReceivedPayload.value
       && this.state.transport.wsState.value === "connecting"
     ) {
-      return this.t("spectrum.loading");
-    }
-    if (
+      message = this.t("spectrum.loading");
+    } else if (
       this.state.transport.wsState.value === "connecting"
       || this.state.transport.wsState.value === "reconnecting"
     ) {
-      return this.t("ws.connecting");
+      message = this.t("ws.connecting");
+    } else if (this.state.transport.wsState.value === "stale") {
+      message = this.t("spectrum.stale");
+    } else if (this.state.spectrum.chartLoading.value && this.state.spectrum.hasSpectrumData.value) {
+      message = this.t("spectrum.loading");
+    } else if (!this.state.spectrum.hasSpectrumData.value) {
+      message = this.t("spectrum.empty");
     }
-    if (this.state.transport.wsState.value === "stale") {
-      return this.t("spectrum.stale");
-    }
-    if (this.state.spectrum.chartLoading.value && this.state.spectrum.hasSpectrumData.value) {
-      return this.t("spectrum.loading");
-    }
-    if (!this.state.spectrum.hasSpectrumData.value) {
-      return this.t("spectrum.empty");
-    }
-    return null;
+    return {
+      hidden: message === null,
+      text: message ?? "Waiting for sensor data...",
+    };
   }
 
-  private setSpectrumOverlay(message: string | null): void {
-    this.panel.renderOverlay(message);
+  private setSpectrumOverlay(model: { hidden: boolean; text: string }): void {
+    this.panel.renderOverlay(model);
   }
 
   private bindInteractionModelSignals(): void {

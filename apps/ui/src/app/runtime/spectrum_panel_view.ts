@@ -51,6 +51,14 @@ export interface SpectrumPanelChartDom {
 export interface SpectrumPanelBandToggleModel {
   hasBands: boolean;
   bandsVisible: boolean;
+  disabled: boolean;
+  hidden: boolean;
+  pressed: "true" | "false";
+  text: string;
+}
+
+export interface SpectrumPanelOverlayModel {
+  hidden: boolean;
   text: string;
 }
 
@@ -69,6 +77,6 @@ export interface SpectrumPanelView {
   ): void;
   bindBandLegendModel(model: ReadonlySignal<SpectrumBandLegendModel>): void;
   renderHeader(model: SpectrumPanelHeaderModel): void;
-  renderOverlay(message: string | null): void;
+  renderOverlay(model: SpectrumPanelOverlayModel): void;
   renderInspectorText(text: string): void;
 }
