@@ -204,7 +204,7 @@ function SpectrumPanel(props: {
               aria-expanded={bandTogglePressed}
               hidden={bandToggleHidden}
               disabled={bandToggleHidden}
-              onClick={() => props.onBandToggle.value?.()}
+              onClick={() => props.onBandToggle.peek()?.()}
             >
               {bandToggleText}
             </button>

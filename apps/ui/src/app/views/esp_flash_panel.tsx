@@ -85,10 +85,10 @@ function EspFlashPortRow(props: {
   selectedPortValue: ReadonlySignal<string>;
 }) {
   const handleSelectPort = (value: string) => {
-    props.actions.value?.onSelectPort(value);
+    props.actions.peek()?.onSelectPort(value);
   };
   const handleRefreshPorts = () => {
-    props.actions.value?.onRefreshPorts();
+    props.actions.peek()?.onRefreshPorts();
   };
   return (
     <div class="manual-speed-row">
@@ -136,10 +136,10 @@ function EspFlashActionRow(props: {
   startButtonLabelText: ReadonlySignal<string>;
 }) {
   const handleStart = () => {
-    props.actions.value?.onStart();
+    props.actions.peek()?.onStart();
   };
   const handleCancel = () => {
-    props.actions.value?.onCancel();
+    props.actions.peek()?.onCancel();
   };
   return (
     <div class="maintenance-action-row">

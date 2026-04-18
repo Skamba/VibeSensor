@@ -175,7 +175,7 @@ export function createEspFlashFeatureWorkflow(
       const ports = payload.ports || [];
       batch(() => {
         availablePorts.value = ports;
-        if (!ports.some((port) => port.port === selectedPortValue.value)) {
+        if (!ports.some((port) => port.port === selectedPortValue.peek())) {
           selectedPortValue.value = "__auto__";
         }
       });
@@ -188,7 +188,7 @@ export function createEspFlashFeatureWorkflow(
     enabled: deps.pollingEnabled,
     poll: async () => {
       await refreshStatus();
-      return safeEspFlashState(latestStatus.value.state) === "running"
+      return safeEspFlashState(latestStatus.peek().state) === "running"
         ? ESP_FLASH_POLL_ACTIVE_MS
         : ESP_FLASH_POLL_IDLE_MS;
     },
@@ -196,14 +196,17 @@ export function createEspFlashFeatureWorkflow(
   });
 
   async function startFlash(): Promise<void> {
+    const latestState = safeEspFlashState(latestStatus.peek().state);
+    const ports = availablePorts.peek();
     if (
-      safeEspFlashState(latestStatus.value.state) === "running"
-      || availablePorts.value.length === 0
+      latestState === "running"
+      || ports.length === 0
     ) {
       return;
     }
-    const autoDetect = selectedPortValue.value === "__auto__";
-    const port = autoDetect ? null : selectedPortValue.value;
+    const selectedPort = selectedPortValue.peek();
+    const autoDetect = selectedPort === "__auto__";
+    const port = autoDetect ? null : selectedPort;
     try {
       await api.startEspFlash(port, autoDetect);
       logText.value = "";

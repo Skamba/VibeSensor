@@ -63,15 +63,19 @@ export function CarsWizardPanel(props: {
     summary,
   } = useSignalProperties(props.wizardModel, CARS_WIZARD_PANEL_KEYS);
 
+  function dispatchAction(action: CarsFeatureInteraction): void {
+    props.actions.peek()?.onAction(action);
+  }
+
   function closeWizard(): void {
-    props.actions.value?.onAction({ type: "close" });
+    dispatchAction({ type: "close" });
   }
 
   function emitManualInputs(
     field: keyof CarsFeatureManualInputState,
     value: string,
   ): void {
-    props.actions.value?.onAction({
+    dispatchAction({
       type: "manual-input-changed",
       field,
       value,
@@ -139,18 +143,18 @@ export function CarsWizardPanel(props: {
                   emitManualInputs={emitManualInputs}
                   refs={refs}
                   wizardModel={props.wizardModel}
-                  onSelectBrand={(value) => props.actions.value?.onAction({ type: "select-brand", value })}
-                  onSelectGearbox={(index) => props.actions.value?.onAction({ type: "select-gearbox", index })}
-                  onSelectModel={(index) => props.actions.value?.onAction({ type: "select-model", index })}
-                  onSelectTire={(index) => props.actions.value?.onAction({ type: "select-tire", index })}
-                  onSelectType={(value) => props.actions.value?.onAction({ type: "select-type", value })}
-                  onSelectVariant={(index) => props.actions.value?.onAction({ type: "select-variant", index })}
+                  onSelectBrand={(value) => dispatchAction({ type: "select-brand", value })}
+                  onSelectGearbox={(index) => dispatchAction({ type: "select-gearbox", index })}
+                  onSelectModel={(index) => dispatchAction({ type: "select-model", index })}
+                  onSelectTire={(index) => dispatchAction({ type: "select-tire", index })}
+                  onSelectType={(value) => dispatchAction({ type: "select-type", value })}
+                  onSelectVariant={(index) => dispatchAction({ type: "select-variant", index })}
                   onSubmitCustomBrand={(value) =>
-                    props.actions.value?.onAction({ type: "submit-custom-brand", value })}
+                    dispatchAction({ type: "submit-custom-brand", value })}
                   onSubmitCustomModel={(value) =>
-                    props.actions.value?.onAction({ type: "submit-custom-model", value })}
+                    dispatchAction({ type: "submit-custom-model", value })}
                   onSubmitCustomType={(value) =>
-                    props.actions.value?.onAction({ type: "submit-custom-type", value })}
+                    dispatchAction({ type: "submit-custom-type", value })}
                 />
               </div>
 
@@ -163,7 +167,7 @@ export function CarsWizardPanel(props: {
                     id="wizardBackBtn"
                     class="btn btn--muted"
                     hidden={!backVisible.value}
-                    onClick={() => props.actions.value?.onAction({ type: "back" })}
+                    onClick={() => dispatchAction({ type: "back" })}
                   >
                     {t("settings.car.back", "Back")}
                   </button>
@@ -172,7 +176,7 @@ export function CarsWizardPanel(props: {
                     class="btn btn--success"
                     hidden={!finishVisible.value}
                     disabled={!finishEnabled.value}
-                    onClick={() => props.actions.value?.onAction({ type: "finish" })}
+                    onClick={() => dispatchAction({ type: "finish" })}
                     ref={refs.setElementRef("manualAddButton")}
                   >
                     {t("settings.car.finish_add", "Add Car")}

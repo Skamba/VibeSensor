@@ -462,10 +462,10 @@ function UpdateActionRow(props: {
   startButtonLabelText: ReadonlySignal<string>;
 }) {
   const handleStart = () => {
-    props.actions.value?.onStart();
+    props.actions.peek()?.onStart();
   };
   const handleCancel = () => {
-    props.actions.value?.onCancel();
+    props.actions.peek()?.onCancel();
   };
   return (
     <div class="maintenance-action-row">
