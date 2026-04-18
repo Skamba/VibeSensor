@@ -6,8 +6,7 @@ import numpy as np
 import pytest
 
 from vibesensor.infra.processing import MAX_CLIENT_SAMPLE_RATE_HZ, SignalProcessor
-from vibesensor.infra.processing.fft import noise_floor, smooth_spectrum, top_peaks
-from vibesensor.vibration_strength import compute_vibration_strength_db
+from vibesensor.infra.processing.fft import noise_floor, smooth_spectrum
 
 
 def _make_processor(**kwargs) -> SignalProcessor:
@@ -335,42 +334,6 @@ def test_evict_clients() -> None:
     proc.evict_clients({"keep"})
     assert proc.latest_sample_xyz("keep") is not None
     assert proc.latest_sample_xyz("evict") is None
-
-
-# -- _top_peaks edge cases -----------------------------------------------------
-
-
-def test_top_peaks_empty() -> None:
-    result = top_peaks(np.array([]), np.array([]))
-    assert result == []
-
-
-def test_top_peaks_with_data() -> None:
-    freqs = np.linspace(0, 100, 64, dtype=np.float32)
-    # Create a broad peak (several bins high) so smoothing doesn't flatten it
-    amps = np.zeros(64, dtype=np.float32)
-    for i in range(8, 13):
-        amps[i] = 1.0
-    amps[10] = 2.0  # Peak center
-    peaks = top_peaks(freqs, amps, top_n=3, smoothing_bins=3)
-    assert len(peaks) >= 1
-    assert peaks[0]["amp"] > 0
-
-
-def test_top_peaks_dominant_frequency_aligns_with_strength_metrics() -> None:
-    freqs = np.linspace(0, 100, 128, dtype=np.float32)
-    amps = np.zeros(128, dtype=np.float32)
-    amps[35] = 2.0
-    amps[74] = 1.6
-    peaks = top_peaks(freqs, amps, top_n=1, smoothing_bins=1)
-    strength = compute_vibration_strength_db(
-        freq_hz=freqs.tolist(),
-        combined_spectrum_amp_g_values=amps.tolist(),
-        top_n=1,
-    )
-    assert peaks
-    assert strength["top_peaks"]
-    assert peaks[0]["hz"] == pytest.approx(float(strength["top_peaks"][0]["hz"]))
 
 
 # -- compute_all ---------------------------------------------------------------

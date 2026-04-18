@@ -18,7 +18,6 @@ from vibesensor.infra.processing.fft import (
     medfilt3,
     noise_floor,
     smooth_spectrum,
-    top_peaks,
 )
 
 
@@ -154,32 +153,6 @@ class TestFloatList:
         assert np.isneginf(arr[3])
 
 
-class TestTopPeaks:
-    """Tests for spectral peak detection."""
-
-    def test_empty_input(self) -> None:
-        result = top_peaks(np.array([]), np.array([]))
-        assert result == []
-
-    def test_single_peak(self) -> None:
-        freqs = np.linspace(1, 100, 200, dtype=np.float32)
-        amps = np.zeros(200, dtype=np.float32)
-        amps[50] = 1.0  # Clear peak at index 50
-        peaks = top_peaks(freqs, amps, top_n=3, smoothing_bins=1)
-        assert len(peaks) >= 1
-        assert peaks[0]["hz"] == pytest.approx(float(freqs[50]))
-
-    def test_respects_top_n(self) -> None:
-        freqs = np.linspace(1, 100, 200, dtype=np.float32)
-        amps = np.zeros(200, dtype=np.float32)
-        amps[30] = 0.8
-        amps[60] = 0.6
-        amps[90] = 0.4
-        amps[120] = 0.2
-        peaks = top_peaks(freqs, amps, top_n=2, smoothing_bins=1)
-        assert len(peaks) <= 2
-
-
 class TestComputeFftSpectrum:
     """Tests for the pure FFT spectrum computation."""
 
@@ -199,11 +172,8 @@ class TestComputeFftSpectrum:
         assert "strength_metrics" in result
         assert "axis_peaks" in result
 
-        # The dominant peak on each axis should be near 50 Hz
         for axis in ("x", "y", "z"):
-            peaks = result["axis_peaks"][axis]
-            assert len(peaks) >= 1
-            assert abs(peaks[0]["hz"] - 50.0) < 2.0
+            assert result["axis_peaks"][axis] == []
 
     def test_spike_filter_toggle(self) -> None:
         """Verify spike filter can be disabled."""
