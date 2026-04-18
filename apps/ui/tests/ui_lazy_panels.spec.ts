@@ -340,4 +340,71 @@ test.describe("createLazyUiPanels", () => {
     expect(historyLoads).toBe(1);
     expect(settingsLoads).toBe(1);
   });
+
+  test("prefetchHiddenPanels prefers requestIdleCallback when available", async () => {
+    const hosts = createFakeHosts();
+    let historyLoads = 0;
+    let idleTask: IdleRequestCallback | null = null;
+    let settingsLoads = 0;
+    const originalRequestIdleCallback = globalThis.requestIdleCallback;
+    const originalSetTimeout = globalThis.setTimeout;
+    let timeoutCalls = 0;
+
+    globalThis.requestIdleCallback = ((callback: IdleRequestCallback) => {
+      idleTask = callback;
+      return 1;
+    }) as typeof requestIdleCallback;
+    globalThis.setTimeout = ((...args: Parameters<typeof setTimeout>) => {
+      timeoutCalls += 1;
+      return originalSetTimeout(...args);
+    }) as typeof setTimeout;
+
+    try {
+      const lazyPanels = createLazyUiPanels({
+        hosts,
+        mountDashboardPanels: () => createDashboardPanels(),
+        loadHistoryPanel: async () => {
+          historyLoads += 1;
+        },
+        loadSettingsPanels: async () => {
+          settingsLoads += 1;
+          return {
+            settingsShell: createSettingsShellSpy().view,
+            settings: {
+              analysis: {
+                focusField() {},
+                openGuidance() {},
+              },
+              cars: {
+                focus() {},
+              },
+              internet: createInternetPanelSpy().handle,
+              speedSource: {
+                focusManualSpeedInput() {},
+                focusScanObdDevices() {},
+                focusStaleTimeoutInput() {},
+              },
+            },
+          };
+        },
+      });
+
+      lazyPanels.prefetchHiddenPanels();
+      expect(idleTask).not.toBeNull();
+      expect(timeoutCalls).toBe(0);
+      idleTask?.({
+        didTimeout: false,
+        timeRemaining() {
+          return 50;
+        },
+      });
+      await Promise.resolve();
+    } finally {
+      globalThis.requestIdleCallback = originalRequestIdleCallback;
+      globalThis.setTimeout = originalSetTimeout;
+    }
+
+    expect(historyLoads).toBe(1);
+    expect(settingsLoads).toBe(1);
+  });
 });
