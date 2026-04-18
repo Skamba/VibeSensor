@@ -4,7 +4,7 @@ import {
   type ReadonlySignal,
 } from "../../ui_signals";
 import {
-  settingsFeedbackClassName,
+  settingsFeedbackAttrs,
   type SettingsFeedbackMessage,
 } from "../../views/settings_feedback";
 import {
@@ -113,7 +113,7 @@ function SettingsFeedbackSlot(props: {
       aria-live={ariaLive}
     >
       {message.value ? (
-        <div class={settingsFeedbackClassName(message.value)}>
+        <div {...settingsFeedbackAttrs(message.value)}>
           {message.value.title ? (
             <strong class="settings-feedback__title">{message.value.title}</strong>
           ) : null}

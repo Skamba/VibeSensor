@@ -183,7 +183,7 @@
   outline-offset: 2px;
 }
 
-.history-row__toggle--expanded {
+.history-row__toggle[data-expanded="true"] {
   color: var(--brand-800);
 }
 
@@ -210,7 +210,7 @@
   transform-origin: 35% 50%;
 }
 
-.history-row__toggle--expanded .history-row__toggle-icon {
+.history-row__toggle[data-expanded="true"] .history-row__toggle-icon {
   transform: rotate(90deg);
 }
 
@@ -257,7 +257,7 @@
   margin-top: var(--space-2);
 }
 
-.history-row--expanded td { background: var(--surface-2) !important; }
+.history-row[data-expanded="true"] td { background: var(--surface-2) !important; }
 
 .history-inline-error {
   display: inline-flex;

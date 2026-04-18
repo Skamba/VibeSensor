@@ -66,12 +66,12 @@
   background: var(--surface-2);
 }
 
-.settings-feedback--error {
+.settings-feedback[data-tone="error"] {
   border-color: rgba(197, 34, 31, 0.25);
   background: rgba(197, 34, 31, 0.06);
 }
 
-.settings-feedback--compact {
+.settings-feedback[data-compact="true"] {
   padding: 0;
   border: none;
   border-radius: 0;
@@ -94,13 +94,13 @@
   line-height: 1.4;
 }
 
-.settings-feedback--error .settings-feedback__title,
-.settings-feedback--error .settings-feedback__body {
+.settings-feedback[data-tone="error"] .settings-feedback__title,
+.settings-feedback[data-tone="error"] .settings-feedback__body {
   color: var(--danger-700);
 }
 
-.settings-feedback--compact .settings-feedback__body,
-.settings-feedback--compact .settings-feedback__detail {
+.settings-feedback[data-compact="true"] .settings-feedback__body,
+.settings-feedback[data-compact="true"] .settings-feedback__detail {
   font-size: 0.78rem;
 }
 

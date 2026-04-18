@@ -211,7 +211,7 @@ test.describe("wiki screenshots", () => {
     await expect(page.locator("#liveRunHealth")).toBeHidden();
     await expect(page.locator("#loggingStatus")).toBeHidden();
     await expect(page.locator("#liveSensorRoster .status-pill")).toHaveCount(0);
-    await expect(page.locator("#liveSensorRoster .live-sensor-card__status-dot--online")).toHaveCount(5);
+    await expect(page.locator('#liveSensorRoster .live-sensor-card__status-dot[data-status="online"]')).toHaveCount(5);
     await expect(page.locator("#liveSensorRoster article")).toHaveCount(5);
     await assertSpectrumHasData(page);
     await page.screenshot({ fullPage: true, path: screenshotPath("live-dashboard.png") });

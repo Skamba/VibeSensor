@@ -8,11 +8,17 @@ export interface SettingsFeedbackMessage {
   compact?: boolean;
 }
 
-export function settingsFeedbackClassName(message: SettingsFeedbackMessage): string {
+export interface SettingsFeedbackAttrs {
+  class: "settings-feedback";
+  "data-tone": SettingsFeedbackTone;
+  "data-compact"?: "true";
+}
+
+export function settingsFeedbackAttrs(message: SettingsFeedbackMessage): SettingsFeedbackAttrs {
   const tone = message.tone ?? "info";
-  const classNames = ["settings-feedback", `settings-feedback--${tone}`];
-  if (message.compact) {
-    classNames.push("settings-feedback--compact");
-  }
-  return classNames.join(" ");
+  return {
+    class: "settings-feedback",
+    "data-tone": tone,
+    "data-compact": message.compact ? "true" : undefined,
+  };
 }
