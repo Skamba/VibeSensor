@@ -29,7 +29,7 @@ from vibesensor.shared.run_context_warning import (
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.sensor_frame import SensorFrame
-from vibesensor.use_cases.history.exports import HistoryExportService, build_run_details_json
+from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
 from vibesensor.use_cases.history.runs import HistoryRunService, raise_delete_run_error
@@ -353,10 +353,10 @@ async def test_projected_run_service_drops_persisted_origin_without_primary_find
     assert "_internal" not in analysis
 
 
-def test_build_run_details_json_strips_internal_analysis_fields() -> None:
+def test_build_projected_run_details_json_strips_internal_analysis_fields() -> None:
     payload = json.loads(
-        build_run_details_json(
-            run=_stored_run(
+        build_projected_run_details_json(
+            _stored_run(
                 {
                     "run_id": "run-1",
                     "analysis": {"visible": 1, "_internal": {"secret": True}},
@@ -364,7 +364,7 @@ def test_build_run_details_json_strips_internal_analysis_fields() -> None:
             ),
             sample_count=5,
             run_id="run-1",
-        ),
+        )
     )
 
     assert payload["sample_count"] == 5
@@ -453,9 +453,9 @@ def test_project_history_insights_keeps_non_projectable_analysis_shape() -> None
     }
 
 
-def test_build_run_details_json_sanitizes_non_finite_floats() -> None:
+def test_build_projected_run_details_json_sanitizes_non_finite_floats() -> None:
     """Non-finite floats in analysis are replaced with null, producing valid JSON."""
-    result = build_run_details_json(
+    result = build_projected_run_details_json(
         _stored_run(
             {
                 "run_id": "run-nan",
