@@ -95,7 +95,6 @@ function ShellNavigationTabButton(props: {
 }) {
   const { index, item, onActivateView } = props;
   const isActive = useComputed(() => item.viewId === props.activeViewId.value);
-  const buttonClass = useComputed(() => isActive.value ? "menu-btn active" : "menu-btn");
   const ariaSelected = useComputed(() => isActive.value ? "true" : "false");
   const tabIndex = useComputed(() => isActive.value ? 0 : -1);
 
@@ -103,7 +102,7 @@ function ShellNavigationTabButton(props: {
     <button
       ref={props.onRef}
       type="button"
-      class={buttonClass}
+      class="menu-btn"
       data-view={item.viewId}
       id={item.tabId}
       role="tab"

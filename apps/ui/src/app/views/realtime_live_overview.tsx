@@ -151,7 +151,8 @@ function RealtimeLiveOverviewSensorRoster(props: {
           return (
             <article
               key={card.id}
-              class={card.strongest ? "live-sensor-card live-sensor-card--strongest" : "live-sensor-card"}
+              class="live-sensor-card"
+              data-strongest={card.strongest ? "true" : undefined}
             >
               <div class="live-sensor-card__header">
                 <strong>{card.label}</strong>
