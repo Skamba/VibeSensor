@@ -56,7 +56,7 @@ interface SettingsLazyViewReadyHandles {
     internet: Pick<InternetPanelView, "focusSsidInput">;
     speedSource: Pick<
       SpeedSourcePanelView,
-      "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput" | "isObdConfigVisible"
+      "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput"
     >;
   };
 }

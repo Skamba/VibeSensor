@@ -283,14 +283,12 @@ function SpeedSourceObdDeviceRow(props: {
 function ObdConfigSection(props: {
   actions: SpeedSourcePanelActionHandlers | null;
   model: SpeedSourcePanelRenderModel;
-  obdConfigRef: (element: HTMLElement | null) => void;
   scanButtonRef: (element: HTMLButtonElement | null) => void;
 }) {
-  const { actions, model, obdConfigRef, scanButtonRef } = props;
+  const { actions, model, scanButtonRef } = props;
   return (
     <div
       id="obdSpeedConfig"
-      ref={obdConfigRef}
       class="speed-source-config"
       hidden={!model.obdConfigVisible}
     >
@@ -422,7 +420,6 @@ export function SpeedSourceConfigPanel(props: {
   actions: SpeedSourcePanelActionHandlers | null;
   manualInputRef: (element: HTMLInputElement | null) => void;
   model: SpeedSourcePanelRenderModel;
-  obdConfigRef: (element: HTMLElement | null) => void;
   scanButtonRef: (element: HTMLButtonElement | null) => void;
   staleTimeoutInputRef: (element: HTMLInputElement | null) => void;
 }) {
@@ -430,7 +427,6 @@ export function SpeedSourceConfigPanel(props: {
     actions,
     manualInputRef,
     model,
-    obdConfigRef,
     scanButtonRef,
     staleTimeoutInputRef,
   } = props;
@@ -449,7 +445,6 @@ export function SpeedSourceConfigPanel(props: {
       <ObdConfigSection
         actions={actions}
         model={model}
-        obdConfigRef={obdConfigRef}
         scanButtonRef={scanButtonRef}
       />
       <GpsFallbackSection
