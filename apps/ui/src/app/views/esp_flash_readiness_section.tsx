@@ -3,17 +3,23 @@ import {
   StatusGrid,
   type EspFlashReadinessPanelModel,
 } from "./esp_flash_panel_shared";
+import { useSignalProperties, type ReadonlySignal } from "../ui_signals";
+
+const ESP_FLASH_READINESS_KEYS = ["errorText", "rows", "summaryText"] as const;
 
 export function EspFlashReadinessSection(props: {
-  model: EspFlashReadinessPanelModel;
+  model: ReadonlySignal<EspFlashReadinessPanelModel>;
 }) {
-  const { model } = props;
+  const { errorText, rows, summaryText } = useSignalProperties(
+    props.model,
+    ESP_FLASH_READINESS_KEYS,
+  );
   return (
     <div class="maintenance-stack maintenance-stack--tight">
-      <div class="subtle">{model.summaryText}</div>
-      {model.rows.length > 0 ? <StatusGrid rows={model.rows} /> : null}
-      {model.errorText ? (
-        <MaintenanceNote text={model.errorText} variant="bad" />
+      <div class="subtle">{summaryText.value}</div>
+      {rows.value.length > 0 ? <StatusGrid rows={rows.value} /> : null}
+      {errorText.value ? (
+        <MaintenanceNote text={errorText.value} variant="bad" />
       ) : null}
     </div>
   );

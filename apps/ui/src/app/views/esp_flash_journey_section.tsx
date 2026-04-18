@@ -3,6 +3,9 @@ import {
   type EspFlashJourneyPanelModel,
   type EspFlashJourneyStageModel,
 } from "./esp_flash_panel_shared";
+import { useSignalProperties, type ReadonlySignal } from "../ui_signals";
+
+const ESP_FLASH_JOURNEY_KEYS = ["stages", "terminalNoteText"] as const;
 
 function JourneyStageItem(props: {
   stage: EspFlashJourneyStageModel;
@@ -26,16 +29,19 @@ function JourneyStageItem(props: {
 }
 
 export function EspFlashJourneySection(props: {
-  model: EspFlashJourneyPanelModel;
+  model: ReadonlySignal<EspFlashJourneyPanelModel>;
 }) {
-  const { model } = props;
+  const { stages, terminalNoteText } = useSignalProperties(
+    props.model,
+    ESP_FLASH_JOURNEY_KEYS,
+  );
   return (
     <div class="maintenance-journey">
-      {model.terminalNoteText ? (
-        <MaintenanceNote text={model.terminalNoteText} variant="bad" />
+      {terminalNoteText.value ? (
+        <MaintenanceNote text={terminalNoteText.value} variant="bad" />
       ) : null}
       <ol class="maintenance-stage-list">
-        {model.stages.map((stage) => (
+        {stages.value.map((stage) => (
           <JourneyStageItem key={stage.phase} stage={stage} />
         ))}
       </ol>
