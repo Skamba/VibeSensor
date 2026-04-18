@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import pytest
-
 from vibesensor.adapters.pdf import pdf_diagram_render
 from vibesensor.adapters.pdf.diagram_layout import (
     build_sensor_render_plan,
-    choose_label_plan,
     estimate_text_width,
     resolve_marker_states,
 )
@@ -507,26 +504,6 @@ def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> No
     assert "why this corner wins" in text
     assert "dominant corner" in text
     assert "location confidence" in text
-
-
-def test_choose_label_plan_raises_value_error_when_no_candidates(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """choose_label_plan raises ValueError when no label placement candidates exist."""
-    import vibesensor.adapters.pdf.diagram_layout as layout_mod
-
-    monkeypatch.setattr(layout_mod, "_LABEL_CANDIDATES_RIGHT", ())
-    with pytest.raises(ValueError, match="No valid label placement found"):
-        choose_label_plan(
-            name="front_left",
-            px=0.1,  # px < width * 0.5 → selects RIGHT candidates (now empty)
-            py=100.0,
-            width=200.0,
-            height=300.0,
-            occupied_boxes=[],
-            font_size=8.0,
-            color="#000000",
-        )
 
 
 def test_pdf_diagram_render_module_no_longer_reexports_layout_helpers() -> None:

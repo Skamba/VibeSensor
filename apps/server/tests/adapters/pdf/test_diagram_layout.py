@@ -5,12 +5,10 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.adapters.pdf.diagram_layout import (
-    LabelRenderPlan,
     bounds_overflow,
     boxes_overlap,
     build_sensor_render_plan,
     canonical_location,
-    choose_label_plan,
     estimate_text_width,
     extract_amp_by_location,
     highlight_map,
@@ -97,65 +95,6 @@ def test_resolve_marker_states_classifies_correctly() -> None:
     assert states["a"] == "connected-active"
     assert states["b"] == "connected-inactive"
     assert states["c"] == "disconnected"
-
-
-# ── choose_label_plan ────────────────────────────────────────────────────────
-
-
-def test_choose_label_plan_returns_label() -> None:
-    label = choose_label_plan(
-        name="test-loc",
-        px=50,
-        py=100,
-        width=200,
-        height=300,
-        occupied_boxes=[],
-        font_size=8.0,
-        color="#000",
-    )
-    assert isinstance(label, LabelRenderPlan)
-    assert label.name == "test-loc"
-
-
-def test_choose_label_plan_avoids_occupied_boxes() -> None:
-    # Place a box right where the default "start" label would go.
-    # The planner should pick an alternative.
-    default_bbox = label_bbox(x=50 + 10.0, y=100 - 2.0, text="test", anchor="start", font_size=8.0)
-    label = choose_label_plan(
-        name="test",
-        px=50,
-        py=100,
-        width=200,
-        height=300,
-        occupied_boxes=[default_bbox],
-        font_size=8.0,
-        color="#000",
-    )
-    # Should still succeed even if the preferred spot is occupied.
-    assert isinstance(label, LabelRenderPlan)
-
-
-def test_choose_label_plan_prefers_inward_offset_before_outward_overflow() -> None:
-    blocked_inward_box = label_bbox(
-        x=74.3,
-        y=188.0,
-        text="front-right wheel",
-        anchor="end",
-        font_size=6.8,
-    )
-    label = choose_label_plan(
-        name="front-right wheel",
-        px=84.3,
-        py=190.0,
-        width=124.0,
-        height=252.0,
-        occupied_boxes=[blocked_inward_box],
-        font_size=6.8,
-        color="#000",
-    )
-    assert label.anchor == "end"
-    assert label.bbox[0] >= 2.0
-    assert label.bbox[2] <= 122.0
 
 
 # ── build_sensor_render_plan ─────────────────────────────────────────────────
