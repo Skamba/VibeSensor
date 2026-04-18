@@ -60,3 +60,45 @@ async def test_prepare_falls_back_to_error_payload_on_serialization_failure() ->
     assert json.loads(orchestrator.payload_cache["broken"]) == {
         "error": "payload_build_failed",
     }
+
+
+@pytest.mark.asyncio
+async def test_prepare_reuses_serialized_template_across_selected_clients() -> None:
+    shared_clients = [{"id": "sensor-a", "connected": True}]
+    shared_rotational_speeds = {
+        "basis_speed_source": None,
+        "wheel": {"rpm": None, "mode": None, "reason": None},
+        "driveshaft": {"rpm": None, "mode": None, "reason": None},
+        "engine": {"rpm": None, "mode": None, "reason": None},
+        "order_bands": None,
+    }
+
+    def payload_builder(selected: str | None) -> dict[str, object]:
+        return {
+            "schema_version": "1",
+            "server_time": "2026-04-18T00:00:00Z",
+            "speed_mps": None,
+            "clients": shared_clients,
+            "selected_client_id": selected,
+            "rotational_speeds": shared_rotational_speeds,
+        }
+
+    orchestrator = PayloadBuildOrchestrator(payload_builder, capture_debug=False)
+    dict_dump_calls = 0
+    real_dumps = json.dumps
+
+    def counting_dumps(value: object, *args, **kwargs) -> str:
+        nonlocal dict_dump_calls
+        if isinstance(value, dict):
+            dict_dump_calls += 1
+        return real_dumps(value, *args, **kwargs)
+
+    with patch(
+        "vibesensor.adapters.websocket.payload_orchestrator.json.dumps",
+        side_effect=counting_dumps,
+    ):
+        await orchestrator.prepare(["sensor-a", "sensor-b"])
+
+    assert dict_dump_calls == 1
+    assert json.loads(orchestrator.payload_cache["sensor-a"])["selected_client_id"] == "sensor-a"
+    assert json.loads(orchestrator.payload_cache["sensor-b"])["selected_client_id"] == "sensor-b"

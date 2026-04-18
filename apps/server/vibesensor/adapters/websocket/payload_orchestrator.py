@@ -16,6 +16,7 @@ __all__ = ["PayloadBuildOrchestrator"]
 
 _ERROR_PAYLOAD_BODY: WsErrorPayload = {"error": "payload_build_failed"}
 _ERROR_PAYLOAD: str = json.dumps(_ERROR_PAYLOAD_BODY, separators=(",", ":"))
+_SELECTED_CLIENT_ID_NULL_JSON = '"selected_client_id":null'
 
 
 class PayloadBuildOrchestrator:
@@ -29,6 +30,7 @@ class PayloadBuildOrchestrator:
     ) -> None:
         self._payload_builder = payload_builder
         self._payload_cache: dict[str | None, str] = {}
+        self._payload_template_cache: dict[tuple[tuple[str, object], ...], str] = {}
         self._pending_payload_tasks: dict[str | None, asyncio.Task[str]] = {}
         self._failed_client_ids: set[str | None] = set()
         self._debug_info: dict[str | None, bool] | None = {} if capture_debug else None
@@ -85,10 +87,10 @@ class PayloadBuildOrchestrator:
         _dumps = json.dumps
         try:
             try:
-                text = _dumps(
+                text = self._serialize_selected_client_payload(
+                    selected_client_id,
                     raw_payload,
-                    separators=(",", ":"),
-                    allow_nan=False,
+                    _dumps,
                 )
                 had_non_finite = False
             except (TypeError, ValueError, OverflowError):
@@ -99,10 +101,10 @@ class PayloadBuildOrchestrator:
                         "replaced with null.",
                         selected_client_id,
                     )
-                text = _dumps(
+                text = self._serialize_selected_client_payload(
+                    selected_client_id,
                     payload_for_debug,
-                    separators=(",", ":"),
-                    allow_nan=False,
+                    _dumps,
                 )
             has_freq = (
                 self._payload_has_per_client_freq(payload_for_debug)
@@ -118,6 +120,50 @@ class PayloadBuildOrchestrator:
                 exc_info=True,
             )
             return _ERROR_PAYLOAD, True, None
+
+    @staticmethod
+    def _payload_template_key(raw_payload: Mapping[str, object]) -> tuple[tuple[str, object], ...]:
+        key_parts: list[tuple[str, object]] = []
+        for field, value in raw_payload.items():
+            if field == "selected_client_id":
+                continue
+            if value is None or isinstance(value, str | int | float | bool):
+                key_parts.append((field, value))
+            else:
+                key_parts.append((field, id(value)))
+        return tuple(key_parts)
+
+    def _serialize_selected_client_payload(
+        self,
+        selected_client_id: str | None,
+        raw_payload: object,
+        dumps: Callable[..., str],
+    ) -> str:
+        if not isinstance(raw_payload, dict) or "selected_client_id" not in raw_payload:
+            return dumps(raw_payload, separators=(",", ":"), allow_nan=False)
+        template_key = self._payload_template_key(raw_payload)
+        template_text = self._payload_template_cache.get(template_key)
+        if template_text is None:
+            template_text = dumps(
+                {
+                    **raw_payload,
+                    "selected_client_id": None,
+                },
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+            self._payload_template_cache[template_key] = template_text
+        if selected_client_id is None:
+            return template_text
+        selected_client_text = dumps(selected_client_id, separators=(",", ":"), allow_nan=False)
+        selected_client_payload = template_text.replace(
+            _SELECTED_CLIENT_ID_NULL_JSON,
+            f'"selected_client_id":{selected_client_text}',
+            1,
+        )
+        if selected_client_payload != template_text:
+            return selected_client_payload
+        return dumps(raw_payload, separators=(",", ":"), allow_nan=False)
 
     async def prepare(self, selected_client_ids: Iterable[str | None]) -> None:
         """Prime cached payloads for the current snapshot's unique client selections."""
