@@ -73,6 +73,80 @@ export type SettingsCarListTableRenderModel =
       rows: readonly CarsListRowViewModel[];
     };
 
+function sameInlineAction(
+  left: CarsInlineActionViewModel | undefined,
+  right: CarsInlineActionViewModel | undefined,
+): boolean {
+  return left?.labelText === right?.labelText
+    && left?.type === right?.type
+    && left?.variant === right?.variant;
+}
+
+function sameInlineState(
+  left: CarsInlineStateViewModel,
+  right: CarsInlineStateViewModel,
+): boolean {
+  return left.bodyText === right.bodyText
+    && left.detailText === right.detailText
+    && left.titleText === right.titleText
+    && left.tone === right.tone
+    && sameInlineAction(left.action, right.action);
+}
+
+function sameRowAction(
+  left: CarsListRowActionViewModel | null,
+  right: CarsListRowActionViewModel | null,
+): boolean {
+  return left?.className === right?.className
+    && left?.labelText === right?.labelText
+    && left?.type === right?.type;
+}
+
+function sameRowMetric(
+  left: CarsListRowMetricViewModel,
+  right: CarsListRowMetricViewModel,
+): boolean {
+  return left.isCode === right.isCode
+    && left.labelText === right.labelText
+    && left.valueText === right.valueText;
+}
+
+function sameRowMetrics(
+  left: readonly CarsListRowMetricViewModel[],
+  right: readonly CarsListRowMetricViewModel[],
+): boolean {
+  return left.length === right.length
+    && left.every((metric, index) => sameRowMetric(metric, right[index]));
+}
+
+function sameCarRow(
+  left: CarsListRowViewModel,
+  right: CarsListRowViewModel,
+): boolean {
+  return left.activeState === right.activeState
+    && left.activeStatusText === right.activeStatusText
+    && left.carId === right.carId
+    && left.completionDetailText === right.completionDetailText
+    && left.deleteLabelText === right.deleteLabelText
+    && left.displayName === right.displayName
+    && left.highlightedStatusText === right.highlightedStatusText
+    && left.isComplete === right.isComplete
+    && left.isHighlighted === right.isHighlighted
+    && left.metaTypeText === right.metaTypeText
+    && left.metaVariantText === right.metaVariantText
+    && sameRowAction(left.primaryAction, right.primaryAction)
+    && left.readinessState === right.readinessState
+    && left.readinessStatusText === right.readinessStatusText
+    && sameRowMetrics(left.setupMetrics, right.setupMetrics);
+}
+
+function sameRowReferences(
+  left: readonly CarsListRowViewModel[],
+  right: readonly CarsListRowViewModel[],
+): boolean {
+  return left.length === right.length && left.every((row, index) => row === right[index]);
+}
+
 function hasConfiguredNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
@@ -227,5 +301,39 @@ export function buildSettingsCarListRenderModel(
         ],
       };
     }),
+  };
+}
+
+export function createSettingsCarListRenderModelMemo(): (
+  params: SettingsCarListViewParams,
+) => SettingsCarListTableRenderModel {
+  let previousModel: SettingsCarListTableRenderModel | null = null;
+  let previousRowsById = new Map<string, CarsListRowViewModel>();
+
+  return (params: SettingsCarListViewParams): SettingsCarListTableRenderModel => {
+    const nextModel = buildSettingsCarListRenderModel(params);
+    if (nextModel.kind === "empty") {
+      previousRowsById = new Map();
+      if (previousModel?.kind === "empty" && sameInlineState(previousModel.emptyState, nextModel.emptyState)) {
+        return previousModel;
+      }
+      previousModel = nextModel;
+      return nextModel;
+    }
+
+    const nextRows = nextModel.rows.map((row) => {
+      const previousRow = previousRowsById.get(row.carId);
+      return previousRow && sameCarRow(previousRow, row) ? previousRow : row;
+    });
+    previousRowsById = new Map(nextRows.map((row) => [row.carId, row]));
+    if (previousModel?.kind === "rows" && sameRowReferences(previousModel.rows, nextRows)) {
+      return previousModel;
+    }
+
+    previousModel = {
+      kind: "rows",
+      rows: nextRows,
+    };
+    return previousModel;
   };
 }

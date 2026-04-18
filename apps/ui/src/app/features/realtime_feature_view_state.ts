@@ -20,7 +20,7 @@ import {
 } from "../views/realtime_logging_view_models";
 import type { RealtimeLiveOverviewRenderModel } from "../views/realtime_live_overview";
 import type { RealtimeLoggingPanelRenderModel } from "../views/realtime_logging_panel";
-import { buildRealtimeSensorTableRenderModel } from "../views/realtime_sensor_table_view";
+import { createRealtimeSensorTableRenderModelMemo } from "../views/realtime_sensor_table_view";
 import type { SensorsPanelRenderModel } from "../views/sensors_panel";
 
 interface RealtimeFeatureViewStateDeps {
@@ -161,6 +161,7 @@ export function createRealtimeFeatureViewState(
     t,
     formatInt,
   });
+  const buildSensorsTableRenderModel = createRealtimeSensorTableRenderModelMemo();
   const elapsedNowMs = signal(Date.now());
   let cachedLastCompletedElapsedText = "--";
   let cachedLoggingElapsedTickInputs: LoggingElapsedTickInputs = {
@@ -374,7 +375,7 @@ export function createRealtimeFeatureViewState(
 
   const sensorsPanelModel = computed<SensorsPanelRenderModel>(() => {
     return {
-      table: buildRealtimeSensorTableRenderModel({
+      table: buildSensorsTableRenderModel({
         clients: realtime.clients.value,
         locationOptions: sensorState.locationOptions.value,
         t,

@@ -46,6 +46,45 @@ export type RealtimeSensorTableRenderModel =
       rows: RealtimeSensorTableRowViewModel[];
     };
 
+function sameLocationOption(
+  left: RealtimeSensorTableLocationOptionViewModel,
+  right: RealtimeSensorTableLocationOptionViewModel,
+): boolean {
+  return left.code === right.code && left.label === right.label;
+}
+
+function sameLocationOptions(
+  left: readonly RealtimeSensorTableLocationOptionViewModel[],
+  right: readonly RealtimeSensorTableLocationOptionViewModel[],
+): boolean {
+  return left.length === right.length
+    && left.every((option, index) => sameLocationOption(option, right[index]));
+}
+
+function sameSensorRow(
+  left: RealtimeSensorTableRowViewModel,
+  right: RealtimeSensorTableRowViewModel,
+): boolean {
+  return left.clientId === right.clientId
+    && left.displayName === right.displayName
+    && left.statusText === right.statusText
+    && left.statusClass === right.statusClass
+    && left.macAddress === right.macAddress
+    && left.selectedLocationCode === right.selectedLocationCode
+    && left.locationSelectLabel === right.locationSelectLabel
+    && sameLocationOptions(left.locationOptions, right.locationOptions)
+    && left.identifyLabel === right.identifyLabel
+    && left.identifyDisabled === right.identifyDisabled
+    && left.removeLabel === right.removeLabel;
+}
+
+function sameRowReferences(
+  left: readonly RealtimeSensorTableRowViewModel[],
+  right: readonly RealtimeSensorTableRowViewModel[],
+): boolean {
+  return left.length === right.length && left.every((row, index) => row === right[index]);
+}
+
 export function buildRealtimeSensorTableRenderModel(
   params: RealtimeSensorTableViewParams,
 ): RealtimeSensorTableRenderModel {
@@ -78,5 +117,39 @@ export function buildRealtimeSensorTableRenderModel(
         removeLabel: t("actions.remove"),
       };
     }),
+  };
+}
+
+export function createRealtimeSensorTableRenderModelMemo(): (
+  params: RealtimeSensorTableViewParams,
+) => RealtimeSensorTableRenderModel {
+  let previousModel: RealtimeSensorTableRenderModel | null = null;
+  let previousRowsById = new Map<string, RealtimeSensorTableRowViewModel>();
+
+  return (params: RealtimeSensorTableViewParams): RealtimeSensorTableRenderModel => {
+    const nextModel = buildRealtimeSensorTableRenderModel(params);
+    if (nextModel.kind === "empty") {
+      previousRowsById = new Map();
+      if (previousModel?.kind === "empty" && previousModel.emptyText === nextModel.emptyText) {
+        return previousModel;
+      }
+      previousModel = nextModel;
+      return nextModel;
+    }
+
+    const nextRows = nextModel.rows.map((row) => {
+      const previousRow = previousRowsById.get(row.clientId);
+      return previousRow && sameSensorRow(previousRow, row) ? previousRow : row;
+    });
+    previousRowsById = new Map(nextRows.map((row) => [row.clientId, row]));
+    if (previousModel?.kind === "rows" && sameRowReferences(previousModel.rows, nextRows)) {
+      return previousModel;
+    }
+
+    previousModel = {
+      kind: "rows",
+      rows: nextRows,
+    };
+    return previousModel;
   };
 }
