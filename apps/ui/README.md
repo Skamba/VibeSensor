@@ -120,8 +120,8 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/runtime/ui_startup_coordinator.ts` | Declarative startup-task runner that lets the shell own its initial bind/language/view boot while startup loads and transport start from a named sync/async plan |
 | `app/runtime/ui_startup_feature_ports.ts` | Narrow startup-only feature contract for initial refresh/load work |
 | `app/runtime/spectrum_canvas_renderer.ts` | Spectrum frame preparation, cached per-client display-series reuse, plot lifecycle, cadence-aware tween scheduling, stable uPlot buffer reuse for same-shape frames, and canvas draw plugin orchestration |
-| `app/runtime/spectrum_interaction_controller.ts` | Spectrum focus, band-toggle, cursor, and legend/isolation interaction state with explicit ports |
-| `app/runtime/spectrum_panel_view.ts` | Typed spectrum panel contract for the signal-backed legend, band legend, inspector, band-toggle, and chart-host refs |
+| `app/runtime/spectrum_interaction_controller.ts` | Spectrum focus, band-toggle, cursor, and legend/isolation interaction state with explicit ports plus throttled hover-inspector updates and announcement routing |
+| `app/runtime/spectrum_panel_view.ts` | Typed spectrum panel contract for the signal-backed legend, band legend, split visual inspector vs live announcer, band-toggle, and chart-host refs |
 | `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
 | `app/features/` | Feature owners for state changes, API calls, shared polling control, and typed actions emitted from local view surfaces |
 | `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, typed island action bridge, and settings-view polling context together |
