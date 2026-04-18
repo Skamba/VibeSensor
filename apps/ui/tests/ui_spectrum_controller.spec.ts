@@ -19,23 +19,23 @@ function createPanelStub(): {
   let lastOverlayMessage: string | null = null;
 
   return {
-    panel: {
-      chartDom: {
-        specChartWrap: createElementStub("div"),
-        specChart: createElementStub("div"),
+      panel: {
+        chartDom: {
+          specChartWrap: createElementStub("div"),
+          specChart: createElementStub("div"),
+        },
+        bindBandToggle() {},
+        bindBandToggleModel() {},
+        bindSensorLegendModel() {},
+        bindBandLegendModel() {},
+        renderHeader(model) {
+          lastHeaderModel = model;
+        },
+        renderOverlay(message: string | null) {
+          lastOverlayMessage = message;
+        },
+        renderInspectorText() {},
       },
-      bindBandToggle() {},
-      renderHeader(model) {
-        lastHeaderModel = model;
-      },
-      renderOverlay(message: string | null) {
-        lastOverlayMessage = message;
-      },
-      renderBandToggle() {},
-      renderSensorLegend() {},
-      renderBandLegend() {},
-      renderInspectorText() {},
-    },
     get lastHeaderModel() {
       return lastHeaderModel;
     },
