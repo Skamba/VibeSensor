@@ -16,8 +16,6 @@ import numpy.typing as npt
 from vibesensor.infra.processing.models import Axis, AxisPeak, FftSpectrumResult, SpectrumByAxis
 from vibesensor.shared.constants.dsp import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 from vibesensor.vibration_strength import (
-    PEAK_THRESHOLD_FLOOR_RATIO,
-    STRENGTH_EPSILON_MIN_G,
     VibrationStrengthMetrics,
     combined_spectrum_amp_g,
     compute_vibration_strength_db,
@@ -174,61 +172,6 @@ def float_list(values: FloatArray | list[float]) -> list[float]:
     return [float(v) if _isfinite(v) else 0.0 for v in values]
 
 
-def top_peaks(
-    freqs: FloatArray,
-    amps: FloatArray,
-    *,
-    top_n: int = 5,
-    floor_ratio: float = PEAK_THRESHOLD_FLOOR_RATIO,
-    smoothing_bins: int = 5,
-) -> list[AxisPeak]:
-    """Extract the *top_n* spectral peaks above the noise floor."""
-    if freqs.size == 0 or amps.size == 0:
-        return []
-    smoothed = smooth_spectrum(amps, bins=smoothing_bins)
-    floor_amp = noise_floor(smoothed)
-    if not math.isfinite(floor_amp) or floor_amp < 0:
-        floor_amp = 0.0
-    threshold = max(floor_amp * max(1.1, floor_ratio), floor_amp + STRENGTH_EPSILON_MIN_G)
-
-    # Vectorised interior-peak detection (replaces per-element Python loop).
-    if smoothed.size > 2:
-        interior = smoothed[1:-1]
-        mask = (interior >= threshold) & (interior > smoothed[:-2]) & (interior >= smoothed[2:])
-        peak_idx: list[int] = (np.flatnonzero(mask) + 1).tolist()
-    else:
-        peak_idx = []
-    # Boundary check: last bin can be a peak if it exceeds its left neighbor.
-    if smoothed.size > 1:
-        last = smoothed.size - 1
-        amp_last = float(smoothed[last])
-        if amp_last >= threshold and amp_last > float(smoothed[last - 1]):
-            peak_idx.append(last)
-
-    if not peak_idx:
-        if smoothed.size > 1:
-            candidate = int(np.argmax(smoothed[1:]) + 1)
-        else:
-            candidate = int(np.argmax(smoothed))
-        if candidate >= 0 and float(smoothed[candidate]) > 0:
-            peak_idx = [candidate]
-
-    peak_idx.sort(key=lambda idx: float(smoothed[idx]), reverse=True)
-    peaks: list[AxisPeak] = []
-    for idx in peak_idx[:top_n]:
-        raw_amp = float(amps[idx])
-        peaks.append(
-            {
-                "hz": float(freqs[idx]),
-                "amp": raw_amp,
-                "snr_ratio": (
-                    (raw_amp + STRENGTH_EPSILON_MIN_G) / (floor_amp + STRENGTH_EPSILON_MIN_G)
-                ),
-            },
-        )
-    return peaks
-
-
 def compute_fft_spectrum(
     fft_block: FloatArray,
     sample_rate_hz: int,
@@ -296,15 +239,7 @@ def compute_fft_spectrum(
 
     for axis_idx, axis in enumerate(AXES):
         amp_slice = specs_all[axis_idx, valid_idx]
-        amp_for_peaks = amp_slice.copy()
-        if amp_for_peaks.size > 1 and freq_slice.size > 0 and freq_slice[0] < 0.5:
-            amp_for_peaks[0] = 0.0
-        axis_peaks[axis] = top_peaks(
-            freq_slice,
-            amp_for_peaks,
-            top_n=3,
-            smoothing_bins=3,
-        )
+        axis_peaks[axis] = []
         spectrum_by_axis[axis] = {
             "freq": freq_slice,
             "amp": amp_slice,
