@@ -10,5 +10,5 @@ export function EspFlashLogContent(props: {
   if (model.emptyState) {
     return <InlineEmptyState model={model.emptyState} />;
   }
-  return <pre class="log-pre">{model.text}</pre>;
+  return <pre class="log-pre log-pre--contained">{model.text}</pre>;
 }
