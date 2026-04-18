@@ -1,7 +1,7 @@
 import type { JSX } from "preact";
 
 import { render } from "preact";
-import { useUiText } from "../ui_i18n";
+import { getUiText } from "../ui_i18n";
 import {
   useComputed,
   useSignalProperties,
@@ -110,10 +110,10 @@ function SensorsTableRow(props: {
 
 function SensorsTableBody(props: {
   actions: SensorsPanelActionHandlers | null;
+  emptyText: string;
   table: RealtimeSensorTableRenderModel | null;
 }) {
-  const { actions, table } = props;
-  const emptyText = useUiText("settings.sensors.no_sensors", "No sensors detected yet.");
+  const { actions, emptyText, table } = props;
   if (table === null || table.kind === "empty") {
     return (
       <tr>
@@ -132,46 +132,54 @@ function SensorsPanel(props: {
   actions: ReadonlySignal<SensorsPanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<SensorsPanelRenderModel> | null>;
 }) {
-  const titleText = useUiText("settings.sensors.title", "Sensors");
-  const hintText = useUiText(
-    "settings.sensors.hint",
-    "Manage sensor names and locations. Default name is the MAC address.",
-  );
-  const nameLabel = useUiText("settings.sensors.name", "Name");
-  const locationLabel = useUiText("settings.sensors.location", "Location");
-  const actionsLabel = useUiText("settings.sensors.actions", "Actions");
   const actions = useComputed(() => props.actions.value);
+  const labels = useComputed(() => ({
+    actionsLabel: getUiText("settings.sensors.actions", "Actions"),
+    emptyText: getUiText("settings.sensors.no_sensors", "No sensors detected yet."),
+    hintText: getUiText(
+      "settings.sensors.hint",
+      "Manage sensor names and locations. Default name is the MAC address.",
+    ),
+    locationLabel: getUiText("settings.sensors.location", "Location"),
+    nameLabel: getUiText("settings.sensors.name", "Name"),
+    titleText: getUiText("settings.sensors.title", "Sensors"),
+  }));
   const model = useComputed(() => props.model.value?.value ?? DEFAULT_SENSORS_PANEL_MODEL);
   const { table } = useSignalProperties(model, SENSORS_PANEL_MODEL_KEYS);
+  const labelTexts = labels.value;
   return (
     <div class="panel card">
       <strong>
-        {titleText}
+        {labelTexts.titleText}
       </strong>
       <div class="subtle">
-        {hintText}
+        {labelTexts.hintText}
       </div>
       <div class="settings-table-wrap">
         <table class="clients-table settings-entity-table settings-entity-table--sensors">
           <thead>
             <tr>
-              <th>
-                {nameLabel}
-              </th>
-              <th>
-                {locationLabel}
-              </th>
-              <th>
-                {actionsLabel}
-              </th>
-            </tr>
-          </thead>
-          <tbody id="sensorsSettingsBody">
-            <SensorsTableBody actions={actions.value} table={table.value} />
-          </tbody>
-        </table>
+                <th>
+                 {labelTexts.nameLabel}
+                </th>
+                <th>
+                 {labelTexts.locationLabel}
+                </th>
+                <th>
+                 {labelTexts.actionsLabel}
+                </th>
+              </tr>
+            </thead>
+            <tbody id="sensorsSettingsBody">
+             <SensorsTableBody
+               actions={actions.value}
+               emptyText={labelTexts.emptyText}
+               table={table.value}
+             />
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
   );
 }
 
