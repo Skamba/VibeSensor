@@ -96,7 +96,7 @@ function RealtimeLoggingSummarySection(props: {
     summaryPanel.value ? "panel" : undefined
   );
   const handleAction = (action: RealtimeLoggingSummaryAction) => {
-    props.actions.value?.onSummaryAction(action);
+    props.actions.peek()?.onSummaryAction(action);
   };
 
   return (
@@ -267,10 +267,10 @@ function RealtimeLoggingActionRow(props: {
   const startHidden = useComputed(() => !showStart.value);
   const stopHidden = useComputed(() => !showStop.value);
   const handleStartLogging = () => {
-    props.actions.value?.onStartLogging();
+    props.actions.peek()?.onStartLogging();
   };
   const handleStopLogging = () => {
-    props.actions.value?.onStopLogging();
+    props.actions.peek()?.onStopLogging();
   };
 
   return (

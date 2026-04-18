@@ -140,7 +140,7 @@ export function createRealtimeFeatureWorkflow(
   let queuedIdleCaptureReadinessSignature: string | null = null;
 
   function syncIdleCaptureReadinessSignature(): void {
-    lastIdleCaptureReadinessSignature = deps.idleCaptureReadinessSignature.value;
+    lastIdleCaptureReadinessSignature = deps.idleCaptureReadinessSignature.peek();
     queuedIdleCaptureReadinessSignature = null;
   }
 
@@ -149,17 +149,20 @@ export function createRealtimeFeatureWorkflow(
   }
 
   async function refreshIdleCaptureReadiness(signature: string): Promise<void> {
+    const handlersBound = state.handlersBound.peek();
+    const pendingLoggingAction = state.pendingLoggingAction.peek();
     if (
-      !state.handlersBound.value
+      !handlersBound
       || isDemoMode
-      || state.pendingLoggingAction.value !== null
+      || pendingLoggingAction !== null
     ) {
       return;
     }
+    const loggingStatus = realtime.loggingStatus.peek();
     if (
-      realtime.loggingStatus.value.enabled
-      || realtime.loggingStatus.value.analysis_in_progress
-      || Boolean(realtime.loggingStatus.value.last_completed_run_id)
+      loggingStatus.enabled
+      || loggingStatus.analysis_in_progress
+      || Boolean(loggingStatus.last_completed_run_id)
     ) {
       return;
     }
@@ -214,7 +217,7 @@ export function createRealtimeFeatureWorkflow(
   });
 
   function bindHandlers(): void {
-    if (state.handlersBound.value) {
+    if (state.handlersBound.peek()) {
       return;
     }
     state.handlersBound.value = true;
@@ -225,11 +228,11 @@ export function createRealtimeFeatureWorkflow(
 
   async function refreshLoggingStatus(): Promise<void> {
     syncIdleCaptureReadinessSignature();
-    if (isDemoMode && state.pendingLoggingAction.value === null) {
+    if (isDemoMode && state.pendingLoggingAction.peek() === null) {
       state.loggingError.value = null;
       return;
     }
-    const previousStatus = realtime.loggingStatus.value;
+    const previousStatus = realtime.loggingStatus.peek();
     let nextStatus: LoggingStatusPayload;
     try {
       nextStatus = await api.getLoggingStatus();
@@ -257,7 +260,7 @@ export function createRealtimeFeatureWorkflow(
   }
 
   async function startLogging(): Promise<void> {
-    if (state.pendingLoggingAction.value) return;
+    if (state.pendingLoggingAction.peek()) return;
     syncIdleCaptureReadinessSignature();
     batch(() => {
       state.pendingLoggingAction.value = "starting";
@@ -285,7 +288,7 @@ export function createRealtimeFeatureWorkflow(
   }
 
   async function stopLogging(): Promise<void> {
-    if (state.pendingLoggingAction.value) return;
+    if (state.pendingLoggingAction.peek()) return;
     syncIdleCaptureReadinessSignature();
     batch(() => {
       state.pendingLoggingAction.value = "stopping";
@@ -326,7 +329,8 @@ export function createRealtimeFeatureWorkflow(
 
   async function setClientLocation(clientId: string, locationCode: string): Promise<void> {
     if (!clientId) return;
-    const existing = realtime.clients.value.find((client) => client.id === clientId);
+    const clients = realtime.clients.peek();
+    const existing = clients.find((client) => client.id === clientId);
     const existingLocationCode = String(existing?.location_code || "").trim();
     if (existing && existingLocationCode === locationCode) return;
     try {
@@ -335,9 +339,10 @@ export function createRealtimeFeatureWorkflow(
       showError(err instanceof Error ? err.message : t("actions.set_location_failed"));
       return;
     }
-    const client = realtime.clients.value.find((row) => row.id === clientId);
+    const nextClients = realtime.clients.peek();
+    const client = nextClients.find((row) => row.id === clientId);
     if (client) {
-      realtime.clients.value = realtime.clients.value.map((row) =>
+      realtime.clients.value = nextClients.map((row) =>
         row.id === clientId ? { ...row, location_code: locationCode } : row
       );
     }
@@ -360,13 +365,13 @@ export function createRealtimeFeatureWorkflow(
       showError(err instanceof Error ? err.message : t("actions.remove_client_failed"));
       return;
     }
-    const previousSelectedClientId = realtime.selectedClientId.value;
-    realtime.clients.value = realtime.clients.value.filter((client) => client.id !== clientId);
-    if (realtime.selectedClientId.value === clientId) {
+    const previousSelectedClientId = realtime.selectedClientId.peek();
+    realtime.clients.value = realtime.clients.peek().filter((client) => client.id !== clientId);
+    if (realtime.selectedClientId.peek() === clientId) {
       realtime.selectedClientId.value = null;
     }
     syncSelectedRealtimeClient(realtime);
-    if (previousSelectedClientId !== realtime.selectedClientId.value) {
+    if (previousSelectedClientId !== realtime.selectedClientId.peek()) {
       selection.sendSelection();
     }
   }
