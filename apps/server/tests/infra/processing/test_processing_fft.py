@@ -68,11 +68,60 @@ class TestMedfilt3:
         assert result[1, 3] == pytest.approx(0.0)
         assert result[2, 2] == pytest.approx(0.0)
 
+    def test_clean_block_skips_sanitize_fast_path(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        sanitize_calls = 0
+
+        def counting_sanitize(values: np.ndarray) -> np.ndarray:
+            nonlocal sanitize_calls
+            sanitize_calls += 1
+            return values
+
+        monkeypatch.setattr(
+            "vibesensor.infra.processing.fft._sanitize_float_array",
+            counting_sanitize,
+        )
+        block = np.array([[0.0, 0.0, 10.0, 0.0, 0.0]], dtype=np.float32)
+
+        result = medfilt3(block)
+
+        assert sanitize_calls == 0
+        assert result[0, 2] == pytest.approx(0.0)
+
     def test_all_nan_block_is_sanitized_to_zero(self) -> None:
         block = np.full((3, 5), float("nan"), dtype=np.float32)
         result = medfilt3(block)
         assert np.all(np.isfinite(result))
         assert np.all(result == 0.0)
+
+    def test_nan_block_uses_sanitize_fallback(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        sanitize_calls = 0
+        original = np.nan_to_num
+
+        def counting_sanitize(values: np.ndarray) -> np.ndarray:
+            nonlocal sanitize_calls
+            sanitize_calls += 1
+            return original(values, copy=True, nan=0.0, posinf=0.0, neginf=0.0).astype(
+                np.float32,
+                copy=False,
+            )
+
+        monkeypatch.setattr(
+            "vibesensor.infra.processing.fft._sanitize_float_array",
+            counting_sanitize,
+        )
+        block = np.array([[1.0, np.nan, 1.0, 1.0, 1.0]], dtype=np.float32)
+
+        result = medfilt3(block)
+
+        assert sanitize_calls == 1
+        assert np.all(np.isfinite(result))
+        assert result[0, 1] == pytest.approx(1.0)
 
 
 class TestSmoothSpectrum:
