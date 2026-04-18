@@ -1,3 +1,4 @@
+import { memo } from "preact/compat";
 import { getUiText as t } from "../ui_i18n";
 import { inlineStateActionClass } from "./inline_state_panel_models";
 import type {
@@ -58,7 +59,7 @@ function CarsInlineStatePanel(props: {
   );
 }
 
-function CarsTableRow(props: {
+const CarsTableRow = memo(function CarsTableRow(props: {
   actions: CarsListPanelActionHandlers | null;
   row: CarsListRowViewModel;
 }) {
@@ -150,7 +151,7 @@ function CarsTableRow(props: {
       </td>
     </tr>
   );
-}
+});
 
 function CarsTableBody(props: {
   actions: CarsListPanelActionHandlers | null;
