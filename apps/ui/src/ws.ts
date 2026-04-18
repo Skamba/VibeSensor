@@ -184,9 +184,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
   }
 
   function setState(next: WsUiState): void {
-    batch(() => {
-      commitState(next);
-    });
+    commitState(next);
   }
 
   function commitState(next: WsUiState): void {
