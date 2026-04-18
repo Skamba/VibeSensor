@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from math import sqrt
 
+import numpy as np
 import pytest
 
 import vibesensor.vibration_strength as vibration_strength_module
@@ -352,6 +353,40 @@ def test_compute_vibration_strength_db_skips_full_scan_band_helper(
     )
 
     assert full_scan_calls == 0
+    assert result["vibration_strength_db"] > 0.0
+
+
+def test_compute_vibration_strength_db_does_not_mutate_cached_strength_range_mask() -> None:
+    strength_range_mask = np.ones(20, dtype=np.bool_)
+
+    result = compute_vibration_strength_db(
+        freq_hz=[float(index) for index in range(20)],
+        combined_spectrum_amp_g_values=[
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.002,
+            0.004,
+            0.01,
+            0.03,
+            0.06,
+            0.12,
+            0.03,
+            0.01,
+            0.004,
+            0.002,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+            0.001,
+        ],
+        strength_range_mask=strength_range_mask,
+    )
+
+    assert np.all(strength_range_mask)
     assert result["vibration_strength_db"] > 0.0
 
 

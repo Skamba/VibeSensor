@@ -150,3 +150,31 @@ def test_compute_reuses_single_square_call_for_rms_and_combined_metrics(
     assert square_calls == 1
     assert result.metrics["x"]["rms"] > 0.0
     assert result.metrics["combined"]["vib_mag_rms"] > 0.0
+
+
+def test_compute_fft_spectrum_reuses_cached_strength_range_mask(monkeypatch) -> None:
+    metrics = SignalMetricsComputer(_config(fft_n=8))
+    block = np.zeros((3, 8), dtype=np.float32)
+    seen_masks: list[np.ndarray] = []
+
+    def _fake_compute_fft_spectrum(
+        fft_block: np.ndarray,
+        sample_rate_hz: int,
+        **kwargs: object,
+    ) -> dict[str, object]:
+        del fft_block, sample_rate_hz
+        seen_masks.append(kwargs["strength_range_mask"])
+        return _empty_fft_result()
+
+    monkeypatch.setattr(
+        "vibesensor.infra.processing.compute.compute_fft_spectrum",
+        _fake_compute_fft_spectrum,
+    )
+
+    metrics.compute_fft_spectrum(block, 800, spike_filter_enabled=False)
+    metrics.compute_fft_spectrum(block, 800, spike_filter_enabled=False)
+
+    assert len(seen_masks) == 2
+    assert seen_masks[0] is seen_masks[1]
+    assert seen_masks[0].dtype == np.bool_
+    assert np.all(seen_masks[0])
