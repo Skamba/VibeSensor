@@ -49,6 +49,7 @@ export class UiSpectrumController {
       setSeriesIsolation: (seriesIndex) => this.canvas.setSeriesIsolation(seriesIndex),
       requestPlotRefresh: () => this.canvas.refreshDecorations(),
     });
+    this.bindInteractionModelSignals();
     this.renderSpectrumHeader();
     this.updateSpectrumOverlay();
     this.bindReactiveTransportSync();
@@ -124,6 +125,15 @@ export class UiSpectrumController {
 
   private setSpectrumOverlay(message: string | null): void {
     this.panel.renderOverlay(message);
+  }
+
+  private bindInteractionModelSignals(): void {
+    this.panel.bindBandToggleModel(this.interaction.bandToggleModel);
+    this.panel.bindSensorLegendModel(
+      this.interaction.sensorLegendModel,
+      this.interaction.sensorLegendHandlersModel,
+    );
+    this.panel.bindBandLegendModel(this.interaction.bandLegendModel);
   }
 
   private bindReactiveLanguageSync(): void {

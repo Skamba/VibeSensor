@@ -2,75 +2,41 @@ import { expect, test } from "@playwright/test";
 
 import { SpectrumInteractionController } from "../src/app/runtime/spectrum_interaction_controller";
 import type {
-  SpectrumBandLegendModel,
   SpectrumPanelView,
-  SpectrumSensorLegendModel,
 } from "../src/app/runtime/spectrum_panel_view";
 import { createElementStub } from "./spectrum_test_support";
 
 function createPanelStub(): {
   panel: SpectrumPanelView;
-  bandToggleModel: { hasBands: boolean; bandsVisible: boolean; text: string } | null;
-  sensorLegend: {
-    model: SpectrumSensorLegendModel | null;
-    handlers: {
-      onReset: () => void;
-      onSelect: (entryId: string) => void;
-    } | null;
-  };
-  bandLegendModel: SpectrumBandLegendModel | null;
+  onBandToggle: (() => void) | null;
   inspectorText: string;
 } {
-  let bandToggleModel: { hasBands: boolean; bandsVisible: boolean; text: string } | null = null;
-  let sensorLegend: {
-    model: SpectrumSensorLegendModel | null;
-    handlers: {
-      onReset: () => void;
-      onSelect: (entryId: string) => void;
-    } | null;
-  } = {
-    model: null,
-    handlers: null,
-  };
-  let bandLegendModel: SpectrumBandLegendModel | null = null;
+  let onBandToggle: (() => void) | null = null;
   let inspectorText = "";
 
   return {
     panel: {
-      chartDom: {
-        specChartWrap: createElementStub("div"),
-        specChart: createElementStub("div"),
+        chartDom: {
+          specChartWrap: createElementStub("div"),
+          specChart: createElementStub("div"),
+        },
+        bindBandToggle(handler) {
+          onBandToggle = handler;
+        },
+        bindBandToggleModel() {},
+        bindSensorLegendModel() {},
+        bindBandLegendModel() {},
+        renderHeader() {},
+        renderOverlay() {},
+        renderInspectorText(text) {
+          inspectorText = text;
+        },
       },
-      bindBandToggle() {},
-      renderHeader() {},
-      renderOverlay() {},
-      renderBandToggle(model) {
-        bandToggleModel = model;
+      get onBandToggle() {
+        return onBandToggle;
       },
-      renderSensorLegend(model, handlers) {
-        sensorLegend = {
-          model,
-          handlers: handlers ?? null,
-        };
-      },
-      renderBandLegend(model) {
-        bandLegendModel = model;
-      },
-      renderInspectorText(text) {
-        inspectorText = text;
-      },
-    },
-    get bandToggleModel() {
-      return bandToggleModel;
-    },
-    get sensorLegend() {
-      return sensorLegend;
-    },
-    get bandLegendModel() {
-      return bandLegendModel;
-    },
-    get inspectorText() {
-      return inspectorText;
+      get inspectorText() {
+        return inspectorText;
     },
   };
 }
@@ -124,22 +90,22 @@ test.describe("SpectrumInteractionController", () => {
       chartBands: [],
     });
 
-    expect(panel.bandToggleModel).toEqual({
+    expect(controller.bandToggleModel.value).toEqual({
       hasBands: false,
       bandsVisible: false,
       text: "Show reference bands",
     });
-    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("12.0 dB");
-    expect(panel.sensorLegend.model?.items[0]?.ariaPressed).toBe(false);
-    expect(panel.sensorLegend.model?.items[1]?.detailText).toBe("8.0 dB");
+    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe("12.0 dB");
+    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(false);
+    expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe("8.0 dB");
     expect(isolatedSeries).toBeNull();
 
-    panel.sensorLegend.handlers?.onSelect("sensor-a");
-    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("12.0 dB");
-    expect(panel.sensorLegend.model?.items[0]?.ariaPressed).toBe(true);
-    expect(panel.sensorLegend.model?.items[0]?.active).toBe(true);
-    expect(panel.sensorLegend.model?.items[1]?.detailText).toBe("8.0 dB");
-    expect(panel.sensorLegend.model?.items[1]?.muted).toBe(true);
+    controller.sensorLegendHandlersModel.value?.onSelect("sensor-a");
+    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe("12.0 dB");
+    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(true);
+    expect(controller.sensorLegendModel.value?.items[0]?.active).toBe(true);
+    expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe("8.0 dB");
+    expect(controller.sensorLegendModel.value?.items[1]?.muted).toBe(true);
     expect(isolatedSeries).toBe(1);
 
     strengthDbById.set("sensor-a", 13);
@@ -152,15 +118,17 @@ test.describe("SpectrumInteractionController", () => {
       chartBands: [],
     });
 
-    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("13.0 dB");
-    expect(panel.sensorLegend.model?.items[0]?.ariaPressed).toBe(true);
+    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe("13.0 dB");
+    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(true);
 
-    panel.sensorLegend.handlers?.onSelect("sensor-a");
-    expect(panel.sensorLegend.model?.items[0]?.detailText).toBe("13.0 dB");
-    expect(panel.sensorLegend.model?.items[0]?.ariaPressed).toBe(false);
-    expect(panel.sensorLegend.model?.items[0]?.active).toBe(false);
-    expect(panel.sensorLegend.model?.items[1]?.detailText).toBe("8.0 dB");
-    expect(panel.sensorLegend.model?.items[1]?.muted).toBe(false);
+    controller.sensorLegendHandlersModel.value?.onSelect("sensor-a");
+    expect(controller.sensorLegendModel.value?.items[0]?.detailText).toBe("13.0 dB");
+    expect(controller.sensorLegendModel.value?.items[0]?.ariaPressed).toBe(false);
+    expect(controller.sensorLegendModel.value?.items[0]?.active).toBe(false);
+    expect(controller.sensorLegendModel.value?.items[1]?.detailText).toBe("8.0 dB");
+    expect(controller.sensorLegendModel.value?.items[1]?.muted).toBe(false);
     expect(isolatedSeries).toBeNull();
+
+    expect(panel.onBandToggle).not.toBeNull();
   });
 });
