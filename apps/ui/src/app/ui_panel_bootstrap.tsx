@@ -63,7 +63,7 @@ export interface UiMountedLazyPanelHandles {
     internet: Pick<InternetPanelView, "focusSsidInput">;
     speedSource: Pick<
       SpeedSourcePanelView,
-      "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput" | "isObdConfigVisible"
+      "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput"
     >;
   };
 }
