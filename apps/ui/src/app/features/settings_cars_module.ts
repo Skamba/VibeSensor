@@ -27,6 +27,7 @@ import {
   createSettingsCarsTransport,
   type SettingsCarsTransport,
 } from "./settings_cars_transport";
+import { createApiLoader } from "./api_loader";
 
 interface SettingsCarsModulePanels {
   analysisPanel: Pick<AnalysisPanelView, "carAvailability">;
@@ -164,13 +165,16 @@ export function createSettingsCarsModule(
     }
   }
 
-  async function loadCarsFromServer(): Promise<void> {
-    try {
-      syncCarsPayload(await transport.loadCars());
+  const carsLoader = createApiLoader({
+    load: () => transport.loadCars(),
+    apply: (payload) => {
+      syncCarsPayload(payload);
       syncActiveCarToInputs();
-    } catch (_err) {
-      return;
-    }
+    },
+  });
+
+  async function loadCarsFromServer(): Promise<void> {
+    await carsLoader.load();
   }
 
   async function handleActivateCar(carId: string): Promise<void> {
