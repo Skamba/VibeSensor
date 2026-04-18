@@ -406,6 +406,27 @@ def vibration_strength_db_scalar(
     return 20.0 * log10((band + eps) / (floor + eps))
 
 
+def _batch_vibration_strength_db_aligned(
+    *,
+    peak_band_rms_amp_g_values: npt.NDArray[np.float64],
+    floor_amp_g: float,
+    epsilon_g: float | None = None,
+) -> npt.NDArray[np.float64]:
+    floor_raw = float(floor_amp_g)
+    floor = max(0.0, floor_raw) if isfinite(floor_raw) else 0.0
+    eps = (
+        max(STRENGTH_EPSILON_MIN_G, floor * STRENGTH_EPSILON_FLOOR_RATIO)
+        if epsilon_g is None
+        else max(STRENGTH_EPSILON_MIN_G, float(epsilon_g))
+    )
+    band = np.where(
+        np.isfinite(peak_band_rms_amp_g_values),
+        np.maximum(peak_band_rms_amp_g_values, 0.0),
+        0.0,
+    )
+    return 20.0 * np.log10((band + eps) / (floor + eps))
+
+
 def compute_vibration_strength_db(
     *,
     freq_hz: ArrayLike,
@@ -462,7 +483,8 @@ def compute_vibration_strength_db(
         bandwidth_hz=peak_bandwidth_hz,
     )
 
-    candidates: list[StrengthPeak] = []
+    candidate_hz: list[float] = []
+    candidate_band_rms: list[float] = []
     if peak_band_ranges is None:
         for idx in scored_candidate_indexes:
             band_rms = _peak_band_rms_amp_g_aligned(
@@ -471,20 +493,8 @@ def compute_vibration_strength_db(
                 center_idx=idx,
                 bandwidth_hz=peak_bandwidth_hz,
             )
-            db = vibration_strength_db_scalar(
-                peak_band_rms_amp_g=band_rms,
-                floor_amp_g=floor_strength,
-            )
-            if not isfinite(db):
-                continue
-            candidates.append(
-                {
-                    "hz": float(freq[idx]),
-                    "amp": float(band_rms),
-                    "vibration_strength_db": float(db),
-                    "strength_bucket": bucket_for_strength(float(db)),
-                }
-            )
+            candidate_hz.append(float(freq[idx]))
+            candidate_band_rms.append(float(band_rms))
     else:
         left_bounds, right_bounds = peak_band_ranges
         for candidate_idx, idx in enumerate(scored_candidate_indexes):
@@ -493,20 +503,25 @@ def compute_vibration_strength_db(
                 start_idx=int(left_bounds[candidate_idx]),
                 stop_idx=int(right_bounds[candidate_idx]),
             )
-            db = vibration_strength_db_scalar(
-                peak_band_rms_amp_g=band_rms,
-                floor_amp_g=floor_strength,
-            )
-            if not isfinite(db):
-                continue
-            candidates.append(
-                {
-                    "hz": float(freq[idx]),
-                    "amp": float(band_rms),
-                    "vibration_strength_db": float(db),
-                    "strength_bucket": bucket_for_strength(float(db)),
-                }
-            )
+            candidate_hz.append(float(freq[idx]))
+            candidate_band_rms.append(float(band_rms))
+    candidate_db = _batch_vibration_strength_db_aligned(
+        peak_band_rms_amp_g_values=np.asarray(candidate_band_rms, dtype=np.float64),
+        floor_amp_g=floor_strength,
+    )
+    candidates: list[StrengthPeak] = []
+    for hz, band_rms, db in zip(candidate_hz, candidate_band_rms, candidate_db, strict=True):
+        db_value = float(db)
+        if not isfinite(db_value):
+            continue
+        candidates.append(
+            {
+                "hz": hz,
+                "amp": band_rms,
+                "vibration_strength_db": db_value,
+                "strength_bucket": bucket_for_strength(db_value),
+            }
+        )
     candidates.sort(
         key=lambda item: item["vibration_strength_db"],
         reverse=True,
