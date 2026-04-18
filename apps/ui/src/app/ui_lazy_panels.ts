@@ -55,6 +55,7 @@ export interface UiMountedLazyPanelHandles {
 
 export interface UiLazyPanels {
   attachSettingsPanels(mountedPanels: UiMountedLazyPanelHandles): void;
+  dispose(): void;
   panels: UiMountedPanels;
   spectrumPanel: CreatedSpectrumPanel;
 }
@@ -62,9 +63,12 @@ export interface UiLazyPanels {
 function createDeferredTargetAction<TView, TTarget>(
   realView: ReadonlySignal<TView | null>,
   run: (view: TView, target: TTarget) => void,
-): (target: TTarget) => void {
+): {
+  dispose(): void;
+  request(target: TTarget): void;
+} {
   const pendingTarget = signal<TTarget | null>(null);
-  effect(() => {
+  const dispose = effect(() => {
     const view = realView.value;
     const target = pendingTarget.value;
     if (view === null || target === null) {
@@ -73,17 +77,23 @@ function createDeferredTargetAction<TView, TTarget>(
     run(view, target);
     pendingTarget.value = null;
   });
-  return (target) => {
-    pendingTarget.value = target;
+  return {
+    dispose,
+    request(target) {
+      pendingTarget.value = target;
+    },
   };
 }
 
 function createDeferredAction<TView>(
   realView: ReadonlySignal<TView | null>,
   run: (view: TView) => void,
-): () => void {
+): {
+  dispose(): void;
+  request(): void;
+} {
   const pending = signal(false);
-  effect(() => {
+  const dispose = effect(() => {
     const view = realView.value;
     if (view === null || !pending.value) {
       return;
@@ -91,8 +101,11 @@ function createDeferredAction<TView>(
     run(view);
     pending.value = false;
   });
-  return () => {
-    pending.value = true;
+  return {
+    dispose,
+    request() {
+      pending.value = true;
+    },
   };
 }
 
@@ -111,6 +124,7 @@ function createDeferredViewAttachment<TView>(): {
 
 function createDeferredSettingsShellView(): {
   attach(realView: SettingsShellView): void;
+  dispose(): void;
   view: SettingsShellView;
 } {
   let disposeRealViewSync: (() => void) | null = null;
@@ -134,11 +148,17 @@ function createDeferredSettingsShellView(): {
         activeTabId.value = nextRealView.activeTabId.value;
       });
     },
+    dispose() {
+      disposeRealViewSync?.();
+      disposeRealViewSync = null;
+      realView = null;
+    },
   };
 }
 
 function createDeferredCarsPanelView(): {
   attach(realView: Pick<CarsPanelView["wizard"], "focus">): void;
+  dispose(): void;
   view: CarsPanelView;
 } {
   type CarsWizardFocusTarget = Parameters<CarsPanelView["wizard"]["focus"]>[0];
@@ -165,16 +185,20 @@ function createDeferredCarsPanelView(): {
         actions: wizard.actions,
         model: wizard.model,
         focus(target) {
-          requestWizardFocus(target);
+          requestWizardFocus.request(target);
         },
       },
     },
     attach: realWizard.attach,
+    dispose() {
+      requestWizardFocus.dispose();
+    },
   };
 }
 
 function createDeferredAnalysisPanelView(): {
   attach(realView: Pick<AnalysisPanelView, "focusField" | "openGuidance">): void;
+  dispose(): void;
   view: AnalysisPanelView;
 } {
   type AnalysisFocusField = Parameters<AnalysisPanelView["focusField"]>[0];
@@ -197,13 +221,17 @@ function createDeferredAnalysisPanelView(): {
       carAvailability: createDeferredModelSignal<AnalysisPanelCarAvailability>(),
       model: createDeferredModelSignal<AnalysisPanelRenderModel>(),
       openGuidance() {
-        requestGuidanceOpen();
+        requestGuidanceOpen.request();
       },
       focusField(nextFocusField) {
-        requestFocusField(nextFocusField);
+        requestFocusField.request(nextFocusField);
       },
     },
     attach: realView.attach,
+    dispose() {
+      requestGuidanceOpen.dispose();
+      requestFocusField.dispose();
+    },
   };
 }
 
@@ -214,6 +242,7 @@ function createDeferredSpeedSourcePanelView(): {
       "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput"
     >,
   ): void;
+  dispose(): void;
   view: SpeedSourcePanelView;
 } {
   type PendingFocusTarget = "manual" | "scan" | "stale";
@@ -246,21 +275,25 @@ function createDeferredSpeedSourcePanelView(): {
         return readDeferredModelValue(model)?.obdConfigVisible ?? false;
       },
       focusManualSpeedInput() {
-        requestFocusTarget("manual");
+        requestFocusTarget.request("manual");
       },
       focusScanObdDevices() {
-        requestFocusTarget("scan");
+        requestFocusTarget.request("scan");
       },
       focusStaleTimeoutInput() {
-        requestFocusTarget("stale");
+        requestFocusTarget.request("stale");
       },
     },
     attach: realView.attach,
+    dispose() {
+      requestFocusTarget.dispose();
+    },
   };
 }
 
 function createDeferredInternetPanelView(): {
   attach(realView: Pick<InternetPanelView, "focusSsidInput">): void;
+  dispose(): void;
   view: InternetPanelView;
 } {
   const realView = createDeferredViewAttachment<Pick<InternetPanelView, "focusSsidInput">>();
@@ -273,14 +306,18 @@ function createDeferredInternetPanelView(): {
       actions: signal<InternetPanelActionHandlers | null>(null),
       model: createDeferredModelSignal<InternetPanelRenderModel>(),
       focusSsidInput() {
-        requestSsidFocus();
+        requestSsidFocus.request();
       },
     },
     attach: realView.attach,
+    dispose() {
+      requestSsidFocus.dispose();
+    },
   };
 }
 
 export function createLazyUiPanels(): UiLazyPanels {
+  let disposed = false;
   const history = {
     view: createModelActionPanelBindings<HistoryPanelRenderModel, HistoryPanelActionHandlers>(),
   };
@@ -314,6 +351,9 @@ export function createLazyUiPanels(): UiLazyPanels {
   } satisfies UiMountedDashboardPanels;
 
   const attachSettingsPanels = (mountedPanels: UiMountedLazyPanelHandles): void => {
+    if (disposed) {
+      return;
+    }
     settingsShell.attach(mountedPanels.settingsShell);
     settings.cars.attach(mountedPanels.settings.cars);
     settings.analysis.attach(mountedPanels.settings.analysis);
@@ -337,6 +377,17 @@ export function createLazyUiPanels(): UiLazyPanels {
       },
     },
     attachSettingsPanels,
+    dispose() {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      settingsShell.dispose();
+      settings.cars.dispose();
+      settings.analysis.dispose();
+      settings.internet.dispose();
+      settings.speedSource.dispose();
+    },
     spectrumPanel,
   };
 }

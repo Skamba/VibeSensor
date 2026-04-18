@@ -52,6 +52,8 @@ export class SpectrumInteractionController {
 
   readonly bandLegendModel: ReadonlySignal<SpectrumBandLegendModel>;
 
+  private readonly disposeInspectorSync: () => void;
+
   constructor(
     private readonly deps: SpectrumInteractionControllerDeps,
   ) {
@@ -157,7 +159,7 @@ export class SpectrumInteractionController {
     });
 
     this.deps.panel.bindBandToggle(() => this.toggleBands());
-    effect(() => {
+    this.disposeInspectorSync = effect(() => {
       const activeFreq = this.activeFrequency();
       const activeBands = activeFreq === null ? [] : this.activeBandsForFrequency(activeFreq);
       const focusEntry = this.focusEntry();
@@ -194,6 +196,10 @@ export class SpectrumInteractionController {
         },
       ));
     });
+  }
+
+  dispose(): void {
+    this.disposeInspectorSync();
   }
 
   sync(

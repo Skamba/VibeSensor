@@ -86,6 +86,10 @@ export class UiShellController {
 
   private readonly bindFeatureHandlers: () => void;
 
+  private readonly disposeDocumentLanguageSync: () => void;
+
+  private readonly disposeReactiveLanguageSync: () => void;
+
   private readonly liveStatusBadge = signal<UiShellBadgeModel>({
     text: "No live signal",
     variant: "muted",
@@ -133,8 +137,8 @@ export class UiShellController {
     this.dialogRenderModel = this.createDialogRenderModel();
     deps.liveOverview.speedText.value = this.status.speedReadoutText;
     this.bindChromeModelSignals();
-    this.bindDocumentLanguageSync();
-    this.bindReactiveLanguageSync();
+    this.disposeDocumentLanguageSync = this.bindDocumentLanguageSync();
+    this.disposeReactiveLanguageSync = this.bindReactiveLanguageSync();
   }
 
   t(key: string, vars?: Record<string, unknown>): string {
@@ -173,20 +177,26 @@ export class UiShellController {
     this.setActiveView(defaultViewId);
   }
 
+  dispose(): void {
+    this.disposeReactiveLanguageSync();
+    this.disposeDocumentLanguageSync();
+    this.notifications.dispose();
+  }
+
   async hydratePersistedPreferences(): Promise<void> {
     await this.preferences.hydratePersistedPreferences();
   }
 
-  private bindReactiveLanguageSync(): void {
-    effectOnChange(this.state.shell.lang, (currentLanguage) => {
+  private bindReactiveLanguageSync(): () => void {
+    return effectOnChange(this.state.shell.lang, (currentLanguage) => {
       untracked(() => {
         setUiLanguage(currentLanguage);
       });
     });
   }
 
-  private bindDocumentLanguageSync(): void {
-    effect(() => {
+  private bindDocumentLanguageSync(): () => void {
+    return effect(() => {
       const currentLanguage = this.state.shell.lang.value;
       untracked(() => {
         const documentElement = globalThis.document?.documentElement;

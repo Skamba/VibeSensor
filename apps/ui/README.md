@@ -104,12 +104,13 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | File | Purpose |
 |------|---------|
 | `main.ts` | Thin Vite entry that boots the UI runtime |
-| `app/start_ui_app.ts` | CSS-aware startup entry that renders one `UiAppRoot`, then starts the runtime and hidden-view prefetch |
+| `app/start_ui_app.ts` | CSS-aware public startup entry that mounts one `UiAppRoot` and returns a disposable app handle |
+| `app/ui_app_mount.ts` | Pure mount helper that creates the runtime, renders the root tree, and composes teardown for tests and startup callers |
 | `app/ui_app_root.tsx` | Single rendered app tree that owns the shell frame plus the dashboard/history/settings sections |
 | `app/ui_panel_host_registry.ts` | Ref-backed settings-shell host registry for the per-tab settings panels mounted inside the settings subtree |
 | `app/ui_lazy_panels.ts` | Typed panel binding factory that gives the runtime full dashboard/history/settings contracts up front, then attaches the real settings shell handles when that subtree mounts |
 | `app/dom/` | Focused DOM-only utilities for download and RAF lifecycles after removing the shared global query helper |
-| `app/ui_app_runtime.ts` | Thin UI composition root that creates the shell, spectrum, transport, feature bundle, and startup coordinator from local helper wiring instead of deferred attachment seams |
+| `app/ui_app_runtime.ts` | Thin UI composition root that creates the shell, spectrum, transport, feature bundle, and startup coordinator, then exposes one composed runtime `dispose()` |
 | `app/ui_app_state.ts` | Canonical AppState shape plus reactive slice helpers that keep object-style reads/writes working while shared shell/transport/realtime/history/settings/spectrum state becomes signal-observable |
 | `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
 | `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, app-level error banner, and the top-level dashboard/history/settings view containers plus the typed shell bridge |
@@ -223,8 +224,10 @@ the concrete features, wires explicit cross-feature ports, and returns only the
 shell, transport, and startup contracts the runtime needs, while
 `ui_startup_coordinator.ts` runs the startup-only load/refresh ports from a
 small declarative sync/async plan instead of a handwritten boot call chain.
-Long-lived update, ESP flash, and GPS-status polling still start and stop from
-feature-owned reactive context.
+`startUiApp()` now returns a public dispose handle, and that top-level teardown
+flows through `ui_app_runtime.ts` to stop long-lived effects, polling loops,
+WebSocket reconnect/stale timers, spectrum RAF work, and deferred settings
+panel bindings from one place.
 
 The live UI architecture is now fully Preact for the top-level shell and
 primary page composition. `app/runtime/ui_shell_chrome.tsx` owns the primary

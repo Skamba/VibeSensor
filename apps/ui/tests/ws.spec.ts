@@ -231,4 +231,30 @@ test.describe("createWsClient", () => {
       globalThis.WebSocket = originalWebSocket;
     }
   });
+
+  test("dispose clears reconnect timers and leaves no active timeout lifecycle", () => {
+    const originalWebSocket = globalThis.WebSocket;
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    const timeouts = installTimeoutHarness();
+    try {
+      const client = createWsClient({
+        url: "ws://example.test/ws",
+        onMessage: () => undefined,
+      });
+
+      client.connect();
+      const socket = FakeWebSocket.instances[0];
+      socket?.emitOpen();
+      socket?.close();
+
+      expect(client.uiState.value).toBe("reconnecting");
+      expect(timeouts.pendingTimeoutCount()).toBe(1);
+
+      client.dispose();
+      expect(timeouts.pendingTimeoutCount()).toBe(0);
+    } finally {
+      timeouts.restore();
+      globalThis.WebSocket = originalWebSocket;
+    }
+  });
 });

@@ -186,4 +186,38 @@ test.describe("createLazyUiPanels", () => {
     expect(lazyPanels.panels.settingsShell.activeTabId.value).toBe("internetTab");
   });
 
+  test("dispose prevents deferred settings replays after teardown", () => {
+    const analysisPanel = createAnalysisPanelSpy();
+    const carsPanel = createCarsPanelSpy();
+    const internetPanel = createInternetPanelSpy();
+    const settingsShell = createSettingsShellSpy();
+    const speedSourcePanel = createSpeedSourcePanelSpy();
+    const lazyPanels = createLazyUiPanels();
+
+    lazyPanels.panels.settingsShell.activateTab("updateTab");
+    lazyPanels.panels.settings.analysis.openGuidance();
+    lazyPanels.panels.settings.analysis.focusField("wheel_bandwidth_pct");
+    lazyPanels.panels.settings.cars.wizard.focus("finish");
+    lazyPanels.panels.settings.internet.focusSsidInput();
+    lazyPanels.panels.settings.speedSource.focusManualSpeedInput();
+    lazyPanels.dispose();
+
+    lazyPanels.attachSettingsPanels({
+      settingsShell: settingsShell.view,
+      settings: {
+        analysis: analysisPanel.handle,
+        cars: carsPanel.handle,
+        internet: internetPanel.handle,
+        speedSource: speedSourcePanel.handle,
+      },
+    });
+
+    expect(settingsShell.activations).toEqual([]);
+    expect(analysisPanel.guidanceOpens).toBe(0);
+    expect(analysisPanel.focusFields).toEqual([]);
+    expect(carsPanel.focusTargets).toEqual([]);
+    expect(internetPanel.focusCalls).toBe(0);
+    expect(speedSourcePanel.focusManualCalls).toBe(0);
+  });
+
 });
