@@ -7,9 +7,6 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.constants.units import KMH_TO_MPS
 
 DEFAULT_SPEED_KMH = 100.0
-DEFAULT_TIRE_WIDTH_MM = AnalysisSettingsSnapshot.DEFAULTS["tire_width_mm"]
-DEFAULT_TIRE_ASPECT_PCT = AnalysisSettingsSnapshot.DEFAULTS["tire_aspect_pct"]
-DEFAULT_RIM_IN = AnalysisSettingsSnapshot.DEFAULTS["rim_in"]
 DEFAULT_DEFLECTION_FACTOR = AnalysisSettingsSnapshot.DEFAULTS["tire_deflection_factor"]
 DEFAULT_FINAL_DRIVE = AnalysisSettingsSnapshot.DEFAULTS["final_drive_ratio"]
 DEFAULT_GEAR_RATIO = AnalysisSettingsSnapshot.DEFAULTS["current_gear_ratio"]

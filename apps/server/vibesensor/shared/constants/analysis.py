@@ -14,16 +14,6 @@ Used as the lower bound for SNR computations to prevent ratio blow-up when
 the measured floor is near zero (sensor artifact / perfectly clean signal).
 """
 
-ROAD_RESONANCE_MIN_HZ: Final[float] = 0.5
-"""Lower bound of the road-surface resonance frequency range (Hz).
-
-Covers body/suspension modes (~0.5–3 Hz); the primary low-frequency cutoff
-is ``spectrum_min_hz`` in the processing config.
-"""
-
-ROAD_RESONANCE_MAX_HZ: Final[float] = 12.0
-"""Upper bound of the road-surface resonance frequency range (Hz)."""
-
 MULTI_SENSOR_CORROBORATION_DB: Final[float] = 3.0
 """Bonus dB added when ≥2 sensors agree on a finding, boosting effective
 confidence in the detected vibration."""
