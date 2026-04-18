@@ -4,7 +4,10 @@ import {
   type CarSelectionState,
   getCarCompleteness,
 } from "../car_selection_state";
-import type { SettingsState } from "../ui_app_state";
+import {
+  mergeCarOwnedVehicleSettings,
+  type SettingsState,
+} from "../ui_app_state";
 import type { CarRecord, CarsPayload } from "../../api/types";
 import type {
   CarsListPanelView,
@@ -70,13 +73,10 @@ function copyActiveCarAspects(
   if (!car?.aspects || typeof car.aspects !== "object") {
     return;
   }
-  const nextVehicleSettings = { ...settings.vehicleSettings.value };
-  for (const [key, value] of Object.entries(car.aspects)) {
-    if (typeof value === "number" && key in nextVehicleSettings) {
-      nextVehicleSettings[key as keyof typeof nextVehicleSettings] = value;
-    }
-  }
-  settings.vehicleSettings.value = nextVehicleSettings;
+  settings.vehicleSettings.value = mergeCarOwnedVehicleSettings(
+    settings.vehicleSettings.value,
+    car.aspects,
+  );
 }
 
 export function createSettingsCarsModule(

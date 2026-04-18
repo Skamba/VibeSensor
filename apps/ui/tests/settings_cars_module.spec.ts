@@ -120,10 +120,17 @@ test("settings cars module dismisses transient creation feedback through typed t
   expect(dismissedByView.table.rows[0].highlightedStatusText).toBeNull();
 });
 
-test("settings cars module loads cars through the shared async loader and syncs active-car inputs", async () => {
+test("settings cars module loads cars through the shared async loader without overwriting analysis-owned settings", async () => {
   const state = createAppState().settings;
   const renders: CarsListRenderModel[] = [];
   let syncAnalysisInputsCalls = 0;
+
+  state.vehicleSettings.value = {
+    ...state.vehicleSettings.value,
+    wheel_bandwidth_pct: 7.5,
+    speed_uncertainty_pct: 2.5,
+    min_abs_band_hz: 1.5,
+  };
 
   const panel: CarsListPanelView = {
     actions: signal(null),
@@ -175,12 +182,15 @@ test("settings cars module loads cars through the shared async loader and syncs 
             aspects: {
               tire_width_mm: 245,
               tire_aspect_pct: 40,
-              rim_in: 19,
-              final_drive_ratio: 3.23,
-              current_gear_ratio: 0.72,
-            },
-          }],
-        };
+            rim_in: 19,
+            final_drive_ratio: 3.23,
+            current_gear_ratio: 0.72,
+            wheel_bandwidth_pct: 99,
+            speed_uncertainty_pct: 99,
+            min_abs_band_hz: 99,
+          },
+        }],
+      };
       },
     },
   });
@@ -192,8 +202,11 @@ test("settings cars module loads cars through the shared async loader and syncs 
     current_gear_ratio: 0.72,
     final_drive_ratio: 3.23,
     rim_in: 19,
+    min_abs_band_hz: 1.5,
+    speed_uncertainty_pct: 2.5,
     tire_aspect_pct: 40,
     tire_width_mm: 245,
+    wheel_bandwidth_pct: 7.5,
   });
   expect(syncAnalysisInputsCalls).toBe(1);
   expect(lastRender(renders).table?.kind).toBe("rows");
