@@ -24,7 +24,8 @@
     "test:visual:update": "npx playwright test --update-snapshots",
     "wiki:screenshots": "npx playwright test --config=playwright.wiki.config.ts tests/wiki_screenshots.spec.ts --workers=1",
     "screenshot": "node take-screenshot.mjs",
-    "snapshot:update": "node update-snapshots.mjs"
+    "snapshot:update": "node update-snapshots.mjs",
+    "analyze": "vite build --mode analyze"
   },
   "dependencies": {
     "@preact/signals": "^2.9.0",
@@ -37,6 +38,7 @@
     "@preact/preset-vite": "^2.10.5",
     "linkedom": "^0.18.12",
     "openapi-typescript": "^7.13.0",
+    "rollup-plugin-visualizer": "^7.0.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "vite": "^8.0.8"
