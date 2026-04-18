@@ -1,3 +1,4 @@
+import { memo } from "preact/compat";
 import {
   MaintenanceNote,
   type EspFlashJourneyPanelModel,
@@ -28,7 +29,7 @@ function JourneyStageItem(props: {
   );
 }
 
-export function EspFlashJourneySection(props: {
+export const EspFlashJourneySection = memo(function EspFlashJourneySection(props: {
   model: ReadonlySignal<EspFlashJourneyPanelModel>;
 }) {
   const { stages, terminalNoteText } = useSignalProperties(
@@ -47,4 +48,4 @@ export function EspFlashJourneySection(props: {
       </ol>
     </div>
   );
-}
+});

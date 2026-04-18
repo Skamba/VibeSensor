@@ -1,3 +1,4 @@
+import { memo } from "preact/compat";
 import {
   InlineEmptyState,
   MaintenanceNote,
@@ -8,7 +9,7 @@ import { useSignalProperties, type ReadonlySignal } from "../ui_signals";
 
 const ESP_FLASH_HISTORY_KEYS = ["attempts", "emptyState"] as const;
 
-export function EspFlashHistoryContent(props: {
+export const EspFlashHistoryContent = memo(function EspFlashHistoryContent(props: {
   model: ReadonlySignal<EspFlashHistoryPanelModel>;
 }) {
   const { attempts, emptyState } = useSignalProperties(props.model, ESP_FLASH_HISTORY_KEYS);
@@ -31,4 +32,4 @@ export function EspFlashHistoryContent(props: {
       ))}
     </ul>
   );
-}
+});

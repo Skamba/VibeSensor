@@ -1,3 +1,4 @@
+import { memo } from "preact/compat";
 import {
   MaintenanceNote,
   StatusGrid,
@@ -7,7 +8,7 @@ import { useSignalProperties, type ReadonlySignal } from "../ui_signals";
 
 const ESP_FLASH_READINESS_KEYS = ["errorText", "rows", "summaryText"] as const;
 
-export function EspFlashReadinessSection(props: {
+export const EspFlashReadinessSection = memo(function EspFlashReadinessSection(props: {
   model: ReadonlySignal<EspFlashReadinessPanelModel>;
 }) {
   const { errorText, rows, summaryText } = useSignalProperties(
@@ -23,4 +24,4 @@ export function EspFlashReadinessSection(props: {
       ) : null}
     </div>
   );
-}
+});
