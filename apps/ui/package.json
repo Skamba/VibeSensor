@@ -33,14 +33,14 @@
     "uplot": "^1.6.31"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.11",
+    "@biomejs/biome": "^2.4.12",
     "@playwright/test": "^1.59.1",
     "@preact/preset-vite": "^2.10.5",
     "linkedom": "^0.18.12",
     "openapi-typescript": "^7.13.0",
     "rollup-plugin-visualizer": "^7.0.1",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2",
+    "typescript": "^6.0.3",
     "vite": "^8.0.8"
   }
 }
