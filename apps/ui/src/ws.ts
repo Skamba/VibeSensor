@@ -171,14 +171,17 @@ export function createWsClient(options: WsClientOptions): WsClient {
       ) {
         return;
       }
-      const mostRecentMessageAtMs = lastMessageAtMs.value;
-      const intervalId = window.setInterval(() => {
-        if (Date.now() - mostRecentMessageAtMs > resolvedOptions.staleAfterMs) {
-          setState("stale");
-        }
-      }, 1000);
+      const elapsedMs = Date.now() - lastMessageAtMs.value;
+      const remainingMs = resolvedOptions.staleAfterMs - elapsedMs;
+      if (remainingMs <= 0) {
+        setState("stale");
+        return;
+      }
+      const timeoutId = window.setTimeout(() => {
+        setState("stale");
+      }, remainingMs);
       return () => {
-        window.clearInterval(intervalId);
+        window.clearTimeout(timeoutId);
       };
     });
   }
