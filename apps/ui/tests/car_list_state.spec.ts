@@ -4,6 +4,7 @@ import { getCarCompleteness } from "../src/app/car_selection_state";
 import {
   buildCarsGuidanceRenderModel,
   buildSettingsCarListRenderModel,
+  createSettingsCarListRenderModelMemo,
 } from "../src/app/views/settings_car_list_view";
 import type { CarRecord } from "../src/api/types";
 
@@ -191,6 +192,67 @@ test("buildSettingsCarListRenderModel produces the actionable empty state when n
       titleText: "Add the first car profile.",
     },
   });
+});
+
+test("createSettingsCarListRenderModelMemo preserves unchanged row references", () => {
+  const buildMemoizedModel = createSettingsCarListRenderModelMemo();
+  const readyCar = makeCar({
+    id: "car-ready",
+    name: "Ready Car",
+    aspects: {
+      tire_width_mm: 245,
+      tire_aspect_pct: 40,
+      rim_in: 18,
+      final_drive_ratio: 3.91,
+      current_gear_ratio: 0.82,
+    },
+  });
+  const incompleteCar = makeCar({
+    id: "car-new",
+    name: "Needs Work",
+    variant: "Project",
+    aspects: {
+      tire_width_mm: 245,
+    },
+  });
+
+  const firstModel = buildMemoizedModel({
+    cars: [readyCar, incompleteCar],
+    activeCarId: "car-ready",
+    highlightedCarId: null,
+    t,
+    fmt,
+  });
+
+  expect(firstModel.kind).toBe("rows");
+  if (firstModel.kind !== "rows") {
+    throw new Error("Expected car rows");
+  }
+
+  const secondModel = buildMemoizedModel({
+    cars: [
+      makeCar({
+        ...readyCar,
+        aspects: { ...readyCar.aspects },
+      }),
+      makeCar({
+        ...incompleteCar,
+        aspects: { ...incompleteCar.aspects },
+      }),
+    ],
+    activeCarId: "car-ready",
+    highlightedCarId: "car-new",
+    t,
+    fmt,
+  });
+
+  expect(secondModel.kind).toBe("rows");
+  if (secondModel.kind !== "rows") {
+    throw new Error("Expected car rows");
+  }
+
+  expect(secondModel.rows[0]).toBe(firstModel.rows[0]);
+  expect(secondModel.rows[1]).not.toBe(firstModel.rows[1]);
 });
 
 test("buildCarsGuidanceRenderModel returns success, guidance, or hidden states based on selection", () => {

@@ -20,7 +20,7 @@ import {
 } from "../ui_signals";
 import {
   buildCarsGuidanceRenderModel,
-  buildSettingsCarListRenderModel,
+  createSettingsCarListRenderModelMemo,
   type CarsListHighlightedFeedback,
 } from "../views/settings_car_list_view";
 import {
@@ -92,6 +92,7 @@ export function createSettingsCarsModule(
       ctx.ports.activeViewId.value === "settingsView"
       && ctx.ports.activeSettingsTabId.value === "carTab",
   );
+  const buildCarListRenderModel = createSettingsCarListRenderModelMemo();
 
   function hasValidActiveCar(): boolean {
     return carSelection.hasResolvedActiveCar.value;
@@ -112,7 +113,7 @@ export function createSettingsCarsModule(
       }),
       table: carSelectionState.kind === "loading"
         ? null
-        : buildSettingsCarListRenderModel({
+        : buildCarListRenderModel({
           activeCarId: settings.activeCarId.value,
           cars: settings.cars.value,
           highlightedCarId: highlightedCar.value?.carId ?? null,
