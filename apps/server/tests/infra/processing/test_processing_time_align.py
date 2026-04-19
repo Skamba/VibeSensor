@@ -19,36 +19,87 @@ from vibesensor.infra.processing.time_align import (
 class TestComputeOverlap:
     """Tests for the intersection-over-union overlap computation."""
 
-    def test_empty_inputs(self) -> None:
-        result = compute_overlap([], [])
-        assert result.overlap_ratio == 0.0
-        assert result.aligned is False
-        assert result.overlap_s == 0.0
+    @pytest.mark.parametrize(
+        (
+            "starts",
+            "ends",
+            "expected_ratio",
+            "expected_aligned",
+            "expected_shared_start",
+            "expected_shared_end",
+            "expected_overlap_s",
+        ),
+        [
+            pytest.param([], [], 0.0, False, 0.0, 0.0, 0.0, id="empty-inputs"),
+            pytest.param(
+                [1.0],
+                [2.0, 3.0],
+                0.0,
+                False,
+                0.0,
+                0.0,
+                0.0,
+                id="mismatched-lengths",
+            ),
+            pytest.param(
+                [0.0, 0.0],
+                [10.0, 10.0],
+                1.0,
+                True,
+                0.0,
+                10.0,
+                10.0,
+                id="identical-ranges",
+            ),
+            pytest.param(
+                [0.0, 20.0],
+                [10.0, 30.0],
+                0.0,
+                False,
+                20.0,
+                10.0,
+                0.0,
+                id="no-overlap",
+            ),
+            pytest.param(
+                [0.0, 5.0],
+                [10.0, 15.0],
+                5.0 / 15.0,
+                False,
+                5.0,
+                10.0,
+                5.0,
+                id="partial-overlap",
+            ),
+            pytest.param(
+                [0.0, 2.0, 4.0],
+                [10.0, 12.0, 14.0],
+                6.0 / 14.0,
+                False,
+                4.0,
+                10.0,
+                6.0,
+                id="three-ranges",
+            ),
+        ],
+    )
+    def test_compute_overlap_cases(
+        self,
+        starts: list[float],
+        ends: list[float],
+        expected_ratio: float,
+        expected_aligned: bool,
+        expected_shared_start: float,
+        expected_shared_end: float,
+        expected_overlap_s: float,
+    ) -> None:
+        result = compute_overlap(starts, ends)
 
-    def test_mismatched_lengths(self) -> None:
-        result = compute_overlap([1.0], [2.0, 3.0])
-        assert result.overlap_ratio == 0.0
-        assert result.aligned is False
-
-    def test_identical_ranges(self) -> None:
-        result = compute_overlap([0.0, 0.0], [10.0, 10.0])
-        assert result.overlap_ratio == pytest.approx(1.0)
-        assert result.aligned is True
-        assert result.overlap_s == pytest.approx(10.0)
-
-    def test_no_overlap(self) -> None:
-        result = compute_overlap([0.0, 20.0], [10.0, 30.0])
-        assert result.overlap_ratio == pytest.approx(0.0)
-        assert result.aligned is False
-        assert result.overlap_s == pytest.approx(0.0)
-
-    def test_partial_overlap(self) -> None:
-        result = compute_overlap([0.0, 5.0], [10.0, 15.0])
-        # Union: 0–15 = 15s, overlap: 5–10 = 5s → ratio = 5/15 ≈ 0.333
-        assert result.overlap_ratio == pytest.approx(5.0 / 15.0)
-        assert result.overlap_s == pytest.approx(5.0)
-        assert result.shared_start == pytest.approx(5.0)
-        assert result.shared_end == pytest.approx(10.0)
+        assert result.overlap_ratio == pytest.approx(expected_ratio)
+        assert result.aligned is expected_aligned
+        assert result.shared_start == pytest.approx(expected_shared_start)
+        assert result.shared_end == pytest.approx(expected_shared_end)
+        assert result.overlap_s == pytest.approx(expected_overlap_s)
 
     @pytest.mark.parametrize(
         ("starts", "ends", "expected_ratio", "expected_aligned"),
@@ -73,13 +124,6 @@ class TestComputeOverlap:
             assert result.overlap_ratio >= _ALIGNMENT_MIN_OVERLAP
         else:
             assert result.overlap_ratio < _ALIGNMENT_MIN_OVERLAP
-
-    def test_three_ranges(self) -> None:
-        result = compute_overlap([0.0, 2.0, 4.0], [10.0, 12.0, 14.0])
-        # Union: 0-14 = 14, shared: max(0,2,4)-min(10,12,14) = 4-10 = 6
-        assert result.shared_start == pytest.approx(4.0)
-        assert result.shared_end == pytest.approx(10.0)
-        assert result.overlap_s == pytest.approx(6.0)
 
 
 _ATR_DEFAULTS: dict[str, object] = {
