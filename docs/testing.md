@@ -13,6 +13,7 @@
 - `tools/tests/run_e2e_parallel.py` records observed shard test durations in `~/.cache/vibesensor/e2e-duration-cache.json` so later local or CI runs can rebalance without hand-maintained timing hints.
 - Python test configuration lives in `apps/server/pyproject.toml`.
 - Backend structural AST/import guards live in `tools/dev/verify_backend_static_guards.py`, and repo/frontend hygiene guards live in `tools/dev/check_hygiene.py`; both run via `make lint`.
+- Oversized tracked test/spec files are guarded in `tools/dev/check_hygiene.py` with the allowlist at `tools/dev/oversized_test_allowlist.yml`. Files at or above the shared threshold must either be split or carry an explicit allowlist reason, and the hygiene output always prints the current largest tracked test/spec files.
 - `make sync-contracts` is the authoritative contract/doc regeneration path; `make lint` and the `backend-contract-drift` CI job run it in `--check` mode.
 
 ## Layout
@@ -65,7 +66,7 @@ regressions that span multiple subsystems go in `integration/`.
 
 Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `findings.py` (shared finding-payload factories), `report_helpers.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
 
-If a guard needs AST or source-text inspection of production modules, put backend-specific checks in `tools/dev/verify_backend_static_guards.py` and repo/frontend boundary checks in `tools/dev/check_hygiene.py` instead of re-parsing source inside pytest. Hygiene tests should call those helpers through stable module interfaces rather than duplicating the source inspection logic.
+If a guard needs AST or source-text inspection of production modules, put backend-specific checks in `tools/dev/verify_backend_static_guards.py` and repo/frontend boundary checks in `tools/dev/check_hygiene.py` instead of re-parsing source inside pytest. Hygiene tests should call those helpers through stable module interfaces rather than duplicating the source inspection logic. Oversized test/spec guardrails also belong in `tools/dev/check_hygiene.py`, with intentional exceptions documented in `tools/dev/oversized_test_allowlist.yml` rather than hidden in ad-hoc test code.
 
 ## Contract bridge tests
 

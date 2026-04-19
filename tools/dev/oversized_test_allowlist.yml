@@ -1,0 +1,18 @@
+# Oversized tracked test/spec files that are intentionally still above the
+# shared hygiene threshold. Each entry needs a human reason so growth stays
+# explicit instead of accidental.
+threshold_lines: 700
+report_limit: 10
+allowlist:
+  # Shared maintenance-flow harness reused by several focused ESP/update specs.
+  apps/ui/tests/maintenance_feature_test_support.ts: Shared maintenance feature harness for ESP flash and updater feature specs.
+  # Projection regressions intentionally stay together so report-shape drift is reviewed in one place.
+  apps/server/tests/adapters/pdf/test_report_document_projection.py: High-density report projection regression matrix kept together by document-output seam.
+  # Settings smoke keeps the full multi-tab settings journey in one browser spec.
+  apps/ui/tests/smoke.settings.spec.ts: End-to-end settings smoke journey intentionally spans multiple settings tabs in one spec.
+  # Report helpers are the shared builder/assertion spine for multiple PDF and report test modules.
+  apps/server/tests/test_support/report_helpers.py: Shared report test helper surface reused across multiple report and PDF suites.
+  # Metrics log helper coverage still lives as one dense helper-focused module.
+  apps/server/tests/use_cases/run/test_metrics_log_helpers.py: Helper-focused metrics log regression coverage intentionally stays aggregated in one module.
+  # Cars smoke keeps the full cars workflow journey in one browser spec.
+  apps/ui/tests/smoke.cars.spec.ts: End-to-end cars smoke journey intentionally spans multiple cars flows in one spec.
