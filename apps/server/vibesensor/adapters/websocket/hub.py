@@ -8,7 +8,6 @@ protection via per-connection send queues.
 from __future__ import annotations
 
 import logging
-import os
 from collections.abc import Callable
 
 from fastapi import WebSocket
@@ -20,6 +19,7 @@ from vibesensor.adapters.websocket.connection_tracker import (
     WSConnectionSnapshot,
 )
 from vibesensor.adapters.websocket.tick_controller import BroadcastTickController
+from vibesensor.app.process_settings import load_websocket_env_settings
 from vibesensor.shared.types.payload_types import LiveWsPayload
 
 LOGGER = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ __all__ = ["WSConnection", "WebSocketHub"]
 
 def _ws_debug_enabled() -> bool:
     """Check WS debug flag at call time so it can be toggled at runtime."""
-    return os.environ.get("VIBESENSOR_WS_DEBUG", "0") == "1"
+    return load_websocket_env_settings().ws_debug
 
 
 # Timing constants for WebSocket broadcast

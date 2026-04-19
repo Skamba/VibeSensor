@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import os
 import string
 from dataclasses import dataclass
 
+from vibesensor.app.process_settings import load_update_env_settings
 from vibesensor.shared.constants.github import GITHUB_REPO
 from vibesensor.shared.types.json_types import is_json_array, is_json_object
 
@@ -32,10 +32,10 @@ def resolve_release_fetcher_config(
     github_token: str = "",
 ) -> ReleaseFetcherConfig:
     """Resolve runtime defaults for the server release fetcher config."""
-
+    env_settings = load_update_env_settings()
     return ReleaseFetcherConfig(
-        server_repo=server_repo or os.environ.get("VIBESENSOR_SERVER_REPO", GITHUB_REPO),
-        github_token=github_token or os.environ.get("GITHUB_TOKEN", ""),
+        server_repo=server_repo or env_settings.server_repo,
+        github_token=github_token or env_settings.github_token,
     )
 
 

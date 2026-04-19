@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from vibesensor.app.process_settings import (
+    DEFAULT_UPDATE_ROLLBACK_DIR,
+    load_update_env_settings,
+)
 from vibesensor.use_cases.updates.installer import UpdateInstallerConfig
 from vibesensor.use_cases.updates.models import UpdateValidationConfig
 from vibesensor.use_cases.updates.releases.models import (
@@ -21,7 +24,7 @@ from vibesensor.use_cases.updates.wifi.wifi_config import (
 __all__ = ["UpdateRuntimeConfig", "resolve_update_runtime_config"]
 
 REINSTALL_OP_TIMEOUT_S = 180
-DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
+DEFAULT_ROLLBACK_DIR = str(DEFAULT_UPDATE_ROLLBACK_DIR)
 ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
 UPDATE_SERVICE_NAME = "vibesensor.service"
@@ -52,9 +55,10 @@ def resolve_update_runtime_config(
     ap_con_name: str,
     wifi_ifname: str,
 ) -> UpdateRuntimeConfig:
-    repo = Path(repo_path or os.environ.get("VIBESENSOR_REPO_PATH", "/opt/VibeSensor"))
-    resolved_rollback_dir = Path(
-        rollback_dir or os.environ.get("VIBESENSOR_ROLLBACK_DIR", DEFAULT_ROLLBACK_DIR),
+    env_settings = load_update_env_settings()
+    repo = Path(repo_path).expanduser() if repo_path else env_settings.repo_path
+    resolved_rollback_dir = (
+        Path(rollback_dir).expanduser() if rollback_dir else env_settings.rollback_dir
     )
     wifi_config = build_default_wifi_config(
         ap_con_name=ap_con_name,

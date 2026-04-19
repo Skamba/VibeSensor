@@ -4,6 +4,11 @@ import os
 from dataclasses import dataclass, field
 from typing import TypedDict
 
+from vibesensor.app.process_settings import (
+    DEFAULT_FIRMWARE_CACHE_DIR,
+    DEFAULT_FIRMWARE_CHANNEL,
+    load_update_env_settings,
+)
 from vibesensor.shared.constants.github import GITHUB_REPO
 
 __all__ = [
@@ -19,7 +24,7 @@ __all__ = [
     "ManifestSegmentPayload",
 ]
 
-_DEFAULT_CACHE_DIR = "/var/lib/vibesensor/firmware"
+_DEFAULT_CACHE_DIR = str(DEFAULT_FIRMWARE_CACHE_DIR)
 
 
 class ManifestSegmentPayload(TypedDict, total=False):
@@ -63,21 +68,22 @@ class FirmwareCacheConfig:
 
     cache_dir: str = ""
     firmware_repo: str = GITHUB_REPO
-    channel: str = "stable"  # "stable" or "prerelease"
+    channel: str = DEFAULT_FIRMWARE_CHANNEL  # "stable" or "prerelease"
     pinned_tag: str = ""
     github_token: str = ""
 
     def __post_init__(self) -> None:
+        env_settings = load_update_env_settings()
         if not self.cache_dir:
-            self.cache_dir = os.environ.get("VIBESENSOR_FIRMWARE_CACHE_DIR", _DEFAULT_CACHE_DIR)
+            self.cache_dir = os.fspath(env_settings.firmware_cache_dir)
         if not self.firmware_repo:
-            self.firmware_repo = os.environ.get("VIBESENSOR_FIRMWARE_REPO", GITHUB_REPO)
+            self.firmware_repo = env_settings.firmware_repo
         if not self.channel:
-            self.channel = os.environ.get("VIBESENSOR_FIRMWARE_CHANNEL", "stable")
+            self.channel = env_settings.firmware_channel
         if not self.pinned_tag:
-            self.pinned_tag = os.environ.get("VIBESENSOR_FIRMWARE_PINNED_TAG", "")
+            self.pinned_tag = env_settings.firmware_pinned_tag
         if not self.github_token:
-            self.github_token = os.environ.get("GITHUB_TOKEN", "")
+            self.github_token = env_settings.github_token
 
 
 @dataclass
