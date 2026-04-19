@@ -188,6 +188,11 @@ class RuntimeSupportMatrixRow:
 _UI_ALLOWED_RAW_HTML_PREFIX = "apps/ui/src/app/views/"
 _UI_DOM_REGISTRY_PATH = ROOT / "apps" / "ui" / "src" / "app" / "ui_dom_registry.ts"
 _UI_DOM_REGISTRY_TOKENS = ("UiDomRegistry", "ui_dom_registry")
+_OVERSIZED_TEST_ALLOWLIST_PATH = ROOT / "tools" / "dev" / "oversized_test_allowlist.yml"
+_OVERSIZED_TEST_DEFAULT_LIMIT = 700
+_OVERSIZED_TEST_DEFAULT_REPORT_LIMIT = 10
+_OVERSIZED_TEST_UI_SUFFIXES = {".ts", ".tsx", ".js", ".jsx"}
+_OVERSIZED_TEST_IGNORED_PARTS = {"snapshots", "test-results"}
 _IMPORT_FROM_RE = re.compile(r"""\bfrom\s+["']([^"']+)["']""")
 _SIDE_EFFECT_IMPORT_RE = re.compile(r"""\bimport\s+["']([^"']+)["']""")
 _EMPTY_INNERHTML_ASSIGNMENT_RE = re.compile(
@@ -248,6 +253,139 @@ def _load_ci_manifest_module():
 
 def _read_required_text(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
+
+
+def _line_count(path: Path) -> int:
+    return sum(1 for _ in path.open("r", encoding="utf-8", errors="ignore"))
+
+
+def _is_tracked_test_file(path: Path) -> bool:
+    rel = path.relative_to(ROOT).as_posix()
+    if _OVERSIZED_TEST_IGNORED_PARTS.intersection(path.parts):
+        return False
+    suffix = path.suffix.lower()
+    if rel.startswith("apps/server/tests/") or rel.startswith("apps/server/tests_e2e/"):
+        return suffix == ".py"
+    if rel.startswith("apps/ui/tests/"):
+        return suffix in _OVERSIZED_TEST_UI_SUFFIXES
+    return False
+
+
+def _load_oversized_test_allowlist() -> tuple[int, int, dict[str, str], list[str]]:
+    errors: list[str] = []
+    if not _OVERSIZED_TEST_ALLOWLIST_PATH.exists():
+        return (
+            _OVERSIZED_TEST_DEFAULT_LIMIT,
+            _OVERSIZED_TEST_DEFAULT_REPORT_LIMIT,
+            {},
+            [
+                f"Missing oversized-test allowlist at {_OVERSIZED_TEST_ALLOWLIST_PATH.relative_to(ROOT)}."
+            ],
+        )
+
+    loaded = yaml.safe_load(_OVERSIZED_TEST_ALLOWLIST_PATH.read_text(encoding="utf-8"))
+    if not isinstance(loaded, Mapping):
+        return (
+            _OVERSIZED_TEST_DEFAULT_LIMIT,
+            _OVERSIZED_TEST_DEFAULT_REPORT_LIMIT,
+            {},
+            [
+                f"{_OVERSIZED_TEST_ALLOWLIST_PATH.relative_to(ROOT)} must load as a mapping."
+            ],
+        )
+
+    raw_threshold = loaded.get("threshold_lines", _OVERSIZED_TEST_DEFAULT_LIMIT)
+    raw_report_limit = loaded.get("report_limit", _OVERSIZED_TEST_DEFAULT_REPORT_LIMIT)
+    threshold = (
+        int(raw_threshold)
+        if isinstance(raw_threshold, int) and raw_threshold > 0
+        else _OVERSIZED_TEST_DEFAULT_LIMIT
+    )
+    report_limit = (
+        int(raw_report_limit)
+        if isinstance(raw_report_limit, int) and raw_report_limit > 0
+        else _OVERSIZED_TEST_DEFAULT_REPORT_LIMIT
+    )
+    if threshold != raw_threshold:
+        errors.append(
+            f"{_OVERSIZED_TEST_ALLOWLIST_PATH.relative_to(ROOT)} must set threshold_lines to a positive integer."
+        )
+    if report_limit != raw_report_limit:
+        errors.append(
+            f"{_OVERSIZED_TEST_ALLOWLIST_PATH.relative_to(ROOT)} must set report_limit to a positive integer."
+        )
+
+    allowlist: dict[str, str] = {}
+    raw_allowlist = loaded.get("allowlist")
+    if not isinstance(raw_allowlist, Mapping):
+        errors.append(
+            f"{_OVERSIZED_TEST_ALLOWLIST_PATH.relative_to(ROOT)} must define allowlist as a mapping of path -> reason."
+        )
+        return threshold, report_limit, allowlist, errors
+
+    for raw_path, raw_reason in raw_allowlist.items():
+        if not isinstance(raw_path, str) or not raw_path.strip():
+            errors.append(
+                f"{_OVERSIZED_TEST_ALLOWLIST_PATH.relative_to(ROOT)} contains a non-string allowlist path."
+            )
+            continue
+        if not isinstance(raw_reason, str) or not raw_reason.strip():
+            errors.append(
+                f"{raw_path} in {_OVERSIZED_TEST_ALLOWLIST_PATH.relative_to(ROOT)} must include a non-empty reason."
+            )
+            continue
+        allowlist[raw_path] = raw_reason.strip()
+    return threshold, report_limit, allowlist, errors
+
+
+def check_oversized_test_files() -> tuple[list[str], list[str]]:
+    threshold, report_limit, allowlist, errors = _load_oversized_test_allowlist()
+    tracked_test_files = [
+        path for path in _git_tracked_files() if _is_tracked_test_file(path)
+    ]
+    line_counts = {
+        path.relative_to(ROOT).as_posix(): _line_count(path)
+        for path in tracked_test_files
+    }
+    oversized = {
+        rel_path: count for rel_path, count in line_counts.items() if count >= threshold
+    }
+
+    stale_allowlist = sorted(set(allowlist) - set(line_counts))
+    if stale_allowlist:
+        errors.append(
+            f"{_OVERSIZED_TEST_ALLOWLIST_PATH.relative_to(ROOT)} contains missing or untracked files: {', '.join(stale_allowlist)}"
+        )
+
+    for rel_path, reason in allowlist.items():
+        line_count = line_counts.get(rel_path)
+        if line_count is None:
+            continue
+        if line_count < threshold:
+            errors.append(
+                f"{rel_path} is allowlisted in {_OVERSIZED_TEST_ALLOWLIST_PATH.relative_to(ROOT)} but is only {line_count} lines (limit {threshold}); remove the stale entry."
+            )
+        if not reason:
+            errors.append(
+                f"{rel_path} in {_OVERSIZED_TEST_ALLOWLIST_PATH.relative_to(ROOT)} must keep a non-empty reason."
+            )
+
+    for rel_path, line_count in sorted(
+        oversized.items(), key=lambda item: (-item[1], item[0])
+    ):
+        if rel_path not in allowlist:
+            errors.append(
+                f"{rel_path} is {line_count} lines (limit {threshold}); split it or add it to {_OVERSIZED_TEST_ALLOWLIST_PATH.relative_to(ROOT)} with a reason."
+            )
+
+    report = [
+        f"{rel_path} ({line_count} lines{' - allowlisted' if rel_path in allowlist else ''})"
+        for rel_path, line_count in sorted(
+            line_counts.items(),
+            key=lambda item: (-item[1], item[0]),
+        )[:report_limit]
+    ]
+    return errors, report
 
 
 def _load_runtime_support_matrix_rows() -> dict[str, RuntimeSupportMatrixRow]:
@@ -1995,6 +2133,18 @@ def main() -> int:
         failures += 1
     else:
         print("Frontend DOM registry guardrails passed.")
+
+    oversized_test_errors, oversized_test_report = check_oversized_test_files()
+    if oversized_test_errors:
+        print("Oversized test/spec guardrail drift detected:")
+        for item in oversized_test_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Oversized test/spec guardrails passed.")
+    print("Largest tracked test/spec files:")
+    for item in oversized_test_report:
+        print(f"  - {item}")
 
     return 1 if failures else 0
 
