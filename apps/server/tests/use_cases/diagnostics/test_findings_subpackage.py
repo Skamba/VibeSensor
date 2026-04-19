@@ -6,21 +6,21 @@ testable, and that each module exposes expected symbols.
 
 from __future__ import annotations
 
-from typing import get_type_hints
-
 import pytest
-from test_support.findings import make_finding
+from test_support.findings import make_finding, make_finding_payload
 
 import vibesensor.use_cases.diagnostics.findings as findings_module
 from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.boundaries.summary_fields.finding import (
+    finding_from_payload,
+    finding_payload_from_domain,
+)
 from vibesensor.shared.constants.analysis import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
-from vibesensor.shared.types.analysis_views import MatchedPoint
-from vibesensor.shared.types.history_analysis_contracts import AmplitudeMetric, FindingPayload
 from vibesensor.use_cases.diagnostics._reference_findings import _reference_missing_finding
 from vibesensor.use_cases.diagnostics.orders.heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
@@ -29,6 +29,7 @@ from vibesensor.use_cases.diagnostics.orders.heuristics import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
 from vibesensor.use_cases.diagnostics.orders.match_rate import _compute_effective_match_rate
+from vibesensor.use_cases.diagnostics.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.use_cases.diagnostics.orders.statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
@@ -46,48 +47,60 @@ from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
 # -- Subpackage structure tests -----------------------------------------------
 
 
-def test_findings_module_no_longer_reexports_helper_names() -> None:
-    helper_names = (
-        "_classify_peak_type",
-        "_phase_speed_breakdown",
-        "_sensor_intensity_by_location",
-        "_speed_breakdown",
-        "_phase_to_str",
-        "_speed_profile_from_points",
-        "PeakBin",
+def test_findings_module_public_api_surface_stays_explicit() -> None:
+    assert findings_module.__all__ == [
+        "PeakFindingAnalyzer",
+        "collect_order_frequencies",
+        "finalize_findings",
+        "prepare_analysis_samples",
+    ]
+    for exported_name in findings_module.__all__:
+        assert hasattr(findings_module, exported_name)
+
+
+def test_finding_payload_round_trip_preserves_consumer_fields() -> None:
+    domain = finding_from_payload(
+        make_finding_payload(
+            finding_id="F_ROUNDTRIP",
+            confidence=0.82,
+            strongest_location="front-left wheel",
+            confidence_label_key="CONFIDENCE_HIGH",
+            confidence_tone="success",
+            confidence_pct="82%",
+            confidence_reason="Strong order evidence",
+            phase_evidence={"cruise_fraction": 0.75, "phases_detected": ["cruise", "acceleration"]},
+            matched_points=[
+                {
+                    "t_s": 1.25,
+                    "speed_kmh": 72.0,
+                    "predicted_hz": 48.0,
+                    "matched_hz": 48.4,
+                    "rel_error": 0.008,
+                    "amp": 0.03,
+                    "location": "front-left wheel",
+                    "phase": "cruise",
+                }
+            ],
+        )
     )
 
-    for helper_name in helper_names:
-        assert not hasattr(findings_module, helper_name)
+    payload = finding_payload_from_domain(domain)
+    round_trip = finding_from_payload(payload)
 
-
-def test_finding_typed_dict_exposes_shared_finding_contract() -> None:
-    """FindingPayload TypedDict must expose the shared outward finding fields."""
-    hints = get_type_hints(FindingPayload)
-    assert {
-        "finding_id",
-        "suspected_source",
-        "evidence_summary",
-        "frequency_hz_or_order",
-        "amplitude_metric",
-        "confidence",
-        "evidence_metrics",
-        "phase_evidence",
-    }.issubset(hints)
-    assert hints["amplitude_metric"] == AmplitudeMetric
-    assert hints["matched_points"] == list[MatchedPoint]
-    assert {
-        "quick_checks",
-        "peak_speed_kmh",
-        "speed_window_kmh",
-        "localization_confidence",
-        "corroborating_locations",
-        "next_sensor_move",
-        "actions",
-        "phase_presence",
-        "grouped_count",
-        "diagnostic_caveat",
-    }.isdisjoint(hints)
+    assert payload["finding_id"] == "F_ROUNDTRIP"
+    assert payload["confidence_label_key"] == "CONFIDENCE_HIGH"
+    assert payload["confidence_tone"] == "success"
+    assert payload["confidence_pct"] == "82%"
+    assert payload["phase_evidence"] == {
+        "cruise_fraction": 0.75,
+        "phases_detected": ["cruise", "acceleration"],
+    }
+    assert payload["matched_points"][0]["location"] == "front-left wheel"
+    assert round_trip.confidence_assessment is not None
+    assert round_trip.confidence_assessment.reason == "Strong order evidence"
+    assert round_trip.phases_detected == ("cruise", "acceleration")
+    assert round_trip.matched_points[0].location == "front-left wheel"
+    assert round_trip.matched_points[0].phase == "cruise"
 
 
 # -- speed_profile tests ------------------------------------------------------
@@ -102,10 +115,17 @@ class TestPhaseToStr:
             pytest.param(None, None, id="none_returns_none"),
             pytest.param(DrivingPhase.CRUISE, "cruise", id="enum_value"),
             pytest.param("acceleration", "acceleration", id="string_passthrough"),
+            pytest.param(7, "7", id="unsupported_scalar_stringified"),
         ],
     )
     def test_phase_to_str(self, input_val: object, expected: str | None) -> None:
         assert _phase_to_str(input_val) == expected
+
+    def test_phase_to_str_uses_enum_like_value_for_future_phase_objects(self) -> None:
+        class FuturePhase:
+            value = "future_phase"
+
+        assert _phase_to_str(FuturePhase()) == "future_phase"
 
 
 class TestSpeedProfileFromPoints:
@@ -230,27 +250,60 @@ class TestDetectDiffuseExcitation:
 class TestComputeOrderConfidence:
     """Test _compute_order_confidence clamping and modifiers."""
 
-    def test_confidence_clamped_to_bounds(self) -> None:
-        # Maximum possible inputs
-        conf = _compute_order_confidence(
-            effective_match_rate=1.0,
-            error_score=1.0,
-            corr_val=1.0,
-            snr_score=1.0,
-            absolute_strength_db=40.0,
-            localization_confidence=1.0,
-            weak_spatial_separation=False,
-            dominance_ratio=2.0,
-            constant_speed=False,
-            steady_speed=False,
-            matched=100,
-            corroborating_locations=3,
-            phases_with_evidence=3,
-            is_diffuse_excitation=False,
-            diffuse_penalty=1.0,
-            n_connected_locations=3,
+    _BASE_INPUTS = {
+        "effective_match_rate": 0.70,
+        "error_score": 0.80,
+        "corr_val": 0.60,
+        "snr_score": 0.75,
+        "absolute_strength_db": 20.0,
+        "localization_confidence": 0.60,
+        "weak_spatial_separation": False,
+        "dominance_ratio": 1.2,
+        "constant_speed": False,
+        "steady_speed": False,
+        "matched": 20,
+        "corroborating_locations": 2,
+        "phases_with_evidence": 2,
+        "is_diffuse_excitation": False,
+        "diffuse_penalty": 1.0,
+        "n_connected_locations": 3,
+    }
+
+    def test_confidence_increases_with_stronger_match_evidence(self) -> None:
+        weaker = _compute_order_confidence(
+            **{**self._BASE_INPUTS, "effective_match_rate": 0.35},
         )
-        assert 0.08 <= conf <= 0.97
+        stronger = _compute_order_confidence(
+            **{**self._BASE_INPUTS, "effective_match_rate": 0.85},
+        )
+
+        assert stronger > weaker
+        assert CONFIDENCE_FLOOR <= weaker <= CONFIDENCE_CEILING
+        assert CONFIDENCE_FLOOR <= stronger <= CONFIDENCE_CEILING
+
+    def test_negligible_strength_cap_reduces_same_signal_to_cap(self) -> None:
+        capped = _compute_order_confidence(
+            **{**self._BASE_INPUTS, "absolute_strength_db": NEGLIGIBLE_STRENGTH_MAX_DB - 1.0},
+        )
+        uncapped = _compute_order_confidence(
+            **{**self._BASE_INPUTS, "absolute_strength_db": NEGLIGIBLE_STRENGTH_MAX_DB + 5.0},
+        )
+
+        assert capped <= ORDER_CONFIDENCE_SETTINGS.negligible_strength_confidence_cap
+        assert uncapped > capped
+
+    def test_constant_and_steady_speed_penalties_apply_in_order(self) -> None:
+        baseline = _compute_order_confidence(
+            **self._BASE_INPUTS,
+        )
+        steady = _compute_order_confidence(
+            **{**self._BASE_INPUTS, "steady_speed": True},
+        )
+        constant = _compute_order_confidence(
+            **{**self._BASE_INPUTS, "constant_speed": True},
+        )
+
+        assert baseline > steady > constant
 
     def test_confidence_minimum_inputs(self) -> None:
         conf = _compute_order_confidence(

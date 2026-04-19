@@ -11,6 +11,9 @@ missing direct unit tests that pin their contracts.
 
 from __future__ import annotations
 
+import math
+
+import pytest
 from test_support.findings import make_finding_payload
 
 from vibesensor.domain import Finding
@@ -60,11 +63,21 @@ class TestConfidenceLabel:
         _, _, pct = Finding.classify_confidence(1.5)
         assert pct == "100%"
 
-    def test_return_type_is_three_strings(self) -> None:
-        """Return value must be a 3-tuple of str."""
-        result = Finding.classify_confidence(0.5)
-        assert len(result) == 3
-        assert all(isinstance(v, str) for v in result)
+    @pytest.mark.parametrize(
+        ("confidence", "expected"),
+        [
+            pytest.param(float("nan"), ("CONFIDENCE_LOW", "neutral", "0%"), id="nan"),
+            pytest.param(-0.20, ("CONFIDENCE_LOW", "neutral", "0%"), id="negative"),
+            pytest.param(math.inf, ("CONFIDENCE_LOW", "neutral", "0%"), id="infinite"),
+            pytest.param(1.50, ("CONFIDENCE_HIGH", "success", "100%"), id="above-one"),
+        ],
+    )
+    def test_invalid_and_out_of_range_inputs_follow_clamped_confidence_semantics(
+        self,
+        confidence: float,
+        expected: tuple[str, str, str],
+    ) -> None:
+        assert Finding.classify_confidence(confidence) == expected
 
     def test_negligible_band_caps_high_to_medium(self) -> None:
         """strength_band_key='negligible' must reduce HIGH → MEDIUM."""
@@ -135,36 +148,83 @@ class TestSelectTopCauses:
         assert domain_findings == ()
 
     def test_respects_max_causes_limit(self) -> None:
-        """At most max_causes findings are returned."""
         findings = self._to_domain(
-            make_finding_payload(suspected_source="wheel/tire", confidence=0.90),
-            make_finding_payload(suspected_source="driveline", confidence=0.85),
-            make_finding_payload(suspected_source="engine", confidence=0.80),
-            make_finding_payload(suspected_source="body resonance", confidence=0.75),
+            make_finding_payload(
+                finding_id="F_WHEEL",
+                suspected_source="wheel/tire",
+                confidence=0.90,
+            ),
+            make_finding_payload(
+                finding_id="F_DRIVELINE",
+                suspected_source="driveline",
+                confidence=0.85,
+            ),
+            make_finding_payload(
+                finding_id="F_ENGINE",
+                suspected_source="engine",
+                confidence=0.80,
+            ),
+            make_finding_payload(
+                finding_id="F_BODY",
+                suspected_source="body resonance",
+                confidence=0.75,
+            ),
         )
         domain_findings = select_top_causes(findings, max_causes=2)
-        assert len(domain_findings) <= 2
+        assert [finding.finding_id for finding in domain_findings] == ["F_WHEEL", "F_DRIVELINE"]
+        assert {finding.finding_id for finding in findings} - {
+            finding.finding_id for finding in domain_findings
+        } == {"F_ENGINE", "F_BODY"}
 
     def test_best_per_source_group_selected(self) -> None:
-        """Two findings for the same source → only the higher-confidence one."""
         findings = self._to_domain(
-            make_finding_payload(suspected_source="wheel/tire", confidence=0.90),
-            make_finding_payload(suspected_source="wheel/tire", confidence=0.60),
-            make_finding_payload(suspected_source="engine", confidence=0.80),
+            make_finding_payload(
+                finding_id="F_WHEEL_BEST",
+                suspected_source="wheel/tire",
+                confidence=0.90,
+                frequency_hz_or_order="2x wheel order",
+            ),
+            make_finding_payload(
+                finding_id="F_WHEEL_WEAKER",
+                suspected_source="wheel/tire",
+                confidence=0.60,
+                frequency_hz_or_order="1x wheel order",
+            ),
+            make_finding_payload(
+                finding_id="F_ENGINE",
+                suspected_source="engine",
+                confidence=0.80,
+            ),
         )
         domain_findings = select_top_causes(findings, max_causes=3)
-        sources = [f.source_normalized for f in domain_findings]
-        # "wheel/tire" should appear exactly once (best representative)
-        assert sources.count("wheel/tire") == 1
+        assert [finding.finding_id for finding in domain_findings] == ["F_WHEEL_BEST", "F_ENGINE"]
+        best_wheel = domain_findings[0]
+        assert best_wheel.source_normalized == "wheel/tire"
+        assert best_wheel.confidence == pytest.approx(0.90)
+        assert best_wheel.signature_labels == ("2x wheel order", "1x wheel order")
 
-    def test_returns_domain_findings(self) -> None:
-        """Return value must be a tuple of Finding objects."""
+    def test_drop_off_threshold_excludes_low_scoring_groups_even_below_max_causes(self) -> None:
         findings = self._to_domain(
-            make_finding_payload(suspected_source="wheel/tire", confidence=0.80),
+            make_finding_payload(
+                finding_id="F_TOP",
+                suspected_source="wheel/tire",
+                confidence=0.90,
+            ),
+            make_finding_payload(
+                finding_id="F_CLOSE",
+                suspected_source="engine",
+                confidence=0.79,
+            ),
+            make_finding_payload(
+                finding_id="F_BELOW",
+                suspected_source="body resonance",
+                confidence=0.60,
+            ),
         )
-        domain_findings = select_top_causes(findings)
-        assert isinstance(domain_findings, tuple)
-        assert all(isinstance(d, Finding) for d in domain_findings)
+        domain_findings = select_top_causes(findings, max_causes=3)
+
+        assert [finding.finding_id for finding in domain_findings] == ["F_TOP", "F_CLOSE"]
+        assert all(isinstance(finding, Finding) for finding in domain_findings)
 
     def test_equal_score_groups_keep_first_seen_source_order(self) -> None:
         findings = self._to_domain(
