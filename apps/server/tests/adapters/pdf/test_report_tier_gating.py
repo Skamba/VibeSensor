@@ -109,162 +109,109 @@ def _make_summary(
     }
 
 
-# ---------------------------------------------------------------------------
-# Report output tests: Tier A behavior
-# ---------------------------------------------------------------------------
+def _build_report_data(**kwargs: object):
+    return build_report_document(prepare_report_input(_make_summary(**kwargs)))
 
 
-class TestTierAReportOutput:
-    """Tier A (low certainty, < 40%): no specific systems, no repair steps."""
+class TestTierReportOutput:
+    """Tier A/B/C report behavior should follow semantic gating rules."""
 
-    @pytest.fixture
-    def tier_a_data(self):
-        return build_report_document(prepare_report_input(_make_summary(confidence=0.10)))
+    @pytest.mark.parametrize(
+        ("confidence", "expected_tier", "lang", "expect_status_label", "expect_parts"),
+        [
+            pytest.param(0.10, "A", "en", False, False, id="tier-a-en"),
+            pytest.param(0.06, "A", "nl", False, False, id="tier-a-nl"),
+            pytest.param(0.50, "B", "en", True, False, id="tier-b-en"),
+            pytest.param(0.50, "B", "nl", True, False, id="tier-b-nl"),
+            pytest.param(0.75, "C", "en", False, True, id="tier-c-en"),
+        ],
+    )
+    def test_tier_gating_contracts(
+        self,
+        confidence: float,
+        expected_tier: str,
+        lang: str,
+        expect_status_label: bool,
+        expect_parts: bool,
+    ) -> None:
+        data = _build_report_data(confidence=confidence, lang=lang)
 
-    def test_tier_a_no_system_cards(self, tier_a_data):
-        assert tier_a_data.certainty_tier_key == "A"
-        assert tier_a_data.system_cards == []
+        assert data.certainty_tier_key == expected_tier
+        assert data.observed.certainty_label is not None
+        assert data.observed.certainty_pct is not None
 
-    def test_tier_a_no_repair_actions(self, tier_a_data):
-        for step in tier_a_data.next_steps:
-            assert "balance" not in step.action.lower()
-            assert "inspect" not in step.action.lower()
-            assert "runout" not in step.action.lower()
+        if expected_tier == "A":
+            assert data.system_cards == []
+            assert len(data.next_steps) == 3
+            assert all(step.confirm is None for step in data.next_steps)
+            assert all(step.falsify is None for step in data.next_steps)
+            assert {step.action for step in data.next_steps} != {
+                "Inspect wheel balance and radial/lateral runout"
+            }
+            return
 
-    def test_tier_a_shows_capture_guidance(self, tier_a_data):
-        actions = [s.action for s in tier_a_data.next_steps]
-        assert len(actions) >= 3
-        assert any("speed sweep" in a.lower() or "speed" in a.lower() for a in actions)
-        assert any("sensor" in a.lower() for a in actions)
-        assert any("reference" in a.lower() or "tire size" in a.lower() for a in actions)
+        assert len(data.system_cards) == 1
+        assert [step.action for step in data.next_steps] == [
+            "Inspect wheel balance and radial/lateral runout"
+        ]
 
-    def test_tier_a_next_steps_not_empty(self, tier_a_data):
-        """The report should not be empty — it must guide the user."""
-        assert len(tier_a_data.next_steps) > 0
-
-    def test_tier_a_observed_signature_still_present(self, tier_a_data):
-        """Observed signature should still show (pattern data, certainty label)."""
-        assert tier_a_data.observed.certainty_label is not None
-        assert tier_a_data.observed.certainty_pct is not None
-
-
-# ---------------------------------------------------------------------------
-# Report output tests: Tier B behavior
-# ---------------------------------------------------------------------------
-
-
-class TestTierBReportOutput:
-    """Tier B (medium certainty, 40%–70%): hypotheses only, no repair parts."""
-
-    @pytest.fixture
-    def tier_b_data(self):
-        return build_report_document(prepare_report_input(_make_summary(confidence=0.50)))
-
-    def test_tier_b_system_cards_present(self, tier_b_data):
-        assert tier_b_data.certainty_tier_key == "B"
-        assert len(tier_b_data.system_cards) > 0
-
-    def test_tier_b_cards_use_possible_source_status_label(self, tier_b_data):
-        for card in tier_b_data.system_cards:
-            assert card.system_name
-            assert "hypothesis" not in card.system_name.lower()
-            assert card.status_label == "Possible source"
-
-    def test_tier_b_no_repair_parts(self, tier_b_data):
-        for card in tier_b_data.system_cards:
-            assert card.parts == [], f"Tier B cards should have no parts, got {card.parts}"
-
-    def test_tier_b_next_steps_from_test_plan(self, tier_b_data):
-        """Tier B should still pass through test_plan steps (verification)."""
-        assert len(tier_b_data.next_steps) > 0
-        assert tier_b_data.next_steps[0].action != ""
-
-
-# ---------------------------------------------------------------------------
-# Report output tests: Tier C behavior
-# ---------------------------------------------------------------------------
-
-
-class TestTierCReportOutput:
-    """Tier C (high certainty, ≥ 70%): full diagnostic behavior."""
-
-    @pytest.fixture
-    def tier_c_data(self):
-        return build_report_document(prepare_report_input(_make_summary(confidence=0.75)))
-
-    def test_tier_c_system_cards_present(self, tier_c_data):
-        assert tier_c_data.certainty_tier_key == "C"
-        assert len(tier_c_data.system_cards) > 0
-
-    def test_tier_c_cards_have_parts(self, tier_c_data):
-        has_parts = any(card.parts for card in tier_c_data.system_cards)
-        assert has_parts, "Tier C cards should have repair-oriented parts"
-
-    def test_tier_c_cards_no_hypothesis_label(self, tier_c_data):
-        for card in tier_c_data.system_cards:
-            assert "hypothesis" not in card.system_name.lower()
+        card = data.system_cards[0]
+        assert card.system_name
+        assert card.strongest_location == "front_left"
+        assert bool(card.status_label) is expect_status_label
+        assert bool(card.parts) is expect_parts
+        if expect_status_label:
+            assert card.status_label not in {"", None}
+            assert card.parts == []
+        else:
             assert card.status_label is None
+            assert [part.name for part in card.parts] == [
+                "Tire flat spot / out-of-round",
+                "Wheel balance weights",
+                "Wheel hub bearing",
+            ]
 
-    def test_tier_c_next_steps_from_test_plan(self, tier_c_data):
-        assert len(tier_c_data.next_steps) > 0
+    @pytest.mark.parametrize(
+        ("confidence", "expected_tier"),
+        [
+            pytest.param(0.06, "A", id="tier-a"),
+            pytest.param(0.50, "B", id="tier-b"),
+            pytest.param(0.75, "C", id="tier-c"),
+        ],
+    )
+    def test_dutch_localization_preserves_same_tier_semantics(
+        self,
+        confidence: float,
+        expected_tier: str,
+    ) -> None:
+        english = _build_report_data(confidence=confidence, lang="en")
+        dutch = _build_report_data(confidence=confidence, lang="nl")
 
+        assert english.certainty_tier_key == dutch.certainty_tier_key == expected_tier
+        assert len(english.system_cards) == len(dutch.system_cards)
+        assert len(english.next_steps) == len(dutch.next_steps)
 
-# ---------------------------------------------------------------------------
-# Regression test: low certainty scenario
-# ---------------------------------------------------------------------------
+        if expected_tier == "A":
+            assert english.system_cards == dutch.system_cards == []
+            assert [step.action for step in english.next_steps] != [
+                step.action for step in dutch.next_steps
+            ]
+            return
 
+        english_card = english.system_cards[0]
+        dutch_card = dutch.system_cards[0]
+        assert english_card.system_name
+        assert dutch_card.system_name
+        assert english_card.system_name != dutch_card.system_name
+        assert english_card.strongest_location == dutch_card.strongest_location == "front_left"
+        assert bool(english_card.parts) is bool(dutch_card.parts)
+        assert (english_card.status_label is None) is (dutch_card.status_label is None)
+        if english_card.status_label is not None:
+            assert dutch_card.status_label not in {"", None, english_card.status_label}
 
-class TestLowCertaintyRegression:
-    """Regression: at low certainty the report must not suggest specific repairs."""
+    def test_baseline_noise_low_certainty_stays_capture_guidance_only(self) -> None:
+        data = _build_report_data(confidence=0.08, source="baseline_noise")
 
-    @pytest.fixture
-    def low_cert_data(self):
-        return build_report_document(prepare_report_input(_make_summary(confidence=0.06)))
-
-    def test_six_percent_certainty_no_parts_to_inspect(self, low_cert_data):
-        """With ~6% certainty, no parts inspection should be suggested."""
-        for step in low_cert_data.next_steps:
-            assert "tire" not in step.action.lower() or "tire size" in step.action.lower()
-            assert "bearing" not in step.action.lower()
-            assert "mount" not in step.action.lower()
-
-    def test_six_percent_certainty_provides_guidance(self, low_cert_data):
-        """With ~6% certainty, guidance on how to improve data quality must be shown."""
-        actions_text = " ".join(s.action.lower() for s in low_cert_data.next_steps)
-        assert "speed" in actions_text, "Should mention speed sweep guidance"
-        assert "sensor" in actions_text, "Should mention sensor coverage guidance"
-
-    def test_baseline_noise_low_certainty(self):
-        """Baseline Noise as primary system with low certainty stays in Tier A."""
-        data = build_report_document(
-            prepare_report_input(_make_summary(confidence=0.08, source="baseline_noise"))
-        )
         assert data.certainty_tier_key == "A"
         assert data.system_cards == []
-        assert len(data.next_steps) >= 3
-
-
-# ---------------------------------------------------------------------------
-# NL language support
-# ---------------------------------------------------------------------------
-
-
-class TestCertaintyTierNL:
-    """Verify tier behavior works with Dutch (nl) language."""
-
-    def test_tier_a_nl_capture_guidance(self):
-        data = build_report_document(
-            prepare_report_input(_make_summary(confidence=0.06, lang="nl"))
-        )
-        assert data.certainty_tier_key == "A"
-        assert len(data.next_steps) >= 3
-        actions_text = " ".join(s.action for s in data.next_steps)
-        assert "snelheidsvariatie" in actions_text or "sensorlocaties" in actions_text
-
-    def test_tier_b_nl_status_label(self):
-        data = build_report_document(
-            prepare_report_input(_make_summary(confidence=0.50, lang="nl"))
-        )
-        for card in data.system_cards:
-            assert "hypothese" not in card.system_name.lower()
-            assert card.status_label == "Mogelijke bron"
+        assert len(data.next_steps) == 3

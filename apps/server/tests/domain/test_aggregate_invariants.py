@@ -65,6 +65,10 @@ def _run(
     )
 
 
+def _action(action_id: str, what: str) -> RecommendedAction:
+    return RecommendedAction(action_id=action_id, what=what)
+
+
 def _passing_suitability() -> RunSuitability:
     return RunSuitability(
         checks=(SuitabilityCheck(check_key="test", state="pass"),),
@@ -102,6 +106,36 @@ class TestCaseLifecycle:
     def test_case_with_no_runs_has_no_primary(self) -> None:
         case = DiagnosticCase.start()
         assert case.primary_run is None
+
+    def test_primary_run_advances_without_mutating_previous_case(self) -> None:
+        first = _run(
+            "run-1",
+            findings=(_finding("F001"),),
+            actions=(_action("inspect-wheel", "Inspect wheel balance"),),
+            suitability=_passing_suitability(),
+        )
+        second = _run(
+            "run-2",
+            findings=(_finding("F002", source="driveline", location="center"),),
+            actions=(_action("inspect-driveline", "Inspect driveline joints"),),
+            suitability=_failing_suitability(),
+        )
+
+        initial_case = DiagnosticCase.start()
+        first_case = initial_case.add_run(first)
+        latest_case = first_case.add_run(second)
+
+        assert initial_case.test_runs == ()
+        assert first_case.test_runs == (first,)
+        assert first_case.primary_run == first
+        assert latest_case.test_runs == (first, second)
+        assert latest_case.primary_run == second
+        assert latest_case.primary_run.primary_source is VibrationSource.DRIVELINE
+        assert latest_case.primary_run.primary_location == "center"
+        assert latest_case.primary_run.recommended_actions == (
+            _action("inspect-driveline", "Inspect driveline joints"),
+        )
+        assert latest_case.primary_run.suitability == _failing_suitability()
 
 
 # ── Impossible aggregate state tests ────────────────────────────────────────
@@ -188,17 +222,21 @@ class TestImpossibleFindingStates:
         with pytest.raises(ValueError, match="confidence must be in"):
             Finding(finding_id="F001", confidence=1.01)
 
-    def test_confidence_boundary_zero_ok(self) -> None:
-        f = Finding(finding_id="F001", confidence=0.0)
-        assert f.confidence == 0.0
-
-    def test_confidence_boundary_one_ok(self) -> None:
-        f = Finding(finding_id="F001", confidence=1.0)
-        assert f.confidence == 1.0
-
-    def test_confidence_none_ok(self) -> None:
-        f = Finding(finding_id="F001", confidence=None)
-        assert f.confidence is None
+    @pytest.mark.parametrize(
+        ("confidence", "expected"),
+        [
+            pytest.param(0.0, 0.0, id="zero"),
+            pytest.param(1.0, 1.0, id="one"),
+            pytest.param(None, None, id="none"),
+        ],
+    )
+    def test_confidence_boundary_cases_ok(
+        self,
+        confidence: float | None,
+        expected: float | None,
+    ) -> None:
+        f = Finding(finding_id="F001", confidence=confidence)
+        assert f.confidence == expected
 
     def test_cruise_fraction_below_zero_raises(self) -> None:
         with pytest.raises(ValueError, match="cruise_fraction must be in"):
@@ -235,45 +273,42 @@ class TestImpossibleFindingStates:
 class TestImpossibleSuitabilityStates:
     """SuitabilityCheck state values and RunSuitability aggregation."""
 
-    def test_arbitrary_state_string_is_accepted(self) -> None:
-        """SuitabilityCheck.state is a plain str, not an enum — any value is stored."""
-        c = SuitabilityCheck(check_key="test", state="banana")
+    def test_arbitrary_state_string_is_explicitly_neutral_downstream(self) -> None:
+        """Unknown states remain stored but do not count as pass/warn/fail."""
+        c = SuitabilityCheck(check_key="test", state="banana", details=(("stride", 4),))
+        suitability = RunSuitability(checks=(c,))
+
         assert c.state == "banana"
         assert not c.passed
         assert not c.failed
         assert not c.is_warning
+        assert c.details_dict == {"stride": 4}
+        assert c.explanation_i18n_ref() == ""
+        assert suitability.overall == "pass"
+        assert suitability.is_usable
+        assert suitability.failed_checks == ()
+        assert suitability.warning_checks == ()
 
-    def test_overall_fail_when_any_check_fails(self) -> None:
+    @pytest.mark.parametrize(
+        ("states", "expected_overall", "expected_usable"),
+        [
+            pytest.param((), "pass", True, id="empty"),
+            pytest.param(("pass", "pass"), "pass", True, id="all-pass"),
+            pytest.param(("pass", "warn"), "caution", True, id="warning-present"),
+            pytest.param(("pass", "fail"), "fail", False, id="failure-present"),
+        ],
+    )
+    def test_overall_state_aggregation(
+        self,
+        states: tuple[str, ...],
+        expected_overall: str,
+        expected_usable: bool,
+    ) -> None:
         s = RunSuitability(
-            checks=(
-                SuitabilityCheck(check_key="a", state="pass"),
-                SuitabilityCheck(check_key="b", state="fail"),
+            checks=tuple(
+                SuitabilityCheck(check_key=f"check-{index}", state=state)
+                for index, state in enumerate(states)
             )
         )
-        assert s.overall == "fail"
-        assert not s.is_usable
-
-    def test_overall_caution_when_only_warnings(self) -> None:
-        s = RunSuitability(
-            checks=(
-                SuitabilityCheck(check_key="a", state="pass"),
-                SuitabilityCheck(check_key="b", state="warn"),
-            )
-        )
-        assert s.overall == "caution"
-        assert s.is_usable
-
-    def test_overall_pass_when_all_pass(self) -> None:
-        s = RunSuitability(
-            checks=(
-                SuitabilityCheck(check_key="a", state="pass"),
-                SuitabilityCheck(check_key="b", state="pass"),
-            )
-        )
-        assert s.overall == "pass"
-        assert s.is_usable
-
-    def test_empty_checks_is_pass(self) -> None:
-        s = RunSuitability(checks=())
-        assert s.overall == "pass"
-        assert s.is_usable
+        assert s.overall == expected_overall
+        assert s.is_usable is expected_usable

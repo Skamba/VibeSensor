@@ -37,6 +37,12 @@ def _metadata(run_id: str, **overrides: object) -> RunMetadata:
     return run_metadata_from_mapping(payload)
 
 
+def _assert_client_name_not_persisted(db: HistoryDB, client_id: str) -> None:
+    assert db.list_client_names() == {}
+    fresh_registry = ClientRegistry(db=db)
+    assert fresh_registry.get(client_id) is None
+
+
 class TestHistoryDBExceptionDiscipline:
     """HistoryDB catches sqlite3.Error but lets coding bugs propagate."""
 
@@ -61,6 +67,9 @@ class TestHistoryDBExceptionDiscipline:
         with pytest.raises(TypeError), db.write_transaction_cursor() as cur:
             cur.execute("SELECT 1")
             raise TypeError("simulated code bug")
+        run_id = "run-after-type-error"
+        db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, src="t"))
+        assert any(run.run_id == run_id for run in db.list_runs())
         db.close()
 
     def test_attribute_error_in_cursor_propagates(self, tmp_path: Path) -> None:
@@ -69,6 +78,9 @@ class TestHistoryDBExceptionDiscipline:
         with pytest.raises(AttributeError), db._cursor() as cur:
             cur.execute("SELECT 1")
             raise AttributeError("simulated code bug")
+        run_id = "run-after-attribute-error"
+        db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, src="t"))
+        assert any(run.run_id == run_id for run in db.list_runs())
         db.close()
 
 
@@ -82,6 +94,7 @@ class TestSettingsStoreExceptionDiscipline:
         """An sqlite3.OperationalError from the DB is wrapped as PersistenceError."""
         db = HistoryDB(tmp_path / "test.db")
         services = build_settings_services(db=db)
+        before = services.car_settings.get_cars()
         services.coordinator._db = MagicMock()
         services.coordinator._db.set_settings_snapshot.side_effect = sqlite3.OperationalError(
             "disk I/O error"
@@ -89,31 +102,37 @@ class TestSettingsStoreExceptionDiscipline:
 
         with pytest.raises(PersistenceError, match="Failed to persist"):
             services.car_settings.add_car({"name": "Test"})
+        assert services.car_settings.get_cars() == before
 
     def test_os_error_wrapped_as_persistence_error(self, tmp_path: Path) -> None:
         """An OSError from the DB is wrapped as PersistenceError."""
         db = HistoryDB(tmp_path / "test.db")
         services = build_settings_services(db=db)
+        before = services.car_settings.get_cars()
         services.coordinator._db = MagicMock()
         services.coordinator._db.set_settings_snapshot.side_effect = OSError("disk full")
 
         with pytest.raises(PersistenceError, match="Failed to persist"):
             services.car_settings.add_car({"name": "Test"})
+        assert services.car_settings.get_cars() == before
 
     def test_type_error_propagates_through_persist(self, tmp_path: Path) -> None:
         """TypeError from the DB is NOT wrapped — it propagates as a code bug."""
         db = HistoryDB(tmp_path / "test.db")
         services = build_settings_services(db=db)
+        before = services.car_settings.get_cars()
         services.coordinator._db = MagicMock()
         services.coordinator._db.set_settings_snapshot.side_effect = TypeError("bad argument type")
 
         with pytest.raises(TypeError, match="bad argument type"):
             services.car_settings.add_car({"name": "Test"})
+        assert services.car_settings.get_cars() == before
 
     def test_attribute_error_propagates_through_persist(self, tmp_path: Path) -> None:
         """AttributeError from the DB is NOT wrapped — it's a code bug."""
         db = HistoryDB(tmp_path / "test.db")
         services = build_settings_services(db=db)
+        before = services.car_settings.get_cars()
         services.coordinator._db = MagicMock()
         services.coordinator._db.set_settings_snapshot.side_effect = AttributeError(
             "no such method"
@@ -121,6 +140,7 @@ class TestSettingsStoreExceptionDiscipline:
 
         with pytest.raises(AttributeError, match="no such method"):
             services.car_settings.add_car({"name": "Test"})
+        assert services.car_settings.get_cars() == before
 
 
 # ── ClientRegistry — sqlite3.Error caught, bugs propagate ────────────────
@@ -144,6 +164,7 @@ class TestRegistryExceptionDiscipline:
         rec = registry.get(client_id)
         assert rec is not None
         assert rec.name == "My Sensor"
+        _assert_client_name_not_persisted(db, client_id)
 
     def test_type_error_on_persist_name_propagates(self, tmp_path: Path) -> None:
         """TypeError during name persistence indicates a code bug and must propagate."""
@@ -154,3 +175,4 @@ class TestRegistryExceptionDiscipline:
         with patch.object(db, "upsert_client_name", side_effect=TypeError("wrong type")):
             with pytest.raises(TypeError, match="wrong type"):
                 registry.set_name(client_id, "My Sensor")
+        _assert_client_name_not_persisted(db, client_id)

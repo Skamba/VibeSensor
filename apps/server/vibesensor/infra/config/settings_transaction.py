@@ -66,7 +66,7 @@ def update_with_rollback[SnapshotT, ResultT](
             return result()
         try:
             persist()
-        except PersistenceError:
+        except (PersistenceError, TypeError, AttributeError, KeyError):
             restore(previous)
             raise
         if audit_log is not None:
