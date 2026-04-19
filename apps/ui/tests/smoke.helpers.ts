@@ -5,10 +5,11 @@ export type FakeWebSocketOptions = {
   payload?: Record<string, unknown>;
   repeatPayloadCount?: number;
   repeatPayloadIntervalMs?: number;
+  trackerKey?: string;
 };
 
 export async function installFakeWebSocket(page: Page, options: FakeWebSocketOptions = {}): Promise<void> {
-  await page.addInitScript(({ payload, schemaVersion, repeatPayloadCount, repeatPayloadIntervalMs }) => {
+  await page.addInitScript(({ payload, schemaVersion, repeatPayloadCount, repeatPayloadIntervalMs, trackerKey }) => {
     const mergedPayload = payload
       ? {
           schema_version: schemaVersion,
@@ -20,6 +21,16 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
           ...payload,
         }
       : null;
+    const globalState = window as Window & typeof globalThis & Record<string, unknown>;
+    const tracker = trackerKey
+      ? {
+          deliveredCount: 0,
+          repeatTimerActive: false,
+        }
+      : null;
+    if (trackerKey && tracker) {
+      globalState[trackerKey] = tracker;
+    }
     class FakeWebSocket {
       static OPEN = 1;
       readyState = 1;
@@ -31,15 +42,25 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
       constructor() {
         queueMicrotask(() => this.onopen?.(new Event("open")));
         if (mergedPayload) {
-          const emitPayload = () =>
+          const emitPayload = () => {
+            if (tracker) {
+              tracker.deliveredCount += 1;
+            }
             this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(mergedPayload) }));
+          };
           queueMicrotask(emitPayload);
           if ((repeatPayloadCount ?? 0) > 0) {
+            if (tracker) {
+              tracker.repeatTimerActive = true;
+            }
             let remainingRepeats = repeatPayloadCount ?? 0;
             this.repeatTimer = window.setInterval(() => {
               if (this.readyState !== FakeWebSocket.OPEN) {
                 window.clearInterval(this.repeatTimer);
                 this.repeatTimer = 0;
+                if (tracker) {
+                  tracker.repeatTimerActive = false;
+                }
                 return;
               }
               emitPayload();
@@ -47,6 +68,9 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
               if (remainingRepeats <= 0) {
                 window.clearInterval(this.repeatTimer);
                 this.repeatTimer = 0;
+                if (tracker) {
+                  tracker.repeatTimerActive = false;
+                }
               }
             }, repeatPayloadIntervalMs ?? 50);
           }
@@ -57,6 +81,9 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
         if (this.repeatTimer) {
           window.clearInterval(this.repeatTimer);
           this.repeatTimer = 0;
+          if (tracker) {
+            tracker.repeatTimerActive = false;
+          }
         }
         this.readyState = 3;
         this.onclose?.(new CloseEvent("close"));
@@ -64,6 +91,36 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
     }
     window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
   }, { ...options, schemaVersion: EXPECTED_SCHEMA_VERSION });
+}
+
+export async function waitForFakeWebSocketSettled(
+  page: Page,
+  trackerKey: string,
+  minimumDeliveredCount: number,
+): Promise<void> {
+  await expect.poll(async () => {
+    const tracker = await page.evaluate((key) => {
+      const tracker = (
+        window as Window & typeof globalThis & Record<string, unknown>
+      )[key];
+      if (
+        typeof tracker !== "object"
+        || tracker === null
+        || !("deliveredCount" in tracker)
+        || !("repeatTimerActive" in tracker)
+        || typeof tracker.deliveredCount !== "number"
+        || typeof tracker.repeatTimerActive !== "boolean"
+      ) {
+        throw new Error(`Missing fake WebSocket tracker: ${key}`);
+      }
+      return {
+        deliveredCount: tracker.deliveredCount,
+        repeatTimerActive: tracker.repeatTimerActive,
+      };
+    }, trackerKey);
+    return tracker.repeatTimerActive === false
+      && tracker.deliveredCount >= minimumDeliveredCount;
+  }).toBe(true);
 }
 
 export async function confirmPrompt(page: Page): Promise<void> {

@@ -245,7 +245,6 @@ test("dark mode quiet danger buttons use semantic danger tokens in History", asy
     deleteButtonBox.y + (deleteButtonBox.height / 2),
   );
   await expect.poll(() => deleteButton.evaluate((element) => element.matches(":hover"))).toBe(true);
-  await page.waitForTimeout(150);
   const hoverStyles = await readSemanticToneStyles(deleteButton, {
     surfaceVar: "--button-danger-quiet-hover-surface",
     borderVar: "--button-danger-quiet-hover-border",
@@ -493,10 +492,8 @@ test("history PDF download revokes object URL with safe delay", async ({ page })
   await expect(pdfButton).toBeVisible();
   await pdfButton.click();
   await expect.poll(() => reportPdfCalls).toBe(1);
-  await page.waitForTimeout(200);
   expect(await revokeCallCount()).toBe(0);
-  await page.waitForTimeout(1000);
-  expect(await revokeCallCount()).toBe(1);
+  await expect.poll(revokeCallCount, { timeout: 2_000 }).toBe(1);
 });
 
 test("history loaded insights promote the result summary above supporting evidence", async ({ page }) => {

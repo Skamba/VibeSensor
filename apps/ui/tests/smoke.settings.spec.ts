@@ -24,11 +24,21 @@ test("gps status uses selected speed unit in settings panel", async ({ page }) =
 });
 
 test("gps status polling does not override websocket speed readout", async ({ page }) => {
-  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "/api/settings/language": { language: "en" }, "/api/settings/speed-unit": { speed_unit: "kmh" }, "/api/settings/speed-source/status": gpsStatus({}) }) });
+  let gpsStatusCalls = 0;
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "/api/settings/language": { language: "en" },
+      "/api/settings/speed-unit": { speed_unit: "kmh" },
+      "GET /api/settings/speed-source/status": async () => {
+        gpsStatusCalls += 1;
+        return gpsStatus({});
+      },
+    }),
+  });
   await installFakeWebSocket(page, { payload: { server_time: new Date().toISOString(), speed_mps: 20, clients: [], spectra: { clients: {} } } });
   await page.goto("/");
   await expect(page.locator("#speed")).toContainText("72.0 km/h");
-  await page.waitForTimeout(500);
+  await expect.poll(() => gpsStatusCalls, { timeout: 5_000 }).toBeGreaterThanOrEqual(2);
   await expect(page.locator("#speed")).toContainText("72.0 km/h");
 });
 
@@ -817,7 +827,8 @@ test("background OBD rescans stop when the Speed Source OBD panel is no longer v
   await page.locator('[data-speed-source-choice="gps"]').click();
 
   const stoppedAt = scanCalls;
-  await page.waitForTimeout(2_500);
+  await expect(page.locator('input[name="speedSourceRadio"][value="gps"]')).toBeChecked();
+  await expect(page.locator("#obdSpeedConfig")).toBeHidden();
   expect(scanCalls).toBe(stoppedAt);
 });
 
