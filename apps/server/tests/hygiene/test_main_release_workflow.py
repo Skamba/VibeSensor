@@ -14,7 +14,6 @@ def test_main_release_workflow_fetches_full_history_and_validates_release_artifa
     workflow_path = REPO_ROOT / ".github" / "workflows" / "main-release.yml"
     workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
     release_job = workflow["jobs"]["release"]
-    publish_wiki_job = workflow["jobs"]["publish_wiki"]
     steps = release_job["steps"]
 
     checkout_step = next(
@@ -77,32 +76,10 @@ def test_main_release_workflow_fetches_full_history_and_validates_release_artifa
         for step in steps
         if isinstance(step, dict) and isinstance(step.get("name"), str)
     }
+    assert "publish_wiki" not in workflow["jobs"]
     assert "Generate wiki screenshots" not in release_step_names
     assert "Upload wiki screenshot artifact" not in release_step_names
     assert "Publish GitHub wiki screenshots" not in release_step_names
-
-    assert publish_wiki_job["needs"] == "release"
-    assert publish_wiki_job["continue-on-error"] is True
-    publish_steps = publish_wiki_job["steps"]
-    upload_step = next(
-        step
-        for step in publish_steps
-        if isinstance(step, dict) and step.get("name") == "Upload wiki screenshot artifact"
-    )
-    assert upload_step["if"] == "${{ always() }}"
-    assert upload_step["with"]["if-no-files-found"] == "warn"
-
-    publish_step = next(
-        step
-        for step in publish_steps
-        if isinstance(step, dict) and step.get("name") == "Publish GitHub wiki screenshots"
-    )
-    publish_script = publish_step["run"]
-    assert (
-        "docs(wiki): refresh screenshots for release ${{ needs.release.outputs.version }}"
-        in publish_script
-    )
-    assert "tools/wiki/publish_wiki.py" in publish_script
 
 
 def test_main_release_workflow_labels_and_cleans_only_wheel_esp_releases() -> None:
