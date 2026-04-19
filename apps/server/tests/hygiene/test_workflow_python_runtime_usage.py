@@ -95,6 +95,24 @@ def test_workflows_use_configured_python_runtime_paths() -> None:
     assert "steps.setup-python.outputs.python-path" in ci_text
     assert "steps.setup-backend.outputs.python-path" in ci_text
 
+    ci = _load_yaml(_CI)
+    docs_lint_steps = ci["jobs"]["docs-lint"]["steps"]
+    assert isinstance(docs_lint_steps, list)
+    setup_python_step = next(
+        step
+        for step in docs_lint_steps
+        if isinstance(step, dict) and step.get("id") == "setup-python"
+    )
+    assert setup_python_step["uses"] == "./.github/actions/setup-python"
+    docs_lint_step = next(
+        step
+        for step in docs_lint_steps
+        if isinstance(step, dict) and step.get("name") == "Docs lint"
+    )
+    assert docs_lint_step["run"] == (
+        '"${{ steps.setup-python.outputs.python-path }}" tools/dev/docs_lint.py'
+    )
+
 
 def test_pi_image_release_scripts_accept_configured_python_path() -> None:
     app_artifacts = _APP_ARTIFACTS.read_text(encoding="utf-8")
