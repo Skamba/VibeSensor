@@ -58,6 +58,8 @@ def test_cars_response_payload_projects_snapshot() -> None:
         ],
         "active_car_id": "car-1",
     }
+
+
 def test_speed_source_update_payload_from_mapping_projects_http_keys() -> None:
     payload = speed_source_update_payload_from_mapping(
         {
