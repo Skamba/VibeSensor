@@ -119,7 +119,11 @@ _BACKEND_TEST_SHARD_JOBS = (
     "backend-tests-5",
 )
 _BACKEND_SETUP_JOBS = (
-    *_BACKEND_QUALITY_JOBS,
+    "backend-lint",
+    "repo-hygiene",
+    "backend-static-guards",
+    "backend-preflight",
+    "backend-contract-drift",
     "backend-typecheck",
     _BACKEND_TEST_MATRIX_JOB,
     "e2e",
@@ -974,6 +978,33 @@ def check_contract_sync_entrypoint() -> list[str]:
             errors.append(
                 "ui-build-artifact must build static assets with tools/build_ui_static.py --skip-typecheck --assume-prevalidated-contracts."
             )
+
+    docs_lint = jobs.get("docs-lint")
+    if isinstance(docs_lint, Mapping):
+        steps = docs_lint.get("steps")
+        if isinstance(steps, list):
+            if not any(
+                isinstance(step, Mapping)
+                and step.get("id") == "setup-python"
+                and step.get("uses") == _LOCAL_PYTHON_SETUP_ACTION
+                for step in steps
+            ):
+                errors.append("docs-lint must use ./.github/actions/setup-python.")
+            if any(
+                isinstance(step, Mapping)
+                and step.get("uses") == _LOCAL_BACKEND_SETUP_ACTION
+                for step in steps
+            ):
+                errors.append("docs-lint must not use ./.github/actions/setup-backend.")
+            if not any(
+                isinstance(step, Mapping)
+                and step.get("run")
+                == '"${{ steps.setup-python.outputs.python-path }}" tools/dev/docs_lint.py'
+                for step in steps
+            ):
+                errors.append(
+                    "docs-lint must invoke tools/dev/docs_lint.py with the configured setup-python interpreter path."
+                )
 
     for path in (_UI_README_PATH, _SERVER_README_PATH, _CONTRIBUTING_PATH):
         if "make sync-contracts" not in path.read_text(encoding="utf-8"):
