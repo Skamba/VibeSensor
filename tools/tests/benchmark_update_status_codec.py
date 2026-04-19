@@ -9,6 +9,11 @@ Usage::
 Run this on a Raspberry Pi or similar low-power Linux host before copying the
 pattern to larger payload boundaries. Output reports payload bytes plus encode
 and decode latency in microseconds per operation.
+
+For repeatable regression comparisons, use
+``apps/server/tests/use_cases/updates/benchmark_update_status_codec.py``
+through ``make benchmark-backend``. This script remains the standalone
+single-shot timing harness.
 """
 
 from __future__ import annotations
