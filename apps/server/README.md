@@ -128,7 +128,9 @@ install path.
 ## Payload boundary pattern
 
 Updater status persistence and `/api/update/status` now share one msgspec-owned
-boundary in `vibesensor/use_cases/updates/status/payload_codec.py`.
+boundary in `vibesensor/use_cases/updates/status/payload_codec.py`. Persisted
+settings snapshots now follow the same pattern in
+`vibesensor/shared/boundaries/settings/snapshot.py`.
 
 - Keep the domain models (`UpdateJobStatus`, `UpdateRuntimeDetails`,
   `UpdateIssue`) as the internal source of truth.
@@ -140,6 +142,10 @@ boundary in `vibesensor/use_cases/updates/status/payload_codec.py`.
 - Keep compatibility code narrow: legacy persisted status oddities normalize in
   one decode fallback path instead of leaking loose coercion into domain models
   or route handlers.
+- Use the same pattern for internal persisted settings/user-preference snapshots:
+  msgspec structs own the SQLite codec boundary, legacy loose JSON is normalized
+  in one fallback decode path, and higher-level settings services still expose
+  stable builtins/HTTP payloads above that boundary.
 - Keep Pydantic response models at the HTTP edge when OpenAPI generation still
   depends on them; msgspec feeds those models with already-validated builtins.
 
