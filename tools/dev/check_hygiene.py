@@ -92,6 +92,7 @@ def check_path_indirections() -> tuple[list[str], list[str]]:
 
 _BACKEND_TEST_MATRIX_JOB = "backend-tests"
 _CI_SCOPE_JOB = "ci-scope"
+_UI_BUILD_ARTIFACT_JOB = "ui-build-artifact"
 _BACKEND_QUALITY_JOBS = (
     "backend-lint",
     "repo-hygiene",
@@ -106,8 +107,10 @@ _RELEASE_SMOKE_QUALITY_NEEDS = (
     *_BACKEND_QUALITY_JOBS,
     "backend-typecheck",
     "frontend-typecheck",
+    _UI_BUILD_ARTIFACT_JOB,
 )
 _UI_SMOKE_NEEDS = (_CI_SCOPE_JOB, "frontend-typecheck")
+_UI_BUILD_ARTIFACT_NEEDS = (_CI_SCOPE_JOB, "frontend-typecheck")
 _BACKEND_TEST_SHARD_JOBS = (
     "backend-tests-1",
     "backend-tests-2",
@@ -1091,8 +1094,14 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
         and _workflow_job_needs(release_smoke) != _RELEASE_SMOKE_QUALITY_NEEDS
     ):
         errors.append(
-            "release-smoke must depend on ci-scope, the split quality jobs, backend-typecheck, and frontend-typecheck."
+            "release-smoke must depend on ci-scope, the split quality jobs, backend-typecheck, frontend-typecheck, and ui-build-artifact."
         )
+    ui_build_artifact = jobs.get(_UI_BUILD_ARTIFACT_JOB)
+    if (
+        isinstance(ui_build_artifact, Mapping)
+        and _workflow_job_needs(ui_build_artifact) != _UI_BUILD_ARTIFACT_NEEDS
+    ):
+        errors.append("ui-build-artifact must depend on ci-scope and frontend-typecheck.")
     firmware_job = jobs.get(_FIRMWARE_INSTALL_JOB)
     if (
         isinstance(firmware_job, Mapping)

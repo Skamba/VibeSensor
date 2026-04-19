@@ -99,15 +99,19 @@ def _job_uses_ui_workspace(steps: list[Step]) -> bool:
     return any(step.cwd == UI_DIR for step in steps)
 
 
-def _job_runs_release_smoke(steps: list[Step]) -> bool:
-    return any("tools/tests/run_release_smoke.py" in step.cmd for step in steps)
+def _job_runs_release_smoke_ui_build(steps: list[Step]) -> bool:
+    return any(
+        "tools/tests/run_release_smoke.py" in step.cmd
+        and "--skip-ui-build" not in step.cmd
+        for step in steps
+    )
 
 
 def _selected_jobs_touch_ui(
     selected_jobs: list[str], all_jobs: dict[str, list[Step]]
 ) -> bool:
     return any(
-        _job_runs_release_smoke(all_jobs[job_name])
+        _job_runs_release_smoke_ui_build(all_jobs[job_name])
         or _job_uses_ui_workspace(all_jobs[job_name])
         for job_name in selected_jobs
     )
@@ -123,7 +127,8 @@ def _shared_ui_workspace_would_race(
     if not skip_bootstrap:
         return False
     if not any(
-        _job_runs_release_smoke(all_jobs[job_name]) for job_name in selected_jobs
+        _job_runs_release_smoke_ui_build(all_jobs[job_name])
+        for job_name in selected_jobs
     ):
         return False
     if not any(
