@@ -41,6 +41,7 @@ def test_car_diagram_shell_uses_contoured_paths_and_detail_polygons() -> None:
     assert shape_counts["Rect"] >= 4
 
 
+@pytest.mark.visual_audit
 def test_appendix_b_diagram_visual_audit_exports_screenshot(tmp_path: Path) -> None:
     audit_root_env = os.getenv("VIBESENSOR_DIAGRAM_AUDIT_DIR")
     artifact_dir = Path(audit_root_env) if audit_root_env else tmp_path / "diagram_audit"

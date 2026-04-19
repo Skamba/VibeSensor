@@ -165,6 +165,24 @@ VIBESENSOR_OCR_AUDIT_DIR="$PWD/../../artifacts/pdf-ocr-audit" \
 PNG, and JSON audit artifacts to land in a deterministic retained directory
 instead of pytest's temp path.
 
+## PDF visual audits
+
+The screenshot-exporting PDF visual audits are also intentionally excluded from
+the default backend pytest lane. Run them only on purpose:
+
+```bash
+cd apps/server
+VIBESENSOR_DIAGRAM_AUDIT_DIR="$PWD/../../artifacts/pdf-diagram-audit" \
+  VIBESENSOR_TIMELINE_AUDIT_DIR="$PWD/../../artifacts/pdf-timeline-audit" \
+  python3 -m pytest -o addopts='' -m visual_audit \
+  tests/adapters/pdf/test_report_pdf_diagram_visual_audit.py \
+  tests/adapters/pdf/test_report_pdf_timeline_visual_audit.py
+```
+
+The fast structural diagram assertion in
+`test_report_pdf_diagram_visual_audit.py` stays in the normal correctness lane;
+only the artifact-exporting screenshot checks moved behind `visual_audit`.
+
 ## Firmware and Pi-image validation
 
 Use the narrowest existing validation path that matches the layer you changed:
