@@ -1,3 +1,4 @@
+import { useRef } from "preact/hooks";
 import { render } from "preact";
 
 import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
@@ -23,7 +24,7 @@ import {
   type CarsFeatureInteractionHandlers,
 } from "./cars_wizard_panel";
 import {
-  useCarsWizardFocusManager,
+  useCarsWizardElementRefs,
   type CarsWizardFocusRequest,
 } from "./cars_wizard_focus";
 import type { DeferredModelSignal } from "./view_model_binding";
@@ -70,10 +71,9 @@ function CarsPanel(props: {
   const wizardModel = useComputed(
     () => props.state.value.wizardModel?.value ?? DEFAULT_CARS_WIZARD_MODEL,
   );
-  const { addCarButtonRef, wizardRefs } = useCarsWizardFocusManager({
-    state: props.state,
-    wizardFocusRequest: props.wizardFocusRequest,
-  });
+  const addCarButtonRef = useRef<HTMLButtonElement | null>(null);
+  const wizardRefs = useCarsWizardElementRefs();
+  const focusRequest = props.wizardFocusRequest.value;
   const openWizard = () => {
     wizardActions.peek()?.onAction({ type: "open" });
   };
@@ -88,6 +88,8 @@ function CarsPanel(props: {
       />
       <CarsWizardPanel
         actions={wizardActions}
+        addCarButtonRef={addCarButtonRef}
+        focusRequest={focusRequest}
         refs={wizardRefs}
         wizardModel={wizardModel}
       />

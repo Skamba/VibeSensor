@@ -1,17 +1,21 @@
-import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
 import type { CarsFeatureManualInputState } from "../features/cars_manual_input";
 import { getUiText as t } from "../ui_i18n";
 import {
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
+import { useLayoutEffect, useRef } from "preact/hooks";
 import type { CarsWizardRenderModel } from "./car_wizard_view";
 import {
   CarsWizardStepNav,
   CarsWizardSteps,
   CarsWizardSummaryPanel,
-} from "./cars_wizard_sections";
-import type { CarsWizardElementRefs } from "./cars_wizard_focus";
+  } from "./cars_wizard_sections";
+import {
+  resolveWizardFocusTarget,
+  type CarsWizardElementRefs,
+  type CarsWizardFocusRequest,
+} from "./cars_wizard_focus";
 
 export type CarsFeatureInteraction =
   | { type: "back" }
@@ -47,6 +51,8 @@ const CARS_WIZARD_PANEL_KEYS = [
 
 export function CarsWizardPanel(props: {
   actions: ReadonlySignal<CarsFeatureInteractionHandlers | null>;
+  addCarButtonRef: { current: HTMLButtonElement | null };
+  focusRequest: CarsWizardFocusRequest | null;
   refs: CarsWizardElementRefs;
   wizardModel: ReadonlySignal<CarsWizardRenderModel>;
 }) {
@@ -62,6 +68,38 @@ export function CarsWizardPanel(props: {
     step,
     summary,
   } = useSignalProperties(props.wizardModel, CARS_WIZARD_PANEL_KEYS);
+  const lastReturnFocusTargetRef = useRef<HTMLElement | null>(null);
+  const wasOpenRef = useRef(isOpen.value);
+
+  useLayoutEffect(() => {
+    const wasOpen = wasOpenRef.current;
+    const isCurrentlyOpen = isOpen.value;
+    if (isCurrentlyOpen && !wasOpen) {
+      const activeElement = document.activeElement;
+      lastReturnFocusTargetRef.current =
+        activeElement instanceof HTMLElement && activeElement !== document.body
+          ? activeElement
+          : props.addCarButtonRef.current;
+      if (refs.elements.current.addCarWizard) {
+        refs.elements.current.addCarWizard.scrollTop = 0;
+      }
+    }
+    if (!isCurrentlyOpen && wasOpen) {
+      const returnTarget = lastReturnFocusTargetRef.current;
+      lastReturnFocusTargetRef.current = null;
+      const safeTarget = returnTarget?.isConnected ? returnTarget : props.addCarButtonRef.current;
+      safeTarget?.focus();
+    }
+    wasOpenRef.current = isCurrentlyOpen;
+  }, [isOpen.value, props.addCarButtonRef, refs]);
+
+  useLayoutEffect(() => {
+    const focusRequest = props.focusRequest;
+    if (!focusRequest) {
+      return;
+    }
+    resolveWizardFocusTarget(focusRequest.target, refs.elements.current)?.focus();
+  }, [props.focusRequest, refs]);
 
   function dispatchAction(action: CarsFeatureInteraction): void {
     props.actions.peek()?.onAction(action);

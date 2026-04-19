@@ -1,8 +1,5 @@
-import { useRef } from "preact/hooks";
-
 import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
-import { useSignalEffect, type ReadonlySignal } from "../ui_signals";
-import type { CarsWizardRenderModel } from "./car_wizard_view";
+import { useRef } from "preact/hooks";
 
 export type CarsWizardFocusElements = {
   addCarWizard: HTMLDivElement | null;
@@ -35,10 +32,6 @@ export type CarsWizardElementRefs = {
     key: Key,
   ) => (element: CarsWizardFocusElements[Key]) => void;
 };
-
-function focusElement(target: HTMLElement | null | undefined): void {
-  target?.focus();
-}
 
 function createCarsWizardFocusElements(): CarsWizardFocusElements {
   return {
@@ -102,68 +95,16 @@ export function resolveWizardFocusTarget(
   }
 }
 
-export function useCarsWizardFocusManager(props: {
-  state: ReadonlySignal<{ wizardModel: ReadonlySignal<CarsWizardRenderModel> | null }>;
-  wizardFocusRequest: ReadonlySignal<CarsWizardFocusRequest | null>;
-}): {
-  addCarButtonRef: { current: HTMLButtonElement | null };
-  wizardRefs: CarsWizardElementRefs;
-} {
-  const addCarButtonRef = useRef<HTMLButtonElement | null>(null);
+export function useCarsWizardElementRefs(): CarsWizardElementRefs {
   const elements = useRef<CarsWizardFocusElements>(createCarsWizardFocusElements());
-  const lastReturnFocusTargetRef = useRef<HTMLElement | null>(null);
-  const lastHandledFocusRequestTokenRef = useRef(0);
-  const lastWizardOpenStateRef = useRef(props.state.value.wizardModel?.value.isOpen ?? false);
-
-  const setElementRef: CarsWizardElementRefs["setElementRef"] = (key) => (element) => {
-    elements.current[key] = element;
-  };
-
-  useSignalEffect(() => {
-    const isOpen = props.state.value.wizardModel?.value.isOpen ?? false;
-    const wasOpen = lastWizardOpenStateRef.current;
-    if (isOpen && !wasOpen) {
-      const activeElement = document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-      lastReturnFocusTargetRef.current =
-        activeElement && activeElement !== document.body ? activeElement : addCarButtonRef.current;
-      queueMicrotask(() => {
-        if (elements.current.addCarWizard) {
-          elements.current.addCarWizard.scrollTop = 0;
-        }
-      });
-    }
-    if (!isOpen && wasOpen) {
-      const target = lastReturnFocusTargetRef.current;
-      lastReturnFocusTargetRef.current = null;
-      queueMicrotask(() => {
-        const safeTarget = target && document.contains(target) ? target : addCarButtonRef.current;
-        focusElement(safeTarget);
-      });
-    }
-    lastWizardOpenStateRef.current = isOpen;
-  });
-
-  useSignalEffect(() => {
-    const wizardFocusRequest = props.wizardFocusRequest.value;
-    if (
-      !wizardFocusRequest ||
-      wizardFocusRequest.token === lastHandledFocusRequestTokenRef.current
-    ) {
-      return;
-    }
-    lastHandledFocusRequestTokenRef.current = wizardFocusRequest.token;
-    queueMicrotask(() => {
-      focusElement(resolveWizardFocusTarget(wizardFocusRequest.target, elements.current));
-    });
-  });
-
-  return {
-    addCarButtonRef,
-    wizardRefs: {
+  const refs = useRef<CarsWizardElementRefs | null>(null);
+  if (refs.current === null) {
+    refs.current = {
       elements,
-      setElementRef,
-    },
-  };
+      setElementRef: (key) => (element) => {
+        elements.current[key] = element;
+      },
+    };
+  }
+  return refs.current;
 }
