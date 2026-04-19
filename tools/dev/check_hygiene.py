@@ -1101,7 +1101,9 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
         isinstance(ui_build_artifact, Mapping)
         and _workflow_job_needs(ui_build_artifact) != _UI_BUILD_ARTIFACT_NEEDS
     ):
-        errors.append("ui-build-artifact must depend on ci-scope and frontend-typecheck.")
+        errors.append(
+            "ui-build-artifact must depend on ci-scope and frontend-typecheck."
+        )
     firmware_job = jobs.get(_FIRMWARE_INSTALL_JOB)
     if (
         isinstance(firmware_job, Mapping)
