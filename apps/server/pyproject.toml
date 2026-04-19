@@ -66,7 +66,7 @@ where = ["."]
 include = ["vibesensor*"]
 
 [tool.pytest.ini_options]
-addopts = "-n auto --dist worksteal"
+addopts = "-n auto --dist worksteal -m 'not ocr_audit'"
 asyncio_mode = "auto"
 timeout = 120
 # Keep tests/ importable so shared helpers use `from test_support...` short imports.
@@ -75,6 +75,7 @@ testpaths = ["tests"]
 markers = [
     "e2e: end-to-end tests",
     "long_sim: longer simulated-run tests (>20 s of synthetic data)",
+    "ocr_audit: OCR and rasterized PDF audit tests kept out of the default correctness lane",
     "smoke: minimal critical path checks",
 ]
 filterwarnings = [
