@@ -47,21 +47,21 @@ class TestAnalysisSettingsSnapshotFromDict:
     def test_combined_fields_project_a_complete_order_reference_spec(self) -> None:
         snap = analysis_settings_snapshot_from_mapping(
             {
-            "tire_width_mm": 285.0,
-            "tire_aspect_pct": 30.0,
-            "rim_in": 21.0,
-            "final_drive_ratio": 3.08,
-            "current_gear_ratio": 0.64,
-            "wheel_bandwidth_pct": 0.0025,
-            "driveshaft_bandwidth_pct": 0.0025,
-            "engine_bandwidth_pct": 0.0025,
-            "speed_uncertainty_pct": 0.05,
-            "tire_diameter_uncertainty_pct": 0.02,
-            "final_drive_uncertainty_pct": 0.01,
-            "gear_uncertainty_pct": 0.01,
-            "min_abs_band_hz": 1.0,
-            "max_band_half_width_pct": 0.05,
-            "tire_deflection_factor": 0.96,
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
+                "final_drive_ratio": 3.08,
+                "current_gear_ratio": 0.64,
+                "wheel_bandwidth_pct": 0.0025,
+                "driveshaft_bandwidth_pct": 0.0025,
+                "engine_bandwidth_pct": 0.0025,
+                "speed_uncertainty_pct": 0.05,
+                "tire_diameter_uncertainty_pct": 0.02,
+                "final_drive_uncertainty_pct": 0.01,
+                "gear_uncertainty_pct": 0.01,
+                "min_abs_band_hz": 1.0,
+                "max_band_half_width_pct": 0.05,
+                "tire_deflection_factor": 0.96,
             }
         )
 
