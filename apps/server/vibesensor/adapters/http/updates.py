@@ -25,6 +25,7 @@ from vibesensor.adapters.http.models import (
     UpdateStatusResponse,
     UsbInternetStatusResponse,
 )
+from vibesensor.use_cases.updates.status import update_status_to_builtins
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
@@ -57,7 +58,7 @@ def create_update_routes(
     @router.get("/api/update/status", response_model=UpdateStatusResponse)
     async def get_update_status() -> UpdateStatusResponse:
         """Return the current OTA software update job state, logs, and runtime details."""
-        return UpdateStatusResponse.model_validate(update_manager.status.to_payload())
+        return UpdateStatusResponse.model_validate(update_status_to_builtins(update_manager.status))
 
     @router.get("/api/update/internet-status", response_model=UsbInternetStatusResponse)
     async def get_usb_internet_status() -> UsbInternetStatusResponse:

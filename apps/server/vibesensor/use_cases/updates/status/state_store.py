@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import contextlib
-import json
 import logging
 import os
 import tempfile
 from pathlib import Path
 
-from vibesensor.shared.types.json_types import is_json_object
+import msgspec
+
 from vibesensor.use_cases.updates.models import UpdateJobStatus
+from vibesensor.use_cases.updates.status.payload_codec import (
+    update_status_from_json,
+    update_status_to_json,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -41,12 +45,8 @@ class UpdateStateStore:
         if not self._path.is_file():
             return None
         try:
-            raw = self._path.read_text(encoding="utf-8")
-            data = json.loads(raw)
-            if not is_json_object(data):
-                raise ValueError("update state payload must be a JSON object")
-            return UpdateJobStatus.from_payload(data)
-        except (json.JSONDecodeError, ValueError, KeyError, TypeError) as exc:
+            return update_status_from_json(self._path.read_bytes())
+        except (msgspec.DecodeError, msgspec.ValidationError, ValueError, TypeError) as exc:
             LOGGER.warning("Corrupt update state file %s: %s", self._path, exc)
             return None
         except OSError as exc:
@@ -55,7 +55,7 @@ class UpdateStateStore:
 
     def save(self, status: UpdateJobStatus) -> None:
         """Persist *status* atomically (temp-file + ``os.replace``)."""
-        payload = json.dumps(status.to_payload(), indent=2, default=str) + "\n"
+        payload = update_status_to_json(status)
         tmp: str | None = None
         try:
             self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -65,7 +65,7 @@ class UpdateStateStore:
                 suffix=".tmp",
             )
             try:
-                os.write(fd, payload.encode("utf-8"))
+                os.write(fd, payload)
                 os.fsync(fd)
             finally:
                 os.close(fd)
