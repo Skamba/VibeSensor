@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+
 def test_route_registration_includes_key_live_routes(fake_state) -> None:
     """App registers a representative set of operator-facing live routes."""
     from vibesensor.adapters.http import create_router
