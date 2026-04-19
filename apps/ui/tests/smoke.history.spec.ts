@@ -1,12 +1,13 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  bootLiveDashboard,
   fulfillJson,
-  installCommonRoutes,
-  installFakeWebSocket,
+  openHistoryTab,
   readSemanticSurfaceStyles,
   readSemanticToneStyles,
   requestPath,
+  installCommonRoutes,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 15_000 });
@@ -26,7 +27,7 @@ test("dark mode diagnosis cards use semantic theme surfaces", async ({ page }) =
   await page.emulateMedia({ colorScheme: "dark" });
   let confidenceTone: "success" | "warn" = "success";
 
-  await installCommonRoutes(page, {
+  await bootLiveDashboard(page, {
     historyHandler: async (route) => {
       const pathname = requestPath(route);
       if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
@@ -86,8 +87,6 @@ test("dark mode diagnosis cards use semantic theme surfaces", async ({ page }) =
       ],
     });
   });
-  await installFakeWebSocket(page);
-
   const expectations = [
     {
       tone: "success",
@@ -104,7 +103,7 @@ test("dark mode diagnosis cards use semantic theme surfaces", async ({ page }) =
   for (const expectation of expectations) {
     confidenceTone = expectation.tone;
     await page.goto("/");
-    await page.locator("#tab-history").click();
+    await openHistoryTab(page);
     await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
     const diagnosisCard = page.locator(`.history-diagnosis-card--${expectation.tone}`);
     await expect(diagnosisCard).toBeVisible();
@@ -121,7 +120,7 @@ test("dark mode diagnosis cards use semantic theme surfaces", async ({ page }) =
 test("dark mode history warning pills and banners use semantic theme tokens", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
 
-  await installCommonRoutes(page, {
+  await bootLiveDashboard(page, {
     historyHandler: async (route) => {
       const pathname = requestPath(route);
       if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
@@ -189,10 +188,8 @@ test("dark mode history warning pills and banners use semantic theme tokens", as
       ],
     });
   });
-  await installFakeWebSocket(page);
-
   await page.goto("/");
-  await page.locator("#tab-history").click();
+  await openHistoryTab(page);
   await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
 
   const confidencePill = page.locator(".history-diagnosis-card__confidence--warn");
@@ -218,11 +215,8 @@ test("dark mode history warning pills and banners use semantic theme tokens", as
 
 test("dark mode quiet danger buttons use semantic danger tokens in History", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
-  await installCommonRoutes(page, { runs: [historyListRun] });
-  await installFakeWebSocket(page);
-
-  await page.goto("/");
-  await page.locator("#tab-history").click();
+  await bootLiveDashboard(page, { runs: [historyListRun] });
+  await openHistoryTab(page);
   await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
   const deleteButton = page.locator('[data-run-action="delete-run"][data-run="run-001"]');
   await expect(deleteButton).toBeVisible();
@@ -256,7 +250,7 @@ test("dark mode quiet danger buttons use semantic danger tokens in History", asy
 });
 
 test("history empty state points users back to Live", async ({ page }) => {
-  await installCommonRoutes(page, {
+  await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
         await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
@@ -273,9 +267,7 @@ test("history empty state points users back to Live", async ({ page }) => {
       await fulfillJson(route, { runs: [] });
     },
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-history").click();
+  await openHistoryTab(page);
   const emptyState = page.locator("#historyTableBody .empty-state");
   await expect(emptyState).toContainText("Capture the first run from Live.");
   await expect(emptyState).toContainText("History fills automatically");
@@ -284,7 +276,7 @@ test("history empty state points users back to Live", async ({ page }) => {
 });
 
 test("history rows show diagnostic context before expansion", async ({ page }) => {
-  await installCommonRoutes(page, {
+  await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
         await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
@@ -341,9 +333,7 @@ test("history rows show diagnostic context before expansion", async ({ page }) =
       ],
     });
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-history").click();
+  await openHistoryTab(page);
   const row = page.locator('[data-run-row="1"][data-run="run-001"]');
   await expect(row).toContainText("Analysis ready");
   await expect(row).toContainText("Front-right wheel imbalance");
@@ -360,7 +350,7 @@ test("history rows show diagnostic context before expansion", async ({ page }) =
 });
 
 test("history preview uses dB intensity fields from insights payload", async ({ page }) => {
-  await installCommonRoutes(page, {
+  await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
         await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
@@ -397,9 +387,7 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
       ],
     });
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-history").click();
+  await openHistoryTab(page);
   const toggle = page.locator('[data-run-toggle="details"][data-run="run-001"]');
   const diagnosisSummary = page.locator('[data-run-row="1"][data-run="run-001"] .history-row__diagnosis');
   await expect(toggle).toContainText("Open diagnosis");
@@ -437,10 +425,8 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
 });
 
 test("history keeps destructive actions inside the expanded management footer", async ({ page }) => {
-  await installCommonRoutes(page, { runs: [historyListRun] });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-history").click();
+  await bootLiveDashboard(page, { runs: [historyListRun] });
+  await openHistoryTab(page);
   const row = page.locator('[data-run-row="1"][data-run="run-001"]');
   const actionCell = row.locator("td").nth(3);
   await expect(actionCell.locator('[data-run-action="download-pdf"][data-run="run-001"]')).toContainText("PDF");
@@ -485,9 +471,8 @@ test("history PDF download revokes object URL with safe delay", async ({ page })
       globalState.__revokeCallCount = (globalState.__revokeCallCount ?? 0) + 1;
     }) as typeof URL.revokeObjectURL;
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-history").click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openHistoryTab(page);
   const pdfButton = page.locator('[data-run-action="download-pdf"][data-run="run-001"]');
   await expect(pdfButton).toBeVisible();
   await pdfButton.click();
@@ -497,7 +482,7 @@ test("history PDF download revokes object URL with safe delay", async ({ page })
 });
 
 test("history loaded insights promote the result summary above supporting evidence", async ({ page }) => {
-  await installCommonRoutes(page, {
+  await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       if (requestPath(route) === "/api/settings/cars") {
         await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
@@ -566,9 +551,7 @@ test("history loaded insights promote the result summary above supporting eviden
       ],
     });
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-history").click();
+  await openHistoryTab(page);
   await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
   await expect(page.locator(".history-details-header [data-run-action='load-insights']")).toBeVisible();
   await page.locator(".history-details-header [data-run-action='load-insights']").click();
