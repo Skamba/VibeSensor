@@ -20,7 +20,81 @@ from vibesensor.shared.boundaries.codecs import (
 )
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 
-# ── AnalysisSettingsSnapshot ────────────────────────────────────────
+
+@pytest.mark.parametrize(
+    ("factory", "extract", "expected"),
+    [
+        pytest.param(
+            lambda: analysis_settings_snapshot_from_mapping({}),
+            lambda snap: {
+                "tire_width_mm": snap.tire_width_mm,
+                "rim_in": snap.rim_in,
+                "tire_deflection_factor": snap.tire_deflection_factor,
+                "has_order_reference": order_reference_spec_from_snapshot(snap) is not None,
+            },
+            {
+                "tire_width_mm": 0.0,
+                "rim_in": 0.0,
+                "tire_deflection_factor": 1.0,
+                "has_order_reference": False,
+            },
+            id="analysis-settings-empty",
+        ),
+        pytest.param(
+            lambda: RunContextSnapshot(),
+            lambda ctx: {
+                "car": ctx.car,
+                "has_car_context": ctx.has_car_context,
+                "active_car_id": ctx.active_car_id,
+                "car_name": ctx.car_name,
+                "car_type": ctx.car_type,
+                "car_variant": ctx.car_variant,
+                "has_order_reference": order_reference_spec_from_snapshot(ctx.analysis_settings)
+                is not None,
+            },
+            {
+                "car": None,
+                "has_car_context": False,
+                "active_car_id": None,
+                "car_name": None,
+                "car_type": None,
+                "car_variant": None,
+                "has_order_reference": False,
+            },
+            id="run-context-empty",
+        ),
+        pytest.param(
+            lambda: speed_profile_summary_from_mapping({}),
+            lambda snap: {
+                "min_kmh": snap.min_kmh,
+                "steady_speed": snap.steady_speed,
+                "sample_count": snap.sample_count,
+            },
+            {
+                "min_kmh": None,
+                "steady_speed": False,
+                "sample_count": 0,
+            },
+            id="speed-profile-empty",
+        ),
+        pytest.param(
+            lambda: driving_phase_summary_from_mapping({}),
+            lambda snap: {
+                "total_samples": snap.total_samples,
+                "has_cruise": snap.has_cruise,
+                "phase_counts": dict(snap.phase_counts),
+            },
+            {
+                "total_samples": 0,
+                "has_cruise": False,
+                "phase_counts": {},
+            },
+            id="driving-phase-empty",
+        ),
+    ],
+)
+def test_snapshot_codecs_accept_empty_input(factory, extract, expected) -> None:
+    assert extract(factory()) == expected
 
 
 class TestAnalysisSettingsSnapshotFromDict:
@@ -77,17 +151,21 @@ class TestAnalysisSettingsSnapshotFromDict:
         assert spec.is_complete is True
         assert spec.tire_circumference_m > 0
 
-    def test_non_numeric_values_default(self) -> None:
-        snap = analysis_settings_snapshot_from_mapping({"tire_width_mm": "not_a_number"})
-        assert snap.tire_width_mm == 0.0
-
-    def test_none_values_default(self) -> None:
-        snap = analysis_settings_snapshot_from_mapping({"rim_in": None})
-        assert snap.rim_in == 0.0
-
-    def test_infinity_defaults(self) -> None:
-        snap = analysis_settings_snapshot_from_mapping({"tire_width_mm": float("inf")})
-        assert snap.tire_width_mm == 0.0
+    @pytest.mark.parametrize(
+        ("payload", "field"),
+        [
+            pytest.param({"tire_width_mm": "not_a_number"}, "tire_width_mm", id="non-numeric"),
+            pytest.param({"rim_in": None}, "rim_in", id="none"),
+            pytest.param({"tire_width_mm": float("inf")}, "tire_width_mm", id="infinity"),
+        ],
+    )
+    def test_invalid_scalar_values_default_to_zero(
+        self,
+        payload: dict[str, object],
+        field: str,
+    ) -> None:
+        snap = analysis_settings_snapshot_from_mapping(payload)
+        assert getattr(snap, field) == 0.0
 
 
 class TestAnalysisSettingsOrderRef:
@@ -132,17 +210,6 @@ class TestAnalysisSettingsOrderRef:
 class TestRunContextSnapshot:
     """Typed domain tests for RunContextSnapshot."""
 
-    def test_absent_car_context_degrades_consumer_accessors(self) -> None:
-        ctx = RunContextSnapshot()
-
-        assert ctx.car is None
-        assert ctx.has_car_context is False
-        assert ctx.active_car_id is None
-        assert ctx.car_name is None
-        assert ctx.car_type is None
-        assert ctx.car_variant is None
-        assert order_reference_spec_from_snapshot(ctx.analysis_settings) is None
-
     def test_order_reference_spec_delegates_to_analysis_settings(self) -> None:
         ctx = RunContextSnapshot(
             analysis_settings=AnalysisSettingsSnapshot(
@@ -171,15 +238,6 @@ class TestRunContextSnapshot:
         assert ctx.car_type == "sedan"
         assert ctx.car_variant == "track"
 
-    def test_convenience_accessors_degrade_when_car_absent(self) -> None:
-        ctx = RunContextSnapshot()
-
-        assert ctx.has_car_context is False
-        assert ctx.active_car_id is None
-        assert ctx.car_name is None
-        assert ctx.car_type is None
-        assert ctx.car_variant is None
-
     def test_partial_car_context_stays_usable_without_fake_analysis_defaults(self) -> None:
         ctx = RunContextSnapshot(
             car=CarSnapshot(
@@ -204,12 +262,6 @@ class TestRunContextSnapshot:
 class TestSpeedProfileSummaryFromDict:
     """Boundary snapshot codec tests."""
 
-    def test_empty_dict_never_raises(self) -> None:
-        snap = speed_profile_summary_from_mapping({})
-        assert snap.min_kmh is None
-        assert snap.steady_speed is False
-        assert snap.sample_count == 0
-
     def test_sanitizes_mixed_speed_payload_without_hidden_normalization(self) -> None:
         snap = speed_profile_summary_from_mapping(
             {
@@ -231,13 +283,20 @@ class TestSpeedProfileSummaryFromDict:
         assert snap.steady_speed is False
         assert snap.sample_count == 12
 
-    def test_non_numeric_speed_defaults_to_none(self) -> None:
-        snap = speed_profile_summary_from_mapping({"min_kmh": "bad"})
-        assert snap.min_kmh is None
-
-    def test_infinity_speed_defaults_to_none(self) -> None:
-        snap = speed_profile_summary_from_mapping({"mean_kmh": float("inf")})
-        assert snap.mean_kmh is None
+    @pytest.mark.parametrize(
+        ("payload", "field"),
+        [
+            pytest.param({"min_kmh": "bad"}, "min_kmh", id="non-numeric"),
+            pytest.param({"mean_kmh": float("inf")}, "mean_kmh", id="infinity"),
+        ],
+    )
+    def test_invalid_speed_values_default_to_none(
+        self,
+        payload: dict[str, object],
+        field: str,
+    ) -> None:
+        snap = speed_profile_summary_from_mapping(payload)
+        assert getattr(snap, field) is None
 
 
 # ── DrivingPhaseSummary ────────────────────────────────────────────────────
@@ -245,12 +304,6 @@ class TestSpeedProfileSummaryFromDict:
 
 class TestDrivingPhaseSummaryFromDict:
     """from_dict() constructor tests."""
-
-    def test_empty_dict_never_raises(self) -> None:
-        snap = driving_phase_summary_from_mapping({})
-        assert snap.total_samples == 0
-        assert snap.has_cruise is False
-        assert dict(snap.phase_counts) == {}
 
     def test_counts_percentages_and_flags_fall_back_consistently(self) -> None:
         snap = driving_phase_summary_from_mapping(

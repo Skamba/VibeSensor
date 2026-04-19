@@ -45,20 +45,33 @@ def test_logging_flags_allow_db_only_mode(cfg_path: Path) -> None:
     assert cfg.logging.run_retention_days == 7
 
 
-def test_logging_no_data_timeout_defaults_and_allows_override(cfg_path: Path) -> None:
-    cfg = _write_and_load(cfg_path, {})
-    assert cfg.logging.no_data_timeout_s == 15.0
-
-    cfg = _write_and_load(cfg_path, {"logging": {"no_data_timeout_s": 30}})
-    assert cfg.logging.no_data_timeout_s == 30.0
-
-
-def test_logging_run_retention_days_defaults_and_allows_override(cfg_path: Path) -> None:
-    cfg = _write_and_load(cfg_path, {})
-    assert cfg.logging.run_retention_days == 7
-
-    cfg = _write_and_load(cfg_path, {"logging": {"run_retention_days": 21}})
-    assert cfg.logging.run_retention_days == 21
+@pytest.mark.parametrize(
+    ("override", "field", "expected"),
+    [
+        pytest.param({}, "no_data_timeout_s", 15.0, id="no-data-timeout-default"),
+        pytest.param(
+            {"logging": {"no_data_timeout_s": 30}},
+            "no_data_timeout_s",
+            30.0,
+            id="no-data-timeout-override",
+        ),
+        pytest.param({}, "run_retention_days", 7, id="run-retention-default"),
+        pytest.param(
+            {"logging": {"run_retention_days": 21}},
+            "run_retention_days",
+            21,
+            id="run-retention-override",
+        ),
+    ],
+)
+def test_logging_defaults_and_overrides(
+    cfg_path: Path,
+    override: dict[str, object],
+    field: str,
+    expected: float | int,
+) -> None:
+    cfg = _write_and_load(cfg_path, override)
+    assert getattr(cfg.logging, field) == expected
 
 
 def test_base_dev_and_docker_configs_capture_intended_runtime_invariants(tmp_path: Path) -> None:
