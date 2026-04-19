@@ -348,7 +348,8 @@ workflow-backed CI manifest:
 
 - `backend-lint`: Ruff lint and formatter drift checks for backend and tooling Python code.
 - `repo-hygiene`: line endings plus repo/path/runtime/CI hygiene checks.
-- `backend-static-guards`: backend layer and import-boundary static guards.
+- `backend-static-guards`: import-linter backend architecture contracts plus the
+  remaining repo-specific backend static guards.
 - `backend-preflight`: dependency consistency plus config preflight validation for dev, docker, and pi configs.
 - `docs-lint`: docs misuse and markdown-link validation.
 - `backend-contract-drift`: WS schema and HTTP API contract drift checks.
