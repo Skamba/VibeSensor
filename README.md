@@ -291,10 +291,12 @@ cd apps/ui
 npx playwright install chromium   # first time only
 npm run test:visual               # compare against baselines
 npm run test:visual:update        # regenerate after intentional changes
+npm run test:visual:audit         # run broader visual audit on purpose
 ```
 
-Screenshots are captured for 4 viewports (laptop-light, laptop-dark,
-tablet-light, tablet-dark) using a deterministic demo mode (`?demo=1`).
+Default snapshot coverage uses one intentional viewport (`laptop-light`) with a
+deterministic demo mode (`?demo=1`). When you want broader visual coverage, run
+the opt-in audit sweep for the full laptop/tablet light/dark matrix.
 Baselines live in `apps/ui/tests/snapshots/`.
 
 ## Reports
