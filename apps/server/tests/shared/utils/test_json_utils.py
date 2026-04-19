@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 
 import numpy as np
 import pytest
@@ -177,25 +178,38 @@ class TestSanitizeValue:
 class TestSafeJsonDumps:
     """Tests for :func:`safe_json_dumps`."""
 
-    def test_plain_dict(self) -> None:
-        result = safe_json_dumps({"key": "value", "num": 42})
-        parsed = json.loads(result)
-        assert parsed == {"key": "value", "num": 42}
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            pytest.param({"key": "value", "num": 42}, {"key": "value", "num": 42}, id="plain"),
+            pytest.param({"val": float("nan")}, {"val": None}, id="nan"),
+            pytest.param({"val": float("inf")}, {"val": None}, id="inf"),
+            pytest.param(
+                {"a": np.float32(1.5), "b": np.int64(42)},
+                {"a": 1.5, "b": 42},
+                id="numpy-scalars",
+            ),
+        ],
+    )
+    def test_projects_supported_values(self, value: object, expected: object) -> None:
+        parsed = json.loads(safe_json_dumps(value))
+        assert parsed == expected
 
-    def test_sanitises_nan(self) -> None:
-        result = safe_json_dumps({"val": float("nan")})
-        parsed = json.loads(result)
-        assert parsed["val"] is None
-
-    def test_sanitises_inf(self) -> None:
-        result = safe_json_dumps({"val": float("inf")})
-        parsed = json.loads(result)
-        assert parsed["val"] is None
-
-    def test_numpy_values(self) -> None:
-        result = safe_json_dumps({"a": np.float32(1.5), "b": np.int64(42)})
-        parsed = json.loads(result)
-        assert parsed == {"a": 1.5, "b": 42}
+    def test_nested_numpy_payload_round_trip(self) -> None:
+        result = safe_json_dumps(
+            {
+                "matrix": np.array([[1.0, float("nan")], [3.0, 4.0]]),
+                "meta": {
+                    "sensor": np.int64(2),
+                    "levels": (np.float32(1.5), float("-inf")),
+                },
+            }
+        )
+        parsed = safe_json_loads(result, context="nested-payload")
+        assert parsed == {
+            "matrix": [[1.0, None], [3.0, 4.0]],
+            "meta": {"sensor": 2, "levels": [1.5, None]},
+        }
 
     def test_unicode_preserved(self) -> None:
         result = safe_json_dumps({"text": "Ünïcödé"})
@@ -212,44 +226,50 @@ class TestSafeJsonDumps:
 class TestSafeJsonLoads:
     """Tests for :func:`safe_json_loads`."""
 
-    def test_valid_json(self) -> None:
-        result = safe_json_loads('{"key": "value"}', context="test")
-        assert result == {"key": "value"}
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            pytest.param('{"key": "value"}', {"key": "value"}, id="object"),
+            pytest.param("[1, 2, 3]", [1, 2, 3], id="array"),
+            pytest.param("42", 42, id="scalar"),
+            pytest.param(None, None, id="none"),
+            pytest.param("", None, id="empty"),
+        ],
+    )
+    def test_loads_expected_values(self, value: str | None, expected: object) -> None:
+        assert safe_json_loads(value, context="test") == expected
 
-    def test_none_input(self) -> None:
-        assert safe_json_loads(None, context="test") is None
-
-    def test_empty_string(self) -> None:
-        assert safe_json_loads("", context="test") is None
-
-    def test_invalid_json_returns_none(self) -> None:
-        result = safe_json_loads("{invalid json", context="test-field")
+    def test_invalid_json_returns_none_and_logs_context(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        with caplog.at_level(logging.WARNING, logger="vibesensor.shared.json_utils"):
+            result = safe_json_loads("{invalid json", context="test-field")
         assert result is None
-
-    def test_array_json(self) -> None:
-        result = safe_json_loads("[1, 2, 3]", context="test")
-        assert result == [1, 2, 3]
-
-    def test_scalar_json(self) -> None:
-        result = safe_json_loads("42", context="test")
-        assert result == 42
+        assert any(
+            record.message == "Skipping invalid JSON payload while reading test-field"
+            for record in caplog.records
+        )
 
 
-def test_payload_value_from_json_projects_nested_json() -> None:
+def test_depth_limited_value_still_round_trips_through_json() -> None:
+    nested = {"a": {"b": {"c": {"d": "deep"}}}}
+    cleaned, had = sanitize_for_json(nested, _max_depth=2)
+    assert had is False
+    assert json.loads(json.dumps(cleaned, allow_nan=False)) == {"a": {"b": {"c": None}}}
+
+
+def test_payload_helpers_project_nested_json_objects() -> None:
     value = {
         "_i18n_key": "SUMMARY_LABEL",
         "params": {"severity": "warn"},
         "bands": [1, {"name": "cruise"}],
     }
-
-    assert payload_value_from_json(value) == value
-
-
-def test_payload_object_helpers_project_json_object_sequences() -> None:
     values = [
         {"code": "speed_gap", "state": "warn"},
-        {"title": {"_i18n_key": "SUMMARY_LABEL"}},
+        {"title": value},
     ]
 
+    assert payload_value_from_json(value) == value
     assert payload_object_from_json(values[1]) == values[1]
     assert payload_objects_from_json(values) == values
