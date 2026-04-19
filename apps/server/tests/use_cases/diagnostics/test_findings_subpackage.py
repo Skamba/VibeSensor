@@ -335,13 +335,22 @@ class TestSuppressEngineAliases:
 
     def test_engine_suppressed_when_wheel_stronger(self) -> None:
         input_findings = [
-            (0.5, make_finding(suspected_source="wheel/tire", confidence=0.60, ranking_score=0.5)),
-            (0.4, make_finding(suspected_source="engine", confidence=0.50, ranking_score=0.4)),
+            (
+                0.62,
+                make_finding(suspected_source="wheel/tire", confidence=0.62, ranking_score=0.62),
+            ),
+            (
+                0.49,
+                make_finding(suspected_source="engine", confidence=0.45, ranking_score=0.49),
+            ),
         ]
         result = _suppress_engine_aliases(input_findings)
-        engine_results = [f for f in result if str(f.suspected_source) == "engine"]
-        if engine_results:
-            assert engine_results[0].effective_confidence < 0.50
+        assert [str(f.suspected_source) for f in result] == ["wheel/tire", "engine"]
+        wheel_result, engine_result = result
+        assert wheel_result.effective_confidence == pytest.approx(0.62)
+        assert engine_result.effective_confidence == pytest.approx(0.27)
+        assert engine_result.ranking_score == pytest.approx(0.294)
+        assert engine_result.effective_confidence < wheel_result.effective_confidence
 
     def test_engine_suppression_normalizes_source_tokens(self) -> None:
         input_findings = [
@@ -374,10 +383,14 @@ class TestSpeedBreakdown:
         samples = [
             {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
             {"speed_kmh": 68.0, "vibration_strength_db": 22.0},
+            {"speed_kmh": 0.0, "vibration_strength_db": 99.0},
         ]
         rows = _speed_breakdown(sensor_frames_from_mappings(samples))
         assert len(rows) == 1
+        assert rows[0].speed_range == "60-70 km/h"
         assert rows[0].count == 2
+        assert rows[0].mean_vibration_strength_db == pytest.approx(21.0)
+        assert rows[0].max_vibration_strength_db == pytest.approx(22.0)
 
 
 class TestPhaseSpeedBreakdown:
@@ -387,12 +400,21 @@ class TestPhaseSpeedBreakdown:
         samples = [
             {"speed_kmh": 60.0, "vibration_strength_db": 18.0},
             {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
+            {"speed_kmh": 0.0, "vibration_strength_db": 8.0},
         ]
         phases = [DrivingPhase.CRUISE, DrivingPhase.CRUISE]
         rows = _phase_speed_breakdown(sensor_frames_from_mappings(samples), phases)
         cruise_rows = [r for r in rows if r.phase == "cruise"]
         assert len(cruise_rows) == 1
         assert cruise_rows[0].count == 2
+        assert cruise_rows[0].mean_speed_kmh == pytest.approx(62.5)
+        assert cruise_rows[0].max_speed_kmh == pytest.approx(65.0)
+        assert cruise_rows[0].mean_vibration_strength_db == pytest.approx(19.0)
+        assert cruise_rows[0].max_vibration_strength_db == pytest.approx(20.0)
+        unknown_rows = [r for r in rows if r.phase == "unknown"]
+        assert len(unknown_rows) == 1
+        assert unknown_rows[0].count == 1
+        assert unknown_rows[0].mean_speed_kmh is None
 
 
 class TestSensorIntensityByLocation:
@@ -403,10 +425,47 @@ class TestSensorIntensityByLocation:
 
     def test_single_location(self) -> None:
         samples = [
-            {"location": "front_left", "vibration_strength_db": 20.0},
-            {"location": "front_left", "vibration_strength_db": 22.0},
+            {
+                "t_s": 0.0,
+                "location": "front_left",
+                "vibration_strength_db": 20.0,
+                "frames_dropped_total": 1,
+                "queue_overflow_drops": 0,
+                "strength_bucket": "l2",
+            },
+            {
+                "t_s": 1.0,
+                "location": "front_left",
+                "vibration_strength_db": 22.0,
+                "frames_dropped_total": 3,
+                "queue_overflow_drops": 1,
+                "strength_bucket": "l2",
+            },
+            {
+                "t_s": 2.0,
+                "location": "front_left",
+                "vibration_strength_db": 30.0,
+                "frames_dropped_total": 6,
+                "queue_overflow_drops": 1,
+                "strength_bucket": "l3",
+            },
         ]
         rows = _sensor_intensity_by_location(sensor_frames_from_mappings(samples))
         assert len(rows) == 1
         assert rows[0].location == "front_left"
-        assert rows[0].sample_count == 2
+        assert rows[0].sample_count == 3
+        assert rows[0].mean_intensity_db == pytest.approx(24.0)
+        assert rows[0].p50_intensity_db == pytest.approx(22.0)
+        assert rows[0].p95_intensity_db == pytest.approx(29.2)
+        assert rows[0].max_intensity_db == pytest.approx(30.0)
+        assert rows[0].dropped_frames_delta == 5
+        assert rows[0].queue_overflow_drops_delta == 1
+        assert rows[0].strength_bucket_distribution.total == 3
+        assert rows[0].strength_bucket_distribution.counts == {
+            "l0": 0,
+            "l1": 0,
+            "l2": 2,
+            "l3": 1,
+            "l4": 0,
+            "l5": 0,
+        }
