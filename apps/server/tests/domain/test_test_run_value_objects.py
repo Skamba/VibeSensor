@@ -331,65 +331,115 @@ class TestTestRunWithValueObjects:
 
 
 class TestTestRunSensors:
-    def test_test_run_default_sensors_empty(self) -> None:
-        tr = TestRun(
-            capture=RunCapture(run_id="r1"),
-        )
-        assert tr.capture.setup.sensors == ()
-        assert tr.sensor_count == 0
+    @pytest.mark.parametrize(
+        ("location_codes", "expected_count"),
+        [
+            pytest.param([], 0, id="default-empty"),
+            pytest.param(["front_left_wheel", "rear_axle"], 2, id="two-sensors"),
+            pytest.param(
+                ["front_left_wheel", "rear_axle", "dashboard"],
+                3,
+                id="sensor-count-property",
+            ),
+        ],
+    )
+    def test_test_run_sensor_cases(
+        self,
+        location_codes: list[str],
+        expected_count: int,
+    ) -> None:
+        if location_codes:
+            sensors = Sensor.from_location_codes(location_codes)
+            test_run = TestRun(
+                capture=RunCapture(run_id="r1", setup=RunSetup(sensors=sensors)),
+            )
+        else:
+            test_run = TestRun(capture=RunCapture(run_id="r1"))
 
-    def test_test_run_with_sensors(self) -> None:
-        sensors = Sensor.from_location_codes(["front_left_wheel", "rear_axle"])
-        tr = TestRun(
-            capture=RunCapture(run_id="r1", setup=RunSetup(sensors=sensors)),
-        )
-        assert len(tr.capture.setup.sensors) == 2
-        assert tr.sensor_count == 2
-
-    def test_test_run_sensor_count_property(self) -> None:
-        sensors = Sensor.from_location_codes(["front_left_wheel", "rear_axle", "dashboard"])
-        tr = TestRun(
-            capture=RunCapture(run_id="r1", setup=RunSetup(sensors=sensors)),
-        )
-        assert tr.sensor_count == len(sensors)
+        assert len(test_run.capture.setup.sensors) == expected_count
+        assert test_run.sensor_count == expected_count
 
 
 class TestDrivingSegment:
     """Tests for DrivingSegment diagnostic-usability semantics."""
 
-    def test_cruise_segment_is_usable(self) -> None:
-        seg = DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=99, sample_count=100)
-        assert seg.is_diagnostically_usable is True
+    @pytest.mark.parametrize(
+        ("segment", "expected"),
+        [
+            pytest.param(
+                DrivingSegment(
+                    phase=DrivingPhase.CRUISE,
+                    start_idx=0,
+                    end_idx=99,
+                    sample_count=100,
+                ),
+                True,
+                id="cruise-usable",
+            ),
+            pytest.param(
+                DrivingSegment(
+                    phase=DrivingPhase.IDLE,
+                    start_idx=0,
+                    end_idx=99,
+                    sample_count=100,
+                ),
+                False,
+                id="idle-not-usable",
+            ),
+            pytest.param(
+                DrivingSegment(
+                    phase=DrivingPhase.CRUISE,
+                    start_idx=0,
+                    end_idx=4,
+                    sample_count=5,
+                ),
+                False,
+                id="too-few-samples",
+            ),
+        ],
+    )
+    def test_diagnostic_usability_cases(self, segment: DrivingSegment, expected: bool) -> None:
+        assert segment.is_diagnostically_usable is expected
 
-    def test_idle_segment_is_not_usable(self) -> None:
-        seg = DrivingSegment(phase=DrivingPhase.IDLE, start_idx=0, end_idx=99, sample_count=100)
-        assert seg.is_diagnostically_usable is False
+    @pytest.mark.parametrize(
+        ("segment", "expected"),
+        [
+            pytest.param(
+                DrivingSegment(
+                    phase=DrivingPhase.CRUISE,
+                    start_idx=0,
+                    end_idx=10,
+                    start_t_s=1.0,
+                    end_t_s=3.5,
+                ),
+                pytest.approx(2.5),
+                id="with-timestamps",
+            ),
+            pytest.param(
+                DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=10),
+                None,
+                id="without-timestamps",
+            ),
+        ],
+    )
+    def test_duration_s_cases(
+        self,
+        segment: DrivingSegment,
+        expected: float | None,
+    ) -> None:
+        assert segment.duration_s == expected
 
-    def test_segment_with_few_samples_is_not_usable(self) -> None:
-        seg = DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=4, sample_count=5)
-        assert seg.is_diagnostically_usable is False
-
-    def test_duration_with_timestamps(self) -> None:
-        seg = DrivingSegment(
-            phase=DrivingPhase.CRUISE,
-            start_idx=0,
-            end_idx=10,
-            start_t_s=1.0,
-            end_t_s=3.5,
-        )
-        assert seg.duration_s == pytest.approx(2.5)
-
-    def test_duration_without_timestamps(self) -> None:
-        seg = DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=10)
-        assert seg.duration_s is None
-
-    def test_is_cruise_property(self) -> None:
-        cruise = DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=10)
-        accel = DrivingSegment(phase=DrivingPhase.ACCELERATION, start_idx=0, end_idx=10)
-        idle = DrivingSegment(phase=DrivingPhase.IDLE, start_idx=0, end_idx=10)
-        assert cruise.is_cruise is True
-        assert accel.is_cruise is False
-        assert idle.is_cruise is False
+    @pytest.mark.parametrize(
+        ("phase", "expected"),
+        [
+            pytest.param(DrivingPhase.CRUISE, True, id="cruise"),
+            pytest.param(DrivingPhase.ACCELERATION, False, id="acceleration"),
+            pytest.param(DrivingPhase.IDLE, False, id="idle"),
+        ],
+    )
+    def test_is_cruise_property_cases(self, phase: DrivingPhase, expected: bool) -> None:
+        segment = DrivingSegment(phase=phase, start_idx=0, end_idx=10)
+        assert segment.is_cruise is expected
 
 
 class TestDrivingPhaseSegment:

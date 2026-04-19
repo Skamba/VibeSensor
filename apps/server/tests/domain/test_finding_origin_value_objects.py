@@ -35,31 +35,64 @@ class TestFindingEvidence:
         assert e.phase_confidences == ()
         assert e.vibration_strength_db is None
 
-    def test_is_strong_true(self) -> None:
-        e = FindingEvidence(match_rate=0.8, snr_db=10.0)
-        assert e.is_strong
+    @pytest.mark.parametrize(
+        ("evidence", "expected"),
+        [
+            pytest.param(
+                FindingEvidence(match_rate=0.8, snr_db=10.0),
+                True,
+                id="strong-evidence",
+            ),
+            pytest.param(
+                FindingEvidence(match_rate=0.5, snr_db=10.0),
+                False,
+                id="low-match-rate",
+            ),
+            pytest.param(
+                FindingEvidence(match_rate=0.8, snr_db=None),
+                False,
+                id="missing-snr",
+            ),
+        ],
+    )
+    def test_is_strong_cases(self, evidence: FindingEvidence, expected: bool) -> None:
+        assert evidence.is_strong is expected
 
-    def test_is_strong_false_low_match(self) -> None:
-        e = FindingEvidence(match_rate=0.5, snr_db=10.0)
-        assert not e.is_strong
+    @pytest.mark.parametrize(
+        ("evidence", "expected"),
+        [
+            pytest.param(
+                FindingEvidence(burstiness=0.1, presence_ratio=0.7),
+                True,
+                id="consistent",
+            ),
+            pytest.param(
+                FindingEvidence(burstiness=0.5, presence_ratio=0.3),
+                False,
+                id="inconsistent",
+            ),
+        ],
+    )
+    def test_is_consistent_cases(self, evidence: FindingEvidence, expected: bool) -> None:
+        assert evidence.is_consistent is expected
 
-    def test_is_strong_false_no_snr(self) -> None:
-        e = FindingEvidence(match_rate=0.8, snr_db=None)
-        assert not e.is_strong
-
-    def test_is_consistent_true(self) -> None:
-        e = FindingEvidence(burstiness=0.1, presence_ratio=0.7)
-        assert e.is_consistent
-
-    def test_is_consistent_false(self) -> None:
-        e = FindingEvidence(burstiness=0.5, presence_ratio=0.3)
-        assert not e.is_consistent
-
-    def test_is_well_localized(self) -> None:
-        e = FindingEvidence(spatial_concentration=0.8)
-        assert e.is_well_localized
-        e2 = FindingEvidence(spatial_concentration=0.3)
-        assert not e2.is_well_localized
+    @pytest.mark.parametrize(
+        ("evidence", "expected"),
+        [
+            pytest.param(
+                FindingEvidence(spatial_concentration=0.8),
+                True,
+                id="well-localized",
+            ),
+            pytest.param(
+                FindingEvidence(spatial_concentration=0.3),
+                False,
+                id="diffuse",
+            ),
+        ],
+    )
+    def test_is_well_localized_cases(self, evidence: FindingEvidence, expected: bool) -> None:
+        assert evidence.is_well_localized is expected
 
     def test_boundary_decode_full(self) -> None:
         d = {
@@ -90,13 +123,20 @@ class TestFindingEvidence:
         assert e.snr_db is None
         assert e.phase_confidences == ()
 
-    def test_boundary_decode_uses_canonical_keys_only(self) -> None:
-        e = finding_evidence_from_mapping({"snr_ratio": 8.0})
-        assert e.snr_db is None
-
-    def test_boundary_decode_snr_db_canonical(self) -> None:
-        e = finding_evidence_from_mapping({"snr_db": 8.0})
-        assert e.snr_db == 8.0
+    @pytest.mark.parametrize(
+        ("payload", "expected_snr_db"),
+        [
+            pytest.param({"snr_ratio": 8.0}, None, id="noncanonical-key-ignored"),
+            pytest.param({"snr_db": 8.0}, 8.0, id="canonical-key-used"),
+        ],
+    )
+    def test_boundary_decode_snr_keys(
+        self,
+        payload: dict[str, float],
+        expected_snr_db: float | None,
+    ) -> None:
+        evidence = finding_evidence_from_mapping(payload)
+        assert evidence.snr_db == expected_snr_db
 
 
 class TestLocationHotspot:
@@ -113,36 +153,75 @@ class TestLocationHotspot:
         assert not h.ambiguous
         assert h.alternative_locations == ()
 
-    def test_is_well_localized_true(self) -> None:
-        h = LocationHotspot(
-            strongest_location="front_left",
-            dominance_ratio=0.8,
-            weak_spatial_separation=False,
-            ambiguous=False,
-        )
-        assert h.is_well_localized
+    @pytest.mark.parametrize(
+        ("hotspot", "expected"),
+        [
+            pytest.param(
+                LocationHotspot(
+                    strongest_location="front_left",
+                    dominance_ratio=0.8,
+                    weak_spatial_separation=False,
+                    ambiguous=False,
+                ),
+                True,
+                id="clear-location",
+            ),
+            pytest.param(
+                LocationHotspot(strongest_location="unknown"),
+                False,
+                id="unknown-location",
+            ),
+            pytest.param(
+                LocationHotspot(
+                    strongest_location="front_left",
+                    weak_spatial_separation=True,
+                ),
+                False,
+                id="weak-spatial-separation",
+            ),
+        ],
+    )
+    def test_is_well_localized_cases(self, hotspot: LocationHotspot, expected: bool) -> None:
+        assert hotspot.is_well_localized is expected
 
-    def test_is_well_localized_false_unknown(self) -> None:
-        h = LocationHotspot(strongest_location="unknown")
-        assert not h.is_well_localized
+    @pytest.mark.parametrize(
+        ("hotspot", "expected"),
+        [
+            pytest.param(LocationHotspot(strongest_location="FL wheel"), True, id="known-location"),
+            pytest.param(LocationHotspot(strongest_location=""), False, id="blank-location"),
+            pytest.param(
+                LocationHotspot(strongest_location="unknown"),
+                False,
+                id="unknown-location",
+            ),
+            pytest.param(
+                LocationHotspot(strongest_location="FL wheel", ambiguous=True),
+                False,
+                id="ambiguous-location",
+            ),
+        ],
+    )
+    def test_is_actionable_cases(self, hotspot: LocationHotspot, expected: bool) -> None:
+        assert hotspot.is_actionable is expected
 
-    def test_is_well_localized_false_weak_spatial(self) -> None:
-        h = LocationHotspot(
-            strongest_location="front_left",
-            weak_spatial_separation=True,
-        )
-        assert not h.is_well_localized
-
-    def test_is_actionable(self) -> None:
-        assert LocationHotspot(strongest_location="FL wheel").is_actionable
-        assert not LocationHotspot(strongest_location="").is_actionable
-        assert not LocationHotspot(strongest_location="unknown").is_actionable
-        assert not LocationHotspot(strongest_location="FL wheel", ambiguous=True).is_actionable
-
-    def test_display_location(self) -> None:
-        assert LocationHotspot(strongest_location="front_left").display_location == "Front Left"
-        assert LocationHotspot(strongest_location="").display_location == "Unknown"
-        assert LocationHotspot(strongest_location="unknown").display_location == "Unknown"
+    @pytest.mark.parametrize(
+        ("hotspot", "expected"),
+        [
+            pytest.param(
+                LocationHotspot(strongest_location="front_left"),
+                "Front Left",
+                id="known-location",
+            ),
+            pytest.param(LocationHotspot(strongest_location=""), "Unknown", id="blank-location"),
+            pytest.param(
+                LocationHotspot(strongest_location="unknown"),
+                "Unknown",
+                id="unknown-location",
+            ),
+        ],
+    )
+    def test_display_location_cases(self, hotspot: LocationHotspot, expected: str) -> None:
+        assert hotspot.display_location == expected
 
     def test_has_clear_separation_false_for_ambiguous_hotspot(self) -> None:
         hotspot = LocationHotspot(strongest_location="front_left", ambiguous=True)
@@ -208,29 +287,34 @@ class TestLocationHotspot:
         assert not hotspot.is_actionable
         assert not hotspot.is_well_localized
 
-    def test_weak_spatial_threshold_baseline_for_none(self) -> None:
-        assert LocationHotspot.weak_spatial_threshold(None) == LocationHotspot.WEAK_SPATIAL_BASELINE
-
-    def test_weak_spatial_threshold_baseline_for_two_locations(self) -> None:
-        assert LocationHotspot.weak_spatial_threshold(2) == pytest.approx(
-            LocationHotspot.WEAK_SPATIAL_BASELINE
-        )
-
-    def test_weak_spatial_threshold_scales_up_per_additional_location(self) -> None:
-        baseline = LocationHotspot.WEAK_SPATIAL_BASELINE
-        assert LocationHotspot.weak_spatial_threshold(3) == pytest.approx(
-            baseline * 1.1,
+    @pytest.mark.parametrize(
+        ("location_count", "expected"),
+        [
+            pytest.param(None, LocationHotspot.WEAK_SPATIAL_BASELINE, id="none-count"),
+            pytest.param(2, LocationHotspot.WEAK_SPATIAL_BASELINE, id="two-locations"),
+            pytest.param(1, LocationHotspot.WEAK_SPATIAL_BASELINE, id="one-location-clamped"),
+            pytest.param(0, LocationHotspot.WEAK_SPATIAL_BASELINE, id="zero-location-clamped"),
+            pytest.param(
+                3,
+                LocationHotspot.WEAK_SPATIAL_BASELINE * 1.1,
+                id="three-locations-scaled",
+            ),
+            pytest.param(
+                4,
+                LocationHotspot.WEAK_SPATIAL_BASELINE * 1.2,
+                id="four-locations-scaled",
+            ),
+        ],
+    )
+    def test_weak_spatial_threshold_cases(
+        self,
+        location_count: int | None,
+        expected: float,
+    ) -> None:
+        assert LocationHotspot.weak_spatial_threshold(location_count) == pytest.approx(
+            expected,
             rel=1e-6,
         )
-        assert LocationHotspot.weak_spatial_threshold(4) == pytest.approx(
-            baseline * 1.2,
-            rel=1e-6,
-        )
-
-    def test_weak_spatial_threshold_clamps_below_two(self) -> None:
-        baseline = LocationHotspot.WEAK_SPATIAL_BASELINE
-        assert LocationHotspot.weak_spatial_threshold(1) == pytest.approx(baseline)
-        assert LocationHotspot.weak_spatial_threshold(0) == pytest.approx(baseline)
 
     def test_weak_spatial_threshold_monotonically_increasing(self) -> None:
         thresholds = [LocationHotspot.weak_spatial_threshold(n) for n in range(2, 8)]
