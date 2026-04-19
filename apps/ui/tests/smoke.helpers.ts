@@ -8,6 +8,12 @@ export type FakeWebSocketOptions = {
   trackerKey?: string;
 };
 
+export type LiveSensorPayloadOptions = Omit<FakeWebSocketOptions, "payload"> & {
+  clients?: Array<Record<string, unknown>>;
+  extraPayload?: Record<string, unknown>;
+  speedMps?: number | null;
+};
+
 export async function installFakeWebSocket(page: Page, options: FakeWebSocketOptions = {}): Promise<void> {
   await page.addInitScript(({ payload, schemaVersion, repeatPayloadCount, repeatPayloadIntervalMs, trackerKey }) => {
     const mergedPayload = payload
@@ -93,6 +99,28 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
   }, { ...options, schemaVersion: EXPECTED_SCHEMA_VERSION });
 }
 
+export async function installLiveSensorPayload(
+  page: Page,
+  options: LiveSensorPayloadOptions = {},
+): Promise<void> {
+  const {
+    clients = [],
+    extraPayload = {},
+    speedMps = null,
+    ...webSocketOptions
+  } = options;
+  await installFakeWebSocket(page, {
+    ...webSocketOptions,
+    payload: {
+      server_time: new Date().toISOString(),
+      speed_mps: speedMps,
+      clients,
+      spectra: { clients: {} },
+      ...extraPayload,
+    },
+  });
+}
+
 export async function waitForFakeWebSocketSettled(
   page: Page,
   trackerKey: string,
@@ -146,6 +174,12 @@ export type CommonRouteOptions = {
   historyHandler?: (route: Route) => Promise<void>;
   settingsHandler?: (route: Route) => Promise<void>;
   espFlashHandler?: (route: Route) => Promise<void>;
+};
+
+export type BootLiveDashboardOptions = CommonRouteOptions & {
+  fakeWebSocket?: FakeWebSocketOptions;
+  installRoutes?: boolean;
+  liveSensorPayload?: LiveSensorPayloadOptions;
 };
 
 export type SettingsRouteValue = unknown | ((route: Route, path: string, method: string) => Promise<unknown | undefined>);
@@ -376,6 +410,65 @@ export async function installCommonRoutes(page: Page, options: CommonRouteOption
       diagnostic: "No USB network interface is currently detected.",
     });
   });
+}
+
+export async function bootLiveDashboard(
+  page: Page,
+  options: BootLiveDashboardOptions = {},
+): Promise<void> {
+  const {
+    fakeWebSocket,
+    installRoutes = true,
+    liveSensorPayload,
+    ...routeOptions
+  } = options;
+  if (installRoutes) {
+    await installCommonRoutes(page, routeOptions);
+  }
+  if (liveSensorPayload) {
+    await installLiveSensorPayload(page, liveSensorPayload);
+  } else {
+    await installFakeWebSocket(page, fakeWebSocket);
+  }
+  await page.goto("/");
+}
+
+export async function openSettingsTab(
+  page: Page,
+  settingsTabId?: string,
+): Promise<void> {
+  await page.locator("#tab-settings").click();
+  if (settingsTabId) {
+    await page.locator(`[data-settings-tab="${settingsTabId}"]`).click();
+  }
+}
+
+export async function openCarsTab(page: Page): Promise<void> {
+  await openSettingsTab(page, "carTab");
+}
+
+export async function openSpeedSourceTab(page: Page): Promise<void> {
+  await openSettingsTab(page, "speedSourceTab");
+}
+
+export async function openAnalysisTab(page: Page): Promise<void> {
+  await openSettingsTab(page, "analysisTab");
+}
+
+export async function openSensorsTab(page: Page): Promise<void> {
+  await openSettingsTab(page, "sensorsTab");
+}
+
+export async function openInternetTab(page: Page): Promise<void> {
+  await openSettingsTab(page, "internetTab");
+}
+
+export async function openUpdateTab(page: Page): Promise<void> {
+  await openSettingsTab(page, "updateTab");
+}
+
+export async function openHistoryTab(page: Page): Promise<void> {
+  await page.locator("#tab-history").click();
 }
 
 export function createSettingsHandlerFromMap(settingsMap: Record<string, SettingsRouteValue>) {

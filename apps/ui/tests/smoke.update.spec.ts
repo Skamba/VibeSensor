@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  bootLiveDashboard,
   fulfillJson,
   installCommonRoutes,
-  installFakeWebSocket,
+  openInternetTab,
+  openUpdateTab,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 15_000 });
@@ -64,10 +66,8 @@ test("settings update tab renders readiness guidance when idle", async ({
       },
     });
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="updateTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openUpdateTab(page);
   await expect(page.locator("#updateOverviewPanel")).toContainText(
     "Ready to start once the Pi has either temporary Wi-Fi credentials or a usable USB internet uplink.",
   );
@@ -91,7 +91,7 @@ test("settings update tab renders readiness guidance when idle", async ({
     "Background service health",
   );
   await expect(page.locator("#updateStartBtn")).toBeDisabled();
-  await page.locator('[data-settings-tab="internetTab"]').click();
+  await openInternetTab(page);
   await expect(page.locator("#updateTransportOptions")).toHaveJSProperty(
     "hidden",
     false,
@@ -135,7 +135,7 @@ test("settings update tab renders readiness guidance when idle", async ({
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "A Wi-Fi network name is entered and ready to use.",
   );
-  await page.locator('[data-settings-tab="updateTab"]').click();
+  await openUpdateTab(page);
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
 });
 
@@ -208,10 +208,8 @@ test("settings internet tab and updater show USB internet when usable", async ({
       diagnostic: "USB internet is ready on 'usb0'.",
     });
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="internetTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openInternetTab(page);
   await expect(page.locator("#internetStatusPanel")).toContainText(
     "USB internet status",
   );
@@ -263,7 +261,7 @@ test("settings internet tab and updater show USB internet when usable", async ({
     "data-choice-state",
     "active",
   );
-  await page.locator('[data-settings-tab="updateTab"]').click();
+  await openUpdateTab(page);
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
 });
 
@@ -323,15 +321,13 @@ test("settings internet tab restores persisted Wi-Fi SSID after reboot", async (
       },
     });
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="internetTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openInternetTab(page);
   await expect(page.locator("#updateSsidInput")).toHaveValue("Workshop Wi-Fi");
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "All visible prerequisites are ready to start the update.",
   );
-  await page.locator('[data-settings-tab="updateTab"]').click();
+  await openUpdateTab(page);
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
 });
 
@@ -391,10 +387,8 @@ test("settings internet tab toggles the Wi-Fi password field without losing the 
       },
     });
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="internetTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openInternetTab(page);
   await page.locator("#updatePasswordInput").fill("secret");
   await expect(page.locator("#updatePasswordInput")).toHaveAttribute(
     "type",
@@ -492,10 +486,8 @@ test("settings update failure shows retry guidance, failed-stage retention, and 
       diagnostic: "USB internet is ready on 'usb0'.",
     });
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="internetTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openInternetTab(page);
   await page.locator("#updateTransportChoiceUsb").click();
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "Recovery guidance",
@@ -509,7 +501,7 @@ test("settings update failure shows retry guidance, failed-stage retention, and 
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "Check upstream connectivity",
   );
-  await page.locator('[data-settings-tab="updateTab"]').click();
+  await openUpdateTab(page);
   await expect(page.locator("#updateStartBtn")).toHaveText("Retry Update");
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
   await expect(page.locator("#updateStatusPanel")).toContainText(
@@ -604,14 +596,12 @@ test("settings update recovery keeps Retry Update enabled even when readiness st
       diagnostic: "USB internet is not available.",
     });
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="internetTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openInternetTab(page);
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "Clear the blocked item before retrying.",
   );
-  await page.locator('[data-settings-tab="updateTab"]').click();
+  await openUpdateTab(page);
   await expect(page.locator("#updateStartBtn")).toHaveText("Retry Update");
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
 });
