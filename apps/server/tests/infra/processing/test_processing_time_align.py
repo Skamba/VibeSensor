@@ -50,18 +50,29 @@ class TestComputeOverlap:
         assert result.shared_start == pytest.approx(5.0)
         assert result.shared_end == pytest.approx(10.0)
 
-    def test_alignment_threshold(self) -> None:
-        # Create a case just above the threshold
-        result = compute_overlap([0.0, 4.0], [10.0, 14.0])
-        # Union: 0-14 = 14, overlap: 4-10 = 6 → ratio = 6/14 ≈ 0.43
-        assert result.overlap_ratio < _ALIGNMENT_MIN_OVERLAP
-        assert result.aligned is False
+    @pytest.mark.parametrize(
+        ("starts", "ends", "expected_ratio", "expected_aligned"),
+        [
+            pytest.param([0.0, 5.000001], [10.0, 10.0], 0.4999999, False, id="just-below"),
+            pytest.param([0.0, 5.0], [10.0, 10.0], 0.5, True, id="exact-threshold"),
+            pytest.param([0.0, 4.999999], [10.0, 10.0], 0.5000001, True, id="just-above"),
+        ],
+    )
+    def test_alignment_threshold_boundaries(
+        self,
+        starts: list[float],
+        ends: list[float],
+        expected_ratio: float,
+        expected_aligned: bool,
+    ) -> None:
+        result = compute_overlap(starts, ends)
 
-        # Create a case at or above threshold
-        result2 = compute_overlap([0.0, 5.0], [10.0, 10.0])
-        # Union: 0-10 = 10, overlap: 5-10 = 5 → ratio = 0.5
-        assert result2.overlap_ratio >= _ALIGNMENT_MIN_OVERLAP
-        assert result2.aligned is True
+        assert result.overlap_ratio == pytest.approx(expected_ratio)
+        assert result.aligned is expected_aligned
+        if expected_aligned:
+            assert result.overlap_ratio >= _ALIGNMENT_MIN_OVERLAP
+        else:
+            assert result.overlap_ratio < _ALIGNMENT_MIN_OVERLAP
 
     def test_three_ranges(self) -> None:
         result = compute_overlap([0.0, 2.0, 4.0], [10.0, 12.0, 14.0])
@@ -101,13 +112,25 @@ class TestAnalysisTimeRange:
     def test_returns_none(self, overrides: dict[str, object]) -> None:
         assert _atr(**overrides) is None
 
-    def test_server_clock_path(self) -> None:
-        result = _atr()
+    def test_server_clock_path_preserves_partial_window_and_drift(self) -> None:
+        result = _atr(
+            count=450,
+            last_ingest_mono_s=100.123,
+        )
+        assert result is not None
+        start, end, synced = result
+        assert synced is False
+        assert end == pytest.approx(100.123)
+        assert start == pytest.approx(99.673)
+
+    def test_server_clock_path_preserves_off_by_one_sample_duration(self) -> None:
+        result = _atr(count=1001)
         assert result is not None
         start, end, synced = result
         assert synced is False
         assert end == pytest.approx(100.0)
-        assert start == pytest.approx(99.0)  # 1000 samples / 1000 Hz = 1s window
+        assert start == pytest.approx(98.999)
+        assert (end - start) == pytest.approx(1.001)
 
     def test_sensor_clock_path(self) -> None:
         result = _atr(
@@ -131,3 +154,18 @@ class TestAnalysisTimeRange:
         start, end, synced = result
         # Window should be 2000/1000 = 2s, not 5s
         assert (end - start) == pytest.approx(2.0)
+
+    @pytest.mark.parametrize("last_ingest_mono_s", [0.0, -1.0])
+    def test_bad_timestamp_combinations_return_none(
+        self,
+        last_ingest_mono_s: float,
+    ) -> None:
+        assert (
+            _atr(
+                count=100,
+                last_ingest_mono_s=last_ingest_mono_s,
+                last_t0_us=5_000_000,
+                samples_since_t0=450,
+            )
+            is None
+        )
