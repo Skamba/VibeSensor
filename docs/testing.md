@@ -149,6 +149,22 @@ python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
   `act -j ui-smoke -W .github/workflows/ci.yml` when you need GitHub-workflow
   parity for those jobs.
 
+## PDF OCR audit
+
+The heavyweight OCR/rasterized PDF text-fidelity audit is intentionally excluded
+from the default backend pytest lane. Run it only on purpose:
+
+```bash
+cd apps/server
+VIBESENSOR_OCR_AUDIT_DIR="$PWD/../../artifacts/pdf-ocr-audit" \
+  python3 -m pytest -o addopts='' -m ocr_audit \
+  tests/adapters/pdf/test_report_pdf_ocr_text_fidelity.py
+```
+
+`VIBESENSOR_OCR_AUDIT_DIR` is optional but recommended when you want the PDF,
+PNG, and JSON audit artifacts to land in a deterministic retained directory
+instead of pytest's temp path.
+
 ## Firmware and Pi-image validation
 
 Use the narrowest existing validation path that matches the layer you changed:

@@ -19,6 +19,8 @@ from vibesensor.use_cases.history.report_document import build_report_document
 pdfium = pytest.importorskip("pypdfium2")
 RapidOCR = pytest.importorskip("rapidocr_onnxruntime").RapidOCR
 
+pytestmark = pytest.mark.ocr_audit
+
 
 def _normalize_text(value: str) -> str:
     normalized = value.lower()
