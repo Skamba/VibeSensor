@@ -10,6 +10,11 @@ Usage::
     python tools/tests/benchmark_pipeline.py --sensors 8 --rounds 20
 
 Output is a plain-text table comparing sequential vs parallel execution.
+
+For repeatable regression comparisons, use
+``apps/server/tests/infra/workers/benchmark_compute_all.py`` through
+``make benchmark-backend``. This script remains the standalone
+human-readable throughput harness.
 """
 
 from __future__ import annotations

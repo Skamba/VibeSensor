@@ -153,14 +153,19 @@ settings snapshots now follow the same pattern in
 - Keep Pydantic response models at the HTTP edge when OpenAPI generation still
   depends on them; msgspec feeds those models with already-validated builtins.
 
-For Pi or Pi-like timing checks before widening this pattern, run:
+For repeatable codec comparisons, run the explicit benchmark suite:
 
 ```bash
-python tools/tests/benchmark_update_status_codec.py --iterations 5000 --rounds 20
+make benchmark-backend \
+  BACKEND_BENCHMARK_TARGETS=tests/use_cases/updates/benchmark_update_status_codec.py \
+  BENCHMARK_OPTS="--benchmark-save=update-status-codec"
+make benchmark-compare-backend
 ```
 
-The benchmark uses a representative updater-status payload and reports payload
-bytes plus median/p95 encode/decode latency in microseconds per operation.
+The benchmark uses a representative updater-status payload. Saved runs land in
+`apps/server/.benchmarks/` so later runs can be compared with the same target.
+The older `tools/tests/benchmark_update_status_codec.py` script remains as a
+standalone single-shot harness when you just want the raw Pi timing printout.
 
 ## Configuration
 

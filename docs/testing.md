@@ -8,6 +8,8 @@
 - Pi-image build/validation guidance lives in `infra/pi-image/pi-gen/README.md`.
 - Use `make test-ci-lite` (`python3 tools/tests/run_ci_parallel.py --ci-lite`) for the non-Docker blocking-CI subset.
 - Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for the broader local runner.
+- Use `make benchmark-backend` for the explicit pytest-benchmark backend suite; pass `BENCHMARK_OPTS="--benchmark-save=<name>"` to save runs and `BACKEND_BENCHMARK_TARGETS=...` to focus one benchmark file.
+- Use `make benchmark-compare-backend` to compare saved runs from `apps/server/.benchmarks/`.
 - The full end-to-end verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`), which starts an isolated direct server subprocess per shard from `apps/server/config.docker.yaml` with static UI serving disabled.
 - `tools/tests/run_backend_parallel.py` shards `apps/server/tests` by whole test file, using cached JUnit timings from `~/.cache/vibesensor/backend-duration-cache.json` to keep the backend CI shards balanced over time. It also accepts `--xdist-workers` / `VIBESENSOR_BACKEND_XDIST_WORKERS` for controlled intra-shard xdist; CI pins that to `2` because the repo's five-shard local CI-parallel benchmark beat `-n 0` (48.6s wall time) and still edged out the higher `-n 3` setting (41.5s) with `-n 2` (41.1s) while keeping the same shard contents.
 - `tools/tests/run_e2e_parallel.py` records observed shard test durations in `~/.cache/vibesensor/e2e-duration-cache.json` so later local or CI runs can rebalance without hand-maintained timing hints.
@@ -99,6 +101,10 @@ make test-ci-lite
 # Full local runner
 make test-all
 
+# Explicit backend benchmarks
+make benchmark-backend BENCHMARK_OPTS="--benchmark-save=baseline"
+make benchmark-compare-backend
+
 # Required pre-finalization gate — real GitHub workflow via act (requires Docker)
 act -W .github/workflows/ci.yml
 ```
@@ -112,6 +118,11 @@ pytest -q apps/server/tests/use_cases/updates/
 pytest -q apps/server/tests/integration/
 python3 tools/dev/fuzz_analysis_engine.py --duration-s 60 --batch-examples 100 --processes 16
 ```
+
+Explicit backend benchmark files stay out of default CI and normal pytest
+discovery so the blocking lanes do not turn noisy or hardware-sensitive.
+Run them on demand when you need regression evidence and save comparison data
+for later runs with `make benchmark-backend` / `make benchmark-compare-backend`.
 
 Focused CI job groups and full-stack validation:
 
