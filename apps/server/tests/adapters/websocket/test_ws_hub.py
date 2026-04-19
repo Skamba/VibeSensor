@@ -8,28 +8,23 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
 import pytest
+from test_support.ws_hub import (
+    build_hub,
+)
+from test_support.ws_hub import (
+    make_websocket as _make_ws,
+)
+from test_support.ws_hub import (
+    sent_json as _sent_json,
+)
 
 from vibesensor.adapters.websocket.hub import WebSocketHub, WSConnection
 from vibesensor.shared.json_utils import sanitize_for_json
 
 
-def _make_ws() -> AsyncMock:
-    """Create a mock WebSocket with ``send_text``."""
-    ws = AsyncMock()
-    ws.send_text = AsyncMock()
-    return ws
-
-
-def _sent_json(ws: AsyncMock) -> dict[str, object]:
-    """Return the parsed JSON sent via ``ws.send_text``."""
-    return json.loads(ws.send_text.call_args[0][0])
-
-
 @pytest.mark.asyncio
 async def test_add_remove() -> None:
-    hub = WebSocketHub()
-    ws = _make_ws()
-    await hub.add(ws, None)
+    hub, [ws] = await build_hub(None)
     conns = await hub._snapshot()
     assert len(conns) == 1
     assert conns[0].websocket is ws
@@ -39,9 +34,7 @@ async def test_add_remove() -> None:
 
 @pytest.mark.asyncio
 async def test_update_selected_client() -> None:
-    hub = WebSocketHub()
-    ws = _make_ws()
-    await hub.add(ws, None)
+    hub, [ws] = await build_hub(None)
     await hub.update_selected_client(ws, "abc123")
     conns = await hub._snapshot()
     assert conns[0].selected_client_id == "abc123"
@@ -60,9 +53,7 @@ async def test_update_selected_client_missing_ws() -> None:
 
 @pytest.mark.asyncio
 async def test_broadcast_calls_send_json() -> None:
-    hub = WebSocketHub()
-    ws = _make_ws()
-    await hub.add(ws, "client_a")
+    hub, [ws] = await build_hub("client_a")
     payload_builder = MagicMock(return_value={"data": "test"})
     await hub.broadcast(payload_builder)
     payload_builder.assert_called_once_with("client_a")
@@ -135,13 +126,7 @@ async def test_broadcast_survives_payload_builder_exception() -> None:
 
 @pytest.mark.asyncio
 async def test_broadcast_builds_payload_once_per_unique_selection() -> None:
-    hub = WebSocketHub()
-    ws1 = _make_ws()
-    ws2 = _make_ws()
-    ws3 = _make_ws()
-    await hub.add(ws1, "same")
-    await hub.add(ws2, "same")
-    await hub.add(ws3, None)
+    hub, [ws1, ws2, ws3] = await build_hub("same", "same", None)
     payload_builder = MagicMock(side_effect=lambda selected: {"selected": selected})
 
     await hub.broadcast(payload_builder)
@@ -154,11 +139,7 @@ async def test_payload_error_does_not_block_other_clients() -> None:
     """A payload build failure for one client_id must not prevent other clients
     from receiving their data.
     """
-    hub = WebSocketHub()
-    good_ws = _make_ws()
-    bad_ws = _make_ws()
-    await hub.add(good_ws, "good_client")
-    await hub.add(bad_ws, "bad_client")
+    hub, [good_ws, bad_ws] = await build_hub("good_client", "bad_client")
 
     def selective_builder(client_id):
         if client_id == "bad_client":
@@ -518,9 +499,7 @@ class TestSanitizeForJson:
 @pytest.mark.asyncio
 async def test_broadcast_sanitizes_nan_to_null() -> None:
     """Broadcast with NaN values in payload produces valid JSON with null."""
-    hub = WebSocketHub()
-    ws = _make_ws()
-    await hub.add(ws, "client_x")
+    hub, [ws] = await build_hub("client_x")
 
     payload_with_nan = {
         "wheel": {"rpm": float("nan")},
@@ -539,9 +518,7 @@ async def test_broadcast_sanitizes_nan_to_null() -> None:
 @pytest.mark.asyncio
 async def test_broadcast_logs_warning_on_nan(caplog) -> None:
     """A warning is logged when NaN/Inf values are found in the payload."""
-    hub = WebSocketHub()
-    ws = _make_ws()
-    await hub.add(ws, "sensor_1")
+    hub, [ws] = await build_hub("sensor_1")
 
     with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"):
         await hub.broadcast(lambda _: {"val": float("nan")})
@@ -551,10 +528,8 @@ async def test_broadcast_logs_warning_on_nan(caplog) -> None:
 
 @pytest.mark.asyncio
 async def test_broadcast_send_timeout_removes_connection() -> None:
-    hub = WebSocketHub()
-    ws = _make_ws()
+    hub, [ws] = await build_hub("client-timeout")
     ws.send_text = AsyncMock(side_effect=TimeoutError("slow client"))
-    await hub.add(ws, "client-timeout")
 
     await hub.broadcast(lambda _: {"ok": True})
 
@@ -619,11 +594,9 @@ async def test_connection_count_tracks_add_remove() -> None:
 @pytest.mark.asyncio
 async def test_broadcast_closes_dead_websocket() -> None:
     """broadcast() should call ws.close() on failed connections before removing."""
-    hub = WebSocketHub()
-    ws = _make_ws()
+    hub, [ws] = await build_hub("c1")
     ws.send_text = AsyncMock(side_effect=ConnectionError("gone"))
     ws.close = AsyncMock()
-    await hub.add(ws, "c1")
 
     await hub.broadcast(lambda _: {"ok": True})
 
@@ -652,10 +625,8 @@ async def test_broadcast_close_error_does_not_prevent_removal() -> None:
 @pytest.mark.asyncio
 async def test_send_failure_log_includes_client_id(caplog) -> None:
     """The send-failure WARNING message must include the selected_client_id."""
-    hub = WebSocketHub()
-    ws = _make_ws()
+    hub, [ws] = await build_hub("sensor_42")
     ws.send_text = AsyncMock(side_effect=ConnectionError("boom"))
-    await hub.add(ws, "sensor_42")
 
     with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"):
         await hub.broadcast(lambda _: {"ok": True})
