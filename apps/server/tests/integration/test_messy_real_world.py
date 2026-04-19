@@ -14,16 +14,11 @@ import pytest
 from test_support import (
     ADDITIONAL_CAR_PROFILE_IDS,
     ADDITIONAL_CAR_PROFILES,
-    ALL_WHEEL_SENSORS,
     CAR_PROFILE_IDS,
     CAR_PROFILES,
     CORNER_SENSORS,
-    SENSOR_DRIVER_SEAT,
     SENSOR_FL,
-    SENSOR_FR,
-    SENSOR_RL,
     SENSOR_RR,
-    SENSOR_TRUNK,
     SPEED_HIGH,
     SPEED_MID,
     _stable_hash,
@@ -48,10 +43,25 @@ from test_support import (
     run_analysis,
     top_confidence,
 )
-
-_4S = ALL_WHEEL_SENSORS  # never mutated – no need to copy
-_CORNERS = list(CORNER_SENSORS)  # derive from single source of truth
-
+from test_support.diagnostic_matrix_catalogs import (
+    DIAGNOSTIC_4_SENSOR_SET as _4S,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    DIAGNOSTIC_WHEEL_CORNERS as _CORNERS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    MESSY_AMPLITUDE_SWEEP_CASES,
+    MESSY_CLOCK_SKEW_CORNERS,
+    MESSY_DUAL_FAULT_CASES,
+    MESSY_GAIN_MISMATCH_CORNERS,
+    MESSY_OUT_OF_ORDER_CORNERS,
+    MESSY_OVERLAP_SPEED_CASES,
+    MESSY_POTHOLE_SPEED_CASES,
+    MESSY_SELF_DROPOUT_CORNERS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    MESSY_CABIN_OVERLAP_MIXES as _CABIN_OVERLAP_MIXES,
+)
 
 # F.1 – Persistent wheel fault + sensor dropout (4 corners = 4 cases)
 
@@ -135,7 +145,11 @@ def test_fault_with_speed_jitter(corner: str, profile: dict[str, Any]) -> None:
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("speed", [SPEED_MID, SPEED_HIGH], ids=["mid", "high"])
+@pytest.mark.parametrize(
+    "speed",
+    [speed for _, speed in MESSY_POTHOLE_SPEED_CASES],
+    ids=[case_id for case_id, _ in MESSY_POTHOLE_SPEED_CASES],
+)
 def test_diffuse_noise_with_pothole_transients(speed: float, profile: dict[str, Any]) -> None:
     """Diffuse road noise + pothole-style transient bursts on all sensors.
 
@@ -166,7 +180,11 @@ def test_diffuse_noise_with_pothole_transients(speed: float, profile: dict[str, 
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("speed", [60.0, 100.0], ids=["60kmh", "100kmh"])
+@pytest.mark.parametrize(
+    "speed",
+    [speed for _, speed in MESSY_OVERLAP_SPEED_CASES],
+    ids=[case_id for case_id, _ in MESSY_OVERLAP_SPEED_CASES],
+)
 def test_overlapping_engine_wheel_harmonics(speed: float, profile: dict[str, Any]) -> None:
     """Engine-order + wheel-order fault present simultaneously.
 
@@ -211,11 +229,8 @@ def test_overlapping_engine_wheel_harmonics(speed: float, profile: dict[str, Any
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
     ("pair", "primary"),
-    [
-        ((SENSOR_FL, SENSOR_RR), SENSOR_FL),
-        ((SENSOR_FR, SENSOR_RL), SENSOR_FR),
-    ],
-    ids=["FL_RR", "FR_RL"],
+    [(pair, primary) for _, pair, primary in MESSY_DUAL_FAULT_CASES],
+    ids=[case_id for case_id, _, _ in MESSY_DUAL_FAULT_CASES],
 )
 def test_dual_fault_detection(pair: tuple[str, str], primary: str, profile: dict[str, Any]) -> None:
     """Two sensors have wheel faults simultaneously (primary is stronger).
@@ -272,7 +287,7 @@ def test_road_phase_smooth_rough_pothole(profile: dict[str, Any]) -> None:
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", ["FL", "RR"])
+@pytest.mark.parametrize("corner", MESSY_OUT_OF_ORDER_CORNERS)
 def test_fault_with_out_of_order_timestamps(corner: str, profile: dict[str, Any]) -> None:
     """Fault data with some out-of-order timestamps (simulating network reordering)."""
     fault_sensor = CORNER_SENSORS[corner]
@@ -297,7 +312,7 @@ def test_fault_with_out_of_order_timestamps(corner: str, profile: dict[str, Any]
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", ["FR", "RL"])
+@pytest.mark.parametrize("corner", MESSY_CLOCK_SKEW_CORNERS)
 def test_fault_with_clock_skew(corner: str, profile: dict[str, Any]) -> None:
     """Fault with a 0.3s clock skew on one non-fault sensor."""
     fault_sensor = CORNER_SENSORS[corner]
@@ -327,7 +342,7 @@ def test_fault_with_clock_skew(corner: str, profile: dict[str, Any]) -> None:
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", ["FL", "RL"])
+@pytest.mark.parametrize("corner", MESSY_GAIN_MISMATCH_CORNERS)
 def test_fault_with_gain_mismatch(corner: str, profile: dict[str, Any]) -> None:
     """Fault sensor has 1.5x gain (different sensitivity). Fault should still be localized."""
     fault_sensor = CORNER_SENSORS[corner]
@@ -354,10 +369,9 @@ def test_fault_with_gain_mismatch(corner: str, profile: dict[str, Any]) -> None:
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 def test_pairwise_monotonic_amplitude_4sensor(profile: dict[str, Any]) -> None:
     """Confidence should increase (pairwise) with fault amplitude on 4 sensors."""
-    amps = [(0.02, 16.0), (0.04, 20.0), (0.06, 26.0), (0.09, 30.0), (0.12, 34.0)]
     confs: list[float] = []
     labels: list[str] = []
-    for amp, vdb in amps:
+    for amp, vdb, label in MESSY_AMPLITUDE_SWEEP_CASES:
         samples = make_profile_fault_samples(
             profile=profile,
             fault_sensor=SENSOR_FL,
@@ -369,7 +383,7 @@ def test_pairwise_monotonic_amplitude_4sensor(profile: dict[str, Any]) -> None:
         )
         summary = run_analysis(samples, metadata=profile_metadata(profile))
         confs.append(top_confidence(summary))
-        labels.append(f"amp={amp}")
+        labels.append(label)
     # Check pairwise monotonic (allowing 0.05 tolerance)
     assert_pairwise_monotonic(confs, tolerance=0.10, labels=labels, msg="amplitude sweep")
 
@@ -378,7 +392,7 @@ def test_pairwise_monotonic_amplitude_4sensor(profile: dict[str, Any]) -> None:
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", ["FL", "RR"])
+@pytest.mark.parametrize("corner", MESSY_SELF_DROPOUT_CORNERS)
 def test_fault_with_self_dropout(corner: str, profile: dict[str, Any]) -> None:
     """Fault sensor itself drops out mid-run but has enough data before/after.
 
@@ -439,14 +453,6 @@ def test_speed_jitter_baseline_no_fault(profile: dict[str, Any]) -> None:
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg="speed-jitter-baseline")
-
-
-# F.14 – Cabin + engine/wheel overlap on the new profile additions (4 cases)
-
-_CABIN_OVERLAP_MIXES = [
-    ("driver-only", [SENSOR_DRIVER_SEAT]),
-    ("seat+trunk", [SENSOR_DRIVER_SEAT, SENSOR_TRUNK]),
-]
 
 
 @pytest.mark.parametrize("profile", ADDITIONAL_CAR_PROFILES, ids=ADDITIONAL_CAR_PROFILE_IDS)
