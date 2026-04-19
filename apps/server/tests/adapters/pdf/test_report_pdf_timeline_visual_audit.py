@@ -17,6 +17,7 @@ from vibesensor.use_cases.history.report_document import build_report_document
 pdfium = pytest.importorskip("pypdfium2")
 
 
+@pytest.mark.visual_audit
 def test_page_one_timeline_visual_audit_exports_screenshot(tmp_path: Path) -> None:
     audit_root_env = os.getenv("VIBESENSOR_TIMELINE_AUDIT_DIR")
     artifact_dir = Path(audit_root_env) if audit_root_env else tmp_path / "timeline_audit"
