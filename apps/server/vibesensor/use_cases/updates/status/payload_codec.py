@@ -6,7 +6,12 @@ import time
 
 import msgspec
 
-from vibesensor.shared.types.json_types import JsonObject, is_json_array, is_json_object
+from vibesensor.shared.types.json_types import (
+    JsonArray,
+    JsonObject,
+    is_json_array,
+    is_json_object,
+)
 from vibesensor.use_cases.updates.models import (
     UPDATE_STATUS_LOG_TAIL_LIMIT,
     UpdateJobStatus,
@@ -155,10 +160,10 @@ def _convert_status_payload_object(data: object) -> UpdateJobStatusPayload:
         return msgspec.convert(normalized, type=UpdateJobStatusPayload, strict=False)
 
 
-def _normalize_legacy_issues(value: object) -> list[JsonObject]:
+def _normalize_legacy_issues(value: object) -> JsonArray:
     if not is_json_array(value):
         return []
-    issues: list[JsonObject] = []
+    issues: JsonArray = []
     for issue in value:
         if not is_json_object(issue):
             continue
@@ -172,7 +177,7 @@ def _normalize_legacy_issues(value: object) -> list[JsonObject]:
     return issues
 
 
-def _normalize_legacy_log_tail(value: object) -> list[str]:
+def _normalize_legacy_log_tail(value: object) -> JsonArray:
     if not is_json_array(value):
         return []
     return [str(line) for line in value[-UPDATE_STATUS_LOG_TAIL_LIMIT:]]
