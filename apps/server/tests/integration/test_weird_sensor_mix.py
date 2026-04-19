@@ -16,73 +16,68 @@ from test_support.assertions import (
     assert_wheel_weak_spatial,
 )
 from test_support.core import (
-    ADDITIONAL_CAR_PROFILES,
-    CAR_PROFILES,
-    SENSOR_DRIVER_SEAT,
-    SENSOR_ENGINE,
-    SENSOR_FL,
-    SENSOR_FR,
-    SENSOR_FRONT_SUBFRAME,
-    SENSOR_PASSENGER_SEAT,
-    SENSOR_REAR_SUBFRAME,
-    SENSOR_RL,
-    SENSOR_RR,
-    SENSOR_TRUNK,
     assert_summary_sections,
     profile_metadata,
 )
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_ASYMMETRIC_COMBOS as _ASYMMETRIC_COMBOS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_CABIN_SENSOR_MIXES as _CABIN_SENSOR_MIXES,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_CABIN_WHEEL_COMBOS as _CABIN_COMBOS_FOR_WHEEL,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_CONTRADICTORY_MIXES as _CONTRA_MIXES,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_GRANULARITY_SCENARIOS as _GRANULARITY_SCENARIOS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_HIGH_TRANSFER_CASES as _HIGH_TRANSFERS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_NOISE_LEVEL_CASES as _NOISE_LEVELS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_PHASED_SCENARIOS as _PHASED_SCENARIOS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_RESOLVE_COMBOS as _RESOLVE_COMBOS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_SPARSE_SENSOR_CASES as _SPARSE_SENSORS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_SPARSE_SPEED_IDS as _SPARSE_SPEED_IDS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_SPARSE_SPEEDS as _SPARSE_SPEEDS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_SPEED_IDS as _SPEED_IDS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_SPEEDS as _SPEEDS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_STRONG_AMPLITUDE_CASES as _STRONG_AMPS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_TOPOLOGY_PROFILE_IDS as _TOPOLOGY_PROFILE_IDS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_TOPOLOGY_PROFILES as _TOPOLOGY_PROFILES,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_WEAK_AMPLITUDE_CASES as _WEAK_AMPS,
+)
+from test_support.diagnostic_matrix_catalogs import (
+    WEIRD_WHEEL_CORNER_CASES as _WHEEL_CORNERS,
+)
 from test_support.fault_scenarios import make_fault_samples
 from test_support.sample_scenarios import make_diffuse_samples, make_noise_samples
-
-# ---------------------------------------------------------------------------
-# Constants for parameterization
-# ---------------------------------------------------------------------------
-
-_CABIN_SENSOR_MIXES: list[tuple[str, list[str]]] = [
-    ("seat+trunk", [SENSOR_DRIVER_SEAT, SENSOR_TRUNK]),
-    ("seat+pass", [SENSOR_DRIVER_SEAT, SENSOR_PASSENGER_SEAT]),
-    ("pass+trunk", [SENSOR_PASSENGER_SEAT, SENSOR_TRUNK]),
-    ("all-cabin", [SENSOR_DRIVER_SEAT, SENSOR_PASSENGER_SEAT, SENSOR_TRUNK]),
-    ("seat-only", [SENSOR_DRIVER_SEAT]),
-]
-
-_SPEEDS = [30.0, 80.0, 120.0]
-_SPEED_IDS = ["30kph", "80kph", "120kph"]
-
-_WHEEL_CORNERS: list[tuple[str, str]] = [
-    ("FL", SENSOR_FL),
-    ("FR", SENSOR_FR),
-    ("RL", SENSOR_RL),
-    ("RR", SENSOR_RR),
-]
-
-_CABIN_COMBOS_FOR_WHEEL: list[tuple[str, list[str]]] = [
-    ("seat+trunk", [SENSOR_DRIVER_SEAT, SENSOR_TRUNK]),
-    ("pass", [SENSOR_PASSENGER_SEAT]),
-    ("all-cabin", [SENSOR_DRIVER_SEAT, SENSOR_PASSENGER_SEAT, SENSOR_TRUNK]),
-]
-
-_ASYMMETRIC_COMBOS: list[tuple[str, list[str]]] = [
-    ("front-heavy", [SENSOR_DRIVER_SEAT, SENSOR_PASSENGER_SEAT]),
-    ("rear-heavy", [SENSOR_TRUNK, SENSOR_REAR_SUBFRAME]),
-    ("mixed-fr", [SENSOR_DRIVER_SEAT, SENSOR_TRUNK]),
-    ("cross-region", [SENSOR_DRIVER_SEAT, SENSOR_REAR_SUBFRAME]),
-]
-
-_SPARSE_SENSORS: list[tuple[str, str]] = [
-    ("seat", SENSOR_DRIVER_SEAT),
-    ("pass", SENSOR_PASSENGER_SEAT),
-    ("trunk", SENSOR_TRUNK),
-    ("engine", SENSOR_ENGINE),
-    ("front-sub", SENSOR_FRONT_SUBFRAME),
-    ("rear-sub", SENSOR_REAR_SUBFRAME),
-]
-
-# Explicit topology coverage plan: one existing sports-coupe baseline plus two
-# new profiles that stretch tall-gearing and cargo/tire geometry.
-_TOPOLOGY_PROFILES = [CAR_PROFILES[2], *ADDITIONAL_CAR_PROFILES]
-_TOPOLOGY_PROFILE_IDS = [p["name"] for p in _TOPOLOGY_PROFILES]
-
 
 # ===================================================================
 # 1. test_cabin_only_no_exact_corner — 45 cases
@@ -124,11 +119,6 @@ def test_cabin_only_no_exact_corner(
 # ===================================================================
 # 2. test_cabin_only_weak_evidence — 10 cases (5 mixes × 2 amps)
 # ===================================================================
-
-_WEAK_AMPS: list[tuple[str, float, float]] = [
-    ("low", 0.02, 16.0),
-    ("med", 0.04, 20.0),
-]
 
 
 @pytest.mark.parametrize(
@@ -211,11 +201,6 @@ def test_one_wheel_plus_cabin_correct_localization(
 #    (5 mixes × 2 transfer fractions)
 # ===================================================================
 
-_HIGH_TRANSFERS: list[tuple[str, float]] = [
-    ("tf0.7", 0.7),
-    ("tf0.9", 0.9),
-]
-
 
 @pytest.mark.parametrize(
     ("mix_id", "sensors"),
@@ -284,9 +269,6 @@ def test_asymmetric_cabin_front_vs_rear(combo_id: str, sensors: list[str], speed
 #    (6 sensors × 2 speeds × 3 profiles)
 # ===================================================================
 
-_SPARSE_SPEEDS = [60.0, 100.0]
-_SPARSE_SPEED_IDS = ["60kph", "100kph"]
-
 
 @pytest.mark.parametrize(
     ("sensor_id", "sensor"),
@@ -321,16 +303,6 @@ def test_sparse_single_non_wheel(
 # 7. test_phased_fault_cabin_only — 7 cases
 # ===================================================================
 
-_PHASED_SCENARIOS: list[tuple[str, list[str], float]] = [
-    ("seat+trunk@60", [SENSOR_DRIVER_SEAT, SENSOR_TRUNK], 60.0),
-    ("seat+pass@80", [SENSOR_DRIVER_SEAT, SENSOR_PASSENGER_SEAT], 80.0),
-    ("pass+trunk@100", [SENSOR_PASSENGER_SEAT, SENSOR_TRUNK], 100.0),
-    ("all-cabin@80", [SENSOR_DRIVER_SEAT, SENSOR_PASSENGER_SEAT, SENSOR_TRUNK], 80.0),
-    ("seat-only@60", [SENSOR_DRIVER_SEAT], 60.0),
-    ("seat+rear-sub@80", [SENSOR_DRIVER_SEAT, SENSOR_REAR_SUBFRAME], 80.0),
-    ("trunk+front-sub@100", [SENSOR_TRUNK, SENSOR_FRONT_SUBFRAME], 100.0),
-]
-
 
 @pytest.mark.parametrize(
     ("scenario_id", "sensors", "speed"),
@@ -364,19 +336,6 @@ def test_phased_fault_cabin_only(scenario_id: str, sensors: list[str], speed: fl
 # 8. test_contradictory_noisy_mixes — 10 cases
 #    (5 scenarios × 2 noise levels)
 # ===================================================================
-
-_CONTRA_MIXES: list[tuple[str, list[str]]] = [
-    ("seat+trunk", [SENSOR_DRIVER_SEAT, SENSOR_TRUNK]),
-    ("seat+pass", [SENSOR_DRIVER_SEAT, SENSOR_PASSENGER_SEAT]),
-    ("pass+trunk", [SENSOR_PASSENGER_SEAT, SENSOR_TRUNK]),
-    ("all-cabin", [SENSOR_DRIVER_SEAT, SENSOR_PASSENGER_SEAT, SENSOR_TRUNK]),
-    ("seat+rear-sub", [SENSOR_DRIVER_SEAT, SENSOR_REAR_SUBFRAME]),
-]
-
-_NOISE_LEVELS: list[tuple[str, float, float]] = [
-    ("moderate", 0.03, 20.0),
-    ("heavy", 0.05, 24.0),
-]
 
 
 @pytest.mark.parametrize(
@@ -425,19 +384,6 @@ def test_contradictory_noisy_mixes(
 #    (5 amplitude levels × 2 sensor combos)
 # ===================================================================
 
-_STRONG_AMPS: list[tuple[str, float, float]] = [
-    ("amp0.04", 0.04, 20.0),
-    ("amp0.06", 0.06, 24.0),
-    ("amp0.08", 0.08, 28.0),
-    ("amp0.10", 0.10, 30.0),
-    ("amp0.12", 0.12, 32.0),
-]
-
-_RESOLVE_COMBOS: list[tuple[str, list[str]]] = [
-    ("seat+trunk", [SENSOR_DRIVER_SEAT, SENSOR_TRUNK]),
-    ("all-cabin", [SENSOR_DRIVER_SEAT, SENSOR_PASSENGER_SEAT, SENSOR_TRUNK]),
-]
-
 
 @pytest.mark.parametrize(
     ("amp_id", "fault_amp", "fault_vib_db"),
@@ -475,11 +421,6 @@ def test_stronger_evidence_resolves_system(
 # ===================================================================
 # 10. test_report_granularity_consistency — 2 cases
 # ===================================================================
-
-_GRANULARITY_SCENARIOS: list[tuple[str, list[str], float]] = [
-    ("sparse-cabin", [SENSOR_DRIVER_SEAT, SENSOR_TRUNK], 80.0),
-    ("dense-cabin", [SENSOR_DRIVER_SEAT, SENSOR_PASSENGER_SEAT, SENSOR_TRUNK], 80.0),
-]
 
 
 @pytest.mark.parametrize(
