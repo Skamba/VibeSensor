@@ -141,47 +141,10 @@ python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
   `npm run test:visual:update` only for intentional baseline changes.
 - `npm run test:visual:audit` is the opt-in four-project visual audit sweep
   when you need dark/tablet coverage on purpose instead of in the default lane.
-- `npm run wiki:screenshots` is separate docs asset generation. It does not
-  belong to the default visual lane; by default it writes screenshots under
-  `apps/ui/wiki-screenshots/` unless `WIKI_SCREENSHOT_DIR` overrides the path.
 - `frontend-typecheck` is the contract/type gate, while `ui-smoke` is the CI
   browser path. Use `act -j frontend-typecheck -W .github/workflows/ci.yml` or
   `act -j ui-smoke -W .github/workflows/ci.yml` when you need GitHub-workflow
   parity for those jobs.
-
-## PDF OCR audit
-
-The heavyweight OCR/rasterized PDF text-fidelity audit is intentionally excluded
-from the default backend pytest lane. Run it only on purpose:
-
-```bash
-cd apps/server
-VIBESENSOR_OCR_AUDIT_DIR="$PWD/../../artifacts/pdf-ocr-audit" \
-  python3 -m pytest -o addopts='' -m ocr_audit \
-  tests/adapters/pdf/test_report_pdf_ocr_text_fidelity.py
-```
-
-`VIBESENSOR_OCR_AUDIT_DIR` is optional but recommended when you want the PDF,
-PNG, and JSON audit artifacts to land in a deterministic retained directory
-instead of pytest's temp path.
-
-## PDF visual audits
-
-The screenshot-exporting PDF visual audits are also intentionally excluded from
-the default backend pytest lane. Run them only on purpose:
-
-```bash
-cd apps/server
-VIBESENSOR_DIAGRAM_AUDIT_DIR="$PWD/../../artifacts/pdf-diagram-audit" \
-  VIBESENSOR_TIMELINE_AUDIT_DIR="$PWD/../../artifacts/pdf-timeline-audit" \
-  python3 -m pytest -o addopts='' -m visual_audit \
-  tests/adapters/pdf/test_report_pdf_diagram_visual_audit.py \
-  tests/adapters/pdf/test_report_pdf_timeline_visual_audit.py
-```
-
-The fast structural diagram assertion in
-`test_report_pdf_diagram_visual_audit.py` stays in the normal correctness lane;
-only the artifact-exporting screenshot checks moved behind `visual_audit`.
 
 ## Firmware and Pi-image validation
 
