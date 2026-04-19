@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import errno
+import os
 from argparse import Namespace
 from pathlib import Path
 from types import SimpleNamespace
@@ -111,4 +112,4 @@ def test_main_reload_uses_factory_target(monkeypatch, tmp_path) -> None:
             },
         ),
     ]
-    assert app_module.os.environ[app_module._CONFIG_PATH_ENV] == str(config_path.resolve())
+    assert os.environ[app_module._CONFIG_PATH_ENV] == str(config_path.resolve())

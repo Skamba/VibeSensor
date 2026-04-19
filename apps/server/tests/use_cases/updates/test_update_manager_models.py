@@ -111,7 +111,7 @@ class TestSudoWrapperDiscovery:
         wrapper.write_text("#!/usr/bin/env bash\n")
         wrapper.chmod(0o755)
 
-        monkeypatch.setattr(update_privilege.os, "geteuid", lambda: 1000)
+        monkeypatch.setattr(os, "geteuid", lambda: 1000)
         monkeypatch.setenv("VIBESENSOR_UPDATE_SUDO_WRAPPER", os.fspath(wrapper))
         monkeypatch.delenv("VIBESENSOR_REPO_PATH", raising=False)
         monkeypatch.setattr(update_privilege, "_DEFAULT_INSTALL_REPO", tmp_path / "missing-install")
@@ -130,7 +130,7 @@ class TestSudoWrapperDiscovery:
         wrapper.write_text("#!/usr/bin/env bash\n")
         wrapper.chmod(0o755)
 
-        monkeypatch.setattr(update_privilege.os, "geteuid", lambda: 1000)
+        monkeypatch.setattr(os, "geteuid", lambda: 1000)
         monkeypatch.delenv("VIBESENSOR_UPDATE_SUDO_WRAPPER", raising=False)
         monkeypatch.delenv("VIBESENSOR_REPO_PATH", raising=False)
         monkeypatch.setattr(update_privilege, "_DEFAULT_INSTALL_REPO", repo_root)
