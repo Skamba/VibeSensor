@@ -7,8 +7,6 @@ from vibesensor.shared.boundaries.settings import (
     car_config_update_payload_from_mapping,
     cars_response_payload,
     language_response_payload,
-    sensor_config_update_payload_from_mapping,
-    sensors_response_payload,
     speed_source_response_payload,
     speed_source_update_payload_from_mapping,
     speed_unit_response_payload,
@@ -60,26 +58,6 @@ def test_cars_response_payload_projects_snapshot() -> None:
         ],
         "active_car_id": "car-1",
     }
-
-
-def test_sensor_config_update_payload_from_mapping_omits_none_fields() -> None:
-    payload = sensor_config_update_payload_from_mapping({"name": "Front Left"})
-
-    assert payload == {"name": "Front Left"}
-
-
-def test_sensors_response_payload_projects_mapping() -> None:
-    payload = sensors_response_payload(
-        {
-            "aa:bb:cc:dd:ee:ff": {"name": "Front Left", "location_code": "fl"},
-        }
-    )
-
-    assert payload == {
-        "sensors_by_mac": {"aa:bb:cc:dd:ee:ff": {"name": "Front Left", "location_code": "fl"}}
-    }
-
-
 def test_speed_source_update_payload_from_mapping_projects_http_keys() -> None:
     payload = speed_source_update_payload_from_mapping(
         {
