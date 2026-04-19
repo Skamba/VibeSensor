@@ -1,12 +1,19 @@
-"""Smoke test: the assembled router wires a minimum number of routes."""
+"""Smoke test: the assembled router wires key live routes."""
 
 from __future__ import annotations
 
 
-def test_route_registration_floor(fake_state) -> None:
-    """App registers a minimum number of routes, catching broken wiring."""
+def test_route_registration_includes_key_live_routes(fake_state) -> None:
+    """App registers a representative set of operator-facing live routes."""
     from vibesensor.adapters.http import create_router
 
     router = create_router(fake_state)
-    routes = [r for r in router.routes if hasattr(r, "path")]
-    assert len(routes) >= 20, f"Expected ≥20 routes, got {len(routes)}"
+    paths = {route.path for route in router.routes if hasattr(route, "path")}
+
+    assert {
+        "/api/health",
+        "/api/history",
+        "/api/history/{run_id}/report.pdf",
+        "/api/update/status",
+        "/ws",
+    } <= paths
