@@ -1,12 +1,8 @@
-"""Round-trip and edge-case tests for UpdateJobStatus payload serialization.
-
-These tests cover the ``from_payload`` / ``to_payload`` contract of
-:class:`~vibesensor.use_cases.updates.models.UpdateJobStatus`, which is exercised at
-runtime when the state-store reloads a persisted snapshot.
-"""
+"""Round-trip and edge-case tests for the updater status msgspec codec."""
 
 from __future__ import annotations
 
+import msgspec
 import pytest
 
 from vibesensor.use_cases.updates.models import (
@@ -17,13 +13,17 @@ from vibesensor.use_cases.updates.models import (
     UpdateState,
     UpdateTransport,
 )
+from vibesensor.use_cases.updates.status import (
+    update_status_from_builtins,
+    update_status_to_builtins,
+)
 
 
 class TestUpdateJobStatusRoundTrip:
-    """Payload round-trip tests for UpdateJobStatus."""
+    """Payload round-trip tests for the updater status codec."""
 
-    def test_to_payload_from_payload_round_trip(self) -> None:
-        """A fully populated status must survive a to_payload → from_payload cycle."""
+    def test_to_builtins_from_builtins_round_trip(self) -> None:
+        """A fully populated status must survive a msgspec builtins round trip."""
         original = UpdateJobStatus(
             state=UpdateState.success,
             phase=UpdatePhase.done,
@@ -36,7 +36,7 @@ class TestUpdateJobStatusRoundTrip:
             exit_code=0,
             runtime=UpdateRuntimeDetails(version="1.2.3"),
         )
-        restored = UpdateJobStatus.from_payload(original.to_payload())
+        restored = update_status_from_builtins(update_status_to_builtins(original))
 
         assert restored.state == original.state
         assert restored.phase == original.phase
@@ -52,8 +52,8 @@ class TestUpdateJobStatusRoundTrip:
         assert restored.log_tail == ["line1", "line2", "line3"]
 
     def test_from_payload_empty_yields_idle_defaults(self) -> None:
-        """Calling from_payload with an empty dict must produce a blank idle status."""
-        status = UpdateJobStatus.from_payload({})
+        """Decoding an empty payload must produce a blank idle status."""
+        status = update_status_from_builtins({})
 
         assert status.state == UpdateState.idle
         assert status.phase == UpdatePhase.idle
@@ -68,14 +68,14 @@ class TestUpdateJobStatusRoundTrip:
         assert status.runtime == UpdateRuntimeDetails()
 
     def test_from_payload_truncates_log_tail_to_50_lines(self) -> None:
-        """from_payload must honour the _LOG_TAIL_LIMIT of 50 lines."""
+        """Decoding must honour the updater log-tail limit of 50 lines."""
         long_tail = [f"log-line-{i}" for i in range(200)]
         data = {
             "state": "failed",
             "phase": "installing",
             "log_tail": long_tail,
         }
-        status = UpdateJobStatus.from_payload(data)
+        status = update_status_from_builtins(data)
 
         # Only the last 50 lines should be kept.
         assert len(status.log_tail) == 50
@@ -85,21 +85,21 @@ class TestUpdateJobStatusRoundTrip:
     def test_to_payload_truncates_log_tail_to_last_50_lines(self) -> None:
         status = UpdateJobStatus(log_tail=[f"log-line-{i}" for i in range(80)])
 
-        payload = status.to_payload()
+        payload = update_status_to_builtins(status)
 
         assert payload["log_tail"] == [f"log-line-{i}" for i in range(30, 80)]
 
     @pytest.mark.parametrize(
         ("payload", "expected_message"),
         [
-            pytest.param({"state": "broken"}, "Unsupported update state", id="bad-state"),
-            pytest.param({"phase": "broken"}, "Unsupported update phase", id="bad-phase"),
+            pytest.param({"state": "broken"}, "Invalid enum value 'broken'", id="bad-state"),
+            pytest.param({"phase": "broken"}, "Invalid enum value 'broken'", id="bad-phase"),
             pytest.param(
                 {"transport": "broken"},
-                "Unsupported update transport",
+                "Invalid enum value 'broken'",
                 id="bad-transport",
             ),
-            pytest.param({"state": 7}, "update state must be a string", id="non-string-state"),
+            pytest.param({"state": 7}, r"Expected `str`, got `int`", id="non-string-state"),
         ],
     )
     def test_from_payload_rejects_invalid_enum_values(
@@ -107,8 +107,8 @@ class TestUpdateJobStatusRoundTrip:
         payload: dict[str, object],
         expected_message: str,
     ) -> None:
-        with pytest.raises(ValueError, match=expected_message):
-            UpdateJobStatus.from_payload(payload)
+        with pytest.raises(msgspec.ValidationError, match=expected_message):
+            update_status_from_builtins(payload)
 
     def test_finished_at_must_not_precede_started_at(self) -> None:
         with pytest.raises(
@@ -124,7 +124,7 @@ class TestUpdateJobStatusRoundTrip:
 
     def test_from_payload_preserves_partial_valid_fields(self) -> None:
         """Malformed nested fields must drop cleanly while valid pieces survive."""
-        status = UpdateJobStatus.from_payload(
+        status = update_status_from_builtins(
             {
                 "state": "failed",
                 "phase": "installing",
@@ -176,7 +176,7 @@ class TestUpdateJobStatusRoundTrip:
         )
 
     def test_from_payload_coerces_legacy_boolish_runtime_flags(self) -> None:
-        status = UpdateJobStatus.from_payload(
+        status = update_status_from_builtins(
             {
                 "runtime": {
                     "assets_verified": 1,

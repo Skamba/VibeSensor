@@ -120,6 +120,33 @@ model with CI `pip check` plus automated Dependabot update PRs rather than
 maintaining a second checked-in Python lockfile workflow alongside the editable
 install path.
 
+## Payload boundary pattern
+
+Updater status persistence and `/api/update/status` now share one msgspec-owned
+boundary in `vibesensor/use_cases/updates/status/payload_codec.py`.
+
+- Keep the domain models (`UpdateJobStatus`, `UpdateRuntimeDetails`,
+  `UpdateIssue`) as the internal source of truth.
+- Use `Update*Payload` `msgspec.Struct` types only at the persistence/HTTP
+  boundary, then route both JSON file I/O and FastAPI response shaping through
+  `update_status_to_payload()`, `update_status_to_builtins()`,
+  `update_status_to_json()`, `update_status_from_builtins()`, and
+  `update_status_from_json()`.
+- Keep compatibility code narrow: legacy persisted status oddities normalize in
+  one decode fallback path instead of leaking loose coercion into domain models
+  or route handlers.
+- Keep Pydantic response models at the HTTP edge when OpenAPI generation still
+  depends on them; msgspec feeds those models with already-validated builtins.
+
+For Pi or Pi-like timing checks before widening this pattern, run:
+
+```bash
+python tools/tests/benchmark_update_status_codec.py --iterations 5000 --rounds 20
+```
+
+The benchmark uses a representative updater-status payload and reports payload
+bytes plus median/p95 encode/decode latency in microseconds per operation.
+
 ## Configuration
 
 Configuration is YAML-based. Runtime defaults live in `vibesensor/app/config_defaults.py`, and `load_config()` applies precedence `DEFAULT_CONFIG -> selected YAML override file -> typed validation/clamping`. Run `vibesensor-config-preflight --dump-defaults` to see all available keys with defaults, or run `vibesensor-config-preflight apps/server/config.dev.yaml` / `apps/server/config.docker.yaml` to inspect a resolved override file.

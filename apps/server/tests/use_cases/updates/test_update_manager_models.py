@@ -7,11 +7,11 @@ from vibesensor.use_cases.updates.models import (
     UpdateIssue,
     UpdateJobStatus,
     UpdatePhase,
-    UpdateRuntimeDetails,
     UpdateState,
     UpdateTransport,
 )
 from vibesensor.use_cases.updates.runner import sanitize_log_line as sanitize_log_line
+from vibesensor.use_cases.updates.status import update_status_to_builtins
 from vibesensor.use_cases.updates.venv_paths import (
     is_reinstall_venv_ready,
     reinstall_python_executable,
@@ -21,7 +21,7 @@ from vibesensor.use_cases.updates.venv_paths import (
 class TestUpdateJobStatus:
     def test_default_status_to_payload(self) -> None:
         status = UpdateJobStatus()
-        data = status.to_payload()
+        data = update_status_to_builtins(status)
         assert data["state"] == "idle"
         assert data["phase"] == "idle"
         assert data["started_at"] is None
@@ -32,7 +32,16 @@ class TestUpdateJobStatus:
         assert data["issues"] == []
         assert data["log_tail"] == []
         assert data["exit_code"] is None
-        assert data["runtime"] == UpdateRuntimeDetails().to_payload()
+        assert data["runtime"] == {
+            "version": "",
+            "commit": "",
+            "ui_source_hash": "",
+            "static_assets_hash": "",
+            "static_build_source_hash": "",
+            "static_build_commit": "",
+            "assets_verified": False,
+            "has_packaged_static": False,
+        }
 
     def test_status_with_issues(self) -> None:
         status = UpdateJobStatus(
@@ -41,14 +50,14 @@ class TestUpdateJobStatus:
             ssid="TestNet",
             issues=[UpdateIssue(phase="installing", message="Install failed", detail="rc=1")],
         )
-        data = status.to_payload()
+        data = update_status_to_builtins(status)
         assert data["state"] == "failed"
         assert data["ssid"] == "TestNet"
         assert len(data["issues"]) == 1
 
     def test_log_tail_truncated(self) -> None:
         status = UpdateJobStatus(log_tail=[f"line {i}" for i in range(100)])
-        assert len(status.to_payload()["log_tail"]) == 50
+        assert len(update_status_to_builtins(status)["log_tail"]) == 50
 
 
 class TestUpdaterInterpreterSelection:
