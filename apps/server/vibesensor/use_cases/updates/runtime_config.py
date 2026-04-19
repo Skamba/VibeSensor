@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.app.process_settings import (
+from vibesensor.shared.process_settings import (
     DEFAULT_UPDATE_ROLLBACK_DIR,
     load_update_env_settings,
 )

@@ -66,7 +66,7 @@ def test_websocket_env_settings_reject_invalid_bool(monkeypatch: pytest.MonkeyPa
     _clear_backend_env(monkeypatch)
     monkeypatch.setenv("VIBESENSOR_WS_DEBUG", "definitely")
 
-    with pytest.raises(ValidationError, match="ws_debug"):
+    with pytest.raises(ValidationError, match="VIBESENSOR_WS_DEBUG"):
         WebSocketEnvSettings()
 
 
@@ -136,7 +136,7 @@ def test_update_env_settings_reject_invalid_channel(monkeypatch: pytest.MonkeyPa
     _clear_backend_env(monkeypatch)
     monkeypatch.setenv("VIBESENSOR_FIRMWARE_CHANNEL", "beta")
 
-    with pytest.raises(ValidationError, match="firmware_channel"):
+    with pytest.raises(ValidationError, match="VIBESENSOR_FIRMWARE_CHANNEL"):
         UpdateEnvSettings()
 
 

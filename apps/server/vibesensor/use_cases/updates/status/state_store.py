@@ -10,7 +10,10 @@ from pathlib import Path
 
 import msgspec
 
-from vibesensor.app.process_settings import DEFAULT_UPDATE_STATE_PATH, load_update_env_settings
+from vibesensor.shared.process_settings import (
+    DEFAULT_UPDATE_STATE_PATH,
+    load_update_env_settings,
+)
 from vibesensor.use_cases.updates.models import UpdateJobStatus
 from vibesensor.use_cases.updates.status.payload_codec import (
     update_status_from_json,

@@ -31,9 +31,10 @@ state. Current `main` is intentionally split more narrowly:
   configuration loaded at startup, such as network bindings, retention windows,
   processing budgets, and update paths.
 - `BootstrapEnvSettings`, `WebSocketEnvSettings`, and `UpdateEnvSettings` in
-  `vibesensor.app.process_settings` own process-level env overrides and feature
-  flags such as config-path selection, static-asset mounting, WS debug logging,
-  and updater/release path/repo defaults.
+  `vibesensor.shared.process_settings` own process-level env overrides and
+  feature flags such as config-path selection, static-asset mounting, WS debug
+  logging, and updater/release path/repo defaults. `vibesensor.app.settings`
+  re-exports that surface for app/CLI entrypoints.
 - Focused persisted settings services own user-facing runtime settings: car
   profiles (`CarSettingsService`), active-car analysis settings
   (`ActiveCarAnalysisSettingsService`), speed-source preferences
@@ -181,9 +182,10 @@ startup maintenance prunes them automatically. The default is `7`.
 ## Environment variables
 
 Prefer YAML config for normal runtime settings. The backend resolves the
-environment-driven startup/static layer through `vibesensor.app.process_settings`
-so env names, defaults, and validation stay in one typed owner instead of being
-spread across bootstrap and updater modules.
+environment-driven startup/static layer through
+`vibesensor.shared.process_settings` so env names, defaults, and validation
+stay in one typed owner instead of being spread across bootstrap and updater
+modules.
 
 Those process settings stay separate from the persisted user settings services:
 car, analysis, speed-source, UI-preference, and sensor-metadata state still

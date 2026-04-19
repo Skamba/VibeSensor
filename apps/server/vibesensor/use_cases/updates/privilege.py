@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.app.process_settings import DEFAULT_UPDATE_REPO_PATH, load_update_env_settings
+from vibesensor.shared.process_settings import (
+    DEFAULT_UPDATE_REPO_PATH,
+    load_update_env_settings,
+)
 
 __all__ = [
     "build_privilege_probe_args",
