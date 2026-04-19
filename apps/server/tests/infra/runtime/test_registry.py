@@ -2,55 +2,41 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
+from test_support.runtime_lifecycle import (
+    FakeAckMessage as _FakeAckMessage,
+)
+from test_support.runtime_lifecycle import (
+    FakeClientNameStore as _FakeClientNameStore,
+)
+from test_support.runtime_lifecycle import (
+    FakeDataMessage as _FakeDataMessage,
+)
+from test_support.runtime_lifecycle import (
+    FakeHelloMessage as _FakeHelloMessage,
+)
+from test_support.runtime_lifecycle import (
+    build_history_db as _build_history_db,
+)
+from test_support.runtime_lifecycle import (
+    build_registry as _build_registry,
+)
+from test_support.runtime_lifecycle import (
+    build_registry_with_hello as _make_registry_with_hello,
+)
+from test_support.runtime_lifecycle import (
+    make_data_message as _data_msg,
+)
+from test_support.runtime_lifecycle import (
+    make_hello_message as _make_hello_message,
+)
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.boundaries.clients import snapshot_for_api
-
-
-@dataclass(slots=True)
-class _FakeHelloMessage:
-    client_id: bytes
-    control_port: int
-    sample_rate_hz: int
-    name: str
-    firmware_version: str
-    frame_samples: int = 0
-    queue_overflow_drops: int = 0
-
-
-@dataclass(slots=True)
-class _FakeDataMessage:
-    client_id: bytes
-    seq: int
-    t0_us: int
-    sample_count: int
-
-
-@dataclass(slots=True)
-class _FakeAckMessage:
-    client_id: bytes
-    cmd_seq: int
-    status: int
-
-
-class _FakeClientNameStore:
-    def __init__(self) -> None:
-        self._names: dict[str, str] = {}
-
-    def list_client_names(self) -> dict[str, str]:
-        return dict(self._names)
-
-    def upsert_client_name(self, client_id: str, name: str) -> None:
-        self._names[client_id] = name
-
-    def delete_client_name(self, client_id: str) -> bool:
-        return self._names.pop(client_id, None) is not None
 
 
 def test_registry_accepts_protocol_shaped_messages() -> None:
@@ -261,12 +247,10 @@ def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
 
 
 def test_registry_hello_uses_advertised_control_port(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
-    hello = HelloMessage(
-        client_id=bytes.fromhex("aabbccddeeff"),
+    db = _build_history_db(tmp_path)
+    registry = _build_registry(db=db)
+    hello = _make_hello_message(
         control_port=9010,
-        sample_rate_hz=800,
         name="node",
         firmware_version="fw",
         frame_samples=200,
@@ -282,23 +266,11 @@ def test_registry_hello_uses_advertised_control_port(tmp_path: Path) -> None:
 
 
 def test_registry_evicts_stale_clients(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db, live_ttl_seconds=2.0, retention_ttl_seconds=2.0)
+    db = _build_history_db(tmp_path)
+    registry = _build_registry(db=db, live_ttl_seconds=2.0, retention_ttl_seconds=2.0)
 
-    fresh = HelloMessage(
-        client_id=bytes.fromhex("001122334455"),
-        control_port=9010,
-        sample_rate_hz=800,
-        name="fresh",
-        firmware_version="fw",
-    )
-    stale = HelloMessage(
-        client_id=bytes.fromhex("aabbccddeeff"),
-        control_port=9011,
-        sample_rate_hz=800,
-        name="stale",
-        firmware_version="fw",
-    )
+    fresh = _make_hello_message("001122334455", control_port=9010, name="fresh")
+    stale = _make_hello_message(control_port=9011, name="stale")
     registry.update_from_hello(stale, ("10.4.0.2", 9000), now=1.0, now_mono=1.0)
     registry.update_from_hello(fresh, ("10.4.0.3", 9001), now=3.0, now_mono=3.0)
 
@@ -312,20 +284,14 @@ def test_registry_staleness_uses_monotonic_clock_when_now_not_provided(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db, live_ttl_seconds=10.0, retention_ttl_seconds=30.0)
+    db = _build_history_db(tmp_path)
+    registry = _build_registry(db=db, live_ttl_seconds=10.0, retention_ttl_seconds=30.0)
     now = {"wall": 1_000.0, "mono": 100.0}
 
     monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: now["wall"])
     monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: now["mono"])
 
-    hello = HelloMessage(
-        client_id=bytes.fromhex("001122334455"),
-        control_port=9010,
-        sample_rate_hz=800,
-        name="sensor",
-        firmware_version="fw",
-    )
+    hello = _make_hello_message("001122334455", name="sensor")
     registry.update_from_hello(hello, ("10.4.0.2", 9010))
 
     now["wall"] = 50_000.0
@@ -570,39 +536,6 @@ def test_set_location_trims_whitespace(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # Deduplication tests (R3)
 # ---------------------------------------------------------------------------
-
-
-def _make_registry_with_hello(tmp_path: Path, client_id_hex: str = "aabbccddeeff"):
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
-    client_id = bytes.fromhex(client_id_hex)
-    hello = HelloMessage(
-        client_id=client_id,
-        control_port=9010,
-        sample_rate_hz=800,
-        name="node",
-        firmware_version="fw",
-    )
-    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0)
-    return registry, client_id
-
-
-def _data_msg(
-    client_id: bytes,
-    seq: int,
-    t0_us: int,
-    *,
-    sample_count: int = 100,
-) -> DataMessage:
-    """Build a :class:`DataMessage` with zero-filled samples."""
-    samples = np.zeros((sample_count, 3), dtype=np.int16)
-    return DataMessage(
-        client_id=client_id,
-        seq=seq,
-        t0_us=t0_us,
-        sample_count=sample_count,
-        samples=samples,
-    )
 
 
 def test_duplicate_seq_is_detected(tmp_path: Path) -> None:

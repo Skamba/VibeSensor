@@ -8,61 +8,33 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import cast
 
 import pytest
-from test_support.core import canonicalize_run_context_metadata
+from test_support.history_db_lifecycle import (
+    build_history_db,
+    create_analyzing_run,
+    create_completed_run,
+    create_error_run,
+    create_recording_run,
+)
+from test_support.history_db_lifecycle import (
+    make_analysis_summary as _analysis,
+)
+from test_support.history_db_lifecycle import (
+    make_run_metadata as _metadata,
+)
+from test_support.history_db_lifecycle import (
+    make_settings_snapshot as _settings_snapshot,
+)
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB, SQLiteHistoryEngine
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frame_from_mapping
-from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
-
-
-def _metadata(run_id: str, **overrides: object) -> RunMetadata:
-    payload: dict[str, object] = {
-        "run_id": run_id,
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "source": "test",
-    }
-    payload.update(overrides)
-    return run_metadata_from_mapping(canonicalize_run_context_metadata(payload))
-
-
-def _analysis(run_id: str, **overrides: object) -> AnalysisSummary:
-    payload: dict[str, object] = {
-        "run_id": run_id,
-        "findings": [],
-        "top_causes": [],
-        "warnings": [],
-    }
-    payload.update(overrides)
-    return cast(AnalysisSummary, payload)
-
-
-def _settings_snapshot() -> SettingsSnapshotPayload:
-    return {
-        "cars": [],
-        "activeCarId": None,
-        "speedSource": "gps",
-        "manualSpeedKph": None,
-        "staleTimeoutS": 10.0,
-        "language": "en",
-        "speedUnit": "kmh",
-        "sensorsByMac": {},
-    }
 
 
 def test_append_samples_in_chunks(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-1", "2026-01-01T00:00:00Z", _metadata("run-1"))
+    db = build_history_db(tmp_path)
+    create_recording_run(db, "run-1")
     calls: list[int] = []
     original_write_tx = db.write_transaction_cursor
 
@@ -93,12 +65,8 @@ def test_append_samples_in_chunks(tmp_path: Path) -> None:
 
 
 def test_list_runs_includes_recorded_car_name(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run(
-        "run-car",
-        "2026-01-01T00:00:00Z",
-        _metadata("run-car", active_car_snapshot={"name": "Track Car"}),
-    )
+    db = build_history_db(tmp_path)
+    create_recording_run(db, "run-car", active_car_snapshot={"name": "Track Car"})
 
     run = db.list_runs()[0]
 
@@ -106,8 +74,8 @@ def test_list_runs_includes_recorded_car_name(tmp_path: Path) -> None:
 
 
 def test_history_db_thread_safe_appends(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-2", "2026-01-01T00:00:00Z", _metadata("run-2"))
+    db = build_history_db(tmp_path)
+    create_recording_run(db, "run-2")
 
     def _append(start: int) -> None:
         batch = [sensor_frame_from_mapping({"i": start + i}) for i in range(50)]
@@ -228,22 +196,12 @@ def test_recover_stale_recording_runs_marks_error(tmp_path: Path) -> None:
 def test_prune_terminal_runs_older_than_days_deletes_only_old_terminal_runs(
     tmp_path: Path,
 ) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-old-complete", "2026-01-01T00:00:00Z", _metadata("run-old-complete"))
-    db.store_analysis(
-        "run-old-complete",
-        make_persisted_analysis(_analysis("run-old-complete", score=10)),
-    )
-    db.create_run("run-old-error", "2026-01-01T00:00:00Z", _metadata("run-old-error"))
-    db.store_analysis_error("run-old-error", "failed")
-    db.create_run("run-recent-complete", "2026-01-01T00:00:00Z", _metadata("run-recent-complete"))
-    db.store_analysis(
-        "run-recent-complete",
-        make_persisted_analysis(_analysis("run-recent-complete", score=20)),
-    )
-    db.create_run("run-recording", "2026-01-01T00:00:00Z", _metadata("run-recording"))
-    db.create_run("run-analyzing", "2026-01-01T00:00:00Z", _metadata("run-analyzing"))
-    db.finalize_run("run-analyzing", "2026-01-01T00:01:00Z")
+    db = build_history_db(tmp_path)
+    create_completed_run(db, "run-old-complete", analysis_overrides={"score": 10})
+    create_error_run(db, "run-old-error", error_message="failed")
+    create_completed_run(db, "run-recent-complete", analysis_overrides={"score": 20})
+    create_recording_run(db, "run-recording")
+    create_analyzing_run(db, "run-analyzing")
 
     old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
     recent_timestamp = (datetime.now(UTC) - timedelta(days=2)).isoformat()
@@ -280,8 +238,8 @@ def test_prune_terminal_runs_older_than_days_deletes_only_old_terminal_runs(
 
 
 def test_prune_terminal_runs_older_than_days_cascades_samples(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-prune", "2026-01-01T00:00:00Z", _metadata("run-prune"))
+    db = build_history_db(tmp_path)
+    create_recording_run(db, "run-prune")
     db.append_samples("run-prune", [sensor_frame_from_mapping({"i": i}) for i in range(3)])
     db.store_analysis("run-prune", make_persisted_analysis(_analysis("run-prune", score=9)))
 
@@ -577,9 +535,8 @@ def test_finalize_run_persists_case_id(tmp_path: Path) -> None:
 
 
 def test_analyzing_run_health_reports_oldest_age(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-an", "2026-01-01T00:00:00Z", _metadata("run-an"))
-    db.finalize_run("run-an", "2026-01-01T00:01:00Z")
+    db = build_history_db(tmp_path)
+    create_analyzing_run(db, "run-an")
 
     health = db.analyzing_run_health()
 
