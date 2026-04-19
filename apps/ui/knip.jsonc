@@ -1,0 +1,7 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  // First pass: keep the signal high by focusing on dead files and dependency
+  // drift. The raw export report is still noisy enough to deserve a follow-up.
+  "include": ["files", "dependencies"],
+  "ignoreDependencies": ["openapi-typescript"]
+}
