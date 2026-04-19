@@ -103,9 +103,11 @@ jobs:
 
       - uses: ./.github/actions/setup-backend
 
-      - name: Backend static guard checks
+      - name: Backend architecture checks
         working-directory: apps/server
-        run: python ../../tools/dev/verify_backend_static_guards.py
+        run: |
+          lint-imports --config pyproject.toml
+          python ../../tools/dev/verify_backend_static_guards.py
 
   backend-preflight:
     name: Backend preflight

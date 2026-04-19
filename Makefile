@@ -49,7 +49,7 @@ lint: ## Run repo hygiene, static guards, docs lint, and contract drift checks
 	"$$PYTHON" -m ruff check $(LINT_TARGETS) && \
 	"$$PYTHON" -m ruff format --check $(LINT_TARGETS) && \
 	"$$PYTHON" tools/dev/check_hygiene.py && \
-	cd $(SERVER_DIR) && "$$PYTHON" ../../tools/dev/verify_backend_static_guards.py && \
+	cd $(SERVER_DIR) && lint-imports --config pyproject.toml && "$$PYTHON" ../../tools/dev/verify_backend_static_guards.py && \
 	cd "$(CURDIR)" && "$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.dev.yaml && \
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.docker.yaml && \
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.pi.yaml && \

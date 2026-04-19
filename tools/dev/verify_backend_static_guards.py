@@ -1038,16 +1038,6 @@ def _check_shared_types_no_domain_factory_methods() -> list[str]:
     return factory_methods
 
 
-_LAYERS = ("domain", "shared", "use_cases", "infra", "adapters", "app")
-_ALLOWED_IMPORTS: dict[str, frozenset[str]] = {
-    "domain": frozenset(),
-    "shared": frozenset({"domain"}),
-    "use_cases": frozenset({"domain", "shared"}),
-    "infra": frozenset({"domain", "shared"}),
-    "adapters": frozenset({"domain", "shared", "infra", "use_cases"}),
-    "app": frozenset({"domain", "shared", "use_cases", "infra", "adapters"}),
-}
-
 _ALLOWED_ROOT_MODULE_FILES = frozenset(
     {
         "__init__.py",
@@ -1058,109 +1048,6 @@ _ALLOWED_ROOT_MODULE_FILES = frozenset(
         "vibration_strength.py",
     }
 )
-
-_ALLOWED_ROOT_MODULE_FILES = frozenset(
-    {
-        "__init__.py",
-        "__main__.py",
-        "_version.py",
-        "report_i18n.py",
-        "strength_bands.py",
-        "vibration_strength.py",
-    }
-)
-
-_ALLOWED_ROOT_MODULE_FILES = frozenset(
-    {
-        "__init__.py",
-        "__main__.py",
-        "_version.py",
-        "report_i18n.py",
-        "strength_bands.py",
-        "vibration_strength.py",
-    }
-)
-
-
-def _classify_layer(rel_path: str) -> str:
-    first = rel_path.split("/")[0]
-    if first in _LAYERS:
-        return first
-    if first == "cli":
-        return "app"
-    return "shared"
-
-
-def _import_target_layer(module: str) -> str | None:
-    if not module.startswith("vibesensor"):
-        return None
-    rest = module.removeprefix("vibesensor.")
-    if not rest:
-        return None
-    top = rest.split(".")[0]
-    if top in _LAYERS:
-        return top
-    if top == "cli":
-        return "app"
-    return "shared"
-
-
-_KNOWN_VIOLATIONS: frozenset[tuple[str, str]] = frozenset()
-
-
-def _scan_layer_boundary_violations() -> set[tuple[str, str]]:
-    violations: set[tuple[str, str]] = set()
-    for path in _python_files(VIBESENSOR_DIR):
-        if "static" in path.parts:
-            continue
-        rel = str(path.relative_to(VIBESENSOR_DIR))
-        layer = _classify_layer(rel)
-        allowed = _ALLOWED_IMPORTS[layer]
-        tree = _parse_python(path)
-        if tree is None:
-            continue
-        for node in ast.walk(tree):
-            modules: list[str] = []
-            if isinstance(node, ast.Import):
-                modules = [alias.name for alias in node.names]
-            elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
-                modules = [node.module]
-            for module in modules:
-                target = _import_target_layer(module)
-                if target is None or target == layer:
-                    continue
-                if target not in allowed:
-                    violations.add((rel, module))
-    return violations
-
-
-def _check_layer_boundaries() -> list[str]:
-    violations = _scan_layer_boundary_violations()
-    failures: list[str] = []
-    new_violations = violations - _KNOWN_VIOLATIONS
-    if new_violations:
-        failures.append(
-            "New layer-boundary violations found:\n  "
-            + "\n  ".join(f"{src} -> {mod}" for src, mod in sorted(new_violations))
-        )
-    stale = _KNOWN_VIOLATIONS - violations
-    if stale:
-        failures.append(
-            "Stale layer-boundary allowlist entries found:\n  "
-            + "\n  ".join(f"{src} -> {mod}" for src, mod in sorted(stale))
-        )
-    for layer in _LAYERS:
-        expected = VIBESENSOR_DIR / ("app" if layer == "app" else layer)
-        if not expected.is_dir():
-            failures.append(
-                f"Missing layer directory: {expected.relative_to(REPO_ROOT)}"
-            )
-    for layer, allowed in _ALLOWED_IMPORTS.items():
-        for target in allowed:
-            peer_allowed = _ALLOWED_IMPORTS.get(target, frozenset())
-            if layer in peer_allowed:
-                failures.append(f"Layer DAG cycle detected: {layer} <-> {target}")
-    return failures
 
 
 def _check_root_module_allowlist() -> list[str]:
@@ -2057,7 +1944,6 @@ CHECKS: tuple[Check, ...] = (
         "Shared types avoid domain factory methods",
         _check_shared_types_no_domain_factory_methods,
     ),
-    ("Layer boundaries stay acyclic and clean", _check_layer_boundaries),
     (
         "run_analysis keeps normalize_lang in report_i18n",
         _check_run_analysis_does_not_define_normalize_lang,
