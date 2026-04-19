@@ -2,11 +2,15 @@ import { expect, test } from "@playwright/test";
 
 import {
   activateWizardCloseButton,
+  bootLiveDashboard,
   buildCaptureReadiness,
   confirmPrompt,
   fulfillJson,
   installCommonRoutes,
-  installFakeWebSocket,
+  openAnalysisTab,
+  openCarsTab,
+  openHistoryTab,
+  openSettingsTab,
   readSemanticToneStyles,
   requestPath,
 } from "./smoke.helpers";
@@ -62,9 +66,9 @@ test("dark mode warning pills use semantic theme tokens in Live and Cars", async
       }),
     });
   });
-  await installFakeWebSocket(page, {
-    payload: {
-      server_time: new Date().toISOString(),
+  await bootLiveDashboard(page, {
+    installRoutes: false,
+    liveSensorPayload: {
       clients: [
         {
           id: "001122334455",
@@ -79,11 +83,8 @@ test("dark mode warning pills use semantic theme tokens in Live and Cars", async
           firmware_version: "fw-1.0.0",
         },
       ],
-      spectra: { clients: {} },
     },
   });
-
-  await page.goto("/");
   const liveHealth = page.locator("#liveRunHealth");
   await expect(liveHealth).toHaveText("Needs attention");
   const liveHealthStyles = await readSemanticToneStyles(liveHealth, {
@@ -93,8 +94,7 @@ test("dark mode warning pills use semantic theme tokens in Live and Cars", async
   expect(liveHealthStyles.backgroundColor).toBe(liveHealthStyles.expectedBackgroundColor);
   expect(liveHealthStyles.color).toBe(liveHealthStyles.expectedColor);
 
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="carTab"]').click();
+  await openCarsTab(page);
   const readinessPill = page.locator(
     '#carListBody tr[data-car-id="car-1"] .car-readiness-pill[data-state="incomplete"]',
   );
@@ -109,7 +109,7 @@ test("dark mode warning pills use semantic theme tokens in Live and Cars", async
 
 test("dark mode quiet danger buttons use semantic danger tokens in Cars", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
-  await installCommonRoutes(page, {
+  await bootLiveDashboard(page, {
     settingsHandler: async (route) => {
       const path = requestPath(route);
       const method = route.request().method();
@@ -136,11 +136,7 @@ test("dark mode quiet danger buttons use semantic danger tokens in Cars", async 
       await fulfillJson(route, {});
     },
   });
-  await installFakeWebSocket(page);
-
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="carTab"]').click();
+  await openCarsTab(page);
   const deleteButton = page.locator('#carListBody tr[data-car-id="car-1"] .car-delete-btn');
   await expect(deleteButton).toBeVisible();
 
@@ -190,8 +186,7 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
     }
     await fulfillJson(route, {});
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
+  await bootLiveDashboard(page, { installRoutes: false });
   await expect(page.locator("#liveActiveCar")).not.toHaveAttribute("data-variant", "warn");
   await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveCount(0);
   await expect(page.locator("#liveActiveCar [data-value]")).toContainText("No cars added yet");
@@ -204,10 +199,9 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
   await expect(page.locator("#wizardBackdrop")).toBeVisible();
   await activateWizardCloseButton(page);
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
-  await page.locator("#tab-history").click();
+  await openHistoryTab(page);
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="carTab"]').click();
+  await openCarsTab(page);
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
   await expect(page.locator("#carListBody .settings-table-empty-state")).toBeVisible();
   const carEmptyState = page.locator("#carListBody .empty-state");
@@ -216,8 +210,7 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
   await carEmptyState.getByRole("button", { name: "Add a car" }).click();
   await expect(page.locator("#wizardBackdrop")).toBeVisible();
   await activateWizardCloseButton(page);
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await openAnalysisTab(page);
   await expect(page.locator("#analysisNoCarMessage")).toBeVisible();
   await expect(page.locator("#saveAnalysisBtn")).toBeDisabled();
   await expect(page.locator("#resetAnalysisBtn")).toBeDisabled();
@@ -234,12 +227,10 @@ test("hides contextual car guidance when a valid selected car exists", async ({ 
       await fulfillJson(route, {});
     },
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="carTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openCarsTab(page);
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
-  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await openAnalysisTab(page);
   await expect(page.locator("#analysisNoCarMessage")).toBeHidden();
   await expect(page.locator("#resetAnalysisBtn")).toBeEnabled();
 });
@@ -297,26 +288,6 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
       await fulfillJson(route, {});
     },
   });
-  await installFakeWebSocket(page, {
-    payload: {
-      server_time: new Date().toISOString(),
-      clients: [
-        {
-          id: "001122334455",
-          name: "Front Left",
-          connected: true,
-          sample_rate_hz: 1000,
-          last_seen_age_ms: 12,
-          dropped_frames: 0,
-          frames_total: 100,
-          location_code: "front_left_wheel",
-          mac_address: "001122334455",
-          firmware_version: "fw-1.0.0",
-        },
-      ],
-      spectra: { clients: {} },
-    },
-  });
   await page.route("**/api/recording/status", async (route) => {
     await fulfillJson(route, {
       enabled: false,
@@ -348,7 +319,25 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
         }),
     });
   });
-  await page.goto("/");
+  await bootLiveDashboard(page, {
+    installRoutes: false,
+    liveSensorPayload: {
+      clients: [
+        {
+          id: "001122334455",
+          name: "Front Left",
+          connected: true,
+          sample_rate_hz: 1000,
+          last_seen_age_ms: 12,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "front_left_wheel",
+          mac_address: "001122334455",
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+    },
+  });
   await expect(page.locator("#carSelectionBanner")).toHaveCount(0);
   await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Loading active car...");
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText("Blocked");
@@ -356,14 +345,13 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
   await expect(page.locator("#loggingStatus")).toBeHidden();
   await expect(page.locator("#startLoggingBtn")).toBeDisabled();
 
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await openAnalysisTab(page);
 
   await expect(page.locator("#wheelBandwidthInput")).toHaveValue("7.5");
   await expect(page.locator("#saveAnalysisBtn")).toBeDisabled();
   await expect(page.locator("#resetAnalysisBtn")).toBeDisabled();
   await expect(page.locator("#analysisNoCarMessage")).toBeHidden();
-  await page.locator('[data-settings-tab="carTab"]').click();
+  await openCarsTab(page);
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
 
   if (!releaseCars) {
@@ -372,12 +360,12 @@ test("keeps contextual no-car guidance hidden until active car bootstrap resolve
   captureReady = true;
   releaseCars();
 
-  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await openAnalysisTab(page);
   await expect(page.locator("#saveAnalysisBtn")).toBeEnabled();
   await expect(page.locator("#resetAnalysisBtn")).toBeEnabled();
   await expect(page.locator("#analysisNoCarMessage")).toBeHidden();
 
-  await page.locator('[data-settings-tab="carTab"]').click();
+  await openCarsTab(page);
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
   const activeRow = page.locator('#carListBody tr[data-car-id="car-1"]');
   await expect(activeRow).toContainText("Audit Demo Car");
@@ -475,9 +463,9 @@ test("shows a live warning state until an active car is selected, then clears it
       last_completed_run_error: null,
     });
   });
-  await installFakeWebSocket(page, {
-    payload: {
-      server_time: new Date().toISOString(),
+  await bootLiveDashboard(page, {
+    installRoutes: false,
+    liveSensorPayload: {
       clients: [
         {
           id: "001122334455",
@@ -492,11 +480,8 @@ test("shows a live warning state until an active car is selected, then clears it
           firmware_version: "fw-1.0.0",
         },
       ],
-      spectra: { clients: {} },
     },
   });
-
-  await page.goto("/");
   await expect(page.locator("#liveActiveCar")).not.toHaveAttribute("data-variant", "warn");
   await expect(page.locator("#liveActiveCar .stat__value-icon")).toHaveCount(0);
   await expect(page.locator("#liveActiveCar [data-value]")).toContainText("No active car selected");
@@ -581,9 +566,8 @@ test("shows car-tab guidance for invalid persisted selection and after deleting 
       await fulfillJson(route, {});
     },
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openSettingsTab(page);
   await expect(page.locator("#carSelectionGuidance")).toBeVisible();
   await page.locator("#carListBody .car-activate-btn").last().click();
   await expect(page.locator("#carSelectionGuidance")).toBeHidden();
@@ -658,10 +642,8 @@ test("routes incomplete cars through Finish setup instead of generic activation"
       await fulfillJson(route, {});
     },
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="carTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openCarsTab(page);
 
   const incompleteRow = page.locator('#carListBody tr[data-car-id="car-2"]');
   await expect(incompleteRow).toContainText("Inactive");
@@ -712,10 +694,8 @@ test("returns from the add-car flow with visible success feedback and row highli
       await fulfillJson(route, {});
     },
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="carTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openCarsTab(page);
   await page.getByRole("button", { name: "+ Add Car" }).click();
   await page.locator("#wizardCustomBrand").fill("Track");
   await page.locator("#wizardCustomBrandBtn").click();
