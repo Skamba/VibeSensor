@@ -19,12 +19,47 @@ from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
 
 def test_schema_export_check_passes() -> None:
-    """Verify the committed schema matches what the export generates."""
+    """Verify the exported schema exposes the live WS contract shape consumers use."""
     generated = export_schema()
-    assert len(generated) > 100, "Schema should be non-trivial"
     parsed = json.loads(generated)
-    assert "properties" in parsed
-    assert "schema_version" in parsed["properties"]
+    assert parsed["title"] == "LiveWsPayload"
+    assert parsed["type"] == "object"
+
+    properties = parsed["properties"]
+    assert set(properties) == {
+        "schema_version",
+        "server_time",
+        "speed_mps",
+        "clients",
+        "selected_client_id",
+        "rotational_speeds",
+        "spectra",
+    }
+    assert set(parsed["required"]) == {
+        "schema_version",
+        "server_time",
+        "speed_mps",
+        "clients",
+        "selected_client_id",
+        "rotational_speeds",
+    }
+    assert properties["spectra"] == {"$ref": "#/$defs/SpectraPayload"}
+    assert properties["rotational_speeds"]["anyOf"] == [
+        {"$ref": "#/$defs/RotationalSpeedsPayload"},
+        {"type": "null"},
+    ]
+
+    rotational_speeds = parsed["$defs"]["RotationalSpeedsPayload"]
+    assert set(rotational_speeds["required"]) == {
+        "basis_speed_source",
+        "wheel",
+        "driveshaft",
+        "engine",
+        "order_bands",
+    }
+
+    spectra = parsed["$defs"]["SpectraPayload"]
+    assert set(spectra["properties"]) == {"alignment", "clients", "freq", "warning"}
 
 
 # ---------------------------------------------------------------------------
