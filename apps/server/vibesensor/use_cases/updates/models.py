@@ -228,6 +228,14 @@ class UpdateJobStatus:
     exit_code: int | None = None
     runtime: UpdateRuntimeDetails = field(default_factory=lambda: UpdateRuntimeDetails())
 
+    def __post_init__(self) -> None:
+        if (
+            self.started_at is not None
+            and self.finished_at is not None
+            and self.finished_at < self.started_at
+        ):
+            raise ValueError("finished_at must be greater than or equal to started_at")
+
     def to_payload(self) -> UpdateJobStatusPayload:
         phase_elapsed_s = None
         if self.state == UpdateState.running and self.phase_started_at is not None:

@@ -297,6 +297,10 @@ def _assert_scenario_consistency(scenario: ScenarioPair) -> None:
     _run_all_consistency_checks(summary, rd)
 
 
+def _warn_checks(rd: ReportDocument) -> set[str]:
+    return {item.check for item in rd.data_trust if item.state == "warn"}
+
+
 # ---------------------------------------------------------------------------
 # Scenario 1: No-fault baseline
 # ---------------------------------------------------------------------------
@@ -312,19 +316,16 @@ class TestScenario1NoFaultBaseline:
     def test_consistency(self, scenario: ScenarioPair) -> None:
         _assert_scenario_consistency(scenario)
 
-    def test_no_overconfident_claims(self, scenario: ScenarioPair) -> None:
+    def test_no_fault_baseline_stays_guarded(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
-        assert rd.certainty_tier_key in ("A", "B"), (
-            f"No-fault baseline should be tier A or B, got '{rd.certainty_tier_key}'"
-        )
-
-    def test_no_repair_actions(self, scenario: ScenarioPair) -> None:
-        _, rd = scenario
-        for card in rd.system_cards:
-            if rd.certainty_tier_key in ("A", "B"):
-                assert len(card.parts) == 0, (
-                    f"No-fault baseline card '{card.system_name}' should have no repair parts"
-                )
+        assert rd.certainty_tier_key == "A"
+        assert rd.observed.primary_system == "No significant pattern"
+        assert rd.system_cards == []
+        assert len(rd.next_steps) == 2
+        assert _warn_checks(rd) == {
+            "Reference completeness",
+            "Order-analysis reference context was incomplete for this run",
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -342,29 +343,19 @@ class TestScenario2SingleWheelFault:
     def test_consistency(self, scenario: ScenarioPair) -> None:
         _assert_scenario_consistency(scenario)
 
-    def test_fl_localisation(self, scenario: ScenarioPair) -> None:
+    def test_single_wheel_fault_contract(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
-        loc = (rd.observed.strongest_location or "").lower()
-        assert "front" in loc and "left" in loc, (
-            f"Expected front-left localisation, got '{rd.observed.strongest_location}'"
-        )
-
-    def test_wheel_source_identified(self, scenario: ScenarioPair) -> None:
-        _, rd = scenario
-        system = (rd.observed.primary_system or "").lower()
-        assert "wheel" in system or "tire" in system, (
-            f"Expected wheel/tire source, got '{rd.observed.primary_system}'"
-        )
-
-    def test_strength_nonzero(self, scenario: ScenarioPair) -> None:
-        _, rd = scenario
-        assert rd.observed.strength_label is not None
-        assert rd.observed.strength_label != ""
-        assert rd.observed.strength_label != "Unknown"
-
-    def test_peak_rows_present(self, scenario: ScenarioPair) -> None:
-        _, rd = scenario
-        assert len(rd.peak_rows) > 0, "Single wheel fault should have peak rows"
+        assert rd.certainty_tier_key == "B"
+        assert rd.observed.primary_system == "Wheel / Tire"
+        assert rd.observed.strongest_location == "Front-Left"
+        assert rd.observed.speed_band == "80-90 km/h"
+        assert (rd.observed.strength_label or "").startswith("Moderate (")
+        assert (rd.observed.strength_label or "").endswith(" dB)")
+        assert rd.system_cards[0].status_label == "Possible source"
+        first_peak = rd.peak_rows[0]
+        assert first_peak.relevance == "Repeated pattern"
+        assert first_peak.speed_band == "80-90 km/h"
+        assert first_peak.peak_db != "\u2014"
 
 
 # ---------------------------------------------------------------------------
@@ -382,18 +373,17 @@ class TestScenario3HighSpeedFault:
     def test_consistency(self, scenario: ScenarioPair) -> None:
         _assert_scenario_consistency(scenario)
 
-    def test_speed_band_reflects_high_speed(self, scenario: ScenarioPair) -> None:
+    def test_high_speed_fault_tracks_high_band_and_uncertainty_reason(
+        self,
+        scenario: ScenarioPair,
+    ) -> None:
         _, rd = scenario
-        band = (rd.observed.speed_band or "").lower()
-        assert band != "unknown" and band != "", (
-            f"High-speed fault should have a specific speed band, got '{rd.observed.speed_band}'"
-        )
-
-    def test_fr_localisation(self, scenario: ScenarioPair) -> None:
-        _, rd = scenario
-        loc = (rd.observed.strongest_location or "").lower()
-        assert "front" in loc and "right" in loc, (
-            f"Expected front-right localisation, got '{rd.observed.strongest_location}'"
+        assert rd.observed.primary_system == "Wheel / Tire"
+        assert rd.observed.strongest_location == "Front-Right"
+        assert rd.observed.speed_band == "110-120 km/h"
+        assert rd.observed.certainty_label == "High"
+        assert rd.observed.certainty_reason == (
+            "Missing reference data may affect accuracy; Speed was not steady during measurement"
         )
 
 
@@ -414,12 +404,14 @@ class TestScenario4MixedNoiseFault:
 
     def test_fault_not_masked_by_noise(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
-        assert rd.observed.primary_system is not None
-        assert rd.observed.primary_system != "Unknown"
-
-    def test_data_trust_present(self, scenario: ScenarioPair) -> None:
-        _, rd = scenario
-        assert isinstance(rd.data_trust, list)
+        assert rd.observed.primary_system == "Wheel / Tire"
+        assert rd.observed.strongest_location == "Rear-Left"
+        assert rd.observed.speed_band == "80-90 km/h"
+        assert rd.observed.certainty_label == "Medium"
+        assert _warn_checks(rd) == {
+            "Reference completeness",
+            "Order-analysis reference context was incomplete for this run",
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -444,9 +436,18 @@ class TestScenario5SparseSensors:
         )
         assert rd.sensor_count == len(connected or [])
 
-    def test_no_false_precision(self, scenario: ScenarioPair) -> None:
+    def test_sparse_sensor_contract_degrades_location_granularity(
+        self,
+        scenario: ScenarioPair,
+    ) -> None:
         _, rd = scenario
-        assert rd.sensor_count <= 2
+        assert rd.sensor_count == 2
+        assert sorted(rd.sensor_locations) == ["engine-bay", "front-left"]
+        assert {row.location for row in rd.location_hotspot_rows} == {
+            "engine-bay",
+            "front-left",
+        }
+        assert {row.unit for row in rd.location_hotspot_rows} == {"db"}
 
 
 # ---------------------------------------------------------------------------
