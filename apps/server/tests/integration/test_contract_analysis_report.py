@@ -65,14 +65,15 @@ def _make_steady_speed_fault_dataset() -> tuple[dict, list[dict]]:
     return meta, samples
 
 
-def _report_data_from_samples(
+def _summarize_and_prepare_report(
     meta: dict,
     samples: list[dict],
     *,
     lang: str,
-) -> ReportDocument:
+) -> tuple[dict, object, ReportDocument]:
     summary = summarize_run_data(meta, samples, lang=lang)
-    return build_report_document(prepare_report_input(summary))
+    prepared = prepare_report_input(summary)
+    return summary, prepared, build_report_document(prepared)
 
 
 # ------------------------------------------------------------------
@@ -80,20 +81,52 @@ def _report_data_from_samples(
 # ------------------------------------------------------------------
 
 
-def test_analysis_output_accepted_by_report_mapper():
-    """summarize_run_data() output must prepare and map cleanly."""
-    meta, samples = _make_small_dataset()
-    summary = summarize_run_data(meta, samples, lang="en")
-    prepared = prepare_report_input(summary)
-    report_data = build_report_document(prepared)
+@pytest.mark.parametrize(
+    ("meta", "samples", "lang", "expect_top_cause_mapping"),
+    [
+        pytest.param(*_make_small_dataset(), "en", True, id="fault-en"),
+        pytest.param(
+            standard_metadata(language="en"),
+            make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30, speed_kmh=60.0),
+            "en",
+            False,
+            id="noise-en",
+        ),
+        pytest.param(
+            standard_metadata(language="nl"),
+            make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=20, speed_kmh=60.0),
+            "nl",
+            False,
+            id="noise-nl",
+        ),
+    ],
+)
+def test_analysis_to_report_bridge_scenarios(
+    meta: dict,
+    samples: list[dict],
+    lang: str,
+    expect_top_cause_mapping: bool,
+) -> None:
+    """Analysis output should prepare and map cleanly across bridge scenarios."""
+    summary, prepared, report_data = _summarize_and_prepare_report(
+        meta,
+        samples,
+        lang=lang,
+    )
 
     assert prepared.domain_test_run is not None
     assert isinstance(report_data, ReportDocument)
     assert report_data.run_id == summary["run_id"] == prepared.report_facts.run.run_id
+    assert report_data.title
+    assert report_data.lang == lang
     assert report_data.sensor_count == summary["sensor_count_used"]
     assert report_data.sensor_locations == summary["sensor_locations"]
-    assert report_data.top_causes
+    assert report_data.observed.certainty_label
 
+    if not expect_top_cause_mapping:
+        return
+
+    assert report_data.top_causes
     domain_top_cause = prepared.domain_test_run.effective_top_causes()[0]
     report_top_cause = report_data.top_causes[0]
     assert report_top_cause.suspected_source == str(domain_top_cause.suspected_source)
@@ -102,43 +135,6 @@ def test_analysis_output_accepted_by_report_mapper():
     assert report_top_cause.effective_confidence == pytest.approx(
         domain_top_cause.effective_confidence,
     )
-
-
-def test_report_data_has_populated_fields():
-    """Key report fields must be non-empty after mapping real analysis output."""
-    meta, samples = _make_small_dataset()
-    report_data = _report_data_from_samples(meta, samples, lang="en")
-
-    # Structural: the report must have a title and language
-    assert report_data.title
-    assert report_data.lang == "en"
-
-    # Content: sensor information propagated
-    assert report_data.sensor_count > 0
-    assert len(report_data.sensor_locations) > 0
-
-    # Diagnostic output: observed signature populated
-    assert report_data.observed.certainty_label
-
-
-def test_analysis_without_fault_maps_cleanly():
-    """A run with only road-noise (no fault) must still map without errors."""
-    meta = standard_metadata(language="en")
-    samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30, speed_kmh=60.0)
-    report_data = _report_data_from_samples(meta, samples, lang="en")
-
-    assert isinstance(report_data, ReportDocument)
-    assert report_data.lang == "en"
-
-
-def test_multilingual_mapping():
-    """Analysis + report mapping must work for non-English languages."""
-    meta = standard_metadata(language="nl")
-    samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=20, speed_kmh=60.0)
-    report_data = _report_data_from_samples(meta, samples, lang="nl")
-
-    assert isinstance(report_data, ReportDocument)
-    assert report_data.lang == "nl"
 
 
 def test_report_certainty_uses_confidence_assessment_reason() -> None:
