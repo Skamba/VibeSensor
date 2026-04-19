@@ -237,6 +237,14 @@ jobs:
         working-directory: apps/ui
         run: npm run sync:generated-contracts
 
+      - name: UI dependency boundary checks
+        working-directory: apps/ui
+        run: npm run lint:deps
+
+      - name: UI dead code checks
+        working-directory: apps/ui
+        run: npm run lint:unused
+
       - name: UI typecheck
         working-directory: apps/ui
         run: npm run typecheck
