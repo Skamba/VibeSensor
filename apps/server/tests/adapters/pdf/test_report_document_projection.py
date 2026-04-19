@@ -1,4 +1,4 @@
-"""Focused tests for report summary mapping and origin explanation behavior."""
+"""Projection tests for report document assembly and origin wording."""
 
 from __future__ import annotations
 
