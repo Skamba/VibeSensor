@@ -320,10 +320,10 @@ instead of controller-side variant class interpolation.
 - `src/contracts/ws_payload_schema.json` defines the JSON Schema for live WS payloads.
 - `src/contracts/ws_payload_types.ts` is generated from that schema by the
   [contract sync flow](#contract-sync).
-- `src/ws_payload_validator.ts` compiles AJV against `ws_payload_schema.json` and validates raw live payloads at runtime.
+- `src/ws_payload_validator.ts` validates raw live payloads with Valibot schemas, while the large spectrum-number arrays stay on a custom finite-number-array guard so the live chart path avoids per-element schema object churn.
 - `src/server_payload.ts` then adapts the validated `LiveWsPayload` with schema-version warnings, shared-`freq` fallback, and malformed/misaligned spectrum rejection.
 
-AJV-backed runtime validation now sits at the WebSocket boundary. Live payloads must satisfy that JSON Schema directly before the app-state adapter accepts them. The remaining UI-side handling is limited to current, explicit adapter behavior: schema-version warning logging, shared-`freq` fallback when the canonical shared axis is used, and dropping spectrum series that still cannot produce aligned bins for rendering.
+Valibot-backed runtime validation now sits at the WebSocket boundary. Live payloads must satisfy the generated contract shape directly before the app-state adapter accepts them. The remaining UI-side handling is limited to current, explicit adapter behavior: schema-version warning logging, shared-`freq` fallback when the canonical shared axis is used, and dropping spectrum series that still cannot produce aligned bins for rendering.
 
 Top-level `LiveWsPayload` fields:
 
