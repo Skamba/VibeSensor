@@ -123,8 +123,11 @@ make test-full-suite
 
 `release-smoke` is the packaged-artifact gate. It builds or reuses the server
 wheel, validates packaged static assets, boots the packaged server, and checks
-that `/api/health` reaches readiness. It is complementary to Docker/e2e
-validation, not a duplicate of it.
+that `/api/health` reaches readiness. In GitHub CI it now consumes the
+same-commit `release-smoke-ui-static` artifact built after `frontend-typecheck`
+and runs `tools/tests/run_release_smoke.py --skip-ui-build` so the final smoke
+job validates packaged assets without rebuilding the UI from source again. It
+is complementary to Docker/e2e validation, not a duplicate of it.
 
 ## Frontend validation
 

@@ -279,33 +279,19 @@ jobs:
           npx playwright install chromium
           npm run test:smoke
 
-  release-smoke:
-    name: Release smoke
+  ui-build-artifact:
+    name: UI build artifact
     needs:
       - ci-scope
-      - backend-lint
-      - repo-hygiene
-      - backend-static-guards
-      - backend-preflight
-      - docs-lint
-      - backend-contract-drift
-      - backend-typecheck
       - frontend-typecheck
     if: >-
       ${{
         always() &&
         needs.ci-scope.outputs.run_release_smoke == 'true' &&
-        needs.backend-lint.result != 'failure' &&
-        needs.repo-hygiene.result != 'failure' &&
-        needs.backend-static-guards.result != 'failure' &&
-        needs.backend-preflight.result != 'failure' &&
-        needs.docs-lint.result != 'failure' &&
-        needs.backend-contract-drift.result != 'failure' &&
-        needs.backend-typecheck.result != 'failure' &&
-        needs.frontend-typecheck.result != 'failure'
+        needs.frontend-typecheck.result == 'success'
       }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v6
@@ -322,10 +308,79 @@ jobs:
         id: setup-python
         uses: ./.github/actions/setup-python
 
+      - name: Build release-smoke UI static artifact
+        run: >-
+          "${{ steps.setup-python.outputs.python-path }}"
+          tools/build_ui_static.py --skip-typecheck
+
+      - name: Package release-smoke UI static artifact
+        run: |
+          mkdir -p artifacts/release-smoke
+          tar -C apps/server/vibesensor/static -czf artifacts/release-smoke/ui-static.tar.gz .
+
+      - name: Upload release-smoke UI static artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-smoke-ui-static
+          path: artifacts/release-smoke/ui-static.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+
+  release-smoke:
+    name: Release smoke
+    needs:
+      - ci-scope
+      - backend-lint
+      - repo-hygiene
+      - backend-static-guards
+      - backend-preflight
+      - docs-lint
+      - backend-contract-drift
+      - backend-typecheck
+      - frontend-typecheck
+      - ui-build-artifact
+    if: >-
+      ${{
+        always() &&
+        needs.ci-scope.outputs.run_release_smoke == 'true' &&
+        needs.backend-lint.result != 'failure' &&
+        needs.repo-hygiene.result != 'failure' &&
+        needs.backend-static-guards.result != 'failure' &&
+        needs.backend-preflight.result != 'failure' &&
+        needs.docs-lint.result != 'failure' &&
+        needs.backend-contract-drift.result != 'failure' &&
+        needs.backend-typecheck.result != 'failure' &&
+        needs.frontend-typecheck.result != 'failure' &&
+        needs.ui-build-artifact.result == 'success'
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Set up configured Python runtime
+        id: setup-python
+        uses: ./.github/actions/setup-python
+
+      - name: Download release-smoke UI static artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-smoke-ui-static
+          path: artifacts/release-smoke
+
+      - name: Restore release-smoke UI static artifact
+        run: |
+          rm -rf apps/server/vibesensor/static
+          mkdir -p apps/server/vibesensor/static
+          tar -xzf artifacts/release-smoke/ui-static.tar.gz -C apps/server/vibesensor/static
+
       - name: Release smoke validation
         run: >-
           "${{ steps.setup-python.outputs.python-path }}"
-          tools/tests/run_release_smoke.py
+          tools/tests/run_release_smoke.py --skip-ui-build
 
   firmware-native-tests:
     name: Firmware native tests
