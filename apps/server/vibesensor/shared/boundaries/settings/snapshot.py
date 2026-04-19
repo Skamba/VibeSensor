@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping
+from typing import cast
 
 import msgspec
 
@@ -159,9 +160,10 @@ def _settings_snapshot_record_from_object(payload: Mapping[str, object]) -> Sett
                     name=car_payload["name"],
                     type=car_payload["type"],
                     aspects={
-                        key: float(value)
-                        for key, value in analysis_settings_payload_from_mapping(
-                            car_payload["aspects"]
+                        key: cast(float, value)
+                        for key, value in cast(
+                            Mapping[str, float],
+                            car_payload["aspects"],
                         ).items()
                     },
                     variant=car_payload.get("variant"),
