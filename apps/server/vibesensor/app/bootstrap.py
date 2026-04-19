@@ -11,7 +11,6 @@ import argparse
 import asyncio
 import errno
 import logging
-import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from logging.handlers import RotatingFileHandler
@@ -27,7 +26,12 @@ from vibesensor.adapters.http.middleware import install_request_logging_middlewa
 from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
 from vibesensor.app.container import build_runtime
 from vibesensor.app.runtime_state import AppRuntime
-from vibesensor.app.settings import load_config
+from vibesensor.app.settings import (
+    CONFIG_PATH_ENV,
+    export_config_path_env,
+    load_bootstrap_env_settings,
+    load_config,
+)
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
 from vibesensor.shared.structured_logging import StructuredLogFormatter
 
@@ -48,7 +52,7 @@ _BIND_ERROR_NUMBERS: frozenset[int] = frozenset({errno.EACCES, errno.EADDRINUSE,
 
 _LOG_MAX_BYTES = 5 * 1024 * 1024  # 5 MB per file
 _LOG_BACKUP_COUNT = 3
-_CONFIG_PATH_ENV = "VIBESENSOR_CONFIG_PATH"
+_CONFIG_PATH_ENV = CONFIG_PATH_ENV
 
 
 def _setup_file_logging(log_path: Path | None) -> None:
@@ -74,6 +78,7 @@ def _setup_file_logging(log_path: Path | None) -> None:
 def create_app(config_path: Path | None = None) -> FastAPI:
     """Create and configure the VibeSensor FastAPI application."""
     config = load_config(config_path)
+    bootstrap_settings = load_bootstrap_env_settings()
     _setup_file_logging(config.logging.app_log_path)
     runtime = build_runtime(config)
     lifecycle = LifecycleManager(
@@ -128,7 +133,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     install_http_exception_handlers(app)
     install_request_logging_middleware(app)
     app.include_router(create_router(runtime.router))
-    if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
+    if bootstrap_settings.serve_static:
         static_dir = _PACKAGE_DIR / "static"
         if not (static_dir / "index.html").exists():
             message = (
@@ -148,9 +153,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
 
 def create_app_from_env() -> FastAPI:
     """Create the app using the config path exported for reload mode."""
-    config_path_text = os.getenv(_CONFIG_PATH_ENV)
-    config_path = Path(config_path_text).expanduser() if config_path_text else None
-    return create_app(config_path=config_path)
+    return create_app(config_path=load_bootstrap_env_settings().config_path)
 
 
 def _run_server(
@@ -233,10 +236,7 @@ def main() -> None:
         config = load_config(args.config)
         host = config.server.host
         port = config.server.port
-        if args.config is None:
-            os.environ.pop(_CONFIG_PATH_ENV, None)
-        else:
-            os.environ[_CONFIG_PATH_ENV] = str(args.config.resolve())
+        export_config_path_env(args.config)
         _run_server_with_port_fallback(
             "vibesensor.app.bootstrap:create_app_from_env",
             host=host,
