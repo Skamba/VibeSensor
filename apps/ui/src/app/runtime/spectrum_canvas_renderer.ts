@@ -373,12 +373,16 @@ export function createSpectrumCanvasRenderer(
   }
 
   function setSpectrumDataFromFrame(frame: SpectrumHeavyFrame): void {
-    if (!deps.state.spectrum.spectrumPlot.value) {
+    const plot = deps.state.spectrum.spectrumPlot.value;
+    if (!plot) {
       return;
     }
     currentFreqAxis.value = frame.freq;
     syncChartDataBuffer(frame.freq, frame.values);
-    deps.state.spectrum.spectrumPlot.value.setData(chartData.value, false);
+    plot.setData(chartData.value, false);
+    // uPlot does not commit a paint when setData() skips scale recalculation.
+    // Tween frames reuse fixed axes, so explicitly rebuild paths and redraw.
+    plot.redraw(true, false);
     spectrumLastFrame.value = frame;
   }
 
