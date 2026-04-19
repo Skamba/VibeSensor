@@ -1,4 +1,4 @@
-"""Focused tests for report PDF rendering and layout helpers."""
+"""PDF rendering tests for report verdict, appendix flow, and page text."""
 
 from __future__ import annotations
 
