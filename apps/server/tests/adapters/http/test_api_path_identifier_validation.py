@@ -80,7 +80,6 @@ def _settings_test_client() -> tuple[TestClient, MagicMock]:
             settings_store,
             settings_store,
             settings_store,
-            settings_store,
             speed_source_service,
             speed_status_service,
             MagicMock(),

@@ -6,7 +6,6 @@ from fastapi import APIRouter
 
 from vibesensor.adapters.http.car_library import create_car_library_routes
 from vibesensor.adapters.http.clients import create_client_routes
-from vibesensor.adapters.http.debug import create_debug_routes
 from vibesensor.adapters.http.dependencies import (
     HealthDeps,
     HistoryDeps,
@@ -52,7 +51,6 @@ def create_settings_route_bundle(services: SettingsDeps) -> APIRouter:
         create_settings_routes(
             services.car_settings,
             services.analysis_settings,
-            services.sensor_metadata_store,
             services.ui_preferences,
             services.speed_source_service,
             services.speed_status_service,
@@ -76,7 +74,6 @@ def create_live_route_bundle(services: LiveDeps) -> APIRouter:
     )
     router.include_router(create_recording_routes(services.run_recorder))
     router.include_router(create_websocket_routes(services.ws_hub))
-    router.include_router(create_debug_routes(services.processor))
     return router
 
 

@@ -23,7 +23,6 @@ from vibesensor.infra.processing.buffer_capacity import (
 from vibesensor.infra.processing.buffer_store import SignalBufferStore
 from vibesensor.infra.processing.buffers import ClientBuffer
 from vibesensor.infra.processing.compute import SignalMetricsComputer
-from vibesensor.infra.processing.debug_queries import DebugQueryReader
 from vibesensor.infra.processing.models import (
     CachedMetricsHit,
     ClientMetrics,
@@ -32,7 +31,6 @@ from vibesensor.infra.processing.models import (
 from vibesensor.infra.processing.payload import (
     SpectrumSeriesPayload,
     _empty_spectrum_payload,
-    build_debug_spectrum_payload,
     build_intake_stats_payload,
     build_multi_spectrum_payload,
     build_spectrum_payload,
@@ -43,11 +41,7 @@ from vibesensor.infra.workers.worker_pool import WorkerPool
 
 if TYPE_CHECKING:
     from vibesensor.shared.types.payload_types import (
-        DebugSpectrumErrorPayload,
-        DebugSpectrumPayload,
         IntakeStatsPayload,
-        RawSamplesErrorPayload,
-        RawSamplesPayload,
         SpectraPayload,
         TimeAlignmentPayload,
     )
@@ -93,7 +87,6 @@ class SignalProcessor:
         self.max_samples = self._config.max_samples
 
         self._store = SignalBufferStore(self._config)
-        self._debug_queries = DebugQueryReader(self._store)
         self._metrics = SignalMetricsComputer(self._config)
         self._worker_pool = worker_pool
 
@@ -191,17 +184,6 @@ class SignalProcessor:
     def all_latest_metrics(self, client_ids: list[str]) -> dict[str, ClientMetrics]:
         """Return latest metrics for requested clients."""
         return self._store.all_latest_metrics(client_ids)
-
-    def debug_spectrum(self, client_id: str) -> DebugSpectrumPayload | DebugSpectrumErrorPayload:
-        request = self._debug_queries.debug_request(client_id)
-        return build_debug_spectrum_payload(request, self._store.config, self._metrics)
-
-    def raw_samples(
-        self,
-        client_id: str,
-        n_samples: int = 2048,
-    ) -> RawSamplesPayload | RawSamplesErrorPayload:
-        return self._debug_queries.raw_samples(client_id, n_samples=n_samples)
 
     def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
         return self._store.clients_with_recent_data(client_ids, max_age_s=max_age_s)

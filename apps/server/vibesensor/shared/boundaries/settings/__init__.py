@@ -6,7 +6,6 @@ from .analysis import (
 )
 from .cars import car_config_update_payload_from_mapping, cars_response_payload
 from .preferences import language_response_payload, speed_unit_response_payload
-from .sensors import sensor_config_update_payload_from_mapping, sensors_response_payload
 from .snapshot import (
     coerce_language_code,
     coerce_speed_unit_code,
@@ -27,8 +26,6 @@ __all__ = [
     "coerce_language_code",
     "coerce_speed_unit_code",
     "language_response_payload",
-    "sensor_config_update_payload_from_mapping",
-    "sensors_response_payload",
     "settings_snapshot_from_payload",
     "speed_source_response_payload",
     "speed_source_update_payload_from_mapping",
