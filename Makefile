@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev format lint typecheck-backend typecheck ui-lint ui-typecheck test test-changed test-ci-lite test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev format lint typecheck-backend typecheck ui-lint ui-typecheck test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts regen-contracts coverage smoke loc docs-lint
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -11,6 +11,7 @@ PYTHON_MAJOR_MINOR := $(PYTHON_MAJOR).$(PYTHON_MINOR)
 PYTHON_BOOTSTRAP := python$(PYTHON_MAJOR_MINOR)
 VENV_DIR := $(CURDIR)/.venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
+BACKEND_BENCHMARK_TARGETS ?= tests/infra/workers/benchmark_compute_all.py tests/use_cases/updates/benchmark_update_status_codec.py
 
 # Prefer the repo venv after setup, but still allow bootstrap targets to run
 # against the pinned host interpreter before `.venv` exists.
@@ -82,6 +83,15 @@ test-all: ## Run the broader local CI runner
 test-full-suite: ## Run the full end-to-end suite locally
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" tools/tests/run_e2e_parallel.py --shards 1
+
+benchmark-backend: ## Run explicit backend benchmark suite (set BENCHMARK_OPTS / BACKEND_BENCHMARK_TARGETS as needed)
+	@$(RESOLVE_PYTHON) \
+	cd $(SERVER_DIR) && "$$PYTHON" -m pytest --benchmark-only $(BACKEND_BENCHMARK_TARGETS) $(BENCHMARK_OPTS)
+
+benchmark-compare-backend: ## Compare saved backend benchmark runs from apps/server/.benchmarks
+	@$(RESOLVE_PYTHON) \
+	BENCHMARK_CLI="$$(dirname "$$PYTHON")/py.test-benchmark"; \
+	cd $(SERVER_DIR) && "$$BENCHMARK_CLI" compare .benchmarks
 
 sync-contracts: ## Regenerate or check the authoritative contract sync pipeline
 	@$(RESOLVE_PYTHON) \
