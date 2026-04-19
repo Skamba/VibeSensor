@@ -141,6 +141,9 @@ python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
   `npm run test:visual:update` only for intentional baseline changes.
 - `npm run test:visual:audit` is the opt-in four-project visual audit sweep
   when you need dark/tablet coverage on purpose instead of in the default lane.
+- `npm run wiki:screenshots` is separate docs asset generation. It does not
+  belong to the default visual lane; by default it writes screenshots under
+  `apps/ui/wiki-screenshots/` unless `WIKI_SCREENSHOT_DIR` overrides the path.
 - `frontend-typecheck` is the contract/type gate, while `ui-smoke` is the CI
   browser path. Use `act -j frontend-typecheck -W .github/workflows/ci.yml` or
   `act -j ui-smoke -W .github/workflows/ci.yml` when you need GitHub-workflow
