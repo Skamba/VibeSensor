@@ -19,7 +19,7 @@ from _update_manager_test_helpers import (
 
 from vibesensor.shared.exceptions import UpdateCleanupError
 from vibesensor.use_cases.updates.models import UpdateState, UpdateTransport, UsbInternetStatus
-from vibesensor.use_cases.updates.status import collect_runtime_details
+from vibesensor.use_cases.updates.status import collect_runtime_details, update_status_to_builtins
 
 
 class _StaticUsbInternetService:
@@ -329,7 +329,7 @@ class TestUpdateManagerAsync:
                 server_release_fetcher=fetcher,
             )
             await run_update(manager, "TestNet", secret)
-        serialized = str(manager.status.to_payload())
+        serialized = str(update_status_to_builtins(manager.status))
         assert secret not in serialized
         for line in manager.status.log_tail:
             assert secret not in line

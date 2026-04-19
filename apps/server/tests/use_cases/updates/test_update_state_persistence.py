@@ -27,6 +27,8 @@ from vibesensor.use_cases.updates.status import (
     UpdatePhaseTransitionError,
     UpdateStateStore,
     build_update_status_tracker,
+    update_status_from_builtins,
+    update_status_to_builtins,
 )
 
 # ---------------------------------------------------------------------------
@@ -112,14 +114,14 @@ def update_env(
 
 
 # ---------------------------------------------------------------------------
-# UpdateJobStatus round-trip (to_payload / from_payload)
+# UpdateJobStatus round-trip (msgspec payload codec)
 # ---------------------------------------------------------------------------
 
 
 class TestUpdateJobStatusRoundTrip:
     def test_idle_round_trip(self) -> None:
         status = UpdateJobStatus()
-        restored = UpdateJobStatus.from_payload(status.to_payload())
+        restored = update_status_from_builtins(update_status_to_builtins(status))
         assert restored.state == UpdateState.idle
         assert restored.phase == UpdatePhase.idle
         assert restored.issues == []
@@ -150,7 +152,7 @@ class TestUpdateJobStatusRoundTrip:
             exit_code=1,
             runtime=UpdateRuntimeDetails(version="1.0.0"),
         )
-        restored = UpdateJobStatus.from_payload(status.to_payload())
+        restored = update_status_from_builtins(update_status_to_builtins(status))
         assert restored.state == UpdateState.failed
         assert restored.phase == UpdatePhase.installing
         assert restored.started_at == 1700000000.0
@@ -203,6 +205,48 @@ class TestUpdateStateStore:
         assert len(loaded.issues) == 1
         assert loaded.issues[0].message == "ok"
         assert loaded.log_tail == ["log entry 1"]
+
+    def test_load_accepts_backward_compatible_legacy_payload(self, tmp_path: Path) -> None:
+        path = tmp_path / "state.json"
+        path.write_text(
+            """
+            {
+              "state": "failed",
+              "phase": "installing",
+              "transport": "usb_internet",
+              "started_at": "10.5",
+              "issues": [
+                "bad",
+                {"phase": "downloading", "message": "warn", "detail": 99}
+              ],
+              "log_tail": ["ok", 7, null],
+              "runtime": {
+                "version": 9,
+                "assets_verified": 1,
+                "has_packaged_static": "true"
+              }
+            }
+            """.strip(),
+            encoding="utf-8",
+        )
+        store = UpdateStateStore(path=path)
+
+        loaded = store.load()
+
+        assert loaded is not None
+        assert loaded.state == UpdateState.failed
+        assert loaded.phase == UpdatePhase.installing
+        assert loaded.transport == UpdateTransport.usb_internet
+        assert loaded.started_at == 10.5
+        assert loaded.issues == [
+            UpdateIssue(phase="downloading", message="warn", detail="99"),
+        ]
+        assert loaded.log_tail == ["ok", "7", "None"]
+        assert loaded.runtime == UpdateRuntimeDetails(
+            version="9",
+            assets_verified=True,
+            has_packaged_static=True,
+        )
 
     @pytest.mark.parametrize(
         "file_content",
