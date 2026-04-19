@@ -28,84 +28,66 @@ from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_caus
 class TestConfidenceLabel:
     """Direct unit tests for Finding.classify_confidence static method."""
 
-    def test_high_threshold_yields_success_tone(self) -> None:
-        """Conf >= HIGH_THRESHOLD → CONFIDENCE_HIGH and 'success' tone."""
-        label, tone, pct = Finding.classify_confidence(Finding.CONFIDENCE_HIGH_THRESHOLD)
-        assert label == "CONFIDENCE_HIGH"
-        assert tone == "success"
-
-    def test_medium_threshold_yields_warn_tone(self) -> None:
-        """Conf in [MEDIUM, HIGH) → CONFIDENCE_MEDIUM and 'warn' tone."""
-        mid = (Finding.CONFIDENCE_MEDIUM_THRESHOLD + Finding.CONFIDENCE_HIGH_THRESHOLD) / 2
-        label, tone, _ = Finding.classify_confidence(mid)
-        assert label == "CONFIDENCE_MEDIUM"
-        assert tone == "warn"
-
-    def test_below_medium_yields_neutral_tone(self) -> None:
-        """Conf < MEDIUM_THRESHOLD → CONFIDENCE_LOW and 'neutral' tone."""
-        label, tone, _ = Finding.classify_confidence(Finding.CONFIDENCE_MEDIUM_THRESHOLD - 0.01)
-        assert label == "CONFIDENCE_LOW"
-        assert tone == "neutral"
-
-    def test_zero_input_returns_low(self) -> None:
-        """Zero confidence → CONFIDENCE_LOW."""
-        label, tone, pct = Finding.classify_confidence(0.0)
-        assert label == "CONFIDENCE_LOW"
-        assert pct == "0%"
-
-    def test_pct_text_format_is_integer_percent(self) -> None:
-        """pct_text should be e.g. '82%', not '0.82%' or '82.0%'."""
-        _, _, pct = Finding.classify_confidence(0.82)
-        assert pct == "82%"
-
-    def test_pct_text_clamps_to_100(self) -> None:
-        """Values > 1.0 should yield '100%', not '150%'."""
-        _, _, pct = Finding.classify_confidence(1.5)
-        assert pct == "100%"
-
     @pytest.mark.parametrize(
-        ("confidence", "expected"),
+        ("confidence", "strength_band_key", "expected"),
         [
-            pytest.param(float("nan"), ("CONFIDENCE_LOW", "neutral", "0%"), id="nan"),
-            pytest.param(-0.20, ("CONFIDENCE_LOW", "neutral", "0%"), id="negative"),
-            pytest.param(math.inf, ("CONFIDENCE_LOW", "neutral", "0%"), id="infinite"),
-            pytest.param(1.50, ("CONFIDENCE_HIGH", "success", "100%"), id="above-one"),
+            pytest.param(
+                Finding.CONFIDENCE_HIGH_THRESHOLD,
+                None,
+                ("CONFIDENCE_HIGH", "success", "70%"),
+                id="high-threshold",
+            ),
+            pytest.param(
+                (Finding.CONFIDENCE_MEDIUM_THRESHOLD + Finding.CONFIDENCE_HIGH_THRESHOLD) / 2,
+                None,
+                ("CONFIDENCE_MEDIUM", "warn", "55%"),
+                id="medium-band",
+            ),
+            pytest.param(
+                Finding.CONFIDENCE_MEDIUM_THRESHOLD - 0.01,
+                None,
+                ("CONFIDENCE_LOW", "neutral", "39%"),
+                id="below-medium",
+            ),
+            pytest.param(0.0, None, ("CONFIDENCE_LOW", "neutral", "0%"), id="zero"),
+            pytest.param(0.82, None, ("CONFIDENCE_HIGH", "success", "82%"), id="integer-pct"),
+            pytest.param(float("nan"), None, ("CONFIDENCE_LOW", "neutral", "0%"), id="nan"),
+            pytest.param(-0.20, None, ("CONFIDENCE_LOW", "neutral", "0%"), id="negative"),
+            pytest.param(math.inf, None, ("CONFIDENCE_LOW", "neutral", "0%"), id="infinite"),
+            pytest.param(1.50, None, ("CONFIDENCE_HIGH", "success", "100%"), id="above-one"),
+            pytest.param(
+                Finding.CONFIDENCE_HIGH_THRESHOLD + 0.05,
+                "negligible",
+                ("CONFIDENCE_MEDIUM", "warn", "75%"),
+                id="negligible-caps-high",
+            ),
+            pytest.param(
+                (Finding.CONFIDENCE_MEDIUM_THRESHOLD + Finding.CONFIDENCE_HIGH_THRESHOLD) / 2,
+                "negligible",
+                ("CONFIDENCE_MEDIUM", "warn", "55%"),
+                id="negligible-keeps-medium",
+            ),
+            pytest.param(
+                Finding.CONFIDENCE_HIGH_THRESHOLD + 0.05,
+                "strong",
+                ("CONFIDENCE_HIGH", "success", "75%"),
+                id="other-band-keeps-high",
+            ),
         ],
     )
-    def test_invalid_and_out_of_range_inputs_follow_clamped_confidence_semantics(
+    def test_classify_confidence_cases(
         self,
         confidence: float,
+        strength_band_key: str | None,
         expected: tuple[str, str, str],
     ) -> None:
-        assert Finding.classify_confidence(confidence) == expected
-
-    def test_negligible_band_caps_high_to_medium(self) -> None:
-        """strength_band_key='negligible' must reduce HIGH → MEDIUM."""
-        label, tone, _ = Finding.classify_confidence(
-            Finding.CONFIDENCE_HIGH_THRESHOLD + 0.05,
-            strength_band_key="negligible",
+        assert (
+            Finding.classify_confidence(
+                confidence,
+                strength_band_key=strength_band_key,
+            )
+            == expected
         )
-        assert label == "CONFIDENCE_MEDIUM"
-        assert tone == "warn"
-
-    def test_negligible_band_does_not_affect_medium(self) -> None:
-        """strength_band_key='negligible' only caps HIGH, not MEDIUM already."""
-        mid = (Finding.CONFIDENCE_MEDIUM_THRESHOLD + Finding.CONFIDENCE_HIGH_THRESHOLD) / 2
-        label, tone, _ = Finding.classify_confidence(mid, strength_band_key="negligible")
-        assert label == "CONFIDENCE_MEDIUM"
-
-    def test_non_negligible_band_leaves_high_intact(self) -> None:
-        """An unrelated band key must not suppress a HIGH label."""
-        label, tone, _ = Finding.classify_confidence(
-            Finding.CONFIDENCE_HIGH_THRESHOLD + 0.05,
-            strength_band_key="strong",
-        )
-        assert label == "CONFIDENCE_HIGH"
-
-
-# ---------------------------------------------------------------------------
-# select_top_causes
-# ---------------------------------------------------------------------------
 
 
 class TestSelectTopCauses:
@@ -115,140 +97,187 @@ class TestSelectTopCauses:
     def _to_domain(*payloads: dict[str, object]) -> tuple[Finding, ...]:
         return tuple(finding_from_payload(p) for p in payloads)
 
-    def test_empty_findings_returns_empty(self) -> None:
-        domain_findings = select_top_causes(())
-        assert domain_findings == ()
+    @pytest.mark.parametrize(
+        ("findings", "expected_ids"),
+        [
+            pytest.param((), (), id="empty"),
+            pytest.param(
+                (
+                    make_finding_payload(
+                        suspected_source="wheel/tire",
+                        confidence=0.10,
+                    ),
+                ),
+                (),
+                id="below-min-confidence",
+            ),
+            pytest.param(
+                (
+                    make_finding_payload(
+                        suspected_source="wheel/tire",
+                        confidence=0.90,
+                        severity="info",
+                    ),
+                ),
+                (),
+                id="info-severity",
+            ),
+            pytest.param(
+                (
+                    make_finding_payload(
+                        suspected_source="baseline",
+                        confidence=0.95,
+                        finding_id="REF_BASELINE",
+                    ),
+                ),
+                (),
+                id="reference-finding",
+            ),
+            pytest.param(
+                (
+                    make_finding_payload(
+                        finding_id="F_VALID",
+                        suspected_source="wheel/tire",
+                        confidence=0.70,
+                    ),
+                ),
+                ("F_VALID",),
+                id="returns-domain-findings",
+            ),
+        ],
+    )
+    def test_select_top_causes_filters_and_returns_findings(
+        self,
+        findings: tuple[dict[str, object], ...],
+        expected_ids: tuple[str, ...],
+    ) -> None:
+        domain_findings = select_top_causes(self._to_domain(*findings))
 
-    def test_below_min_confidence_findings_excluded(self) -> None:
-        """Findings below ORDER_MIN_CONFIDENCE (0.25) must be filtered."""
-        findings = self._to_domain(
-            make_finding_payload(suspected_source="wheel/tire", confidence=0.10),
-        )
-        domain_findings = select_top_causes(findings)
-        assert domain_findings == ()
-
-    def test_info_severity_excluded(self) -> None:
-        """Info-severity findings must not appear in top causes."""
-        findings = self._to_domain(
-            make_finding_payload(suspected_source="wheel/tire", confidence=0.90, severity="info"),
-        )
-        domain_findings = select_top_causes(findings)
-        assert domain_findings == ()
-
-    def test_ref_finding_excluded(self) -> None:
-        """Findings whose ID starts with REF_ must be excluded."""
-        findings = self._to_domain(
-            make_finding_payload(
-                suspected_source="baseline",
-                confidence=0.95,
-                finding_id="REF_BASELINE",
-            ),
-        )
-        domain_findings = select_top_causes(findings)
-        assert domain_findings == ()
-
-    def test_respects_max_causes_limit(self) -> None:
-        findings = self._to_domain(
-            make_finding_payload(
-                finding_id="F_WHEEL",
-                suspected_source="wheel/tire",
-                confidence=0.90,
-            ),
-            make_finding_payload(
-                finding_id="F_DRIVELINE",
-                suspected_source="driveline",
-                confidence=0.85,
-            ),
-            make_finding_payload(
-                finding_id="F_ENGINE",
-                suspected_source="engine",
-                confidence=0.80,
-            ),
-            make_finding_payload(
-                finding_id="F_BODY",
-                suspected_source="body resonance",
-                confidence=0.75,
-            ),
-        )
-        domain_findings = select_top_causes(findings, max_causes=2)
-        assert [finding.finding_id for finding in domain_findings] == ["F_WHEEL", "F_DRIVELINE"]
-        assert {finding.finding_id for finding in findings} - {
-            finding.finding_id for finding in domain_findings
-        } == {"F_ENGINE", "F_BODY"}
-
-    def test_best_per_source_group_selected(self) -> None:
-        findings = self._to_domain(
-            make_finding_payload(
-                finding_id="F_WHEEL_BEST",
-                suspected_source="wheel/tire",
-                confidence=0.90,
-                frequency_hz_or_order="2x wheel order",
-            ),
-            make_finding_payload(
-                finding_id="F_WHEEL_WEAKER",
-                suspected_source="wheel/tire",
-                confidence=0.60,
-                frequency_hz_or_order="1x wheel order",
-            ),
-            make_finding_payload(
-                finding_id="F_ENGINE",
-                suspected_source="engine",
-                confidence=0.80,
-            ),
-        )
-        domain_findings = select_top_causes(findings, max_causes=3)
-        assert [finding.finding_id for finding in domain_findings] == ["F_WHEEL_BEST", "F_ENGINE"]
-        best_wheel = domain_findings[0]
-        assert best_wheel.source_normalized == "wheel/tire"
-        assert best_wheel.confidence == pytest.approx(0.90)
-        assert best_wheel.signature_labels == ("2x wheel order", "1x wheel order")
-
-    def test_drop_off_threshold_excludes_low_scoring_groups_even_below_max_causes(self) -> None:
-        findings = self._to_domain(
-            make_finding_payload(
-                finding_id="F_TOP",
-                suspected_source="wheel/tire",
-                confidence=0.90,
-            ),
-            make_finding_payload(
-                finding_id="F_CLOSE",
-                suspected_source="engine",
-                confidence=0.79,
-            ),
-            make_finding_payload(
-                finding_id="F_BELOW",
-                suspected_source="body resonance",
-                confidence=0.60,
-            ),
-        )
-        domain_findings = select_top_causes(findings, max_causes=3)
-
-        assert [finding.finding_id for finding in domain_findings] == ["F_TOP", "F_CLOSE"]
+        assert isinstance(domain_findings, tuple)
         assert all(isinstance(finding, Finding) for finding in domain_findings)
+        assert tuple(finding.finding_id for finding in domain_findings) == expected_ids
 
-    def test_equal_score_groups_keep_first_seen_source_order(self) -> None:
-        findings = self._to_domain(
-            make_finding_payload(
-                finding_id="F_WHEEL",
-                suspected_source="wheel/tire",
-                confidence=0.80,
-                strongest_location="front-left wheel",
+    @pytest.mark.parametrize(
+        ("findings", "max_causes", "expected_ids", "expected_first_signatures"),
+        [
+            pytest.param(
+                (
+                    make_finding_payload(
+                        finding_id="F_WHEEL",
+                        suspected_source="wheel/tire",
+                        confidence=0.90,
+                    ),
+                    make_finding_payload(
+                        finding_id="F_DRIVELINE",
+                        suspected_source="driveline",
+                        confidence=0.85,
+                    ),
+                    make_finding_payload(
+                        finding_id="F_ENGINE",
+                        suspected_source="engine",
+                        confidence=0.80,
+                    ),
+                    make_finding_payload(
+                        finding_id="F_BODY",
+                        suspected_source="body resonance",
+                        confidence=0.75,
+                    ),
+                ),
+                2,
+                ("F_WHEEL", "F_DRIVELINE"),
+                None,
+                id="max-causes-limit",
             ),
-            make_finding_payload(
-                finding_id="F_ENGINE",
-                suspected_source="engine",
-                confidence=0.80,
+            pytest.param(
+                (
+                    make_finding_payload(
+                        finding_id="F_WHEEL_BEST",
+                        suspected_source="wheel/tire",
+                        confidence=0.90,
+                        frequency_hz_or_order="2x wheel order",
+                    ),
+                    make_finding_payload(
+                        finding_id="F_WHEEL_WEAKER",
+                        suspected_source="wheel/tire",
+                        confidence=0.60,
+                        frequency_hz_or_order="1x wheel order",
+                    ),
+                    make_finding_payload(
+                        finding_id="F_ENGINE",
+                        suspected_source="engine",
+                        confidence=0.80,
+                    ),
+                ),
+                3,
+                ("F_WHEEL_BEST", "F_ENGINE"),
+                ("2x wheel order", "1x wheel order"),
+                id="best-per-source-group",
             ),
-            make_finding_payload(
-                finding_id="F_DRIVELINE",
-                suspected_source="driveline",
-                confidence=0.50,
+            pytest.param(
+                (
+                    make_finding_payload(
+                        finding_id="F_TOP",
+                        suspected_source="wheel/tire",
+                        confidence=0.90,
+                    ),
+                    make_finding_payload(
+                        finding_id="F_CLOSE",
+                        suspected_source="engine",
+                        confidence=0.79,
+                    ),
+                    make_finding_payload(
+                        finding_id="F_BELOW",
+                        suspected_source="body resonance",
+                        confidence=0.60,
+                    ),
+                ),
+                3,
+                ("F_TOP", "F_CLOSE"),
+                None,
+                id="drop-off-threshold",
             ),
+            pytest.param(
+                (
+                    make_finding_payload(
+                        finding_id="F_WHEEL",
+                        suspected_source="wheel/tire",
+                        confidence=0.80,
+                        strongest_location="front-left wheel",
+                    ),
+                    make_finding_payload(
+                        finding_id="F_ENGINE",
+                        suspected_source="engine",
+                        confidence=0.80,
+                    ),
+                    make_finding_payload(
+                        finding_id="F_DRIVELINE",
+                        suspected_source="driveline",
+                        confidence=0.50,
+                    ),
+                ),
+                2,
+                ("F_WHEEL", "F_ENGINE"),
+                None,
+                id="equal-score-keeps-source-order",
+            ),
+        ],
+    )
+    def test_select_top_causes_selection_cases(
+        self,
+        findings: tuple[dict[str, object], ...],
+        max_causes: int,
+        expected_ids: tuple[str, ...],
+        expected_first_signatures: tuple[str, ...] | None,
+    ) -> None:
+        domain_findings = select_top_causes(
+            self._to_domain(*findings),
+            max_causes=max_causes,
         )
-
-        domain_findings = select_top_causes(findings, max_causes=2)
-
-        assert [finding.finding_id for finding in domain_findings] == ["F_WHEEL", "F_ENGINE"]
+        assert tuple(finding.finding_id for finding in domain_findings) == expected_ids
+        if expected_first_signatures is not None:
+            assert domain_findings[0].signature_labels == expected_first_signatures
+            assert domain_findings[0].confidence == pytest.approx(0.90)
+            assert domain_findings[0].source_normalized == "wheel/tire"
 
     def test_wheel_driveline_overlap_adds_explicit_reason_when_both_surface(self) -> None:
         wheel = finding_from_payload(

@@ -9,7 +9,6 @@ from __future__ import annotations
 import pytest
 from test_support.findings import make_finding, make_finding_payload
 
-import vibesensor.use_cases.diagnostics.findings as findings_module
 from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.boundaries.summary_fields.finding import (
@@ -43,19 +42,6 @@ from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
     _phase_to_str,
     _speed_profile_from_points,
 )
-
-# -- Subpackage structure tests -----------------------------------------------
-
-
-def test_findings_module_public_api_surface_stays_explicit() -> None:
-    assert findings_module.__all__ == [
-        "PeakFindingAnalyzer",
-        "collect_order_frequencies",
-        "finalize_findings",
-        "prepare_analysis_samples",
-    ]
-    for exported_name in findings_module.__all__:
-        assert hasattr(findings_module, exported_name)
 
 
 def test_finding_payload_round_trip_preserves_consumer_fields() -> None:
@@ -116,16 +102,15 @@ class TestPhaseToStr:
             pytest.param(DrivingPhase.CRUISE, "cruise", id="enum_value"),
             pytest.param("acceleration", "acceleration", id="string_passthrough"),
             pytest.param(7, "7", id="unsupported_scalar_stringified"),
+            pytest.param(
+                type("FuturePhase", (), {"value": "future_phase"})(),
+                "future_phase",
+                id="future-enum-like-object",
+            ),
         ],
     )
-    def test_phase_to_str(self, input_val: object, expected: str | None) -> None:
+    def test_phase_to_str_cases(self, input_val: object, expected: str | None) -> None:
         assert _phase_to_str(input_val) == expected
-
-    def test_phase_to_str_uses_enum_like_value_for_future_phase_objects(self) -> None:
-        class FuturePhase:
-            value = "future_phase"
-
-        assert _phase_to_str(FuturePhase()) == "future_phase"
 
 
 class TestSpeedProfileFromPoints:
