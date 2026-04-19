@@ -23,6 +23,8 @@ running the UI commands below. Native frontend work follows [`.nvmrc`](../../.nv
 cd apps/ui
 npm ci
 npm run lint         # Biome lint over the hand-written UI/config/test files
+npm run lint:deps    # dependency-cruiser boundary checks over src/
+npm run lint:unused  # knip dead-file/dependency checks
 npm run dev          # Dev server on http://localhost:5173
 npm run dev:open     # Same dev server, but opens the browser on local desktops
 npm run dev:docker   # Docker-oriented wrapper: contract check + guarded npm ci + Vite
@@ -76,6 +78,11 @@ The release-smoke artifact helper is the intentional narrow exception: after the
 
 - `npm run lint` checks the hand-written TypeScript, config, and support scripts
   with Biome.
+- `npm run lint:deps` runs dependency-cruiser against the current `src/`
+  boundary rules so feature/runtime/view and transport/app seams stay explicit.
+- `npm run lint:unused` runs knip's first-pass dead-file/dependency checks. It
+  intentionally focuses on high-confidence files and dependency drift before the
+  noisier export sweep lands in a follow-up.
 - `npm run format` rewrites the supported files when you want to apply the repo
   UI formatting locally.
 

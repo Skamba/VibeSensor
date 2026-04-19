@@ -140,7 +140,8 @@ duplicate of it.
 Use the standard UI workflow for `apps/ui/**` changes:
 
 ```bash
-cd apps/ui && npm run typecheck && npm run build
+make ui-typecheck
+cd apps/ui && npm run build
 cd apps/ui && npm run test:visual
 cd apps/ui && npm run test:visual:audit   # optional broader visual sweep
 python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
@@ -150,8 +151,10 @@ python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
   `npm run test:visual:update` only for intentional baseline changes.
 - `npm run test:visual:audit` is the opt-in four-project visual audit sweep
   when you need dark/tablet coverage on purpose instead of in the default lane.
-- `frontend-typecheck` is the contract/type gate, while `ui-smoke` is the CI
-  browser path. Use `act -j frontend-typecheck -W .github/workflows/ci.yml` or
+- `frontend-typecheck` is the UI contract/type/tooling gate: it syncs generated
+  contract artifacts, then runs Biome, dependency-cruiser, knip, and TypeScript.
+  `ui-smoke` is the CI browser path. Use
+  `act -j frontend-typecheck -W .github/workflows/ci.yml` or
   `act -j ui-smoke -W .github/workflows/ci.yml` when you need GitHub-workflow
   parity for those jobs.
 
