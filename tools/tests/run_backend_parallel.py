@@ -44,7 +44,9 @@ collect_normalized_test_ids = _parallel_runner_support.parse_collected_test_ids
 ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "ci"
 _DURATION_CACHE_ENV = "VIBESENSOR_BACKEND_DURATION_CACHE"
+_XDIST_WORKERS_ENV = "VIBESENSOR_BACKEND_XDIST_WORKERS"
 _DEFAULT_DURATION = 1.0
+_DEFAULT_XDIST_WORKERS = 2
 
 
 def _emit(line: str) -> None:
@@ -61,6 +63,20 @@ def _normalize_collected_test_id(line: str) -> str | None:
 
 def _parse_collected_test_ids(output: str) -> list[str]:
     return collect_normalized_test_ids(output, normalize=_normalize_collected_test_id)
+
+
+def _xdist_workers_default(env: Mapping[str, str] | None = None) -> int:
+    source = os.environ if env is None else env
+    raw = source.get(_XDIST_WORKERS_ENV)
+    if raw is None or raw == "":
+        return _DEFAULT_XDIST_WORKERS
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise SystemExit(f"{_XDIST_WORKERS_ENV} must be an integer >= 0") from exc
+    if value < 0:
+        raise SystemExit(f"{_XDIST_WORKERS_ENV} must be >= 0")
+    return value
 
 
 def _duration_cache_path(env: Mapping[str, str] | None = None) -> Path:
@@ -238,11 +254,22 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help="Optional JUnit XML output path for the selected shard.",
     )
+    parser.add_argument(
+        "--xdist-workers",
+        type=int,
+        default=_xdist_workers_default(),
+        help=(
+            "Intra-shard pytest-xdist worker count; defaults to "
+            f"{_XDIST_WORKERS_ENV} or {_DEFAULT_XDIST_WORKERS}."
+        ),
+    )
     args = parser.parse_args()
     if args.shards < 1:
         raise SystemExit("--shards must be >= 1")
     if not 1 <= args.shard_index <= args.shards:
         raise SystemExit("--shard-index must be between 1 and --shards")
+    if args.xdist_workers < 0:
+        raise SystemExit("--xdist-workers must be >= 0")
     return args
 
 
@@ -276,7 +303,8 @@ def main() -> int:
     _emit(
         f"[backend-parallel] collected {len(collected)} test cases across "
         f"{len(grouped_tests)} test files; running shard {args.shard_index}/{args.shards} "
-        f"with {len(selected_targets)} files and {len(selected_tests)} test cases"
+        f"with {len(selected_targets)} files and {len(selected_tests)} test cases "
+        f"using pytest -n {args.xdist_workers}"
     )
 
     if not selected_targets:
@@ -292,7 +320,7 @@ def main() -> int:
         "pytest",
         "-q",
         "-n",
-        "0",
+        str(args.xdist_workers),
         "--tb=short",
         "--junitxml",
         str(junit_path),

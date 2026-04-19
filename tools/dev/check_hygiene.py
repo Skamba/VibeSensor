@@ -624,7 +624,14 @@ def _normalize_tokenized_command(tokens: list[str]) -> str:
     if not tokens:
         return ""
     normalized = list(tokens)
-    normalized[0] = _normalize_python_token(normalized[0])
+    command_index = 0
+    if normalized[0] == "env":
+        command_index = 1
+        while command_index < len(normalized) and "=" in normalized[command_index]:
+            command_index += 1
+        if command_index >= len(normalized):
+            return shlex.join(normalized)
+    normalized[command_index] = _normalize_python_token(normalized[command_index])
     return shlex.join(normalized)
 
 
