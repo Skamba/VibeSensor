@@ -1,6 +1,6 @@
-"""Payload formatting for processing-facing debug and spectrum views.
+"""Payload formatting for processing-facing spectrum and alignment views.
 
-Pure functions that assemble API/WebSocket/debug payload dicts from
+Pure functions that assemble API and WebSocket payload dicts from
 processing state. Called by :class:`~vibesensor.infra.processing.processor.SignalProcessor`
 wrapper methods that handle locking and buffer lookup.
 """
@@ -13,17 +13,11 @@ import numpy as np
 
 from vibesensor.infra.processing.fft import float_list
 from vibesensor.infra.processing.models import (
-    DebugSpectrumRequest,
-    ProcessorConfig,
     SpectrumAxisData,
 )
 from vibesensor.infra.processing.time_align import compute_overlap
 from vibesensor.shared.types.payload_types import (
     AlignmentInfoPayload,
-    DebugSpectrumErrorPayload,
-    DebugSpectrumPayload,
-    DebugSpectrumStatsPayload,
-    DebugSpectrumTopBinPayload,
     FrequencyWarningPayload,
     IntakeStatsPayload,
     SharedWindowPayload,
@@ -39,7 +33,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from vibesensor.infra.processing.buffers import ClientBuffer
-    from vibesensor.infra.processing.compute import SignalMetricsComputer
 
 _EMPTY_F32: np.ndarray = np.array([], dtype=np.float32)
 
@@ -79,70 +72,6 @@ def build_spectrum_payload(buf: ClientBuffer) -> SpectrumSeriesPayload:
     buf.cached_spectrum_payload = payload
     buf.cached_spectrum_payload_generation = buf.spectrum_generation
     return payload
-
-
-def build_debug_spectrum_payload(
-    request: DebugSpectrumRequest,
-    config: ProcessorConfig,
-    metrics: SignalMetricsComputer,
-) -> DebugSpectrumPayload | DebugSpectrumErrorPayload:
-    """Build the route-facing debug spectrum payload from a copied FFT request."""
-    if request.fft_block is None:
-        return {
-            "error": "insufficient samples",
-            "count": request.count,
-            "fft_n": config.fft_n,
-        }
-
-    fft_block = request.fft_block
-    raw_mean = fft_block.mean(axis=1).tolist()
-    raw_std = fft_block.std(axis=1).tolist()
-    raw_min = fft_block.min(axis=1).tolist()
-    raw_max = fft_block.max(axis=1).tolist()
-
-    fft_result = metrics.compute_fft_spectrum(fft_block, request.sample_rate_hz)
-    freq_slice = fft_result["freq_slice"]
-    combined_amp = fft_result["combined_amp"]
-    strength_metrics = fft_result["strength_metrics"]
-    detrended_std = (fft_block - fft_block.mean(axis=1, keepdims=True)).std(axis=1).tolist()
-
-    sorted_idx = np.argsort(combined_amp)[::-1]
-    spectrum = fft_result["spectrum_by_axis"]
-    top_bins: list[DebugSpectrumTopBinPayload] = []
-    for index in sorted_idx[:10]:
-        top_bins.append(
-            {
-                "bin": int(index),
-                "freq_hz": float(freq_slice[index]),
-                "combined_amp_g": float(combined_amp[index]),
-                "x_amp_g": float(spectrum["x"]["amp"][index]),
-                "y_amp_g": float(spectrum["y"]["amp"][index]),
-                "z_amp_g": float(spectrum["z"]["amp"][index]),
-            },
-        )
-
-    raw_stats: DebugSpectrumStatsPayload = {
-        "mean_g": raw_mean,
-        "std_g": raw_std,
-        "min_g": raw_min,
-        "max_g": raw_max,
-    }
-    return {
-        "client_id": request.client_id,
-        "sample_rate_hz": request.sample_rate_hz,
-        "fft_n": config.fft_n,
-        "fft_scale": metrics.fft_scale,
-        "window": "hann",
-        "spectrum_min_hz": config.spectrum_min_hz,
-        "spectrum_max_hz": config.spectrum_max_hz,
-        "freq_bins": len(freq_slice),
-        "freq_resolution_hz": float(request.sample_rate_hz) / config.fft_n,
-        "raw_stats": raw_stats,
-        "detrended_std_g": detrended_std,
-        "vibration_strength_db": float(strength_metrics.get("vibration_strength_db", 0)),
-        "top_bins_by_amplitude": top_bins,
-        "strength_peaks": list(strength_metrics.get("top_peaks", [])),
-    }
 
 
 def build_intake_stats_payload(

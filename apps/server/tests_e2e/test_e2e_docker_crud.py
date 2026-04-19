@@ -1,44 +1,12 @@
-"""Docker E2E tests for CRUD edge cases around sensors and cars."""
+"""Docker E2E tests for car CRUD edge cases."""
 
 from __future__ import annotations
 
 import pytest
 
-from tests_e2e._docker_edge_helpers import (
-    _cleanup_clients,
-    _simulate,
-)
-from tests_e2e.e2e_helpers import (
-    api_json,
-)
+from tests_e2e.e2e_helpers import api_json
 
 pytestmark = pytest.mark.e2e
-
-
-def test_sensor_settings_crud_e2e(e2e_env: dict[str, str]) -> None:
-    base = e2e_env["base_url"]
-    _simulate(e2e_env, duration=2.0, count=1, names="front-left")
-    client = api_json(base, "/api/clients")["clients"][0]
-    mac = str(client["mac_address"])
-    sid = mac.replace(":", "")
-    try:
-        api_json(
-            base,
-            f"/api/settings/sensors/{mac}",
-            method="POST",
-            body={"name": "E2E Sensor", "location_code": "rear_left_wheel"},
-        )
-        sensors = api_json(base, "/api/settings/sensors")["sensors_by_mac"]
-        assert sensors[sid]["name"] == "E2E Sensor"
-        assert sensors[sid]["location_code"] == "rear_left_wheel"
-
-        api_json(base, f"/api/settings/sensors/{mac}", method="DELETE")
-        api_json(base, f"/api/settings/sensors/{mac}", method="DELETE", expected_status=404)
-        api_json(base, "/api/settings/sensors/not-a-mac", method="DELETE", expected_status=400)
-    finally:
-        _cleanup_clients(base)
-
-
 def test_car_crud_edge_cases_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     cars_before = api_json(base, "/api/settings/cars")

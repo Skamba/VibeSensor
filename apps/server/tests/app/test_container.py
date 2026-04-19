@@ -141,9 +141,9 @@ def test_build_settings_service_bundle_exposes_runtime_and_http_dependency_group
     car_id = created.cars[0]["id"]
     bundle.car_settings.set_active_car(car_id)
     bundle.analysis_settings.update_active_car_aspects({"tire_width_mm": 255.0})
-    bundle.sensor_metadata_store.set_sensor(
+    bundle.sensor_metadata_store.assign_sensor_location(
         "00:11:22:33:44:55",
-        {"name": "Front Left", "location_code": "front_left"},
+        "front_left_wheel",
     )
 
     runtime_deps = bundle.runtime_deps()
@@ -155,7 +155,10 @@ def test_build_settings_service_bundle_exposes_runtime_and_http_dependency_group
     assert runtime_deps.settings_reader.active_car_snapshot().car_id == car_id
     assert runtime_deps.settings_reader.analysis_settings_snapshot().tire_width_mm == 255.0
     assert runtime_deps.sensor_metadata_reader is bundle.sensor_metadata_store
-    assert runtime_deps.sensor_metadata_reader.get_sensors()["001122334455"]["name"] == "Front Left"
+    assert (
+        runtime_deps.sensor_metadata_reader.get_sensors()["001122334455"]["name"]
+        == "Front Left Wheel"
+    )
     assert runtime_deps.speed_source_reader is bundle.speed_source_settings
     assert (
         bundle.speed_source_service.get_speed_source()
@@ -166,7 +169,6 @@ def test_build_settings_service_bundle_exposes_runtime_and_http_dependency_group
 
     assert http_deps.car_settings is bundle.car_settings
     assert http_deps.analysis_settings is bundle.analysis_settings
-    assert http_deps.sensor_metadata_store is bundle.sensor_metadata_store
     assert http_deps.ui_preferences is bundle.ui_preferences
     assert http_deps.speed_source_service is bundle.speed_source_service
     assert http_deps.speed_status_service is speed_status_service
@@ -503,7 +505,7 @@ def test_build_live_runtime_exposes_http_route_bundle_deps_and_requeues_stale_ru
 def test_build_router_deps_maps_runtime_bundles_to_route_bundles() -> None:
     speed_status_service = object()
     obd_admin_service = object()
-    settings_deps = SimpleNamespace(sensor_metadata_store="sensor-store")
+    settings_deps = SimpleNamespace(name="settings-deps")
     history_deps = object()
     health_deps = object()
     live_deps = object()
@@ -516,6 +518,7 @@ def test_build_router_deps_maps_runtime_bundles_to_route_bundles() -> None:
     )
     settings_services = SimpleNamespace(
         http_settings_deps=Mock(return_value=settings_deps),
+        sensor_metadata_store="sensor-store",
     )
     history_services = SimpleNamespace(http_deps=Mock(return_value=history_deps))
     live_runtime = SimpleNamespace(

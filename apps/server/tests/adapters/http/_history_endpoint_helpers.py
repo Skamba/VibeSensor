@@ -313,8 +313,6 @@ class FakeState:
             "P",
             (),
             {
-                "debug_spectrum": lambda self, _id: {},
-                "raw_samples": lambda self, _id, n_samples=1: {},
                 "intake_stats": lambda self: {
                     "total_ingested_samples": 0,
                     "total_compute_calls": 0,
@@ -374,7 +372,6 @@ class FakeState:
         return SettingsDeps(
             car_settings=self.settings_store,
             analysis_settings=self.settings_store,
-            sensor_metadata_store=self.settings_store,
             ui_preferences=self.settings_store,
             speed_source_service=self.settings_store,
             speed_status_service=self.gps_monitor,

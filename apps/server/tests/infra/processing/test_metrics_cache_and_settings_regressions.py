@@ -166,31 +166,36 @@ class TestSettingsStoreRollbackDbFailure:
 
         assert store.ui_preferences.speed_unit == original
 
-    def test_set_sensor_rollback_new_sensor(self, store: PersistedSettingsServices) -> None:
+    def test_assign_sensor_location_rollback_new_sensor(
+        self,
+        store: PersistedSettingsServices,
+    ) -> None:
         mac = "AA:BB:CC:DD:EE:FF"
         store.coordinator._db = MagicMock()
         store.coordinator._db.set_settings_snapshot.side_effect = OSError("disk full")
 
         with pytest.raises(PersistenceError):
-            store.sensor_settings.set_sensor(mac, {"name": "Test", "location": "front"})
+            store.sensor_settings.assign_sensor_location(mac, "front_left_wheel")
 
         # Sensor should not exist after rollback
         sensors = store.sensor_settings.get_sensors()
         normalized = mac.upper().replace(":", "")
         assert normalized not in sensors
 
-    def test_set_sensor_rollback_existing_sensor(self, store: PersistedSettingsServices) -> None:
+    def test_assign_sensor_location_rollback_existing_sensor(
+        self,
+        store: PersistedSettingsServices,
+    ) -> None:
         mac = "11:22:33:44:55:66"
-        # First create a sensor successfully
-        store.sensor_settings.set_sensor(mac, {"name": "Original", "location_code": "rear"})
+        store.sensor_settings.assign_sensor_location(mac, "rear_left_wheel")
         store.coordinator._db = MagicMock()
         store.coordinator._db.set_settings_snapshot.side_effect = OSError("disk full")
 
         with pytest.raises(PersistenceError):
-            store.sensor_settings.set_sensor(mac, {"name": "Updated", "location_code": "front"})
+            store.sensor_settings.assign_sensor_location(mac, "front_left_wheel")
 
         # Should have original values
         sensors = store.sensor_settings.get_sensors()
         normalized = mac.upper().replace(":", "")
-        assert sensors[normalized]["name"] == "Original"
-        assert sensors[normalized]["location_code"] == "rear"
+        assert sensors[normalized]["name"] == "Rear Left Wheel"
+        assert sensors[normalized]["location_code"] == "rear_left_wheel"

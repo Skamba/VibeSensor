@@ -1,4 +1,4 @@
-"""Cover sensor settings service mutations, defaults, and rollback behavior."""
+"""Cover sensor settings service location assignment, defaults, and rollback behavior."""
 
 from __future__ import annotations
 
@@ -38,42 +38,20 @@ def _sensor_settings_service(
     )
 
 
-def test_sensor_settings_set_and_get_sensor() -> None:
-    settings = _sensor_settings_service()
-
-    settings.set_sensor(
-        "aa:bb:cc:dd:ee:ff",
-        {"name": "FL Wheel", "location_code": "front_left_wheel"},
-    )
-
-    sensors = settings.get_sensors()
-    assert "aabbccddeeff" in sensors
-    assert sensors["aabbccddeeff"]["name"] == "FL Wheel"
-    assert sensors["aabbccddeeff"]["location_code"] == "front_left_wheel"
-
-
-def test_sensor_settings_rejects_duplicate_location() -> None:
-    settings = _sensor_settings_service()
-    settings.set_sensor("aa:bb:cc:dd:ee:ff", {"location_code": "front_left_wheel"})
-
-    with pytest.raises(ValueError, match="already assigned"):
-        settings.set_sensor("11:22:33:44:55:66", {"location_code": "front_left_wheel"})
-
-
-def test_assign_sensor_location_persists_canonical_location_label() -> None:
+def test_assign_sensor_location_sets_and_gets_sensor() -> None:
     settings = _sensor_settings_service()
 
     settings.assign_sensor_location("aa:bb:cc:dd:ee:ff", "front_left_wheel")
 
-    assert settings.get_sensors()["aabbccddeeff"] == {
-        "name": "Front Left Wheel",
-        "location_code": "front_left_wheel",
-    }
+    sensors = settings.get_sensors()
+    assert "aabbccddeeff" in sensors
+    assert sensors["aabbccddeeff"]["name"] == "Front Left Wheel"
+    assert sensors["aabbccddeeff"]["location_code"] == "front_left_wheel"
 
 
-def test_assign_sensor_location_reuses_duplicate_location_validation() -> None:
+def test_assign_sensor_location_rejects_duplicate_location() -> None:
     settings = _sensor_settings_service()
-    settings.set_sensor("aa:bb:cc:dd:ee:ff", {"location_code": "front_left_wheel"})
+    settings.assign_sensor_location("aa:bb:cc:dd:ee:ff", "front_left_wheel")
 
     with pytest.raises(ValueError, match="already assigned"):
         settings.assign_sensor_location("11:22:33:44:55:66", "front_left_wheel")
@@ -86,33 +64,26 @@ def test_assign_sensor_location_rejects_unknown_location_code() -> None:
         settings.assign_sensor_location("aa:bb:cc:dd:ee:ff", "not_a_real_location")
 
 
-def test_sensor_settings_remove_sensor() -> None:
+def test_assign_sensor_location_can_clear_back_to_sensor_defaults() -> None:
     settings = _sensor_settings_service()
-    settings.set_sensor("aa:bb:cc:dd:ee:ff", {"name": "Test"})
+    settings.assign_sensor_location("aa:bb:cc:dd:ee:ff", "front_left_wheel")
+    settings.assign_sensor_location("aa:bb:cc:dd:ee:ff", "")
 
-    assert settings.remove_sensor("aa:bb:cc:dd:ee:ff") is True
-    assert settings.remove_sensor("aa:bb:cc:dd:ee:ff") is False
-
-
-def test_sensor_settings_creates_entry_with_defaults() -> None:
-    settings = _sensor_settings_service()
-
-    settings.set_sensor("aa:bb:cc:dd:ee:ff", {})
-
-    sensors = settings.get_sensors()
-    assert "aabbccddeeff" in sensors
-    assert sensors["aabbccddeeff"]["name"] == "aabbccddeeff"
+    assert settings.get_sensors()["aabbccddeeff"] == {
+        "name": "aabbccddeeff",
+        "location_code": "",
+    }
 
 
 def _raise_persistence_error() -> None:
     raise PersistenceError("disk full")
 
 
-def test_sensor_settings_rolls_back_new_sensor_on_persist_error() -> None:
+def test_assign_sensor_location_rolls_back_new_sensor_on_persist_error() -> None:
     settings = _sensor_settings_service(persist=_raise_persistence_error)
 
     with pytest.raises(PersistenceError, match="disk full"):
-        settings.set_sensor("aa:bb:cc:dd:ee:ff", {"name": "FL Wheel"})
+        settings.assign_sensor_location("aa:bb:cc:dd:ee:ff", "front_left_wheel")
 
     assert settings.get_sensors() == {}
 
@@ -121,8 +92,12 @@ def test_sensor_settings_round_trip_through_shared_snapshot(tmp_path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     services = build_settings_services(db=db)
 
-    services.sensor_settings.set_sensor("aa:bb:cc:dd:ee:ff", {})
+    services.sensor_settings.assign_sensor_location("aa:bb:cc:dd:ee:ff", "front_left_wheel")
 
     reloaded = build_settings_services(db=db)
     sensors = reloaded.sensor_settings.get_sensors()
     assert "aabbccddeeff" in sensors
+    assert sensors["aabbccddeeff"] == {
+        "name": "Front Left Wheel",
+        "location_code": "front_left_wheel",
+    }

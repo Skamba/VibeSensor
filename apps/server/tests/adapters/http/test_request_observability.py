@@ -71,7 +71,6 @@ def test_request_id_flows_into_settings_audit_logs(caplog: pytest.LogCaptureFixt
         create_settings_routes(
             MagicMock(),
             MagicMock(),
-            MagicMock(),
             _audited_ui_preferences(),
             MagicMock(),
             MagicMock(),

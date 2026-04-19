@@ -1,18 +1,12 @@
-"""Exercise processing payload builders for debug spectra, intake stats, and alignment."""
+"""Exercise processing payload builders for intake stats and alignment."""
 
 from __future__ import annotations
 
-import math
-from math import pi
 from typing import cast
 
-import numpy as np
-
 from vibesensor.infra.processing.buffers import ClientBuffer
-from vibesensor.infra.processing.compute import SignalMetricsComputer
-from vibesensor.infra.processing.models import DebugSpectrumRequest, ProcessorConfig
+from vibesensor.infra.processing.models import ProcessorConfig
 from vibesensor.infra.processing.payload import (
-    build_debug_spectrum_payload,
     build_intake_stats_payload,
     build_time_alignment_payload,
 )
@@ -29,48 +23,6 @@ def _config(fft_n: int = 256) -> ProcessorConfig:
         spectrum_max_hz=100.0,
         accel_scale_g_per_lsb=None,
     )
-
-
-def test_build_debug_spectrum_payload_returns_insufficient_samples_error() -> None:
-    config = _config(fft_n=512)
-    request = DebugSpectrumRequest(
-        client_id="c1",
-        sample_rate_hz=200,
-        count=0,
-        fft_block=None,
-    )
-    metrics = SignalMetricsComputer(config)
-
-    result = build_debug_spectrum_payload(request, config, metrics)
-
-    assert result == {"error": "insufficient samples", "count": 0, "fft_n": 512}
-
-
-def test_build_debug_spectrum_payload_returns_debug_metadata() -> None:
-    config = _config(fft_n=256)
-    metrics = SignalMetricsComputer(config)
-    t = np.arange(config.fft_n, dtype=np.float32) / config.sample_rate_hz
-    signal = 0.02 * np.sin(2.0 * pi * 20.0 * t)
-    fft_block = np.column_stack([signal, signal * 0.5, signal * 0.25]).T.astype(np.float32)
-    request = DebugSpectrumRequest(
-        client_id="c1",
-        sample_rate_hz=config.sample_rate_hz,
-        count=config.fft_n,
-        fft_block=fft_block,
-    )
-
-    result = build_debug_spectrum_payload(request, config, metrics)
-
-    assert "error" not in result
-    assert result["client_id"] == "c1"
-    assert result["fft_n"] == config.fft_n
-    assert result["window"] == "hann"
-    assert result["freq_bins"] > 0
-    assert result["freq_resolution_hz"] == config.sample_rate_hz / config.fft_n
-    assert math.isfinite(result["vibration_strength_db"])
-    assert len(result["top_bins_by_amplitude"]) <= 10
-    assert len(result["raw_stats"]["mean_g"]) == 3
-    assert len(result["detrended_std_g"]) == 3
 
 
 def test_build_intake_stats_payload_adds_worker_pool_stats() -> None:

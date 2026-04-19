@@ -93,13 +93,3 @@ class MetricsComputationResult:
     has_fft_data: bool
     duration_s: float
     buffer_epoch: int = 0
-
-
-@dataclass(frozen=True, slots=True)
-class DebugSpectrumRequest:
-    """Debug FFT request copied from shared state under the store lock."""
-
-    client_id: str
-    sample_rate_hz: int
-    count: int
-    fft_block: FloatArray | None

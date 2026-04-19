@@ -109,59 +109,6 @@ class SpectraPayload(TypedDict, total=False):
     warning: FrequencyWarningPayload
 
 
-class DebugSpectrumStatsPayload(TypedDict):
-    mean_g: list[float]
-    std_g: list[float]
-    min_g: list[float]
-    max_g: list[float]
-
-
-class DebugSpectrumTopBinPayload(TypedDict):
-    bin: int
-    freq_hz: float
-    combined_amp_g: float
-    x_amp_g: float
-    y_amp_g: float
-    z_amp_g: float
-
-
-class DebugSpectrumErrorPayload(TypedDict):
-    error: str
-    count: int
-    fft_n: int
-
-
-class DebugSpectrumPayload(TypedDict):
-    client_id: str
-    sample_rate_hz: int
-    fft_n: int
-    fft_scale: float
-    window: str
-    spectrum_min_hz: float
-    spectrum_max_hz: float
-    freq_bins: int
-    freq_resolution_hz: float
-    raw_stats: DebugSpectrumStatsPayload
-    detrended_std_g: list[float]
-    vibration_strength_db: float
-    top_bins_by_amplitude: list[DebugSpectrumTopBinPayload]
-    strength_peaks: list[StrengthPeak]
-
-
-class RawSamplesErrorPayload(TypedDict):
-    error: str
-    count: int
-
-
-class RawSamplesPayload(TypedDict):
-    client_id: str
-    sample_rate_hz: int
-    n_samples: int
-    x: list[float]
-    y: list[float]
-    z: list[float]
-
-
 WsErrorCode = Literal["payload_build_failed"]
 
 
