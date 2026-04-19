@@ -78,6 +78,7 @@ def test_observed_durations_from_junit_matches_selected_test_ids(tmp_path) -> No
 
 def test_parse_args_defaults_to_single_shard(monkeypatch) -> None:
     module = _load_run_backend_parallel_module()
+    monkeypatch.delenv(module._XDIST_WORKERS_ENV, raising=False)
     monkeypatch.setattr(module.sys, "argv", ["run_backend_parallel.py"])
 
     args = module._parse_args()
@@ -85,3 +86,28 @@ def test_parse_args_defaults_to_single_shard(monkeypatch) -> None:
     assert args.shards == 1
     assert args.shard_index == 1
     assert args.junitxml is None
+    assert args.xdist_workers == 2
+
+
+def test_parse_args_reads_xdist_workers_from_env(monkeypatch) -> None:
+    module = _load_run_backend_parallel_module()
+    monkeypatch.setenv(module._XDIST_WORKERS_ENV, "3")
+    monkeypatch.setattr(module.sys, "argv", ["run_backend_parallel.py"])
+
+    args = module._parse_args()
+
+    assert args.xdist_workers == 3
+
+
+def test_parse_args_cli_overrides_env_xdist_workers(monkeypatch) -> None:
+    module = _load_run_backend_parallel_module()
+    monkeypatch.setenv(module._XDIST_WORKERS_ENV, "3")
+    monkeypatch.setattr(
+        module.sys,
+        "argv",
+        ["run_backend_parallel.py", "--xdist-workers", "2"],
+    )
+
+    args = module._parse_args()
+
+    assert args.xdist_workers == 2
