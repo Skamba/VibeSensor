@@ -361,96 +361,187 @@ class TestSuppressEngineAliases:
 class TestSpeedBreakdown:
     """Test _speed_breakdown."""
 
-    def test_empty_samples(self) -> None:
-        assert _speed_breakdown([]) == []
-
-    def test_single_speed_bin(self) -> None:
-        samples = [
-            {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
-            {"speed_kmh": 68.0, "vibration_strength_db": 22.0},
-            {"speed_kmh": 0.0, "vibration_strength_db": 99.0},
-        ]
+    @pytest.mark.parametrize(
+        ("samples", "expected_rows"),
+        [
+            pytest.param([], (), id="empty"),
+            pytest.param(
+                [
+                    {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
+                    {"speed_kmh": 68.0, "vibration_strength_db": 22.0},
+                    {"speed_kmh": 0.0, "vibration_strength_db": 99.0},
+                ],
+                (("60-70 km/h", 2, 21.0, 22.0),),
+                id="single-speed-bin",
+            ),
+        ],
+    )
+    def test_speed_breakdown_cases(
+        self,
+        samples: list[dict[str, float]],
+        expected_rows: tuple[tuple[str, int, float, float], ...],
+    ) -> None:
         rows = _speed_breakdown(sensor_frames_from_mappings(samples))
-        assert len(rows) == 1
-        assert rows[0].speed_range == "60-70 km/h"
-        assert rows[0].count == 2
-        assert rows[0].mean_vibration_strength_db == pytest.approx(21.0)
-        assert rows[0].max_vibration_strength_db == pytest.approx(22.0)
+
+        assert len(rows) == len(expected_rows)
+        for row, (
+            speed_range,
+            count,
+            mean_vibration_strength_db,
+            max_vibration_strength_db,
+        ) in zip(rows, expected_rows, strict=True):
+            assert row.speed_range == speed_range
+            assert row.count == count
+            assert row.mean_vibration_strength_db == pytest.approx(mean_vibration_strength_db)
+            assert row.max_vibration_strength_db == pytest.approx(max_vibration_strength_db)
 
 
 class TestPhaseSpeedBreakdown:
     """Test _phase_speed_breakdown."""
 
-    def test_single_phase(self) -> None:
-        samples = [
-            {"speed_kmh": 60.0, "vibration_strength_db": 18.0},
-            {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
-            {"speed_kmh": 0.0, "vibration_strength_db": 8.0},
-        ]
-        phases = [DrivingPhase.CRUISE, DrivingPhase.CRUISE]
+    @pytest.mark.parametrize(
+        ("samples", "phases", "expected_rows"),
+        [
+            pytest.param([], [], (), id="empty"),
+            pytest.param(
+                [
+                    {"speed_kmh": 60.0, "vibration_strength_db": 18.0},
+                    {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
+                    {"speed_kmh": 0.0, "vibration_strength_db": 8.0},
+                ],
+                [DrivingPhase.CRUISE, DrivingPhase.CRUISE],
+                (
+                    ("cruise", 2, 62.5, 65.0, 19.0, 20.0),
+                    ("unknown", 1, None, None, 8.0, 8.0),
+                ),
+                id="single-phase-plus-unknown-tail",
+            ),
+        ],
+    )
+    def test_phase_speed_breakdown_cases(
+        self,
+        samples: list[dict[str, float]],
+        phases: list[DrivingPhase],
+        expected_rows: tuple[
+            tuple[str, int, float | None, float | None, float | None, float | None],
+            ...,
+        ],
+    ) -> None:
         rows = _phase_speed_breakdown(sensor_frames_from_mappings(samples), phases)
-        cruise_rows = [r for r in rows if r.phase == "cruise"]
-        assert len(cruise_rows) == 1
-        assert cruise_rows[0].count == 2
-        assert cruise_rows[0].mean_speed_kmh == pytest.approx(62.5)
-        assert cruise_rows[0].max_speed_kmh == pytest.approx(65.0)
-        assert cruise_rows[0].mean_vibration_strength_db == pytest.approx(19.0)
-        assert cruise_rows[0].max_vibration_strength_db == pytest.approx(20.0)
-        unknown_rows = [r for r in rows if r.phase == "unknown"]
-        assert len(unknown_rows) == 1
-        assert unknown_rows[0].count == 1
-        assert unknown_rows[0].mean_speed_kmh is None
+
+        assert len(rows) == len(expected_rows)
+        for row, (
+            phase,
+            count,
+            mean_speed_kmh,
+            max_speed_kmh,
+            mean_vibration_strength_db,
+            max_vibration_strength_db,
+        ) in zip(rows, expected_rows, strict=True):
+            assert row.phase == phase
+            assert row.count == count
+            if mean_speed_kmh is None:
+                assert row.mean_speed_kmh is None
+            else:
+                assert row.mean_speed_kmh == pytest.approx(mean_speed_kmh)
+            if max_speed_kmh is None:
+                assert row.max_speed_kmh is None
+            else:
+                assert row.max_speed_kmh == pytest.approx(max_speed_kmh)
+            assert (
+                row.mean_vibration_strength_db == pytest.approx(mean_vibration_strength_db)
+                if mean_vibration_strength_db is not None
+                else row.mean_vibration_strength_db is None
+            )
+            assert (
+                row.max_vibration_strength_db == pytest.approx(max_vibration_strength_db)
+                if max_vibration_strength_db is not None
+                else row.max_vibration_strength_db is None
+            )
 
 
 class TestSensorIntensityByLocation:
     """Test _sensor_intensity_by_location."""
 
-    def test_empty_samples(self) -> None:
-        assert _sensor_intensity_by_location([]) == []
-
-    def test_single_location(self) -> None:
-        samples = [
-            {
-                "t_s": 0.0,
-                "location": "front_left",
-                "vibration_strength_db": 20.0,
-                "frames_dropped_total": 1,
-                "queue_overflow_drops": 0,
-                "strength_bucket": "l2",
-            },
-            {
-                "t_s": 1.0,
-                "location": "front_left",
-                "vibration_strength_db": 22.0,
-                "frames_dropped_total": 3,
-                "queue_overflow_drops": 1,
-                "strength_bucket": "l2",
-            },
-            {
-                "t_s": 2.0,
-                "location": "front_left",
-                "vibration_strength_db": 30.0,
-                "frames_dropped_total": 6,
-                "queue_overflow_drops": 1,
-                "strength_bucket": "l3",
-            },
-        ]
+    @pytest.mark.parametrize(
+        ("samples", "expected_rows"),
+        [
+            pytest.param([], (), id="empty"),
+            pytest.param(
+                [
+                    {
+                        "t_s": 0.0,
+                        "location": "front_left",
+                        "vibration_strength_db": 20.0,
+                        "frames_dropped_total": 1,
+                        "queue_overflow_drops": 0,
+                        "strength_bucket": "l2",
+                    },
+                    {
+                        "t_s": 1.0,
+                        "location": "front_left",
+                        "vibration_strength_db": 22.0,
+                        "frames_dropped_total": 3,
+                        "queue_overflow_drops": 1,
+                        "strength_bucket": "l2",
+                    },
+                    {
+                        "t_s": 2.0,
+                        "location": "front_left",
+                        "vibration_strength_db": 30.0,
+                        "frames_dropped_total": 6,
+                        "queue_overflow_drops": 1,
+                        "strength_bucket": "l3",
+                    },
+                ],
+                (
+                    (
+                        "front_left",
+                        3,
+                        24.0,
+                        22.0,
+                        29.2,
+                        30.0,
+                        5,
+                        1,
+                        3,
+                        {"l0": 0, "l1": 0, "l2": 2, "l3": 1, "l4": 0, "l5": 0},
+                    ),
+                ),
+                id="single-location",
+            ),
+        ],
+    )
+    def test_sensor_intensity_by_location_cases(
+        self,
+        samples: list[dict[str, float | str]],
+        expected_rows: tuple[
+            tuple[str, int, float, float, float, float, int, int, int, dict[str, int]],
+            ...,
+        ],
+    ) -> None:
         rows = _sensor_intensity_by_location(sensor_frames_from_mappings(samples))
-        assert len(rows) == 1
-        assert rows[0].location == "front_left"
-        assert rows[0].sample_count == 3
-        assert rows[0].mean_intensity_db == pytest.approx(24.0)
-        assert rows[0].p50_intensity_db == pytest.approx(22.0)
-        assert rows[0].p95_intensity_db == pytest.approx(29.2)
-        assert rows[0].max_intensity_db == pytest.approx(30.0)
-        assert rows[0].dropped_frames_delta == 5
-        assert rows[0].queue_overflow_drops_delta == 1
-        assert rows[0].strength_bucket_distribution.total == 3
-        assert rows[0].strength_bucket_distribution.counts == {
-            "l0": 0,
-            "l1": 0,
-            "l2": 2,
-            "l3": 1,
-            "l4": 0,
-            "l5": 0,
-        }
+
+        assert len(rows) == len(expected_rows)
+        for row, (
+            location,
+            sample_count,
+            mean_intensity_db,
+            p50_intensity_db,
+            p95_intensity_db,
+            max_intensity_db,
+            dropped_frames_delta,
+            queue_overflow_drops_delta,
+            bucket_total,
+            bucket_counts,
+        ) in zip(rows, expected_rows, strict=True):
+            assert row.location == location
+            assert row.sample_count == sample_count
+            assert row.mean_intensity_db == pytest.approx(mean_intensity_db)
+            assert row.p50_intensity_db == pytest.approx(p50_intensity_db)
+            assert row.p95_intensity_db == pytest.approx(p95_intensity_db)
+            assert row.max_intensity_db == pytest.approx(max_intensity_db)
+            assert row.dropped_frames_delta == dropped_frames_delta
+            assert row.queue_overflow_drops_delta == queue_overflow_drops_delta
+            assert row.strength_bucket_distribution.total == bucket_total
+            assert row.strength_bucket_distribution.counts == bucket_counts

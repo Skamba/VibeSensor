@@ -51,10 +51,19 @@ def _smoke_workers_env_contract() -> tuple[str, str]:
     return str(match.group(1)), str(match.group(2))
 
 
-def test_ui_smoke_script_defers_test_selection_to_smoke_config() -> None:
+def _resolved_smoke_specs() -> set[str]:
+    return {
+        path.name
+        for pattern in _smoke_test_match_patterns()
+        for path in (REPO_ROOT / "apps" / "ui" / _smoke_test_dir()).glob(pattern)
+    }
+
+
+def test_ui_smoke_command_and_config_alignment() -> None:
     scripts = _package_scripts()
     smoke_tokens = _smoke_script_tokens()
     workers_env_var, workers_default = _smoke_workers_env_contract()
+    smoke_specs = _resolved_smoke_specs()
 
     assert scripts["pretest:smoke"] == "npm run sync:generated-contracts"
     assert smoke_tokens[:3] == ["npx", "playwright", "test"]
@@ -69,15 +78,6 @@ def test_ui_smoke_script_defers_test_selection_to_smoke_config() -> None:
     )
     assert workers_env_var == "PLAYWRIGHT_SMOKE_WORKERS"
     assert workers_default == "1"
-
-
-def test_ui_smoke_config_uses_split_smoke_glob() -> None:
-    smoke_specs = {
-        path.name
-        for pattern in _smoke_test_match_patterns()
-        for path in (REPO_ROOT / "apps" / "ui" / _smoke_test_dir()).glob(pattern)
-    }
-
     assert _smoke_test_dir() == "tests"
     assert smoke_specs
     assert all(name.startswith("smoke") for name in smoke_specs)
@@ -85,11 +85,7 @@ def test_ui_smoke_config_uses_split_smoke_glob() -> None:
 
 
 def test_core_ui_smoke_specs_exist() -> None:
-    smoke_specs = {
-        path.name
-        for pattern in _smoke_test_match_patterns()
-        for path in _UI_TESTS_DIR.glob(pattern)
-    }
+    smoke_specs = _resolved_smoke_specs()
 
     missing = _EXPECTED_CORE_SMOKE_SPECS - smoke_specs
     assert not missing, f"Missing core smoke specs: {sorted(missing)}"
