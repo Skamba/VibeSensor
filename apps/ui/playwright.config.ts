@@ -1,6 +1,48 @@
 import { defineConfig, devices } from "@playwright/test";
 
-export default defineConfig({
+const laptopLightProject = {
+  name: "laptop-light",
+  use: {
+    ...devices["Desktop Chrome"],
+    viewport: { width: 1280, height: 800 },
+    colorScheme: "light" as const,
+  },
+};
+
+export const visualAuditProjects = [
+  laptopLightProject,
+  {
+    name: "laptop-dark",
+    use: {
+      ...devices["Desktop Chrome"],
+      viewport: { width: 1280, height: 800 },
+      colorScheme: "dark" as const,
+    },
+  },
+  {
+    name: "tablet-light",
+    use: {
+      ...devices["iPad (gen 7)"],
+      // Use Chromium for all projects (only browser installed)
+      channel: undefined,
+      browserName: "chromium" as const,
+      colorScheme: "light" as const,
+      hasTouch: true,
+    },
+  },
+  {
+    name: "tablet-dark",
+    use: {
+      ...devices["iPad (gen 7)"],
+      channel: undefined,
+      browserName: "chromium" as const,
+      colorScheme: "dark" as const,
+      hasTouch: true,
+    },
+  },
+];
+
+export const visualBaseConfig = {
   testDir: "tests",
   outputDir: "tests/test-results",
   snapshotDir: "tests/snapshots",
@@ -21,43 +63,9 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
-  projects: [
-    {
-      name: "laptop-light",
-      use: {
-        ...devices["Desktop Chrome"],
-        viewport: { width: 1280, height: 800 },
-        colorScheme: "light",
-      },
-    },
-    {
-      name: "laptop-dark",
-      use: {
-        ...devices["Desktop Chrome"],
-        viewport: { width: 1280, height: 800 },
-        colorScheme: "dark",
-      },
-    },
-    {
-      name: "tablet-light",
-      use: {
-        ...devices["iPad (gen 7)"],
-        // Use Chromium for all projects (only browser installed)
-        channel: undefined,
-        browserName: "chromium",
-        colorScheme: "light",
-        hasTouch: true,
-      },
-    },
-    {
-      name: "tablet-dark",
-      use: {
-        ...devices["iPad (gen 7)"],
-        channel: undefined,
-        browserName: "chromium",
-        colorScheme: "dark",
-        hasTouch: true,
-      },
-    },
-  ],
+};
+
+export default defineConfig({
+  ...visualBaseConfig,
+  projects: [laptopLightProject],
 });

@@ -340,23 +340,33 @@ frame instead of the normal payload.
 
 ## Visual Tests
 
-Playwright snapshot tests capture the UI across 4 viewports:
+Playwright snapshot tests default to one intentional regression target:
 
-| Viewport | Theme |
-|----------|-------|
-| Laptop (1280x800) | Light |
-| Laptop (1280x800) | Dark |
-| Tablet (768x1024) | Light |
-| Tablet (768x1024) | Dark |
+| Viewport | Theme | Command |
+|----------|-------|---------|
+| Laptop (1280x800) | Light | `npm run test:visual` |
+
+Use the broader visual audit sweep only on purpose:
+
+| Viewport | Theme | Command |
+|----------|-------|---------|
+| Laptop (1280x800) | Light | `npm run test:visual:audit` |
+| Laptop (1280x800) | Dark | `npm run test:visual:audit` |
+| Tablet (768x1024) | Light | `npm run test:visual:audit` |
+| Tablet (768x1024) | Dark | `npm run test:visual:audit` |
 
 ```bash
 npx playwright install chromium   # first time only
 npm run test:visual               # compare against baselines
 npm run test:visual:update        # regenerate after intentional changes
+npm run test:visual:audit         # run wider multi-viewport audit on purpose
 npm run wiki:screenshots          # capture release/wiki screenshots (build dist first)
 ```
 
-Baselines live in `tests/snapshots/`. Tests use demo mode for deterministic payloads.
+Baselines live in `tests/snapshots/`. Tests use demo mode for deterministic
+payloads. The default lane stays on `laptop-light`; the audit command keeps the
+older multi-viewport sweep available when broader visual review is worth the
+cost.
 
 The release/wiki screenshot flow is separate from the visual-regression baselines.
 It runs `tests/wiki_screenshots.spec.ts` through `playwright.wiki.config.ts` and
