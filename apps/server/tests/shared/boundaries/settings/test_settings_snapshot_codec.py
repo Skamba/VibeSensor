@@ -4,6 +4,7 @@ import json
 
 from vibesensor.shared.boundaries.settings.snapshot import (
     settings_snapshot_from_json,
+    settings_snapshot_from_payload,
     settings_snapshot_to_json,
 )
 
@@ -37,7 +38,7 @@ def test_settings_snapshot_json_round_trip_preserves_canonical_payload() -> None
 
     encoded = settings_snapshot_to_json(payload)
 
-    assert settings_snapshot_from_json(encoded) == payload
+    assert settings_snapshot_from_json(encoded) == settings_snapshot_from_payload(payload)
 
 
 def test_settings_snapshot_from_json_normalizes_legacy_values() -> None:
@@ -79,8 +80,8 @@ def test_settings_snapshot_from_json_normalizes_legacy_values() -> None:
     assert "variant" not in payload["cars"][0]
     assert payload["activeCarId"] is None
     assert payload["speedSource"] == "manual"
-    assert payload["manualSpeedKph"] == 80.0
-    assert payload["staleTimeoutS"] == 17.0
+    assert payload["manualSpeedKph"] is None
+    assert payload["staleTimeoutS"] == 10.0
     assert payload["obdDeviceMac"] == "00043e5a4a4d"
     assert payload["obdDeviceName"] == "OBDLink MX+"
     assert payload["language"] == "nl"

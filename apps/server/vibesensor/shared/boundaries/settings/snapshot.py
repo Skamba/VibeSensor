@@ -15,7 +15,11 @@ from vibesensor.shared.types.car_config import (
 )
 from vibesensor.shared.types.sensor_config import SensorConfig
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
-from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
+from vibesensor.shared.types.settings_types import (
+    LanguageCode,
+    SpeedUnitCode,
+    analysis_settings_payload_from_mapping,
+)
 from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
 
 __all__ = [
@@ -154,7 +158,12 @@ def _settings_snapshot_record_from_object(payload: Mapping[str, object]) -> Sett
                     id=car_payload["id"],
                     name=car_payload["name"],
                     type=car_payload["type"],
-                    aspects=dict(car_payload["aspects"]),
+                    aspects={
+                        key: float(value)
+                        for key, value in analysis_settings_payload_from_mapping(
+                            car_payload["aspects"]
+                        ).items()
+                    },
                     variant=car_payload.get("variant"),
                 )
             )
@@ -211,17 +220,17 @@ def _settings_snapshot_payload_from_record(
 ) -> SettingsSnapshotPayload:
     cars: list[CarConfigPayload] = []
     for car in record.cars:
-        payload: CarConfigPayload = {
+        car_payload: CarConfigPayload = {
             "id": car.id,
             "name": car.name,
             "type": car.type,
-            "aspects": dict(car.aspects),
+            "aspects": analysis_settings_payload_from_mapping(car.aspects),
         }
         if car.variant:
-            payload["variant"] = car.variant
-        cars.append(payload)
+            car_payload["variant"] = car.variant
+        cars.append(car_payload)
 
-    payload: SettingsSnapshotPayload = {
+    snapshot_payload: SettingsSnapshotPayload = {
         "cars": cars,
         "activeCarId": record.activeCarId,
         "speedSource": record.speedSource,
@@ -235,7 +244,7 @@ def _settings_snapshot_payload_from_record(
         },
     }
     if record.obdDeviceMac is not None:
-        payload["obdDeviceMac"] = record.obdDeviceMac
+        snapshot_payload["obdDeviceMac"] = record.obdDeviceMac
     if record.obdDeviceName is not None:
-        payload["obdDeviceName"] = record.obdDeviceName
-    return payload
+        snapshot_payload["obdDeviceName"] = record.obdDeviceName
+    return snapshot_payload
