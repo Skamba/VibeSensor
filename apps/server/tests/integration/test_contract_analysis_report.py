@@ -83,9 +83,25 @@ def _report_data_from_samples(
 def test_analysis_output_accepted_by_report_mapper():
     """summarize_run_data() output must prepare and map cleanly."""
     meta, samples = _make_small_dataset()
-    report_data = _report_data_from_samples(meta, samples, lang="en")
+    summary = summarize_run_data(meta, samples, lang="en")
+    prepared = prepare_report_input(summary)
+    report_data = build_report_document(prepared)
 
+    assert prepared.domain_test_run is not None
     assert isinstance(report_data, ReportDocument)
+    assert report_data.run_id == summary["run_id"] == prepared.report_facts.run.run_id
+    assert report_data.sensor_count == summary["sensor_count_used"]
+    assert report_data.sensor_locations == summary["sensor_locations"]
+    assert report_data.top_causes
+
+    domain_top_cause = prepared.domain_test_run.effective_top_causes()[0]
+    report_top_cause = report_data.top_causes[0]
+    assert report_top_cause.suspected_source == str(domain_top_cause.suspected_source)
+    assert report_top_cause.strongest_location == domain_top_cause.strongest_location
+    assert report_top_cause.order == domain_top_cause.order
+    assert report_top_cause.effective_confidence == pytest.approx(
+        domain_top_cause.effective_confidence,
+    )
 
 
 def test_report_data_has_populated_fields():
