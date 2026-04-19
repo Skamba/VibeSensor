@@ -108,6 +108,38 @@ def test_main_refuses_skip_bootstrap_when_release_smoke_would_race_ui_jobs(
     assert "release-smoke would trigger npm ci inside apps/ui" in output
 
 
+def test_release_smoke_skip_ui_build_does_not_trigger_ui_race(monkeypatch) -> None:
+    module = _load_ci_parallel_module()
+    release_smoke_step = module.Step(
+        "Release smoke validation",
+        ["python3", "tools/tests/run_release_smoke.py", "--skip-ui-build"],
+    )
+    ui_step = module.Step("UI lint", ["npm", "run", "lint"], cwd=module.UI_DIR)
+    jobs = {
+        "frontend-typecheck": [ui_step],
+        "release-smoke": [release_smoke_step],
+    }
+
+    monkeypatch.setattr(
+        module,
+        "_ui_bootstrap_status",
+        lambda skip_npm_ci: module.UiBootstrapStatus(
+            needs_npm_ci=not skip_npm_ci,
+            lock_hash="lock",
+            current_lock_hash="",
+            node_modules_exists=True,
+        ),
+    )
+
+    assert not module._job_runs_release_smoke_ui_build([release_smoke_step])
+    assert not module._shared_ui_workspace_would_race(
+        ["frontend-typecheck", "release-smoke"],
+        jobs,
+        skip_bootstrap=True,
+        skip_npm_ci=False,
+    )
+
+
 def test_ui_bootstrap_status_reads_shared_helper_json(monkeypatch, tmp_path: Path) -> None:
     module = _load_ci_parallel_module()
     ui_dir = tmp_path / "apps" / "ui"
