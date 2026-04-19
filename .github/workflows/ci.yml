@@ -147,10 +147,13 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: ./.github/actions/setup-backend
+      - id: setup-python
+        uses: ./.github/actions/setup-python
 
       - name: Docs lint
-        run: python tools/dev/docs_lint.py
+        run: >-
+          "${{ steps.setup-python.outputs.python-path }}"
+          tools/dev/docs_lint.py
 
   backend-contract-drift:
     name: Backend contract drift
