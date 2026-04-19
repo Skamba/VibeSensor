@@ -162,7 +162,6 @@ test("dark mode quiet danger buttons use semantic danger tokens in Cars", async 
     deleteButtonBox.y + (deleteButtonBox.height / 2),
   );
   await expect.poll(() => deleteButton.evaluate((element) => element.matches(":hover"))).toBe(true);
-  await page.waitForTimeout(150);
   const hoverStyles = await readSemanticToneStyles(deleteButton, {
     surfaceVar: "--button-danger-quiet-hover-surface",
     borderVar: "--button-danger-quiet-hover-border",
@@ -222,8 +221,7 @@ test("routes no-car blockers to the add-car flow from Live and Cars", async ({ p
   await expect(page.locator("#analysisNoCarMessage")).toBeVisible();
   await expect(page.locator("#saveAnalysisBtn")).toBeDisabled();
   await expect(page.locator("#resetAnalysisBtn")).toBeDisabled();
-  await page.waitForTimeout(150);
-  await expect.poll(() => analysisPutCalls).toBe(0);
+  expect(analysisPutCalls).toBe(0);
 });
 
 test("hides contextual car guidance when a valid selected car exists", async ({ page }) => {

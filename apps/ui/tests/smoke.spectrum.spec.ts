@@ -6,6 +6,7 @@ import {
   installCommonRoutes,
   installFakeWebSocket,
   requestPath,
+  waitForFakeWebSocketSettled,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 12_000 });
@@ -64,6 +65,7 @@ test("spectrum controls simplify the chart and update the inspector", async ({ p
 });
 
 test("spectrum controls stay interactive while repeated websocket updates arrive", async ({ page }) => {
+  const trackerKey = "__spectrumRepeatTracker";
   await installCommonRoutes(page, {
     locations: [
       { code: "front_left_wheel", label: "Front Left Wheel" },
@@ -172,6 +174,7 @@ test("spectrum controls stay interactive while repeated websocket updates arrive
     },
     repeatPayloadCount: 6,
     repeatPayloadIntervalMs: 50,
+    trackerKey,
   });
 
   await page.goto("/");
@@ -196,7 +199,7 @@ test("spectrum controls stay interactive while repeated websocket updates arrive
   await expect(bandToggle).toHaveAttribute("aria-pressed", "true");
   await expect(bandLegend).toBeVisible();
 
-  await page.waitForTimeout(350);
+  await waitForFakeWebSocketSettled(page, trackerKey, 7);
 
   await expect(sensorChip).toHaveAttribute("aria-pressed", "true");
   await expect(sensorChip).toHaveAttribute("data-legend-state", "active");
