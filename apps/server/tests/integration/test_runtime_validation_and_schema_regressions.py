@@ -2,19 +2,15 @@
 
 Covers:
   1. _corr_abs — NaN propagation guard (math_utils.py)
-  2. pdf_diagram_render.py — next() with default for marker lookup
-  3. pdf_engine.py — confidence NaN/Inf guard
-  4. persistent_findings.py — type hint list[str] (compile-time only)
-    5. api_models/ — input validation bounds on request models
-  6. history_db.py — corrupted schema version recovery
-  7. settings_store.py — dict rollback safety
-  8. json_utils.py — depth limit prevents infinite recursion
+  2. api_models/ — input validation bounds on request models
+  3. history_db.py — corrupted schema version recovery
+  4. settings_store.py — dict rollback safety
+  5. json_utils.py — depth limit prevents infinite recursion
 """
 
 from __future__ import annotations
 
 import contextlib
-import math
 import sqlite3
 from unittest.mock import MagicMock
 
@@ -56,66 +52,7 @@ class TestCorrAbsNanGuard:
 
 
 # ------------------------------------------------------------------
-# 2. pdf_diagram — next() with default for marker lookup
-# ------------------------------------------------------------------
-
-
-class TestPdfDiagramMarkerLookup:
-    """Marker lookup must not raise StopIteration for missing markers.
-
-    The fix changed ``next(item for ...)`` to ``next((...), None)``
-    with a ``continue`` guard in pdf_diagram_render.py.  We verify the
-    pattern at a unit level (the inline logic is inside
-    car_location_diagram and not separately testable).
-    """
-
-    def test_next_with_default_returns_none(self) -> None:
-        """Verify the pattern used in the fix: next() with default None."""
-        items = [{"name": "a"}, {"name": "b"}]
-        result = next((i for i in items if i["name"] == "missing"), None)
-        assert result is None
-
-    def test_next_without_default_raises(self) -> None:
-        """Document the original bug: next() without default raises."""
-        items = [{"name": "a"}, {"name": "b"}]
-        with pytest.raises(StopIteration):
-            next(i for i in items if i["name"] == "missing")
-
-
-# ------------------------------------------------------------------
-# 3. pdf_engine — confidence NaN/Inf guard
-# ------------------------------------------------------------------
-
-
-def _safe_confidence(raw: object) -> float:
-    """Replicate the production clamping logic for confidence values."""
-    try:
-        val = float(raw or 0.0)
-    except (ValueError, TypeError):
-        val = 0.0
-    return val if math.isfinite(val) else 0.0
-
-
-class TestConfidenceNanGuard:
-    """Confidence formatting must handle NaN/Inf gracefully."""
-
-    @pytest.mark.parametrize(
-        ("raw", "expected"),
-        [
-            pytest.param(float("nan"), 0.0, id="nan"),
-            pytest.param(float("inf"), 0.0, id="inf"),
-            pytest.param(0.75, 0.75, id="valid"),
-        ],
-    )
-    def test_confidence_clamped(self, raw: float, expected: float) -> None:
-        confidence = _safe_confidence(raw)
-        assert abs(confidence - expected) < 1e-6
-        # Verify formatting doesn't crash
-        f"({confidence * 100.0:.0f}%)"
-
-
-# ------------------------------------------------------------------
-# 4. api_models — input validation bounds
+# 2. api_models — input validation bounds
 # ------------------------------------------------------------------
 
 _VALIDATION_REJECT_CASES = [
@@ -144,7 +81,7 @@ class TestApiModelValidationBounds:
 
 
 # ------------------------------------------------------------------
-# 5. history_db — corrupted schema version recovery
+# 3. history_db — corrupted schema version recovery
 # ------------------------------------------------------------------
 
 
@@ -169,7 +106,7 @@ class TestHistoryDbCorruptedSchemaVersion:
 
 
 # ------------------------------------------------------------------
-# 6. settings_store — car rollback safety
+# 4. settings_store — car rollback safety
 # ------------------------------------------------------------------
 
 
@@ -203,7 +140,7 @@ class TestSettingsStoreRollbackSafety:
 
 
 # ------------------------------------------------------------------
-# 7. json_utils — depth limit prevents infinite recursion
+# 5. json_utils — depth limit prevents infinite recursion
 # ------------------------------------------------------------------
 
 
