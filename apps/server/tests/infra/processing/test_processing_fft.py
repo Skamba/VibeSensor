@@ -41,48 +41,75 @@ def _make_fft_params(
 class TestMedfilt3:
     """Tests for the 3-point median spike filter."""
 
-    def test_single_spike_removed(self) -> None:
-        block = np.array([[0.0, 0.0, 10.0, 0.0, 0.0]], dtype=np.float32)
-        result = medfilt3(block)
-        # The spike at index 2 should be replaced by the median of [0, 10, 0] = 0
-        assert result[0, 2] == pytest.approx(0.0)
+    @pytest.mark.parametrize(
+        ("build_block", "expected"),
+        [
+            pytest.param(
+                lambda: np.array([[0.0, 0.0, 10.0, 0.0, 0.0]], dtype=np.float32),
+                np.array([[0.0, 0.0, 0.0, 0.0, 0.0]], dtype=np.float32),
+                id="single-spike",
+            ),
+            pytest.param(
+                lambda: np.array([[5.0, 0.0, 0.0, 0.0, 7.0]], dtype=np.float32),
+                np.array([[5.0, 0.0, 0.0, 0.0, 7.0]], dtype=np.float32),
+                id="edges-unchanged",
+            ),
+            pytest.param(
+                lambda: np.array([[1.0, 2.0]], dtype=np.float32),
+                np.array([[1.0, 2.0]], dtype=np.float32),
+                id="short-block",
+            ),
+            pytest.param(
+                lambda: np.array(
+                    [
+                        [0.0, 0.0, 100.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 200.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, 0.0],
+                    ],
+                    dtype=np.float32,
+                ),
+                np.zeros((3, 5), dtype=np.float32),
+                id="multi-axis",
+            ),
+        ],
+    )
+    def test_medfilt3_behavior_cases(self, build_block, expected: np.ndarray) -> None:
+        block = build_block()
 
-    def test_edges_unchanged(self) -> None:
-        block = np.array([[5.0, 0.0, 0.0, 0.0, 7.0]], dtype=np.float32)
         result = medfilt3(block)
-        assert result[0, 0] == pytest.approx(5.0)
-        assert result[0, -1] == pytest.approx(7.0)
 
-    def test_short_block_unchanged(self) -> None:
-        block = np.array([[1.0, 2.0]], dtype=np.float32)
-        result = medfilt3(block)
-        np.testing.assert_array_equal(result, block)
+        np.testing.assert_allclose(result, expected)
 
-    def test_multi_axis(self) -> None:
-        block = np.zeros((3, 5), dtype=np.float32)
-        block[0, 2] = 100.0  # spike on x
-        block[1, 3] = 200.0  # spike on y
-        result = medfilt3(block)
-        assert result[0, 2] == pytest.approx(0.0)
-        assert result[1, 3] == pytest.approx(0.0)
-        assert result[2, 2] == pytest.approx(0.0)
-
-    def test_nan_and_spike_block_stays_finite_without_mutating_input(self) -> None:
-        block = np.array([[1.0, np.nan, 1.0, 9.0, 1.0]], dtype=np.float32)
+    @pytest.mark.parametrize(
+        ("block", "expected"),
+        [
+            pytest.param(
+                np.array([[1.0, np.nan, 1.0, 9.0, 1.0]], dtype=np.float32),
+                np.array([[1.0, 1.0, 5.0, 1.0, 1.0]], dtype=np.float32),
+                id="mixed-nan-and-spike",
+            ),
+            pytest.param(
+                np.full((3, 5), float("nan"), dtype=np.float32),
+                np.zeros((3, 5), dtype=np.float32),
+                id="all-nan",
+            ),
+        ],
+    )
+    def test_medfilt3_nan_sanitization_cases(
+        self,
+        block: np.ndarray,
+        expected: np.ndarray,
+    ) -> None:
         original = block.copy()
 
         result = medfilt3(block)
 
-        np.testing.assert_allclose(result, np.array([[1.0, 1.0, 5.0, 1.0, 1.0]], dtype=np.float32))
+        np.testing.assert_allclose(result, expected)
         assert np.all(np.isfinite(result))
-        assert np.isnan(block[0, 1])
-        assert block[0, 3] == original[0, 3]
-
-    def test_all_nan_block_is_sanitized_to_zero(self) -> None:
-        block = np.full((3, 5), float("nan"), dtype=np.float32)
-        result = medfilt3(block)
-        assert np.all(np.isfinite(result))
-        assert np.all(result == 0.0)
+        np.testing.assert_array_equal(
+            np.nan_to_num(block, nan=-999.0, posinf=999.0, neginf=-999.0),
+            np.nan_to_num(original, nan=-999.0, posinf=999.0, neginf=-999.0),
+        )
 
 
 class TestNoiseFloor:
@@ -102,30 +129,49 @@ class TestNoiseFloor:
 class TestFloatList:
     """Tests for array-to-list conversion."""
 
-    def test_ndarray(self) -> None:
-        arr = np.array([1.0, 2.0, 3.0], dtype=np.float32)
-        result = float_list(arr)
+    @pytest.mark.parametrize(
+        ("values", "expected"),
+        [
+            pytest.param(
+                np.array([1.0, 2.0, 3.0], dtype=np.float32),
+                [1.0, 2.0, 3.0],
+                id="ndarray",
+            ),
+            pytest.param(
+                np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32),
+                [1.0, 2.0, 3.0, 4.0],
+                id="multidimensional-ndarray",
+            ),
+            pytest.param([1, 2, 3], [1.0, 2.0, 3.0], id="python-list"),
+            pytest.param(
+                np.array([1.0, np.nan, np.inf, -np.inf], dtype=np.float32),
+                [1.0, 0.0, 0.0, 0.0],
+                id="non-finite-ndarray",
+            ),
+        ],
+    )
+    def test_float_list_cases(
+        self,
+        values: np.ndarray | list[int],
+        expected: list[float],
+    ) -> None:
+        if isinstance(values, np.ndarray):
+            original = values.copy()
+        else:
+            original = list(values)
+
+        result = float_list(values)
+
         assert isinstance(result, list)
-        assert result == [1.0, 2.0, 3.0]
+        assert result == expected
         assert all(type(value) is float for value in result)
-
-    def test_ndarray_multidimensional_values_flatten_in_row_major_order(self) -> None:
-        arr = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
-        result = float_list(arr)
-        assert result == [1.0, 2.0, 3.0, 4.0]
-        np.testing.assert_array_equal(arr, np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32))
-
-    def test_python_list(self) -> None:
-        result = float_list([1, 2, 3])
-        assert result == [1.0, 2.0, 3.0]
-
-    def test_ndarray_non_finite_values_become_zero_without_mutating_input(self) -> None:
-        arr = np.array([1.0, np.nan, np.inf, -np.inf], dtype=np.float32)
-        result = float_list(arr)
-        assert result == [1.0, 0.0, 0.0, 0.0]
-        assert np.isnan(arr[1])
-        assert np.isposinf(arr[2])
-        assert np.isneginf(arr[3])
+        if isinstance(values, np.ndarray):
+            np.testing.assert_array_equal(
+                np.nan_to_num(values, nan=-999.0, posinf=999.0, neginf=-999.0),
+                np.nan_to_num(original, nan=-999.0, posinf=999.0, neginf=-999.0),
+            )
+        else:
+            assert values == original
 
 
 class TestComputeFftSpectrum:
@@ -211,27 +257,72 @@ class TestComputeFftSpectrum:
         assert float(result["spectrum_by_axis"]["x"]["amp"][0]) > 0.0
         assert float(result["combined_amp"][0]) > 0.0
 
-    def test_result_shapes_and_frequency_order_follow_analysis_slice(self) -> None:
-        sr = 256
-        fft_n = 256
-        block = np.random.default_rng(42).standard_normal((3, fft_n)).astype(np.float32) * 0.01
-
-        result = compute_fft_spectrum(block, sr, **_make_fft_params(sr=sr, fft_n=fft_n))
+    @pytest.mark.parametrize(
+        ("block", "sample_rate_hz", "params", "expect_empty"),
+        [
+            pytest.param(
+                np.random.default_rng(42).standard_normal((3, 256)).astype(np.float32) * 0.01,
+                256,
+                _make_fft_params(sr=256, fft_n=256),
+                False,
+                id="populated-spectrum",
+            ),
+            pytest.param(
+                np.empty((3, 0), dtype=np.float32),
+                256,
+                {
+                    "fft_window": np.empty((0,), dtype=np.float32),
+                    "fft_scale": 1.0,
+                    "freq_slice": np.empty((0,), dtype=np.float32),
+                    "valid_idx": np.empty((0,), dtype=np.intp),
+                },
+                True,
+                id="empty-spectrum",
+            ),
+        ],
+    )
+    def test_compute_fft_spectrum_output_contract(
+        self,
+        block: np.ndarray,
+        sample_rate_hz: int,
+        params: dict[str, object],
+        expect_empty: bool,
+    ) -> None:
+        result = compute_fft_spectrum(block, sample_rate_hz, **params)
         freq_slice = result["freq_slice"]
 
+        assert set(result) == {
+            "freq_slice",
+            "spectrum_by_axis",
+            "combined_amp",
+            "strength_metrics",
+            "axis_peaks",
+        }
         assert freq_slice.dtype == np.float32
-        assert np.all(np.diff(freq_slice) >= 0.0)
         assert result["combined_amp"].dtype == np.float32
-        assert result["combined_amp"].shape == freq_slice.shape
-        assert np.isfinite(result["strength_metrics"]["vibration_strength_db"])
-        assert isinstance(result["strength_metrics"]["top_peaks"], list)
         for axis in ("x", "y", "z"):
             axis_spectrum = result["spectrum_by_axis"][axis]
             assert axis_spectrum["freq"].dtype == np.float32
             np.testing.assert_array_equal(axis_spectrum["freq"], freq_slice)
             assert axis_spectrum["amp"].dtype == np.float32
-            assert axis_spectrum["amp"].shape == freq_slice.shape
             assert isinstance(result["axis_peaks"][axis], list)
+
+        if expect_empty:
+            assert freq_slice.size == 0
+            assert result["combined_amp"].size == 0
+            assert result["strength_metrics"]["vibration_strength_db"] == 0.0
+            assert result["strength_metrics"]["top_peaks"] == []
+            for axis in ("x", "y", "z"):
+                assert result["spectrum_by_axis"][axis]["amp"].size == 0
+                assert result["axis_peaks"][axis] == []
+            return
+
+        assert np.all(np.diff(freq_slice) >= 0.0)
+        assert result["combined_amp"].shape == freq_slice.shape
+        assert np.isfinite(result["strength_metrics"]["vibration_strength_db"])
+        assert isinstance(result["strength_metrics"]["top_peaks"], list)
+        for axis in ("x", "y", "z"):
+            assert result["spectrum_by_axis"][axis]["amp"].shape == freq_slice.shape
 
     def test_combined_spectrum_reports_multiple_axis_tones(self) -> None:
         sr = 512
@@ -268,20 +359,3 @@ class TestComputeFftSpectrum:
         assert float(result["combined_amp"][idx_80]) < float(
             result["spectrum_by_axis"]["y"]["amp"][idx_80],
         )
-
-    def test_zero_length_fft_block_returns_empty_result(self) -> None:
-        result = compute_fft_spectrum(
-            np.empty((3, 0), dtype=np.float32),
-            256,
-            fft_window=np.empty((0,), dtype=np.float32),
-            fft_scale=1.0,
-            freq_slice=np.empty((0,), dtype=np.float32),
-            valid_idx=np.empty((0,), dtype=np.intp),
-        )
-        assert result["freq_slice"].size == 0
-        assert result["combined_amp"].size == 0
-        assert result["strength_metrics"]["vibration_strength_db"] == 0.0
-        assert result["strength_metrics"]["top_peaks"] == []
-        for axis in ("x", "y", "z"):
-            assert result["spectrum_by_axis"][axis]["amp"].size == 0
-            assert result["axis_peaks"][axis] == []
