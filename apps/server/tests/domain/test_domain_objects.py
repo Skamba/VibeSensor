@@ -19,107 +19,255 @@ from vibesensor.domain import (
 from vibesensor.shared.boundaries.reporting.document import Report
 from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 
-# ---------------------------------------------------------------------------
-# Phase 1: SpeedSource
-# ---------------------------------------------------------------------------
+
+def _tire_aspects(**overrides: float) -> dict[str, float]:
+    aspects = {"tire_width_mm": 225.0, "tire_aspect_pct": 45.0, "rim_in": 17.0}
+    aspects.update(overrides)
+    return aspects
 
 
-class TestSpeedSource:
-    """Speed source value object."""
+@pytest.mark.parametrize(
+    ("factory", "attribute", "new_value"),
+    [
+        pytest.param(
+            lambda: SpeedSource(kind="manual", manual_speed_kmh=80.0),
+            "kind",
+            "gps",
+            id="speed-source",
+        ),
+        pytest.param(
+            lambda: SensorPlacement.from_code("trunk"),
+            "code",
+            "engine_bay",
+            id="sensor-placement",
+        ),
+        pytest.param(
+            lambda: Sensor(sensor_id="aabbccddeeff"),
+            "name",
+            "new",
+            id="sensor",
+        ),
+        pytest.param(lambda: Car(), "name", "new", id="car"),
+        pytest.param(lambda: Finding(finding_id="F001"), "finding_id", "F002", id="finding"),
+        pytest.param(lambda: Report(run_id="abc"), "title", "new", id="report"),
+    ],
+)
+def test_domain_objects_are_immutable(factory, attribute: str, new_value: object) -> None:
+    obj = factory()
 
-    def test_manual_speed_source(self) -> None:
-        src = SpeedSource(kind="manual", manual_speed_kmh=80.0)
-        assert src.is_manual
-        assert not src.is_gps
-        assert src.manual_speed_kmh == 80.0
+    with pytest.raises(AttributeError):
+        setattr(obj, attribute, new_value)
 
-    def test_frozen(self) -> None:
-        src = SpeedSource()
-        with pytest.raises(AttributeError):
-            src.kind = "manual"
 
-    def test_rejects_zero_manual_speed(self) -> None:
+@pytest.mark.parametrize(
+    (
+        "kwargs",
+        "expected_label",
+        "expected_is_gps",
+        "expected_is_obd2",
+        "expected_is_manual",
+        "expected_is_live",
+        "expected_effective_speed_kmh",
+    ),
+    [
+        pytest.param({}, "GPS", True, False, False, True, None, id="default-gps"),
+        pytest.param(
+            {"kind": "obd2"},
+            "OBD-II",
+            False,
+            True,
+            False,
+            True,
+            None,
+            id="obd2",
+        ),
+        pytest.param(
+            {"kind": "manual", "manual_speed_kmh": 80.0},
+            "Manual",
+            False,
+            False,
+            True,
+            False,
+            80.0,
+            id="manual",
+        ),
+    ],
+)
+def test_speed_source_modes(
+    kwargs: dict[str, object],
+    expected_label: str,
+    expected_is_gps: bool,
+    expected_is_obd2: bool,
+    expected_is_manual: bool,
+    expected_is_live: bool,
+    expected_effective_speed_kmh: float | None,
+) -> None:
+    src = SpeedSource(**kwargs)
+
+    assert src.label == expected_label
+    assert src.is_gps is expected_is_gps
+    assert src.is_obd2 is expected_is_obd2
+    assert src.is_manual is expected_is_manual
+    assert src.is_live is expected_is_live
+    if expected_effective_speed_kmh is None:
+        assert src.effective_speed_kmh is None
+    else:
+        assert src.effective_speed_kmh == pytest.approx(expected_effective_speed_kmh)
+
+
+def test_speed_source_rejects_zero_or_negative_manual_speed() -> None:
+    for manual_speed_kmh in (0.0, -10.0):
         with pytest.raises(ValueError, match="positive manual_speed_kmh"):
-            SpeedSource(kind="manual", manual_speed_kmh=0.0)
-
-    def test_rejects_negative_manual_speed(self) -> None:
-        with pytest.raises(ValueError, match="positive manual_speed_kmh"):
-            SpeedSource(kind="manual", manual_speed_kmh=-10.0)
+            SpeedSource(kind="manual", manual_speed_kmh=manual_speed_kmh)
 
 
-# ---------------------------------------------------------------------------
-# Phase 2: SensorPlacement
-# ---------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    ("factory", "expected_code", "expected_label", "expected_display_name"),
+    [
+        pytest.param(
+            lambda: SensorPlacement(code="engine_bay", label="Engine Bay"),
+            "engine_bay",
+            "Engine Bay",
+            "Engine Bay",
+            id="explicit-label",
+        ),
+        pytest.param(
+            lambda: SensorPlacement.from_code("front_left_wheel"),
+            "front_left_wheel",
+            "Front Left Wheel",
+            "Front Left Wheel",
+            id="known-wheel-code",
+        ),
+        pytest.param(
+            lambda: SensorPlacement.from_code("custom_mount"),
+            "custom_mount",
+            "Custom Mount",
+            "Custom Mount",
+            id="custom-fallback",
+        ),
+    ],
+)
+def test_sensor_placement_display_name_cases(
+    factory,
+    expected_code: str,
+    expected_label: str,
+    expected_display_name: str,
+) -> None:
+    placement = factory()
+
+    assert placement.code == expected_code
+    assert placement.label == expected_label
+    assert placement.display_name == expected_display_name
 
 
-class TestSensorPlacement:
-    """Sensor placement value object."""
+@pytest.mark.parametrize(
+    ("sensor", "expected_display_name", "expected_is_placed", "expected_location_code"),
+    [
+        pytest.param(
+            Sensor(
+                sensor_id="aabbccddeeff",
+                name="FL",
+                placement=SensorPlacement.from_code("front_left_wheel"),
+            ),
+            "FL",
+            True,
+            "front_left_wheel",
+            id="named-and-placed",
+        ),
+        pytest.param(
+            Sensor(
+                sensor_id="112233445566",
+                placement=SensorPlacement.from_code("rear_subframe"),
+            ),
+            "112233445566",
+            True,
+            "rear_subframe",
+            id="unnamed-but-placed",
+        ),
+        pytest.param(
+            Sensor(sensor_id="778899aabbcc", name="Cabin"),
+            "Cabin",
+            False,
+            "",
+            id="named-unplaced",
+        ),
+    ],
+)
+def test_sensor_derived_fields(
+    sensor: Sensor,
+    expected_display_name: str,
+    expected_is_placed: bool,
+    expected_location_code: str,
+) -> None:
+    assert sensor.display_name == expected_display_name
+    assert sensor.is_placed is expected_is_placed
+    assert sensor.location_code == expected_location_code
 
-    def test_non_wheel_location(self) -> None:
-        p = SensorPlacement(code="engine_bay", label="Engine Bay")
-        assert p.display_name == "Engine Bay"
 
-    def test_frozen(self) -> None:
-        p = SensorPlacement(code="trunk")
-        with pytest.raises(AttributeError):
-            p.code = "engine_bay"
+@pytest.mark.parametrize(
+    (
+        "car",
+        "expected_name",
+        "expected_car_type",
+        "expected_display_name",
+        "expected_tire_width_mm",
+        "expected_tire_aspect_pct",
+        "expected_rim_in",
+    ),
+    [
+        pytest.param(
+            Car(),
+            "Unnamed Car",
+            "sedan",
+            "Unnamed Car (sedan)",
+            None,
+            None,
+            None,
+            id="defaults",
+        ),
+        pytest.param(
+            Car(name="Track Tool", car_type="coupe"),
+            "Track Tool",
+            "coupe",
+            "Track Tool (coupe)",
+            None,
+            None,
+            None,
+            id="custom-type",
+        ),
+        pytest.param(
+            Car(name="Test", aspects=_tire_aspects()),
+            "Test",
+            "sedan",
+            "Test (sedan)",
+            225.0,
+            45.0,
+            17.0,
+            id="tire-aspects",
+        ),
+    ],
+)
+def test_car_derived_properties(
+    car: Car,
+    expected_name: str,
+    expected_car_type: str,
+    expected_display_name: str,
+    expected_tire_width_mm: float | None,
+    expected_tire_aspect_pct: float | None,
+    expected_rim_in: float | None,
+) -> None:
+    assert car.name == expected_name
+    assert car.car_type == expected_car_type
+    assert car.display_name == expected_display_name
+    assert car.tire_width_mm == expected_tire_width_mm
+    assert car.tire_aspect_pct == expected_tire_aspect_pct
+    assert car.rim_in == expected_rim_in
 
 
-# ---------------------------------------------------------------------------
-# Phase 2: Sensor
-# ---------------------------------------------------------------------------
-
-
-class TestSensor:
-    """Sensor domain object."""
-
-    def test_sensor_with_placement(self) -> None:
-        p = SensorPlacement(code="front_left_wheel", label="Front Left Wheel")
-        s = Sensor(sensor_id="aabbccddeeff", name="FL", placement=p)
-        assert s.is_placed
-        assert s.location_code == "front_left_wheel"
-
-    def test_frozen(self) -> None:
-        s = Sensor(sensor_id="aabbccddeeff")
-        with pytest.raises(AttributeError):
-            s.name = "new"
-
-
-# ---------------------------------------------------------------------------
-# Phase 2: Car
-# ---------------------------------------------------------------------------
-
-
-class TestCar:
-    """Car domain object."""
-
-    def test_tire_aspects(self) -> None:
-        car = Car(
-            name="Test",
-            aspects={"tire_width_mm": 225, "tire_aspect_pct": 45, "rim_in": 17},
-        )
-        assert car.tire_width_mm == 225
-        assert car.tire_aspect_pct == 45
-        assert car.rim_in == 17
-
-    def test_missing_aspects(self) -> None:
-        car = Car(name="Test")
-        assert car.tire_width_mm is None
-        assert car.tire_aspect_pct is None
-        assert car.rim_in is None
-
-    def test_frozen(self) -> None:
-        car = Car()
-        with pytest.raises(AttributeError):
-            car.name = "new"
-
-    def test_rejects_zero_tire_dimension(self) -> None:
+def test_car_rejects_zero_tire_dimension() -> None:
+    for key in ("tire_width_mm", "tire_aspect_pct", "rim_in"):
         with pytest.raises(ValueError, match="positive finite"):
-            Car(aspects={"tire_width_mm": 0.0})
-        with pytest.raises(ValueError, match="positive finite"):
-            Car(aspects={"tire_aspect_pct": 0.0})
-        with pytest.raises(ValueError, match="positive finite"):
-            Car(aspects={"rim_in": 0.0})
+            Car(aspects={key: 0.0})
 
 
 # ---------------------------------------------------------------------------
@@ -155,11 +303,6 @@ class TestFindingDomainObject:
     def test_source_normalized(self) -> None:
         f = Finding(suspected_source=" Wheel/Tire ")
         assert f.source_normalized == "wheel/tire"
-
-    def test_frozen(self) -> None:
-        f = Finding(finding_id="F001")
-        with pytest.raises(AttributeError):
-            f.finding_id = "F002"
 
     def test_ref_prefix_override_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
         """When explicit kind overrides REF_ prefix, a warning is logged."""
@@ -216,15 +359,6 @@ class TestFindingDomainObject:
 # ---------------------------------------------------------------------------
 # Phase 3: Report
 # ---------------------------------------------------------------------------
-
-
-class TestReport:
-    """Report domain object."""
-
-    def test_frozen(self) -> None:
-        r = Report(run_id="abc")
-        with pytest.raises(AttributeError):
-            r.title = "new"
 
 
 # ---------------------------------------------------------------------------
@@ -361,26 +495,3 @@ class TestReportValidation:
 
 class TestRunEnrichments:
     """Tests for enriched Run domain object."""
-
-
-class TestSpeedSourceEnrichments:
-    """Tests for enriched SpeedSource domain object."""
-
-    def test_is_obd2(self) -> None:
-        ss = SpeedSource(kind="obd2")
-        assert ss.is_obd2
-        assert not ss.is_gps
-        assert not ss.is_manual
-
-    def test_is_live(self) -> None:
-        assert SpeedSource(kind="gps").is_live
-        assert SpeedSource(kind="obd2").is_live
-        assert not SpeedSource(kind="manual", manual_speed_kmh=1.0).is_live
-
-    def test_effective_speed_manual(self) -> None:
-        ss = SpeedSource(kind="manual", manual_speed_kmh=80.0)
-        assert ss.effective_speed_kmh == 80.0
-
-    def test_effective_speed_gps(self) -> None:
-        ss = SpeedSource(kind="gps")
-        assert ss.effective_speed_kmh is None
