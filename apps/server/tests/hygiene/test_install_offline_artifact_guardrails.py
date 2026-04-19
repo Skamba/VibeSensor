@@ -43,6 +43,9 @@ def test_server_pyproject_includes_esp_flash_and_firmware_cache_entrypoints() ->
     assert "esptool" in pyproject_text, (
         "Server dependencies must include esptool for offline ESP flash"
     )
+    assert "pyserial" in pyproject_text, (
+        "Server dependencies must include pyserial for ESP port discovery"
+    )
     assert "vibesensor-fw-refresh" in pyproject_text, (
         "Server must expose firmware cache refresh CLI entry point"
     )
