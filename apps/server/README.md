@@ -123,10 +123,11 @@ while the Vite dev server proxies browser traffic to `http://127.0.0.1:8000`.
 
 Backend Python dependencies are declared in `apps/server/pyproject.toml` with
 bounded version ranges and installed through the editable package flow (`python
--m pip install -e "./apps/server[dev]"`). The repo currently validates that
-model with CI `pip check` plus automated Dependabot update PRs rather than
-maintaining a second checked-in Python lockfile workflow alongside the editable
-install path.
+-m pip install -e "./apps/server[dev]"`). The repo validates that model with
+`deptry . tests --config pyproject.toml` for declared-import hygiene, CI
+`pip check` for installed-package consistency, and automated Dependabot update
+PRs rather than maintaining a second checked-in Python lockfile workflow
+alongside the editable install path.
 
 ## Payload boundary pattern
 

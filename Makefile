@@ -44,12 +44,12 @@ format: ## Run Ruff formatter over backend and tooling files
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" -m ruff format $(LINT_TARGETS)
 
-lint: ## Run repo hygiene, static guards, docs lint, and contract drift checks
+lint: ## Run repo hygiene, dependency/static guards, docs lint, and contract drift checks
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" -m ruff check $(LINT_TARGETS) && \
 	"$$PYTHON" -m ruff format --check $(LINT_TARGETS) && \
 	"$$PYTHON" tools/dev/check_hygiene.py && \
-	cd $(SERVER_DIR) && lint-imports --config pyproject.toml && "$$PYTHON" ../../tools/dev/verify_backend_static_guards.py && \
+	cd $(SERVER_DIR) && deptry . tests --config pyproject.toml && lint-imports --config pyproject.toml && "$$PYTHON" ../../tools/dev/verify_backend_static_guards.py && \
 	cd "$(CURDIR)" && "$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.dev.yaml && \
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.docker.yaml && \
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.pi.yaml && \

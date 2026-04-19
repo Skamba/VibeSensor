@@ -127,6 +127,10 @@ jobs:
       - name: Validate dependency consistency
         run: python -m pip check
 
+      - name: Validate declared Python dependencies
+        working-directory: apps/server
+        run: deptry . tests --config pyproject.toml
+
       - name: Config preflight (dev)
         run: python -m vibesensor.cli.preflight apps/server/config.dev.yaml
 
