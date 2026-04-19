@@ -366,7 +366,7 @@ npm run wiki:screenshots          # capture release/wiki screenshots (build dist
 Baselines live in `tests/snapshots/`. Tests use demo mode for deterministic
 payloads. The default lane stays on `laptop-light`; the audit command keeps the
 older multi-viewport sweep available when broader visual review is worth the
-cost.
+cost. Both visual commands only run `tests/visual.spec.ts`.
 
 The release/wiki screenshot flow is separate from the visual-regression baselines.
 It runs `tests/wiki_screenshots.spec.ts` through `playwright.wiki.config.ts` and
@@ -374,6 +374,16 @@ captures a curated laptop-light set of product screenshots with realistic seeded
 data for Live, History, Cars, Analysis, and Speed Source. Release CI publishes
 only these screenshot assets into the existing GitHub wiki; the wiki markdown
 pages are seeded manually.
+
+Run it on purpose with:
+
+```bash
+npm run wiki:screenshots
+```
+
+Screenshots write to `apps/ui/wiki-screenshots/` by default. Set
+`WIKI_SCREENSHOT_DIR=/path/to/output` when you need a different deterministic
+output directory.
 
 ## Signal-driven island tests
 
