@@ -63,8 +63,6 @@ def test_settings_package_exposes_settings_codecs() -> None:
     assert callable(settings.cars_response_payload)
     assert callable(settings.settings_snapshot_from_payload)
     assert callable(settings.language_response_payload)
-    assert callable(settings.sensor_config_update_payload_from_mapping)
-    assert callable(settings.sensors_response_payload)
     assert callable(settings.speed_source_response_payload)
     assert callable(settings.speed_source_update_payload_from_mapping)
     assert callable(settings.speed_unit_response_payload)

@@ -732,11 +732,7 @@ def _run_processor_target(
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.shared.types.payload_types import (
         ClientMetrics,
-        DebugSpectrumErrorPayload,
-        DebugSpectrumPayload,
         IntakeStatsPayload,
-        RawSamplesErrorPayload,
-        RawSamplesPayload,
         SpectraPayload,
         SpectrumSeriesPayload,
         TimeAlignmentPayload,
@@ -805,8 +801,6 @@ def _run_processor_target(
 
             metrics_by_client: dict[str, ClientMetrics] = {}
             spectrum_by_client: dict[str, object] = {}
-            debug_by_client: dict[str, object] = {}
-            raw_by_client: dict[str, object] = {}
             latest_xyz: dict[str, object] = {}
             for client_id in clients:
                 metrics = processor.compute_metrics(client_id)
@@ -818,26 +812,6 @@ def _run_processor_target(
                 TypeAdapter(SpectrumSeriesPayload).validate_python(spectrum_payload)
                 _json_no_nan(spectrum_payload)
                 spectrum_by_client[client_id] = spectrum_payload
-
-                debug_payload = processor.debug_spectrum(client_id)
-                if "error" in debug_payload:
-                    TypeAdapter(DebugSpectrumErrorPayload).validate_python(
-                        debug_payload
-                    )
-                else:
-                    TypeAdapter(DebugSpectrumPayload).validate_python(debug_payload)
-                _json_no_nan(debug_payload)
-                debug_by_client[client_id] = debug_payload
-
-                raw_payload = processor.raw_samples(
-                    client_id, n_samples=int(case["fft_n"])
-                )
-                if "error" in raw_payload:
-                    TypeAdapter(RawSamplesErrorPayload).validate_python(raw_payload)
-                else:
-                    TypeAdapter(RawSamplesPayload).validate_python(raw_payload)
-                _json_no_nan(raw_payload)
-                raw_by_client[client_id] = raw_payload
 
                 xyz = processor.latest_sample_xyz(client_id)
                 if xyz is not None:
@@ -867,8 +841,6 @@ def _run_processor_target(
             current_output = {
                 "metrics_by_client": metrics_by_client,
                 "spectrum_by_client": spectrum_by_client,
-                "debug_by_client": debug_by_client,
-                "raw_by_client": raw_by_client,
                 "latest_xyz": latest_xyz,
                 "compute_all_result": compute_all_result,
                 "multi": multi,

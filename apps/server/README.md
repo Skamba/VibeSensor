@@ -42,12 +42,11 @@ state. Current `main` is intentionally split more narrowly:
   `SettingsDerivationService` projects the persisted car settings into the
   current analysis/run context, while `SpeedSourceRuntimeApplier` pushes the
   current speed-source selection into live runtime collaborators. Client-facing
-  sensor location assignment also delegates through `SensorSettingsService`, so
-  settings remains the single owner of canonical sensor metadata writes. HTTP
-  adapters and runtime collaborators should consume the focused settings ports
-  they need rather than importing persistence internals directly. Route-facing
-  HTTP modules should stay on shared ports or adapter-local protocol seams,
-  while `settings/sensors.py` owns raw sensor CRUD and `clients.py` may only
+  sensor location assignment also delegates through `SensorSettingsService`.
+  HTTP adapters and runtime collaborators should consume the focused settings
+  ports they need rather than importing persistence internals directly.
+  Route-facing HTTP modules should stay on shared ports or adapter-local
+  protocol seams, while `clients.py` remains the only HTTP surface allowed to
   delegate location writes through `assign_sensor_location()`.
 - `vibesensor.app.container.build_runtime()` is a thin app-layer orchestrator.
   It delegates speed/OBD setup, history/reporting services, live runtime
@@ -267,13 +266,12 @@ Current route groups:
 
 - `health.py` — `/api/health` runtime, startup, and degradation snapshots.
 - `clients.py` — sensor inventory, location assignment, and identify/blink actions.
-- `settings/` — aggregated settings routes split across cars, speed source, OBD admin, sensor metadata, UI preferences, and analysis micro-routers.
+- `settings/` — aggregated settings routes split across cars, speed source, OBD admin, UI preferences, and analysis micro-routers.
 - `recording.py` — recording lifecycle control and status.
 - `history.py` — saved runs, insights, reports, and exports.
 - `websocket.py` — `/ws` live update stream and selected-client updates.
 - `updates.py` — software updater and ESP flash workflows.
 - `car_library.py` — bundled car library brands/types/variants.
-- `debug.py` — raw-sample and FFT inspection endpoints for development/debugging.
 
 ### HTTP API schema export and versioning stance
 

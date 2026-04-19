@@ -15,7 +15,7 @@ from vibesensor.shared.types.history_records import (
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_config import SensorConfigUpdatePayload, SensorsByMacPayload
+from vibesensor.shared.types.sensor_config import SensorsByMacPayload
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
 from vibesensor.shared.types.settings_types import (
@@ -192,11 +192,7 @@ class SensorMetadataReader(Protocol):
 class SensorMetadataStore(SensorMetadataReader, Protocol):
     """Canonical sensor-metadata surface shared by settings and client routes."""
 
-    def set_sensor(self, mac: str, data: SensorConfigUpdatePayload) -> SensorsByMacPayload: ...
-
     def assign_sensor_location(self, sensor_id: str, location_code: str) -> SensorsByMacPayload: ...
-
-    def remove_sensor(self, mac: str) -> bool: ...
 
 
 class SettingsSnapshotPersistence(Protocol):

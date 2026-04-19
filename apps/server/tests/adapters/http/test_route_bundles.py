@@ -27,7 +27,6 @@ from vibesensor.adapters.http.route_bundles import (
             {
                 "/api/clients",
                 "/api/recording/status",
-                "/api/debug/spectrum/{client_id}",
                 "/ws",
             },
         ),

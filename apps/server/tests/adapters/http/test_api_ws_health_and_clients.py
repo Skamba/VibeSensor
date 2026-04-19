@@ -330,9 +330,9 @@ async def test_get_clients_overlays_canonical_settings_metadata_after_restart(
 
     db = HistoryDB(tmp_path / "history.db")
     initial_settings = build_settings_services(db=db)
-    initial_settings.sensor_settings.set_sensor(
+    initial_settings.sensor_settings.assign_sensor_location(
         "00:11:22:33:44:55",
-        {"name": "Rear Left Wheel", "location_code": "rear_left_wheel"},
+        "rear_left_wheel",
     )
 
     settings_store = build_settings_services(db=db).sensor_settings

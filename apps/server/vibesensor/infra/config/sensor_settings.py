@@ -1,4 +1,4 @@
-"""Sensor metadata CRUD extracted into an explicit collaborator."""
+"""Sensor metadata reads and location assignment extracted into an explicit collaborator."""
 
 from __future__ import annotations
 
@@ -16,7 +16,6 @@ from vibesensor.infra.location_assignment_validator import (
 from vibesensor.shared.locations import label_for_code
 from vibesensor.shared.types.sensor_config import (
     SensorConfig,
-    SensorConfigUpdatePayload,
     SensorsByMacPayload,
 )
 
@@ -32,7 +31,7 @@ class SensorSettingsState:
 
 
 class SensorSettingsService:
-    """Persisted sensor-metadata CRUD collaborator backed by the shared snapshot coordinator."""
+    """Persisted sensor-metadata collaborator backed by the shared snapshot coordinator."""
 
     __slots__ = ("_lock", "_state", "_update_with_rollback")
 
@@ -80,19 +79,11 @@ class SensorSettingsService:
             label = label_for_code(normalized_location)
             if label is None:
                 raise ValueError("Unknown location_code")
-            payload: SensorConfigUpdatePayload = {
-                "location_code": normalized_location,
-                "name": label,
-            }
+            name = label
         else:
-            payload = {
-                "location_code": "",
-                "name": normalized_sensor_id,
-            }
-        return self.set_sensor(normalized_sensor_id, payload)
+            name = normalized_sensor_id
 
-    def set_sensor(self, mac: str, data: SensorConfigUpdatePayload) -> SensorsByMacPayload:
-        sensor_id = normalize_sensor_id(mac)
+        sensor_id = normalized_sensor_id
 
         def _apply(_previous: dict[str, SensorConfig]) -> bool:
             existing = self._state.sensors.get(sensor_id)
@@ -100,24 +91,20 @@ class SensorSettingsService:
                 updated = SensorConfig(sensor_id=sensor_id, name=sensor_id, location_code="")
             else:
                 updated = SensorConfig.from_dict(sensor_id, existing.to_dict())
-            if "name" in data:
-                name = _clamp_str(data["name"], 64)
-                updated.name = name or sensor_id
-            if "location_code" in data:
-                location_code = _clamp_str(data["location_code"], 64)
-                _LOCATION_VALIDATOR.validate_assignment(
-                    owner_id=sensor_id,
-                    location_code=location_code,
-                    assigned_locations=(
-                        AssignedLocation(
-                            owner_id=other_id,
-                            owner_name=other.name or other.sensor_id,
-                            location_code=other.location_code,
-                        )
-                        for other_id, other in self._state.sensors.items()
-                    ),
-                )
-                updated.location_code = location_code
+            updated.name = _clamp_str(name, 64) or sensor_id
+            _LOCATION_VALIDATOR.validate_assignment(
+                owner_id=sensor_id,
+                location_code=normalized_location,
+                assigned_locations=(
+                    AssignedLocation(
+                        owner_id=other_id,
+                        owner_name=other.name or other.sensor_id,
+                        location_code=other.location_code,
+                    )
+                    for other_id, other in self._state.sensors.items()
+                ),
+            )
+            updated.location_code = normalized_location
             self._state.sensors[sensor_id] = updated
             return True
 
@@ -127,7 +114,7 @@ class SensorSettingsService:
             restore=lambda previous: setattr(self._state, "sensors", previous),
             audit_log=lambda previous: log_settings_change(
                 LOGGER,
-                action="set_sensor",
+                action="assign_sensor_location",
                 before=(
                     previous_sensor.to_dict()
                     if (previous_sensor := previous.get(sensor_id)) is not None
@@ -137,31 +124,4 @@ class SensorSettingsService:
                 sensor_id=sensor_id,
             ),
             result=lambda: {sensor_id: self._state.sensors[sensor_id].to_dict()},
-        )
-
-    def remove_sensor(self, mac: str) -> bool:
-        sensor_id = normalize_sensor_id(mac)
-        removed = False
-
-        def _apply(_previous: dict[str, SensorConfig]) -> bool:
-            nonlocal removed
-            removed = self._state.sensors.pop(sensor_id, None) is not None
-            return removed
-
-        return self._update_with_rollback(
-            snapshot=self.sensor_configs_snapshot_unlocked,
-            apply=_apply,
-            restore=lambda previous: setattr(self._state, "sensors", previous),
-            audit_log=lambda previous: log_settings_change(
-                LOGGER,
-                action="remove_sensor",
-                before=(
-                    previous_sensor.to_dict()
-                    if (previous_sensor := previous.get(sensor_id)) is not None
-                    else None
-                ),
-                after=None,
-                sensor_id=sensor_id,
-            ),
-            result=lambda: removed,
         )

@@ -41,7 +41,6 @@ def _build_openapi_app() -> FastAPI:
     settings = SettingsDeps(
         car_settings=placeholder,
         analysis_settings=placeholder,
-        sensor_metadata_store=placeholder,
         ui_preferences=placeholder,
         speed_source_service=placeholder,
         speed_status_service=placeholder,
@@ -59,7 +58,7 @@ def _build_openapi_app() -> FastAPI:
         live=LiveDeps(
             registry=placeholder,
             control_plane=placeholder,
-            sensor_metadata_store=settings.sensor_metadata_store,
+            sensor_metadata_store=placeholder,
             processor=placeholder,
             run_recorder=placeholder,
             ws_hub=placeholder,

@@ -6,7 +6,6 @@ import pytest
 
 from tests_e2e._docker_edge_helpers import (
     _cleanup_clients,
-    _cleanup_sensor_settings,
     _simulate,
 )
 from tests_e2e.e2e_helpers import (
@@ -25,7 +24,6 @@ def test_client_location_invalid_input_matrix(e2e_env: dict[str, str]) -> None:
 
     c1 = str(clients[0]["id"])
     c2 = str(clients[1]["id"])
-    macs = [str(clients[0]["mac_address"]), str(clients[1]["mac_address"])]
     try:
         api_json(
             base,
@@ -69,7 +67,6 @@ def test_client_location_invalid_input_matrix(e2e_env: dict[str, str]) -> None:
             expected_status=409,
         )
     finally:
-        _cleanup_sensor_settings(base, *macs)
         _cleanup_clients(base)
 
 
@@ -80,8 +77,6 @@ def test_location_reassignment_releases_previous_slot(e2e_env: dict[str, str]) -
     clients = sorted(api_json(base, "/api/clients")["clients"], key=lambda c: str(c["id"]))
     c1 = str(clients[0]["id"])
     c2 = str(clients[1]["id"])
-    mac_1 = str(clients[0]["mac_address"])
-    mac_2 = str(clients[1]["mac_address"])
     try:
         api_json(
             base,
@@ -109,9 +104,11 @@ def test_location_reassignment_releases_previous_slot(e2e_env: dict[str, str]) -
         )
         assert moved["location_code"] == "front_left_wheel"
 
-        sensors = api_json(base, "/api/settings/sensors")["sensors_by_mac"]
-        assert sensors[mac_1.replace(":", "")]["location_code"] == "rear_left_wheel"
-        assert sensors[mac_2.replace(":", "")]["location_code"] == "front_left_wheel"
+        clients_after_move = {
+            str(client["id"]): client["location_code"]
+            for client in api_json(base, "/api/clients")["clients"]
+        }
+        assert clients_after_move[c1] == "rear_left_wheel"
+        assert clients_after_move[c2] == "front_left_wheel"
     finally:
-        _cleanup_sensor_settings(base, mac_1, mac_2)
         _cleanup_clients(base)

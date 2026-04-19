@@ -12,13 +12,11 @@ from vibesensor.adapters.http.settings.dependencies import (
     AnalysisSettingsRouteDeps,
     CarSettingsRouteDeps,
     ObdAdminRouteDeps,
-    SensorSettingsRouteDeps,
     SpeedSourceRouteDeps,
     UiPreferencesRouteDeps,
 )
 from vibesensor.adapters.http.settings.obd import create_obd_admin_routes
 from vibesensor.adapters.http.settings.preferences import create_ui_preferences_routes
-from vibesensor.adapters.http.settings.sensors import create_sensor_settings_routes
 from vibesensor.adapters.http.settings.speed_source import create_speed_source_routes
 
 if TYPE_CHECKING:
@@ -30,7 +28,6 @@ if TYPE_CHECKING:
     from vibesensor.shared.ports import (
         AnalysisSettingsStore,
         CarSettingsStore,
-        SensorMetadataStore,
         UiPreferencesStore,
     )
 
@@ -38,7 +35,6 @@ if TYPE_CHECKING:
 def create_settings_routes(
     car_settings: CarSettingsStore,
     analysis_settings: AnalysisSettingsStore,
-    sensor_metadata_store: SensorMetadataStore,
     ui_preferences: UiPreferencesStore,
     speed_source_service: SpeedSourceSettingsServiceProtocol,
     speed_status_service: SettingsSpeedServiceProtocol,
@@ -66,11 +62,6 @@ def create_settings_routes(
                 speed_status_service=speed_status_service,
                 obd_admin_service=obd_admin_service,
             ),
-        ),
-    )
-    router.include_router(
-        create_sensor_settings_routes(
-            SensorSettingsRouteDeps(sensor_metadata_store=sensor_metadata_store),
         ),
     )
     router.include_router(

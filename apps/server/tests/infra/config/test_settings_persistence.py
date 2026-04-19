@@ -59,10 +59,7 @@ def test_settings_snapshot_persists_and_loads(tmp_path: Path) -> None:
             "obdDeviceName": "OBDLink MX+ 80163",
         }
     )
-    services.sensor_settings.set_sensor(
-        "11:22:33:44:55:66",
-        {"name": "Rear", "location_code": "rear_left_wheel"},
-    )
+    services.sensor_settings.assign_sensor_location("11:22:33:44:55:66", "rear_left_wheel")
     services.ui_preferences.set_language("nl")
     services.ui_preferences.set_speed_unit("mps")
 
@@ -75,7 +72,7 @@ def test_settings_snapshot_persists_and_loads(tmp_path: Path) -> None:
     assert snapshot["manualSpeedKph"] == 60.0
     assert snapshot["obdDeviceMac"] == "00043e5a4a4d"
     assert snapshot["obdDeviceName"] == "OBDLink MX+ 80163"
-    assert snapshot["sensorsByMac"]["112233445566"]["name"] == "Rear"
+    assert snapshot["sensorsByMac"]["112233445566"]["name"] == "Rear Left Wheel"
     assert snapshot["language"] == "nl"
     assert snapshot["speedUnit"] == "mps"
 

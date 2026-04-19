@@ -22,7 +22,7 @@ import pytest
 from pydantic import ValidationError
 from test_support.settings_services import build_settings_services
 
-from vibesensor.adapters.http.models import CarUpsertRequest, SensorRequest, SpeedSourceRequest
+from vibesensor.adapters.http.models import CarUpsertRequest, SpeedSourceRequest
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.json_utils import sanitize_for_json
@@ -123,8 +123,6 @@ _VALIDATION_REJECT_CASES = [
     pytest.param(SpeedSourceRequest, {"manual_speed_kph": -10}, id="speed_negative"),
     pytest.param(SpeedSourceRequest, {"manual_speed_kph": 501}, id="speed_too_high"),
     pytest.param(SpeedSourceRequest, {"stale_timeout_s": 301}, id="stale_timeout_too_high"),
-    pytest.param(SensorRequest, {"name": "x" * 65}, id="sensor_name_too_long"),
-    pytest.param(SensorRequest, {"location_code": "x" * 65}, id="sensor_location_too_long"),
 ]
 
 
@@ -143,11 +141,6 @@ class TestApiModelValidationBounds:
     def test_speed_source_valid_speed_ok(self) -> None:
         req = SpeedSourceRequest(manual_speed_kph=120)
         assert req.manual_speed_kph == 120
-
-    def test_sensor_request_valid_ok(self) -> None:
-        req = SensorRequest(name="MySensor", location_code="front_left")
-        assert req.name == "MySensor"
-        assert req.location_code == "front_left"
 
 
 # ------------------------------------------------------------------
