@@ -50,12 +50,10 @@ def test_server_pyproject_includes_esp_flash_and_firmware_cache_entrypoints() ->
         "Server must expose firmware cache info CLI entry point"
     )
     assert (
-        "vibesensor.use_cases.updates.firmware.firmware_cache:refresh_cache_cli"
-        in pyproject_text
+        "vibesensor.use_cases.updates.firmware.firmware_cache:refresh_cache_cli" in pyproject_text
     ), "Firmware cache refresh CLI entry point must target the firmware package module"
     assert (
-        "vibesensor.use_cases.updates.firmware.firmware_cache:cache_info_cli"
-        in pyproject_text
+        "vibesensor.use_cases.updates.firmware.firmware_cache:cache_info_cli" in pyproject_text
     ), "Firmware cache info CLI entry point must target the firmware package module"
     assert "vibesensor.use_cases.updates.releases.cli:fetch_latest_wheel_cli" in pyproject_text, (
         "Server release fetch CLI entry point must target the releases package module"
