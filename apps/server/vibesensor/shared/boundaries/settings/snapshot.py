@@ -160,7 +160,7 @@ def _settings_snapshot_record_from_object(payload: Mapping[str, object]) -> Sett
                     name=car_payload["name"],
                     type=car_payload["type"],
                     aspects={
-                        key: cast(float, value)
+                        key: value
                         for key, value in cast(
                             Mapping[str, float],
                             car_payload["aspects"],
