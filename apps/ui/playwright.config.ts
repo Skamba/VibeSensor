@@ -44,6 +44,7 @@ export const visualAuditProjects = [
 
 export const visualBaseConfig = {
   testDir: "tests",
+  testMatch: ["visual.spec.ts"],
   outputDir: "tests/test-results",
   snapshotDir: "tests/snapshots",
   snapshotPathTemplate: "{snapshotDir}/{testFilePath}/{arg}-{projectName}{ext}",

@@ -299,6 +299,16 @@ deterministic demo mode (`?demo=1`). When you want broader visual coverage, run
 the opt-in audit sweep for the full laptop/tablet light/dark matrix.
 Baselines live in `apps/ui/tests/snapshots/`.
 
+Wiki screenshot generation is separate from that visual regression lane:
+
+```bash
+cd apps/ui
+npm run wiki:screenshots
+```
+
+It writes to `apps/ui/wiki-screenshots/` by default, or to
+`$WIKI_SCREENSHOT_DIR` when you want an explicit output directory.
+
 ## Reports
 
 Generate a PDF diagnostic report from a recorded run:
