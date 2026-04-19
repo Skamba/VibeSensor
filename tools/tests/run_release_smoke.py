@@ -84,7 +84,12 @@ def main(argv: list[str] | None = None) -> int:
     python_cmd = sys.executable
 
     if not args.skip_ui_build:
-        build_ui_cmd = [python_cmd, "tools/build_ui_static.py", "--skip-typecheck"]
+        build_ui_cmd = [
+            python_cmd,
+            "tools/build_ui_static.py",
+            "--skip-typecheck",
+            "--assume-prevalidated-contracts",
+        ]
         if args.skip_npm_ci:
             build_ui_cmd.append("--skip-npm-ci")
         _run(build_ui_cmd, cwd=repo_root)

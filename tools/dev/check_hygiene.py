@@ -869,6 +869,7 @@ def check_contract_sync_entrypoint() -> list[str]:
         "sync:generated-contracts": "node ../../tools/config/sync_shared_contracts_to_ui.mjs",
         "check:contracts": "node ../../tools/config/sync_shared_contracts_to_ui.mjs --check",
         "build": "npm run check:contracts && vite build",
+        "build:prevalidated-contracts": "vite build",
         "typecheck": "npm run check:contracts && tsc --noEmit",
         "pretest:smoke": "npm run sync:generated-contracts",
     }
@@ -960,6 +961,19 @@ def check_contract_sync_entrypoint() -> list[str]:
                 errors.append(
                     "frontend-typecheck must explicitly sync generated UI contract derivatives before running npm run typecheck."
                 )
+
+    ui_build_artifact = jobs.get(_UI_BUILD_ARTIFACT_JOB)
+    if isinstance(ui_build_artifact, Mapping):
+        steps = ui_build_artifact.get("steps")
+        if isinstance(steps, list) and not any(
+            isinstance(step, Mapping)
+            and step.get("run")
+            == '"${{ steps.setup-python.outputs.python-path }}" tools/build_ui_static.py --skip-typecheck --assume-prevalidated-contracts'
+            for step in steps
+        ):
+            errors.append(
+                "ui-build-artifact must build static assets with tools/build_ui_static.py --skip-typecheck --assume-prevalidated-contracts."
+            )
 
     for path in (_UI_README_PATH, _SERVER_README_PATH, _CONTRIBUTING_PATH):
         if "make sync-contracts" not in path.read_text(encoding="utf-8"):
