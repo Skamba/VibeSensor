@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
 from test_support.update_status import build_update_status_harness
@@ -33,6 +34,36 @@ def _build_readiness(
         config=config,
     )
     return readiness, runner
+
+
+@pytest.mark.asyncio
+async def test_wait_for_dns_ready_retries_then_succeeds(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    readiness, runner = _build_readiness(tmp_path, dns_ready_min_wait_s=1.0)
+    original_run = runner.run
+    probe_attempts = {"count": 0}
+
+    async def flaky_probe(args, *, timeout=30, env=None):
+        joined = " ".join(args)
+        if "socket.getaddrinfo" in joined:
+            probe_attempts["count"] += 1
+            if probe_attempts["count"] < 3:
+                return (1, "", "Temporary failure in name resolution")
+        return await original_run(args, timeout=timeout, env=env)
+
+    runner.run = flaky_probe
+    sleep = AsyncMock(return_value=None)
+    monkeypatch.setattr(
+        "vibesensor.use_cases.updates.transport.uplink_readiness.asyncio.sleep",
+        sleep,
+    )
+
+    await readiness.wait_for_dns_ready()
+
+    assert probe_attempts["count"] == 3
+    assert sleep.await_count == 2
 
 
 @pytest.mark.asyncio

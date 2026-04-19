@@ -185,8 +185,12 @@ def test_release_validation_cli_import_path_does_not_require_pydantic(tmp_path: 
     assert "Validated release wheel metadata" in result.stdout
 
 
-def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) -> None:
-    recorded: dict[str, object] = {}
+def _patch_release_smoke_process(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    recorded: dict[str, object],
+) -> None:
+    monkeypatch.setattr(release_validation, "_RELEASE_SMOKE_RETRY_WAIT_S", 0.0)
 
     class FakeProcess:
         def __init__(self) -> None:
@@ -234,15 +238,6 @@ def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) 
         recorded["config"] = (source_config, runtime_root, host, port)
         return config_path
 
-    responses = [
-        (
-            200,
-            "application/json",
-            '{"status":"ok","startup_state":"ready","background_task_failures":{}}',
-        ),
-        (200, "text/html; charset=utf-8", "<html><title>VibeSensor</title></html>"),
-    ]
-
     monkeypatch.setattr(
         release_validation,
         "build_release_smoke_config",
@@ -265,6 +260,19 @@ def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) 
         "terminate_subprocess",
         lambda process: (process.terminate(), process.wait(timeout=10.0)),
     )
+
+
+def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) -> None:
+    recorded: dict[str, object] = {}
+    _patch_release_smoke_process(monkeypatch, tmp_path, recorded)
+    responses = [
+        (
+            200,
+            "application/json",
+            '{"status":"ok","startup_state":"ready","background_task_failures":{}}',
+        ),
+        (200, "text/html; charset=utf-8", "<html><title>VibeSensor</title></html>"),
+    ]
     monkeypatch.setattr(release_validation, "_read_http", lambda url: responses.pop(0))
 
     run_server_smoke(
@@ -281,6 +289,58 @@ def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) 
     assert popen_kwargs["env"]["VIBESENSOR_SERVE_STATIC"] == "0"
     assert popen_kwargs["env"]["VIBESENSOR_UPDATE_STATE_PATH"].endswith("update_status.json")
     assert popen_kwargs["stdout"] == subprocess.PIPE
+    assert recorded["terminated"] is True
+
+
+def test_run_server_smoke_retries_until_server_is_ready(monkeypatch, tmp_path: Path) -> None:
+    recorded: dict[str, object] = {}
+    _patch_release_smoke_process(monkeypatch, tmp_path, recorded)
+    responses = [
+        (
+            200,
+            "application/json",
+            '{"status":"ok","startup_state":"booting","background_task_failures":{}}',
+        ),
+        (
+            200,
+            "application/json",
+            '{"status":"ok","startup_state":"ready","background_task_failures":{}}',
+        ),
+        (200, "text/html; charset=utf-8", "<html><title>VibeSensor</title></html>"),
+    ]
+    monkeypatch.setattr(release_validation, "_read_http", lambda url: responses.pop(0))
+
+    run_server_smoke(
+        SERVER_ROOT / "config.dev.yaml",
+        host="127.0.0.1",
+        port=18081,
+        startup_timeout_s=1.0,
+    )
+
+    assert responses == []
+    assert recorded["terminated"] is True
+
+
+def test_run_server_smoke_times_out_with_last_error(monkeypatch, tmp_path: Path) -> None:
+    recorded: dict[str, object] = {}
+    _patch_release_smoke_process(monkeypatch, tmp_path, recorded)
+    monkeypatch.setattr(
+        release_validation,
+        "_read_http",
+        lambda url: (503, "text/plain", "still starting"),
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="Release smoke validation timed out waiting for server readiness",
+    ):
+        run_server_smoke(
+            SERVER_ROOT / "config.dev.yaml",
+            host="127.0.0.1",
+            port=18081,
+            startup_timeout_s=0.0,
+        )
+
     assert recorded["terminated"] is True
 
 
