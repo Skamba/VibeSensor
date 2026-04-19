@@ -362,6 +362,13 @@ Production devices use the wheel-based updater in `apps/server/vibesensor/use_ca
 
 `firmware_cache.py` is now the thin public cache/CLI surface, while `firmware_release_fetcher.py` owns GitHub firmware HTTP access, `firmware_bundle.py` owns bundle extraction/validation/metadata helpers, and `firmware_types.py` owns the updater-local cache/release contracts.
 
+- The Wi-Fi uplink connect path in `wifi_uplink_setup.py` now uses
+  `tenacity` for the specific retryable "SSID not found yet" scan-lag case.
+  Nearby updater loops with different semantics stay custom for now:
+  `wifi_hotspot_recovery.py` retries every restore failure uniformly, and
+  `transport/uplink_readiness.py` owns a minimum-wait DNS readiness window
+  rather than a simple attempt-count policy.
+
 - Normal delivery should go through release wheels.
 - Do not rely on manual edits inside deployed `site-packages` as a normal workflow.
 - Emergency in-place patching is allowed only to restore a broken live updater and must be followed by the matching in-repo fix, validation, and a successful updater run.
