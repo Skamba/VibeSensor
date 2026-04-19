@@ -12,7 +12,6 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-import vibesensor.infra.processing.fft as fft_module
 from vibesensor.infra.processing.fft import (
     compute_fft_spectrum,
     float_list,
@@ -68,60 +67,22 @@ class TestMedfilt3:
         assert result[1, 3] == pytest.approx(0.0)
         assert result[2, 2] == pytest.approx(0.0)
 
-    def test_clean_block_skips_sanitize_fast_path(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        sanitize_calls = 0
-
-        def counting_sanitize(values: np.ndarray) -> np.ndarray:
-            nonlocal sanitize_calls
-            sanitize_calls += 1
-            return values
-
-        monkeypatch.setattr(
-            "vibesensor.infra.processing.fft._sanitize_float_array",
-            counting_sanitize,
-        )
-        block = np.array([[0.0, 0.0, 10.0, 0.0, 0.0]], dtype=np.float32)
+    def test_nan_and_spike_block_stays_finite_without_mutating_input(self) -> None:
+        block = np.array([[1.0, np.nan, 1.0, 9.0, 1.0]], dtype=np.float32)
+        original = block.copy()
 
         result = medfilt3(block)
 
-        assert sanitize_calls == 0
-        assert result[0, 2] == pytest.approx(0.0)
+        np.testing.assert_allclose(result, np.array([[1.0, 1.0, 5.0, 1.0, 1.0]], dtype=np.float32))
+        assert np.all(np.isfinite(result))
+        assert np.isnan(block[0, 1])
+        assert block[0, 3] == original[0, 3]
 
     def test_all_nan_block_is_sanitized_to_zero(self) -> None:
         block = np.full((3, 5), float("nan"), dtype=np.float32)
         result = medfilt3(block)
         assert np.all(np.isfinite(result))
         assert np.all(result == 0.0)
-
-    def test_nan_block_uses_sanitize_fallback(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        sanitize_calls = 0
-        original = np.nan_to_num
-
-        def counting_sanitize(values: np.ndarray) -> np.ndarray:
-            nonlocal sanitize_calls
-            sanitize_calls += 1
-            return original(values, copy=True, nan=0.0, posinf=0.0, neginf=0.0).astype(
-                np.float32,
-                copy=False,
-            )
-
-        monkeypatch.setattr(
-            "vibesensor.infra.processing.fft._sanitize_float_array",
-            counting_sanitize,
-        )
-        block = np.array([[1.0, np.nan, 1.0, 1.0, 1.0]], dtype=np.float32)
-
-        result = medfilt3(block)
-
-        assert sanitize_calls == 1
-        assert np.all(np.isfinite(result))
-        assert result[0, 1] == pytest.approx(1.0)
 
 
 class TestNoiseFloor:
@@ -135,10 +96,7 @@ class TestNoiseFloor:
 
     def test_positive_values(self) -> None:
         amps = np.array([0.01, 0.02, 0.03, 0.04, 0.05], dtype=np.float32)
-        floor = noise_floor(amps)
-        assert floor > 0.0
-        # Floor should be less than the max amplitude
-        assert floor < float(amps.max())
+        assert noise_floor(amps) == pytest.approx(0.018, abs=1e-6)
 
 
 class TestFloatList:
@@ -151,25 +109,11 @@ class TestFloatList:
         assert result == [1.0, 2.0, 3.0]
         assert all(type(value) is float for value in result)
 
-    def test_ndarray_finite_values_skip_sanitize_copy(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        nan_to_num_calls = 0
-        original = np.nan_to_num
-        arr = np.array([1.0, 2.0, 3.0], dtype=np.float32)
-
-        def counting_nan_to_num(*args: object, **kwargs: object) -> np.ndarray:
-            nonlocal nan_to_num_calls
-            nan_to_num_calls += 1
-            return original(*args, **kwargs)
-
-        monkeypatch.setattr("vibesensor.infra.processing.fft.np.nan_to_num", counting_nan_to_num)
-
+    def test_ndarray_multidimensional_values_flatten_in_row_major_order(self) -> None:
+        arr = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
         result = float_list(arr)
-
-        assert result == [1.0, 2.0, 3.0]
-        assert nan_to_num_calls == 0
+        assert result == [1.0, 2.0, 3.0, 4.0]
+        np.testing.assert_array_equal(arr, np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32))
 
     def test_python_list(self) -> None:
         result = float_list([1, 2, 3])
@@ -183,32 +127,12 @@ class TestFloatList:
         assert np.isposinf(arr[2])
         assert np.isneginf(arr[3])
 
-    def test_ndarray_non_finite_values_use_sanitize_fallback(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        nan_to_num_calls = 0
-        original = np.nan_to_num
-        arr = np.array([1.0, np.nan], dtype=np.float32)
-
-        def counting_nan_to_num(*args: object, **kwargs: object) -> np.ndarray:
-            nonlocal nan_to_num_calls
-            nan_to_num_calls += 1
-            return original(*args, **kwargs)
-
-        monkeypatch.setattr("vibesensor.infra.processing.fft.np.nan_to_num", counting_nan_to_num)
-
-        result = float_list(arr)
-
-        assert result == [1.0, 0.0]
-        assert nan_to_num_calls == 1
-
 
 class TestComputeFftSpectrum:
     """Tests for the pure FFT spectrum computation."""
 
     def test_known_frequency(self) -> None:
-        """A pure sine at 50 Hz should produce a peak near 50 Hz."""
+        """A pure sine at 50 Hz should dominate the combined spectrum."""
         sr = 512
         fft_n = 512
         t = np.arange(fft_n, dtype=np.float32) / sr
@@ -217,13 +141,23 @@ class TestComputeFftSpectrum:
 
         params = _make_fft_params(sr=sr, fft_n=fft_n, max_hz=200.0)
         result = compute_fft_spectrum(block, sr, **params)
+        dominant_idx = int(np.argmax(result["combined_amp"]))
+        top_peak = result["strength_metrics"]["top_peaks"][0]
 
-        assert "spectrum_by_axis" in result
-        assert "combined_amp" in result
-        assert "strength_metrics" in result
-        assert "axis_peaks" in result
-
+        assert float(result["freq_slice"][dominant_idx]) == pytest.approx(50.0, abs=1.0)
+        assert float(result["combined_amp"][dominant_idx]) > float(
+            result["combined_amp"][dominant_idx - 1],
+        )
+        assert float(result["combined_amp"][dominant_idx]) > float(
+            result["combined_amp"][dominant_idx + 1],
+        )
+        assert float(top_peak["hz"]) == pytest.approx(50.0, abs=1.0)
+        assert float(top_peak["amp"]) > 0.0
+        assert float(result["strength_metrics"]["vibration_strength_db"]) > 0.0
         for axis in ("x", "y", "z"):
+            assert float(result["spectrum_by_axis"][axis]["amp"][dominant_idx]) == pytest.approx(
+                float(result["combined_amp"][dominant_idx]),
+            )
             assert result["axis_peaks"][axis] == []
 
     def test_spike_filter_toggle(self) -> None:
@@ -277,55 +211,63 @@ class TestComputeFftSpectrum:
         assert float(result["spectrum_by_axis"]["x"]["amp"][0]) > 0.0
         assert float(result["combined_amp"][0]) > 0.0
 
-    def test_returns_expected_keys(self) -> None:
+    def test_result_shapes_and_frequency_order_follow_analysis_slice(self) -> None:
         sr = 256
         fft_n = 256
         block = np.random.default_rng(42).standard_normal((3, fft_n)).astype(np.float32) * 0.01
 
         result = compute_fft_spectrum(block, sr, **_make_fft_params(sr=sr, fft_n=fft_n))
+        freq_slice = result["freq_slice"]
 
-        expected_keys = {
-            "freq_slice",
-            "spectrum_by_axis",
-            "combined_amp",
-            "strength_metrics",
-            "axis_peaks",
-        }
-        assert set(result.keys()) == expected_keys
-
-    def test_uses_internal_ndarray_combined_spectrum_helper(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        sr = 256
-        fft_n = 256
-        params = _make_fft_params(sr=sr, fft_n=fft_n)
-        block = np.random.default_rng(42).standard_normal((3, fft_n)).astype(np.float32) * 0.01
-        expected = np.linspace(
-            0.1,
-            0.3,
-            num=params["freq_slice"].size,
-            dtype=np.float64,
-        )
-        helper_calls = 0
-
-        def fake_combined(
-            *,
-            axis_spectra_amp_g: object,
-            axis_count_for_mean: int | None = None,
-        ) -> np.ndarray:
-            del axis_spectra_amp_g, axis_count_for_mean
-            nonlocal helper_calls
-            helper_calls += 1
-            return expected
-
-        monkeypatch.setattr(fft_module, "_combined_spectrum_amp_g_array", fake_combined)
-
-        result = compute_fft_spectrum(block, sr, **params)
-
-        assert helper_calls == 1
+        assert freq_slice.dtype == np.float32
+        assert np.all(np.diff(freq_slice) >= 0.0)
         assert result["combined_amp"].dtype == np.float32
-        np.testing.assert_allclose(result["combined_amp"], expected.astype(np.float32))
+        assert result["combined_amp"].shape == freq_slice.shape
+        assert np.isfinite(result["strength_metrics"]["vibration_strength_db"])
+        assert isinstance(result["strength_metrics"]["top_peaks"], list)
+        for axis in ("x", "y", "z"):
+            axis_spectrum = result["spectrum_by_axis"][axis]
+            assert axis_spectrum["freq"].dtype == np.float32
+            np.testing.assert_array_equal(axis_spectrum["freq"], freq_slice)
+            assert axis_spectrum["amp"].dtype == np.float32
+            assert axis_spectrum["amp"].shape == freq_slice.shape
+            assert isinstance(result["axis_peaks"][axis], list)
+
+    def test_combined_spectrum_reports_multiple_axis_tones(self) -> None:
+        sr = 512
+        fft_n = 512
+        t = np.arange(fft_n, dtype=np.float32) / sr
+        block = np.stack(
+            [
+                0.1 * np.sin(2 * np.pi * 50 * t),
+                0.05 * np.sin(2 * np.pi * 80 * t),
+                np.zeros_like(t),
+            ],
+            axis=0,
+        )
+
+        result = compute_fft_spectrum(
+            block,
+            sr,
+            **_make_fft_params(sr=sr, fft_n=fft_n, max_hz=200.0),
+        )
+        peak_freqs = [float(peak["hz"]) for peak in result["strength_metrics"]["top_peaks"][:2]]
+        idx_50 = int(np.argmin(np.abs(result["freq_slice"] - 50.0)))
+        idx_80 = int(np.argmin(np.abs(result["freq_slice"] - 80.0)))
+
+        assert peak_freqs == pytest.approx([50.0, 80.0], abs=1.0)
+        assert float(result["combined_amp"][idx_50]) > float(
+            result["spectrum_by_axis"]["y"]["amp"][idx_50],
+        )
+        assert float(result["combined_amp"][idx_80]) > float(
+            result["spectrum_by_axis"]["x"]["amp"][idx_80],
+        )
+        assert float(result["combined_amp"][idx_50]) < float(
+            result["spectrum_by_axis"]["x"]["amp"][idx_50],
+        )
+        assert float(result["combined_amp"][idx_80]) < float(
+            result["spectrum_by_axis"]["y"]["amp"][idx_80],
+        )
 
     def test_zero_length_fft_block_returns_empty_result(self) -> None:
         result = compute_fft_spectrum(
