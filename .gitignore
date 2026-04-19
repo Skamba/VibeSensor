@@ -93,7 +93,6 @@ apps/server/dist/
 # Playwright test artifacts
 apps/ui/tests/test-results/
 apps/ui/playwright-report/
-apps/ui/wiki-screenshots/
 
 # Generic artifacts/caches
 artifacts/**

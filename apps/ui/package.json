@@ -24,7 +24,6 @@
     "test:visual:update": "npx playwright test --update-snapshots",
     "test:visual:audit": "npx playwright test --config=playwright.visual-audit.config.ts",
     "test:visual:audit:update": "npx playwright test --config=playwright.visual-audit.config.ts --update-snapshots",
-    "wiki:screenshots": "npx playwright test --config=playwright.wiki.config.ts tests/wiki_screenshots.spec.ts --workers=1",
     "screenshot": "node take-screenshot.mjs",
     "snapshot:update": "node update-snapshots.mjs",
     "analyze": "vite build --mode analyze"

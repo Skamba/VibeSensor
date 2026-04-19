@@ -157,7 +157,7 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
 
 1. Confirm current runtime and update status from the UI or update endpoints.
 2. Before shipping a release, ensure the `release` job in the main release workflow builds the wheel, publishes the Wheel / ESP artifacts, and passes the smoke validation step.
-3. Treat the `publish_wiki` follow-on job as non-blocking documentation publication: if it fails, the release artifacts may already be published. Inspect that job and the `wiki-screenshots-<version>` artifact before retrying the wiki update.
+3. Treat the `release` job itself as the complete release gate: it must build the wheel, publish the Wheel / ESP artifacts, and pass the smoke validation step before you treat the release as shipped.
 4. If an update fails on-device, do not assume rollback succeeded silently. Confirm service health after the attempt and check updater issues for rollback wheel validation failures.
 5. The updater now aborts before touching the live environment if it cannot write a fresh rollback snapshot or cannot verify free disk space for the rollback area. Treat either condition as an infrastructure problem to fix first, not a retry-until-it-works event.
 6. If rollback metadata is missing, the updater will only trust the newest rollback wheel after structural archive validation; if checksum metadata exists, a mismatch should be treated as a broken rollback snapshot, not a transient install failure.
