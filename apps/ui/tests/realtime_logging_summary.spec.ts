@@ -1,8 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
+import {
+  fulfillJson,
+  installCommonRoutes,
+  installFakeWebSocket,
+  requestPath,
+  waitForFakeWebSocketSettled,
+} from "./smoke.helpers";
 
 test("keeps the no-car Live CTA stable while repeated websocket payloads arrive", async ({ page }) => {
+  const trackerKey = "__loggingSummaryRepeatTracker";
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       const path = requestPath(route);
@@ -34,6 +41,7 @@ test("keeps the no-car Live CTA stable while repeated websocket payloads arrive"
     },
     repeatPayloadCount: 16,
     repeatPayloadIntervalMs: 25,
+    trackerKey,
   });
 
   await page.goto("/");
@@ -75,7 +83,7 @@ test("keeps the no-car Live CTA stable while repeated websocket payloads arrive"
     ).__loggingSummaryObserver = observer;
   });
 
-  await page.waitForTimeout(450);
+  await waitForFakeWebSocketSettled(page, trackerKey, 17);
 
   expect(await page.evaluate(() => (
     window as Window & typeof globalThis & {
