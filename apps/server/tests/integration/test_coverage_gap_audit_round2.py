@@ -2,16 +2,15 @@
 
 Findings addressed
 -------------------
-1. Processing: debug_spectrum / raw_samples never directly tested
-2. Processing: multi_spectrum_payload alignment metadata untested
-3. Worker pool: submit after shutdown + map_unordered timing metrics
-4. WS Hub: run() loop (tick callback, exception recovery, cancellation)
-5. GPS: set_fallback_settings boundary values + NaN/Inf override
-6. GPS: reconnect back-off doubling and cap
-7. History DB: store_analysis idempotency (double-complete) + store_analysis_error
-8. History DB: finalize_run no-op on wrong status
-9. API export: _flatten_for_csv edge cases (nested dict, extras column)
-10. API export: _safe_filename sanitization
+1. Processing: multi_spectrum_payload alignment metadata untested
+2. Worker pool: submit after shutdown + map_unordered timing metrics
+3. WS Hub: run() loop (tick callback, exception recovery, cancellation)
+4. GPS: set_fallback_settings boundary values + NaN/Inf override
+5. GPS: reconnect back-off doubling and cap
+6. History DB: store_analysis idempotency (double-complete) + store_analysis_error
+7. History DB: finalize_run no-op on wrong status
+8. API export: _flatten_for_csv edge cases (nested dict, extras column)
+9. API export: _safe_filename sanitization
 """
 
 from __future__ import annotations
@@ -96,77 +95,7 @@ def history_db(tmp_path: Path) -> Iterator[HistoryDB]:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 1. Processing: debug_spectrum / raw_samples
-# ═══════════════════════════════════════════════════════════════════════════
-
-
-class TestDebugSpectrumAndRawSamples:
-    """debug_spectrum() and raw_samples() are only tested indirectly via API
-    mocks.  Direct unit tests ensure correctness of the returned data.
-    """
-
-    def test_debug_spectrum_insufficient_samples(self) -> None:
-        proc = _proc(fft_n=512)
-        # No data
-        result = proc.debug_spectrum("nonexistent")
-        assert result["error"] == "insufficient samples"
-        assert result["count"] == 0
-        assert result["fft_n"] == 512
-
-    def test_debug_spectrum_returns_expected_keys(self) -> None:
-        proc = _proc(fft_n=512)
-        _inject(proc, "c1", n=1024)
-        proc.compute_metrics("c1")
-        result = proc.debug_spectrum("c1")
-        assert "error" not in result
-        assert result["client_id"] == "c1"
-        assert result["fft_n"] == 512
-        assert result["window"] == "hann"
-        assert result["freq_bins"] > 0
-        assert result["freq_resolution_hz"] > 0
-        assert math.isfinite(result["vibration_strength_db"])
-        assert isinstance(result["top_bins_by_amplitude"], list)
-        assert len(result["top_bins_by_amplitude"]) <= 10
-        for b in result["top_bins_by_amplitude"]:
-            assert "freq_hz" in b
-            assert "combined_amp_g" in b
-
-    def test_debug_spectrum_raw_stats_are_finite(self) -> None:
-        proc = _proc(fft_n=256)
-        _inject(proc, "c1", n=512)
-        result = proc.debug_spectrum("c1")
-        for key in ("mean_g", "std_g", "min_g", "max_g"):
-            vals = result["raw_stats"][key]
-            assert len(vals) == 3
-            for v in vals:
-                assert math.isfinite(v), f"non-finite in raw_stats[{key}]"
-        assert len(result["detrended_std_g"]) == 3
-
-    def test_raw_samples_no_data(self) -> None:
-        proc = _proc()
-        result = proc.raw_samples("nonexistent")
-        assert result["error"] == "no data"
-        assert result["count"] == 0
-
-    def test_raw_samples_returns_axes(self) -> None:
-        proc = _proc()
-        _inject(proc, "c1", n=200)
-        result = proc.raw_samples("c1", n_samples=100)
-        assert result["client_id"] == "c1"
-        assert result["n_samples"] == 100
-        assert len(result["x"]) == 100
-        assert len(result["y"]) == 100
-        assert len(result["z"]) == 100
-
-    def test_raw_samples_caps_at_available(self) -> None:
-        proc = _proc()
-        _inject(proc, "c1", n=50)
-        result = proc.raw_samples("c1", n_samples=9999)
-        assert result["n_samples"] == 50
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 2. Processing: multi_spectrum_payload alignment metadata
+# 1. Processing: multi_spectrum_payload alignment metadata
 # ═══════════════════════════════════════════════════════════════════════════
 
 

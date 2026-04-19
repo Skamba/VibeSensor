@@ -313,8 +313,6 @@ class FakeState:
             "P",
             (),
             {
-                "debug_spectrum": lambda self, _id: {},
-                "raw_samples": lambda self, _id, n_samples=1: {},
                 "intake_stats": lambda self: {
                     "total_ingested_samples": 0,
                     "total_compute_calls": 0,
