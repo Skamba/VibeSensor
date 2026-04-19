@@ -247,6 +247,20 @@ class TestRun:
         with pytest.raises(RuntimeError, match="Cannot stop run"):
             session.stop()
 
+    def test_stop_when_already_stopped_raises(self) -> None:
+        session = Run()
+        session.start()
+        session.stop()
+        with pytest.raises(RuntimeError, match="Cannot stop run: already stopped"):
+            session.stop()
+
+    def test_restart_after_stop_raises(self) -> None:
+        session = Run()
+        session.start()
+        session.stop()
+        with pytest.raises(RuntimeError, match="Cannot start run: already started"):
+            session.start()
+
     def test_analysis_settings(self) -> None:
         from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 

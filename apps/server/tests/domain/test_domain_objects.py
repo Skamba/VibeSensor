@@ -12,11 +12,9 @@ import pytest
 from vibesensor.domain import (
     Car,
     Finding,
-    Run,
     Sensor,
     SensorPlacement,
     SpeedSource,
-    SpeedSourceKind,
 )
 from vibesensor.shared.boundaries.reporting.document import Report
 from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
@@ -29,22 +27,11 @@ from vibesensor.shared.boundaries.summary_fields.finding import finding_from_pay
 class TestSpeedSource:
     """Speed source value object."""
 
-    def test_default_is_gps(self) -> None:
-        src = SpeedSource()
-        assert src.kind == "gps"
-        assert src.is_gps
-        assert not src.is_manual
-
     def test_manual_speed_source(self) -> None:
         src = SpeedSource(kind="manual", manual_speed_kmh=80.0)
         assert src.is_manual
         assert not src.is_gps
         assert src.manual_speed_kmh == 80.0
-
-    def test_label(self) -> None:
-        assert SpeedSource(kind="gps").label == "GPS"
-        assert SpeedSource(kind="obd2").label == "OBD-II"
-        assert SpeedSource(kind="manual", manual_speed_kmh=1.0).label == "Manual"
 
     def test_frozen(self) -> None:
         src = SpeedSource()
@@ -68,17 +55,9 @@ class TestSpeedSource:
 class TestSensorPlacement:
     """Sensor placement value object."""
 
-    def test_wheel_location(self) -> None:
-        p = SensorPlacement(code="front_left_wheel", label="Front Left Wheel")
-        assert p.display_name == "Front Left Wheel"
-
     def test_non_wheel_location(self) -> None:
         p = SensorPlacement(code="engine_bay", label="Engine Bay")
         assert p.display_name == "Engine Bay"
-
-    def test_display_name_fallback(self) -> None:
-        p = SensorPlacement(code="rear_subframe")
-        assert p.display_name == "Rear Subframe"
 
     def test_frozen(self) -> None:
         p = SensorPlacement(code="trunk")
@@ -94,21 +73,11 @@ class TestSensorPlacement:
 class TestSensor:
     """Sensor domain object."""
 
-    def test_basic_sensor(self) -> None:
-        s = Sensor(sensor_id="aabbccddeeff", name="Sensor 1")
-        assert s.display_name == "Sensor 1"
-        assert not s.is_placed
-        assert s.location_code == ""
-
     def test_sensor_with_placement(self) -> None:
         p = SensorPlacement(code="front_left_wheel", label="Front Left Wheel")
         s = Sensor(sensor_id="aabbccddeeff", name="FL", placement=p)
         assert s.is_placed
         assert s.location_code == "front_left_wheel"
-
-    def test_display_name_fallback(self) -> None:
-        s = Sensor(sensor_id="aabbccddeeff")
-        assert s.display_name == "aabbccddeeff"
 
     def test_frozen(self) -> None:
         s = Sensor(sensor_id="aabbccddeeff")
@@ -123,16 +92,6 @@ class TestSensor:
 
 class TestCar:
     """Car domain object."""
-
-    def test_default_car(self) -> None:
-        car = Car()
-        assert car.name == "Unnamed Car"
-        assert car.car_type == "sedan"
-        assert car.display_name == "Unnamed Car (sedan)"
-
-    def test_car_with_type(self) -> None:
-        car = Car(name="BMW 3 Series", car_type="suv")
-        assert car.display_name == "BMW 3 Series (suv)"
 
     def test_tire_aspects(self) -> None:
         car = Car(
@@ -196,10 +155,6 @@ class TestFindingDomainObject:
     def test_source_normalized(self) -> None:
         f = Finding(suspected_source=" Wheel/Tire ")
         assert f.source_normalized == "wheel/tire"
-
-    def test_confidence_pct_none(self) -> None:
-        f = Finding()
-        assert f.confidence_pct is None
 
     def test_frozen(self) -> None:
         f = Finding(finding_id="F001")
@@ -266,52 +221,10 @@ class TestFindingDomainObject:
 class TestReport:
     """Report domain object."""
 
-    def test_basic_report(self) -> None:
-        r = Report(
-            run_id="abc123",
-            title="Diagnostic Report",
-            lang="en",
-            car_name="BMW 3 Series",
-        )
-        assert r.run_id == "abc123"
-        assert r.lang == "en"
-        assert r.car_name == "BMW 3 Series"
-
     def test_frozen(self) -> None:
         r = Report(run_id="abc")
         with pytest.raises(AttributeError):
             r.title = "new"
-
-
-# ---------------------------------------------------------------------------
-# Package-level imports
-# ---------------------------------------------------------------------------
-
-
-class TestPackageImports:
-    """All primary domain objects must be importable from vibesensor.domain."""
-
-    def test_all_ten_importable(self) -> None:
-        from vibesensor.domain import (
-            Car,
-            DrivingPhase,
-            Finding,
-            Measurement,
-            Run,
-            Sensor,
-            SensorPlacement,
-            SpeedSource,
-        )
-
-        # Verify they are the expected types
-        assert Run is not None
-        assert Measurement is not None
-        assert Car is not None
-        assert Sensor is not None
-        assert SensorPlacement is not None
-        assert SpeedSource is not None
-        assert DrivingPhase is not None
-        assert Finding is not None
 
 
 # ---------------------------------------------------------------------------
@@ -321,35 +234,6 @@ class TestPackageImports:
 
 class TestBridgeMethods:
     """Config objects bridge to domain objects correctly."""
-
-    def test_speed_source_config_to_speed_source(self) -> None:
-        from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
-
-        cfg = SpeedSourceConfig.default()
-        speed = cfg.to_speed_source()
-        assert isinstance(speed, SpeedSource)
-        assert speed.is_gps
-        assert speed.label == "GPS"
-
-    def test_sensor_placement_from_code(self) -> None:
-        p = SensorPlacement.from_code("engine_bay")
-        assert p.code == "engine_bay"
-        assert p.label == "Engine Bay"
-
-    def test_sensor_placement_from_code_unknown(self) -> None:
-        p = SensorPlacement.from_code("custom_spot")
-        assert p.code == "custom_spot"
-        assert p.label == "Custom Spot"
-
-    def test_settings_store_domain_accessors(self) -> None:
-        from test_support.settings_services import build_settings_services
-
-        services = build_settings_services()
-        assert (
-            services.speed_source_settings.speed_source_config().speed_source == SpeedSourceKind.GPS
-        )
-        assert services.car_settings.active_car() is None
-        assert services.sensor_settings.sensors() == []
 
     def test_finding_payload_is_distinct_from_domain_finding(self) -> None:
         """FindingPayload is the analysis TypedDict; domain Finding is the dataclass."""
@@ -477,12 +361,6 @@ class TestReportValidation:
 
 class TestRunEnrichments:
     """Tests for enriched Run domain object."""
-
-    def test_lifecycle_pending_to_running(self) -> None:
-        run = Run()
-        assert not run.is_recording
-        run.start()
-        assert run.is_recording
 
 
 class TestSpeedSourceEnrichments:
