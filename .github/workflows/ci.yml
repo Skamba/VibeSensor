@@ -311,7 +311,7 @@ jobs:
       - name: Build release-smoke UI static artifact
         run: >-
           "${{ steps.setup-python.outputs.python-path }}"
-          tools/build_ui_static.py --skip-typecheck
+          tools/build_ui_static.py --skip-typecheck --assume-prevalidated-contracts
 
       - name: Package release-smoke UI static artifact
         run: |
