@@ -86,3 +86,56 @@ async def test_bring_uplink_up_retries_ssid_not_found_then_succeeds(
     assert connect_calls["count"] == 2
     assert sleep.await_count == 1
     assert any("dev wifi list ifname wlan0" in " ".join(call[0]) for call in runner.calls)
+
+
+@pytest.mark.asyncio
+async def test_bring_uplink_up_fails_immediately_for_non_retryable_error(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    provisioner, runner = _build_uplink_provisioner(tmp_path)
+    runner.set_response(
+        "connection up VibeSensor-Uplink",
+        10,
+        "",
+        "Error: Connection activation failed",
+    )
+    sleep = AsyncMock(return_value=None)
+    monkeypatch.setattr("vibesensor.use_cases.updates.wifi.wifi_uplink_setup.asyncio.sleep", sleep)
+
+    with pytest.raises(
+        UpdateTransportStepError,
+        match="Failed to connect to Wi-Fi 'TestNet'",
+    ) as exc_info:
+        await provisioner.bring_uplink_up("TestNet")
+
+    assert exc_info.value.detail == "Error: Connection activation failed"
+    assert sleep.await_count == 0
+    assert not any("dev wifi list ifname wlan0" in " ".join(call[0]) for call in runner.calls)
+
+
+@pytest.mark.asyncio
+async def test_bring_uplink_up_exhausts_retryable_ssid_not_found_error(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    provisioner, runner = _build_uplink_provisioner(tmp_path)
+    runner.set_response(
+        "connection up VibeSensor-Uplink",
+        10,
+        "",
+        "Error: No network with SSID 'TestNet' found.\n",
+    )
+    sleep = AsyncMock(return_value=None)
+    monkeypatch.setattr("vibesensor.use_cases.updates.wifi.wifi_uplink_setup.asyncio.sleep", sleep)
+
+    with pytest.raises(
+        UpdateTransportStepError,
+        match="Failed to connect to Wi-Fi 'TestNet'",
+    ) as exc_info:
+        await provisioner.bring_uplink_up("TestNet")
+
+    assert exc_info.value.detail == "Error: No network with SSID 'TestNet' found.\n"
+    assert sleep.await_count == 2
+    assert sum("connection up VibeSensor-Uplink" in " ".join(call[0]) for call in runner.calls) == 3
+    assert sum("dev wifi list ifname wlan0" in " ".join(call[0]) for call in runner.calls) == 2
