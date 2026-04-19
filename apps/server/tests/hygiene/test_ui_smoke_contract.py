@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import ast
 import json
+import re
+import shlex
 
 from tests._paths import REPO_ROOT
 
@@ -18,38 +21,75 @@ _EXPECTED_CORE_SMOKE_SPECS = {
 }
 
 
-def _smoke_script() -> str:
+def _package_scripts() -> dict[str, str]:
     package_json = json.loads(_UI_PACKAGE_JSON.read_text())
-    return str(package_json["scripts"]["test:smoke"])
+    return {key: str(value) for key, value in package_json["scripts"].items()}
+
+
+def _smoke_script_tokens() -> list[str]:
+    return shlex.split(_package_scripts()["test:smoke"])
+
+
+def _smoke_test_match_patterns() -> list[str]:
+    config_text = _SMOKE_CONFIG.read_text()
+    match = re.search(r"testMatch:\s*(\[[^\]]+\])", config_text)
+    assert match is not None
+    return [str(pattern) for pattern in ast.literal_eval(match.group(1))]
+
+
+def _smoke_test_dir() -> str:
+    config_text = _SMOKE_CONFIG.read_text()
+    match = re.search(r'testDir:\s*"([^"]+)"', config_text)
+    assert match is not None
+    return str(match.group(1))
+
+
+def _smoke_workers_env_contract() -> tuple[str, str]:
+    config_text = _SMOKE_CONFIG.read_text()
+    match = re.search(r'process\.env\.(\w+)\s*\?\?\s*"([^"]+)"', config_text)
+    assert match is not None
+    return str(match.group(1)), str(match.group(2))
 
 
 def test_ui_smoke_script_defers_test_selection_to_smoke_config() -> None:
-    package_json = json.loads(_UI_PACKAGE_JSON.read_text())
-    scripts = package_json["scripts"]
-    script = str(scripts["test:smoke"])
-    config_text = _SMOKE_CONFIG.read_text()
+    scripts = _package_scripts()
+    smoke_tokens = _smoke_script_tokens()
+    workers_env_var, workers_default = _smoke_workers_env_contract()
 
     assert scripts["pretest:smoke"] == "npm run sync:generated-contracts"
-    assert "--config=playwright.smoke.config.ts" in script
-    assert "--project=laptop-light" in script
-    assert "--workers=" not in script
-    assert "tests/" not in script, (
+    assert smoke_tokens[:3] == ["npx", "playwright", "test"]
+    assert "--config=playwright.smoke.config.ts" in smoke_tokens
+    assert "--project=laptop-light" in smoke_tokens
+    assert not any(token.startswith("--workers") for token in smoke_tokens)
+    assert not any(
+        token.startswith("tests/") or token.endswith(".spec.ts") for token in smoke_tokens[3:]
+    ), (
         "Smoke file selection should live in playwright.smoke.config.ts, "
         "not as hard-coded paths in package.json."
     )
-    assert "PLAYWRIGHT_SMOKE_WORKERS" in config_text
-    assert '?? "1"' in config_text
+    assert workers_env_var == "PLAYWRIGHT_SMOKE_WORKERS"
+    assert workers_default == "1"
 
 
 def test_ui_smoke_config_uses_split_smoke_glob() -> None:
-    config_text = _SMOKE_CONFIG.read_text()
+    smoke_specs = {
+        path.name
+        for pattern in _smoke_test_match_patterns()
+        for path in (REPO_ROOT / "apps" / "ui" / _smoke_test_dir()).glob(pattern)
+    }
 
-    assert "testMatch" in config_text
-    assert "smoke*.spec.ts" in config_text
+    assert _smoke_test_dir() == "tests"
+    assert smoke_specs
+    assert all(name.startswith("smoke") for name in smoke_specs)
+    assert "visual.spec.ts" not in smoke_specs
 
 
 def test_core_ui_smoke_specs_exist() -> None:
-    smoke_specs = {path.name for path in _UI_TESTS_DIR.glob("smoke*.spec.ts")}
+    smoke_specs = {
+        path.name
+        for pattern in _smoke_test_match_patterns()
+        for path in _UI_TESTS_DIR.glob(pattern)
+    }
 
     missing = _EXPECTED_CORE_SMOKE_SPECS - smoke_specs
     assert not missing, f"Missing core smoke specs: {sorted(missing)}"
