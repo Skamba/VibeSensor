@@ -60,7 +60,6 @@ def draw_proof_block(
         plan.location_hotspot_rows,
         content_width=w - 8 * mm,
         tr=tr,
-        text_fn=lambda en, nl: nl if plan.lang == "nl" else en,
         diagram_width=left_w,
         diagram_height=diagram_h - 2 * mm,
         vertical_align="top",

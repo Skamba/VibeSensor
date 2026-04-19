@@ -77,7 +77,6 @@ def test_sparse_layout_omits_sensor_location_labels() -> None:
         [],
         content_width=300.0,
         tr=lambda key, **kwargs: key,
-        text_fn=lambda en, nl: en,
         diagram_width=200.0,
         diagram_height=252.0,
     )
@@ -111,7 +110,6 @@ def test_diagram_omits_source_legend_and_keeps_text_within_bounds() -> None:
         [],
         content_width=300.0,
         tr=lambda key, **kwargs: key,
-        text_fn=lambda en, nl: en,
         diagram_width=104.0,  # narrow width that previously triggered source-legend overlap
         diagram_height=252.0,
     )
@@ -174,7 +172,6 @@ def test_tall_narrow_page1_diagram_stays_inside_bounds_without_sensor_labels() -
         [],
         content_width=300.0,
         tr=lambda key, **kwargs: key,
-        text_fn=lambda en, nl: en,
         diagram_width=128.0,
         diagram_height=490.0,
     )
@@ -227,7 +224,6 @@ def test_tall_narrow_page1_diagram_can_top_align_orientation_labels() -> None:
         [],
         content_width=300.0,
         tr=lambda key, **kwargs: key,
-        text_fn=lambda en, nl: en,
         diagram_width=128.0,
         diagram_height=490.0,
     )
@@ -237,7 +233,6 @@ def test_tall_narrow_page1_diagram_can_top_align_orientation_labels() -> None:
         [],
         content_width=300.0,
         tr=lambda key, **kwargs: key,
-        text_fn=lambda en, nl: en,
         diagram_width=128.0,
         diagram_height=490.0,
         vertical_align="top",

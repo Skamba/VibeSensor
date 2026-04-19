@@ -17,7 +17,6 @@ def test_car_diagram_shell_uses_contoured_paths_and_detail_polygons() -> None:
         [],
         content_width=300.0,
         tr=lambda key, **kwargs: key,
-        text_fn=lambda en, nl: en,
         diagram_width=200.0,
         diagram_height=252.0,
     )

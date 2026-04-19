@@ -69,7 +69,6 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
         plan.location_hotspot_rows,
         content_width=left_w - 8 * mm,
         tr=lambda key, **kw: _tr(plan.lang, key, **kw),
-        text_fn=lambda en, nl: nl if plan.lang == "nl" else en,
         diagram_width=left_w - 12 * mm,
         diagram_height=top_h - 24 * mm,
     )
