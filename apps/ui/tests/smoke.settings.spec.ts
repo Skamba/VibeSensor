@@ -1,13 +1,17 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  bootLiveDashboard,
   cancelPrompt,
   confirmPrompt,
   createSettingsHandlerFromMap,
   fulfillJson,
   gpsStatus,
   installCommonRoutes,
-  installFakeWebSocket,
+  openAnalysisTab,
+  openSensorsTab,
+  openSettingsTab,
+  openSpeedSourceTab,
   requestPath,
 } from "./smoke.helpers";
 
@@ -15,10 +19,8 @@ test.describe.configure({ timeout: 20_000 });
 
 test("gps status uses selected speed unit in settings panel", async ({ page }) => {
   await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "/api/settings/language": { language: "en" }, "/api/settings/speed-unit": { speed_unit: "mps" }, "/api/settings/speed-source/status": gpsStatus({ last_update_age_s: 0.333, raw_speed_kmh: 36 }) }) });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openSpeedSourceTab(page);
   await expect(page.locator("#gpsStatusRawSpeed")).toHaveText("10.0 m/s");
   await expect(page.locator("#gpsStatusEffectiveSpeed")).toHaveText("5.0 m/s");
 });
@@ -35,8 +37,10 @@ test("gps status polling does not override websocket speed readout", async ({ pa
       },
     }),
   });
-  await installFakeWebSocket(page, { payload: { server_time: new Date().toISOString(), speed_mps: 20, clients: [], spectra: { clients: {} } } });
-  await page.goto("/");
+  await bootLiveDashboard(page, {
+    installRoutes: false,
+    liveSensorPayload: { speedMps: 20 },
+  });
   await expect(page.locator("#speed")).toContainText("72.0 km/h");
   await expect.poll(() => gpsStatusCalls, { timeout: 5_000 }).toBeGreaterThanOrEqual(2);
   await expect(page.locator("#speed")).toContainText("72.0 km/h");
@@ -44,10 +48,10 @@ test("gps status polling does not override websocket speed readout", async ({ pa
 
 test("spectrum title updates when switching language", async ({ page }) => {
   await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/language": { language: "en" }, "PUT /api/settings/language": { language: "nl" }, "/api/settings/speed-unit": { speed_unit: "kmh" }, "/api/settings/speed-source/status": gpsStatus({ raw_speed_kmh: 72, effective_speed_kmh: 72 }) }) });
-  await installFakeWebSocket(page, {
-    payload: {
-      server_time: new Date().toISOString(),
-      speed_mps: 20,
+  await bootLiveDashboard(page, {
+    installRoutes: false,
+    liveSensorPayload: {
+      speedMps: 20,
       clients: [
         {
           id: "c1",
@@ -62,10 +66,8 @@ test("spectrum title updates when switching language", async ({ page }) => {
           firmware_version: "fw-1.0.0",
         },
       ],
-      spectra: { clients: {} },
     },
   });
-  await page.goto("/");
   const spectrumTitle = page.locator("#spectrumPanelRoot .card__title");
   await expect(spectrumTitle).toHaveText("Multi-Sensor Blended Spectrum");
   await expect(page.locator("#languageSelect")).toHaveValue("en");
@@ -82,10 +84,8 @@ test("manual speed save uses settings endpoint only (no speed-override call)", a
     speedOverrideCalls += 1;
     await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ detail: "missing" }) });
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openSpeedSourceTab(page);
   await expect(page.locator("#speedSourceCurrentSource")).toHaveText("GPS");
   await expect(page.locator("#gpsFallbackPanel")).toBeVisible();
   await expect(page.locator("#manualSpeedConfig")).toBeHidden();
@@ -110,11 +110,8 @@ test("manual speed validation marks the field invalid while keeping the active G
       },
     }),
   });
-  await installFakeWebSocket(page);
-
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openSpeedSourceTab(page);
   await page.locator('[data-speed-source-choice="manual"]').click();
   await page.locator("#manualSpeedInput").fill("0");
   await page.locator("#saveSpeedSourceBtn").click();
@@ -145,24 +142,19 @@ test("resolved fallback manual state stays coherent across header status, form, 
       }),
     }),
   });
-  await installFakeWebSocket(page, {
-    payload: {
-      server_time: new Date().toISOString(),
-      speed_mps: 80 / 3.6,
-      clients: [],
-      spectra: { clients: {} },
-    },
+  await bootLiveDashboard(page, {
+    installRoutes: false,
+    liveSensorPayload: { speedMps: 80 / 3.6 },
   });
-  await page.goto("/");
   await expect(page.locator("#speed")).toContainText("80.0 km/h");
   await expect(page.locator("#speed")).toContainText("Manual");
   await expect(page.locator(".site-header__status")).toBeHidden();
 
-  await page.locator("#tab-settings").click();
+  await openSettingsTab(page);
   await expect(page.locator(".site-header__status")).toBeVisible();
   await expect(page.locator("#linkState")).toHaveText("Connected");
   await expect(page.locator("#shellLiveStatus")).toHaveText("No live signal");
-  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await openSpeedSourceTab(page);
   await expect(page.locator("#speedSourceCurrentSource")).toHaveText("Manual fallback");
   await expect(page.locator("#speedSourceEffectiveSpeed")).toHaveText("80.0 km/h");
   await expect(page.locator("#speedSourceFallbackActive")).toHaveText("Yes");
@@ -218,21 +210,14 @@ test("resolved OBD2 state stays coherent across header status, form, and device 
       },
     }),
   });
-  await installFakeWebSocket(page, {
-    payload: {
-      server_time: new Date().toISOString(),
-      speed_mps: 81 / 3.6,
-      clients: [],
-      spectra: { clients: {} },
-    },
+  await bootLiveDashboard(page, {
+    installRoutes: false,
+    liveSensorPayload: { speedMps: 81 / 3.6 },
   });
-
-  await page.goto("/");
   await expect(page.locator("#speed")).toContainText("81.0 km/h");
   await expect(page.locator("#speed")).toContainText("OBD2");
 
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await openSpeedSourceTab(page);
   await expect(page.locator("#speedSourceCurrentSource")).toHaveText("OBD2");
   await expect(page.locator("#speedSourceEffectiveSpeed")).toHaveText("81.0 km/h");
   await expect(page.locator('input[name="speedSourceRadio"][value="obd2"]')).toBeChecked();
@@ -261,10 +246,8 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
     }
     await fulfillJson(route, persistedAnalysisSettings);
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openAnalysisTab(page);
   await page.locator("#wheelBandwidthInput").fill("7.5");
   await page.locator("#driveshaftBandwidthInput").fill("8.5");
   await page.locator("#engineBandwidthInput").fill("9.5");
@@ -277,8 +260,7 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
   await page.locator("#saveAnalysisBtn").click();
   await expect.poll(() => analysisPutCalls).toBe(1);
   await page.reload();
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await openAnalysisTab(page);
   await expect(page.locator("#wheelBandwidthInput")).toHaveValue("7.5");
 });
 
@@ -330,10 +312,8 @@ test("analysis tab adds guided helper copy and can reset tuning to defaults", as
     }
     await fulfillJson(route, lastAnalysisPayload);
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openAnalysisTab(page);
 
   const analysisGuidance = page.locator("#analysisGuidanceHelp");
   const analysisGuidanceBody = analysisGuidance.locator(".settings-help-disclosure__body");
@@ -393,10 +373,8 @@ test("analysis settings ask for confirmation before saving risky values", async 
     }
     await fulfillJson(route, {});
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openAnalysisTab(page);
   await page.locator("#wheelBandwidthInput").fill("40");
   await page.locator("#saveAnalysisBtn").click();
   await cancelPrompt(page);
@@ -429,10 +407,8 @@ test("analysis settings show a field-specific error when a hard limit is exceede
     }
     await fulfillJson(route, {});
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openAnalysisTab(page);
   await page.locator("#wheelBandwidthInput").fill("120");
   await page.locator("#saveAnalysisBtn").click();
 
@@ -484,10 +460,8 @@ test("failed analysis save preserves the draft and explains that saved settings 
       tire_deflection_factor: 0.97,
     });
   });
-  await installFakeWebSocket(page);
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openAnalysisTab(page);
   await page.locator("#wheelBandwidthInput").fill("7.5");
   await page.locator("#maxBandHalfWidthInput").fill("11");
   await page.locator("#saveAnalysisBtn").click();
@@ -511,9 +485,9 @@ test("assigning a sensor location preserves the original sensor name", async ({ 
     locationUpdateCalls += 1;
     await fulfillJson(route, {});
   });
-  await installFakeWebSocket(page, {
-    payload: {
-      server_time: new Date().toISOString(),
+  await bootLiveDashboard(page, {
+    installRoutes: false,
+    liveSensorPayload: {
       clients: [
         {
           id: "sensor-1",
@@ -528,13 +502,9 @@ test("assigning a sensor location preserves the original sensor name", async ({ 
           firmware_version: "fw-1.0.0",
         },
       ],
-      spectra: { clients: {} },
     },
   });
-
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="sensorsTab"]').click();
+  await openSensorsTab(page);
 
   const row = page.locator('#sensorsSettingsBody tr[data-client-id="sensor-1"]');
   const locationSelect = row.locator("select.row-location-select");
@@ -567,9 +537,9 @@ test("sensor identify and remove actions stay wired through the Sensors panel", 
     removeCalls += 1;
     await fulfillJson(route, {});
   });
-  await installFakeWebSocket(page, {
-    payload: {
-      server_time: new Date().toISOString(),
+  await bootLiveDashboard(page, {
+    installRoutes: false,
+    liveSensorPayload: {
       clients: [
         {
           id: "sensor-1",
@@ -584,13 +554,9 @@ test("sensor identify and remove actions stay wired through the Sensors panel", 
           firmware_version: "fw-1.0.0",
         },
       ],
-      spectra: { clients: {} },
     },
   });
-
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="sensorsTab"]').click();
+  await openSensorsTab(page);
 
   const row = page.locator('#sensorsSettingsBody tr[data-client-id="sensor-1"]');
 
@@ -607,9 +573,9 @@ test("settings keep inferred sensor names unassigned until an explicit location 
   await installCommonRoutes(page, {
     locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
   });
-  await installFakeWebSocket(page, {
-    payload: {
-      server_time: new Date().toISOString(),
+  await bootLiveDashboard(page, {
+    installRoutes: false,
+    liveSensorPayload: {
       clients: [
         {
           id: "sensor-1",
@@ -624,13 +590,9 @@ test("settings keep inferred sensor names unassigned until an explicit location 
           firmware_version: "fw-1.0.0",
         },
       ],
-      spectra: { clients: {} },
     },
   });
-
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="sensorsTab"]').click();
+  await openSensorsTab(page);
 
   const row = page.locator('#sensorsSettingsBody tr[data-client-id="sensor-1"]');
   const locationSelect = row.locator("select.row-location-select");
@@ -653,11 +615,8 @@ test("failed speed-source save keeps the draft and explains which source remains
       },
     }),
   });
-  await installFakeWebSocket(page);
-
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openSpeedSourceTab(page);
   await page.locator('[data-speed-source-choice="manual"]').click();
   await page.locator("#manualSpeedInput").fill("45");
   await page.locator("#saveSpeedSourceBtn").click();
@@ -746,11 +705,8 @@ test("manual OBD scan sorts named devices first and background rescans progressi
       },
     }),
   });
-  await installFakeWebSocket(page);
-
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openSpeedSourceTab(page);
   await page.locator("#scanObdDevicesBtn").click();
 
   const deviceNames = page.locator(".speed-source-device__name");
@@ -816,11 +772,8 @@ test("background OBD rescans stop when the Speed Source OBD panel is no longer v
       },
     }),
   });
-  await installFakeWebSocket(page);
-
-  await page.goto("/");
-  await page.locator("#tab-settings").click();
-  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await bootLiveDashboard(page, { installRoutes: false });
+  await openSpeedSourceTab(page);
   await page.locator("#scanObdDevicesBtn").click();
 
   await expect.poll(() => scanCalls, { timeout: 5_000 }).toBeGreaterThanOrEqual(2);
@@ -846,9 +799,7 @@ test("failed language save reverts the selector and shows an error", async ({ pa
       "GET /api/settings/speed-unit": { speed_unit: "kmh" },
     }),
   });
-  await installFakeWebSocket(page);
-
-  await page.goto("/");
+  await bootLiveDashboard(page, { installRoutes: false });
   await page.locator("#languageSelect").selectOption("nl");
 
   await expect(page.locator("#languageFeedback")).toBeVisible();
