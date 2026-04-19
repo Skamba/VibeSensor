@@ -6,10 +6,11 @@ import sqlite3
 from collections.abc import Callable
 from contextlib import AbstractContextManager
 
-from vibesensor.shared.boundaries.settings.snapshot import settings_snapshot_from_payload
-from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
+from vibesensor.shared.boundaries.settings.snapshot import (
+    settings_snapshot_from_json,
+    settings_snapshot_to_json,
+)
 from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
 
 __all__ = ["SettingsSnapshotRepository"]
@@ -36,8 +37,7 @@ class SettingsSnapshotRepository:
             row = cur.fetchone()
         if row is None:
             return None
-        snapshot = safe_json_loads(row[0], context="settings_snapshot")
-        return settings_snapshot_from_payload(snapshot) if is_json_object(snapshot) else None
+        return settings_snapshot_from_json(row[0])
 
     def set_settings_snapshot(self, snapshot: SettingsSnapshotPayload) -> None:
         now = utc_now_iso()
@@ -46,5 +46,5 @@ class SettingsSnapshotRepository:
                 "INSERT INTO settings_snapshot (id, value_json, updated_at) VALUES (1, ?, ?) "
                 "ON CONFLICT(id) DO UPDATE SET value_json = excluded.value_json, "
                 "updated_at = excluded.updated_at",
-                (safe_json_dumps(snapshot), now),
+                (settings_snapshot_to_json(snapshot), now),
             )
