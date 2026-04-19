@@ -77,7 +77,20 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Skip npm run typecheck (useful when CI already validates types).",
     )
+    parser.add_argument(
+        "--assume-prevalidated-contracts",
+        action="store_true",
+        help=(
+            "Use the prevalidated-contracts build path after earlier same-commit "
+            "CI jobs already checked contract sync and UI types."
+        ),
+    )
     args = parser.parse_args(argv)
+    if args.assume_prevalidated_contracts and not args.skip_typecheck:
+        parser.error(
+            "--assume-prevalidated-contracts requires --skip-typecheck because "
+            "npm run typecheck already re-checks UI contracts."
+        )
 
     repo_root = Path(__file__).resolve().parents[1]
     ui_dir = repo_root / "apps" / "ui"
@@ -93,7 +106,12 @@ def main(argv: list[str] | None = None) -> None:
     _run(["npm", "run", "sync:generated-contracts"], cwd=ui_dir)
     if not args.skip_typecheck:
         _run(["npm", "run", "typecheck"], cwd=ui_dir)
-    _run(["npm", "run", "build"], cwd=ui_dir)
+    build_script = (
+        "build:prevalidated-contracts"
+        if args.assume_prevalidated_contracts
+        else "build"
+    )
+    _run(["npm", "run", build_script], cwd=ui_dir)
 
     shutil.rmtree(static_dir, ignore_errors=True)
     static_dir.mkdir(parents=True, exist_ok=True)
