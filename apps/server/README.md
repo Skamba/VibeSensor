@@ -27,9 +27,13 @@ backend-specific setup, configuration, routes, updates, and testing.
 Several issue reports have described the backend as one pool of global mutable
 state. Current `main` is intentionally split more narrowly:
 
-- `AppConfig` in `vibesensor.app.config_schema` owns deployment/process
+- `AppConfig` in `vibesensor.app.config_schema` owns YAML-backed deployment
   configuration loaded at startup, such as network bindings, retention windows,
   processing budgets, and update paths.
+- `BootstrapEnvSettings`, `WebSocketEnvSettings`, and `UpdateEnvSettings` in
+  `vibesensor.app.process_settings` own process-level env overrides and feature
+  flags such as config-path selection, static-asset mounting, WS debug logging,
+  and updater/release path/repo defaults.
 - Focused persisted settings services own user-facing runtime settings: car
   profiles (`CarSettingsService`), active-car analysis settings
   (`ActiveCarAnalysisSettingsService`), speed-source preferences
@@ -176,9 +180,18 @@ startup maintenance prunes them automatically. The default is `7`.
 
 ## Environment variables
 
-Prefer YAML config for normal runtime settings. The backend also supports a
-small set of `VIBESENSOR_*` environment overrides for packaging, service, and
-debug workflows:
+Prefer YAML config for normal runtime settings. The backend resolves the
+environment-driven startup/static layer through `vibesensor.app.process_settings`
+so env names, defaults, and validation stay in one typed owner instead of being
+spread across bootstrap and updater modules.
+
+Those process settings stay separate from the persisted user settings services:
+car, analysis, speed-source, UI-preference, and sensor-metadata state still
+live in the settings snapshot/history DB flow because they need transactional
+mutation and per-run snapshot behavior that env/process settings do not.
+
+The backend supports this focused set of env overrides for packaging, service,
+and debug workflows:
 
 - `VIBESENSOR_CONFIG_PATH`: alternate config path used by the app factory and
   the hotspot/systemd launch path.
@@ -199,6 +212,7 @@ Updater and release tooling also expose focused overrides:
 - `VIBESENSOR_FIRMWARE_PINNED_TAG`
 - `VIBESENSOR_SERVER_REPO`
 - `VIBESENSOR_UPDATE_STATE_PATH`
+- `VIBESENSOR_UPDATE_SUDO_WRAPPER`
 
 Those update-related variables are intended for controlled packaging, staging,
 or recovery scenarios rather than day-to-day dashboard use.

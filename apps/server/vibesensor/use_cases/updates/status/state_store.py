@@ -10,6 +10,7 @@ from pathlib import Path
 
 import msgspec
 
+from vibesensor.app.process_settings import DEFAULT_UPDATE_STATE_PATH, load_update_env_settings
 from vibesensor.use_cases.updates.models import UpdateJobStatus
 from vibesensor.use_cases.updates.status.payload_codec import (
     update_status_from_json,
@@ -18,7 +19,7 @@ from vibesensor.use_cases.updates.status.payload_codec import (
 
 LOGGER = logging.getLogger(__name__)
 
-DEFAULT_STATE_PATH = "/var/lib/vibesensor/update/update_status.json"
+DEFAULT_STATE_PATH = str(DEFAULT_UPDATE_STATE_PATH)
 
 
 class UpdateStateStore:
@@ -32,9 +33,10 @@ class UpdateStateStore:
     __slots__ = ("_path",)
 
     def __init__(self, path: str | Path | None = None) -> None:
-        self._path = Path(
-            path or os.environ.get("VIBESENSOR_UPDATE_STATE_PATH", DEFAULT_STATE_PATH),
-        )
+        if path is not None:
+            self._path = Path(path).expanduser()
+        else:
+            self._path = load_update_env_settings().update_state_path
 
     @property
     def path(self) -> Path:
