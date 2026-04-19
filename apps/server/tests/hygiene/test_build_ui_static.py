@@ -7,6 +7,8 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
+
 from tests._paths import REPO_ROOT
 
 _BUILD_UI_STATIC = REPO_ROOT / "tools" / "build_ui_static.py"
@@ -116,3 +118,36 @@ def test_build_ui_static_passes_skip_npm_ci_to_shared_bootstrap(
         ],
         ui_dir,
     )
+
+
+def test_build_ui_static_can_use_prevalidated_contract_build_path(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    module, repo, ui_dir = _load_temp_build_ui_static(tmp_path)
+    commands: list[tuple[list[str], Path]] = []
+
+    monkeypatch.setattr(
+        module,
+        "_run",
+        lambda command, cwd: commands.append((command, cwd)),
+    )
+
+    module.main(["--skip-typecheck", "--assume-prevalidated-contracts"])
+
+    assert commands == [
+        (["node", str(repo / "tools" / "ui" / "ensure_ui_bootstrap.mjs")], ui_dir),
+        (["npm", "run", "sync:generated-contracts"], ui_dir),
+        (["npm", "run", "build:prevalidated-contracts"], ui_dir),
+    ]
+
+
+def test_build_ui_static_rejects_prevalidated_contracts_without_skip_typecheck(
+    tmp_path: Path,
+) -> None:
+    module, _repo, _ui_dir = _load_temp_build_ui_static(tmp_path)
+
+    with pytest.raises(SystemExit) as exc_info:
+        module.main(["--assume-prevalidated-contracts"])
+
+    assert exc_info.value.code == 2

@@ -15,6 +15,7 @@
     "dev:open": "vite --open",
     "dev:docker": "sh ./dev-docker.sh",
     "build": "npm run check:contracts && vite build",
+    "build:prevalidated-contracts": "vite build",
     "preview": "vite preview",
     "typecheck": "npm run check:contracts && tsc --noEmit",
     "pretest:smoke": "npm run sync:generated-contracts",

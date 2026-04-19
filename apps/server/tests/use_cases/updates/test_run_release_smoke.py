@@ -37,6 +37,7 @@ def test_run_release_smoke_builds_ui_and_wheel_then_runs_smoke(monkeypatch, tmp_
         module.sys.executable,
         "tools/build_ui_static.py",
         "--skip-typecheck",
+        "--assume-prevalidated-contracts",
         "--skip-npm-ci",
     ]
     assert commands[0][1] == repo_root

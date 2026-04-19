@@ -126,8 +126,13 @@ wheel, validates packaged static assets, boots the packaged server, and checks
 that `/api/health` reaches readiness. In GitHub CI it now consumes the
 same-commit `release-smoke-ui-static` artifact built after `frontend-typecheck`
 and runs `tools/tests/run_release_smoke.py --skip-ui-build` so the final smoke
-job validates packaged assets without rebuilding the UI from source again. It
-is complementary to Docker/e2e validation, not a duplicate of it.
+job validates packaged assets without rebuilding the UI from source again. That
+artifact build still runs `npm run sync:generated-contracts` to materialize the
+UI-only derivative files on a fresh checkout, but it now switches to the
+prevalidated-contracts build path instead of re-running the late
+`check:contracts` gate already owned by `backend-contract-drift` and
+`frontend-typecheck`. It is complementary to Docker/e2e validation, not a
+duplicate of it.
 
 ## Frontend validation
 
