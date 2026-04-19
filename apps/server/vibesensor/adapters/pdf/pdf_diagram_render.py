@@ -414,7 +414,6 @@ def car_location_diagram(
     *,
     content_width: float,
     tr: Callable[..., str],
-    text_fn: Callable[..., str],
     diagram_width: float | None = None,
     diagram_height: float = 252,
     vertical_align: str = "center",

@@ -342,7 +342,6 @@ def test_car_diagram_omits_sensor_labels() -> None:
         [],
         content_width=300.0,
         tr=lambda key, **kwargs: key,
-        text_fn=lambda en, nl: en,
         diagram_width=200.0,
         diagram_height=250.0,
     )
