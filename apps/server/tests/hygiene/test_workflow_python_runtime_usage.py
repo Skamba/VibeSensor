@@ -53,9 +53,7 @@ def test_workflows_use_configured_python_runtime_paths() -> None:
 
     main_release = _load_yaml(_MAIN_RELEASE)
     release_steps = main_release["jobs"]["release"]["steps"]
-    publish_steps = main_release["jobs"]["publish_wiki"]["steps"]
     assert isinstance(release_steps, list)
-    assert isinstance(publish_steps, list)
     setup_index = next(
         i
         for i, step in enumerate(release_steps)
@@ -74,31 +72,13 @@ def test_workflows_use_configured_python_runtime_paths() -> None:
     assert setup_index < compute_version_index
     assert setup_index < build_ui_index
 
-    publish_setup_index = next(
-        i
-        for i, step in enumerate(publish_steps)
-        if isinstance(step, dict) and step.get("id") == "setup-python"
-    )
-    publish_build_ui_index = next(
-        i
-        for i, step in enumerate(publish_steps)
-        if isinstance(step, dict) and step.get("name") == "Build UI"
-    )
-    publish_wiki_index = next(
-        i
-        for i, step in enumerate(publish_steps)
-        if isinstance(step, dict) and step.get("name") == "Publish GitHub wiki screenshots"
-    )
-    assert publish_setup_index < publish_build_ui_index
-    assert publish_setup_index < publish_wiki_index
-
     main_release_text = _MAIN_RELEASE.read_text(encoding="utf-8")
+    assert "publish_wiki" not in main_release["jobs"]
     assert "steps.setup-python.outputs.python-path" in main_release_text
     assert "tools/release/main_release.py compute-version" in main_release_text
     assert "tools/release/main_release.py build-wheel" in main_release_text
     assert "tools/release/main_release.py generate-firmware-manifest" in main_release_text
     assert "tools/release/main_release.py cleanup-releases" in main_release_text
-    assert "tools/wiki/publish_wiki.py" in main_release_text
 
     weekly_text = _WEEKLY_PI_IMAGE.read_text(encoding="utf-8")
     assert "uses: ./.github/actions/build-pi-image" in weekly_text
