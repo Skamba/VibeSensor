@@ -115,10 +115,16 @@ def test_speed_source_modes(
         assert src.effective_speed_kmh == pytest.approx(expected_effective_speed_kmh)
 
 
-def test_speed_source_rejects_zero_or_negative_manual_speed() -> None:
-    for manual_speed_kmh in (0.0, -10.0):
-        with pytest.raises(ValueError, match="positive manual_speed_kmh"):
-            SpeedSource(kind="manual", manual_speed_kmh=manual_speed_kmh)
+@pytest.mark.parametrize(
+    "manual_speed_kmh",
+    [
+        pytest.param(0.0, id="zero"),
+        pytest.param(-10.0, id="negative"),
+    ],
+)
+def test_speed_source_rejects_zero_or_negative_manual_speed(manual_speed_kmh: float) -> None:
+    with pytest.raises(ValueError, match="positive manual_speed_kmh"):
+        SpeedSource(kind="manual", manual_speed_kmh=manual_speed_kmh)
 
 
 @pytest.mark.parametrize(
@@ -264,10 +270,17 @@ def test_car_derived_properties(
     assert car.rim_in == expected_rim_in
 
 
-def test_car_rejects_zero_tire_dimension() -> None:
-    for key in ("tire_width_mm", "tire_aspect_pct", "rim_in"):
-        with pytest.raises(ValueError, match="positive finite"):
-            Car(aspects={key: 0.0})
+@pytest.mark.parametrize(
+    "key",
+    [
+        pytest.param("tire_width_mm", id="width"),
+        pytest.param("tire_aspect_pct", id="aspect"),
+        pytest.param("rim_in", id="rim"),
+    ],
+)
+def test_car_rejects_zero_tire_dimension(key: str) -> None:
+    with pytest.raises(ValueError, match="positive finite"):
+        Car(aspects={key: 0.0})
 
 
 # ---------------------------------------------------------------------------
@@ -278,27 +291,58 @@ def test_car_rejects_zero_tire_dimension() -> None:
 class TestFindingDomainObject:
     """Finding domain object (distinct from the TypedDict payload)."""
 
-    def test_diagnostic_finding(self) -> None:
-        f = Finding(
-            finding_id="F001",
-            suspected_source="wheel/tire",
-            confidence=0.85,
-            severity="high",
-        )
-        assert f.is_diagnostic
-        assert not f.is_reference
-        assert not f.is_informational
-        assert f.confidence_pct == 85
-
-    def test_reference_finding(self) -> None:
-        f = Finding(finding_id="REF_SPEED")
-        assert f.is_reference
-        assert not f.is_diagnostic
-
-    def test_informational_finding(self) -> None:
-        f = Finding(finding_id="F010", severity="info")
-        assert f.is_informational
-        assert not f.is_diagnostic
+    @pytest.mark.parametrize(
+        (
+            "finding",
+            "expected_is_diagnostic",
+            "expected_is_reference",
+            "expected_is_info",
+            "expected_confidence_pct",
+        ),
+        [
+            pytest.param(
+                Finding(
+                    finding_id="F001",
+                    suspected_source="wheel/tire",
+                    confidence=0.85,
+                    severity="high",
+                ),
+                True,
+                False,
+                False,
+                85,
+                id="diagnostic-finding",
+            ),
+            pytest.param(
+                Finding(finding_id="REF_SPEED"),
+                False,
+                True,
+                False,
+                None,
+                id="reference-finding",
+            ),
+            pytest.param(
+                Finding(finding_id="F010", severity="info"),
+                False,
+                False,
+                True,
+                None,
+                id="informational-finding",
+            ),
+        ],
+    )
+    def test_finding_kind_cases(
+        self,
+        finding: Finding,
+        expected_is_diagnostic: bool,
+        expected_is_reference: bool,
+        expected_is_info: bool,
+        expected_confidence_pct: int | None,
+    ) -> None:
+        assert finding.is_diagnostic is expected_is_diagnostic
+        assert finding.is_reference is expected_is_reference
+        assert finding.is_informational is expected_is_info
+        assert finding.confidence_pct == expected_confidence_pct
 
     def test_source_normalized(self) -> None:
         f = Finding(suspected_source=" Wheel/Tire ")
@@ -386,45 +430,76 @@ class TestBridgeMethods:
 class TestFindingEnrichments:
     """Tests for enriched Finding domain object behaviour."""
 
-    def test_effective_confidence(self) -> None:
-        f = Finding(confidence=0.75)
-        assert f.effective_confidence == 0.75
+    @pytest.mark.parametrize(
+        ("confidence", "expected"),
+        [
+            pytest.param(0.75, 0.75, id="explicit-confidence"),
+            pytest.param(None, 0.0, id="missing-confidence"),
+        ],
+    )
+    def test_effective_confidence_cases(
+        self,
+        confidence: float | None,
+        expected: float,
+    ) -> None:
+        finding = Finding(confidence=confidence)
+        assert finding.effective_confidence == expected
 
-    def test_effective_confidence_none(self) -> None:
-        f = Finding(confidence=None)
-        assert f.effective_confidence == 0.0
+    @pytest.mark.parametrize(
+        ("finding", "expected"),
+        [
+            pytest.param(
+                Finding(suspected_source="wheel/tire"),
+                True,
+                id="known-source",
+            ),
+            pytest.param(
+                Finding(suspected_source="unknown"),
+                False,
+                id="placeholder-no-location",
+            ),
+            pytest.param(
+                Finding(suspected_source="unknown", strongest_location="front_left_wheel"),
+                True,
+                id="placeholder-with-location",
+            ),
+            pytest.param(
+                Finding(suspected_source="unknown_resonance"),
+                False,
+                id="unknown-resonance",
+            ),
+        ],
+    )
+    def test_is_actionable_cases(self, finding: Finding, expected: bool) -> None:
+        assert finding.is_actionable is expected
 
-    def test_is_actionable_known_source(self) -> None:
-        f = Finding(suspected_source="wheel/tire")
-        assert f.is_actionable
-
-    def test_is_actionable_placeholder_source_no_location(self) -> None:
-        f = Finding(suspected_source="unknown")
-        assert not f.is_actionable
-
-    def test_is_actionable_placeholder_source_with_location(self) -> None:
-        f = Finding(suspected_source="unknown", strongest_location="front_left_wheel")
-        assert f.is_actionable
-
-    def test_is_actionable_unknown_resonance(self) -> None:
-        f = Finding(suspected_source="unknown_resonance")
-        assert not f.is_actionable
-
-    def test_should_surface_diagnostic(self) -> None:
-        f = Finding(confidence=0.5, severity="diagnostic")
-        assert f.should_surface
-
-    def test_should_surface_low_confidence(self) -> None:
-        f = Finding(confidence=0.1, severity="diagnostic")
-        assert not f.should_surface
-
-    def test_should_surface_reference(self) -> None:
-        f = Finding(finding_id="REF_SPEED", confidence=0.9)
-        assert not f.should_surface
-
-    def test_should_surface_informational(self) -> None:
-        f = Finding(confidence=0.8, severity="info")
-        assert not f.should_surface
+    @pytest.mark.parametrize(
+        ("finding", "expected"),
+        [
+            pytest.param(
+                Finding(confidence=0.5, severity="diagnostic"),
+                True,
+                id="diagnostic",
+            ),
+            pytest.param(
+                Finding(confidence=0.1, severity="diagnostic"),
+                False,
+                id="low-confidence",
+            ),
+            pytest.param(
+                Finding(finding_id="REF_SPEED", confidence=0.9),
+                False,
+                id="reference",
+            ),
+            pytest.param(
+                Finding(confidence=0.8, severity="info"),
+                False,
+                id="informational",
+            ),
+        ],
+    )
+    def test_should_surface_cases(self, finding: Finding, expected: bool) -> None:
+        assert finding.should_surface is expected
 
     def test_rank_key_quantised(self) -> None:
         f1 = Finding(confidence=0.751, ranking_score=1.0)
@@ -437,13 +512,23 @@ class TestFindingEnrichments:
         f2 = Finding(confidence=0.5, ranking_score=1.0)
         assert f1.rank_key > f2.rank_key
 
-    def test_phase_adjusted_score_no_phase(self) -> None:
-        f = Finding(confidence=0.8)
-        assert f.phase_adjusted_score == pytest.approx(0.8 * 0.85)
-
-    def test_phase_adjusted_score_full_cruise(self) -> None:
-        f = Finding(confidence=0.8, cruise_fraction=1.0)
-        assert f.phase_adjusted_score == pytest.approx(0.8 * 1.0)
+    @pytest.mark.parametrize(
+        ("finding", "expected"),
+        [
+            pytest.param(
+                Finding(confidence=0.8),
+                pytest.approx(0.8 * 0.85),
+                id="no-phase",
+            ),
+            pytest.param(
+                Finding(confidence=0.8, cruise_fraction=1.0),
+                pytest.approx(0.8 * 1.0),
+                id="full-cruise",
+            ),
+        ],
+    )
+    def test_phase_adjusted_score_cases(self, finding: Finding, expected: float) -> None:
+        assert finding.phase_adjusted_score == expected
 
     def test_is_stronger_than(self) -> None:
         f1 = Finding(confidence=0.8, ranking_score=1.0)
