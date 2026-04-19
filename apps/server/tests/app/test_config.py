@@ -27,8 +27,22 @@ def cfg_path(tmp_path: Path) -> Path:
 
 
 def test_logging_flags_allow_db_only_mode(cfg_path: Path) -> None:
-    cfg = _write_and_load(cfg_path, {"logging": {"persist_history_db": True}})
+    cfg = _write_and_load(
+        cfg_path,
+        {
+            "logging": {
+                "persist_history_db": True,
+                "history_db_path": "db/history.db",
+                "app_log_path": "logs/app.log",
+            }
+        },
+    )
+
     assert cfg.logging.persist_history_db is True
+    assert cfg.logging.history_db_path == cfg_path.parent / "db/history.db"
+    assert cfg.logging.app_log_path == cfg_path.parent / "logs/app.log"
+    assert cfg.logging.no_data_timeout_s == 15.0
+    assert cfg.logging.run_retention_days == 7
 
 
 def test_logging_no_data_timeout_defaults_and_allows_override(cfg_path: Path) -> None:
@@ -47,44 +61,62 @@ def test_logging_run_retention_days_defaults_and_allows_override(cfg_path: Path)
     assert cfg.logging.run_retention_days == 21
 
 
-def test_dev_and_docker_configs_equivalent() -> None:
-    """config.dev.yaml and config.docker.yaml share core settings but Docker
-    intentionally overrides environment-specific options (GPS disabled because
-    Docker containers have no gpsd, AP self-heal disabled because nmcli/hostapd
-    are absent, rollback_dir uses a container-local path).
-    """
+def test_base_dev_and_docker_configs_capture_intended_runtime_invariants(tmp_path: Path) -> None:
+    base_cfg = _write_and_load(tmp_path / "config.yaml", {})
     dev_cfg = load_config(SERVER_DIR / "config.dev.yaml")
     docker_cfg = load_config(SERVER_DIR / "config.docker.yaml")
-    # Core transport and processing settings must still agree
-    assert dev_cfg.server == docker_cfg.server
-    assert dev_cfg.udp == docker_cfg.udp
-    assert dev_cfg.processing == docker_cfg.processing
-    # GPS: Docker container has no gpsd — GPS is intentionally disabled there
-    assert dev_cfg.gps.gpsd_host == docker_cfg.gps.gpsd_host
-    assert dev_cfg.gps.gpsd_port == docker_cfg.gps.gpsd_port
-    assert docker_cfg.gps.gps_enabled is False, "Docker config must disable GPS"
-    # AP: self-heal is intentionally disabled in Docker (no nmcli/hostapd)
-    assert docker_cfg.ap.self_heal.enabled is False, "Docker config must disable AP self-heal"
+
+    assert base_cfg.server.host == dev_cfg.server.host == docker_cfg.server.host
+    assert base_cfg.server.port == 80
+    assert dev_cfg.server.port == docker_cfg.server.port == 8000
+    assert base_cfg.udp == dev_cfg.udp == docker_cfg.udp
+    assert base_cfg.processing == dev_cfg.processing == docker_cfg.processing
+    assert base_cfg.logging.persist_history_db is True
+    assert dev_cfg.logging.persist_history_db is True
+    assert docker_cfg.logging.persist_history_db is True
+    assert base_cfg.gps.gps_enabled is True
+    assert dev_cfg.gps.gps_enabled is False
+    assert docker_cfg.gps.gps_enabled is False
+    assert base_cfg.ap.self_heal.enabled is True
+    assert dev_cfg.ap.self_heal.enabled is True
+    assert docker_cfg.ap.self_heal.enabled is False
+    assert docker_cfg.update.rollback_dir != base_cfg.update.rollback_dir
 
 
-def test_default_server_port_is_80_for_base_config(cfg_path: Path) -> None:
-    cfg = _write_and_load(cfg_path, {})
-    assert cfg.server.port == 80
+@pytest.mark.parametrize(
+    ("raw_value", "expected"),
+    [
+        (4096, 4096),
+        (0, 1),
+        (-5, 1),
+        ("512", 512),
+        (1_000_000, 1_000_000),
+    ],
+)
+def test_udp_data_queue_maxsize_loader_clamps_or_preserves_integer_like_values(
+    cfg_path: Path,
+    raw_value: object,
+    expected: int,
+) -> None:
+    cfg = _write_and_load(cfg_path, {"udp": {"data_queue_maxsize": raw_value}})
+    assert cfg.udp.data_queue_maxsize == expected
 
 
-def test_dev_and_docker_override_server_port_to_8000() -> None:
-    dev_cfg = load_config(SERVER_DIR / "config.dev.yaml")
-    docker_cfg = load_config(SERVER_DIR / "config.docker.yaml")
-    assert dev_cfg.server.port == 8000
-    assert docker_cfg.server.port == 8000
-
-
-def test_udp_data_queue_maxsize_override_and_clamp(cfg_path: Path) -> None:
-    cfg = _write_and_load(cfg_path, {"udp": {"data_queue_maxsize": 4096}})
-    assert cfg.udp.data_queue_maxsize == 4096
-
-    cfg = _write_and_load(cfg_path, {"udp": {"data_queue_maxsize": 0}})
-    assert cfg.udp.data_queue_maxsize == 1
+@pytest.mark.parametrize(
+    ("raw_value", "message"),
+    [
+        (True, "udp.data_queue_maxsize"),
+        ("not-a-number", "invalid literal for int()"),
+    ],
+)
+def test_udp_data_queue_maxsize_rejects_non_integer_like_values(
+    cfg_path: Path,
+    raw_value: object,
+    message: str,
+) -> None:
+    _write_config(cfg_path, {"udp": {"data_queue_maxsize": raw_value}})
+    with pytest.raises(ValueError, match=message):
+        load_config(cfg_path)
 
 
 # --- AP WiFi channel validation ---
