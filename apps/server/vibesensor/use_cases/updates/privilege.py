@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
+
+from vibesensor.shared.process_settings import (
+    DEFAULT_UPDATE_REPO_PATH,
+    load_update_env_settings,
+)
 
 __all__ = [
     "build_privilege_probe_args",
@@ -17,21 +21,17 @@ __all__ = [
 _SOURCE_TREE_WRAPPER_SCRIPT = (
     Path(__file__).resolve().parent.parent.parent / "scripts" / "vibesensor_update_sudo.sh"
 )
-_DEFAULT_INSTALL_REPO = Path("/opt/VibeSensor")
+_DEFAULT_INSTALL_REPO = DEFAULT_UPDATE_REPO_PATH
 
 
 def _sudo_wrapper_path() -> Path | None:
     """Return the first installed wrapper path that exists on disk."""
-
-    configured_wrapper = os.environ.get("VIBESENSOR_UPDATE_SUDO_WRAPPER", "").strip()
-    configured_repo = os.environ.get("VIBESENSOR_REPO_PATH", "").strip()
+    env_settings = load_update_env_settings()
+    configured_wrapper = env_settings.update_sudo_wrapper
+    configured_repo = env_settings.repo_path
     candidate_paths = [
-        Path(configured_wrapper) if configured_wrapper else None,
-        (
-            Path(configured_repo) / "apps" / "server" / "scripts" / "vibesensor_update_sudo.sh"
-            if configured_repo
-            else None
-        ),
+        configured_wrapper,
+        configured_repo / "apps" / "server" / "scripts" / "vibesensor_update_sudo.sh",
         _DEFAULT_INSTALL_REPO / "apps" / "server" / "scripts" / "vibesensor_update_sudo.sh",
         _SOURCE_TREE_WRAPPER_SCRIPT,
     ]
@@ -43,6 +43,8 @@ def _sudo_wrapper_path() -> Path | None:
 
 def _sudo_prefix() -> list[str]:
     """Return the sudo prefix for privileged commands."""
+    import os
+
     if os.geteuid() == 0:
         return []
     wrapper = _sudo_wrapper_path()

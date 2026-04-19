@@ -4,7 +4,12 @@ import argparse
 import json
 from pathlib import Path
 
-from vibesensor.app.settings import AppConfig, documented_default_config, load_config
+from vibesensor.app.settings import (
+    AppConfig,
+    documented_default_config,
+    load_config,
+    summarize_process_settings,
+)
 from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 
 
@@ -26,6 +31,7 @@ def summarize(cfg: AppConfig) -> dict[str, object]:
         "paths": {
             "history_db_path": str(cfg.logging.history_db_path),
         },
+        "process_settings": summarize_process_settings(),
     }
 
 
