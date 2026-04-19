@@ -54,7 +54,9 @@ Paths below are repo-relative unless a line explicitly calls out a Python import
 
 ## Backend layer dependency DAG
 
-- Import-direction enforcement lives in `tools/dev/verify_backend_static_guards.py::_check_layer_boundaries()`.
+- Package-level import-direction enforcement lives in `apps/server/pyproject.toml`
+  under `[tool.importlinter]`. Repo-specific backend static guards remain in
+  `tools/dev/verify_backend_static_guards.py`.
 - Allowed dependency directions are:
   - `domain` -> none
   - `shared` -> `domain`

@@ -29,6 +29,7 @@ esp = [
 dev = [
   "hypothesis>=6.131,<7",
   "httpx>=0.27,<1",
+  "import-linter>=2.11,<3",
   "mypy>=1.19,<2",
   "pypdf>=5,<7",
   "pypdfium2>=5.7.0,<6",
@@ -113,6 +114,68 @@ warn_unused_ignores = true
 warn_return_any = true
 strict_equality = true
 show_error_codes = true
+
+[tool.importlinter]
+# Keep the package-level backend dependency direction declarative here.
+# Root-level `vibesensor/*.py` shared-module rules and other repo-specific
+# guardrails still live in `tools/dev/verify_backend_static_guards.py`.
+root_package = "vibesensor"
+
+[[tool.importlinter.contracts]]
+name = "Domain stays isolated from outer layers"
+type = "forbidden"
+source_modules = ["vibesensor.domain"]
+forbidden_modules = [
+  "vibesensor.shared",
+  "vibesensor.use_cases",
+  "vibesensor.infra",
+  "vibesensor.adapters",
+  "vibesensor.app",
+  "vibesensor.cli",
+]
+
+[[tool.importlinter.contracts]]
+name = "Shared stays below service and adapter layers"
+type = "forbidden"
+source_modules = ["vibesensor.shared"]
+forbidden_modules = [
+  "vibesensor.use_cases",
+  "vibesensor.infra",
+  "vibesensor.adapters",
+  "vibesensor.app",
+  "vibesensor.cli",
+]
+
+[[tool.importlinter.contracts]]
+name = "Use cases and infra stay independent"
+type = "independence"
+modules = ["vibesensor.use_cases", "vibesensor.infra"]
+
+[[tool.importlinter.contracts]]
+name = "Use cases stay below adapters and app entrypoints"
+type = "forbidden"
+source_modules = ["vibesensor.use_cases"]
+forbidden_modules = [
+  "vibesensor.adapters",
+  "vibesensor.app",
+  "vibesensor.cli",
+]
+
+[[tool.importlinter.contracts]]
+name = "Infra stays below adapters and app entrypoints"
+type = "forbidden"
+source_modules = ["vibesensor.infra"]
+forbidden_modules = [
+  "vibesensor.adapters",
+  "vibesensor.app",
+  "vibesensor.cli",
+]
+
+[[tool.importlinter.contracts]]
+name = "Adapters stay below app entrypoints"
+type = "forbidden"
+source_modules = ["vibesensor.adapters"]
+forbidden_modules = ["vibesensor.app", "vibesensor.cli"]
 
 [[tool.mypy.overrides]]
 module = [

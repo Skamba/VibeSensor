@@ -21,6 +21,9 @@ Backend ownership boundaries:
 See [docs/ai/repo-map.md#backend-package-layout](../../docs/ai/repo-map.md#backend-package-layout)
 for the detailed backend ownership map. This README stays focused on
 backend-specific setup, configuration, routes, updates, and testing.
+Package-level backend dependency direction is declared in
+`apps/server/pyproject.toml` under `[tool.importlinter]`; keep repo-specific
+root-module and structural guardrails in `tools/dev/verify_backend_static_guards.py`.
 
 ## State and configuration scopes
 
