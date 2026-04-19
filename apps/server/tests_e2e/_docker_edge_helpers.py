@@ -37,16 +37,6 @@ def _cleanup_clients(base_url: str) -> None:
         )
 
 
-def _cleanup_sensor_settings(base_url: str, *mac_addresses: str) -> None:
-    for mac_address in mac_addresses:
-        api_json(
-            base_url,
-            f"/api/settings/sensors/{mac_address}",
-            method="DELETE",
-            expected_status=(200, 404),
-        )
-
-
 def _wait_complete(base_url: str, run_id: str) -> dict:
     return wait_run_status(base_url, run_id, statuses=("complete", "error"), timeout_s=120.0)
 

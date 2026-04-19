@@ -320,7 +320,6 @@ class FakeState:
         return SettingsDeps(
             car_settings=self.car_settings,
             analysis_settings=self.analysis_settings,
-            sensor_metadata_store=self.sensor_metadata_store,
             ui_preferences=self.ui_preferences,
             speed_source_service=self.speed_source_service,
             speed_status_service=self.gps_monitor,

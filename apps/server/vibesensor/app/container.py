@@ -126,7 +126,6 @@ class SettingsServiceBundle:
         return SettingsDeps(
             car_settings=self.car_settings,
             analysis_settings=self.analysis_settings,
-            sensor_metadata_store=self.sensor_metadata_store,
             ui_preferences=self.ui_preferences,
             speed_source_service=self.speed_source_service,
             speed_status_service=speed_status_service,
@@ -518,7 +517,7 @@ def build_router_deps(
         health=live_runtime.http_health_deps(health_state=health_state),
         settings=settings,
         live=live_runtime.http_live_deps(
-            sensor_metadata_store=settings.sensor_metadata_store,
+            sensor_metadata_store=settings_services.sensor_metadata_store,
         ),
         history=history_services.http_deps(),
         updates=updates,

@@ -8,11 +8,10 @@ from __future__ import annotations
 import os
 import threading
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from test_support.gps import set_gps_snapshot_age
-from test_support.settings_services import PersistedSettingsServices, build_settings_services
 
 import vibesensor.adapters.udp.udp_control_tx as udp_control_tx_mod
 import vibesensor.shared.locations as locations_mod
@@ -26,18 +25,10 @@ from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import _ws_debug_enabled
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.workers.worker_pool import WorkerPool
-from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.locations import is_wheel_location
 from vibesensor.shared.order_bands import (
     as_float_or_none as order_bands_as_float_or_none,
 )
-
-
-def _make_store_with_sensor() -> PersistedSettingsServices:
-    """Create focused persisted settings services with one pre-registered sensor."""
-    services = build_settings_services()
-    services.sensor_settings.set_sensor("aabbccddeeff", {"name": "Test", "location_code": "trunk"})
-    return services
 
 
 def _make_gps_monitor() -> GPSSpeedMonitor:
@@ -49,38 +40,7 @@ def _make_control_plane() -> UDPControlPlane:
 
 
 # ---------------------------------------------------------------------------
-# Item 1: remove_sensor persistence rollback
-# ---------------------------------------------------------------------------
-
-
-class TestRemoveSensorRollback:
-    """Verify sensor removal rolls back in-memory state when persistence fails."""
-
-    def test_remove_sensor_rolls_back_on_persist_failure(self) -> None:
-        services = _make_store_with_sensor()
-        assert "aabbccddeeff" in services.sensor_settings.get_sensors()
-        services.coordinator._db = MagicMock()
-        services.coordinator._db.set_settings_snapshot.side_effect = OSError("disk full")
-
-        # Simulate persistence failure
-        with pytest.raises(PersistenceError):
-            services.sensor_settings.remove_sensor("aabbccddeeff")
-
-        # Sensor should still be in memory after rollback
-        assert "aabbccddeeff" in services.sensor_settings.get_sensors()
-
-    def test_remove_sensor_succeeds_normally(self) -> None:
-        services = _make_store_with_sensor()
-        assert services.sensor_settings.remove_sensor("aabbccddeeff") is True
-        assert "aabbccddeeff" not in services.sensor_settings.get_sensors()
-
-    def test_remove_sensor_nonexistent_returns_false(self) -> None:
-        services = build_settings_services()
-        assert services.sensor_settings.remove_sensor("aabbccddeeff") is False
-
-
-# ---------------------------------------------------------------------------
-# Item 2: _NON_WHEEL_TOKENS is a module-level constant
+# Item 1: _NON_WHEEL_TOKENS is a module-level constant
 # ---------------------------------------------------------------------------
 
 
@@ -106,7 +66,7 @@ class TestNonWheelTokensModuleLevel:
 
 
 # ---------------------------------------------------------------------------
-# Item 3: resolve_speed reads from atomic snapshot
+# Item 2: resolve_speed reads from atomic snapshot
 # ---------------------------------------------------------------------------
 
 

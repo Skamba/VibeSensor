@@ -74,13 +74,6 @@ class SpeedSourceRequest(_FrozenBase):
     obd_device_name: str | None = Field(default=None, min_length=1, max_length=128)
 
 
-class SensorRequest(_FrozenBase):
-    """Request body for updating sensor name and location."""
-
-    name: str | None = Field(default=None, min_length=1, max_length=64)
-    location_code: str | None = Field(default=None, max_length=64)
-
-
 class CarResponse(BaseModel):
     """Response body representing a single car profile."""
 
@@ -191,19 +184,6 @@ class ObdStatusResponse(BaseModel):
     last_raw_response: str | None
     reconnect_delay_s: float | None
     debug_hint: str | None
-
-
-class SensorConfigResponse(BaseModel):
-    """Response body with persisted config for a single sensor (name, location_code)."""
-
-    name: str
-    location_code: str
-
-
-class SensorsResponse(BaseModel):
-    """Response body mapping MAC addresses to sensor config responses."""
-
-    sensors_by_mac: dict[str, SensorConfigResponse]
 
 
 class LanguageResponse(BaseModel):

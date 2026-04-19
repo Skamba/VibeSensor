@@ -12,7 +12,6 @@ from vibesensor.adapters.http.dependencies import (
 from vibesensor.shared.ports import (
     AnalysisSettingsStore,
     CarSettingsStore,
-    SensorMetadataStore,
     UiPreferencesStore,
 )
 
@@ -20,7 +19,6 @@ __all__ = [
     "AnalysisSettingsRouteDeps",
     "CarSettingsRouteDeps",
     "ObdAdminRouteDeps",
-    "SensorSettingsRouteDeps",
     "SpeedSourceRouteDeps",
     "UiPreferencesRouteDeps",
 ]
@@ -42,11 +40,6 @@ class ObdAdminRouteDeps:
     speed_source_service: SpeedSourceSettingsServiceProtocol
     speed_status_service: SettingsSpeedServiceProtocol
     obd_admin_service: ObdAdminServiceProtocol
-
-
-@dataclass(frozen=True, slots=True)
-class SensorSettingsRouteDeps:
-    sensor_metadata_store: SensorMetadataStore
 
 
 @dataclass(frozen=True, slots=True)

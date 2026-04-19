@@ -730,14 +730,11 @@ def _check_sensor_metadata_writes_stay_in_settings_boundary() -> list[str]:
     ports_path = VIBESENSOR_DIR / "shared" / "ports.py"
     http_dir = VIBESENSOR_DIR / "adapters" / "http"
     clients_path = http_dir / "clients.py"
-    settings_sensors_path = http_dir / "settings" / "sensors.py"
     ports_source = _read_text(ports_path)
     failures: list[str] = []
     for marker in (
         "class SensorMetadataStore(SensorMetadataReader, Protocol):",
-        "def set_sensor(self, mac: str, data: SensorConfigUpdatePayload) -> SensorsByMacPayload: ...",
         "def assign_sensor_location(self, sensor_id: str, location_code: str) -> SensorsByMacPayload: ...",
-        "def remove_sensor(self, mac: str) -> bool: ...",
     ):
         if marker not in ports_source:
             failures.append(
@@ -753,28 +750,21 @@ def _check_sensor_metadata_writes_stay_in_settings_boundary() -> list[str]:
             failures.append(
                 f"{clients_path.relative_to(REPO_ROOT)} must not call {attr_name} directly; client routes should delegate through assign_sensor_location() (lines {attr_lines})"
             )
-    if not _attribute_access_lines(settings_sensors_path, "set_sensor"):
-        failures.append(
-            f"{settings_sensors_path.relative_to(REPO_ROOT)} must own persisted sensor upserts through set_sensor()"
-        )
-    if not _attribute_access_lines(settings_sensors_path, "remove_sensor"):
-        failures.append(
-            f"{settings_sensors_path.relative_to(REPO_ROOT)} must own persisted sensor deletes through remove_sensor()"
-        )
-    if _attribute_access_lines(settings_sensors_path, "assign_sensor_location"):
-        failures.append(
-            f"{settings_sensors_path.relative_to(REPO_ROOT)} should keep raw sensor CRUD separate from client-location assignment"
-        )
-    allowed_write_paths = {clients_path, settings_sensors_path}
     for path in _python_files(http_dir):
-        if path in allowed_write_paths:
-            continue
-        for attr_name in ("set_sensor", "assign_sensor_location", "remove_sensor"):
+        for attr_name in ("set_sensor", "remove_sensor"):
             attr_lines = _attribute_access_lines(path, attr_name)
             if attr_lines:
                 failures.append(
-                    f"{path.relative_to(REPO_ROOT)} must not write sensor metadata directly; keep writes in settings/sensors.py and client-location delegation in clients.py ({attr_name} at lines {attr_lines})"
+                    f"{path.relative_to(REPO_ROOT)} must not expose raw sensor metadata CRUD over HTTP; sensor metadata writes are limited to clients.py delegating assign_sensor_location() ({attr_name} at lines {attr_lines})"
                 )
+    for path in _python_files(http_dir):
+        if path == clients_path:
+            continue
+        attr_lines = _attribute_access_lines(path, "assign_sensor_location")
+        if attr_lines:
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} must not delegate sensor location writes directly; keep assign_sensor_location() usage in clients.py only (lines {attr_lines})"
+            )
     return failures
 
 

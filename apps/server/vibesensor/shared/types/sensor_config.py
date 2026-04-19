@@ -9,17 +9,11 @@ from typing import TypedDict
 __all__ = [
     "SensorConfig",
     "SensorConfigPayload",
-    "SensorConfigUpdatePayload",
     "SensorsByMacPayload",
 ]
 
 
 class SensorConfigPayload(TypedDict):
-    name: str
-    location_code: str
-
-
-class SensorConfigUpdatePayload(TypedDict, total=False):
     name: str
     location_code: str
 

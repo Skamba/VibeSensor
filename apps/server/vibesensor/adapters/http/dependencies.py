@@ -132,7 +132,6 @@ class LiveDeps:
 class SettingsDeps:
     car_settings: CarSettingsStore
     analysis_settings: AnalysisSettingsStore
-    sensor_metadata_store: SensorMetadataStore
     ui_preferences: UiPreferencesStore
     speed_source_service: SpeedSourceSettingsServiceProtocol
     speed_status_service: SettingsSpeedServiceProtocol

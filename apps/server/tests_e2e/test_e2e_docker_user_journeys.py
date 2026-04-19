@@ -69,7 +69,6 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
     created_car_id: str | None = None
     created_run_ids: list[str] = []
     seen_client_ids: list[str] = []
-    seen_sensor_macs: list[str] = []
 
     try:
         # Ensure deterministic client count for E2E-1 assertions.
@@ -109,7 +108,6 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 assert assigned["location_code"] == code
                 assert assigned["name"] == location_labels[code]
                 assert MAC_RE.match(str(assigned.get("mac_address") or ""))
-                seen_sensor_macs.append(str(assigned["mac_address"]))
 
             api_json(
                 base_url,
@@ -119,10 +117,12 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 expected_status=409,
             )
 
-            sensors_by_mac = api_json(base_url, "/api/settings/sensors")["sensors_by_mac"]
-            for mac, code in zip(seen_sensor_macs, LOCATION_CODES, strict=True):
-                normalized = mac.replace(":", "").lower()
-                assert sensors_by_mac[normalized]["location_code"] == code
+            clients_after_assign = {
+                str(client["id"]): client["location_code"]
+                for client in api_json(base_url, "/api/clients")["clients"]
+            }
+            for client_id, code in zip(seen_client_ids, LOCATION_CODES, strict=True):
+                assert clients_after_assign[client_id] == code
 
             # E2E-3: Create a car profile and make it active.
             baseline_car_ids = {str(car["id"]) for car in cars_before["cars"]}
@@ -284,7 +284,6 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
 
     finally:
         _delete_resources(base_url, "/api/history/{identifier}", list(created_run_ids))
-        _delete_resources(base_url, "/api/settings/sensors/{identifier}", seen_sensor_macs)
         _delete_resources(base_url, "/api/clients/{identifier}", seen_client_ids)
         api_json(
             base_url,
