@@ -4,12 +4,12 @@ import os
 from dataclasses import dataclass, field
 from typing import TypedDict
 
-from vibesensor.app.process_settings import (
+from vibesensor.shared.constants.github import GITHUB_REPO
+from vibesensor.shared.process_settings import (
     DEFAULT_FIRMWARE_CACHE_DIR,
     DEFAULT_FIRMWARE_CHANNEL,
     load_update_env_settings,
 )
-from vibesensor.shared.constants.github import GITHUB_REPO
 
 __all__ = [
     "BundleMeta",

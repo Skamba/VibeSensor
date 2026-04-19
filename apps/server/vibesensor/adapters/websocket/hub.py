@@ -19,7 +19,7 @@ from vibesensor.adapters.websocket.connection_tracker import (
     WSConnectionSnapshot,
 )
 from vibesensor.adapters.websocket.tick_controller import BroadcastTickController
-from vibesensor.app.process_settings import load_websocket_env_settings
+from vibesensor.shared.process_settings import load_websocket_env_settings
 from vibesensor.shared.types.payload_types import LiveWsPayload
 
 LOGGER = logging.getLogger(__name__)

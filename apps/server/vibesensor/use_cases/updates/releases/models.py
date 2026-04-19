@@ -5,8 +5,8 @@ from __future__ import annotations
 import string
 from dataclasses import dataclass
 
-from vibesensor.app.process_settings import load_update_env_settings
 from vibesensor.shared.constants.github import GITHUB_REPO
+from vibesensor.shared.process_settings import load_update_env_settings
 from vibesensor.shared.types.json_types import is_json_array, is_json_object
 
 __all__ = [
