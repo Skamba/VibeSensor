@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from threading import RLock
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.domain import normalize_sensor_id
 from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.infra.runtime.registry import ClientRecord
@@ -25,13 +25,13 @@ def _build_manager(db_path: Path) -> tuple[ClientMetadataManager, dict[str, Clie
             records[normalized] = record
         return record
 
-    db = HistoryDB(db_path)
+    db = create_history_persistence_adapters(db_path)
     manager = ClientMetadataManager(
         lock=RLock(),
         get_or_create=_get_or_create,
-        list_client_names=db.list_client_names,
-        persist_client_name=db.upsert_client_name,
-        delete_client_name=db.delete_client_name,
+        list_client_names=db.client_name_repository.list_client_names,
+        persist_client_name=db.client_name_repository.upsert_client_name,
+        delete_client_name=db.client_name_repository.delete_client_name,
     )
     return manager, records
 

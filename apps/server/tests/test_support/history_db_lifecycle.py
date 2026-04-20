@@ -7,15 +7,18 @@ from typing import cast
 
 from test_support.core import canonicalize_run_context_metadata
 from test_support.persisted_analysis import make_persisted_analysis
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import (
+    HistoryPersistenceAdapters,
+    create_history_persistence_adapters,
+)
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
 
 
-def build_history_db(tmp_path: Path) -> HistoryDB:
-    return HistoryDB(tmp_path / "history.db")
+def build_history_db(tmp_path: Path) -> HistoryPersistenceAdapters:
+    return create_history_persistence_adapters(tmp_path / "history.db")
 
 
 def make_run_metadata(run_id: str, **overrides: object) -> RunMetadata:
@@ -57,7 +60,7 @@ def make_settings_snapshot() -> SettingsSnapshotPayload:
 
 
 def create_recording_run(
-    db: HistoryDB,
+    db: HistoryPersistenceAdapters,
     run_id: str,
     *,
     started_at: str = "2026-01-01T00:00:00Z",
@@ -66,12 +69,12 @@ def create_recording_run(
     **metadata_overrides: object,
 ) -> RunMetadata:
     metadata_obj = metadata or make_run_metadata(run_id, **metadata_overrides)
-    db.create_run(run_id, started_at, metadata_obj, case_id=case_id)
+    db.run_repository.create_run(run_id, started_at, metadata_obj, case_id=case_id)
     return metadata_obj
 
 
 def create_analyzing_run(
-    db: HistoryDB,
+    db: HistoryPersistenceAdapters,
     run_id: str,
     *,
     started_at: str = "2026-01-01T00:00:00Z",
@@ -87,12 +90,12 @@ def create_analyzing_run(
         metadata=metadata,
         **metadata_overrides,
     )
-    db.finalize_run(run_id, finalized_at, metadata=metadata_obj, case_id=case_id)
+    db.run_repository.finalize_run(run_id, finalized_at, metadata=metadata_obj, case_id=case_id)
     return metadata_obj
 
 
 def create_completed_run(
-    db: HistoryDB,
+    db: HistoryPersistenceAdapters,
     run_id: str,
     *,
     started_at: str = "2026-01-01T00:00:00Z",
@@ -113,12 +116,12 @@ def create_completed_run(
         **(metadata_overrides or {}),
     )
     analysis_obj = analysis or make_analysis_summary(run_id, **(analysis_overrides or {}))
-    db.store_analysis(run_id, make_persisted_analysis(analysis_obj))
+    db.run_repository.store_analysis(run_id, make_persisted_analysis(analysis_obj))
     return analysis_obj
 
 
 def create_error_run(
-    db: HistoryDB,
+    db: HistoryPersistenceAdapters,
     run_id: str,
     *,
     started_at: str = "2026-01-01T00:00:00Z",
@@ -135,4 +138,4 @@ def create_error_run(
         metadata=metadata,
         **(metadata_overrides or {}),
     )
-    db.store_analysis_error(run_id, error_message)
+    db.run_repository.store_analysis_error(run_id, error_message)

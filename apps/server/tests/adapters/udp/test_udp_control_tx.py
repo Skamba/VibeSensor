@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.adapters.udp.protocol import (
     HELLO_CAP_EXPLICIT_ACK,
     MSG_HELLO_ACK,
@@ -18,6 +18,11 @@ from vibesensor.adapters.udp.protocol import (
 )
 from vibesensor.adapters.udp.udp_control_tx import ControlDatagramProtocol, UDPControlPlane
 from vibesensor.infra.runtime.registry import ClientRegistry
+
+
+def _make_registry(tmp_path: Path) -> ClientRegistry:
+    adapters = create_history_persistence_adapters(tmp_path / "history.db")
+    return ClientRegistry(db=adapters.client_name_repository)
 
 
 @pytest.mark.parametrize(
@@ -33,7 +38,7 @@ def test_send_identify_accepts_hex_and_mac_client_ids(
     fake_transport,
 ) -> None:
     client_hex = "aabbccddeeff"
-    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
+    registry = _make_registry(tmp_path)
     registry.update_from_hello(
         HelloMessage(
             client_id=bytes.fromhex(client_hex),
@@ -66,7 +71,7 @@ def test_control_datagram_programming_bug_propagates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     client_hex = "aabbccddeeff"
-    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
+    registry = _make_registry(tmp_path)
     protocol = ControlDatagramProtocol(registry)
     packet = pack_ack(bytes.fromhex(client_hex), cmd_seq=7, status=0)
 
@@ -87,7 +92,7 @@ def test_control_datagram_operational_error_is_logged_and_counted(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     client_hex = "aabbccddeeff"
-    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
+    registry = _make_registry(tmp_path)
     registry.update_from_hello(
         HelloMessage(
             client_id=bytes.fromhex(client_hex),
@@ -120,7 +125,7 @@ def test_control_datagram_sends_hello_ack_for_capable_firmware(
     tmp_path: Path,
     fake_transport,
 ) -> None:
-    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
+    registry = _make_registry(tmp_path)
     protocol = ControlDatagramProtocol(registry)
     protocol.transport = fake_transport
     packet = pack_hello(
@@ -145,7 +150,7 @@ def test_control_datagram_skips_hello_ack_for_legacy_firmware(
     tmp_path: Path,
     fake_transport,
 ) -> None:
-    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
+    registry = _make_registry(tmp_path)
     protocol = ControlDatagramProtocol(registry)
     protocol.transport = fake_transport
     packet = pack_hello(
@@ -163,7 +168,7 @@ def test_control_datagram_skips_hello_ack_for_legacy_firmware(
 
 
 def test_close_closes_transport_once_and_clears_reference(tmp_path: Path, fake_transport) -> None:
-    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
+    registry = _make_registry(tmp_path)
     plane = UDPControlPlane(registry=registry, bind_host="127.0.0.1", bind_port=9001)
     plane.transport = fake_transport
 

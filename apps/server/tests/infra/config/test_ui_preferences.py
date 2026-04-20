@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from test_support.settings_services import build_settings_services, write_raw_settings_snapshot
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 
 
 def test_ui_preferences_language_roundtrip() -> None:
@@ -18,29 +18,29 @@ def test_ui_preferences_language_roundtrip() -> None:
 
 
 def test_ui_preferences_speed_unit_roundtrip(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    services = build_settings_services(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    services = build_settings_services(db=db.settings_snapshot_repository)
     assert services.ui_preferences.speed_unit == "kmh"
 
     services.ui_preferences.set_speed_unit("mps")
     assert services.ui_preferences.speed_unit == "mps"
 
-    reloaded = build_settings_services(db=db)
+    reloaded = build_settings_services(db=db.settings_snapshot_repository)
     assert reloaded.ui_preferences.speed_unit == "mps"
 
 
 def test_ui_preferences_load_normalizes_language_and_speed_unit(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    write_raw_settings_snapshot(db, '{"language": " NL ", "speedUnit": " MPS "}')
-    services = build_settings_services(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    write_raw_settings_snapshot(db.lifecycle, '{"language": " NL ", "speedUnit": " MPS "}')
+    services = build_settings_services(db=db.settings_snapshot_repository)
     assert services.ui_preferences.language == "nl"
     assert services.ui_preferences.speed_unit == "mps"
 
 
 def test_ui_preferences_load_whitespace_only_values_default(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    write_raw_settings_snapshot(db, '{"language": "   ", "speedUnit": "   "}')
-    services = build_settings_services(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    write_raw_settings_snapshot(db.lifecycle, '{"language": "   ", "speedUnit": "   "}')
+    services = build_settings_services(db=db.settings_snapshot_repository)
     assert services.ui_preferences.language == "en"
     assert services.ui_preferences.speed_unit == "kmh"
 

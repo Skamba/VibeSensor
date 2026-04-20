@@ -267,12 +267,16 @@ async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected
     monkeypatch,
 ) -> None:
     from vibesensor.adapters.http.clients import create_client_routes
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db, live_ttl_seconds=5.0, retention_ttl_seconds=30.0)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(
+        db=db.client_name_repository,
+        live_ttl_seconds=5.0,
+        retention_ttl_seconds=30.0,
+    )
     hello = HelloMessage(
         client_id=bytes.fromhex("001122334455"),
         control_port=9010,
@@ -324,19 +328,19 @@ async def test_get_clients_overlays_canonical_settings_metadata_after_restart(
     from test_support.settings_services import build_settings_services
 
     from vibesensor.adapters.http.clients import create_client_routes
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = HistoryDB(tmp_path / "history.db")
-    initial_settings = build_settings_services(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    initial_settings = build_settings_services(db=db.settings_snapshot_repository)
     initial_settings.sensor_settings.assign_sensor_location(
         "00:11:22:33:44:55",
         "rear_left_wheel",
     )
 
-    settings_store = build_settings_services(db=db).sensor_settings
-    registry = ClientRegistry(db=db)
+    settings_store = build_settings_services(db=db.settings_snapshot_repository).sensor_settings
+    registry = ClientRegistry(db=db.client_name_repository)
     registry.update_from_hello(
         HelloMessage(
             client_id=bytes.fromhex("001122334455"),

@@ -17,7 +17,7 @@ import pytest
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
@@ -27,8 +27,8 @@ from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 def _make_logger(tmp_path: Path, **overrides):
     """Create a minimal RunRecorder + HistoryDB for concurrency tests."""
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     # Separate config fields from collaborator overrides.
     _CONFIG_FIELDS = frozenset(
         {
@@ -59,7 +59,7 @@ def _make_logger(tmp_path: Path, **overrides):
             fft_n=256,
             spectrum_max_hz=200,
         ),
-        "history_db": db,
+        "history_db": db.run_repository,
     }
     collab_defaults.update(overrides)
     return RunRecorder(config, **collab_defaults), db
@@ -106,7 +106,7 @@ class TestAutoStopGenerationGuard:
         # New session must still be alive
         assert logger.enabled is True
         assert logger._run_id == new_run_id
-        db.close()
+        db.lifecycle.close()
 
     def test_matching_run_id_does_stop(self, tmp_path: Path) -> None:
         logger, db = _make_logger(tmp_path)
@@ -117,7 +117,7 @@ class TestAutoStopGenerationGuard:
         logger.stop_recording(_only_if_run_id=run_id)
         assert logger.enabled is False
         assert logger._run_id is None
-        db.close()
+        db.lifecycle.close()
 
 
 # ---------------------------------------------------------------------------
@@ -129,49 +129,49 @@ class TestDeleteRunIfSafe:
     """Cover safe-delete outcomes for complete, active, analyzing, missing, and error runs."""
 
     def test_delete_complete_run(self, tmp_path: Path) -> None:
-        db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
-        db.finalize_run("r1", "2026-01-01T00:05:00Z")
-        db.store_analysis("r1", make_persisted_analysis({"score": 1}))
-        deleted, reason = db.delete_run_if_safe("r1")
+        db = create_history_persistence_adapters(tmp_path / "h.db")
+        db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
+        db.run_repository.finalize_run("r1", "2026-01-01T00:05:00Z")
+        db.run_repository.store_analysis("r1", make_persisted_analysis({"score": 1}))
+        deleted, reason = db.run_repository.delete_run_if_safe("r1")
         assert deleted is True
         assert reason is None
-        assert db.get_run("r1") is None
-        db.close()
+        assert db.run_repository.get_run("r1") is None
+        db.lifecycle.close()
 
     def test_refuse_recording(self, tmp_path: Path) -> None:
-        db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
-        deleted, reason = db.delete_run_if_safe("r1")
+        db = create_history_persistence_adapters(tmp_path / "h.db")
+        db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
+        deleted, reason = db.run_repository.delete_run_if_safe("r1")
         assert deleted is False
         assert reason == "active"
-        assert db.get_run("r1") is not None
-        db.close()
+        assert db.run_repository.get_run("r1") is not None
+        db.lifecycle.close()
 
     def test_refuse_analyzing(self, tmp_path: Path) -> None:
-        db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
-        db.finalize_run("r1", "2026-01-01T00:05:00Z")
-        deleted, reason = db.delete_run_if_safe("r1")
+        db = create_history_persistence_adapters(tmp_path / "h.db")
+        db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
+        db.run_repository.finalize_run("r1", "2026-01-01T00:05:00Z")
+        deleted, reason = db.run_repository.delete_run_if_safe("r1")
         assert deleted is False
         assert reason == "analyzing"
-        db.close()
+        db.lifecycle.close()
 
     def test_not_found(self, tmp_path: Path) -> None:
-        db = HistoryDB(tmp_path / "h.db")
-        deleted, reason = db.delete_run_if_safe("nonexistent")
+        db = create_history_persistence_adapters(tmp_path / "h.db")
+        deleted, reason = db.run_repository.delete_run_if_safe("nonexistent")
         assert deleted is False
         assert reason == "not_found"
-        db.close()
+        db.lifecycle.close()
 
     def test_delete_error_run(self, tmp_path: Path) -> None:
-        db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
-        db.store_analysis_error("r1", "boom")
-        deleted, reason = db.delete_run_if_safe("r1")
+        db = create_history_persistence_adapters(tmp_path / "h.db")
+        db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
+        db.run_repository.store_analysis_error("r1", "boom")
+        deleted, reason = db.run_repository.delete_run_if_safe("r1")
         assert deleted is True
         assert reason is None
-        db.close()
+        db.lifecycle.close()
 
 
 # ---------------------------------------------------------------------------
@@ -183,27 +183,27 @@ class TestFinalizeRunWithMetadata:
     """Cover metadata updates on finalize_run and the no-op path after status changes."""
 
     def test_atomic_metadata_and_status(self, tmp_path: Path) -> None:
-        db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
+        db = create_history_persistence_adapters(tmp_path / "h.db")
+        db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         new_meta = _metadata("r1", end_time_utc="2026-01-01T00:05:00Z")
-        db.finalize_run("r1", "2026-01-01T00:05:00Z", metadata=new_meta)
-        run = db.get_run("r1")
+        db.run_repository.finalize_run("r1", "2026-01-01T00:05:00Z", metadata=new_meta)
+        run = db.run_repository.get_run("r1")
         assert run is not None
         assert run.status.value == "analyzing"
         assert run.end_time_utc == "2026-01-01T00:05:00Z"
-        db.close()
+        db.lifecycle.close()
 
     def test_only_recording_transitions(self, tmp_path: Path) -> None:
-        db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
-        db.finalize_run("r1", "2026-01-01T00:05:00Z")
+        db = create_history_persistence_adapters(tmp_path / "h.db")
+        db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
+        db.run_repository.finalize_run("r1", "2026-01-01T00:05:00Z")
         # Already analyzing — second finalize with metadata should be no-op
-        db.finalize_run("r1", "2026-01-01T00:10:00Z", metadata=_metadata("r1"))
-        run = db.get_run("r1")
+        db.run_repository.finalize_run("r1", "2026-01-01T00:10:00Z", metadata=_metadata("r1"))
+        run = db.run_repository.get_run("r1")
         assert run is not None
         assert run.status.value == "analyzing"
         assert run.end_time_utc == "2026-01-01T00:05:00Z"
-        db.close()
+        db.lifecycle.close()
 
 
 # ---------------------------------------------------------------------------
@@ -234,15 +234,15 @@ class TestFinalizeReturnGatesAnalysis:
         assert isinstance(run_id, str) and len(run_id) > 0
 
         # Simulate a run that created history and wrote samples
-        db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id))
+        db.run_repository.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id))
         logger._persistence.history_run_created = True
         logger._persistence.written_sample_count = 5
 
         # Sabotage finalize_run to simulate a DB crash
         monkeypatch.setattr(
-            db,
+            type(db.run_repository),
             "finalize_run",
-            lambda *a, **kw: (_ for _ in ()).throw(sqlite3.OperationalError("disk gone")),
+            lambda _self, *a, **kw: (_ for _ in ()).throw(sqlite3.OperationalError("disk gone")),
         )
 
         schedule_calls: list[str] = []
@@ -258,4 +258,4 @@ class TestFinalizeReturnGatesAnalysis:
         assert schedule_calls == [run_id], (
             f"Expected analysis to be scheduled for {run_id}, got: {schedule_calls}"
         )
-        db.close()
+        db.lifecycle.close()

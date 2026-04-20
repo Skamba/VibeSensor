@@ -1877,6 +1877,34 @@ def _check_settings_facade_removed() -> list[str]:
     return violations
 
 
+def _check_history_db_facade_removed() -> list[str]:
+    history_init = (
+        VIBESENSOR_DIR / "adapters" / "persistence" / "history_db" / "__init__.py"
+    )
+    violations: list[str] = []
+    if "HistoryDB" in _read_text(history_init):
+        violations.append(
+            f"{history_init.relative_to(REPO_ROOT)} must not define or export HistoryDB"
+        )
+
+    for root in (SERVER_ROOT, REPO_ROOT / "tools"):
+        for path in _python_files(root):
+            if path == history_init:
+                continue
+            for lineno, module, names, level in _scan_imports(path):
+                if level > 0:
+                    continue
+                if (
+                    module == "vibesensor.adapters.persistence.history_db"
+                    and "HistoryDB" in names
+                ):
+                    violations.append(
+                        f"{path.relative_to(REPO_ROOT)}:{lineno}: imports HistoryDB from "
+                        "vibesensor.adapters.persistence.history_db; use explicit collaborators"
+                    )
+    return violations
+
+
 Check = tuple[str, Callable[[], list[str]]]
 CHECKS: tuple[Check, ...] = (
     (
@@ -2106,6 +2134,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "Settings facade stays removed",
         _check_settings_facade_removed,
+    ),
+    (
+        "HistoryDB facade stays removed",
+        _check_history_db_facade_removed,
     ),
 )
 

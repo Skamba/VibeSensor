@@ -3,21 +3,14 @@
 from __future__ import annotations
 
 import logging
-import sqlite3
-from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from threading import RLock
-from typing import Any
 
 from vibesensor.adapters.persistence.history_db._client_names_repository import (
     ClientNameRepository,
 )
-from vibesensor.adapters.persistence.history_db._engine import (
-    SQLiteHistoryEngine,
-    run_startup_quick_check,
-)
+from vibesensor.adapters.persistence.history_db._engine import SQLiteHistoryEngine
 from vibesensor.adapters.persistence.history_db._run_repository import RunHistoryRepository
 from vibesensor.adapters.persistence.history_db._settings_repository import (
     SettingsSnapshotRepository,
@@ -25,7 +18,6 @@ from vibesensor.adapters.persistence.history_db._settings_repository import (
 
 __all__ = [
     "ClientNameRepository",
-    "HistoryDB",
     "HistoryPersistenceAdapters",
     "RunHistoryRepository",
     "SQLiteHistoryEngine",
@@ -70,119 +62,3 @@ def create_history_persistence_adapters(
             cursor_provider=cursor_provider,
         ),
     )
-
-
-class HistoryDB:
-    """Compatibility facade over the split history persistence collaborators.
-
-    New production wiring should prefer the narrow repositories returned by
-    :func:`create_history_persistence_adapters`. This wrapper is retained so the
-    focused history-db tests and any remaining legacy call sites can continue to
-    exercise the same public surface while the app transitions to explicit
-    injection of narrower persistence capabilities.
-    """
-
-    def __init__(
-        self,
-        db_path: Path,
-        *,
-        corruption_reporter: Callable[[str], None] | None = None,
-    ) -> None:
-        self._engine = SQLiteHistoryEngine(
-            db_path,
-            corruption_reporter=corruption_reporter,
-        )
-        self._run_repository = RunHistoryRepository(
-            cursor_provider=lambda *, commit=True: self._cursor(commit=commit),
-            write_transaction_cursor_provider=lambda: self.write_transaction_cursor(),
-        )
-        self._settings_snapshot_repository = SettingsSnapshotRepository(
-            cursor_provider=lambda *, commit=True: self._cursor(commit=commit),
-        )
-        self._client_name_repository = ClientNameRepository(
-            cursor_provider=lambda *, commit=True: self._cursor(commit=commit),
-        )
-
-    def __getattr__(self, name: str) -> Any:
-        for delegate in (
-            self._run_repository,
-            self._settings_snapshot_repository,
-            self._client_name_repository,
-            self._engine,
-        ):
-            try:
-                return getattr(delegate, name)
-            except AttributeError:
-                continue
-        raise AttributeError(f"{self.__class__.__name__!s} object has no attribute {name!r}")
-
-    @property
-    def _conn(self) -> sqlite3.Connection | None:
-        return self._engine._conn
-
-    @_conn.setter
-    def _conn(self, value: sqlite3.Connection | None) -> None:
-        self._engine._conn = value
-
-    @property
-    def _read_conn(self) -> sqlite3.Connection | None:
-        return self._engine._read_conn
-
-    @_read_conn.setter
-    def _read_conn(self, value: sqlite3.Connection | None) -> None:
-        self._engine._read_conn = value
-
-    @property
-    def _lock(self) -> RLock:
-        return self._engine._lock
-
-    @_lock.setter
-    def _lock(self, value: RLock) -> None:
-        self._engine._lock = value
-
-    @property
-    def _read_lock(self) -> RLock:
-        return self._engine._read_lock
-
-    @_read_lock.setter
-    def _read_lock(self, value: RLock) -> None:
-        self._engine._read_lock = value
-
-    def close(self) -> None:
-        self._engine.close()
-
-    def _cursor_connection(
-        self,
-        *,
-        commit: bool,
-    ) -> tuple[sqlite3.Connection | None, RLock]:
-        return self._engine._cursor_connection(commit=commit)
-
-    @contextmanager
-    def _cursor(self, *, commit: bool = True) -> Iterator[sqlite3.Cursor]:
-        with self._engine._cursor(commit=commit) as cur:
-            yield cur
-
-    @contextmanager
-    def write_transaction_cursor(self) -> Iterator[sqlite3.Cursor]:
-        with self._engine.write_transaction_cursor() as cur:
-            yield cur
-
-    def _assert_write_allowed(self) -> None:
-        self._engine._assert_write_allowed()
-
-    def _mark_corrupted(self, details: str) -> None:
-        self._engine._mark_corrupted(details)
-
-    def _ensure_schema(self) -> None:
-        self._engine._ensure_schema()
-
-    def _schema_version(self) -> int:
-        return self._engine._schema_version()
-
-    def _run_startup_quick_check(self) -> None:
-        run_startup_quick_check(
-            cursor_provider=self._cursor,
-            db_path=self.db_path,
-            mark_corrupted=self._mark_corrupted,
-        )
