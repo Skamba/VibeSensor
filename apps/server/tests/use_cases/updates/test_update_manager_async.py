@@ -513,7 +513,12 @@ class TestUpdateManagerAsync:
             and issue.detail == ""
             for issue in manager.status.issues
         )
-        assert any(rec.message == "update: runtime details refresh error" for rec in caplog.records)
+        refresh_log = next(
+            rec for rec in caplog.records if rec.message == "update: runtime details refresh error"
+        )
+        assert refresh_log.event == "update_runtime_refresh_error"
+        assert refresh_log.update_phase == "cleanup"
+        assert refresh_log.repo_path == str(tmp_path / "repo")
 
     async def test_run_update_surfaces_programmer_bug_from_cancellation_cleanup(
         self,

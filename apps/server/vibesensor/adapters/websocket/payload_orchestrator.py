@@ -11,6 +11,7 @@ from typing import cast
 import orjson
 
 from vibesensor.shared.json_utils import sanitize_for_json
+from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.types.payload_types import LiveWsPayload, WsErrorPayload
 
 LOGGER = logging.getLogger("vibesensor.adapters.websocket.hub")
@@ -91,6 +92,10 @@ class PayloadBuildOrchestrator:
                 "sending error payload to affected connections.",
                 selected_client_id,
                 exc_info=True,
+                extra=log_extra(
+                    event="ws_payload_build_failed",
+                    selected_client_id=selected_client_id,
+                ),
             )
             self._failed_client_ids.add(selected_client_id)
             return None
@@ -126,6 +131,10 @@ class PayloadBuildOrchestrator:
                         "WebSocket payload for client %r contained NaN/Inf values; "
                         "replaced with null.",
                         selected_client_id,
+                        extra=log_extra(
+                            event="ws_payload_non_finite_replaced",
+                            selected_client_id=selected_client_id,
+                        ),
                     )
                 else:
                     had_non_finite = False
@@ -141,6 +150,10 @@ class PayloadBuildOrchestrator:
                         "WebSocket payload for client %r contained NaN/Inf values; "
                         "replaced with null.",
                         selected_client_id,
+                        extra=log_extra(
+                            event="ws_payload_non_finite_replaced",
+                            selected_client_id=selected_client_id,
+                        ),
                     )
                 text = self._serialize_selected_client_payload(
                     selected_client_id,
@@ -159,6 +172,10 @@ class PayloadBuildOrchestrator:
                 "sending error payload to affected connections.",
                 selected_client_id,
                 exc_info=True,
+                extra=log_extra(
+                    event="ws_payload_serialize_failed",
+                    selected_client_id=selected_client_id,
+                ),
             )
             return _ERROR_PAYLOAD, True, None
 

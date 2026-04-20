@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import errno
+import logging
 import os
 from argparse import Namespace
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -21,6 +23,30 @@ def _runtime_app(port: int):
     )
 
 
+def _loaded_config(*, host: str, port: int) -> SimpleNamespace:
+    return SimpleNamespace(
+        server=SimpleNamespace(host=host, port=port),
+        logging=SimpleNamespace(app_log_path=None),
+    )
+
+
+def _run_with_restored_root_logging(callable_obj: Callable[[], None]) -> None:
+    root_logger = logging.getLogger()
+    original_handlers = list(root_logger.handlers)
+    original_level = root_logger.level
+    try:
+        callable_obj()
+    finally:
+        for handler in list(root_logger.handlers):
+            root_logger.removeHandler(handler)
+            if handler not in original_handlers:
+                handler.close()
+        for handler in original_handlers:
+            if handler not in root_logger.handlers:
+                root_logger.addHandler(handler)
+        root_logger.setLevel(original_level)
+
+
 def _run_main(monkeypatch, *, port: int, fail_port: int | None = None) -> list[int]:
     """Shared harness: patch app_module, call ``main()``, return recorded port calls."""
     from vibesensor.app import bootstrap as app_module
@@ -33,9 +59,7 @@ def _run_main(monkeypatch, *, port: int, fail_port: int | None = None) -> list[i
     monkeypatch.setattr(
         app_module,
         "load_config",
-        lambda config_path=None: SimpleNamespace(
-            server=SimpleNamespace(host="0.0.0.0", port=port),
-        ),
+        lambda config_path=None: _loaded_config(host="0.0.0.0", port=port),
     )
     monkeypatch.setattr(app_module, "export_config_path_env", lambda config_path: None)
     calls: list[int] = []
@@ -51,7 +75,7 @@ def _run_main(monkeypatch, *, port: int, fail_port: int | None = None) -> list[i
 
     monkeypatch.setattr(app_module, "Granian", FakeGranian)
     monkeypatch.setattr(app_module, "_granian_loop", lambda: "uvloop")
-    app_module.main()
+    _run_with_restored_root_logging(app_module.main)
     return calls
 
 
@@ -94,9 +118,7 @@ def test_main_reload_uses_factory_target(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(
         app_module,
         "load_config",
-        lambda config_path=None: SimpleNamespace(
-            server=SimpleNamespace(host="127.0.0.1", port=8000),
-        ),
+        lambda config_path=None: _loaded_config(host="127.0.0.1", port=8000),
     )
     calls: list[tuple[object, dict[str, object]]] = []
 
@@ -110,7 +132,7 @@ def test_main_reload_uses_factory_target(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(app_module, "Granian", FakeGranian)
     monkeypatch.setattr(app_module, "_granian_loop", lambda: "uvloop")
 
-    app_module.main()
+    _run_with_restored_root_logging(app_module.main)
 
     assert calls == [
         (
