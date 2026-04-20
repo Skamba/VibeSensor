@@ -278,6 +278,12 @@ async def test_payload_error_logged_at_error_level(caplog) -> None:
     assert any("sensor_42" in r.message for r in error_records)
     # Summary log should mention connection count
     assert any("1 connection(s)" in r.message for r in error_records)
+    client_error = next(
+        record
+        for record in error_records
+        if getattr(record, "selected_client_id", None) == "sensor_42"
+    )
+    assert client_error.event == "ws_payload_build_failed"
 
 
 @pytest.mark.asyncio
@@ -310,10 +316,14 @@ async def test_payload_error_affected_count_logged(caplog) -> None:
 
     # Summary log mentions 2 affected connections
     assert any("2 connection(s)" in r.message for r in caplog.records)
-    assert any(
-        "WebSocket payload build failed for 1 client id(s) ('bad')" in r.message
-        for r in caplog.records
+    summary_record = next(
+        record
+        for record in caplog.records
+        if "WebSocket payload build failed for 1 client id(s) ('bad')" in record.message
     )
+    assert summary_record.event == "ws_broadcast_payload_build_failed"
+    assert summary_record.failed_client_ids == ["bad"]
+    assert summary_record.affected_connection_count == 2
 
 
 @pytest.mark.asyncio
@@ -634,6 +644,8 @@ async def test_send_failure_log_includes_client_id(caplog) -> None:
     warn_logs = [r for r in caplog.records if "broadcast send failed" in r.message]
     assert len(warn_logs) == 1
     assert "sensor_42" in warn_logs[0].message
+    assert warn_logs[0].event == "ws_broadcast_send_failed"
+    assert warn_logs[0].selected_client_id == "sensor_42"
 
 
 @pytest.mark.asyncio
