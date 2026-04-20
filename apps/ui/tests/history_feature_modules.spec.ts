@@ -9,6 +9,14 @@ import type {
   HistoryPanelView,
 } from "../src/app/views/history_table_view";
 import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
+import {
+  buildHistoryHandlers,
+  makeDeleteHistoryRunPayload,
+  makeHistoryListPayload,
+} from "./msw/handlers/history";
+import { createUiMswTestServer } from "./msw/node";
+
+const mswServer = createUiMswTestServer(test);
 
 type ButtonStub = HTMLButtonElement & {
   disabled: boolean;
@@ -274,20 +282,13 @@ test("history feature skips deletion when confirmation is declined", async () =>
 
 test("history feature refreshes runs and renders an empty-state model when no runs exist", async () => {
   const { feature, historySummary, deleteAllRunsBtn, getLatestModel } = createFeatureHarness();
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = (async (input: string | URL | RequestInfo) => {
-    const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
-    if (url === "/api/history") {
-      return jsonResponse({ runs: [] });
-    }
-    throw new Error(`Unexpected request: ${url}`);
-  }) as typeof fetch;
+  mswServer.use(
+    ...buildHistoryHandlers({
+      list: makeHistoryListPayload({ runs: [] }),
+    }),
+  );
 
-  try {
-    await feature.refreshHistory();
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  await feature.refreshHistory();
 
   const model = getLatestModel();
   expect(historySummary.textContent).toBe("history.none");
@@ -301,22 +302,15 @@ test("history feature refreshes runs and renders an empty-state model when no ru
 test("history feature refreshes runs and renders table state through one owner", async () => {
   const state = createAppState();
   const { feature, historySummary, deleteAllRunsBtn, getLatestModel } = createFeatureHarness(state);
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = (async (input: string | URL | RequestInfo) => {
-    const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
-    if (url === "/api/history") {
-      return jsonResponse({
+  mswServer.use(
+    ...buildHistoryHandlers({
+      list: makeHistoryListPayload({
         runs: [historyListRun("run-001", { status: "analyzing" })],
-      });
-    }
-    throw new Error(`Unexpected request: ${url}`);
-  }) as typeof fetch;
+      }),
+    }),
+  );
 
-  try {
-    await feature.refreshHistory();
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  await feature.refreshHistory();
 
   expect(state.history.runs.value).toHaveLength(1);
   expect(historySummary.textContent).toContain("history.available_count");
@@ -557,32 +551,27 @@ test("history feature reports partial delete failures without splitting render o
   ensureRunDetail(state, "run-002");
 
   const { feature, errors, getRenderCount, getLatestModel } = createFeatureHarness(state);
-  const originalFetch = globalThis.fetch;
   const deleteRequests: string[] = [];
-
-  globalThis.fetch = (async (input: string | URL | RequestInfo, init?: RequestInit) => {
-    const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
-    if (init?.method === "DELETE" && url === "/api/history/run-001") {
-      deleteRequests.push(url);
-      return jsonResponse({ ok: true });
-    }
-    if (init?.method === "DELETE" && url === "/api/history/run-002") {
-      deleteRequests.push(url);
-      return jsonResponse({ detail: "delete failed" }, { status: 500 });
-    }
-    if (url === "/api/history") {
-      return jsonResponse({
+  mswServer.use(
+    ...buildHistoryHandlers({
+      list: makeHistoryListPayload({
         runs: [historyListRun("run-002", { status: "analyzing" })],
-      });
-    }
-    throw new Error(`Unexpected request: ${url}`);
-  }) as typeof fetch;
+      }),
+      deleteRun: (request) => {
+        const url = new URL(request.url);
+        deleteRequests.push(url.pathname);
+        if (url.pathname === "/api/history/run-001") {
+          return makeDeleteHistoryRunPayload({ run_id: "run-001" });
+        }
+        if (url.pathname === "/api/history/run-002") {
+          return { detail: "delete failed", status: 500 };
+        }
+        return { detail: `Unexpected request: ${url.pathname}`, status: 500 };
+      },
+    }),
+  );
 
-  try {
-    await feature.deleteAllRuns();
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  await feature.deleteAllRuns();
 
   expect(deleteRequests).toEqual(["/api/history/run-001", "/api/history/run-002"]);
   expect(state.history.deleteAllRunsInFlight.value).toBe(false);

@@ -4,7 +4,10 @@ import {
   downloadBlobFile,
   filenameFromDisposition,
 } from "../src/app/features/history_download";
-import { HttpResponse, http, uiTestUrl } from "./msw/http";
+import {
+  buildHistoryDownloadHandlers,
+  makeHistoryBinaryDownloadResponse,
+} from "./msw/handlers/history";
 import { createUiMswTestServer } from "./msw/node";
 
 const mswServer = createUiMswTestServer(test);
@@ -32,15 +35,13 @@ test("downloadBlobFile downloads with decoded filename and revokes the blob URL"
   const revoked: string[] = [];
 
   mswServer.use(
-    http.get(uiTestUrl("/api/history/run-001/report.pdf"), () =>
-      new HttpResponse("PDF", {
-        status: 200,
-        headers: {
-          "content-type": "application/pdf",
-          "content-disposition": "attachment; filename*=UTF-8''run%20%C3%BC.pdf",
-        },
+    ...buildHistoryDownloadHandlers({
+      reportPdf: makeHistoryBinaryDownloadResponse({
+        body: "PDF",
+        contentType: "application/pdf",
+        filename: "run ü.pdf",
       }),
-    ),
+    }),
   );
   (globalThis as { document?: Document }).document = {
     body: {
