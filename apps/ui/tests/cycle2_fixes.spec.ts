@@ -11,7 +11,7 @@
  *  6. carMapSamples not cleared on reconnect
  */
 
-import { expect, test } from "@playwright/test";
+import { describe, expect, test } from "vitest";
 import { adaptServerPayload } from "../src/server_payload";
 import { applySpectrumTick } from "../src/app/ui_app_state";
 import { areHeavyFramesCompatible, interpolateHeavyFrame } from "../src/app/spectrum_animation";
@@ -36,7 +36,7 @@ function requireSpectra(adapted: ReturnType<typeof adaptServerPayload>) {
 // ---------------------------------------------------------------------------
 // 1. adaptServerPayload – spectra null yields null, not stale data
 // ---------------------------------------------------------------------------
-test.describe("adaptServerPayload spectra handling", () => {
+describe("adaptServerPayload spectra handling", () => {
   const basePayload = {
     schema_version: EXPECTED_SCHEMA_VERSION,
     server_time: "2026-01-01T00:00:00Z",
@@ -92,7 +92,7 @@ test.describe("adaptServerPayload spectra handling", () => {
   });
 });
 
-test.describe("applySpectrumTick heavy/light handling", () => {
+describe("applySpectrumTick heavy/light handling", () => {
   const heavyFrame = {
     clients: {
       sensor1: {
@@ -118,7 +118,7 @@ test.describe("applySpectrumTick heavy/light handling", () => {
   });
 });
 
-test.describe("spectrum heavy-frame animation compatibility", () => {
+describe("spectrum heavy-frame animation compatibility", () => {
   const baseFrame = {
     seriesIds: ["sensor1", "sensor2"],
     freq: [10, 20, 30],
@@ -169,7 +169,7 @@ test.describe("spectrum heavy-frame animation compatibility", () => {
 //    the feature closure.  The bug is that Number.isFinite(v) && v > 0 was
 //    the only check — values like 9999 kph were accepted.
 // ---------------------------------------------------------------------------
-test.describe("manual speed validation logic", () => {
+describe("manual speed validation logic", () => {
   function validateManualSpeed(raw: number): number | null {
     // Mirrors the fixed guard in settings_speed_source_module.ts
     return Number.isFinite(raw) && raw > 0 && raw <= 500 ? raw : null;

@@ -1,10 +1,9 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { createPollingController } from "../src/app/features/polling_controller";
 import { signal } from "../src/app/ui_signals";
 import { createDeferred, flushAsyncWork, installTimerHarness } from "./async_test_helpers";
 
-test.describe("createPollingController", () => {
+describe("createPollingController", () => {
   test("restart replaces the previous timer instead of keeping two poll chains alive", async () => {
     const timers = installTimerHarness();
     let pollCalls = 0;

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, expect, test } from "vitest";
 import { createHistoryFeature } from "../src/app/features/history_feature";
 import { createAppState, type RunDetail } from "../src/app/ui_app_state";
 import { effect, signal } from "../src/app/ui_signals";
@@ -16,7 +15,7 @@ import {
 } from "./msw/handlers/history";
 import { createUiMswTestServer } from "./msw/node";
 
-const mswServer = createUiMswTestServer(test);
+const mswServer = createUiMswTestServer();
 
 type ButtonStub = HTMLButtonElement & {
   disabled: boolean;
@@ -257,7 +256,7 @@ function createFeatureHarness(
   };
 }
 
-test.beforeEach(() => {
+beforeEach(() => {
   installWindowGlobal();
 });
 

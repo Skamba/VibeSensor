@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   createUpdateFeatureWorkflow,
   type UpdateFeatureWorkflowViewPorts,
@@ -114,7 +113,7 @@ function makeInternet(
   };
 }
 
-test.describe("createUpdateFeatureWorkflow", () => {
+describe("createUpdateFeatureWorkflow", () => {
   test("refreshes update status through a no-DOM workflow seam", async () => {
     const harness = createHarness();
     const status = makeStatus({

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   classifyDataFreshness,
   deriveDataFreshnessThresholds,
@@ -13,7 +12,7 @@ function makeClient(overrides: Partial<{ sample_rate_hz: number; frame_samples: 
   };
 }
 
-test.describe("realtime freshness thresholds", () => {
+describe("realtime freshness thresholds", () => {
   test("derives thresholds directly from cadence without legacy minimums", () => {
     expect(deriveDataFreshnessThresholds([makeClient({ sample_rate_hz: 1600, frame_samples: 100 })])).toEqual({
       freshMs: 79,

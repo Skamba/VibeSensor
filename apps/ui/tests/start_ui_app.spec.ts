@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import { mountUiApp } from "../src/app/ui_app_mount";
 import type { AppState } from "../src/app/ui_app_state";
 import type { UiAppRuntime } from "../src/app/ui_app_runtime";

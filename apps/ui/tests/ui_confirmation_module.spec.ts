@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import { createUiConfirmationModule } from "../src/app/runtime/ui_confirmation_module";
 
 test("ui confirmation module queues requests and resolves them from dialog actions", async () => {

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { validateLiveWsPayload } from "../src/ws_payload_validator";
 
 const basePayload = {
@@ -16,6 +15,7 @@ const basePayload = {
       sample_rate_hz: 800,
       last_seen_age_ms: 0,
       frames_total: 10,
+      frame_samples: 1024,
       dropped_frames: 0,
     },
   ],
@@ -41,7 +41,7 @@ function makeStrengthMetrics() {
   };
 }
 
-test.describe("validateLiveWsPayload", () => {
+describe("validateLiveWsPayload", () => {
   test("accepts a schema-valid payload", () => {
     expect(
       validateLiveWsPayload({

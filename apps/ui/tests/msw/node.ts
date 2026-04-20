@@ -1,12 +1,7 @@
-import type { test as playwrightTest } from "@playwright/test";
 import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll } from "vitest";
 
 import { UI_MSW_ORIGIN } from "./http";
-
-type PlaywrightTestHooks = Pick<
-  typeof playwrightTest,
-  "afterAll" | "afterEach" | "beforeAll"
->;
 
 function installUiMswInterception(server: ReturnType<typeof setupServer>): () => void {
   const originalFetch = globalThis.fetch;
@@ -40,21 +35,21 @@ function resolveFetchInput(input: URL | RequestInfo): URL | Request {
   return new Request(new URL(input.url, UI_MSW_ORIGIN), input);
 }
 
-export function createUiMswTestServer(testHooks: PlaywrightTestHooks) {
+export function createUiMswTestServer() {
   const server = setupServer();
   let restoreInterception = () => undefined;
 
   // Use this shared lifecycle only for tests that cross the real HTTP/fetch
   // boundary. Transport-injected or pure view/state tests should stay below it.
-  testHooks.beforeAll(() => {
+  beforeAll(() => {
     restoreInterception = installUiMswInterception(server);
   });
 
-  testHooks.afterEach(() => {
+  afterEach(() => {
     server.resetHandlers();
   });
 
-  testHooks.afterAll(() => {
+  afterAll(() => {
     restoreInterception();
   });
 

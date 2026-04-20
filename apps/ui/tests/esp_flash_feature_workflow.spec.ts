@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { createEspFlashFeatureWorkflow } from "../src/app/features/esp_flash_feature_workflow";
 import type {
   EspFlashHistoryAttemptPayload,
@@ -67,7 +66,7 @@ function makePort(
   };
 }
 
-test.describe("createEspFlashFeatureWorkflow", () => {
+describe("createEspFlashFeatureWorkflow", () => {
   test("refreshes flash status, logs, and history without DOM bindings", async () => {
     const harness = createHarness();
     const status = makeStatus({

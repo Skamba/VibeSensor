@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { signal } from "../src/app/ui_signals";
 import {
   bindReplaceableTimerEffect,
@@ -7,7 +6,7 @@ import {
   createReplaceableTimeout,
 } from "../src/app/timer_cleanup";
 
-test.describe("timer cleanup utilities", () => {
+describe("timer cleanup utilities", () => {
   test("replaceable timeout clears the previous timeout before scheduling a new one", () => {
     let nextHandle = 1;
     const activeHandles = new Set<number>();

@@ -1,8 +1,7 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { installDocumentStub } from "./spectrum_test_support";
 
-test.describe("spectrum_css_vars", () => {
+describe("spectrum_css_vars", () => {
   test("reuses the cached spectrum css snapshot until values actually change", async () => {
     const restoreDocument = installDocumentStub();
     const styleValues: Record<string, string> = {

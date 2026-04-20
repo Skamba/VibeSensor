@@ -1,10 +1,9 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { createUiCarCreationCommand } from "../src/app/runtime/ui_car_creation_command";
 import type { CarUpsertRequest, CarsPayload } from "../src/api/types";
 import { defaultVehicleSettings } from "../src/app/ui_app_state";
 
-test.describe("createUiCarCreationCommand", () => {
+describe("createUiCarCreationCommand", () => {
   test("creates a car through the narrow runtime seam and preserves the activate-and-sync flow", async () => {
     const payloadCalls: CarsPayload[] = [];
     const lifecycleCalls: string[] = [];

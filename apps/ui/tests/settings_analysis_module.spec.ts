@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, expect, test } from "vitest";
 import { createSettingsAnalysisModule } from "../src/app/features/settings_analysis_module";
 import { createAppState } from "../src/app/ui_app_state";
 import { effect, signal } from "../src/app/ui_signals";
@@ -16,7 +15,7 @@ import {
 } from "./msw/handlers/settings";
 import { createUiMswTestServer } from "./msw/node";
 
-const mswServer = createUiMswTestServer(test);
+const mswServer = createUiMswTestServer();
 
 function lastRender(renders: AnalysisPanelRenderModel[]): AnalysisPanelRenderModel {
   const render = renders.at(-1);
@@ -47,7 +46,7 @@ function translate(key: string, vars?: Record<string, unknown>): string {
   }
 }
 
-test.beforeEach(() => {
+beforeEach(() => {
   installWindowGlobal();
 });
 

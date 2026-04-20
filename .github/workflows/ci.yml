@@ -253,6 +253,47 @@ jobs:
         working-directory: apps/ui
         run: npm run typecheck
 
+  ui-unit:
+    name: UI unit tests
+    needs:
+      - ci-scope
+      - frontend-typecheck
+    if: >-
+      ${{
+        needs.ci-scope.outputs.run_frontend_typecheck == 'true' &&
+        needs.frontend-typecheck.result == 'success'
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: apps/ui/package-lock.json
+
+      - name: Install UI dependencies
+        working-directory: apps/ui
+        run: node ../../tools/ui/ensure_ui_bootstrap.mjs
+
+      - name: UI Vitest unit suite
+        working-directory: apps/ui
+        run: npm run test:unit
+
+      - name: Upload UI unit test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-unit-test-artifacts
+          path: apps/ui/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
   ui-smoke:
     name: UI smoke tests
     needs:

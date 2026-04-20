@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, describe, expect, test } from "vitest";
 import { HttpResponse, http, uiTestUrl } from "./msw/http";
 import { createUiMswTestServer } from "./msw/node";
 import { createAppState } from "../src/app/ui_app_state";
@@ -22,7 +21,7 @@ import { createUiShellStatusModule } from "../src/app/runtime/ui_shell_status_mo
 import { signal, type ReadonlySignal } from "../src/app/ui_signals";
 import { installDocumentStub } from "./spectrum_test_support";
 
-const mswServer = createUiMswTestServer(test);
+const mswServer = createUiMswTestServer();
 
 function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : key;
@@ -78,7 +77,7 @@ function createChromeViewRecorder() {
   };
 }
 
-test.describe("createUiShellNavigationModule", () => {
+describe("createUiShellNavigationModule", () => {
   test("setActiveView updates signal-backed state and falls back to dashboard", () => {
     const state = createAppState();
     const activatedViews: string[] = [];
@@ -161,8 +160,8 @@ test.describe("createUiShellNavigationModule", () => {
   });
 });
 
-test.describe("UiShellController", () => {
-  test.beforeEach(() => {
+describe("UiShellController", () => {
+  beforeEach(() => {
     installWindowStub();
   });
 
@@ -322,8 +321,8 @@ test.describe("UiShellController", () => {
 
 });
 
-test.describe("createUiShellPreferencesModule", () => {
-  test.beforeEach(() => {
+describe("createUiShellPreferencesModule", () => {
+  beforeEach(() => {
     (globalThis as { window?: Window & typeof globalThis }).window =
       globalThis as unknown as Window & typeof globalThis;
   });
@@ -414,7 +413,7 @@ test.describe("createUiShellPreferencesModule", () => {
   });
 });
 
-test.describe("createUiShellNotificationModule", () => {
+describe("createUiShellNotificationModule", () => {
   test("shows and clears the shared error banner model signal", () => {
     let pendingHide: (() => void) | null = null;
 
@@ -444,7 +443,7 @@ test.describe("createUiShellNotificationModule", () => {
   });
 });
 
-test.describe("createUiShellStatusModule", () => {
+describe("createUiShellStatusModule", () => {
   test("builds websocket badge state and degraded shell status signals without bootstrap wiring", () => {
     const state = createAppState();
     state.transport.wsState.value = "stale";

@@ -1,13 +1,13 @@
-import { expect, test } from "@playwright/test";
+import { beforeEach, describe, expect, test } from "vitest";
 import { apiJson } from "../src/api/http";
 import { createDeferred, installTimerHarness, installWindowGlobal } from "./async_test_helpers";
 import { HttpResponse, http, uiTestUrl } from "./msw/http";
 import { createUiMswTestServer } from "./msw/node";
 
-const mswServer = createUiMswTestServer(test);
+const mswServer = createUiMswTestServer();
 
-test.describe("apiJson", () => {
-  test.beforeEach(() => {
+describe("apiJson", () => {
+  beforeEach(() => {
     installWindowGlobal();
   });
 

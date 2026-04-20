@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { test } from "vitest";
 
 import {
   createDeferred,
@@ -823,6 +824,5 @@ const maintenanceSignalTests = [
 ];
 
 for (const maintenanceSignalTest of maintenanceSignalTests) {
-  await maintenanceSignalTest.run();
-  console.log(`PASS ${maintenanceSignalTest.name}`);
+  test(maintenanceSignalTest.name, maintenanceSignalTest.run);
 }
