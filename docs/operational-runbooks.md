@@ -45,10 +45,11 @@ or shorter local-history window.
 docker compose logs --tail 100
 ```
 
-5. If file logging is enabled, use the `X-Request-ID` response header from the
-   failing HTTP call to find the matching structured JSON app-log entry; the
-   same `request_id` also appears on request-scoped `settings_change` audit
-   events.
+5. Use `docker compose logs --tail 100` for the human-readable `structlog`
+   console stream. If file logging is enabled, use the `X-Request-ID` response
+   header from the failing HTTP call to find the matching structured JSON
+   app-log entry; the same `request_id` also appears on request-scoped
+   `settings_change` audit events.
 6. If the issue is on a Pi, also review systemd or journal output for the service and hotspot helpers.
 
 ## Diagnose stale or missing live updates
@@ -153,8 +154,9 @@ df -h /var/lib/vibesensor /var/log/vibesensor
 sudo journalctl -u vibesensor.service -n 200 --no-pager
 ```
 
-4. If file logging is enabled, inspect the structured app log configured by
-   `logging.app_log_path`.
+4. Review the live `structlog` console output first with `journalctl` above. If
+   file logging is enabled, inspect the matching structured JSON app log
+   configured by `logging.app_log_path`.
 5. Before any manual DB recovery, copy `/var/lib/vibesensor/history.db` off the
    device (or snapshot the card) so the original evidence is preserved.
 6. If the device lost power and now reports repeated write failures, treat that

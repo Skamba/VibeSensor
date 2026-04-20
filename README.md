@@ -123,6 +123,10 @@ vibesensor-sim --count 5 --server-host 127.0.0.1
 
 Open http://localhost:8000.
 
+Backend logs now flow through a shared `structlog` pipeline: `docker compose logs`
+shows human-readable structured lines, and optional `logging.app_log_path` files
+capture the same events as JSON for request/run correlation.
+
 If you want source-mounted hot-reload instead of a production-style container
 build, use the Docker dev mode below.
 
@@ -324,6 +328,9 @@ run log format. Synthetic analysis scenarios live in
   server bound on 0.0.0.0:80 (or 8000 in dev)
 - **High dropped frames** — reduce Wi-Fi contention, keep ESP close to Pi,
   check AP channel
+- **Need backend log correlation** — use `docker compose logs` for live
+  structured console output, or match the `X-Request-ID` response header
+  against the JSON file log configured by `logging.app_log_path`
 - **Hotspot has no DHCP leases** — rerun `apps/server/scripts/hotspot_nmcli.sh`
 - **Need config details** — check [apps/server/README.md](apps/server/README.md)
   and [firmware/esp/README.md](firmware/esp/README.md) for AP/firmware settings

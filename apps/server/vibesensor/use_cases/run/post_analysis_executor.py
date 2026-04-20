@@ -9,6 +9,7 @@ from typing import Protocol
 import aiosqlite
 
 from vibesensor.shared.ports import RunPersistence
+from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.run.post_analysis_input import (
     PostAnalysisRunInput,
@@ -60,7 +61,11 @@ def execute_post_analysis(
     defer_retryable_error_storage: bool = False,
 ) -> PostAnalysisAttemptResult:
     analysis_start = time.monotonic()
-    LOGGER.info("Analysis started for run %s", run_id)
+    LOGGER.info(
+        "Analysis started for run %s",
+        run_id,
+        extra=log_extra(event="post_analysis_started", run_id=run_id),
+    )
     try:
         load_result = load_run(run_id=run_id, db=db)
     except (aiosqlite.Error, OSError, MemoryError) as exc:
@@ -78,7 +83,15 @@ def execute_post_analysis(
         )
 
     if isinstance(load_result, MissingPostAnalysisMetadata):
-        LOGGER.warning("Cannot analyse run %s: metadata not found", run_id)
+        LOGGER.warning(
+            "Cannot analyse run %s: metadata not found",
+            run_id,
+            extra=log_extra(
+                event="post_analysis_skipped",
+                run_id=run_id,
+                failure_kind="missing_metadata",
+            ),
+        )
         return _store_load_error(
             db=db,
             run_id=run_id,
@@ -87,7 +100,15 @@ def execute_post_analysis(
         )
 
     if isinstance(load_result, EmptyPostAnalysisSamples):
-        LOGGER.warning("Skipping post-analysis for run %s: no samples collected", run_id)
+        LOGGER.warning(
+            "Skipping post-analysis for run %s: no samples collected",
+            run_id,
+            extra=log_extra(
+                event="post_analysis_skipped",
+                run_id=run_id,
+                failure_kind="no_samples",
+            ),
+        )
         return _store_load_error(
             db=db,
             run_id=run_id,
@@ -120,6 +141,12 @@ def execute_post_analysis(
         loaded.run_id,
         len(run_input.samples),
         duration_s,
+        extra=log_extra(
+            event="post_analysis_completed",
+            run_id=loaded.run_id,
+            sample_count=len(run_input.samples),
+            duration_s=round(duration_s, 3),
+        ),
     )
     return PostAnalysisExecutionSuccess(run_id=loaded.run_id)
 
@@ -134,7 +161,15 @@ def _store_load_error(
     try:
         db.store_analysis_error(run_id, completed_error)
     except aiosqlite.Error:
-        LOGGER.warning("Failed to store analysis error for run %s", run_id, exc_info=True)
+        LOGGER.warning(
+            "Failed to store analysis error for run %s",
+            run_id,
+            exc_info=True,
+            extra=log_extra(
+                event="post_analysis_error_persist_failed",
+                run_id=run_id,
+            ),
+        )
         return PostAnalysisExecutionPersistenceFailure(
             run_id=run_id,
             completed_error=completed_error,
@@ -164,6 +199,12 @@ def _retryable_failure_result(
         duration_s,
         exc,
         exc_info=True,
+        extra=log_extra(
+            event="post_analysis_retryable_failure",
+            run_id=run_id,
+            duration_s=round(duration_s, 3),
+            error_message=str(exc),
+        ),
     )
     return PostAnalysisExecutionRetryableFailure(
         run_id=run_id,
@@ -187,6 +228,12 @@ def _persistence_failure_result(
         duration_s,
         exc,
         exc_info=True,
+        extra=log_extra(
+            event="post_analysis_failed",
+            run_id=run_id,
+            duration_s=round(duration_s, 3),
+            error_message=str(exc),
+        ),
     )
     completed_error = str(exc)
     callback_errors = (callback_error,)
@@ -194,7 +241,16 @@ def _persistence_failure_result(
     try:
         db.store_analysis_error(run_id, completed_error)
     except aiosqlite.Error as store_exc:
-        LOGGER.warning("Failed to store analysis error for run %s", run_id, exc_info=True)
+        LOGGER.warning(
+            "Failed to store analysis error for run %s",
+            run_id,
+            exc_info=True,
+            extra=log_extra(
+                event="post_analysis_error_persist_failed",
+                run_id=run_id,
+                error_message=str(store_exc),
+            ),
+        )
         return PostAnalysisExecutionPersistenceFailure(
             run_id=run_id,
             completed_error=completed_error,
