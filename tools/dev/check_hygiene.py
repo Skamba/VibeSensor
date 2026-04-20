@@ -188,6 +188,12 @@ class RuntimeSupportMatrixRow:
 _UI_ALLOWED_RAW_HTML_PREFIX = "apps/ui/src/app/views/"
 _UI_DOM_REGISTRY_PATH = ROOT / "apps" / "ui" / "src" / "app" / "ui_dom_registry.ts"
 _UI_DOM_REGISTRY_TOKENS = ("UiDomRegistry", "ui_dom_registry")
+_UI_LEGACY_TEST_DOM_TOKENS = (
+    "createPanel(",
+    "installFakeDomGlobals(",
+    "FakeElement",
+    "FakeHTMLElement",
+)
 _OVERSIZED_TEST_ALLOWLIST_PATH = ROOT / "tools" / "dev" / "oversized_test_allowlist.yml"
 _OVERSIZED_TEST_DEFAULT_LIMIT = 700
 _OVERSIZED_TEST_DEFAULT_REPORT_LIMIT = 10
@@ -256,6 +262,8 @@ def _read_required_text(path: Path) -> str:
 
 
 def _line_count(path: Path) -> int:
+    if not path.exists():
+        return 0
     return sum(1 for _ in path.open("r", encoding="utf-8", errors="ignore"))
 
 
@@ -454,6 +462,16 @@ def _ui_source_files() -> list[Path]:
     ]
 
 
+def _ui_test_files() -> list[Path]:
+    return [
+        path
+        for path in _git_tracked_files()
+        if path.is_file()
+        and path.suffix in _UI_SOURCE_SUFFIXES
+        and path.is_relative_to(ROOT / "apps" / "ui" / "tests")
+    ]
+
+
 def _extract_import_specifiers(source_text: str) -> list[str]:
     specifiers = [
         *(_IMPORT_FROM_RE.findall(source_text)),
@@ -565,6 +583,21 @@ def check_frontend_dom_registry_guardrails() -> list[str]:
                     "use feature-scoped locators instead."
                 )
                 break
+    return errors
+
+
+def check_frontend_legacy_test_dom_bridge_guardrails() -> list[str]:
+    errors: list[str] = []
+    for path in _ui_test_files():
+        rel = str(path.relative_to(ROOT))
+        text = path.read_text(encoding="utf-8")
+        for token in _UI_LEGACY_TEST_DOM_TOKENS:
+            if token not in text:
+                continue
+            errors.append(
+                f"{rel} references {token!r}; keep UI tests on mountSignalView() plus real DOM panels "
+                "instead of legacy fake-element bridge helpers."
+            )
     return errors
 
 
@@ -2133,6 +2166,15 @@ def main() -> int:
         failures += 1
     else:
         print("Frontend DOM registry guardrails passed.")
+
+    frontend_legacy_test_dom_errors = check_frontend_legacy_test_dom_bridge_guardrails()
+    if frontend_legacy_test_dom_errors:
+        print("Frontend legacy test-DOM guardrail drift detected:")
+        for item in frontend_legacy_test_dom_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Frontend legacy test-DOM guardrails passed.")
 
     oversized_test_errors, oversized_test_report = check_oversized_test_files()
     if oversized_test_errors:

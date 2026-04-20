@@ -450,15 +450,19 @@ cost. Both visual commands only run `tests/visual.spec.ts`.
   for direct signal JSX bindings, computed-driven output assertions, and
   effect-backed subscription seams.
 - Run `npm run test:signals` to execute the reference signal-view coverage
-  directly in Node with the same helper path used by future isolated island
-  tests.
+  directly in Node. That lane now also covers the mounted maintenance feature
+  harness in `tests/maintenance_feature_signal_tests.ts`, so isolated panel
+  tests do not need the Playwright unit runner just to exercise mounted DOM.
 - Use `tests/async_test_helpers.ts::flushSignalUpdates()` after mutating signals
   or when waiting on effect-owned side effects.
   The same reference file also covers an effect-backed subscription seam through
   `mountSettingsShell()`.
-- `createPanel()` and the raw fake-element builders remain only for legacy
-  bridge-style feature fixtures such as `tests/esp_flash_feature.spec.ts`.
-  Do not start new island tests from that pattern.
+- Feature harnesses that need the real maintenance/settings DOM should mount the
+  owning panels with `mountSignalView()` and query semantic IDs from the live
+  DOM, as `tests/maintenance_feature_test_support.ts` now does for the update,
+  internet, and ESP flash panels.
+- Do not add render-model serializers or fake-element bridge helpers for new UI
+  tests; keep panel assertions exercised against mounted DOM.
 
 ## Design Language
 

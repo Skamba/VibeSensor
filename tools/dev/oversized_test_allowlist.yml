@@ -4,8 +4,6 @@
 threshold_lines: 700
 report_limit: 10
 allowlist:
-  # Shared maintenance-flow harness reused by several focused ESP/update specs.
-  apps/ui/tests/maintenance_feature_test_support.ts: Shared maintenance feature harness for ESP flash and updater feature specs.
   # Projection regressions intentionally stay together so report-shape drift is reviewed in one place.
   apps/server/tests/adapters/pdf/test_report_document_projection.py: High-density report projection regression matrix kept together by document-output seam.
   # Settings smoke keeps the full multi-tab settings journey in one browser spec.
@@ -16,3 +14,5 @@ allowlist:
   apps/server/tests/use_cases/run/test_metrics_log_helpers.py: Helper-focused metrics log regression coverage intentionally stays aggregated in one module.
   # Cars smoke keeps the full cars workflow journey in one browser spec.
   apps/ui/tests/smoke.cars.spec.ts: End-to-end cars smoke journey intentionally spans multiple cars flows in one spec.
+  # Maintenance mounted-DOM coverage now lives in one Node-side regression owner instead of four legacy bridge specs.
+  apps/ui/tests/maintenance_feature_signal_tests.ts: Mounted maintenance regression matrix intentionally stays together while replacing the deleted legacy createPanel Playwright split.
