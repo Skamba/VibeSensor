@@ -21,6 +21,26 @@
 - Oversized tracked test/spec files are guarded in `tools/dev/check_hygiene.py` with the allowlist at `tools/dev/oversized_test_allowlist.yml`. Files at or above the shared threshold must either be split or carry an explicit allowlist reason, and the hygiene output always prints the current largest tracked test/spec files.
 - `make sync-contracts` is the authoritative contract/doc regeneration path; `make lint` and the `backend-contract-drift` CI job run it in `--check` mode.
 
+### Frontend HTTP tests with MSW
+
+Use MSW only for frontend tests that intentionally cross the real HTTP boundary.
+
+- Install the shared lifecycle from `apps/ui/tests/msw/node.ts` for Playwright
+  specs that call the real UI HTTP client. It rewrites relative `/api/...`
+  requests onto the test origin and throws on unhandled requests so missing
+  handlers fail loudly.
+- Keep reusable feature handlers in `apps/ui/tests/msw/handlers/` and cross-feature
+  primitives in `apps/ui/tests/msw/http.ts`. Follow the existing naming pattern:
+  `build<Feature>Handlers(...)`, `build<Feature><Scenario>Handlers(...)`, and
+  `make<Feature><Thing>Payload(...)`.
+- Prefer those shared scenario helpers over ad hoc `globalThis.fetch`
+  replacement when multiple specs in the same feature area need the same HTTP
+  behavior.
+- Do not add MSW to tests that already inject transport ports or stay inside
+  pure presenter/view/state seams. Those tests should remain network-free.
+- WebSocket mocking is outside the MSW boundary here; keep using the dedicated
+  fake WebSocket helpers for live-session flows.
+
 ## Layout
 
 The test tree is feature-based. Most directories mirror the backend package or module they cover.
