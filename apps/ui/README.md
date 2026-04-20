@@ -100,8 +100,8 @@ browser-side fetch boundary.
 - Feature-specific reusable handlers belong under `tests/msw/handlers/` as they
   appear. Keep cross-feature primitives in `tests/msw/http.ts`, and name
   scenario factories `build<Feature><Scenario>Handlers(...)`.
-- `tests/msw/browser.ts` is the shared entrypoint for future browser-worker
-  flows; keep WebSocket mocking out of that layer.
+- Browser-worker wiring for optional local backend-free flows stays with the
+  later MSW follow-up issues; keep WebSocket mocking out of that layer.
 
 ## Bundle analysis
 
