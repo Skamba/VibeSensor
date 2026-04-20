@@ -1,4 +1,4 @@
-"""Exercise supervised task restart, terminal failure recording, and backoff caps."""
+"""Exercise supervised service restart, terminal failure recording, and backoff caps."""
 
 from __future__ import annotations
 
@@ -14,9 +14,7 @@ from vibesensor.infra.runtime.task_supervisor import TaskSupervisor
 
 
 @pytest.mark.asyncio
-async def test_supervisor_restarts_failed_task_and_clears_health(monkeypatch) -> None:
-    import vibesensor.infra.runtime.task_supervisor as task_supervisor_module
-
+async def test_supervisor_restarts_failed_task_and_clears_health() -> None:
     health_state = RuntimeHealthState()
     supervisor = TaskSupervisor(
         health_state=health_state,
@@ -40,21 +38,20 @@ async def test_supervisor_restarts_failed_task_and_clears_health(monkeypatch) ->
         restart_started.set()
         await asyncio.Future()
 
-    monkeypatch.setattr(task_supervisor_module.asyncio, "sleep", _fast_sleep)
-
-    task = supervisor.start(
-        task_factory,
-        name="ws-broadcast",
-        restartable_exceptions=(RuntimeError,),
-    )
-    await asyncio.wait_for(restart_started.wait(), timeout=1.0)
-
-    assert call_count == 2
-    assert health_state.background_task_failures == {}
-
-    task.cancel()
-    with contextlib.suppress(asyncio.CancelledError):
-        await task
+    with patch("vibesensor.infra.runtime.task_supervisor.anyio.sleep", side_effect=_fast_sleep):
+        task = asyncio.create_task(
+            supervisor.run(
+                task_factory,
+                name="ws-broadcast",
+                restartable_exceptions=(RuntimeError,),
+            )
+        )
+        await asyncio.wait_for(restart_started.wait(), timeout=1.0)
+        assert call_count == 2
+        assert health_state.background_task_failures == {}
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
 
 
 @pytest.mark.asyncio
@@ -72,14 +69,11 @@ async def test_supervisor_treats_unexpected_exit_as_terminal_failure() -> None:
         nonlocal call_count
         call_count += 1
 
-    task = supervisor.start(
+    await supervisor.run(
         task_factory,
         name="metrics-log",
         restartable_exceptions=(RuntimeError,),
     )
-    with pytest.raises(RuntimeError, match="managed task metrics-log exited unexpectedly"):
-        await task
-    await asyncio.sleep(0)
 
     assert call_count == 1
     assert (
@@ -100,9 +94,7 @@ async def test_supervisor_records_terminal_failure_after_max_attempts() -> None:
     async def task_factory() -> None:
         raise RuntimeError("boom")
 
-    task = supervisor.start(task_factory, name="processing-loop")
-    await asyncio.gather(task, return_exceptions=True)
-    await asyncio.sleep(0)
+    await supervisor.run(task_factory, name="processing-loop")
 
     assert health_state.background_task_failures["processing-loop"] == "boom"
 
@@ -128,15 +120,14 @@ async def test_supervisor_caps_restart_delay() -> None:
         raise RuntimeError("boom")
 
     with (
-        patch("vibesensor.infra.runtime.task_supervisor.asyncio.sleep", side_effect=_fake_sleep),
+        patch("vibesensor.infra.runtime.task_supervisor.anyio.sleep", side_effect=_fake_sleep),
         pytest.raises(asyncio.CancelledError),
     ):
-        task = supervisor.start(
+        await supervisor.run(
             task_factory,
             name="gps-speed",
             restartable_exceptions=(RuntimeError,),
         )
-        await task
 
     assert sleep_calls == [1.0, 2.0, 2.0]
 
@@ -157,13 +148,11 @@ async def test_supervisor_does_not_restart_unclassified_exception() -> None:
         call_count += 1
         raise TypeError("bug")
 
-    task = supervisor.start(
+    await supervisor.run(
         task_factory,
         name="obd-speed",
         restartable_exceptions=(RuntimeError,),
     )
-    await asyncio.gather(task, return_exceptions=True)
-    await asyncio.sleep(0)
 
     assert call_count == 1
     assert health_state.background_task_failures["obd-speed"] == "bug"

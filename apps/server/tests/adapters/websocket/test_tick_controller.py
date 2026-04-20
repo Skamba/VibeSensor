@@ -79,7 +79,7 @@ async def test_controller_escalates_after_consecutive_failures(caplog) -> None:
 
     with (
         patch(
-            "vibesensor.adapters.websocket.tick_controller.asyncio.sleep",
+            "vibesensor.adapters.websocket.tick_controller.anyio.sleep",
             side_effect=fake_sleep,
         ),
         caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"),
@@ -107,7 +107,7 @@ async def test_controller_clamps_hz_to_minimum_one(caplog) -> None:
 
     with (
         patch(
-            "vibesensor.adapters.websocket.tick_controller.asyncio.sleep",
+            "vibesensor.adapters.websocket.tick_controller.anyio.sleep",
             side_effect=fake_sleep,
         ),
         caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"),

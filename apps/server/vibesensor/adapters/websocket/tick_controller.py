@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from collections.abc import Awaitable, Callable
+
+import anyio
 
 from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
 
@@ -48,9 +49,8 @@ class BroadcastTickController:
         """
 
         consecutive_failures = 0
-        loop = asyncio.get_running_loop()
         while True:
-            tick_start = loop.time()
+            tick_start = anyio.current_time()
             if on_tick is not None:
                 on_tick()
             try:
@@ -73,5 +73,5 @@ class BroadcastTickController:
                     consecutive_failures,
                     exc_info=True,
                 )
-            elapsed = loop.time() - tick_start
-            await asyncio.sleep(max(0, self._interval - elapsed))
+            elapsed = anyio.current_time() - tick_start
+            await anyio.sleep(max(0, self._interval - elapsed))

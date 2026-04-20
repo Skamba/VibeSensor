@@ -6,11 +6,11 @@ previously inlined in ``LifecycleManager.start()``.
 
 from __future__ import annotations
 
-import asyncio
-from collections.abc import Awaitable, Callable, Coroutine
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+import anyio
 from opentelemetry.trace import SpanKind
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
@@ -65,6 +65,7 @@ class StartupRunner:
         """Execute all startup phases in order."""
         phase_name = "starting"
         self._health_state.set_phase(phase_name)
+        cancelled_exc_class = anyio.get_cancelled_exc_class()
         try:
             for phase in self._phases():
                 phase_name = phase.name
@@ -77,7 +78,7 @@ class StartupRunner:
                 ) as span:
                     try:
                         await phase.run()
-                    except asyncio.CancelledError:
+                    except cancelled_exc_class:
                         span.set_attribute("vibesensor.cancelled", True)
                         raise
                     except (OSError, RuntimeError) as exc:
@@ -146,21 +147,22 @@ class StartupRunner:
 
     async def _start_background(
         self,
-        coro_factory: Callable[[], Coroutine[object, object, object]],
+        coro_factory: Callable[[], Awaitable[object]],
         name: str,
         *,
         restartable_exceptions: RestartableExceptions = (),
     ) -> None:
-        self._background_tasks.add(
-            self._task_supervisor.start(
+        self._background_tasks.start(
+            lambda: self._task_supervisor.run(
                 coro_factory,
                 name=name,
                 restartable_exceptions=restartable_exceptions,
             ),
+            name=name,
         )
 
     async def _start_update_recovery(self) -> None:
         self._background_tasks.start(
-            self._runtime.update_manager.startup_recover(),
+            self._runtime.update_manager.startup_recover,
             name="update-startup-recover",
         )

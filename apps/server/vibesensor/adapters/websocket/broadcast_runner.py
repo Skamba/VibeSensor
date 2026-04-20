@@ -7,11 +7,11 @@ connection lifecycle and tick cadence.
 
 from __future__ import annotations
 
-import asyncio
 import contextlib
 import logging
 from collections.abc import Callable
 
+import anyio
 from opentelemetry.trace import SpanKind
 
 from vibesensor.adapters.websocket.connection_tracker import (
@@ -72,12 +72,17 @@ class BroadcastRunner:
                 await payloads.prepare(conn.selected_client_id for conn in conns)
                 sent_selected_client_ids: dict[int, str | None] = {}
 
-                dead_ws = await asyncio.gather(
-                    *(
-                        self._send_current_conn(conn, payloads, sent_selected_client_ids)
-                        for conn in conns
-                    ),
-                )
+                dead_ws: list[WSConnectionSnapshot | None] = [None] * len(conns)
+                async with anyio.create_task_group() as task_group:
+                    for index, conn in enumerate(conns):
+                        task_group.start_soon(
+                            self._send_current_conn_into_slot,
+                            index,
+                            conn,
+                            payloads,
+                            sent_selected_client_ids,
+                            dead_ws,
+                        )
                 await self._cleanup_dead(dead_ws)
             except Exception as exc:
                 mark_span_error(span, exc)
@@ -101,13 +106,11 @@ class BroadcastRunner:
         if not await self._tracker.is_snapshot_current(conn):
             return None
         try:
-            await asyncio.wait_for(
-                conn.websocket.send_text(payload_text),
-                timeout=self._send_timeout_s,
-            )
+            with anyio.fail_after(self._send_timeout_s):
+                await conn.websocket.send_text(payload_text)
             return None
-        except _SEND_FAILURE_EXCEPTIONS:
-            now = asyncio.get_running_loop().time()
+        except (*_SEND_FAILURE_EXCEPTIONS, TimeoutError):
+            now = anyio.current_time()
             if (now - self._last_send_error_log_ts) >= self._send_error_log_interval_s:
                 self._last_send_error_log_ts = now
                 LOGGER.warning(
@@ -149,6 +152,16 @@ class BroadcastRunner:
             payload_text,
             selected_client_id=selected_client_id,
         )
+
+    async def _send_current_conn_into_slot(
+        self,
+        index: int,
+        conn: WSConnectionSnapshot,
+        payloads: PayloadBuildOrchestrator,
+        sent_selected_client_ids: dict[int, str | None],
+        dead_ws: list[WSConnectionSnapshot | None],
+    ) -> None:
+        dead_ws[index] = await self._send_current_conn(conn, payloads, sent_selected_client_ids)
 
     async def _cleanup_dead(
         self,
