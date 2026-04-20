@@ -9,9 +9,11 @@ This makes them independently testable and reusable outside of the
 from __future__ import annotations
 
 import math
+import threading
 
 import numpy as np
 import numpy.typing as npt
+import pyfftw
 
 from vibesensor.infra.processing.models import (
     Axis,
@@ -32,6 +34,56 @@ AXES: tuple[Axis, Axis, Axis] = ("x", "y", "z")
 
 type FloatArray = npt.NDArray[np.float32]
 type IntIndexArray = npt.NDArray[np.intp]
+
+
+# pyFFTW plans own internal aligned I/O buffers and are not safe to call
+# concurrently from multiple threads with the same buffer. The processing
+# pipeline dispatches per-client FFTs across a worker pool, so we keep one
+# plan per (axes_count, fft_n) per thread via ``threading.local``. The dict
+# itself is guarded by a lock; plan construction is lazy on first use.
+_PLAN_CACHE_LOCK = threading.Lock()
+_PLAN_CACHE: dict[tuple[int, int], threading.local] = {}
+
+
+def _get_rfft_plan(axes_count: int, fft_n: int) -> pyfftw.FFTW:
+    """Return a thread-local FFTW rfft plan for shape ``(axes_count, fft_n)``.
+
+    The plan's ``input_array`` and ``output_array`` are pre-aligned scratch
+    buffers owned by the plan. Callers must write their windowed input into
+    ``input_array`` (e.g. via ``np.multiply(..., out=plan.input_array)``) and
+    fully consume ``output_array`` before issuing another call on the same
+    thread, because the next plan execution overwrites both buffers in
+    place.
+
+    Thread safety: each thread gets its own plan instance via
+    :class:`threading.local`, so independent threads can call their plans
+    concurrently. A single thread must not invoke the same plan
+    recursively (e.g. from a callback running during ``plan()``), since
+    the I/O buffers are shared between calls.
+    """
+    key = (axes_count, fft_n)
+    with _PLAN_CACHE_LOCK:
+        tls = _PLAN_CACHE.get(key)
+        if tls is None:
+            tls = threading.local()
+            _PLAN_CACHE[key] = tls
+    plan = getattr(tls, "plan", None)
+    if plan is None:
+        input_array = pyfftw.empty_aligned((axes_count, fft_n), dtype=np.float32)
+        output_array = pyfftw.empty_aligned(
+            (axes_count, fft_n // 2 + 1),
+            dtype=np.complex64,
+        )
+        plan = pyfftw.FFTW(
+            input_array,
+            output_array,
+            axes=(1,),
+            direction="FFTW_FORWARD",
+            flags=("FFTW_MEASURE",),
+            threads=1,
+        )
+        tls.plan = plan
+    return plan
 
 
 def _sanitize_float_array(values: FloatArray) -> FloatArray:
@@ -218,9 +270,15 @@ def compute_fft_spectrum(
         fft_block = medfilt3(fft_block)
     fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
 
-    # Batch FFT: window and transform all axes in a single call instead of 3.
-    windowed_all = fft_block * fft_window  # broadcasts (3, N) * (N,)
-    specs_all = np.abs(np.fft.rfft(windowed_all, axis=1)).astype(np.float32)
+    # Batch FFT: window and transform all axes via a pre-planned pyFFTW rfft.
+    # The plan owns aligned scratch buffers, so we stream the windowed input
+    # into ``plan.input_array`` instead of allocating a fresh array each call.
+    plan = _get_rfft_plan(fft_block.shape[0], fft_n)
+    np.multiply(fft_block, fft_window, out=plan.input_array)  # broadcasts (3, N) * (N,)
+    plan()
+    # ``np.abs`` of complex64 returns float32 and copies, so subsequent plan
+    # calls from the same thread can safely overwrite ``plan.output_array``.
+    specs_all: FloatArray = np.abs(plan.output_array)
     specs_all *= fft_scale
     if specs_all.shape[1] > 0:
         specs_all[:, 0] *= 0.5
