@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
+import msgspec
+
+from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_json
 from vibesensor.shared.boundaries.sensor_frames import (
     SensorFrameDecodeError,
     sensor_frame_from_mapping,
 )
+from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.types.run_schema import (
     RUN_END_TYPE,
     RUN_METADATA_TYPE,
@@ -31,6 +33,13 @@ __all__ = [
 LOGGER = logging.getLogger(__name__)
 
 
+class _RunEndRecord(msgspec.Struct, kw_only=True, frozen=True):
+    """Typed run-end record used for tolerant end-time backfill."""
+
+    record_type: str = RUN_END_TYPE
+    end_time_utc: object = None
+
+
 @dataclass(slots=True)
 class RunData:
     """Parsed contents of a JSONL run file: metadata, samples, and source path."""
@@ -46,16 +55,28 @@ def normalize_sample_record(record: dict[str, object]) -> SensorFrame:
     return sensor_frame_from_mapping(record, strict=True, source="jsonl sample")
 
 
+def _run_end_record_from_json(data: str | bytes | bytearray) -> _RunEndRecord:
+    """Decode a run-end record through msgspec while tolerating legacy-like shapes."""
+
+    try:
+        return msgspec.json.decode(data, type=_RunEndRecord)
+    except msgspec.ValidationError:
+        payload = msgspec.json.decode(data)
+    if not is_json_object(payload):
+        raise TypeError("run end JSON must decode to an object")
+    return _RunEndRecord(end_time_utc=payload.get("end_time_utc"))
+
+
 def read_jsonl_run(path: Path) -> RunData:
     """Read a JSONL run file and return parsed metadata and sample records."""
     if not path.exists():
         raise FileNotFoundError(path)
 
     metadata: RunMetadata | None = None
-    end_record: dict[str, object] | None = None
+    end_record: _RunEndRecord | None = None
     samples: list[SensorFrame] = []
     skipped = 0
-    _loads = json.loads
+    _decode = msgspec.json.decode
     _meta_type = RUN_METADATA_TYPE
     _sample_type = RUN_SAMPLE_TYPE
     _end_type = RUN_END_TYPE
@@ -66,8 +87,8 @@ def read_jsonl_run(path: Path) -> RunData:
             if not text:
                 continue
             try:
-                payload = _loads(text)
-            except json.JSONDecodeError as exc:
+                payload = _decode(text)
+            except msgspec.DecodeError as exc:
                 LOGGER.warning(
                     "Skipping corrupt JSONL line %d in %s: %s",
                     line_no,
@@ -76,11 +97,11 @@ def read_jsonl_run(path: Path) -> RunData:
                 )
                 skipped += 1
                 continue
-            if not isinstance(payload, dict):
+            if not is_json_object(payload):
                 continue
             record_type = str(payload.get("record_type", ""))
             if record_type == _meta_type and metadata is None:
-                metadata = run_metadata_from_mapping(payload)
+                metadata = run_metadata_from_json(text)
             elif record_type == _meta_type:
                 LOGGER.warning(
                     "Duplicate metadata record at line %d in %s; ignoring",
@@ -100,7 +121,7 @@ def read_jsonl_run(path: Path) -> RunData:
                     )
                     skipped += 1
             elif record_type == _end_type:
-                end_record = payload
+                end_record = _run_end_record_from_json(text)
 
     if skipped:
         LOGGER.warning("Skipped %d corrupt line(s) while reading %s", skipped, path)
@@ -109,7 +130,7 @@ def read_jsonl_run(path: Path) -> RunData:
     if not metadata.run_id:
         raise ValueError(f"Run metadata in {path} is missing required 'run_id' field")
     if end_record and not metadata.end_time_utc:
-        end_time = end_record.get("end_time_utc")
+        end_time = end_record.end_time_utc
         if end_time:
             metadata.end_time_utc = str(end_time)
         else:
