@@ -5,12 +5,14 @@ import io
 import json
 import zipfile
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, cast
 
 import pytest
 from test_support.analysis import run_analysis
 from test_support.persisted_analysis import make_persisted_analysis
 from test_support.report_helpers import report_sample
+from test_support.tracing import configured_trace_output, read_trace_output
 
 from vibesensor.adapters.history import (
     ProjectedHistoryExportService,
@@ -32,6 +34,7 @@ from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
+from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService, raise_delete_run_error
 
 
@@ -225,6 +228,29 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
         WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
     ]
     assert prepared.domain_test_run is not None
+
+
+@pytest.mark.asyncio
+async def test_report_service_exports_tracing_spans(tmp_path: Path) -> None:
+    service = HistoryReportService(
+        _HistoryDbStub(
+            run={
+                "run_id": "run-1",
+                "status": "complete",
+                "metadata": {"language": "en"},
+                "analysis": {"lang": "nl", "findings": [], "title": "Trace"},
+            }
+        ),
+        pdf_renderer=lambda _prepared: b"%PDF-1.7",
+    )
+
+    with configured_trace_output(tmp_path) as trace_path:
+        pdf = await service.build_pdf("run-1", "en")
+
+    assert pdf.filename == "run-1_report.pdf"
+    spans = {item["name"]: item for item in read_trace_output(trace_path)}
+    assert spans["history.report.build_pdf"]["attributes"]["vibesensor.cache_hit"] is False
+    assert spans["history.report.load_request"]["attributes"]["vibesensor.report_lang"] == "nl"
 
 
 @pytest.mark.asyncio

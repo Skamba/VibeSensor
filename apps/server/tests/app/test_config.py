@@ -45,6 +45,8 @@ def test_logging_flags_allow_db_only_mode(cfg_path: Path) -> None:
     assert cfg.logging.app_log_path == cfg_path.parent / "logs/app.log"
     assert cfg.logging.no_data_timeout_s == 15.0
     assert cfg.logging.run_retention_days == 7
+    assert cfg.tracing.enabled is False
+    assert cfg.tracing.output_path == cfg_path.parent / "data/traces.jsonl"
 
 
 @pytest.mark.parametrize(
@@ -74,6 +76,21 @@ def test_logging_defaults_and_overrides(
 ) -> None:
     cfg = _write_and_load(cfg_path, override)
     assert getattr(cfg.logging, field) == expected
+
+
+def test_tracing_defaults_and_overrides(cfg_path: Path) -> None:
+    cfg = _write_and_load(
+        cfg_path,
+        {
+            "tracing": {
+                "enabled": True,
+                "output_path": "logs/traces.jsonl",
+            }
+        },
+    )
+
+    assert cfg.tracing.enabled is True
+    assert cfg.tracing.output_path == cfg_path.parent / "logs/traces.jsonl"
 
 
 def test_base_dev_and_docker_configs_capture_intended_runtime_invariants(tmp_path: Path) -> None:

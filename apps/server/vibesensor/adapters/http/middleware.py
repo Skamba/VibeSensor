@@ -6,6 +6,7 @@ import sys
 from time import perf_counter
 
 from fastapi import FastAPI
+from opentelemetry.trace import SpanKind
 from starlette.datastructures import Headers, MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -18,6 +19,7 @@ from vibesensor.shared.structured_logging import (
     log_extra,
     reset_request_id,
 )
+from vibesensor.shared.tracing import mark_span_error, start_span
 
 LOGGER = logging.getLogger(__name__)
 
@@ -88,34 +90,49 @@ class RequestLoggingMiddleware:
                     MutableHeaders(scope=message)[REQUEST_ID_HEADER] = resolved_request_id
             await send(message)
 
-        try:
-            await self.app(scope, receive, _send_with_request_id)
-            request_completed = True
-        except asyncio.CancelledError:
-            raise
-        finally:
-            duration_ms = round((perf_counter() - started_at) * 1000.0, 3)
-            active_error = sys.exc_info()[1]
-            if active_error is None and request_completed:
-                LOGGER.info(
-                    "http_request",
-                    extra=log_extra(
-                        event="http_request",
+        with start_span(
+            __name__,
+            "http.request",
+            kind=SpanKind.SERVER,
+            attributes={
+                "http.method": method,
+                "url.path": path,
+                "vibesensor.request_id": request_id or "",
+            },
+        ) as span:
+            try:
+                await self.app(scope, receive, _send_with_request_id)
+                request_completed = True
+            except asyncio.CancelledError:
+                span.set_attribute("vibesensor.cancelled", True)
+                raise
+            finally:
+                duration_ms = round((perf_counter() - started_at) * 1000.0, 3)
+                active_error = sys.exc_info()[1]
+                span.set_attribute("http.status_code", status_code)
+                span.set_attribute("vibesensor.duration_ms", duration_ms)
+                span.set_attribute("vibesensor.response_started", response_started)
+                if active_error is None and request_completed:
+                    LOGGER.info(
+                        "http_request",
+                        extra=log_extra(
+                            event="http_request",
+                            method=method,
+                            path=path,
+                            status_code=status_code,
+                            duration_ms=duration_ms,
+                        ),
+                    )
+                elif active_error is not None:
+                    mark_span_error(span, active_error)
+                    _log_request_failure(
+                        exc=active_error,
                         method=method,
                         path=path,
                         status_code=status_code,
                         duration_ms=duration_ms,
-                    ),
-                )
-            elif active_error is not None:
-                _log_request_failure(
-                    exc=active_error,
-                    method=method,
-                    path=path,
-                    status_code=status_code,
-                    duration_ms=duration_ms,
-                )
-            reset_request_id(token)
+                    )
+                reset_request_id(token)
 
 
 def install_request_logging_middleware(app: FastAPI) -> None:

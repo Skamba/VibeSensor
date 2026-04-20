@@ -8,6 +8,8 @@ from threading import RLock
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
+from opentelemetry.trace import SpanKind
+
 from vibesensor.shared.ports import (
     ClientTracker,
     LanguageReader,
@@ -19,6 +21,7 @@ from vibesensor.shared.ports import (
 )
 from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
 from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
 from vibesensor.use_cases.run.lifecycle_state import RunLifecycleState
@@ -270,67 +273,73 @@ class RunRecorder:
         LOGGER.info("run_lifecycle", extra=log_extra(**extra))
 
     def start_recording(self) -> RunRecorderStatusSnapshot:
-        completed_run_id: str | None = None
-        lifecycle_events: list[
-            tuple[str, str, str, str | None, str | None, int | None, int | None]
-        ] = []
-        with self._lock:
-            if self._lifecycle.shutdown_requested:
-                LOGGER.info(
-                    "Ignoring start_recording() while metrics logger shutdown is in progress.",
-                )
-                return self.status()
-            if self.enabled and self._run_id:
-                flush_snapshot = self._sample_flush.pending_flush_snapshot()
-                if flush_snapshot is not None:
-                    self._sample_flush.append_records(
-                        flush_snapshot.run_id,
-                        flush_snapshot.start_time_utc,
-                        flush_snapshot.start_mono_s,
-                        refresh_metrics=True,
+        with start_span(__name__, "run.recording.start", kind=SpanKind.INTERNAL) as span:
+            completed_run_id: str | None = None
+            lifecycle_events: list[
+                tuple[str, str, str, str | None, str | None, int | None, int | None]
+            ] = []
+            try:
+                with self._lock:
+                    if self._lifecycle.shutdown_requested:
+                        LOGGER.info(
+                            "Ignoring start_recording() while metrics logger "
+                            "shutdown is in progress.",
+                        )
+                        span.set_attribute("vibesensor.ignored_shutdown", True)
+                        return self.status()
+                    if self.enabled and self._run_id:
+                        flush_snapshot = self._sample_flush.pending_flush_snapshot()
+                        if flush_snapshot is not None:
+                            self._sample_flush.append_records(
+                                flush_snapshot.run_id,
+                                flush_snapshot.start_time_utc,
+                                flush_snapshot.start_mono_s,
+                                refresh_metrics=True,
+                            )
+                    if self.enabled and self._run_id:
+                        run_id = self._run_id
+                        completed_run_id = self._persistence.ready_for_analysis(run_id)
+                        start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
+                        end_time_utc = utc_now_iso()
+                        persistence_snapshot = self._persistence.status_snapshot()
+                        if run_id and not self._persistence.finalize_run(
+                            run_id,
+                            start_time_utc,
+                            end_time_utc,
+                        ):
+                            LOGGER.warning(
+                                "finalize_run failed for %s; scheduling analysis anyway",
+                                run_id,
+                            )
+                        lifecycle_events.append(
+                            (
+                                "stopped",
+                                run_id,
+                                start_time_utc,
+                                end_time_utc,
+                                "restart",
+                                persistence_snapshot.written_sample_count,
+                                persistence_snapshot.dropped_sample_count,
+                            )
+                        )
+                    started_run = self._start_new_run_locked()
+                    lifecycle_events.append(
+                        (
+                            "started",
+                            started_run.run_id,
+                            started_run.start_time_utc,
+                            None,
+                            None,
+                            None,
+                            None,
+                        )
                     )
-            if self.enabled and self._run_id:
-                run_id = self._run_id
-                completed_run_id = self._persistence.ready_for_analysis(run_id)
-                start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
-                end_time_utc = utc_now_iso()
-                persistence_snapshot = self._persistence.status_snapshot()
-                if run_id and not self._persistence.finalize_run(
-                    run_id,
-                    start_time_utc,
-                    end_time_utc,
-                ):
-                    # finalize_run may fail (e.g. DB unavailable), but
-                    # store_analysis handles the RECORDING→COMPLETE bypass
-                    # path, so schedule analysis anyway.
-                    LOGGER.warning(
-                        "finalize_run failed for %s; scheduling analysis anyway",
-                        run_id,
-                    )
-                lifecycle_events.append(
-                    (
-                        "stopped",
-                        run_id,
-                        start_time_utc,
-                        end_time_utc,
-                        "restart",
-                        persistence_snapshot.written_sample_count,
-                        persistence_snapshot.dropped_sample_count,
-                    )
-                )
-            started_run = self._start_new_run_locked()
-            lifecycle_events.append(
-                (
-                    "started",
-                    started_run.run_id,
-                    started_run.start_time_utc,
-                    None,
-                    None,
-                    None,
-                    None,
-                )
-            )
-            result = self.status()
+                    result = self.status()
+            except Exception as exc:
+                mark_span_error(span, exc)
+                raise
+            span.set_attribute("vibesensor.run_id", result.run_id or "")
+            span.set_attribute("vibesensor.restarted_previous_run", completed_run_id is not None)
         for (
             event_action,
             event_run_id,
@@ -359,53 +368,64 @@ class RunRecorder:
         _only_if_run_id: str | None = None,
         reason: str = "manual",
     ) -> RunRecorderStatusSnapshot:
-        lifecycle_event: (
-            tuple[str, str, str, str | None, str | None, int | None, int | None] | None
-        ) = None
-        with self._lock:
-            if _only_if_run_id is not None and self._run_id != _only_if_run_id:
-                return self.status()
-            flush_snapshot = self._sample_flush.pending_flush_snapshot()
-            if flush_snapshot is not None:
-                self._sample_flush.append_records(
-                    flush_snapshot.run_id,
-                    flush_snapshot.start_time_utc,
-                    flush_snapshot.start_mono_s,
-                    refresh_metrics=True,
-                )
-            if _only_if_run_id is not None and self._run_id != _only_if_run_id:
-                return self.status()
-            run_id = self._run_id
-            run_id_to_analyze = self._persistence.ready_for_analysis(run_id)
-            start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
-            end_time_utc = utc_now_iso()
-            persistence_snapshot = self._persistence.status_snapshot()
-            if run_id and not self._persistence.finalize_run(
-                run_id,
-                start_time_utc,
-                end_time_utc,
-            ):
-                # finalize_run may fail (e.g. DB unavailable), but
-                # store_analysis handles the RECORDING→COMPLETE bypass
-                # path, so schedule analysis anyway.
-                LOGGER.warning(
-                    "finalize_run failed for %s; scheduling analysis anyway",
-                    run_id,
-                )
-            if run_id is not None:
-                lifecycle_event = (
-                    "stopped",
-                    run_id,
-                    start_time_utc,
-                    end_time_utc,
-                    reason,
-                    persistence_snapshot.written_sample_count,
-                    persistence_snapshot.dropped_sample_count,
-                )
-            self._lifecycle.stop()
-            self._active_run_context = None
-            self._persistence.reset()
-            result = self.status()
+        with start_span(
+            __name__,
+            "run.recording.stop",
+            kind=SpanKind.INTERNAL,
+            attributes={"vibesensor.stop_reason": reason},
+        ) as span:
+            lifecycle_event: (
+                tuple[str, str, str, str | None, str | None, int | None, int | None] | None
+            ) = None
+            try:
+                with self._lock:
+                    if _only_if_run_id is not None and self._run_id != _only_if_run_id:
+                        span.set_attribute("vibesensor.skipped_run_id_guard", True)
+                        return self.status()
+                    flush_snapshot = self._sample_flush.pending_flush_snapshot()
+                    if flush_snapshot is not None:
+                        self._sample_flush.append_records(
+                            flush_snapshot.run_id,
+                            flush_snapshot.start_time_utc,
+                            flush_snapshot.start_mono_s,
+                            refresh_metrics=True,
+                        )
+                    if _only_if_run_id is not None and self._run_id != _only_if_run_id:
+                        span.set_attribute("vibesensor.skipped_run_id_guard", True)
+                        return self.status()
+                    run_id = self._run_id
+                    run_id_to_analyze = self._persistence.ready_for_analysis(run_id)
+                    start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
+                    end_time_utc = utc_now_iso()
+                    persistence_snapshot = self._persistence.status_snapshot()
+                    if run_id and not self._persistence.finalize_run(
+                        run_id,
+                        start_time_utc,
+                        end_time_utc,
+                    ):
+                        LOGGER.warning(
+                            "finalize_run failed for %s; scheduling analysis anyway",
+                            run_id,
+                        )
+                    if run_id is not None:
+                        lifecycle_event = (
+                            "stopped",
+                            run_id,
+                            start_time_utc,
+                            end_time_utc,
+                            reason,
+                            persistence_snapshot.written_sample_count,
+                            persistence_snapshot.dropped_sample_count,
+                        )
+                    self._lifecycle.stop()
+                    self._active_run_context = None
+                    self._persistence.reset()
+                    result = self.status()
+            except Exception as exc:
+                mark_span_error(span, exc)
+                raise
+            span.set_attribute("vibesensor.run_id", lifecycle_event[1] if lifecycle_event else "")
+            span.set_attribute("vibesensor.post_analysis_scheduled", bool(run_id_to_analyze))
         if lifecycle_event is not None:
             (
                 event_action,

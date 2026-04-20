@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
+from test_support.tracing import configured_trace_output, read_trace_output
 
 from vibesensor.adapters.udp.protocol import pack_data
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
@@ -226,3 +228,30 @@ def test_process_datagram_reset_detected_flushes_buffer_before_ingest(fake_trans
     processor.flush_client_buffer.assert_called_once_with("010203040506")
     processor.ingest.assert_called_once()
     assert len(fake_transport.sent) == 1
+
+
+def test_process_datagram_exports_trace_span(fake_transport, tmp_path: Path) -> None:
+    registry = Mock()
+    registry.update_from_data.return_value = DataUpdateResult(reset_detected=True)
+    registry.get.return_value = SimpleNamespace(sample_rate_hz=1600)
+    processor = Mock()
+    proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
+    proto.connection_made(fake_transport)
+
+    pkt = pack_data(
+        bytes.fromhex("010203040506"),
+        seq=10,
+        t0_us=321,
+        samples=np.zeros((2, 3), dtype=np.int16),
+    )
+
+    with configured_trace_output(tmp_path) as trace_path:
+        proto._process_datagram(pkt, ("127.0.0.1", 12345))
+
+    span = next(
+        item for item in read_trace_output(trace_path) if item["name"] == "udp.data.dispatch"
+    )
+    assert span["kind"] == "consumer"
+    assert span["attributes"]["vibesensor.client_id"] == "010203040506"
+    assert span["attributes"]["vibesensor.sample_count"] == 2
+    assert span["attributes"]["vibesensor.reset_detected"] is True

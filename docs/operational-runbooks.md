@@ -34,6 +34,44 @@ prunes `complete` and `error` runs older than `logging.run_retention_days: 7`.
 Raise or lower that value in the server config when the device needs a longer
 or shorter local-history window.
 
+## Enable and inspect backend traces
+
+Tracing is disabled by default. When you need end-to-end backend traces, enable
+the offline JSONL exporter in the active server config:
+
+```yaml
+tracing:
+  enabled: true
+  output_path: data/traces.jsonl
+```
+
+`tracing.output_path` is resolved relative to the active config file unless you
+set an absolute path. The exporter never depends on internet access or an
+external SaaS collector.
+
+After restarting the backend, inspect the exported spans directly:
+
+```bash
+tail -f /path/to/traces.jsonl
+```
+
+The canonical high-value spans are:
+
+- `http.request`
+- `ws.broadcast.tick`
+- `udp.data.dispatch`
+- `runtime.startup.phase`
+- `runtime.managed_task`
+- `run.recording.start` / `run.recording.stop`
+- `run.post_analysis.execute`
+- `history.runs.list`, `history.run.get`, `history.run.insights`, `history.run.delete`
+- `history.report.load_request` / `history.report.build_pdf`
+- `update.startup_recover`, `update.workflow`, `update.runtime_refresh`
+
+Use `trace_id` / `span_id` plus the span attributes to correlate one request or
+background workflow across HTTP, background tasks, history/report work, and
+updater flows.
+
 ## Diagnose high dropped frames
 
 1. Confirm the health endpoint responds and inspect connected clients.
@@ -49,7 +87,9 @@ docker compose logs --tail 100
    console stream. If file logging is enabled, use the `X-Request-ID` response
    header from the failing HTTP call to find the matching structured JSON
    app-log entry; the same `request_id` also appears on request-scoped
-   `settings_change` audit events.
+   `settings_change` audit events. If tracing is enabled, inspect the matching
+   `http.request`, `udp.data.dispatch`, or `ws.broadcast.tick` spans in the
+   JSONL trace output.
 6. If the issue is on a Pi, also review systemd or journal output for the service and hotspot helpers.
 
 ## Diagnose stale or missing live updates
@@ -156,7 +196,9 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
 
 4. Review the live `structlog` console output first with `journalctl` above. If
    file logging is enabled, inspect the matching structured JSON app log
-   configured by `logging.app_log_path`.
+   configured by `logging.app_log_path`. If tracing is enabled, also inspect the
+   JSONL spans written to `tracing.output_path` for `run.post_analysis.execute`
+   or `history.*` failures around the same time.
 5. Before any manual DB recovery, copy `/var/lib/vibesensor/history.db` off the
    device (or snapshot the card) so the original evidence is preserved.
 6. If the device lost power and now reports repeated write failures, treat that

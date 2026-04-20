@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
+from opentelemetry.trace import SpanKind
+
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.reporting import (
     PreparedReportInput,
@@ -14,6 +16,7 @@ from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_obje
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.filenames import safe_filename
 from vibesensor.shared.ports import AsyncRunPersistence
+from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import is_json_array
 from vibesensor.shared.types.report_cache import ReportPdfCacheKey
@@ -57,38 +60,58 @@ class HistoryReportRequestLoader:
         run_id: str,
         requested_lang: str | None,
     ) -> HistoryReportRequest:
-        run = await async_require_run(self._history_db, run_id)
-        if run.status == RunStatus.ANALYZING:
-            raise AnalysisNotReadyError("Analysis is still in progress", status="in_progress")
-        if run.status == RunStatus.ERROR:
-            raise AnalysisNotReadyError(str(run.error_message or "Analysis failed"), status="error")
-        if run.analysis_corrupt:
-            raise AnalysisNotReadyError(
-                "Report data unavailable for this run. Re-analyze to regenerate the PDF."
-            )
-        analysis = run.analysis
-        if analysis is None:
-            raise AnalysisNotReadyError("No analysis available for this run")
+        with start_span(
+            __name__,
+            "history.report.load_request",
+            kind=SpanKind.INTERNAL,
+            attributes={
+                "vibesensor.run_id": run_id,
+                "vibesensor.requested_lang": requested_lang or "",
+            },
+        ) as span:
+            try:
+                run = await async_require_run(self._history_db, run_id)
+                if run.status == RunStatus.ANALYZING:
+                    raise AnalysisNotReadyError(
+                        "Analysis is still in progress", status="in_progress"
+                    )
+                if run.status == RunStatus.ERROR:
+                    raise AnalysisNotReadyError(
+                        str(run.error_message or "Analysis failed"),
+                        status="error",
+                    )
+                if run.analysis_corrupt:
+                    raise AnalysisNotReadyError(
+                        "Report data unavailable for this run. Re-analyze to regenerate the PDF."
+                    )
+                analysis = run.analysis
+                if analysis is None:
+                    raise AnalysisNotReadyError("No analysis available for this run")
 
-        requested_lang = self._analysis_language(run, requested_lang)
-        report_language = self._report_pdf_cache_lang(run, requested_lang)
-        raw_warnings = analysis.get("warnings")
-        warnings = raw_warnings if is_json_array(raw_warnings) else None
-        cache_key = self._report_pdf_cache_key(
-            run,
-            run_id,
-            report_language,
-        )
-        filename = f"{safe_filename(run_id)}_report.pdf"
-        return HistoryReportRequest(
-            prepared=prepare_persisted_report_input(
-                analysis,
-                warnings=warnings,
-                filename=filename,
-                language=report_language,
-                cache_key=cache_key,
-            ),
-        )
+                requested_lang = self._analysis_language(run, requested_lang)
+                report_language = self._report_pdf_cache_lang(run, requested_lang)
+                raw_warnings = analysis.get("warnings")
+                warnings = raw_warnings if is_json_array(raw_warnings) else None
+                cache_key = self._report_pdf_cache_key(
+                    run,
+                    run_id,
+                    report_language,
+                )
+                filename = f"{safe_filename(run_id)}_report.pdf"
+                request = HistoryReportRequest(
+                    prepared=prepare_persisted_report_input(
+                        analysis,
+                        warnings=warnings,
+                        filename=filename,
+                        language=report_language,
+                        cache_key=cache_key,
+                    ),
+                )
+            except Exception as exc:
+                mark_span_error(span, exc)
+                raise
+            span.set_attribute("vibesensor.report_lang", report_language)
+            return request
 
     @staticmethod
     def _metadata_cache_token(metadata: RunMetadata) -> str:
