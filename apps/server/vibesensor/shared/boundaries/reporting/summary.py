@@ -116,14 +116,7 @@ class ReportSummaryNormalizer:
     def _active_sensor_locations(self) -> tuple[str, ...]:
         connected = self._payload.get("sensor_locations_connected_throughout")
         locations = connected if isinstance(connected, list) else []
-        active = tuple(str(location).strip() for location in locations if str(location).strip())
-        if active:
-            return active
-        fallback = self._payload.get("sensor_locations")
-        fallback_locations = fallback if isinstance(fallback, list) else []
-        return tuple(
-            str(location).strip() for location in fallback_locations if str(location).strip()
-        )
+        return tuple(str(location).strip() for location in locations if str(location).strip())
 
     def _sensor_intensity_rows(self) -> tuple[LocationIntensitySummary, ...]:
         raw_rows = self._payload.get("sensor_intensity_by_location")

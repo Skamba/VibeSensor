@@ -274,11 +274,11 @@ class TestSummaryHelpers:
         assert prepared.report_facts is not None
         assert prepared.report_facts.sensor.active_locations == ("front_left",)
 
-    def test_sensor_locations_active_fallback(self) -> None:
+    def test_sensor_locations_active_requires_connected_throughout(self) -> None:
         prepared = prepare_report_input(_minimal_summary(sensor_locations_connected_throughout=[]))
         assert prepared.domain_test_run is not None
         assert prepared.report_facts is not None
-        assert "front_left" in prepared.report_facts.sensor.active_locations
+        assert prepared.report_facts.sensor.active_locations == ()
 
     def test_boundary_test_plan_payload_projects_semantic_action_fields(self) -> None:
         projected = step_payloads_from_plan(

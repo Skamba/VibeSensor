@@ -431,10 +431,9 @@ class TestScenario5SparseSensors:
 
     def test_sensor_count_accurate(self, scenario: ScenarioPair) -> None:
         summary, rd = scenario
-        connected = summary.get("sensor_locations_connected_throughout") or summary.get(
-            "sensor_locations",
-        )
-        assert rd.sensor_count == len(connected or [])
+        connected = summary.get("sensor_locations_connected_throughout")
+        assert isinstance(connected, list)
+        assert rd.sensor_count == len(connected)
 
     def test_sparse_sensor_contract_degrades_location_granularity(
         self,
