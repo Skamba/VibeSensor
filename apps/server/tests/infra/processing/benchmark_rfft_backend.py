@@ -46,8 +46,8 @@ def _numpy_rfft_call(block: np.ndarray, window: np.ndarray) -> Callable[[], np.n
 
 def _pyfftw_rfft_call(block: np.ndarray, window: np.ndarray) -> Callable[[], np.ndarray]:
     plan = _get_rfft_plan(_AXES_COUNT, block.shape[1])
-    # Warm the plan/output buffer so the first measured iteration doesn't pay
-    # one-time FFTW_MEASURE cost.
+    # Warm the plan/output buffer so the benchmarked iterations don't include
+    # one-time plan setup / first-call buffer effects.
     np.multiply(block, window, out=plan.input_array)
     plan()
 
