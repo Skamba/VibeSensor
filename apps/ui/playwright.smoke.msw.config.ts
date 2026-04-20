@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "tests",
-  testMatch: ["smoke.msw-browser.spec.ts"],
+  testMatch: ["msw-browser.smoke.spec.ts"],
   timeout: 15_000,
   workers: 1,
   use: {
