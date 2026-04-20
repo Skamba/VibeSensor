@@ -10,7 +10,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import (
+    HistoryPersistenceAdapters,
+    create_history_persistence_adapters,
+)
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.app.runtime_state import RuntimeState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
@@ -177,8 +180,8 @@ class StubWsPayloadSource:
         return payload
 
 
-def build_history_db(tmp_path: Path) -> HistoryDB:
-    return HistoryDB(tmp_path / "history.db")
+def build_history_db(tmp_path: Path) -> HistoryPersistenceAdapters:
+    return create_history_persistence_adapters(tmp_path / "history.db")
 
 
 def build_registry(
@@ -192,7 +195,9 @@ def build_registry(
         "retention_ttl_seconds": retention_ttl_seconds,
     }
     if db is not None:
-        kwargs["db"] = db
+        kwargs["db"] = (
+            db.client_name_repository if isinstance(db, HistoryPersistenceAdapters) else db
+        )
     return ClientRegistry(**kwargs)
 
 
@@ -239,7 +244,7 @@ def build_registry_with_hello(
     client_id_hex: str = "aabbccddeeff",
 ) -> tuple[ClientRegistry, bytes]:
     db = build_history_db(tmp_path)
-    registry = build_registry(db=db)
+    registry = build_registry(db=db.client_name_repository)
     hello = make_hello_message(client_id_hex)
     registry.update_from_hello(hello, ("10.4.0.2", hello.control_port), now=1.0)
     return registry, hello.client_id

@@ -12,7 +12,10 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import (
+    HistoryPersistenceAdapters,
+    create_history_persistence_adapters,
+)
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.domain import RunStatus
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
@@ -51,13 +54,13 @@ _SAMPLES_200X3 = np.zeros((200, 3), dtype=np.int16)
 
 
 @pytest.fixture
-def db(tmp_path: Path) -> HistoryDB:
-    return HistoryDB(tmp_path / "history.db")
+def db(tmp_path: Path) -> HistoryPersistenceAdapters:
+    return create_history_persistence_adapters(tmp_path / "history.db")
 
 
 @pytest.fixture
-def registry(db: HistoryDB) -> ClientRegistry:
-    return ClientRegistry(db=db)
+def registry(db: HistoryPersistenceAdapters) -> ClientRegistry:
+    return ClientRegistry(db=db.client_name_repository)
 
 
 def _hello(client_id: bytes = _CLIENT_ID, **overrides: object) -> HelloMessage:
@@ -172,11 +175,11 @@ class TestRunStatus:
     def test_status_value(self, attr: str, expected: str) -> None:
         assert getattr(RunStatus, attr) == expected
 
-    def test_history_db_uses_run_status(self, db: HistoryDB) -> None:
+    def test_history_db_uses_run_status(self, db: HistoryPersistenceAdapters) -> None:
         """delete_run_if_safe should return RunStatus.ANALYZING for analyzing runs."""
-        db.create_run("run-1", "2024-01-01T00:00:00Z", _metadata("run-1"))
-        db.finalize_run("run-1", "2024-01-01T00:01:00Z")
-        deleted, reason = db.delete_run_if_safe("run-1")
+        db.run_repository.create_run("run-1", "2024-01-01T00:00:00Z", _metadata("run-1"))
+        db.run_repository.finalize_run("run-1", "2024-01-01T00:01:00Z")
+        deleted, reason = db.run_repository.delete_run_if_safe("run-1")
         assert not deleted
         assert reason == RunStatus.ANALYZING
 

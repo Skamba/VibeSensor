@@ -9,7 +9,7 @@ import pytest
 from test_support.core import wait_until
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 
 # -- Test ----------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ def test_start_append_stop_produces_complete_run_in_db(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Full lifecycle: start -> append -> stop -> analyze -> complete with a real DB."""
-    history_db = HistoryDB(tmp_path / "history.db")
+    history_db = create_history_persistence_adapters(tmp_path / "history.db")
     fake_analysis = {
         "findings": [],
         "top_causes": [],
@@ -38,7 +38,7 @@ def test_start_append_stop_produces_complete_run_in_db(
             }
         ),
     )
-    logger = make_logger(history_db=history_db)
+    logger = make_logger(history_db=history_db.run_repository)
 
     logger.start_recording()
     snapshot = logger._session_snapshot()
@@ -51,12 +51,12 @@ def test_start_append_stop_produces_complete_run_in_db(
     logger.stop_recording()
 
     def _status():
-        run = history_db.get_run(run_id)
+        run = history_db.run_repository.get_run(run_id)
         return run.status.value if run is not None else None
 
     assert wait_until(lambda: _status() == "complete", timeout_s=3.0)
 
-    stored = history_db.get_run(run_id).analysis
+    stored = history_db.run_repository.get_run(run_id).analysis
     assert stored is not None
     assert stored["score"] == 42
     assert stored["details"] == "looks good"

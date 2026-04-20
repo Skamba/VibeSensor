@@ -19,7 +19,10 @@ from test_support import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import (
+    RunHistoryRepository,
+    create_history_persistence_adapters,
+)
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import (
     sensor_frame_from_mapping,
@@ -32,9 +35,9 @@ pytestmark = pytest.mark.smoke
 def _create_populated_db(
     meta: dict,
     samples: list[dict],
-) -> tuple[HistoryDB, str]:
+) -> tuple[RunHistoryRepository, str]:
     """Create an in-memory DB with a run containing *samples*."""
-    db = HistoryDB(Path(":memory:"))
+    db = create_history_persistence_adapters(Path(":memory:")).run_repository
     run_id = "contract-test-run"
     db.create_run(
         run_id,

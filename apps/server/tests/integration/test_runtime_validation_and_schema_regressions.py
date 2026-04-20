@@ -19,7 +19,7 @@ from pydantic import ValidationError
 from test_support.settings_services import build_settings_services
 
 from vibesensor.adapters.http.models import CarUpsertRequest, SpeedSourceRequest
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.json_utils import sanitize_for_json
 from vibesensor.use_cases.diagnostics.math_utils import _corr_abs
@@ -99,10 +99,10 @@ class TestHistoryDbCorruptedSchemaVersion:
 
         # Legacy schema_meta databases are no longer supported
         with pytest.raises(RuntimeError, match="legacy"):
-            HistoryDB(db_path)
+            create_history_persistence_adapters(db_path)
 
     def test_valid_version_still_works(self, tmp_path) -> None:
-        assert HistoryDB(tmp_path / "test.db") is not None
+        assert create_history_persistence_adapters(tmp_path / "test.db") is not None
 
 
 # ------------------------------------------------------------------

@@ -33,7 +33,7 @@ from test_support.runtime_lifecycle import (
     make_hello_message as _make_hello_message,
 )
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.boundaries.clients import snapshot_for_api
@@ -92,8 +92,8 @@ def test_registry_persists_names_with_protocol_shaped_store() -> None:
 
 
 def test_registry_sequence_gap(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     client_id = bytes.fromhex("aabbccddeeff")
 
     hello = HelloMessage(
@@ -118,8 +118,8 @@ def test_registry_sequence_gap(tmp_path: Path) -> None:
 
 
 def test_registry_rejects_far_behind_duplicate_without_clearing_dedup(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     client_id = bytes.fromhex("aabbccddeeff")
 
     hello = HelloMessage(
@@ -165,12 +165,12 @@ def test_registry_rejects_far_behind_duplicate_without_clearing_dedup(tmp_path: 
 
 
 def test_registry_rename_persist(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     client_id = "001122334455"
     registry.set_name(client_id, "rear")
 
-    registry2 = ClientRegistry(db=db)
+    registry2 = ClientRegistry(db=db.client_name_repository)
     hello = HelloMessage(
         client_id=bytes.fromhex(client_id),
         control_port=9011,
@@ -185,8 +185,8 @@ def test_registry_rename_persist(tmp_path: Path) -> None:
 
 
 def test_registry_rename_normalizes_client_id(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     lower_id = "001122334455"
     upper_id = lower_id.upper()
 
@@ -200,12 +200,12 @@ def test_registry_rename_normalizes_client_id(tmp_path: Path) -> None:
 
 
 def test_registry_snapshot_includes_persisted_offline_clients(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     offline_id = "001122334455"
     registry.set_name(offline_id, "rear-right-wheel")
 
-    registry2 = ClientRegistry(db=db)
+    registry2 = ClientRegistry(db=db.client_name_repository)
     rows = {row["id"]: row for row in snapshot_for_api(registry2, now=10.0)}
     assert rows[offline_id]["name"] == "rear-right-wheel"
     assert rows[offline_id]["connected"] is False
@@ -213,8 +213,8 @@ def test_registry_snapshot_includes_persisted_offline_clients(tmp_path: Path) ->
 
 
 def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     offline_id = "001122334455"
     active_id = "aabbccddeeff"
 
@@ -228,7 +228,7 @@ def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
     )
     registry.update_from_hello(hello, ("10.4.0.2", 9010), now=2.0)
 
-    registry2 = ClientRegistry(db=db)
+    registry2 = ClientRegistry(db=db.client_name_repository)
     registry2.update_from_hello(hello, ("10.4.0.2", 9010), now=3.0)
     registry2.update_from_hello(
         HelloMessage(
@@ -311,8 +311,12 @@ def test_registry_staleness_uses_monotonic_clock_when_now_not_provided(
 
 
 def test_registry_retains_stale_client_until_retention_ttl(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db, live_ttl_seconds=5.0, retention_ttl_seconds=30.0)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(
+        db=db.client_name_repository,
+        live_ttl_seconds=5.0,
+        retention_ttl_seconds=30.0,
+    )
     hello = HelloMessage(
         client_id=bytes.fromhex("001122334455"),
         control_port=9010,
@@ -334,8 +338,8 @@ def test_registry_retains_stale_client_until_retention_ttl(tmp_path: Path) -> No
 
 
 def test_registry_data_loss_snapshot_preserves_public_counter_shape(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     client_id = bytes.fromhex("001122334455")
     hello = HelloMessage(
         client_id=client_id,
@@ -372,22 +376,22 @@ def test_registry_data_loss_snapshot_preserves_public_counter_shape(tmp_path: Pa
 
 
 def test_registry_remove_client_clears_persisted_entry(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     client_id = "001122334455"
     registry.set_name(client_id, "front-left")
 
     assert registry.remove_client(client_id) is True
     assert registry.remove_client(client_id) is False
 
-    registry2 = ClientRegistry(db=db)
+    registry2 = ClientRegistry(db=db.client_name_repository)
     rows = snapshot_for_api(registry2, now=1.0)
     assert rows == []
 
 
 def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     client_id = bytes.fromhex("aabbccddeeff")
     hello = HelloMessage(
         client_id=client_id,
@@ -426,8 +430,8 @@ def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path
 
 
 def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     client_id = bytes.fromhex("001122334455")
     hello = HelloMessage(
         client_id=client_id,
@@ -456,8 +460,8 @@ def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
 
 def test_registry_clear_name_reverts_to_default(tmp_path: Path) -> None:
     """clear_name() should remove the user-assigned name and revert to default."""
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     client_id = "001122334455"
 
     # Assign a user name
@@ -471,7 +475,7 @@ def test_registry_clear_name_reverts_to_default(tmp_path: Path) -> None:
     assert cleared.name == f"client-{client_id[-4:]}"
 
     # Verify persistence: the cleared name should NOT come back after reload
-    registry2 = ClientRegistry(db=db)
+    registry2 = ClientRegistry(db=db.client_name_repository)
     rows = snapshot_for_api(registry2, now=1.0)
     names = [r["name"] for r in rows if r["id"] == client_id]
     # After clearing, the client may or may not appear in snapshot (depending on
@@ -482,8 +486,8 @@ def test_registry_clear_name_reverts_to_default(tmp_path: Path) -> None:
 
 def test_registry_clear_name_preserves_other_clients(tmp_path: Path) -> None:
     """Clearing one client's name should not affect other clients."""
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
 
     registry.set_name("001122334455", "Front Left Wheel")
     registry.set_name("aabbccddeeff", "Rear Right Wheel")
@@ -497,8 +501,8 @@ def test_registry_clear_name_preserves_other_clients(tmp_path: Path) -> None:
 
 def test_set_location_populates_client_record(tmp_path: Path) -> None:
     """set_location must write to ClientRecord so snapshot_for_api returns it."""
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     client_id = bytes.fromhex("aabbccddeeff")
 
     hello = HelloMessage(
@@ -525,8 +529,8 @@ def test_set_location_populates_client_record(tmp_path: Path) -> None:
 
 
 def test_set_location_trims_whitespace(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     hex_id = "001122334455"
     registry.set_location(hex_id, "  rear_axle  ")
     row = snapshot_for_api(registry, now=1.0)[0]

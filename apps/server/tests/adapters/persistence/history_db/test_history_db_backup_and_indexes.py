@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 
 
 def _query_plan_details(db_path: Path, sql: str) -> list[str]:
@@ -18,8 +18,8 @@ def _query_plan_details(db_path: Path, sql: str) -> list[str]:
 
 def test_history_db_status_created_at_queries_use_composite_index(tmp_path: Path) -> None:
     db_path = tmp_path / "history.db"
-    db = HistoryDB(db_path)
-    db.close()
+    db = create_history_persistence_adapters(db_path)
+    db.lifecycle.close()
 
     latest_recording_plan = _query_plan_details(
         db_path,

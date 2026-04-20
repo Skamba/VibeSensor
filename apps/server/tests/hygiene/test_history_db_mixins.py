@@ -6,7 +6,6 @@ from pathlib import Path
 
 from vibesensor.adapters.persistence.history_db import (
     ClientNameRepository,
-    HistoryDB,
     RunHistoryRepository,
     SettingsSnapshotRepository,
     SQLiteHistoryEngine,
@@ -39,16 +38,6 @@ def test_run_history_repository_mixins_expose_disjoint_public_methods() -> None:
 
     overlaps = {name: owners for name, owners in owners_by_name.items() if len(owners) > 1}
     assert overlaps == {}, f"run-history mixins must keep disjoint public APIs: {overlaps}"
-
-
-def test_history_db_wrapper_is_no_longer_the_primary_mixin_stack() -> None:
-    history_db_members = set(HistoryDB.__dict__)
-
-    assert not issubclass(HistoryDB, _HistoryDBRunLifecycleMixin)
-    assert not issubclass(HistoryDB, _HistoryDBSampleIOMixin)
-    assert not issubclass(HistoryDB, _HistoryDBQueryMixin)
-    assert "__getattr__" in history_db_members
-    assert {"_cursor", "_cursor_connection", "write_transaction_cursor"} <= history_db_members
 
 
 def test_history_persistence_factory_returns_split_adapters(tmp_path: Path) -> None:
