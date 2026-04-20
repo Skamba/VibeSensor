@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 
-from vibesensor.adapters.persistence.car_library import _DATA_FILE, CAR_LIBRARY
+from vibesensor.adapters.persistence.car_library import _DATA_FILE, load_car_library
 
 _RATIO_SOURCES_FILE = _DATA_FILE.with_name("car_library_ratio_sources.json")
 _PLACEHOLDER_PHRASE = "preserved pending official-source confirmation"
@@ -153,7 +153,7 @@ def test_ratio_sources_do_not_contain_legacy_audit_wording_or_keys() -> None:
 
 def test_ratio_sources_cover_every_car_library_row() -> None:
     ratio_source_keys = set(_load_ratio_sources())
-    library_keys = {_car_key(entry) for entry in CAR_LIBRARY}
+    library_keys = {_car_key(entry) for entry in load_car_library()}
     assert ratio_source_keys == library_keys
 
 

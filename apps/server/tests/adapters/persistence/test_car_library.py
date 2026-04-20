@@ -7,15 +7,21 @@ from pathlib import Path
 import pytest
 
 from vibesensor.adapters.persistence.car_library import (
-    CAR_LIBRARY,
     get_brands,
     get_models_for_brand_type,
     get_types_for_brand,
+    load_car_library,
 )
 
 
 def test_car_library_has_entries() -> None:
-    assert len(CAR_LIBRARY) > 50
+    assert len(load_car_library()) > 50
+
+
+def test_car_library_module_no_longer_exports_compat_alias() -> None:
+    import vibesensor.adapters.persistence.car_library as car_library_module
+
+    assert not hasattr(car_library_module, "CAR_LIBRARY")
 
 
 def test_get_brands_returns_bmw_and_audi() -> None:
@@ -45,7 +51,7 @@ def test_get_models_for_brand_type() -> None:
 
 
 def test_every_entry_has_required_fields() -> None:
-    for entry in CAR_LIBRARY:
+    for entry in load_car_library():
         assert "brand" in entry
         assert "type" in entry
         assert "model" in entry
@@ -72,7 +78,7 @@ def test_every_entry_has_required_fields() -> None:
 
 
 def test_tire_specs_reasonable() -> None:
-    for entry in CAR_LIBRARY:
+    for entry in load_car_library():
         assert entry["tire_width_mm"] >= 175, f"{entry['model']} tire too narrow"
         assert entry["tire_width_mm"] <= 335, f"{entry['model']} tire too wide"
         assert entry["tire_aspect_pct"] >= 20, f"{entry['model']} aspect too low"
@@ -82,7 +88,7 @@ def test_tire_specs_reasonable() -> None:
 
 
 def test_tire_options_specs_within_bounds() -> None:
-    for entry in CAR_LIBRARY:
+    for entry in load_car_library():
         for opt in entry["tire_options"]:
             label = f"{entry['model']} / {opt['name']}"
             assert opt["tire_width_mm"] <= 335, f"{label} width too large"
@@ -93,7 +99,7 @@ def test_tire_options_specs_within_bounds() -> None:
 
 def test_tire_options_standard_matches_base() -> None:
     """The first tire option (Standard) should match the car's base tire specs."""
-    for entry in CAR_LIBRARY:
+    for entry in load_car_library():
         std = entry["tire_options"][0]
         assert std["tire_width_mm"] == entry["tire_width_mm"], entry["model"]
         assert std["tire_aspect_pct"] == entry["tire_aspect_pct"], entry["model"]
@@ -110,7 +116,7 @@ def test_tire_options_count_by_category() -> None:
     perf = ["M3", "M4", "M5", "RS 3", "RS 4", "RS 5", "RS 6", "RS 7", "RS Q8", "R8"]
     ev = ["iX", "i4", "e-tron GT", "Q4 e-tron"]
 
-    for entry in CAR_LIBRARY:
+    for entry in load_car_library():
         model = entry["model"]
         if _matches_prefix(model, perf) or _matches_prefix(model, ev):
             assert len(entry["tire_options"]) == 2, f"{model} should have 2 options"
@@ -122,7 +128,7 @@ def test_tire_option_name_format() -> None:
     """Each option name should end with a rim size in inches."""
     import re
 
-    for entry in CAR_LIBRARY:
+    for entry in load_car_library():
         for opt in entry["tire_options"]:
             assert re.search(r'\d+"$', opt["name"]), f"Bad name format: {opt['name']}"
 
@@ -168,12 +174,10 @@ def _make_bad_data_file(tmp_path: Path, kind: str) -> Path:
 
 @pytest.mark.parametrize("kind", ["missing", "invalid_json", "schema_drift"])
 def test_load_library_handles_bad_data(tmp_path: Path, kind: str) -> None:
-    """_load_library gracefully returns [] when the data file is missing or malformed."""
+    """load_car_library gracefully returns [] when the data file is missing or malformed."""
     from unittest.mock import patch
-
-    from vibesensor.adapters.persistence.car_library import _load_library
 
     fake_path = _make_bad_data_file(tmp_path, kind)
     with patch("vibesensor.adapters.persistence.car_library._DATA_FILE", fake_path):
-        result = _load_library()
+        result = load_car_library()
     assert result == []

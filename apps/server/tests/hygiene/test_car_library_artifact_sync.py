@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from vibesensor.adapters.persistence.car_library import _DATA_FILE, CAR_LIBRARY
+from vibesensor.adapters.persistence.car_library import _DATA_FILE, load_car_library
 
 _RATIO_SOURCES_FILE = _DATA_FILE.with_name("car_library_ratio_sources.json")
 _VARIANT_SOURCES_FILE = _DATA_FILE.with_name("CAR_VARIANT_SOURCES.md")
@@ -60,7 +60,7 @@ def _variant_rows_from_docs() -> dict[str, list[tuple[str, str, str]]]:
 
 def _variant_rows_from_library() -> dict[str, list[tuple[str, str, str]]]:
     rows: dict[str, list[tuple[str, str, str]]] = {}
-    for entry in CAR_LIBRARY:
+    for entry in load_car_library():
         rows[_car_key(entry)] = [
             (variant["name"], variant["engine"], variant["drivetrain"])
             for variant in entry["variants"]

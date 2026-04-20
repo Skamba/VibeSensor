@@ -6,14 +6,18 @@ import json
 
 import pytest
 
-from vibesensor.adapters.persistence.car_library import _DATA_FILE, CAR_LIBRARY, resolve_variant
+from vibesensor.adapters.persistence.car_library import (
+    _DATA_FILE,
+    load_car_library,
+    resolve_variant,
+)
 
 _RATIO_SOURCES_FILE = _DATA_FILE.with_name("car_library_ratio_sources.json")
 _VARIANT_SOURCES_FILE = _DATA_FILE.with_name("CAR_VARIANT_SOURCES.md")
 
 
 def _entry_for(model: str) -> dict[str, object]:
-    for entry in CAR_LIBRARY:
+    for entry in load_car_library():
         if entry["brand"] == "BMW" and entry["model"] == model:
             return entry
     raise AssertionError(f"BMW model not found: {model}")
