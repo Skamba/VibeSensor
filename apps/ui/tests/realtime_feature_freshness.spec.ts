@@ -14,10 +14,10 @@ function makeClient(overrides: Partial<{ sample_rate_hz: number; frame_samples: 
 }
 
 test.describe("realtime freshness thresholds", () => {
-  test("falls back to legacy thresholds when cadence metadata is missing", () => {
-    expect(deriveDataFreshnessThresholds([makeClient({ frame_samples: 0 })])).toEqual({
-      freshMs: 250,
-      delayedMs: 1000,
+  test("derives thresholds directly from cadence without legacy minimums", () => {
+    expect(deriveDataFreshnessThresholds([makeClient({ sample_rate_hz: 1600, frame_samples: 100 })])).toEqual({
+      freshMs: 79,
+      delayedMs: 157,
     });
   });
 
