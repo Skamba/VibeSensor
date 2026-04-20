@@ -12,6 +12,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+import vibesensor.infra.processing.fft as fft_module
 from vibesensor.infra.processing.fft import (
     compute_fft_spectrum,
     float_list,
@@ -256,6 +257,57 @@ class TestComputeFftSpectrum:
         assert result["freq_slice"][0] == pytest.approx(6.0)
         assert float(result["spectrum_by_axis"]["x"]["amp"][0]) > 0.0
         assert float(result["combined_amp"][0]) > 0.0
+
+    def test_get_rfft_plan_uses_estimate_planning(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        captured: dict[str, object] = {}
+        original_cache = fft_module._PLAN_CACHE.copy()
+
+        class FakePlan:
+            def __init__(self, input_array: np.ndarray, output_array: np.ndarray) -> None:
+                self.input_array = input_array
+                self.output_array = output_array
+
+            def __call__(self) -> np.ndarray:
+                return self.output_array
+
+        def _fake_empty_aligned(
+            shape: tuple[int, ...],
+            *,
+            dtype: np.dtype[np.generic],
+        ) -> np.ndarray:
+            return np.empty(shape, dtype=dtype)
+
+        def _fake_fftw(
+            input_array: np.ndarray,
+            output_array: np.ndarray,
+            *,
+            axes: tuple[int, ...],
+            direction: str,
+            flags: tuple[str, ...],
+            threads: int,
+        ) -> FakePlan:
+            captured["axes"] = axes
+            captured["direction"] = direction
+            captured["flags"] = flags
+            captured["threads"] = threads
+            return FakePlan(input_array, output_array)
+
+        fft_module._PLAN_CACHE.clear()
+        monkeypatch.setattr(fft_module.pyfftw, "empty_aligned", _fake_empty_aligned)
+        monkeypatch.setattr(fft_module.pyfftw, "FFTW", _fake_fftw)
+        try:
+            plan = fft_module._get_rfft_plan(3, 256)
+        finally:
+            fft_module._PLAN_CACHE.clear()
+            fft_module._PLAN_CACHE.update(original_cache)
+
+        assert isinstance(plan, FakePlan)
+        assert captured == {
+            "axes": (1,),
+            "direction": "FFTW_FORWARD",
+            "flags": ("FFTW_ESTIMATE",),
+            "threads": 1,
+        }
 
     @pytest.mark.parametrize(
         ("block", "sample_rate_hz", "params", "expect_empty"),
