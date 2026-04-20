@@ -162,7 +162,7 @@ class TestUpdateJobStatusRoundTrip:
                     },
                 },
             )
- 
+
     def test_from_payload_accepts_canonical_runtime_flags(self) -> None:
         status = update_status_from_builtins(
             {
