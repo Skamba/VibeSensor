@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from collections.abc import Mapping
 
+import msgspec
+
 from vibesensor.domain import Symptom
 from vibesensor.shared.boundaries.codecs import (
     analysis_settings_snapshot_from_mapping,
@@ -17,7 +19,7 @@ from vibesensor.shared.boundaries.runs.car import (
 )
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.shared.types.run_schema import (
     PEAK_PICKER_METHOD,
     RUN_METADATA_TYPE,
@@ -26,11 +28,53 @@ from vibesensor.shared.types.run_schema import (
 )
 
 __all__ = [
+    "run_metadata_from_json",
     "run_metadata_from_mapping",
+    "run_metadata_to_json_bytes",
     "run_metadata_to_json_object",
 ]
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class _RunMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
+    """Msgspec-owned run metadata record for persisted JSONL envelopes."""
+
+    record_type: str = RUN_METADATA_TYPE
+    schema_version: str = RUN_SCHEMA_VERSION
+    run_id: object = ""
+    start_time_utc: object = ""
+    end_time_utc: object = None
+    sensor_model: object = "unknown"
+    firmware_version: object = None
+    raw_sample_rate_hz: object = None
+    feature_interval_s: object = None
+    fft_window_size_samples: object = None
+    fft_window_type: object = None
+    peak_picker_method: object = PEAK_PICKER_METHOD
+    accel_scale_g_per_lsb: object = None
+    incomplete_for_order_analysis: object = False
+    analysis_settings_snapshot: object = None
+    active_car_snapshot: object = None
+    case_id: object = ""
+    sensor_mac: object = None
+    symptom: object = None
+    report_date: object = None
+    language: object = "en"
+    reference_context: object = None
+    recorded_utc_offset_seconds: object = None
+
+
+def run_metadata_from_json(data: str | bytes | bytearray) -> RunMetadata:
+    """Decode persisted metadata JSON through the canonical msgspec boundary."""
+
+    try:
+        payload = msgspec.to_builtins(msgspec.json.decode(data, type=_RunMetadataRecord))
+    except msgspec.ValidationError:
+        payload = msgspec.json.decode(data)
+    if not is_json_object(payload):
+        raise TypeError("run metadata JSON must decode to an object")
+    return run_metadata_from_mapping(payload)
 
 
 def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
@@ -105,6 +149,17 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
     if metadata.recorded_utc_offset_seconds is not None:
         payload["recorded_utc_offset_seconds"] = metadata.recorded_utc_offset_seconds
     return payload
+
+
+def run_metadata_to_json_bytes(metadata: RunMetadata) -> bytes:
+    """Encode typed run metadata through the canonical msgspec boundary."""
+
+    record = msgspec.convert(
+        run_metadata_to_json_object(metadata),
+        type=_RunMetadataRecord,
+        strict=False,
+    )
+    return msgspec.json.encode(record)
 
 
 def _normalized_language(value: object) -> str:

@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import msgspec
+
 from vibesensor.shared.boundaries.runs.metadata import (
+    run_metadata_from_json,
     run_metadata_from_mapping,
+    run_metadata_to_json_bytes,
     run_metadata_to_json_object,
 )
 
@@ -38,3 +42,45 @@ def test_run_metadata_codec_roundtrip_uses_nested_symptom_and_reference_context(
     assert "symptom_onset" not in payload
     assert "symptom_context" not in payload
     assert "tire_circumference_m" not in payload
+
+
+def test_run_metadata_msgspec_codec_roundtrip_preserves_nested_fields() -> None:
+    metadata = run_metadata_from_mapping(
+        {
+            "run_id": "run-msgspec",
+            "start_time_utc": "2026-01-01T00:00:00Z",
+            "sensor_model": "ADXL345",
+            "symptom": {
+                "description": "whine under load",
+                "onset": "after 60 km/h",
+                "context": "during acceleration",
+            },
+            "reference_context": {"tire_circumference_m": 2.2},
+        }
+    )
+
+    decoded = run_metadata_from_json(run_metadata_to_json_bytes(metadata))
+
+    assert decoded.run_id == "run-msgspec"
+    assert decoded.symptom is not None
+    assert decoded.symptom.description == "whine under load"
+    assert decoded.symptom.onset == "after 60 km/h"
+    assert decoded.symptom.context == "during acceleration"
+    assert decoded.wheel_circumference_m == 2.2
+
+
+def test_run_metadata_from_json_tolerates_legacy_non_string_record_type() -> None:
+    decoded = run_metadata_from_json(
+        msgspec.json.encode(
+            {
+                "record_type": 123,
+                "schema_version": "v2-jsonl",
+                "run_id": "legacy-run",
+                "start_time_utc": "2026-01-01T00:00:00Z",
+                "sensor_model": "ADXL345",
+            }
+        )
+    )
+
+    assert decoded.record_type == "run_metadata"
+    assert decoded.run_id == "legacy-run"
