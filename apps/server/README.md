@@ -36,8 +36,7 @@ state. Current `main` is intentionally split more narrowly:
 - `BootstrapEnvSettings`, `WebSocketEnvSettings`, and `UpdateEnvSettings` in
   `vibesensor.shared.process_settings` own process-level env overrides and
   feature flags such as config-path selection, static-asset mounting, WS debug
-  logging, and updater/release path/repo defaults. `vibesensor.app.settings`
-  re-exports that surface for app/CLI entrypoints.
+  logging, and updater/release path/repo defaults.
 - Focused persisted settings services own user-facing runtime settings: car
   profiles (`CarSettingsService`), active-car analysis settings
   (`ActiveCarAnalysisSettingsService`), speed-source preferences

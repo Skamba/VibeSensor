@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from vibesensor.app.settings import (
+from vibesensor.shared.process_settings import (
     DEFAULT_FIRMWARE_CACHE_DIR,
     DEFAULT_UPDATE_REPO_PATH,
     DEFAULT_UPDATE_ROLLBACK_DIR,
