@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import hashlib
 import importlib.util
 import sys
@@ -151,3 +152,21 @@ def test_build_ui_static_rejects_prevalidated_contracts_without_skip_typecheck(
         module.main(["--assume-prevalidated-contracts"])
 
     assert exc_info.value.code == 2
+
+
+def test_build_ui_static_stays_importable_without_msgspec(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    original_import = builtins.__import__
+
+    def _guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "msgspec":
+            raise ModuleNotFoundError(name)
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", _guarded_import)
+
+    module, _repo, _ui_dir = _load_temp_build_ui_static(tmp_path)
+
+    assert module.UI_BUILD_METADATA_FILE == ".vibesensor-ui-build.json"
