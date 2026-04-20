@@ -14,3 +14,5 @@ allowlist:
   apps/server/tests/use_cases/run/test_metrics_log_helpers.py: Helper-focused metrics log regression coverage intentionally stays aggregated in one module.
   # Cars smoke keeps the full cars workflow journey in one browser spec.
   apps/ui/tests/smoke.cars.spec.ts: End-to-end cars smoke journey intentionally spans multiple cars flows in one spec.
+  # Maintenance mounted-DOM coverage now lives in one Node-side regression owner instead of four legacy bridge specs.
+  apps/ui/tests/maintenance_feature_signal_tests.ts: Mounted maintenance regression matrix intentionally stays together while replacing the deleted legacy createPanel Playwright split.
