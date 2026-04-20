@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+
+import msgspec
 
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
@@ -15,6 +17,11 @@ __all__ = ["RollbackSnapshot", "RollbackSnapshotMetadata", "RollbackSnapshotStor
 _ROLLBACK_METADATA_FILE = "rollback_snapshot.json"
 _ROLLBACK_WHEEL_FILE = "rollback_snapshot.whl"
 _ROLLBACK_BACKUP_WHEEL_FILE = ".rollback_snapshot.previous.whl"
+
+
+class _RollbackSnapshotMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
+    version: str = ""
+    sha256: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +41,43 @@ class RollbackSnapshotPromotion:
     wheel_path: Path
     backup_path: Path | None
     moved_new_wheel: bool
+
+
+def _rollback_snapshot_metadata_to_json(metadata: RollbackSnapshotMetadata) -> bytes:
+    return (
+        msgspec.json.encode(
+            _RollbackSnapshotMetadataRecord(version=metadata.version, sha256=metadata.sha256)
+        )
+        + b"\n"
+    )
+
+
+def _rollback_snapshot_metadata_from_json(raw: bytes | str) -> RollbackSnapshotMetadata:
+    record = _decode_rollback_snapshot_metadata_record(raw)
+    return RollbackSnapshotMetadata(version=record.version, sha256=record.sha256)
+
+
+def _decode_rollback_snapshot_metadata_record(raw: bytes | str) -> _RollbackSnapshotMetadataRecord:
+    try:
+        return msgspec.json.decode(raw, type=_RollbackSnapshotMetadataRecord)
+    except msgspec.ValidationError:
+        decoded = msgspec.json.decode(raw)
+        if not isinstance(decoded, Mapping):
+            raise
+        return _rollback_snapshot_metadata_record_from_object(decoded)
+
+
+def _rollback_snapshot_metadata_record_from_object(
+    payload: Mapping[str, object],
+) -> _RollbackSnapshotMetadataRecord:
+    return _RollbackSnapshotMetadataRecord(
+        version=_rollback_snapshot_metadata_text(payload.get("version")),
+        sha256=_rollback_snapshot_metadata_text(payload.get("sha256")),
+    )
+
+
+def _rollback_snapshot_metadata_text(value: object) -> str:
+    return str(value or "")
 
 
 class RollbackSnapshotStore:
@@ -59,25 +103,15 @@ class RollbackSnapshotStore:
         """Atomically persist rollback metadata alongside stored wheels."""
 
         self._rollback_dir.mkdir(parents=True, exist_ok=True)
-        payload = (
-            json.dumps(
-                {
-                    "version": metadata.version,
-                    "sha256": metadata.sha256,
-                },
-                indent=2,
-            )
-            + "\n"
-        )
+        payload = _rollback_snapshot_metadata_to_json(metadata)
         fd, temp_path_text = tempfile.mkstemp(
             prefix=".rollback_snapshot.",
             suffix=".tmp",
             dir=self._rollback_dir,
-            text=True,
         )
         temp_path = Path(temp_path_text)
         try:
-            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            with os.fdopen(fd, "wb") as handle:
                 handle.write(payload)
                 handle.flush()
                 os.fsync(handle.fileno())
@@ -155,8 +189,8 @@ class RollbackSnapshotStore:
                 )
             return None
         try:
-            raw = json.loads(metadata_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            metadata = _rollback_snapshot_metadata_from_json(metadata_path.read_bytes())
+        except (msgspec.DecodeError, msgspec.ValidationError, OSError) as exc:
             if report_issues:
                 self._status.add_issue(
                     "installing",
@@ -164,9 +198,7 @@ class RollbackSnapshotStore:
                     f"{metadata_path}: {exc}",
                 )
             return None
-        version = str(raw.get("version") or "")
-        sha256 = str(raw.get("sha256") or "")
-        if not version or not sha256:
+        if not metadata.version or not metadata.sha256:
             if report_issues:
                 self._status.add_issue(
                     "installing",
@@ -174,4 +206,4 @@ class RollbackSnapshotStore:
                     f"{metadata_path} is missing version or sha256",
                 )
             return None
-        return RollbackSnapshotMetadata(version=version, sha256=sha256)
+        return metadata
