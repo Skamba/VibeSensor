@@ -118,9 +118,9 @@ The local development configs default the HTTP listener to port `8000`.
 For native backend iteration, run `vibesensor-server --reload --config
 apps/server/config.dev.yaml` from the repo root so Python changes hot-reload
 while the Vite dev server proxies browser traffic to `http://127.0.0.1:8000`.
-Linux, Docker, and Raspberry Pi backend runs install the canonical `uvloop`
-event-loop policy automatically at startup; unsupported non-Linux local
-development falls back to the default asyncio loop.
+Linux, Docker, and Raspberry Pi backend runs use Granian with the canonical
+`uvloop` event loop; unsupported non-Linux local development falls back to
+Granian on the default asyncio loop.
 
 ## Dependency management
 

@@ -135,8 +135,8 @@ make dev
 ```
 
 Open http://127.0.0.1:5173 for the Vite dev server with HMR. The backend keeps
-running on http://127.0.0.1:8000 with `vibesensor-server --reload`, so Python
-changes hot-reload without rebuilding the image.
+running on http://127.0.0.1:8000 with `vibesensor-server --reload`, so Granian
+reloads Python changes without rebuilding the image.
 
 `make dev` wraps `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build`.
 The UI container now reuses the `node_modules` volume unless `apps/ui/package-lock.json`
@@ -163,10 +163,9 @@ commands like `vibesensor-server` and `vibesensor-sim` stay tied to your working
 tree. A local virtualenv created from the matrix-supported native-dev Python is
 the recommended path before you run the install above, and `make setup` will
 create or refresh that `.venv` for you automatically.
-On Linux, Docker, and Raspberry Pi runtimes, `vibesensor-server` installs the
-canonical `uvloop` event-loop policy automatically before the backend runtime
-starts; unsupported non-Linux local development falls back to the default
-asyncio loop.
+On Linux, Docker, and Raspberry Pi runtimes, `vibesensor-server` runs the
+backend through Granian with the canonical `uvloop` event loop. Unsupported
+non-Linux local development falls back to Granian on the default asyncio loop.
 
 In another terminal:
 

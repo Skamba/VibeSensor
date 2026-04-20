@@ -17,9 +17,11 @@ from contextlib import asynccontextmanager
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from granian import Granian
+from granian.constants import Interfaces, Loops
+from granian.log import LogLevels
 
 from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.error_boundary import install_http_exception_handlers
@@ -27,7 +29,6 @@ from vibesensor.adapters.http.middleware import install_request_logging_middlewa
 from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
 from vibesensor.app.config_loader import load_config
 from vibesensor.app.container import build_runtime
-from vibesensor.app.runtime_state import AppRuntime
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
 from vibesensor.shared.process_settings import (
     CONFIG_PATH_ENV,
@@ -56,21 +57,6 @@ _LOG_BACKUP_COUNT = 3
 _CONFIG_PATH_ENV = CONFIG_PATH_ENV
 
 
-def _install_runtime_event_loop_policy() -> None:
-    """Install the canonical runtime event-loop policy for this platform."""
-    if not sys.platform.startswith("linux"):
-        return
-    if type(asyncio.get_event_loop_policy()).__module__.startswith("uvloop"):
-        return
-    try:
-        import uvloop
-    except ImportError as exc:
-        raise RuntimeError(
-            "uvloop is required on Linux runtimes; reinstall the backend dependencies.",
-        ) from exc
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-
-
 def _setup_file_logging(log_path: Path | None) -> None:
     """Attach a RotatingFileHandler to the root logger when *log_path* is set."""
     if log_path is None:
@@ -93,7 +79,6 @@ def _setup_file_logging(log_path: Path | None) -> None:
 
 def create_app(config_path: Path | None = None) -> FastAPI:
     """Create and configure the VibeSensor FastAPI application."""
-    _install_runtime_event_loop_policy()
     config = load_config(config_path)
     bootstrap_settings = load_bootstrap_env_settings()
     _setup_file_logging(config.logging.app_log_path)
@@ -173,35 +158,49 @@ def create_app_from_env() -> FastAPI:
     return create_app(config_path=load_bootstrap_env_settings().config_path)
 
 
+def _granian_loop() -> Loops:
+    """Return the canonical Granian loop implementation for this platform."""
+    if sys.platform.startswith("linux"):
+        import uvloop
+
+        if not callable(getattr(uvloop, "new_event_loop", None)):
+            raise RuntimeError("uvloop is unavailable for Granian startup")
+        return Loops.uvloop
+    return Loops.asyncio
+
+
 def _run_server(
-    app_target: FastAPI | str,
+    app_target: str,
     *,
     host: str,
     port: int,
     reload: bool = False,
     factory: bool = False,
 ) -> None:
-    """Run uvicorn for the given app target with the common server settings."""
-    uvicorn.run(
+    """Run Granian for the given app target with the common server settings."""
+    server = Granian(
         app_target,
-        host=host,
+        address=host,
         port=port,
-        log_level="info",
-        loop="asyncio",
+        interface=Interfaces.ASGI,
+        log_enabled=True,
+        log_level=LogLevels.info,
+        loop=_granian_loop(),
         reload=reload,
         factory=factory,
     )
+    server.serve()
 
 
 def _run_server_with_port_fallback(
-    app_target: FastAPI | str,
+    app_target: str,
     *,
     host: str,
     port: int,
     reload: bool = False,
     factory: bool = False,
 ) -> None:
-    """Run uvicorn on the configured port, retrying the backup port on bind errors."""
+    """Run Granian on the configured port, retrying the backup port on bind errors."""
     try:
         _run_server(
             app_target,
@@ -246,30 +245,17 @@ def main() -> None:
     parser.add_argument(
         "--reload",
         action="store_true",
-        help="Enable uvicorn auto-reload for local development.",
+        help="Enable Granian auto-reload for local development.",
     )
     args = parser.parse_args()
-
-    if args.reload:
-        config = load_config(args.config)
-        host = config.server.host
-        port = config.server.port
-        export_config_path_env(args.config)
-        _run_server_with_port_fallback(
-            "vibesensor.app.bootstrap:create_app_from_env",
-            host=host,
-            port=port,
-            reload=True,
-            factory=True,
-        )
-        return
-
-    runtime_app = create_app(config_path=args.config)
-    runtime: AppRuntime = runtime_app.state.runtime
+    config = load_config(args.config)
+    export_config_path_env(args.config)
     _run_server_with_port_fallback(
-        runtime_app,
-        host=runtime.config.server.host,
-        port=runtime.config.server.port,
+        "vibesensor.app.bootstrap:create_app_from_env",
+        host=config.server.host,
+        port=config.server.port,
+        reload=args.reload,
+        factory=True,
     )
 
 
