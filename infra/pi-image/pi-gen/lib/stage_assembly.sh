@@ -23,7 +23,6 @@ sync_stage_repo_snapshot() {
     --exclude "firmware/" \
     --exclude "hardware/" \
     --exclude "tools/tests/" \
-    --exclude "apps/server/data/" \
     --exclude "infra/pi-image/pi-gen/.cache/" \
     --exclude "infra/pi-image/pi-gen/.pip-cache-stage/" \
     --exclude "infra/pi-image/pi-gen/out/" \
