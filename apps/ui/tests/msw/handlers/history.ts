@@ -4,7 +4,9 @@ import type {
   HistoryListPayload,
   HistoryRunPayload,
 } from "../../../src/api/types";
-import { HttpResponse, http, uiTestUrl } from "../http";
+import type { JsonBodyType } from "msw";
+
+import { HttpResponse, http, uiRoutePath } from "../http";
 
 type ErrorResponse = {
   detail: string;
@@ -17,8 +19,10 @@ type JsonResponseInit<T> = {
   status?: number;
   statusText?: string;
 };
-type JsonResult<T> = T | ErrorResponse | JsonResponseInit<T> | Response;
-type JsonHandlerResult<T> = JsonResult<T> | ((request: Request) => JsonResult<T> | Promise<JsonResult<T>>);
+type JsonResult<T extends JsonBodyType> = T | ErrorResponse | JsonResponseInit<T> | Response;
+type JsonHandlerFactory<T extends JsonBodyType> =
+  (request: Request) => JsonResult<T> | Promise<JsonResult<T>>;
+type JsonHandlerResult<T extends JsonBodyType> = JsonResult<T> | JsonHandlerFactory<T>;
 type BinaryResponseInit = {
   body?: BodyInit | null;
   contentType?: string;
@@ -42,17 +46,17 @@ function isErrorResponse(value: unknown): value is ErrorResponse {
   return !!value && typeof value === "object" && "detail" in value;
 }
 
-function isJsonResponseInit<T>(value: unknown): value is JsonResponseInit<T> {
+function isJsonResponseInit<T extends JsonBodyType>(value: unknown): value is JsonResponseInit<T> {
   return !!value
     && typeof value === "object"
     && !(value instanceof Response)
-    && Object.hasOwn(value, "json");
+    && Object.prototype.hasOwnProperty.call(value, "json");
 }
 
-async function resolveJsonResult<T>(
+async function resolveJsonResult<T extends JsonBodyType>(
   request: Request,
   result: JsonHandlerResult<T>,
-): Promise<HttpResponse> {
+): Promise<Response> {
   const resolved = typeof result === "function" ? await result(request) : result;
   if (isErrorResponse(resolved)) {
     return HttpResponse.json(
@@ -76,7 +80,7 @@ async function resolveJsonResult<T>(
 async function resolveBinaryResult(
   request: Request,
   result: BinaryHandlerResult,
-): Promise<HttpResponse> {
+): Promise<Response> {
   const resolved = typeof result === "function" ? await result(request) : result;
   if (isErrorResponse(resolved)) {
     return HttpResponse.json(
@@ -179,13 +183,13 @@ export function buildHistoryHandlers(options: {
   const runDetail = options.runDetail ?? makeHistoryRunPayload();
   const insights = options.insights ?? makeHistoryInsightsAnalyzingPayload("run-001");
   return [
-    http.get(uiTestUrl("/api/history"), async ({ request }) =>
+    http.get(uiRoutePath("/api/history"), async ({ request }) =>
       await resolveJsonResult(request, list)),
-    http.delete(uiTestUrl("/api/history/:runId"), async ({ request }) =>
+    http.delete(uiRoutePath("/api/history/:runId"), async ({ request }) =>
       await resolveJsonResult(request, deleteRun)),
-    http.get(uiTestUrl("/api/history/:runId"), async ({ request }) =>
+    http.get(uiRoutePath("/api/history/:runId"), async ({ request }) =>
       await resolveJsonResult(request, runDetail)),
-    http.get(uiTestUrl("/api/history/:runId/insights"), async ({ request }) =>
+    http.get(uiRoutePath("/api/history/:runId/insights"), async ({ request }) =>
       await resolveJsonResult(request, insights)),
   ];
 }
@@ -201,9 +205,9 @@ export function buildHistoryDownloadHandlers(options: {
     filename: "run-001_export.zip",
   });
   return [
-    http.get(uiTestUrl("/api/history/:runId/report.pdf"), async ({ request }) =>
+    http.get(uiRoutePath("/api/history/:runId/report.pdf"), async ({ request }) =>
       await resolveBinaryResult(request, reportPdf)),
-    http.get(uiTestUrl("/api/history/:runId/export"), async ({ request }) =>
+    http.get(uiRoutePath("/api/history/:runId/export"), async ({ request }) =>
       await resolveBinaryResult(request, exportArchive)),
   ];
 }

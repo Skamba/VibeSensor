@@ -6,4 +6,8 @@ export function uiTestUrl(path: string): string {
   return new URL(path, UI_MSW_ORIGIN).toString();
 }
 
+export function uiRoutePath(path: string): string {
+  return `*${path}`;
+}
+
 export { http, HttpResponse };
