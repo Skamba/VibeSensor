@@ -29,7 +29,7 @@ from vibesensor.shared.boundaries.reporting.document import (
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.history.report_document import build_report_document
 
-_I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
+_I18N_JSON = SERVER_ROOT / "vibesensor" / "data" / "report_i18n.json"
 
 
 def _sample(

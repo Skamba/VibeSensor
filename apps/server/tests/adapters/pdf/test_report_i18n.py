@@ -14,7 +14,7 @@ from vibesensor.use_cases.history.report_document.pattern_parts import (
     why_parts_listed,
 )
 
-_I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
+_I18N_JSON = SERVER_ROOT / "vibesensor" / "data" / "report_i18n.json"
 _SOURCE_ROOT = SERVER_ROOT / "vibesensor"
 _UI_NL_JSON = SERVER_ROOT.parent / "ui" / "src" / "i18n" / "catalogs" / "nl.json"
 
