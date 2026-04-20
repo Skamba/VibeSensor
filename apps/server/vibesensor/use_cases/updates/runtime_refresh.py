@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
+from vibesensor.shared.structured_logging import log_extra
 from vibesensor.use_cases.updates.status import (
     UpdateStatusTracker,
     collect_runtime_details,
@@ -35,7 +36,14 @@ class UpdateRuntimeDetailsRefresher:
         try:
             runtime_details = await asyncio.to_thread(collect_runtime_details, self._repo)
         except (OSError, UpdateError) as exc:
-            self._logger.exception("update: runtime details refresh error")
+            self._logger.exception(
+                "update: runtime details refresh error",
+                extra=log_extra(
+                    event="update_runtime_refresh_error",
+                    update_phase="cleanup",
+                    repo_path=str(self._repo),
+                ),
+            )
             raise UpdateCleanupError(
                 "Runtime details refresh failed",
                 phase="cleanup",

@@ -14,7 +14,6 @@ import logging
 import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -35,7 +34,7 @@ from vibesensor.shared.process_settings import (
     export_config_path_env,
     load_bootstrap_env_settings,
 )
-from vibesensor.shared.structured_logging import StructuredLogFormatter
+from vibesensor.shared.structured_logging import configure_logging
 
 __all__ = ["create_app", "create_app_from_env", "main"]
 
@@ -52,36 +51,15 @@ on port 80).  Chosen to be a common unprivileged alternative."""
 _BIND_ERROR_NUMBERS: frozenset[int] = frozenset({errno.EACCES, errno.EADDRINUSE, 10013, 10048})
 """OS errno values indicating a port-bind failure (includes Windows equivalents)."""
 
-_LOG_MAX_BYTES = 5 * 1024 * 1024  # 5 MB per file
-_LOG_BACKUP_COUNT = 3
 _CONFIG_PATH_ENV = CONFIG_PATH_ENV
-
-
-def _setup_file_logging(log_path: Path | None) -> None:
-    """Attach a RotatingFileHandler to the root logger when *log_path* is set."""
-    if log_path is None:
-        return
-    try:
-        log_path.parent.mkdir(parents=True, exist_ok=True)
-        handler = RotatingFileHandler(
-            log_path,
-            maxBytes=_LOG_MAX_BYTES,
-            backupCount=_LOG_BACKUP_COUNT,
-            encoding="utf-8",
-        )
-        handler.setLevel(logging.INFO)
-        handler.setFormatter(StructuredLogFormatter())
-        logging.getLogger().addHandler(handler)
-        LOGGER.info("File logging enabled: %s", log_path)
-    except OSError:
-        LOGGER.warning("Failed to set up file logging at %s", log_path, exc_info=True)
 
 
 def create_app(config_path: Path | None = None) -> FastAPI:
     """Create and configure the VibeSensor FastAPI application."""
+    configure_logging(None)
     config = load_config(config_path)
     bootstrap_settings = load_bootstrap_env_settings()
-    _setup_file_logging(config.logging.app_log_path)
+    configure_logging(config.logging.app_log_path)
     runtime = build_runtime(config)
     lifecycle = LifecycleManager(
         runtime=LifecycleRuntime(
@@ -248,7 +226,9 @@ def main() -> None:
         help="Enable Granian auto-reload for local development.",
     )
     args = parser.parse_args()
+    configure_logging(None)
     config = load_config(args.config)
+    configure_logging(config.logging.app_log_path)
     export_config_path_env(args.config)
     _run_server_with_port_fallback(
         "vibesensor.app.bootstrap:create_app_from_env",

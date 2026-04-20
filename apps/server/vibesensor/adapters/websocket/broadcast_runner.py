@@ -17,6 +17,7 @@ from vibesensor.adapters.websocket.connection_tracker import (
     WSConnectionSnapshot,
 )
 from vibesensor.adapters.websocket.payload_orchestrator import PayloadBuildOrchestrator
+from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.types.payload_types import LiveWsPayload
 
 LOGGER = logging.getLogger(__name__)
@@ -90,6 +91,10 @@ class BroadcastRunner:
                     "connection will be removed.",
                     selected_client_id,
                     exc_info=True,
+                    extra=log_extra(
+                        event="ws_broadcast_send_failed",
+                        selected_client_id=selected_client_id,
+                    ),
                 )
             if await self._tracker.mark_snapshot_closing(conn):
                 return conn
@@ -147,6 +152,13 @@ class BroadcastRunner:
             len(payloads.failed_client_ids),
             ", ".join(repr(cid) for cid in payloads.failed_client_ids),
             affected,
+            extra=log_extra(
+                event="ws_broadcast_payload_build_failed",
+                failed_client_ids=sorted(
+                    "None" if cid is None else cid for cid in payloads.failed_client_ids
+                ),
+                affected_connection_count=affected,
+            ),
         )
 
     def _log_debug(
