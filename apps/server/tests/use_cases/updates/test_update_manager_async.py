@@ -352,6 +352,37 @@ class TestUpdateManagerAsync:
 
         assert details.version == "2026.3.29"
 
+    async def test_runtime_details_ignore_corrupt_ui_build_metadata(self, tmp_path) -> None:
+        manager, _runner, repo = setup_update_env(tmp_path)
+        seed_runtime_artifacts(repo, manager)
+        metadata_path = (
+            repo / "apps" / "server" / "vibesensor" / "static" / ".vibesensor-ui-build.json"
+        )
+        metadata_path.write_text("{not-json", encoding="utf-8")
+
+        details = collect_runtime_details(repo)
+
+        assert details.static_build_source_hash == ""
+        assert details.static_build_commit == ""
+        assert details.assets_verified is False
+
+    async def test_runtime_details_default_blank_for_missing_ui_build_metadata_fields(
+        self,
+        tmp_path,
+    ) -> None:
+        manager, _runner, repo = setup_update_env(tmp_path)
+        seed_runtime_artifacts(repo, manager)
+        metadata_path = (
+            repo / "apps" / "server" / "vibesensor" / "static" / ".vibesensor-ui-build.json"
+        )
+        metadata_path.write_text('{"static_assets_hash":"assets-only"}\n', encoding="utf-8")
+
+        details = collect_runtime_details(repo)
+
+        assert details.static_build_source_hash == ""
+        assert details.static_build_commit == ""
+        assert details.assets_verified is False
+
     async def test_usb_internet_happy_path_skips_hotspot_handover(self, tmp_path) -> None:
         usb_service = _StaticUsbInternetService(
             UsbInternetStatus(

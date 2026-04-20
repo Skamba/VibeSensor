@@ -270,3 +270,15 @@ class TestHealStateStore:
         assert store1.allow("restart", min_interval_s=9999) is True
         store2 = HealStateStore(state_path)
         assert store2.allow("restart", min_interval_s=9999) is False
+
+    def test_partial_state_file_keeps_numeric_entries(self, tmp_path: Path) -> None:
+        state_path = tmp_path / "state.json"
+        state_path.write_text(
+            '{"restart": 9999999999, "reload": "bad", "reassociate": [1]}\n',
+            encoding="utf-8",
+        )
+        store = HealStateStore(state_path)
+
+        assert store.allow("restart", min_interval_s=9999) is False
+        assert store.allow("reload", min_interval_s=60) is True
+        assert store.allow("reassociate", min_interval_s=60) is True
