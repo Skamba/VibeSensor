@@ -53,7 +53,6 @@ from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
 from vibesensor.infra.workers.worker_pool import WorkerPool
-from vibesensor.shared.async_bridge import run_coro_blocking
 from vibesensor.shared.boundaries.reporting import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.constants.dsp import (
@@ -239,7 +238,7 @@ def create_history_db(
         recovered_runs = history.run_repository.recover_stale_recording_runs()
     except (aiosqlite.Error, OSError):
         LOGGER.error("Failed during early startup DB operations; closing DB.", exc_info=True)
-        run_coro_blocking(history.close())
+        history.close()
         raise
     if recovered_runs:
         LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
