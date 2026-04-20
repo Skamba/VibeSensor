@@ -5,6 +5,7 @@ import pytest
 
 from vibesensor.use_cases.updates.http_client import (
     build_get_request,
+    build_request,
     read_text_response,
     stream_http_response,
 )
@@ -18,6 +19,21 @@ def test_build_get_request_rejects_non_https_when_required() -> None:
             context="release",
             require_https=True,
         )
+
+
+def test_build_request_keeps_method_and_body_for_json_puts() -> None:
+    request = build_request(
+        "put",
+        "http://127.0.0.1:8000/api/settings/speed-source",
+        headers={"Content-Type": "application/json"},
+        content=b'{"speed_source":"manual"}',
+        context="simulator speed override",
+    )
+
+    assert request.method == "PUT"
+    assert str(request.url) == "http://127.0.0.1:8000/api/settings/speed-source"
+    assert request.headers["Content-Type"] == "application/json"
+    assert request.content == b'{"speed_source":"manual"}'
 
 
 def test_github_api_client_get_json_decodes_payload() -> None:
@@ -70,6 +86,32 @@ def test_read_text_response_returns_status_and_body_for_local_smoke_checks() -> 
     assert status == 503
     assert content_type == "text/plain; charset=utf-8"
     assert body == "booting"
+
+
+def test_read_text_response_supports_put_with_request_body() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["method"] = request.method
+        captured["body"] = request.content
+        return httpx.Response(200, text="ok", request=request)
+
+    status, _content_type, body = read_text_response(
+        "http://127.0.0.1:8000/api/settings/speed-source",
+        method="PUT",
+        headers={"Content-Type": "application/json"},
+        content=b'{"speed_source":"manual"}',
+        timeout_s=3.0,
+        context="simulator speed override",
+        transport=httpx.MockTransport(handler),
+    )
+
+    assert captured == {
+        "method": "PUT",
+        "body": b'{"speed_source":"manual"}',
+    }
+    assert status == 200
+    assert body == "ok"
 
 
 def test_stream_http_response_maps_timeout_to_oserror() -> None:
