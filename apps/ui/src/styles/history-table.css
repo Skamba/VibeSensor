@@ -6,7 +6,7 @@
 
 .history-table th,
 .history-table td {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
   padding: 0.6rem;
   text-align: left;
   vertical-align: middle;
@@ -19,8 +19,8 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--muted);
-  background: var(--surface-2);
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container-high);
 }
 
 .history-table tbody tr:nth-child(even) td { background: var(--row-even); }
@@ -46,7 +46,7 @@
 
 .history-row__run-id {
   font-size: 0.78rem;
-  color: var(--muted);
+  color: var(--md-sys-color-on-surface-variant);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -61,13 +61,13 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .history-row__car-name {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--md-sys-color-on-surface);
   overflow-wrap: anywhere;
 }
 
@@ -80,10 +80,10 @@
 .history-row__summary-chip {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--border);
+  border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: 999px;
-  background: var(--surface);
-  color: var(--text);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
   padding: 0.14rem 0.5rem;
   font-size: 0.74rem;
   line-height: 1.35;
@@ -108,8 +108,8 @@
 }
 
 .history-row__summary-chip--muted {
-  color: var(--muted);
-  background: var(--surface-2);
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container-high);
 }
 
 .history-row__summary-chip--source {
@@ -138,12 +138,12 @@
 .history-row__diagnosis-title {
   font-size: 0.92rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--md-sys-color-on-surface);
   overflow-wrap: anywhere;
 }
 
 .history-row__diagnosis-meta {
-  color: var(--muted);
+  color: var(--md-sys-color-on-surface-variant);
   font-size: 0.8rem;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -179,7 +179,7 @@
 }
 
 .history-row__toggle:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--md-sys-color-focus);
   outline-offset: 2px;
 }
 
@@ -237,7 +237,7 @@
 }
 
 .history-row__action-hint {
-  color: var(--muted);
+  color: var(--md-sys-color-on-surface-variant);
   font-size: 0.76rem;
   line-height: 1.45;
   text-align: right;
@@ -257,11 +257,11 @@
   margin-top: var(--space-2);
 }
 
-.history-row[data-expanded="true"] td { background: var(--surface-2) !important; }
+.history-row[data-expanded="true"] td { background: var(--md-sys-color-surface-container-high) !important; }
 
 .history-inline-error {
   display: inline-flex;
-  color: var(--danger);
+  color: var(--md-sys-color-error);
   font-size: 0.82rem;
 }
 
@@ -285,7 +285,7 @@
 }
 
 .history-toolbar__summary {
-  color: var(--muted);
+  color: var(--md-sys-color-on-surface-variant);
   font-size: 0.9rem;
   line-height: 1.45;
 }

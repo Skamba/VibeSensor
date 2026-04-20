@@ -20,26 +20,15 @@
   --md-sys-color-on-error: #ffffff;
   --md-sys-color-focus: #a78bfa;
 
-  /* Alias tokens kept for existing selectors */
-  --bg: var(--md-sys-color-surface);
-  --surface: var(--md-sys-color-surface-container);
-  --surface-2: var(--md-sys-color-surface-container-high);
-  --border: var(--md-sys-color-outline-variant);
-  --border-strong: var(--md-sys-color-outline);
-  --text: var(--md-sys-color-on-surface);
-  --muted: var(--md-sys-color-on-surface-variant);
-  --brand-500: var(--md-sys-color-primary);
+  /* Accent/status palette and semantic tokens */
   --brand-600: #6d28d9;
   --brand-700: #5b21b6;
   --brand-400: #8b5cf6;
-  --success: var(--md-sys-color-tertiary);
   --success-400: #29b56c;
   --success-700: #0b7a44;
-  --danger: var(--md-sys-color-error);
   --danger-400: #d64e4b;
   --danger-700: #9f1b18;
   --warning: #b7791f;
-  --focus: var(--md-sys-color-focus);
   --on-fill: #ffffff;
   --menu-hover: #f0ebfe;
   --pill-muted-bg: #eef0f5;
@@ -93,8 +82,8 @@
 body {
   margin: 0;
   font-family: "Segoe UI", "Trebuchet MS", Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
   font-size: 15px;
 }
 
@@ -109,7 +98,7 @@ body {
   --variant-surface: var(--pill-muted-bg);
   --variant-banner-surface: var(--pill-muted-bg);
   --variant-text: var(--pill-muted-text);
-  --variant-border: var(--border);
+  --variant-border: var(--md-sys-color-outline-variant);
 }
 
 [data-variant="ok"] {
@@ -134,9 +123,9 @@ body {
 }
 
 [data-readiness-state] {
-  --readiness-surface: var(--surface-2);
-  --readiness-text: var(--text);
-  --readiness-border: var(--border);
+  --readiness-surface: var(--md-sys-color-surface-container-high);
+  --readiness-text: var(--md-sys-color-on-surface);
+  --readiness-border: var(--md-sys-color-outline-variant);
   --readiness-marker-surface: var(--pill-muted-bg);
   --readiness-marker-text: var(--pill-muted-text);
 }
@@ -145,7 +134,7 @@ body {
   --readiness-surface: var(--pill-ok-bg);
   --readiness-text: var(--pill-ok-text);
   --readiness-border: rgba(11, 122, 68, 0.18);
-  --readiness-marker-surface: var(--success);
+  --readiness-marker-surface: var(--md-sys-color-tertiary);
   --readiness-marker-text: var(--on-fill);
 }
 
@@ -154,13 +143,13 @@ body {
   --readiness-text: var(--pill-warn-text);
   --readiness-border: rgba(170, 108, 26, 0.28);
   --readiness-marker-surface: var(--warning);
-  --readiness-marker-text: var(--text);
+  --readiness-marker-text: var(--md-sys-color-on-surface);
 }
 
 [data-readiness-state="blocked"] {
   --readiness-surface: var(--pill-bad-bg);
   --readiness-text: var(--pill-bad-text);
   --readiness-border: #f0c4c4;
-  --readiness-marker-surface: var(--danger);
+  --readiness-marker-surface: var(--md-sys-color-error);
   --readiness-marker-text: var(--on-fill);
 }
