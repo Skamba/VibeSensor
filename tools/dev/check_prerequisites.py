@@ -157,19 +157,13 @@ def _check_docker() -> list[CheckResult]:
     if compose_ok:
         results.append(CheckResult("docker compose", "OK", _first_line(compose_output)))
     else:
-        legacy_ok, legacy_output = _run(["docker-compose", "version"])
-        if legacy_ok:
-            results.append(
-                CheckResult("docker compose", "OK", _first_line(legacy_output))
+        results.append(
+            CheckResult(
+                "docker compose",
+                "WARN",
+                f"v2 unavailable: {_first_line(compose_output)}",
             )
-        else:
-            results.append(
-                CheckResult(
-                    "docker compose",
-                    "WARN",
-                    f"unavailable: {_first_line(compose_output or legacy_output)}",
-                )
-            )
+        )
 
     daemon_ok, daemon_output = _run(["docker", "info"])
     if daemon_ok:
