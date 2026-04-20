@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
+from functools import partial
 from typing import TYPE_CHECKING, Protocol
+
+import anyio
 
 from vibesensor.shared.exceptions import ProcessingError
 from vibesensor.shared.ports import ClockSyncBroadcaster
@@ -70,7 +72,7 @@ class ProcessingTickRunner:
         if self._control_plane is None:
             return
         try:
-            await asyncio.to_thread(self._control_plane.broadcast_sync_clock)
+            await anyio.to_thread.run_sync(self._control_plane.broadcast_sync_clock)
         except OSError as exc:
             raise ProcessingTickFailure(ProcessingFailureCategory.SYNC_CLOCK, exc) from exc
 
@@ -132,10 +134,12 @@ class ProcessingTickRunner:
     ) -> None:
         compute_failure: ProcessingTickFailure | None = None
         try:
-            await asyncio.to_thread(
-                self._processor.compute_all,
-                compute_client_ids,
-                sample_rates_hz=sample_rates,
+            await anyio.to_thread.run_sync(
+                partial(
+                    self._processor.compute_all,
+                    compute_client_ids,
+                    sample_rates_hz=sample_rates,
+                )
             )
         except _OPERATIONAL_PROCESSING_EXCEPTIONS as exc:
             compute_failure = ProcessingTickFailure(
