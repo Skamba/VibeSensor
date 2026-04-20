@@ -24,8 +24,8 @@ from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.error_boundary import install_http_exception_handlers
 from vibesensor.adapters.http.middleware import install_request_logging_middleware
 from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
-from vibesensor.app.container import build_runtime
 from vibesensor.app.config_loader import load_config
+from vibesensor.app.container import build_runtime
 from vibesensor.app.runtime_state import AppRuntime
 from vibesensor.shared.process_settings import (
     CONFIG_PATH_ENV,
