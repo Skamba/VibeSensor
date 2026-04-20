@@ -17,9 +17,9 @@ import vibesensor.adapters.udp.udp_control_tx as udp_control_tx_mod
 import vibesensor.shared.locations as locations_mod
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.persistence.car_library import (
-    CAR_LIBRARY,
     get_models_for_brand_type,
     get_variants_for_model,
+    load_car_library,
 )
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import _ws_debug_enabled
@@ -116,23 +116,25 @@ class TestCarLibraryCopies:
     """Verify car-library query helpers return copies rather than mutable internals."""
 
     def test_get_models_returns_copies(self) -> None:
-        if not CAR_LIBRARY:
+        library = load_car_library()
+        if not library:
             pytest.skip("No car library data loaded")
-        brand = CAR_LIBRARY[0].get("brand")
-        car_type = CAR_LIBRARY[0].get("type")
+        brand = library[0].get("brand")
+        car_type = library[0].get("type")
         models = get_models_for_brand_type(brand, car_type)
         if not models:
             pytest.skip("No models found")
         # Mutate the returned dict
         models[0]["MUTATED"] = True
         # Original library should NOT be mutated
-        for entry in CAR_LIBRARY:
+        for entry in load_car_library():
             assert "MUTATED" not in entry
 
     def test_get_variants_returns_copies(self) -> None:
-        if not CAR_LIBRARY:
+        library = load_car_library()
+        if not library:
             pytest.skip("No car library data loaded")
-        for entry in CAR_LIBRARY:
+        for entry in library:
             variants = entry.get("variants") or []
             if variants:
                 result = get_variants_for_model(entry["brand"], entry["type"], entry["model"])

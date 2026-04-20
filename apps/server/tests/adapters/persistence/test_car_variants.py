@@ -7,9 +7,9 @@ import json
 import pytest
 
 from vibesensor.adapters.persistence.car_library import (
-    CAR_LIBRARY,
     get_models_for_brand_type,
     get_variants_for_model,
+    load_car_library,
     resolve_variant,
 )
 from vibesensor.shared.types.car_config import car_from_persistence_dict, car_to_persistence_dict
@@ -20,6 +20,10 @@ def _variant_label(entry: dict[str, object], variant: dict[str, object]) -> str:
     return f"{entry['model']} / {variant.get('name', '?')}"
 
 
+def _library_entries() -> list[dict[str, object]]:
+    return load_car_library()
+
+
 # ---------------------------------------------------------------------------
 # Car library JSON structure tests
 # ---------------------------------------------------------------------------
@@ -27,7 +31,7 @@ def _variant_label(entry: dict[str, object], variant: dict[str, object]) -> str:
 
 def test_every_model_has_variants() -> None:
     """Every car library entry must have at least one variant."""
-    for entry in CAR_LIBRARY:
+    for entry in _library_entries():
         assert "variants" in entry, f"{entry['model']} missing variants"
         assert isinstance(entry["variants"], list), f"{entry['model']} variants not a list"
         assert len(entry["variants"]) >= 1, f"{entry['model']} has no variants"
@@ -35,7 +39,7 @@ def test_every_model_has_variants() -> None:
 
 def test_every_variant_has_required_fields() -> None:
     """Each variant must have name and drivetrain."""
-    for entry in CAR_LIBRARY:
+    for entry in _library_entries():
         for v in entry["variants"]:
             label = _variant_label(entry, v)
             assert "name" in v, f"{label} missing name"
@@ -49,7 +53,7 @@ def test_every_variant_has_required_fields() -> None:
 
 def test_variant_names_unique_within_model() -> None:
     """Variant names must be unique within each model."""
-    for entry in CAR_LIBRARY:
+    for entry in _library_entries():
         names = [v["name"] for v in entry["variants"]]
         assert len(names) == len(set(names)), (
             f"{entry['model']} has duplicate variant names: {names}"
@@ -58,7 +62,7 @@ def test_variant_names_unique_within_model() -> None:
 
 def test_variant_gearbox_overrides_valid() -> None:
     """Variant gearbox overrides must be valid (positive ratios)."""
-    for entry in CAR_LIBRARY:
+    for entry in _library_entries():
         for v in entry["variants"]:
             gbs = v.get("gearboxes")
             if not gbs:
@@ -74,7 +78,7 @@ def test_variant_gearbox_overrides_valid() -> None:
 
 def test_variant_tire_overrides_valid() -> None:
     """Variant tire overrides must be within reasonable bounds."""
-    for entry in CAR_LIBRARY:
+    for entry in _library_entries():
         for v in entry["variants"]:
             label = _variant_label(entry, v)
             if "tire_width_mm" in v and v["tire_width_mm"] is not None:
@@ -106,7 +110,7 @@ def test_get_variants_for_model_unknown_returns_empty() -> None:
 
 def test_resolve_variant_no_variant() -> None:
     """resolve_variant with None returns base entry."""
-    base = CAR_LIBRARY[0]
+    base = _library_entries()[0]
     resolved = resolve_variant(base, None)
     assert resolved["gearboxes"] == base["gearboxes"]
     assert resolved["tire_options"] == base["tire_options"]
@@ -115,7 +119,7 @@ def test_resolve_variant_no_variant() -> None:
 def test_resolve_variant_inherits_base_gearboxes() -> None:
     """Variant without gearbox override inherits base gearboxes."""
     # Find a model where first variant has no gearbox override
-    for entry in CAR_LIBRARY:
+    for entry in _library_entries():
         first_v = entry["variants"][0]
         if not first_v.get("gearboxes"):
             resolved = resolve_variant(entry, first_v["name"])
@@ -126,7 +130,7 @@ def test_resolve_variant_inherits_base_gearboxes() -> None:
 def test_resolve_variant_overrides_gearboxes() -> None:
     """Variant with gearbox override replaces base gearboxes."""
     # BMW M3 G80 variants have gearbox overrides
-    for entry in CAR_LIBRARY:
+    for entry in _library_entries():
         if entry["model"] == "M3 (G80, 2021-2026)":
             # "M3 Competition" has only automatic
             resolved = resolve_variant(entry, "M3 Competition")
@@ -139,7 +143,7 @@ def test_resolve_variant_overrides_gearboxes() -> None:
 
 def test_resolve_variant_g20_330i_xdrive_uses_verified_automatic_ratio() -> None:
     """G20 330i xDrive keeps the automatic-only gearbox override with the verified ratio."""
-    for entry in CAR_LIBRARY:
+    for entry in _library_entries():
         if entry["brand"] == "BMW" and entry["model"] == "3 Series (G20, 2019-2025)":
             resolved = resolve_variant(entry, "330i xDrive")
             assert resolved["gearboxes"] == [
@@ -171,7 +175,7 @@ def test_resolve_variant_audi_b9_fy_s_tronic_uses_verified_final_drives(
     model: str, variant: str, expected_final_drive_ratio: float
 ) -> None:
     """Audi B9/FY S tronic entries keep the verified final-drive ratios from Audi docs."""
-    for entry in CAR_LIBRARY:
+    for entry in _library_entries():
         if entry["brand"] == "Audi" and entry["model"] == model:
             resolved = resolve_variant(entry, variant)
             s_tronic = next(
@@ -210,7 +214,7 @@ def test_audi_models_include_verified_tdi_variants(
     model: str, variant: str, expected_engine: str, expected_drivetrain: str
 ) -> None:
     """Audi core European-market models keep the verified TDI coverage added for #974."""
-    for entry in CAR_LIBRARY:
+    for entry in _library_entries():
         if entry["brand"] == "Audi" and entry["model"] == model:
             variant_entry = next(
                 candidate for candidate in entry["variants"] if candidate["name"] == variant
@@ -286,7 +290,7 @@ def test_bev_models_match_verified_motor_layouts(
     model: str, expected_electric_variants: dict[str, tuple[str, str]]
 ) -> None:
     """Supported BEV entries keep the verified motor-layout variants from issue #975."""
-    for entry in CAR_LIBRARY:
+    for entry in _library_entries():
         if entry["model"] == model:
             actual_electric_variants = {
                 variant["name"]: (variant["engine"], variant["drivetrain"])
@@ -301,7 +305,7 @@ def test_bev_models_match_verified_motor_layouts(
 
 def test_resolve_variant_unknown_name_returns_base() -> None:
     """resolve_variant with unknown name returns base entry unchanged."""
-    base = CAR_LIBRARY[0]
+    base = _library_entries()[0]
     resolved = resolve_variant(base, "nonexistent_variant")
     assert resolved["gearboxes"] == base["gearboxes"]
 
@@ -391,5 +395,5 @@ def test_car_library_json_parseable() -> None:
 
 def test_total_variant_count() -> None:
     """Sanity check: the library has a reasonable number of variants."""
-    total = sum(len(e.get("variants", [])) for e in CAR_LIBRARY)
+    total = sum(len(e.get("variants", [])) for e in _library_entries())
     assert total >= 150, f"Only {total} variants total, expected >=150"
