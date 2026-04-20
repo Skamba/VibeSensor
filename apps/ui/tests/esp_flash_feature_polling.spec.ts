@@ -7,8 +7,13 @@ import {
   installFeatureFetchMock,
   installMaintenanceFeatureGlobals,
 } from "./maintenance_feature_test_support";
+import {
+  buildEspFlashHandlers,
+} from "./msw/handlers/maintenance";
+import { createUiMswTestServer } from "./msw/node";
 
 let restoreDomGlobals = () => undefined;
+const mswServer = createUiMswTestServer(test);
 
 test.beforeEach(() => {
   restoreDomGlobals = installMaintenanceFeatureGlobals();
@@ -21,72 +26,47 @@ test.afterEach(() => {
 
 test.describe("createEspFlashFeature polling", () => {
   test("idle state renders readiness, empty log, and empty history context", async () => {
-    const restoreFetch = installFeatureFetchMock(async (url) => {
-      if (url.pathname === "/api/esp-flash/ports") {
-        return jsonResponse({ ports: [createEspFlashPort()] });
-      }
-      if (url.pathname === "/api/esp-flash/status") {
-        return jsonResponse({
-          state: "idle",
-          phase: "idle",
-          selected_port: null,
-          auto_detect: true,
-          last_success_at: null,
-          error: null,
-          log_count: 0,
-        });
-      }
-      if (url.pathname === "/api/esp-flash/history") {
-        return jsonResponse({ attempts: [] });
-      }
-      if (url.pathname === "/api/esp-flash/logs") {
-        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
-      }
-      return jsonResponse({});
-    });
+    mswServer.use(...buildEspFlashHandlers());
 
-    try {
-      const { deps, feature } = createEspFlashFeatureHarness();
+    const { deps, feature } = createEspFlashFeatureHarness();
 
-      feature.bindHandlers();
-      feature.startPolling();
-      await flushAsyncWork();
+    feature.bindHandlers();
+    feature.startPolling();
+    await flushAsyncWork();
 
-      expect(deps.espFlashStartSummary.innerHTML).toContain(
-        "settings.esp_flash.start_readiness.summary_ready",
-      );
-      expect(deps.espFlashStartSummary.innerHTML).toContain(
-        "settings.esp_flash.start_readiness.item.connection_ready",
-      );
-      expect(deps.espFlashStartBtn.disabled).toBe(false);
-      expect(deps.espFlashCancelBtn.hidden).toBe(true);
-      expect(deps.espFlashReadinessPanel.innerHTML).toContain(
-        "settings.esp_flash.readiness.summary.ready_ports",
-      );
-      expect(deps.espFlashReadinessPanel.innerHTML).toContain(
-        "settings.esp_flash.readiness.one_port",
-      );
-      expect(deps.espFlashReadinessPanel.innerHTML).toContain(
-        "settings.esp_flash.auto_detect",
-      );
-      expect(deps.espFlashReadinessPanel.innerHTML).not.toContain(
-        "settings.esp_flash.journey_title",
-      );
-      expect(deps.espFlashReadinessPanel.innerHTML).not.toContain(
-        "settings.esp_flash.phase.validating",
-      );
-      expect(deps.espFlashJourneyPanel.innerHTML).toContain(
-        "settings.esp_flash.phase.validating",
-      );
-      expect((deps.els.espFlashLogPanel as HTMLElement).innerHTML).toContain(
-        "settings.esp_flash.logs_idle_title",
-      );
-      expect(
-        (deps.els.espFlashHistoryPanel as HTMLElement).innerHTML,
-      ).toContain("settings.esp_flash.history_empty_title");
-    } finally {
-      restoreFetch();
-    }
+    expect(deps.espFlashStartSummary.innerHTML).toContain(
+      "settings.esp_flash.start_readiness.summary_ready",
+    );
+    expect(deps.espFlashStartSummary.innerHTML).toContain(
+      "settings.esp_flash.start_readiness.item.connection_ready",
+    );
+    expect(deps.espFlashStartBtn.disabled).toBe(false);
+    expect(deps.espFlashCancelBtn.hidden).toBe(true);
+    expect(deps.espFlashReadinessPanel.innerHTML).toContain(
+      "settings.esp_flash.readiness.summary.ready_ports",
+    );
+    expect(deps.espFlashReadinessPanel.innerHTML).toContain(
+      "settings.esp_flash.readiness.one_port",
+    );
+    expect(deps.espFlashReadinessPanel.innerHTML).toContain(
+      "settings.esp_flash.auto_detect",
+    );
+    expect(deps.espFlashReadinessPanel.innerHTML).not.toContain(
+      "settings.esp_flash.journey_title",
+    );
+    expect(deps.espFlashReadinessPanel.innerHTML).not.toContain(
+      "settings.esp_flash.phase.validating",
+    );
+    expect(deps.espFlashJourneyPanel.innerHTML).toContain(
+      "settings.esp_flash.phase.validating",
+    );
+    expect((deps.els.espFlashLogPanel as HTMLElement).innerHTML).toContain(
+      "settings.esp_flash.logs_idle_title",
+    );
+    expect(
+      (deps.els.espFlashHistoryPanel as HTMLElement).innerHTML,
+    ).toContain("settings.esp_flash.history_empty_title");
+    feature.dispose();
   });
 
   test("no detected ports keep the flash action blocked until hardware is present", async () => {
