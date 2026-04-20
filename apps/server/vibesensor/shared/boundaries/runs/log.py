@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -49,7 +50,7 @@ class RunData:
     source_path: Path
 
 
-def normalize_sample_record(record: dict[str, object]) -> SensorFrame:
+def normalize_sample_record(record: Mapping[str, object]) -> SensorFrame:
     """Normalize a raw sample payload into the canonical typed sample object."""
 
     return sensor_frame_from_mapping(record, strict=True, source="jsonl sample")
