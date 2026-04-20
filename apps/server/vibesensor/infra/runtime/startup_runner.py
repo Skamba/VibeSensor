@@ -6,13 +6,17 @@ previously inlined in ``LifecycleManager.start()``.
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Awaitable, Callable, Coroutine
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from opentelemetry.trace import SpanKind
+
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.task_supervisor import task_failure_message
 from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
+from vibesensor.shared.tracing import mark_span_error, start_span
 
 if TYPE_CHECKING:
     from vibesensor.infra.runtime.background_task_coordinator import BackgroundTaskCoordinator
@@ -65,7 +69,20 @@ class StartupRunner:
             for phase in self._phases():
                 phase_name = phase.name
                 self._health_state.set_phase(phase_name)
-                await phase.run()
+                with start_span(
+                    __name__,
+                    "runtime.startup.phase",
+                    kind=SpanKind.INTERNAL,
+                    attributes={"vibesensor.phase": phase_name},
+                ) as span:
+                    try:
+                        await phase.run()
+                    except asyncio.CancelledError:
+                        span.set_attribute("vibesensor.cancelled", True)
+                        raise
+                    except (OSError, RuntimeError) as exc:
+                        mark_span_error(span, exc)
+                        raise
             self._health_state.mark_ready()
         except (OSError, RuntimeError) as exc:
             self._health_state.mark_failed(phase_name, task_failure_message(exc))

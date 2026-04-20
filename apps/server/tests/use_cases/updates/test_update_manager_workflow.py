@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from test_support.tracing import configured_trace_output, read_trace_output
 
 from vibesensor.shared.exceptions import (
     UpdatePreparationError,
@@ -146,3 +148,17 @@ async def test_startup_recover_uses_persisted_transport() -> None:
     await manager.startup_recover()
 
     recover.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_startup_recover_exports_trace_span(tmp_path: Path) -> None:
+    manager, recover = _build_manager()
+
+    with configured_trace_output(tmp_path) as trace_path:
+        await manager.startup_recover()
+
+    recover.assert_awaited_once()
+    span = next(
+        item for item in read_trace_output(trace_path) if item["name"] == "update.startup_recover"
+    )
+    assert span["attributes"] == {}

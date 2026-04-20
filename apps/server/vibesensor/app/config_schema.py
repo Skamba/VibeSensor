@@ -19,6 +19,7 @@ __all__ = [
     "LoggingConfig",
     "ProcessingConfig",
     "ServerConfig",
+    "TracingConfig",
     "UDPConfig",
     "UpdateConfig",
 ]
@@ -222,6 +223,14 @@ class UpdateConfig:
 
 
 @dataclass(slots=True)
+class TracingConfig:
+    """Backend tracing configuration (optional JSONL export)."""
+
+    enabled: bool
+    output_path: Path
+
+
+@dataclass(slots=True)
 class AppConfig:
     """Full application configuration assembled from the YAML config file."""
 
@@ -232,5 +241,6 @@ class AppConfig:
     logging: LoggingConfig
     gps: GPSConfig
     update: UpdateConfig
+    tracing: TracingConfig
     config_path: Path
     repo_dir: Path = REPO_DIR

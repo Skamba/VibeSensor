@@ -7,9 +7,11 @@ import time
 from typing import Protocol
 
 import aiosqlite
+from opentelemetry.trace import SpanKind
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.structured_logging import log_extra
+from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.run.post_analysis_input import (
     PostAnalysisRunInput,
@@ -61,94 +63,106 @@ def execute_post_analysis(
     defer_retryable_error_storage: bool = False,
 ) -> PostAnalysisAttemptResult:
     analysis_start = time.monotonic()
-    LOGGER.info(
-        "Analysis started for run %s",
-        run_id,
-        extra=log_extra(event="post_analysis_started", run_id=run_id),
-    )
-    try:
-        load_result = load_run(run_id=run_id, db=db)
-    except (aiosqlite.Error, OSError, MemoryError) as exc:
-        if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
-            return _retryable_failure_result(
+    with start_span(
+        __name__,
+        "run.post_analysis.execute",
+        kind=SpanKind.INTERNAL,
+        attributes={"vibesensor.run_id": run_id},
+    ) as span:
+        LOGGER.info(
+            "Analysis started for run %s",
+            run_id,
+            extra=log_extra(event="post_analysis_started", run_id=run_id),
+        )
+        try:
+            load_result = load_run(run_id=run_id, db=db)
+        except (aiosqlite.Error, OSError, MemoryError) as exc:
+            mark_span_error(span, exc)
+            if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
+                return _retryable_failure_result(
+                    run_id=run_id,
+                    analysis_start=analysis_start,
+                    exc=exc,
+                )
+            return _persistence_failure_result(
                 run_id=run_id,
                 analysis_start=analysis_start,
                 exc=exc,
+                db=db,
             )
-        return _persistence_failure_result(
-            run_id=run_id,
-            analysis_start=analysis_start,
-            exc=exc,
-            db=db,
-        )
 
-    if isinstance(load_result, MissingPostAnalysisMetadata):
-        LOGGER.warning(
-            "Cannot analyse run %s: metadata not found",
-            run_id,
-            extra=log_extra(
-                event="post_analysis_skipped",
+        if isinstance(load_result, MissingPostAnalysisMetadata):
+            span.set_attribute("vibesensor.failure_kind", "missing_metadata")
+            LOGGER.warning(
+                "Cannot analyse run %s: metadata not found",
+                run_id,
+                extra=log_extra(
+                    event="post_analysis_skipped",
+                    run_id=run_id,
+                    failure_kind="missing_metadata",
+                ),
+            )
+            return _store_load_error(
+                db=db,
                 run_id=run_id,
-                failure_kind="missing_metadata",
-            ),
-        )
-        return _store_load_error(
-            db=db,
-            run_id=run_id,
-            completed_error=load_result.error_message,
-            kind="missing_metadata",
-        )
+                completed_error=load_result.error_message,
+                kind="missing_metadata",
+            )
 
-    if isinstance(load_result, EmptyPostAnalysisSamples):
-        LOGGER.warning(
-            "Skipping post-analysis for run %s: no samples collected",
-            run_id,
-            extra=log_extra(
-                event="post_analysis_skipped",
+        if isinstance(load_result, EmptyPostAnalysisSamples):
+            span.set_attribute("vibesensor.failure_kind", "no_samples")
+            LOGGER.warning(
+                "Skipping post-analysis for run %s: no samples collected",
+                run_id,
+                extra=log_extra(
+                    event="post_analysis_skipped",
+                    run_id=run_id,
+                    failure_kind="no_samples",
+                ),
+            )
+            return _store_load_error(
+                db=db,
                 run_id=run_id,
-                failure_kind="no_samples",
-            ),
-        )
-        return _store_load_error(
-            db=db,
-            run_id=run_id,
-            completed_error=load_result.error_message,
-            kind="no_samples",
-        )
+                completed_error=load_result.error_message,
+                kind="no_samples",
+            )
 
-    loaded = load_result
-    run_input = build_post_analysis_input(loaded)
-    try:
-        summary = analysis_runner(run_input)
-        db.store_analysis(loaded.run_id, summary)
-    except (aiosqlite.Error, OSError, MemoryError) as exc:
-        if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
-            return _retryable_failure_result(
+        loaded = load_result
+        run_input = build_post_analysis_input(loaded)
+        span.set_attribute("vibesensor.sample_count", len(run_input.samples))
+        try:
+            summary = analysis_runner(run_input)
+            db.store_analysis(loaded.run_id, summary)
+        except (aiosqlite.Error, OSError, MemoryError) as exc:
+            mark_span_error(span, exc)
+            if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
+                return _retryable_failure_result(
+                    run_id=loaded.run_id,
+                    analysis_start=analysis_start,
+                    exc=exc,
+                )
+            return _persistence_failure_result(
                 run_id=loaded.run_id,
                 analysis_start=analysis_start,
                 exc=exc,
+                db=db,
             )
-        return _persistence_failure_result(
-            run_id=loaded.run_id,
-            analysis_start=analysis_start,
-            exc=exc,
-            db=db,
-        )
 
-    duration_s = time.monotonic() - analysis_start
-    LOGGER.info(
-        "Analysis completed for run %s: %d samples in %.2fs",
-        loaded.run_id,
-        len(run_input.samples),
-        duration_s,
-        extra=log_extra(
-            event="post_analysis_completed",
-            run_id=loaded.run_id,
-            sample_count=len(run_input.samples),
-            duration_s=round(duration_s, 3),
-        ),
-    )
-    return PostAnalysisExecutionSuccess(run_id=loaded.run_id)
+        duration_s = time.monotonic() - analysis_start
+        span.set_attribute("vibesensor.duration_s", round(duration_s, 3))
+        LOGGER.info(
+            "Analysis completed for run %s: %d samples in %.2fs",
+            loaded.run_id,
+            len(run_input.samples),
+            duration_s,
+            extra=log_extra(
+                event="post_analysis_completed",
+                run_id=loaded.run_id,
+                sample_count=len(run_input.samples),
+                duration_s=round(duration_s, 3),
+            ),
+        )
+        return PostAnalysisExecutionSuccess(run_id=loaded.run_id)
 
 
 def _store_load_error(

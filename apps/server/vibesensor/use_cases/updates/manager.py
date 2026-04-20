@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import asyncio
 
+from opentelemetry.trace import SpanKind
+
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
+from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
     UpdateRequest,
@@ -79,25 +82,44 @@ class UpdateManager:
         return True
 
     async def startup_recover(self) -> None:
-        await self._startup_recovery.recover()
+        with start_span(__name__, "update.startup_recover", kind=SpanKind.INTERNAL) as span:
+            try:
+                await self._startup_recovery.recover()
+            except asyncio.CancelledError:
+                span.set_attribute("vibesensor.cancelled", True)
+                raise
+            except Exception as exc:
+                mark_span_error(span, exc)
+                raise
 
     async def _run_managed_workflow(self, request: UpdateRequest) -> None:
-        try:
-            await asyncio.wait_for(
-                self._workflow.run(request=request),
-                timeout=self._timeout_s,
-            )
-        except UpdateCleanupError as exc:
-            self._reporter.fail(exc, default_phase="cleanup")
-            raise
-        except UpdateError as exc:
-            self._reporter.fail(exc, default_phase="workflow")
-            return
-        except TimeoutError:
-            self._reporter.fail_timeout(timeout_s=self._timeout_s)
-        except asyncio.CancelledError:
-            self._reporter.fail_cancelled()
-            raise
-        finally:
-            self._status.clear_secrets()
-            self._status.finish_cleanup()
+        with start_span(
+            __name__,
+            "update.workflow",
+            kind=SpanKind.INTERNAL,
+            attributes={"vibesensor.transport": request.transport.value},
+        ) as span:
+            try:
+                await asyncio.wait_for(
+                    self._workflow.run(request=request),
+                    timeout=self._timeout_s,
+                )
+            except UpdateCleanupError as exc:
+                mark_span_error(span, exc)
+                self._reporter.fail(exc, default_phase="cleanup")
+                raise
+            except UpdateError as exc:
+                mark_span_error(span, exc)
+                self._reporter.fail(exc, default_phase="workflow")
+                return
+            except TimeoutError as exc:
+                mark_span_error(span, exc)
+                self._reporter.fail_timeout(timeout_s=self._timeout_s)
+            except asyncio.CancelledError:
+                span.set_attribute("vibesensor.cancelled", True)
+                self._reporter.fail_cancelled()
+                raise
+            finally:
+                span.set_attribute("vibesensor.final_state", self._status.status.state.value)
+                self._status.clear_secrets()
+                self._status.finish_cleanup()

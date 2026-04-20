@@ -23,6 +23,7 @@ from .config_schema import (
     LoggingConfig,
     ProcessingConfig,
     ServerConfig,
+    TracingConfig,
     UDPConfig,
     UpdateConfig,
 )
@@ -99,6 +100,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     logging_cfg = _require_config_section(merged.get("logging", {}), "logging")
     gps_cfg = _require_config_section(merged.get("gps", {}), "gps")
     update_cfg = _require_config_section(merged.get("update", {}), "update")
+    tracing_cfg = _require_config_section(merged.get("tracing", {}), "tracing")
 
     data_host = str(udp_cfg["data_host"])
     data_port = _coerce_port(udp_cfg["data_port"], "udp.data_port")
@@ -218,6 +220,13 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         ),
         update=UpdateConfig(
             rollback_dir=Path(str(update_cfg["rollback_dir"])),
+        ),
+        tracing=TracingConfig(
+            enabled=bool(tracing_cfg["enabled"]),
+            output_path=_resolve_config_path(
+                str(tracing_cfg["output_path"]),
+                path,
+            ),
         ),
         config_path=path,
     )
