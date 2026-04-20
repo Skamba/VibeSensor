@@ -4,17 +4,19 @@ from __future__ import annotations
 
 import asyncio
 import csv
+import inspect
 import io
 import json
 import logging
 import tempfile
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
+from typing import cast
 
 from vibesensor.shared.boundaries.sensor_frames import sensor_frame_to_json_object
 from vibesensor.shared.filenames import safe_filename
 from vibesensor.shared.json_utils import sanitize_for_json
-from vibesensor.shared.ports import RunPersistence
+from vibesensor.shared.ports import AsyncRunPersistence, RunPersistence
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.history.helpers import async_require_run
@@ -57,6 +59,7 @@ EXPORT_CSV_COLUMNS: tuple[str, ...] = (
 EXPORT_CSV_COLUMN_SET: frozenset[str] = frozenset(EXPORT_CSV_COLUMNS)
 CsvCell = str | int | float | None
 CsvRow = dict[str, CsvCell]
+RawCsvSpoolBuilder = Callable[[str], tuple[tempfile.SpooledTemporaryFile[bytes], int]]
 
 
 def flatten_for_csv(row: JsonObject) -> CsvRow:
@@ -106,12 +109,17 @@ class HistoryExportService:
 
     __slots__ = ("_history_db",)
 
-    def __init__(self, history_db: RunPersistence) -> None:
+    def __init__(self, history_db: AsyncRunPersistence) -> None:
         self._history_db = history_db
 
     async def build_export_context(self, run_id: str) -> HistoryExportContext:
         run = await async_require_run(self._history_db, run_id)
-        raw_csv_spool, sample_count = await asyncio.to_thread(self._build_raw_csv_spool, run_id)
+        build_raw_csv_spool = cast(object, self._build_raw_csv_spool)
+        if inspect.iscoroutinefunction(build_raw_csv_spool):
+            raw_csv_spool, sample_count = await self._build_raw_csv_spool(run_id)
+        else:
+            sync_builder = cast(RawCsvSpoolBuilder, build_raw_csv_spool)
+            raw_csv_spool, sample_count = await asyncio.to_thread(sync_builder, run_id)
         return HistoryExportContext(
             run_id=run_id,
             safe_name=safe_filename(run_id),
@@ -120,7 +128,7 @@ class HistoryExportService:
             raw_csv_spool=raw_csv_spool,
         )
 
-    def _build_raw_csv_spool(
+    async def _build_raw_csv_spool(
         self,
         run_id: str,
     ) -> tuple[tempfile.SpooledTemporaryFile[bytes], int]:
@@ -137,12 +145,31 @@ class HistoryExportService:
                 extrasaction="ignore",
             )
             writer.writeheader()
-            for batch in self._history_db.iter_run_samples(
-                run_id,
-                batch_size=EXPORT_BATCH_SIZE,
-            ):
-                sample_count += len(batch)
-                writer.writerows(flatten_for_csv(sensor_frame_to_json_object(row)) for row in batch)
+            aiter_run_samples = getattr(self._history_db, "aiter_run_samples", None)
+            if callable(aiter_run_samples):
+                async for batch in aiter_run_samples(
+                    run_id,
+                    batch_size=EXPORT_BATCH_SIZE,
+                ):
+                    sample_count += len(batch)
+                    writer.writerows(
+                        flatten_for_csv(sensor_frame_to_json_object(row)) for row in batch
+                    )
+            else:
+                sync_history_db = cast(RunPersistence, self._history_db)
+                batches = await asyncio.to_thread(
+                    lambda: list(
+                        sync_history_db.iter_run_samples(
+                            run_id,
+                            batch_size=EXPORT_BATCH_SIZE,
+                        )
+                    )
+                )
+                for batch in batches:
+                    sample_count += len(batch)
+                    writer.writerows(
+                        flatten_for_csv(sensor_frame_to_json_object(row)) for row in batch
+                    )
             raw_csv_text.flush()
             raw_csv_text.detach()
             spool.seek(0)

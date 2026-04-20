@@ -23,6 +23,7 @@ __all__ = [
     "SQLiteHistoryEngine",
     "SettingsSnapshotRepository",
     "create_history_persistence_adapters",
+    "create_history_persistence_adapters_async",
 ]
 
 LOGGER = logging.getLogger(__name__)
@@ -37,13 +38,24 @@ class HistoryPersistenceAdapters:
     settings_snapshot_repository: SettingsSnapshotRepository
     client_name_repository: ClientNameRepository
 
+    def open(self) -> None:
+        self.lifecycle.open()
 
-def create_history_persistence_adapters(
+    async def aopen(self) -> None:
+        await self.lifecycle.aopen()
+
+    def close(self) -> object:
+        return self.lifecycle.close()
+
+    async def aclose(self) -> None:
+        await self.lifecycle.aclose()
+
+
+def _build_history_persistence_adapters(
     db_path: Path,
     *,
     corruption_reporter: Callable[[str], None] | None = None,
 ) -> HistoryPersistenceAdapters:
-    """Build the shared history engine plus narrow repositories on top of it."""
     lifecycle = SQLiteHistoryEngine(
         db_path,
         corruption_reporter=corruption_reporter,
@@ -62,3 +74,30 @@ def create_history_persistence_adapters(
             cursor_provider=cursor_provider,
         ),
     )
+
+
+def create_history_persistence_adapters(
+    db_path: Path,
+    *,
+    corruption_reporter: Callable[[str], None] | None = None,
+) -> HistoryPersistenceAdapters:
+    """Build and open the shared history engine plus narrow repositories on top of it."""
+    history = _build_history_persistence_adapters(
+        db_path,
+        corruption_reporter=corruption_reporter,
+    )
+    history.open()
+    return history
+
+
+async def create_history_persistence_adapters_async(
+    db_path: Path,
+    *,
+    corruption_reporter: Callable[[str], None] | None = None,
+) -> HistoryPersistenceAdapters:
+    history = _build_history_persistence_adapters(
+        db_path,
+        corruption_reporter=corruption_reporter,
+    )
+    await history.aopen()
+    return history

@@ -8,10 +8,11 @@ the injected ``RunPersistence`` boundary.
 from __future__ import annotations
 
 import logging
-import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
+
+import aiosqlite
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -199,11 +200,7 @@ class RunPersistenceWriter:
                 self._history_create_fail_count = 0
         metadata = self._metadata_builder(run_id, start_time_utc)
         try:
-            history_db.create_run(
-                run_id,
-                start_time_utc,
-                metadata,
-            )
+            history_db.create_run(run_id, start_time_utc, metadata)
             with self._lock:
                 if not self._run_id_matches(run_id):
                     return
@@ -212,7 +209,7 @@ class RunPersistenceWriter:
                 self._retry_cycle_count = 0
                 self._retry_after_mono_s = 0.0
             self.clear_last_write_error()
-        except (sqlite3.Error, OSError) as exc:
+        except (aiosqlite.Error, OSError) as exc:
             with self._lock:
                 if not self._run_id_matches(run_id):
                     return
@@ -295,7 +292,7 @@ class RunPersistenceWriter:
                             return AppendRowsResult(history_created=True, rows_written=0)
                         self.clear_last_write_error()
                         return AppendRowsResult(history_created=True, rows_written=rows_written)
-                    except (sqlite3.Error, OSError) as exc:
+                    except (aiosqlite.Error, OSError) as exc:
                         last_exc = exc
                         if attempt < _MAX_APPEND_RETRIES - 1:
                             self._sleep(_APPEND_RETRY_DELAYS_S[attempt])
@@ -350,7 +347,7 @@ class RunPersistenceWriter:
                 return False
             self.clear_last_write_error()
             return True
-        except (sqlite3.Error, OSError) as exc:
+        except (aiosqlite.Error, OSError) as exc:
             self.set_last_write_error(f"history finalize_run failed: {exc}")
             self._logger_provider().warning(
                 "Failed to finalize run in history DB",

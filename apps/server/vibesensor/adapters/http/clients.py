@@ -125,14 +125,15 @@ def create_client_routes(
             raise http_exception_for_value_error(exc, status_code=status_code) from exc
         stored_sensor = stored.get(normalized_client_id)
         code = str(stored_sensor["location_code"] if stored_sensor is not None else "").strip()
-        registry.set_location(normalized_client_id, code)
+        await asyncio.to_thread(registry.set_location, normalized_client_id, code)
         if code:
-            registry.set_name(
+            await asyncio.to_thread(
+                registry.set_name,
                 normalized_client_id,
                 str(stored_sensor["name"] if stored_sensor is not None else "").strip(),
             )
         else:
-            registry.clear_name(normalized_client_id)
+            await asyncio.to_thread(registry.clear_name, normalized_client_id)
         mac = client_id_mac(normalized_client_id)
         fallback_sensor: SensorConfigPayload = {
             "name": normalized_client_id,
@@ -161,7 +162,7 @@ def create_client_routes(
     async def remove_client(client_id: str) -> RemoveClientResponse:
         """Remove a disconnected sensor from the runtime registry."""
         normalized_client_id = normalize_client_id_or_400(client_id)
-        removed = registry.remove_client(normalized_client_id)
+        removed = await asyncio.to_thread(registry.remove_client, normalized_client_id)
         if not removed:
             raise HTTPException(status_code=404, detail="Sensor not found")
         return RemoveClientResponse(id=normalized_client_id, status="removed")

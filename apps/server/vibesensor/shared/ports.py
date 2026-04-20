@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
 from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSourceKind
@@ -103,6 +103,26 @@ class RunPersistence(Protocol):
     def store_analysis_error(self, run_id: str, error: str) -> bool: ...
 
     def analyzing_run_health(self) -> AnalyzingRunHealth: ...
+
+
+class AsyncRunPersistence(Protocol):
+    """Async persistence operations used by native async history surfaces."""
+
+    async def alist_runs(self, limit: int = 500) -> list[HistoryRunListEntry]: ...
+
+    async def aget_run(self, run_id: str) -> StoredHistoryRun | None: ...
+
+    async def aget_run_metadata(self, run_id: str) -> RunMetadata | None: ...
+
+    def aiter_run_samples(
+        self,
+        run_id: str,
+        batch_size: int = 1000,
+        *,
+        stride: int = 1,
+    ) -> AsyncIterator[list[SensorFrame]]: ...
+
+    async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]: ...
 
 
 class ActiveCarReader(Protocol):

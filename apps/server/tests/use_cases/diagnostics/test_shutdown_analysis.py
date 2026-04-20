@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import threading
 from pathlib import Path
 
@@ -156,9 +157,11 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
 
     original_close = SQLiteHistoryEngine.close
 
-    def _tracking_close(self):
+    async def _tracking_close(self):
         events.append("db_close")
-        original_close(self)
+        close_result = original_close(self)
+        if close_result is not None:
+            await close_result
 
     original_wait = RunRecorder.wait_for_post_analysis
 
@@ -172,7 +175,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
     monkeypatch.setattr(SQLiteHistoryEngine, "close", _tracking_close)
     monkeypatch.setattr(RunRecorder, "wait_for_post_analysis", _tracking_wait)
 
-    app = app_module.create_app(config_path=cfg_path)
+    app = await asyncio.to_thread(app_module.create_app, config_path=cfg_path)
     async with app.router.lifespan_context(app):
         pass
 

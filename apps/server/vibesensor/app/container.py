@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
-import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
+
+import aiosqlite
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.history import (
@@ -235,9 +236,9 @@ def create_history_db(
         return history
     try:
         recovered_runs = history.run_repository.recover_stale_recording_runs()
-    except (sqlite3.Error, OSError):
+    except (aiosqlite.Error, OSError):
         LOGGER.error("Failed during early startup DB operations; closing DB.", exc_info=True)
-        history.lifecycle.close()
+        history.close()
         raise
     if recovered_runs:
         LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
@@ -245,7 +246,7 @@ def create_history_db(
         pruned_runs = history.run_repository.prune_terminal_runs_older_than_days(
             config.logging.run_retention_days,
         )
-    except (sqlite3.Error, OSError):
+    except (aiosqlite.Error, OSError):
         LOGGER.warning(
             "Failed to prune terminal runs older than %d day(s) during startup maintenance",
             config.logging.run_retention_days,

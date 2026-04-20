@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import sqlite3
 from dataclasses import dataclass
+
+import aiosqlite
 
 __all__ = [
     "PostAnalysisAttemptResult",
@@ -62,7 +63,7 @@ PostAnalysisAttemptResult = PostAnalysisExecutionResult | PostAnalysisExecutionR
 def is_retryable_post_analysis_error(exc: BaseException) -> bool:
     """Return whether a post-analysis boundary failure should be retried."""
 
-    return isinstance(exc, (sqlite3.Error, OSError, MemoryError))
+    return isinstance(exc, (aiosqlite.Error, OSError, MemoryError))
 
 
 def execution_callback_errors(result: PostAnalysisExecutionResult) -> tuple[str, ...]:

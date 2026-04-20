@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 from test_support import response_payload
+from test_support.history_db_async import fetch_all
 from test_support.persisted_analysis import make_persisted_analysis
 
 from tests.conftest import FakeState
@@ -70,8 +71,7 @@ def _stored_run(
 def test_fresh_db_has_analysis_columns(tmp_path: Path) -> None:
     """Fresh DB should have analysis_started_at, analysis_completed_at."""
     db = create_history_persistence_adapters(tmp_path / "history.db")
-    cursor = db.lifecycle._conn.execute("PRAGMA table_info(runs)")
-    columns = {row[1] for row in cursor.fetchall()}
+    columns = {row[1] for row in fetch_all(db.lifecycle, "PRAGMA table_info(runs)")}
     assert "analysis_started_at" in columns
     assert "analysis_completed_at" in columns
     db.lifecycle.close()

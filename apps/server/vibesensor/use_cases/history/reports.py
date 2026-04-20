@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from vibesensor.shared.boundaries.reporting import PreparedReportInput
-from vibesensor.shared.ports import RunPersistence
+from vibesensor.shared.ports import AsyncRunPersistence
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
 
@@ -38,7 +38,7 @@ class HistoryReportService:
 
     def __init__(
         self,
-        history_db: RunPersistence,
+        history_db: AsyncRunPersistence,
         *,
         pdf_renderer: PdfRendererFn,
     ) -> None:
