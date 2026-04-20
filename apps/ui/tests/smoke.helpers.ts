@@ -14,6 +14,28 @@ export type LiveSensorPayloadOptions = Omit<FakeWebSocketOptions, "payload"> & {
   speedMps?: number | null;
 };
 
+function withCanonicalClientCadence(payload: Record<string, unknown>): Record<string, unknown> {
+  const rawClients = payload.clients;
+  if (!Array.isArray(rawClients)) {
+    return payload;
+  }
+  return {
+    ...payload,
+    clients: rawClients.map((client) => {
+      if (typeof client !== "object" || client === null || Array.isArray(client)) {
+        return client;
+      }
+      if ("frame_samples" in client) {
+        return client;
+      }
+      return {
+        frame_samples: 200,
+        ...client,
+      };
+    }),
+  };
+}
+
 export async function installFakeWebSocket(page: Page, options: FakeWebSocketOptions = {}): Promise<void> {
   await page.addInitScript(({ payload, schemaVersion, repeatPayloadCount, repeatPayloadIntervalMs, trackerKey }) => {
     const mergedPayload = payload
@@ -96,7 +118,11 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
       }
     }
     window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-  }, { ...options, schemaVersion: EXPECTED_SCHEMA_VERSION });
+  }, {
+    ...options,
+    payload: options.payload ? withCanonicalClientCadence(options.payload) : undefined,
+    schemaVersion: EXPECTED_SCHEMA_VERSION,
+  });
 }
 
 export async function installLiveSensorPayload(
