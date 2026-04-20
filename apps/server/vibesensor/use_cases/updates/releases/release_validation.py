@@ -8,20 +8,15 @@ import json
 import subprocess
 import sys
 import tempfile
+import time
 from collections.abc import Sequence
 from pathlib import Path
-
-import msgspec
-from tenacity import Retrying, retry_if_exception_type, stop_after_delay, wait_fixed
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 from vibesensor.use_cases.updates.artifact_validation import wheel_metadata_validation_errors
-from vibesensor.use_cases.updates.http_client import read_text_response
 
 _RELEASE_SMOKE_RETRY_WAIT_S = 0.5
-
-
-class _RetryableReleaseSmokeServerNotReadyError(Exception):
-    pass
 
 
 def _sha256_file(path: Path) -> str:
@@ -57,53 +52,63 @@ def build_release_smoke_config(
 
 
 def validate_firmware_dist(dist_dir: Path) -> list[str]:
-    from vibesensor.use_cases.updates.firmware.firmware_bundle import (
-        flash_manifest_record_from_json,
-    )
-
     errors: list[str] = []
     manifest_path = dist_dir / "flash.json"
     if not manifest_path.is_file():
         return [f"Missing firmware manifest: {manifest_path}"]
 
     try:
-        manifest = flash_manifest_record_from_json(manifest_path.read_bytes())
-    except msgspec.DecodeError as exc:
+        manifest = json.loads(manifest_path.read_bytes())
+    except json.JSONDecodeError as exc:
         return [f"Invalid firmware manifest JSON: {exc}"]
-    except (OSError, ValueError) as exc:
+    except OSError as exc:
         return [str(exc)]
 
-    if not manifest.environments:
+    if not isinstance(manifest, dict):
+        return ["Firmware manifest root must be a JSON object"]
+
+    environments = manifest.get("environments", [])
+    if not isinstance(environments, list):
+        return ["Firmware manifest environments must be a JSON array"]
+    if not environments:
         return ["Firmware manifest must contain at least one environment"]
 
     seen_names: set[str] = set()
-    for index, environment in enumerate(manifest.environments):
+    for index, environment in enumerate(environments):
         prefix = f"environments[{index}]"
-        env_name = environment.name
-        if not env_name:
+        if not isinstance(environment, dict):
+            errors.append(f"{prefix} must be a JSON object")
+            continue
+
+        env_name = environment.get("name", "")
+        if not isinstance(env_name, str) or not env_name:
             errors.append(f"{prefix}.name must be a non-empty string")
             continue
         if env_name in seen_names:
             errors.append(f"Duplicate firmware environment name: {env_name}")
         seen_names.add(env_name)
 
-        segments = environment.segments
-        if not segments:
+        segments = environment.get("segments", [])
+        if not isinstance(segments, list) or not segments:
             errors.append(f"{prefix}.segments must contain at least one segment")
             continue
 
         firmware_seen = False
         for seg_index, segment in enumerate(segments):
             seg_prefix = f"{prefix}.segments[{seg_index}]"
-            file_name = segment.file
-            offset = segment.offset
-            sha256 = segment.sha256
-            if not file_name:
+            if not isinstance(segment, dict):
+                errors.append(f"{seg_prefix} must be a JSON object")
+                continue
+
+            file_name = segment.get("file", "")
+            offset = segment.get("offset", "")
+            sha256 = segment.get("sha256", "")
+            if not isinstance(file_name, str) or not file_name:
                 errors.append(f"{seg_prefix}.file must be a non-empty string")
                 continue
-            if not offset.startswith("0x"):
+            if not isinstance(offset, str) or not offset.startswith("0x"):
                 errors.append(f"{seg_prefix}.offset must be a hex string")
-            if len(sha256) != 64:
+            if not isinstance(sha256, str) or len(sha256) != 64:
                 errors.append(f"{seg_prefix}.sha256 must be a 64-character hex digest")
 
             artifact_path = dist_dir / file_name
@@ -144,12 +149,19 @@ def validate_release_wheel_metadata(
 def _read_http(url: str) -> tuple[int, str, str]:
     """Fetch a URL and return status, content type, and decoded body text."""
 
-    return read_text_response(
-        url,
-        headers={"Connection": "close"},
-        timeout_s=3.0,
-        context="release smoke",
-    )
+    request = Request(url, headers={"Connection": "close"})
+    try:
+        with urlopen(request, timeout=3.0) as response:
+            charset = response.headers.get_content_charset() or "utf-8"
+            body = response.read().decode(charset, errors="replace")
+            return response.status, response.headers.get("Content-Type", ""), body
+    except HTTPError as exc:
+        charset = exc.headers.get_content_charset() if exc.headers is not None else None
+        body = exc.read().decode(charset or "utf-8", errors="replace")
+        content_type = exc.headers.get("Content-Type", "") if exc.headers is not None else ""
+        return exc.code, content_type, body
+    except URLError as exc:
+        raise OSError(f"release smoke request failed for {url}: {exc}") from exc
 
 
 def packaged_static_index_path() -> Path:
@@ -205,52 +217,46 @@ def run_server_smoke(
             health_url = f"http://{host}:{port}/api/health"
             index_url = f"http://{host}:{port}/index.html"
             last_error: Exception | None = None
-            try:
-                for attempt in Retrying(
-                    stop=stop_after_delay(startup_timeout_s),
-                    wait=wait_fixed(_RELEASE_SMOKE_RETRY_WAIT_S),
-                    retry=retry_if_exception_type(_RetryableReleaseSmokeServerNotReadyError),
-                    reraise=True,
-                ):
-                    with attempt:
-                        if process.poll() is not None:
-                            output = process.stdout.read() if process.stdout is not None else ""
-                            raise RuntimeError(
-                                "Release smoke server exited before becoming healthy.\n"
-                                f"Output:\n{output}",
-                            )
-                        try:
-                            status, content_type, body = _read_http(health_url)
-                            if status != 200:
-                                raise RuntimeError(f"Health endpoint returned HTTP {status}")
-                            payload = json.loads(body)
-                            if payload.get("status") not in {"ok", "degraded"}:
-                                raise RuntimeError(f"Unexpected health payload: {payload}")
-                            if payload.get("startup_state") != "ready":
-                                raise RuntimeError(f"Server not ready yet: {payload}")
-                            if payload.get("background_task_failures"):
-                                raise RuntimeError(f"Managed startup task failed: {payload}")
-                            index_status, index_type, index_body = _read_http(index_url)
-                            if index_status != 200:
-                                raise RuntimeError(f"Static index returned HTTP {index_status}")
-                            if "text/html" not in index_type:
-                                raise RuntimeError(
-                                    f"Static index content type mismatch: {index_type}",
-                                )
-                            if "VibeSensor" not in index_body:
-                                raise RuntimeError(
-                                    "Static index content did not include application title",
-                                )
-                            return
-                        except (
-                            OSError,
-                            RuntimeError,
-                            json.JSONDecodeError,
-                        ) as exc:
-                            last_error = exc
-                            raise _RetryableReleaseSmokeServerNotReadyError(str(exc)) from exc
-            except _RetryableReleaseSmokeServerNotReadyError:
-                pass
+            deadline = time.monotonic() + startup_timeout_s
+            while True:
+                if process.poll() is not None:
+                    output = process.stdout.read() if process.stdout is not None else ""
+                    raise RuntimeError(
+                        "Release smoke server exited before becoming healthy.\n"
+                        f"Output:\n{output}",
+                    )
+                try:
+                    status, content_type, body = _read_http(health_url)
+                    if status != 200:
+                        raise RuntimeError(f"Health endpoint returned HTTP {status}")
+                    payload = json.loads(body)
+                    if payload.get("status") not in {"ok", "degraded"}:
+                        raise RuntimeError(f"Unexpected health payload: {payload}")
+                    if payload.get("startup_state") != "ready":
+                        raise RuntimeError(f"Server not ready yet: {payload}")
+                    if payload.get("background_task_failures"):
+                        raise RuntimeError(f"Managed startup task failed: {payload}")
+                    index_status, index_type, index_body = _read_http(index_url)
+                    if index_status != 200:
+                        raise RuntimeError(f"Static index returned HTTP {index_status}")
+                    if "text/html" not in index_type:
+                        raise RuntimeError(
+                            f"Static index content type mismatch: {index_type}",
+                        )
+                    if "VibeSensor" not in index_body:
+                        raise RuntimeError(
+                            "Static index content did not include application title",
+                        )
+                    return
+                except (
+                    OSError,
+                    RuntimeError,
+                    json.JSONDecodeError,
+                ) as exc:
+                    last_error = exc
+                    if time.monotonic() >= deadline:
+                        break
+                    time.sleep(_RELEASE_SMOKE_RETRY_WAIT_S)
 
             output = process.stdout.read() if process.stdout is not None else ""
             raise RuntimeError(
