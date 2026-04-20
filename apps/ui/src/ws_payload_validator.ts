@@ -65,6 +65,7 @@ const wsClientSchema = v.looseObject({
   last_seen_age_ms: nullableIntegerSchema,
   frames_total: integerSchema,
   dropped_frames: integerSchema,
+  frame_samples: integerSchema,
 });
 
 const rotationalSpeedValueSchema = v.looseObject({
