@@ -378,6 +378,7 @@ print("FIRMWARE_CACHE_MODULE_OK")
 import importlib
 mods = [
     "numpy",
+    "pyfftw",
     "yaml",
     "reportlab",
     "fastapi",
