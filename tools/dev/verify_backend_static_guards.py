@@ -2018,6 +2018,33 @@ def _check_udp_hello_legacy_compat_removed() -> list[str]:
     return violations
 
 
+def _check_static_data_uses_packaged_tree_only() -> list[str]:
+    resolver_path = VIBESENSOR_DIR / "shared" / "_data_files.py"
+    resolver_source = _read_text(resolver_path)
+    failures: list[str] = []
+    for marker in (
+        "_SOURCE_DATA_DIR",
+        "source_candidate =",
+        '_PACKAGE_ROOT.parent / "data"',
+    ):
+        if marker in resolver_source:
+            failures.append(
+                f"{resolver_path.relative_to(REPO_ROOT)} must not keep source-tree static-data fallback logic ({marker})"
+            )
+    for path in (
+        SERVER_ROOT / "data" / "car_library.json",
+        SERVER_ROOT / "data" / "report_i18n.json",
+        SERVER_ROOT / "data" / "scripted_scenarios",
+        SERVER_ROOT / "data" / "CAR_VARIANT_SOURCES.md",
+        SERVER_ROOT / "data" / "car_library_ratio_sources.json",
+    ):
+        if path.exists():
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} should not exist; canonical shipped static data lives under apps/server/vibesensor/data/"
+            )
+    return failures
+
+
 Check = tuple[str, Callable[[], list[str]]]
 CHECKS: tuple[Check, ...] = (
     (
@@ -2263,6 +2290,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "UDP HELLO legacy compatibility stays removed",
         _check_udp_hello_legacy_compat_removed,
+    ),
+    (
+        "Static data uses packaged tree only",
+        _check_static_data_uses_packaged_tree_only,
     ),
 )
 

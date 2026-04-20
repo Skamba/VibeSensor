@@ -1,6 +1,6 @@
 """Report internationalisation helpers.
 
-Translation data is loaded from ``apps/server/data/report_i18n.json``.
+Translation data is loaded from ``apps/server/vibesensor/data/report_i18n.json``.
 """
 
 from __future__ import annotations

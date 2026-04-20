@@ -78,4 +78,4 @@ HTTP/WebSocket error semantics. Pair it with `apps/ui/README.md` §
 
 | File | Description |
 |------|-------------|
-| `apps/server/data/CAR_VARIANT_SOURCES.md` | Car variant data sourcing notes. |
+| `apps/server/vibesensor/data/CAR_VARIANT_SOURCES.md` | Car variant data sourcing notes. |
