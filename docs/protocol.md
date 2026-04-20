@@ -38,9 +38,8 @@ This document is generated from code and shared contract files.
 
 ## Hello handshake
 
-- Capable firmware advertises support for explicit control-plane acknowledgment in
-  the HELLO capability byte.
-- Server replies to capable HELLO packets with `HELLO_ACK` on the sensor control port.
+- Firmware sends the canonical HELLO packet shape, including the capabilities byte.
+- Server replies to HELLO packets with `HELLO_ACK` on the sensor control port.
 - Firmware waits for `HELLO_ACK` before sending DATA frames, so the control path
   is validated before streaming starts.
 

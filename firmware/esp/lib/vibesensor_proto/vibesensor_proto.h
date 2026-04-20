@@ -45,7 +45,7 @@ size_t pack_hello(uint8_t* out,
                   const char* name,
                   const char* firmware_version,
                   uint32_t queue_overflow_drops = 0,
-                  uint8_t capabilities = 0);
+                  uint8_t capabilities = kHelloCapExplicitAck);
 
 size_t pack_data(uint8_t* out,
                  size_t out_len,
