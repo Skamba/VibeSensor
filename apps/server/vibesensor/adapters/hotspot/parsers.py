@@ -140,9 +140,7 @@ class HealStateStore:
         try:
             data = msgspec.json.decode(self._path.read_bytes(), type=dict[str, object])
             return {
-                key: float(value)
-                for key, value in data.items()
-                if isinstance(value, (int, float))
+                key: float(value) for key, value in data.items() if isinstance(value, (int, float))
             }
         except (msgspec.DecodeError, msgspec.ValidationError, OSError, ValueError):
             LOGGER.warning(
