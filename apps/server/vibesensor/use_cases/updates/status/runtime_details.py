@@ -3,18 +3,39 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import subprocess
 from pathlib import Path
 
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+import msgspec
+
 from vibesensor.use_cases.updates.models import UpdateRuntimeDetails
 
 LOGGER = logging.getLogger(__name__)
 
 UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 _PACKAGED_STATIC_DIR = Path(__file__).resolve().parents[3] / "static"
+
+
+class _UiBuildMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
+    """Typed runtime-details sidecar record stored beside built static assets."""
+
+    ui_source_hash: object = ""
+    static_assets_hash: object = ""
+    git_commit: object = ""
+
+
+def _ui_build_metadata_from_json(raw: bytes | str) -> _UiBuildMetadataRecord:
+    """Decode one UI build sidecar payload with current fallback semantics."""
+
+    try:
+        return msgspec.json.decode(raw, type=_UiBuildMetadataRecord)
+    except (msgspec.DecodeError, msgspec.ValidationError, TypeError):
+        return _UiBuildMetadataRecord()
+
+
+def _ui_build_metadata_text(value: object) -> str:
+    return str(value or "")
 
 
 def hash_tree(root: Path, *, ignore_names: set[str]) -> str:
@@ -77,17 +98,16 @@ def collect_runtime_details(repo: Path) -> UpdateRuntimeDetails:
     )
     static_assets_hash = hash_tree(static_root, ignore_names={UI_BUILD_METADATA_FILE})
 
-    metadata: JsonObject = {}
+    metadata = _UiBuildMetadataRecord()
     if metadata_path.is_file():
         try:
-            loaded = json.loads(metadata_path.read_text(encoding="utf-8"))
-            metadata = loaded if is_json_object(loaded) else {}
-        except (OSError, json.JSONDecodeError):
-            metadata = {}
+            metadata = _ui_build_metadata_from_json(metadata_path.read_bytes())
+        except OSError:
+            metadata = _UiBuildMetadataRecord()
 
-    static_build_source_hash = str(metadata.get("ui_source_hash") or "")
-    static_build_assets_hash = str(metadata.get("static_assets_hash") or "")
-    static_build_commit = str(metadata.get("git_commit") or "")
+    static_build_source_hash = _ui_build_metadata_text(metadata.ui_source_hash)
+    static_build_assets_hash = _ui_build_metadata_text(metadata.static_assets_hash)
+    static_build_commit = _ui_build_metadata_text(metadata.git_commit)
     has_repo_static = static_root.exists()
     assets_verified = (
         bool(ui_source_hash)

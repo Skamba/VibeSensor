@@ -6,11 +6,12 @@ and have no dependencies on runner/subprocess infrastructure.
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 import time
 from pathlib import Path
+
+import msgspec
 
 LOGGER = logging.getLogger(__name__)
 
@@ -137,11 +138,13 @@ class HealStateStore:
         if not self._path.exists():
             return {}
         try:
-            data = json.loads(self._path.read_text(encoding="utf-8"))
-            if not isinstance(data, dict):
-                return {}
-            return {str(k): float(v) for k, v in data.items() if isinstance(v, (int, float))}
-        except (json.JSONDecodeError, OSError, ValueError):
+            data = msgspec.json.decode(self._path.read_bytes(), type=dict[str, object])
+            return {
+                key: float(value)
+                for key, value in data.items()
+                if isinstance(value, (int, float))
+            }
+        except (msgspec.DecodeError, msgspec.ValidationError, OSError, ValueError):
             LOGGER.warning(
                 "HealStateStore: ignoring corrupt state file %s",
                 self._path,
@@ -151,7 +154,7 @@ class HealStateStore:
 
     def _save(self, data: dict[str, float]) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._path.write_text(json.dumps(data, sort_keys=True), encoding="utf-8")
+        self._path.write_bytes(msgspec.json.encode(data) + b"\n")
 
     def allow(self, key: str, min_interval_s: int) -> bool:
         """Return ``True`` and record the action timestamp if the cooldown has passed.
