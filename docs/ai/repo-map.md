@@ -6,7 +6,7 @@ Paths below are repo-relative unless a line explicitly calls out a Python import
 
 ## Primary entry points
 
-- Backend app: `apps/server/vibesensor/app/bootstrap.py`
+- Backend app: `apps/server/vibesensor/app/bootstrap.py` (installs the canonical Linux `uvloop` policy before building the backend runtime)
 - Backend service wiring: `apps/server/vibesensor/app/container.py`
 - Backend route assembly: `apps/server/vibesensor/adapters/http/router.py` with domain bundles in `apps/server/vibesensor/adapters/http/route_bundles.py`
 - UI app entry: `apps/ui/src/main.ts`

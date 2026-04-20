@@ -101,7 +101,8 @@ apps/server/
 └── vibesensor/
 ```
 
-- `data/`: runtime state, history database, and report i18n JSON.
+- `data/`: runtime state, history database, and local logs for native/dev flows.
+- `vibesensor/data/`: packaged static data such as report i18n JSON, the car library, and scripted scenarios.
 - `vibesensor/static/`: built UI assets served by FastAPI.
 - `scripts/` and `systemd/`: Pi deployment and hotspot support.
 - `tests/`: pytest suite, organized by backend ownership boundary.
@@ -117,6 +118,9 @@ The local development configs default the HTTP listener to port `8000`.
 For native backend iteration, run `vibesensor-server --reload --config
 apps/server/config.dev.yaml` from the repo root so Python changes hot-reload
 while the Vite dev server proxies browser traffic to `http://127.0.0.1:8000`.
+Linux, Docker, and Raspberry Pi backend runs install the canonical `uvloop`
+event-loop policy automatically at startup; unsupported non-Linux local
+development falls back to the default asyncio loop.
 
 ## Dependency management
 

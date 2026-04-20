@@ -107,6 +107,7 @@ def test_main_reload_uses_factory_target(monkeypatch, tmp_path) -> None:
                 "host": "127.0.0.1",
                 "port": 8000,
                 "log_level": "info",
+                "loop": "asyncio",
                 "reload": True,
                 "factory": True,
             },

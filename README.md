@@ -163,6 +163,10 @@ commands like `vibesensor-server` and `vibesensor-sim` stay tied to your working
 tree. A local virtualenv created from the matrix-supported native-dev Python is
 the recommended path before you run the install above, and `make setup` will
 create or refresh that `.venv` for you automatically.
+On Linux, Docker, and Raspberry Pi runtimes, `vibesensor-server` installs the
+canonical `uvloop` event-loop policy automatically before the backend runtime
+starts; unsupported non-Linux local development falls back to the default
+asyncio loop.
 
 In another terminal:
 
