@@ -15,6 +15,7 @@ from vibesensor.adapters.persistence.history_db._run_repository import RunHistor
 from vibesensor.adapters.persistence.history_db._settings_repository import (
     SettingsSnapshotRepository,
 )
+from vibesensor.shared.async_bridge import run_coro_blocking
 
 __all__ = [
     "ClientNameRepository",
@@ -23,6 +24,7 @@ __all__ = [
     "SQLiteHistoryEngine",
     "SettingsSnapshotRepository",
     "create_history_persistence_adapters",
+    "create_history_persistence_adapters_async",
 ]
 
 LOGGER = logging.getLogger(__name__)
@@ -37,13 +39,18 @@ class HistoryPersistenceAdapters:
     settings_snapshot_repository: SettingsSnapshotRepository
     client_name_repository: ClientNameRepository
 
+    async def open(self) -> None:
+        await self.lifecycle.aopen()
 
-def create_history_persistence_adapters(
+    async def close(self) -> None:
+        await self.lifecycle.aclose()
+
+
+def _build_history_persistence_adapters(
     db_path: Path,
     *,
     corruption_reporter: Callable[[str], None] | None = None,
 ) -> HistoryPersistenceAdapters:
-    """Build the shared history engine plus narrow repositories on top of it."""
     lifecycle = SQLiteHistoryEngine(
         db_path,
         corruption_reporter=corruption_reporter,
@@ -62,3 +69,30 @@ def create_history_persistence_adapters(
             cursor_provider=cursor_provider,
         ),
     )
+
+
+def create_history_persistence_adapters(
+    db_path: Path,
+    *,
+    corruption_reporter: Callable[[str], None] | None = None,
+) -> HistoryPersistenceAdapters:
+    """Build and open the shared history engine plus narrow repositories on top of it."""
+    history = _build_history_persistence_adapters(
+        db_path,
+        corruption_reporter=corruption_reporter,
+    )
+    run_coro_blocking(history.open())
+    return history
+
+
+async def create_history_persistence_adapters_async(
+    db_path: Path,
+    *,
+    corruption_reporter: Callable[[str], None] | None = None,
+) -> HistoryPersistenceAdapters:
+    history = _build_history_persistence_adapters(
+        db_path,
+        corruption_reporter=corruption_reporter,
+    )
+    await history.open()
+    return history

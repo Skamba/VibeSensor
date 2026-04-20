@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from test_support.history_db_async import execute_statements, fetch_all, fetch_one
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
@@ -119,9 +120,7 @@ def test_v2_no_json_blobs_in_storage(tmp_path: Path) -> None:
         "run-check", [sensor_frame_from_mapping(_sensor_frame_dict(0))]
     )
 
-    with db.lifecycle._cursor(commit=False) as cur:
-        cur.execute("PRAGMA table_info(samples_v2)")
-        columns = {row[1] for row in cur.fetchall()}
+    columns = {row[1] for row in fetch_all(db.lifecycle, "PRAGMA table_info(samples_v2)")}
 
     assert "sample_json" not in columns
     assert "accel_x_g" in columns
@@ -199,9 +198,8 @@ def test_v2_delete_cascades_legacy_and_v2(tmp_path: Path) -> None:
     assert len(db.run_repository.get_run_samples("run-del2")) == 3
     db.run_repository.delete_run("run-del2")
 
-    with db.lifecycle._cursor(commit=False) as cur:
-        cur.execute("SELECT COUNT(*) FROM samples_v2 WHERE run_id = ?", ("run-del2",))
-        assert cur.fetchone()[0] == 0
+    row = fetch_one(db.lifecycle, "SELECT COUNT(*) FROM samples_v2 WHERE run_id = ?", ("run-del2",))
+    assert row is not None and row[0] == 0
 
 
 def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
@@ -269,11 +267,10 @@ def test_iter_run_samples_skips_corrupt_rows_and_continues(tmp_path: Path) -> No
         "run-corrupt",
         [sensor_frame_from_mapping({"t_s": 1.0}), sensor_frame_from_mapping({"t_s": 2.0})],
     )
-    with db.lifecycle._cursor() as cur:
-        cur.execute(
-            "INSERT INTO samples_v2 (run_id, top_peaks) VALUES (?, ?)",
-            ("run-corrupt", "{bad"),
-        )
+    execute_statements(
+        db.lifecycle,
+        ("INSERT INTO samples_v2 (run_id, top_peaks) VALUES (?, ?)", ("run-corrupt", "{bad")),
+    )
     db.run_repository.append_samples("run-corrupt", [sensor_frame_from_mapping({"t_s": 3.0})])
 
     rows = [
@@ -296,11 +293,13 @@ def test_v2_row_to_dict_non_list_peak_column_warns_and_skips_row(
         "run-peak-warn", "2026-01-01T00:00:00Z", _metadata("run-peak-warn")
     )
 
-    with db.lifecycle._cursor() as cur:
-        cur.execute(
+    execute_statements(
+        db.lifecycle,
+        (
             "INSERT INTO samples_v2 (run_id, top_peaks) VALUES (?, ?)",
             ("run-peak-warn", '{"unexpected": "dict"}'),
-        )
+        ),
+    )
 
     import logging
 

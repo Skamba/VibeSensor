@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
@@ -31,7 +32,8 @@ def create_health_routes(
     async def health() -> HealthResponse:
         """Return the current runtime health snapshot for the server and sensor pipeline."""
         return HealthResponse.model_validate(
-            build_system_health_snapshot(
+            await asyncio.to_thread(
+                build_system_health_snapshot,
                 loop_state,
                 health_state,
                 processor,

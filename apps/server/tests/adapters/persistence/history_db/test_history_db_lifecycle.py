@@ -5,11 +5,13 @@ from __future__ import annotations
 import logging
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+from test_support.history_db_async import execute_statements as _execute_statements
+from test_support.history_db_async import fetch_one as _fetch_one
 from test_support.history_db_lifecycle import (
     build_history_db,
     create_analyzing_run,
@@ -41,9 +43,9 @@ def test_append_samples_in_chunks(tmp_path: Path) -> None:
     calls: list[int] = []
     original_write_tx = db.run_repository._write_transaction_cursor_provider
 
-    @contextmanager
-    def _wrapped_write_transaction():
-        with original_write_tx() as cur:
+    @asynccontextmanager
+    async def _wrapped_write_transaction():
+        async with original_write_tx() as cur:
 
             class _CursorProxy:
                 def __init__(self, base_cursor):
@@ -52,10 +54,10 @@ def test_append_samples_in_chunks(tmp_path: Path) -> None:
                 def __getattr__(self, name: str):
                     return getattr(self._base_cursor, name)
 
-                def executemany(self, sql: str, seq_of_parameters):
+                async def executemany(self, sql: str, seq_of_parameters):
                     rows = list(seq_of_parameters)
                     calls.append(len(rows))
-                    return self._base_cursor.executemany(sql, rows)
+                    return await self._base_cursor.executemany(sql, rows)
 
             yield _CursorProxy(cur)
 
@@ -210,27 +212,29 @@ def test_prune_terminal_runs_older_than_days_deletes_only_old_terminal_runs(
 
     old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
     recent_timestamp = (datetime.now(UTC) - timedelta(days=2)).isoformat()
-    with db.lifecycle._cursor() as cur:
-        cur.execute(
+    _execute_statements(
+        db.lifecycle,
+        (
             "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
             (old_timestamp, old_timestamp, "run-old-complete"),
-        )
-        cur.execute(
+        ),
+        (
             "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
             (old_timestamp, old_timestamp, "run-old-error"),
-        )
-        cur.execute(
+        ),
+        (
             "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
             (recent_timestamp, recent_timestamp, "run-recent-complete"),
-        )
-        cur.execute(
+        ),
+        (
             "UPDATE runs SET created_at = ? WHERE run_id = ?",
             (old_timestamp, "run-recording"),
-        )
-        cur.execute(
+        ),
+        (
             "UPDATE runs SET created_at = ?, end_time_utc = ? WHERE run_id = ?",
             (old_timestamp, old_timestamp, "run-analyzing"),
-        )
+        ),
+    )
 
     pruned = db.run_repository.prune_terminal_runs_older_than_days(7)
 
@@ -253,19 +257,24 @@ def test_prune_terminal_runs_older_than_days_cascades_samples(tmp_path: Path) ->
     )
 
     old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
-    with db.lifecycle._cursor() as cur:
-        cur.execute(
+    _execute_statements(
+        db.lifecycle,
+        (
             "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
             (old_timestamp, old_timestamp, "run-prune"),
-        )
+        ),
+    )
 
     pruned = db.run_repository.prune_terminal_runs_older_than_days(7)
 
     assert pruned == 1
     assert db.run_repository.get_run("run-prune") is None
-    with db.lifecycle._cursor() as cur:
-        cur.execute("SELECT COUNT(*) FROM samples_v2 WHERE run_id = ?", ("run-prune",))
-        assert cur.fetchone()[0] == 0
+    row = _fetch_one(
+        db.lifecycle,
+        "SELECT COUNT(*) FROM samples_v2 WHERE run_id = ?",
+        ("run-prune",),
+    )
+    assert row is not None and row[0] == 0
 
 
 def test_create_run_does_not_auto_recover_recording(tmp_path: Path) -> None:
@@ -313,13 +322,13 @@ def test_history_db_runs_startup_quick_check(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls: list[Path] = []
-    original = SQLiteHistoryEngine._run_startup_quick_check
+    original = SQLiteHistoryEngine._run_startup_quick_check_async
 
-    def _tracking(self: SQLiteHistoryEngine) -> None:
+    async def _tracking(self: SQLiteHistoryEngine) -> None:
         calls.append(self.db_path)
-        original(self)
+        await original(self)
 
-    monkeypatch.setattr(SQLiteHistoryEngine, "_run_startup_quick_check", _tracking)
+    monkeypatch.setattr(SQLiteHistoryEngine, "_run_startup_quick_check_async", _tracking)
     db = create_history_persistence_adapters(tmp_path / "history.db")
     try:
         assert calls == [tmp_path / "history.db"]
@@ -335,10 +344,10 @@ def test_startup_quick_check_logs_corruption(
     db = create_history_persistence_adapters(tmp_path / "history.db")
 
     class _FakeCursor:
-        def execute(self, sql: str) -> None:
+        async def execute(self, sql: str) -> None:
             assert sql == "PRAGMA quick_check"
 
-        def fetchall(self) -> list[tuple[str]]:
+        async def fetchall(self) -> list[tuple[str]]:
             return [("row 7 missing from index",)]
 
     @contextmanager
@@ -366,10 +375,10 @@ def test_startup_quick_check_reports_corruption_via_callback(
     )
 
     class _FakeCursor:
-        def execute(self, sql: str) -> None:
+        async def execute(self, sql: str) -> None:
             assert sql == "PRAGMA quick_check"
 
-        def fetchall(self) -> list[tuple[str]]:
+        async def fetchall(self) -> list[tuple[str]]:
             return [("row 7 missing from index",)]
 
     @contextmanager
@@ -426,9 +435,12 @@ def test_delete_run_cascades_samples(tmp_path: Path) -> None:
 
     db.run_repository.delete_run("run-del")
 
-    with db.lifecycle._cursor() as cur:
-        cur.execute("SELECT COUNT(*) FROM samples_v2 WHERE run_id = ?", ("run-del",))
-        assert cur.fetchone()[0] == 0
+    row = _fetch_one(
+        db.lifecycle,
+        "SELECT COUNT(*) FROM samples_v2 WHERE run_id = ?",
+        ("run-del",),
+    )
+    assert row is not None and row[0] == 0
 
 
 def test_run_status_transitions(tmp_path: Path) -> None:
@@ -472,9 +484,9 @@ def test_append_samples_rolls_back_when_metadata_update_fails(tmp_path: Path) ->
     db.run_repository.create_run("run-rollback", "2026-01-01T00:00:00Z", _metadata("run-rollback"))
     original_write_tx = db.run_repository._write_transaction_cursor_provider
 
-    @contextmanager
-    def _wrapped_write_transaction():
-        with original_write_tx() as cur:
+    @asynccontextmanager
+    async def _wrapped_write_transaction():
+        async with original_write_tx() as cur:
 
             class _CursorProxy:
                 def __init__(self, base_cursor):
@@ -483,10 +495,10 @@ def test_append_samples_rolls_back_when_metadata_update_fails(tmp_path: Path) ->
                 def __getattr__(self, name: str):
                     return getattr(self._base_cursor, name)
 
-                def execute(self, sql: str, params=()):
+                async def execute(self, sql: str, params=()):
                     if "UPDATE runs SET sample_count = sample_count + ?" in sql:
                         raise sqlite3.OperationalError("simulated sample_count failure")
-                    return self._base_cursor.execute(sql, params)
+                    return await self._base_cursor.execute(sql, params)
 
             yield _CursorProxy(cur)
 
@@ -651,11 +663,13 @@ def test_get_run_metadata_non_dict_json_returns_none_and_warns(
 ) -> None:
     db = create_history_persistence_adapters(tmp_path / "history.db")
     db.run_repository.create_run("run-bad-meta", "2026-01-01T00:00:00Z", _metadata("run-bad-meta"))
-    with db.lifecycle._cursor() as cur:
-        cur.execute(
+    _execute_statements(
+        db.lifecycle,
+        (
             "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
             ("[1, 2, 3]", "run-bad-meta"),
-        )
+        ),
+    )
 
     with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.persistence.history_db"):
         result = db.run_repository.get_run_metadata("run-bad-meta")

@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import logging
-import sqlite3
-from collections.abc import Iterator
-from contextlib import AbstractContextManager
+from collections.abc import AsyncIterator, Iterator
+from contextlib import AbstractAsyncContextManager
+
+import aiosqlite
 
 from vibesensor.adapters.persistence.history_db._samples import (
     ALLOWED_SAMPLE_TABLES,
     V2_SELECT_SQL_COLS,
     v2_row_to_sensor_frame,
 )
+from vibesensor.shared.async_bridge import run_coro_blocking
 from vibesensor.shared.boundaries.codecs.sensor_frame_values import SensorFrameDecodeError
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -19,12 +21,15 @@ LOGGER = logging.getLogger(__name__)
 
 
 class _HistoryDBSampleIOMixin:
-    def _cursor(self, *, commit: bool = True) -> AbstractContextManager[sqlite3.Cursor]:
+    def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
         raise NotImplementedError
 
     def get_run_samples(self, run_id: str) -> list[SensorFrame]:
+        return run_coro_blocking(self.aget_run_samples(run_id))
+
+    async def aget_run_samples(self, run_id: str) -> list[SensorFrame]:
         rows: list[SensorFrame] = []
-        for batch in self.iter_run_samples(run_id):
+        async for batch in self.aiter_run_samples(run_id):
             rows.extend(batch)
         return rows
 
@@ -36,13 +41,59 @@ class _HistoryDBSampleIOMixin:
         *,
         stride: int = 1,
     ) -> Iterator[list[SensorFrame]]:
+        return iter(
+            run_coro_blocking(
+                self._collect_sample_batches(
+                    run_id,
+                    batch_size=batch_size,
+                    offset=offset,
+                    stride=stride,
+                )
+            )
+        )
+
+    async def _collect_sample_batches(
+        self,
+        run_id: str,
+        batch_size: int = 1000,
+        offset: int = 0,
+        *,
+        stride: int = 1,
+    ) -> list[list[SensorFrame]]:
+        return [
+            batch
+            async for batch in self.aiter_run_samples(
+                run_id,
+                batch_size=batch_size,
+                offset=offset,
+                stride=stride,
+            )
+        ]
+
+    async def aiter_run_samples(
+        self,
+        run_id: str,
+        batch_size: int = 1000,
+        offset: int = 0,
+        *,
+        stride: int = 1,
+    ) -> AsyncIterator[list[SensorFrame]]:
         if offset < 0:
             raise ValueError(f"iter_run_samples: offset must be >= 0, got {offset}")
         if stride < 1:
             raise ValueError(f"iter_run_samples: stride must be >= 1, got {stride}")
-        yield from self._iter_v2_samples(run_id, batch_size, offset, stride)
+        async for batch in self._iter_v2_samples(run_id, batch_size, offset, stride):
+            yield batch
 
     def _resolve_keyset_offset(
+        self,
+        table: str,
+        run_id: str,
+        offset: int,
+    ) -> int | None:
+        return run_coro_blocking(self._aresolve_keyset_offset(table, run_id, offset))
+
+    async def _aresolve_keyset_offset(
         self,
         table: str,
         run_id: str,
@@ -53,44 +104,44 @@ class _HistoryDBSampleIOMixin:
                 f"_resolve_keyset_offset: invalid table name {table!r}; "
                 f"must be one of {sorted(ALLOWED_SAMPLE_TABLES)}",
             )
-        with self._cursor(commit=False) as cur:
-            cur.execute(
+        async with self._cursor(commit=False) as cur:
+            await cur.execute(
                 f"SELECT id FROM {table} WHERE run_id = ? ORDER BY id LIMIT 1 OFFSET ?",
                 (run_id, offset - 1),
             )
-            row = cur.fetchone()
+            row = await cur.fetchone()
         return int(row[0]) if row else None
 
-    def _iter_v2_samples(
+    async def _iter_v2_samples(
         self,
         run_id: str,
         batch_size: int = 1000,
         offset: int = 0,
         stride: int = 1,
-    ) -> Iterator[list[SensorFrame]]:
+    ) -> AsyncIterator[list[SensorFrame]]:
         size = max(1, batch_size)
         last_id: int | None = None
         if offset > 0:
-            last_id = self._resolve_keyset_offset("samples_v2", run_id, offset)
+            last_id = await self._aresolve_keyset_offset("samples_v2", run_id, offset)
             if last_id is None:
                 return
         total_skipped = 0
         sample_index = offset
         while True:
-            with self._cursor(commit=False) as cur:
+            async with self._cursor(commit=False) as cur:
                 if last_id is None:
-                    cur.execute(
+                    await cur.execute(
                         f"SELECT {V2_SELECT_SQL_COLS} FROM samples_v2"
                         " WHERE run_id = ? ORDER BY id LIMIT ?",
                         (run_id, size),
                     )
                 else:
-                    cur.execute(
+                    await cur.execute(
                         f"SELECT {V2_SELECT_SQL_COLS} FROM samples_v2"
                         " WHERE run_id = ? AND id > ? ORDER BY id LIMIT ?",
                         (run_id, last_id, size),
                     )
-                batch_rows = cur.fetchall()
+                batch_rows = [tuple(row) for row in await cur.fetchall()]
             if not batch_rows:
                 if total_skipped:
                     LOGGER.warning(

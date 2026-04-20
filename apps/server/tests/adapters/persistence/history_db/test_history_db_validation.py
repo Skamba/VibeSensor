@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from test_support.history_db_async import execute_statements
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
@@ -172,8 +173,10 @@ def test_verify_run_integrity_sample_count_mismatch(tmp_path: Path) -> None:
     db.run_repository.finalize_run("run-m", "2026-01-01T00:10:00Z")
     db.run_repository.store_analysis("run-m", make_persisted_analysis(_analysis("run-m")))
     # Manually corrupt sample_count
-    with db.lifecycle._cursor() as cur:
-        cur.execute("UPDATE runs SET sample_count = 99 WHERE run_id = 'run-m'")
+    execute_statements(
+        db.lifecycle,
+        ("UPDATE runs SET sample_count = 99 WHERE run_id = 'run-m'", ()),
+    )
     problems = db.run_repository.verify_run_integrity("run-m")
     assert any("sample_count mismatch" in p for p in problems)
 
@@ -187,8 +190,10 @@ def test_verify_run_integrity_complete_without_analysis(tmp_path: Path) -> None:
     )
     db.run_repository.finalize_run("run-na", "2026-01-01T00:10:00Z")
     # Force status to complete without analysis
-    with db.lifecycle._cursor() as cur:
-        cur.execute("UPDATE runs SET status = 'complete' WHERE run_id = 'run-na'")
+    execute_statements(
+        db.lifecycle,
+        ("UPDATE runs SET status = 'complete' WHERE run_id = 'run-na'", ()),
+    )
     problems = db.run_repository.verify_run_integrity("run-na")
     assert any("missing analysis_json" in p for p in problems)
 
