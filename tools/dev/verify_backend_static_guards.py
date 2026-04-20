@@ -1926,6 +1926,58 @@ def _check_update_status_legacy_decode_removed() -> list[str]:
     return violations
 
 
+def _check_settings_snapshot_legacy_decode_removed() -> list[str]:
+    snapshot_path = (
+        VIBESENSOR_DIR / "shared" / "boundaries" / "settings" / "snapshot.py"
+    )
+    settings_init_path = (
+        VIBESENSOR_DIR / "shared" / "boundaries" / "settings" / "__init__.py"
+    )
+    violations: list[str] = []
+
+    for legacy_name in (
+        "coerce_language_code",
+        "coerce_speed_unit_code",
+        "settings_snapshot_from_payload",
+        "_settings_snapshot_record_from_object",
+    ):
+        if legacy_name in _read_text(snapshot_path):
+            violations.append(
+                f"{snapshot_path.relative_to(REPO_ROOT)} must not define {legacy_name}; "
+                "require the canonical SettingsSnapshotRecord schema instead"
+            )
+        if legacy_name in _read_text(settings_init_path):
+            violations.append(
+                f"{settings_init_path.relative_to(REPO_ROOT)} must not export {legacy_name}; "
+                "keep only canonical settings snapshot entrypoints public"
+            )
+
+    legacy_imports = {
+        "coerce_language_code",
+        "coerce_speed_unit_code",
+        "settings_snapshot_from_payload",
+    }
+    for root in (SERVER_ROOT, REPO_ROOT / "tools"):
+        for path in _python_files(root):
+            if path in {snapshot_path, settings_init_path}:
+                continue
+            if "build" in path.parts:
+                continue
+            for lineno, module, names, level in _scan_imports(path):
+                if level > 0:
+                    continue
+                if module in {
+                    "vibesensor.shared.boundaries.settings.snapshot",
+                    "vibesensor.shared.boundaries.settings",
+                }:
+                    for legacy_name in sorted(legacy_imports & set(names)):
+                        violations.append(
+                            f"{path.relative_to(REPO_ROOT)}:{lineno}: imports {legacy_name}; "
+                            "require the canonical SettingsSnapshotRecord schema instead"
+                        )
+    return violations
+
+
 Check = tuple[str, Callable[[], list[str]]]
 CHECKS: tuple[Check, ...] = (
     (
@@ -2163,6 +2215,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "Updater status legacy decode stays removed",
         _check_update_status_legacy_decode_removed,
+    ),
+    (
+        "Settings snapshot legacy decode stays removed",
+        _check_settings_snapshot_legacy_decode_removed,
     ),
 )
 

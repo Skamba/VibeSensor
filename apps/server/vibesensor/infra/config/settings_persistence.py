@@ -13,12 +13,6 @@ from vibesensor.infra.config.sensor_settings import SensorSettingsState
 from vibesensor.infra.config.settings_transaction import update_with_rollback
 from vibesensor.infra.config.speed_source_settings import SpeedSourceSettingsState
 from vibesensor.infra.config.ui_preferences import UiPreferencesState
-from vibesensor.shared.boundaries.settings.snapshot import (
-    coerce_language_code as _coerce_language,
-)
-from vibesensor.shared.boundaries.settings.snapshot import (
-    coerce_speed_unit_code as _coerce_speed_unit,
-)
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.ports import SettingsSnapshotPersistence
 from vibesensor.shared.types.car_config import car_from_persistence_dict, car_to_persistence_dict
@@ -93,8 +87,8 @@ class SettingsPersistenceCoordinator:
             self._car_state.active_car_id = active_id if active_id in car_ids else None
 
             self._speed_source_state.config = SpeedSourceConfig.from_dict(snapshot)
-            self._ui_preferences_state.language = _coerce_language(snapshot["language"])
-            self._ui_preferences_state.speed_unit = _coerce_speed_unit(snapshot["speedUnit"])
+            self._ui_preferences_state.language = snapshot["language"]
+            self._ui_preferences_state.speed_unit = snapshot["speedUnit"]
 
             self._sensor_state.sensors = {
                 sensor_id: SensorConfig.from_dict(sensor_id, value)
