@@ -27,6 +27,7 @@ from typing import Final, TypedDict, cast
 
 import numpy as np
 import numpy.typing as npt
+from scipy.signal import find_peaks
 
 from vibesensor.strength_bands import _buckets_for_strength_db_aligned, bucket_for_strength
 
@@ -384,18 +385,20 @@ def _peak_band_rms_amp_g_from_bounds(
     return float(np.sqrt(np.mean(np.square(band, dtype=np.float64))))
 
 
-def _local_maxima_indexes(values: npt.NDArray[np.float64], threshold: float) -> list[int]:
-    maxima: list[int] = []
-    if values.size > 2:
-        interior = values[1:-1]
-        mask = (interior >= threshold) & (interior > values[:-2]) & (interior >= values[2:])
-        maxima.extend((np.flatnonzero(mask) + 1).tolist())
+def _candidate_peak_indexes(values: npt.NDArray[np.float64], threshold: float) -> list[int]:
+    peak_indexes_raw, _properties = find_peaks(values, height=threshold)
+    peak_indexes = np.asarray(peak_indexes_raw, dtype=np.intp)
     if values.size > 1:
-        last_val = float(values[-1])
-        if last_val >= threshold and last_val > float(values[-2]):
-            maxima.append(values.size - 1)
-    maxima.sort(key=lambda idx: float(values[idx]), reverse=True)
-    return maxima
+        last_idx = values.size - 1
+        last_val = float(values[last_idx])
+        if last_val >= threshold and last_val > float(values[last_idx - 1]):
+            peak_indexes = np.append(peak_indexes, last_idx)
+    if peak_indexes.size == 0:
+        return []
+    heights = np.asarray(values[peak_indexes], dtype=np.float64)
+    order = np.argsort(heights)[::-1]
+    ordered_indexes = np.asarray(peak_indexes[order], dtype=np.intp)
+    return [int(idx) for idx in ordered_indexes.tolist()]
 
 
 def vibration_strength_db_scalar(
@@ -475,7 +478,7 @@ def compute_vibration_strength_db(
         floor_p20 + STRENGTH_EPSILON_MIN_G,
     )
 
-    local_maxima = _local_maxima_indexes(combined, threshold)
+    local_maxima = _candidate_peak_indexes(combined, threshold)
     invalid_idx = next((idx for idx in local_maxima if not (0 <= idx < freq.size)), None)
     if invalid_idx is not None:
         raise ValueError(

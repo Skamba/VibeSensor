@@ -36,8 +36,10 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
 | **Stateless?** | Yes — each tick processes the current rolling window | Yes — processes all stored samples in one pass |
 
 Mathematical primitives (e.g. `compute_vibration_strength_db`,
-`noise_floor_amp_p20_g`) live in the `vibesensor` top-level package
-and are shared by both layers.
+`noise_floor_amp_p20_g`) live in the `vibesensor` top-level package and the
+live-processing owners under `infra/processing/`; the canonical windowing,
+frequency-bin, and peak-detection steps are SciPy-backed and the same persisted
+peak/floor outputs are then reused by diagnostics/reporting.
 
 ## Related deep dives
 

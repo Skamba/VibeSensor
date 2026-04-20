@@ -7,6 +7,8 @@ from collections import OrderedDict
 from threading import RLock
 
 import numpy as np
+from scipy import fft as scipy_fft
+from scipy.signal import windows as signal_windows
 
 from vibesensor.infra.processing.fft import (
     AXES,
@@ -42,7 +44,10 @@ class SignalMetricsComputer:
 
     def __init__(self, config: ProcessorConfig) -> None:
         self._config = config
-        self.fft_window: FloatArray = np.hanning(config.fft_n).astype(np.float32)
+        self.fft_window: FloatArray = np.asarray(
+            signal_windows.hann(config.fft_n, sym=True),
+            dtype=np.float32,
+        )
         self.fft_scale = float(2.0 / max(1.0, float(np.sum(self.fft_window))))
         self.fft_cache: OrderedDict[int, tuple[FloatArray, IntIndexArray, BoolArray]] = (
             OrderedDict()
@@ -62,7 +67,7 @@ class SignalMetricsComputer:
                     sample_rate_hz,
                 )
                 return _EMPTY_F32, np.empty(0, dtype=np.intp), _EMPTY_BOOL
-            freqs = np.fft.rfftfreq(self._config.fft_n, d=1.0 / sample_rate_hz)
+            freqs = scipy_fft.rfftfreq(self._config.fft_n, d=1.0 / sample_rate_hz)
             valid = (freqs >= self._config.spectrum_min_hz) & (
                 freqs <= self._config.spectrum_max_hz
             )
