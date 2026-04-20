@@ -17,7 +17,7 @@
   flex-wrap: wrap;
   gap: 0.4rem;
   align-items: center;
-  color: var(--muted);
+  color: var(--md-sys-color-on-surface-variant);
 }
 .settings-sensor-row__meta code {
   font-size: 0.82rem;
