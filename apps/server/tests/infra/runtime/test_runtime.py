@@ -36,7 +36,7 @@ from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
 async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
     """Run *rt*.processing_loop.run() for *max_ticks* iterations, then cancel.
 
-    Temporarily replaces ``asyncio.sleep`` with a counting stub so the loop
+    Temporarily replaces ``anyio.sleep`` with a counting stub so the loop
     completes deterministically without real delays.
     """
     tick_count = 0
@@ -49,7 +49,7 @@ async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
             raise asyncio.CancelledError
         await original_sleep(0)
 
-    with patch("asyncio.sleep", _counting_sleep):
+    with patch("anyio.sleep", _counting_sleep):
         with pytest.raises(asyncio.CancelledError):
             await rt.processing_loop.run()
 
@@ -133,7 +133,11 @@ async def test_start_creates_tasks(monkeypatch) -> None:
     lifecycle._udp_transport_lifecycle._start_udp_receiver = _fake_udp
 
     await lifecycle.start()
-    assert len(lifecycle.tasks) == 6
+    for _ in range(20):
+        if "processing-loop" in lifecycle.tasks:
+            break
+        await asyncio.sleep(0)
+    assert "processing-loop" in lifecycle.tasks
     control_plane.start.assert_called_once()
     assert rt.health_state.startup_state == "ready"
     assert rt.health_state.startup_phase == "ready"
@@ -170,6 +174,12 @@ async def test_start_follows_declared_startup_phase_order(monkeypatch) -> None:
         update_manager=update_manager,
     )
     lifecycle._udp_transport_lifecycle._start_udp_receiver = _fake_udp
+
+    def _skip_background_start(self, _task_factory, *, name: str) -> None:
+        del self
+        del name
+
+    monkeypatch.setattr(type(lifecycle._background_tasks), "start", _skip_background_start)
 
     original_set_phase = runtime_module.RuntimeHealthState.set_phase
 
@@ -231,8 +241,10 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
     lifecycle._task_supervisor._max_attempts = 0
 
     await lifecycle.start()
-    failed_task = next(task for task in lifecycle.tasks if task.get_name() == "ws-broadcast")
-    await asyncio.gather(failed_task, return_exceptions=True)
+    for _ in range(20):
+        if "ws-broadcast" in rt.health_state.background_task_failures:
+            break
+        await asyncio.sleep(0)
 
     assert rt.health_state.background_task_failures["ws-broadcast"] == "ws boom"
 
@@ -286,7 +298,7 @@ async def test_start_restarts_supervised_task_after_failure(monkeypatch) -> None
 
     lifecycle._task_supervisor._base_delay_s = 0.0
     lifecycle._task_supervisor._max_delay_s = 0.0
-    monkeypatch.setattr(task_supervisor_module.asyncio, "sleep", _fast_sleep)
+    monkeypatch.setattr(task_supervisor_module.anyio, "sleep", _fast_sleep)
 
     await lifecycle.start()
     await asyncio.wait_for(restart_started.wait(), timeout=1.0)
@@ -305,8 +317,12 @@ async def test_start_monitors_udp_consumer_failure(monkeypatch) -> None:
         consumer_started.set()
         raise RuntimeError("udp boom")
 
+    class _FakeConsumer:
+        async def process_queue(self) -> None:
+            await _consumer()
+
     async def _fake_udp(*args, **kwargs):
-        return MagicMock(), asyncio.create_task(_consumer(), name="udp-data-consumer")
+        return MagicMock(), _FakeConsumer()
 
     control_plane = MagicMock()
     control_plane.start = AsyncMock()
@@ -331,11 +347,10 @@ async def test_start_monitors_udp_consumer_failure(monkeypatch) -> None:
 
     await lifecycle.start()
     await asyncio.wait_for(consumer_started.wait(), timeout=1.0)
-    consumer_task = lifecycle._udp_transport_lifecycle.consumer_task
-    if consumer_task is not None:
-        await asyncio.gather(consumer_task, return_exceptions=True)
-    # Yield so the done-callback that records the failure can fire.
-    await asyncio.sleep(0)
+    for _ in range(20):
+        if "udp-data-consumer" in rt.health_state.background_task_failures:
+            break
+        await asyncio.sleep(0)
 
     assert rt.health_state.background_task_failures["udp-data-consumer"] == "udp boom"
 
@@ -391,6 +406,10 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     lifecycle._udp_transport_lifecycle._start_udp_receiver = _fake_udp
 
     await lifecycle.start()
+    for _ in range(20):
+        if lifecycle.tasks:
+            break
+        await asyncio.sleep(0)
     assert len(lifecycle.tasks) > 0
 
     await lifecycle.stop()

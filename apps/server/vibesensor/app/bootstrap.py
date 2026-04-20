@@ -8,7 +8,6 @@ and serves static assets.
 from __future__ import annotations
 
 import argparse
-import asyncio
 import errno
 import logging
 import sys
@@ -16,6 +15,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import anyio
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from granian import Granian
@@ -92,9 +92,10 @@ def create_app(config_path: Path | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        cancelled_exc_class = anyio.get_cancelled_exc_class()
         try:
             await lifecycle.start()
-        except asyncio.CancelledError:
+        except cancelled_exc_class:
             LOGGER.info("Runtime lifecycle start cancelled; cleaning up before re-raise")
             await lifecycle.stop()
             raise

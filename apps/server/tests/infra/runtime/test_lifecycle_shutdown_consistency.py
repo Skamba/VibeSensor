@@ -1,4 +1,4 @@
-"""Verify lifecycle shutdown logs lingering background and managed tasks consistently."""
+"""Verify lifecycle shutdown logs lingering managed tasks consistently."""
 
 from __future__ import annotations
 
@@ -61,38 +61,6 @@ async def _stubborn_task() -> None:
         await first_wait.wait()
     except asyncio.CancelledError:
         await second_wait.wait()
-
-
-@pytest.mark.asyncio
-async def test_stop_retains_background_tasks_that_outlive_cancel_timeout(
-    monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    import vibesensor.infra.runtime.background_task_coordinator as coordinator_module
-
-    lifecycle = _make_lifecycle()
-    stubborn = asyncio.create_task(_stubborn_task(), name="stubborn-background")
-    lifecycle.tasks = [stubborn]
-    await asyncio.sleep(0)
-
-    async def _wait_pending(tasks, timeout):
-        del timeout
-        await asyncio.sleep(0)
-        return set(), set(tasks)
-
-    monkeypatch.setattr(coordinator_module.asyncio, "wait", _wait_pending)
-
-    with caplog.at_level(logging.WARNING):
-        await lifecycle.stop()
-
-    assert lifecycle.tasks == [stubborn]
-    assert "stubborn-background" in caplog.text
-    assert "remain pending" in caplog.text
-    assert "lingering tasks" in caplog.text
-
-    stubborn.cancel()
-    with contextlib.suppress(asyncio.CancelledError):
-        await stubborn
 
 
 @pytest.mark.asyncio

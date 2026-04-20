@@ -159,12 +159,17 @@ class LifecycleManager:
             logger=LOGGER,
         )
         self._background_tasks = BackgroundTaskCoordinator(
-            monitor_task=self._task_supervisor.monitor_task,
             logger=LOGGER,
         )
         self._udp_transport_lifecycle = UdpTransportLifecycle(
             start_udp_receiver=start_udp_receiver,
-            monitor_task=self._task_supervisor.monitor_task,
+            start_background_task=lambda task_factory: self._background_tasks.start(
+                lambda: self._task_supervisor.run(
+                    task_factory,
+                    name="udp-data-consumer",
+                ),
+                name="udp-data-consumer",
+            ),
             logger=LOGGER,
         )
         self._shutdown_sequence = LifecycleShutdownSequence(
@@ -175,12 +180,8 @@ class LifecycleManager:
         )
 
     @property
-    def tasks(self) -> list[asyncio.Task[object]]:
+    def tasks(self) -> list[str]:
         return self._background_tasks.tasks
-
-    @tasks.setter
-    def tasks(self, tasks: list[asyncio.Task[object]]) -> None:
-        self._background_tasks.tasks = tasks
 
     _LOW_DISK_THRESHOLD_MB = 100
 
@@ -207,7 +208,7 @@ class LifecycleManager:
         from vibesensor.infra.runtime.startup_runner import StartupRunner
 
         self._validate_startup()
-        self.tasks = []
+        await self._background_tasks.open()
         runner = StartupRunner(
             runtime=self._runtime,
             health_state=self._health_state,
@@ -221,7 +222,10 @@ class LifecycleManager:
         """Graceful shutdown with explicit ingress-stop and metrics-drain phases."""
         shutdown = await self._shutdown_sequence.run()
         self._report_shutdown_issues(shutdown.issues)
-        self._report_lingering_tasks(list(shutdown.lingering_managed))
+        self._report_lingering_tasks(
+            list(shutdown.lingering_background),
+            list(shutdown.lingering_managed),
+        )
 
     def _report_shutdown_issues(self, issues: tuple[LifecycleShutdownIssue, ...]) -> None:
         for issue in issues:
@@ -236,11 +240,11 @@ class LifecycleManager:
 
     def _report_lingering_tasks(
         self,
+        lingering_background: list[str],
         lingering_managed: list[asyncio.Task[None]],
     ) -> None:
-        lingering_background = self._background_tasks.retain_pending()
         lingering_task_names = [
-            *(task.get_name() for task in lingering_background if not task.done()),
+            *lingering_background,
             *(task.get_name() for task in lingering_managed if not task.done()),
         ]
         if lingering_task_names:

@@ -123,7 +123,7 @@ async def _run_loop(loop: ProcessingLoop, *, max_ticks: int) -> None:
             raise asyncio.CancelledError
         await original_sleep(0)
 
-    with patch("asyncio.sleep", _counting_sleep):
+    with patch("anyio.sleep", _counting_sleep):
         with pytest.raises(asyncio.CancelledError):
             await loop.run()
 
@@ -189,7 +189,7 @@ class TestProcessingLoopFailureTracking:
         async def _fast_sleep(delay: float) -> None:
             await original_sleep(0)
 
-        with patch("asyncio.sleep", _fast_sleep):
+        with patch("anyio.sleep", _fast_sleep):
             with pytest.raises(ProcessingLoopFailure, match="Processing loop remained unhealthy"):
                 await loop.run()
 
@@ -267,7 +267,7 @@ class TestProcessingLoopMismatchDetection:
             return func(*args, **kwargs)
 
         monkeypatch.setattr(
-            "vibesensor.infra.runtime.processing_loop.asyncio.to_thread",
+            "vibesensor.infra.runtime.processing_tick.anyio.to_thread.run_sync",
             fake_to_thread,
         )
 

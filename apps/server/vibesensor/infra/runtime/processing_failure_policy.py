@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from dataclasses import dataclass
+
+import anyio
 
 from vibesensor.shared.failure_utils import bounded_failure_message
 from vibesensor.shared.runtime_failures import ProcessingLoopFailure
@@ -182,7 +183,7 @@ class ProcessingFailurePolicy:
         cycle: int,
         total_failure_count: int,
     ) -> None:
-        await asyncio.sleep(self._failure_backoff_s)
+        await anyio.sleep(self._failure_backoff_s)
         self._logger.info(
             "Processing loop resuming after fatal-backoff cycle %d/%d; "
             "total failure count so far: %d",

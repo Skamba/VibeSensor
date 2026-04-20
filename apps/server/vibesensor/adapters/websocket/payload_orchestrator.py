@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import math
 from collections.abc import Callable, Iterable, Mapping
 from typing import cast
 
+import anyio
 import orjson
 
 from vibesensor.shared.json_utils import sanitize_for_json
@@ -65,7 +65,7 @@ class PayloadBuildOrchestrator:
         self._payload_builder = payload_builder
         self._payload_cache: dict[str | None, str] = {}
         self._payload_template_cache: dict[tuple[tuple[str, object], ...], str] = {}
-        self._pending_payload_tasks: dict[str | None, asyncio.Task[str]] = {}
+        self._pending_payload_events: dict[str | None, anyio.Event] = {}
         self._failed_client_ids: set[str | None] = set()
         self._debug_info: dict[str | None, bool] | None = {} if capture_debug else None
 
@@ -237,17 +237,24 @@ class PayloadBuildOrchestrator:
         if not raw_payloads:
             return
 
-        serialized_payloads = await asyncio.gather(
-            *(
-                asyncio.to_thread(self._serialize_payload, selected_client_id, raw_payload)
-                for selected_client_id, raw_payload in raw_payloads.items()
-            ),
-        )
-        for selected_client_id, (text, failed, has_freq) in zip(
-            raw_payloads,
-            serialized_payloads,
-            strict=True,
-        ):
+        serialized_payloads: dict[str | None, tuple[str, bool, bool | None]] = {}
+
+        async def _serialize_one(
+            selected_client_id: str | None,
+            raw_payload: LiveWsPayload,
+        ) -> None:
+            serialized_payloads[selected_client_id] = await anyio.to_thread.run_sync(
+                self._serialize_payload,
+                selected_client_id,
+                raw_payload,
+            )
+
+        async with anyio.create_task_group() as task_group:
+            for selected_client_id, raw_payload in raw_payloads.items():
+                task_group.start_soon(_serialize_one, selected_client_id, raw_payload)
+
+        for selected_client_id in raw_payloads:
+            text, failed, has_freq = serialized_payloads[selected_client_id]
             self._payload_cache[selected_client_id] = text
             if failed:
                 self._failed_client_ids.add(selected_client_id)
@@ -261,7 +268,7 @@ class PayloadBuildOrchestrator:
         if raw_payload is None:
             self._payload_cache[selected_client_id] = _ERROR_PAYLOAD
             return _ERROR_PAYLOAD
-        text, failed, has_freq = await asyncio.to_thread(
+        text, failed, has_freq = await anyio.to_thread.run_sync(
             self._serialize_payload,
             selected_client_id,
             raw_payload,
@@ -279,12 +286,15 @@ class PayloadBuildOrchestrator:
         cached = self._payload_cache.get(selected_client_id)
         if cached is not None:
             return cached
-        task = self._pending_payload_tasks.get(selected_client_id)
-        if task is None:
-            task = asyncio.create_task(self._build_payload_text(selected_client_id))
-            self._pending_payload_tasks[selected_client_id] = task
-        try:
-            return await task
-        finally:
-            if self._pending_payload_tasks.get(selected_client_id) is task and task.done():
-                self._pending_payload_tasks.pop(selected_client_id, None)
+        pending = self._pending_payload_events.get(selected_client_id)
+        if pending is None:
+            pending = anyio.Event()
+            self._pending_payload_events[selected_client_id] = pending
+            try:
+                return await self._build_payload_text(selected_client_id)
+            finally:
+                pending.set()
+                if self._pending_payload_events.get(selected_client_id) is pending:
+                    self._pending_payload_events.pop(selected_client_id, None)
+        await pending.wait()
+        return self._payload_cache.get(selected_client_id, _ERROR_PAYLOAD)

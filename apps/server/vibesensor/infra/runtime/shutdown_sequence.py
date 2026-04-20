@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import aiosqlite
+import anyio
 
 if TYPE_CHECKING:
     from vibesensor.infra.runtime.background_task_coordinator import BackgroundTaskCoordinator
@@ -29,6 +30,7 @@ class LifecycleShutdownIssue:
 class LifecycleShutdownResult:
     """Collected shutdown issues plus managed jobs that outlived cancellation."""
 
+    lingering_background: tuple[str, ...]
     lingering_managed: tuple[asyncio.Task[None], ...]
     issues: tuple[LifecycleShutdownIssue, ...]
 
@@ -55,12 +57,15 @@ class LifecycleShutdownSequence:
         issues: list[LifecycleShutdownIssue] = []
         self._stop_ingress(issues)
         await self._udp_transport_lifecycle.shutdown()
-        await self._background_tasks.cancel_all(timeout_s=15.0)
+        lingering_background = await self._background_tasks.cancel_all(timeout_s=15.0)
         lingering_managed = await self._cancel_managed_jobs()
         await self._drain_analysis()
         await self._shutdown_worker_pool(issues)
         await self._close_history_db(issues)
+        if not lingering_background:
+            await self._background_tasks.close()
         return LifecycleShutdownResult(
+            lingering_background=tuple(lingering_background),
             lingering_managed=tuple(lingering_managed),
             issues=tuple(issues),
         )
@@ -90,7 +95,7 @@ class LifecycleShutdownSequence:
 
     async def _drain_analysis(self) -> None:
         analysis_timeout_s = self._runtime.shutdown_analysis_timeout_s
-        shutdown_report = await asyncio.to_thread(
+        shutdown_report = await anyio.to_thread.run_sync(
             self._runtime.run_recorder.shutdown_report,
             analysis_timeout_s,
         )
@@ -109,7 +114,7 @@ class LifecycleShutdownSequence:
 
     async def _shutdown_worker_pool(self, issues: list[LifecycleShutdownIssue]) -> None:
         try:
-            await asyncio.to_thread(self._runtime.worker_pool.shutdown, True)
+            await anyio.to_thread.run_sync(self._runtime.worker_pool.shutdown, True)
         except (OSError, RuntimeError) as exc:
             issues.append(
                 LifecycleShutdownIssue(

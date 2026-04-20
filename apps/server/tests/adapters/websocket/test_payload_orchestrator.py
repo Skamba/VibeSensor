@@ -34,7 +34,7 @@ async def test_get_or_build_payload_text_reuses_pending_task() -> None:
         return func(*args, **kwargs)
 
     with patch(
-        "vibesensor.adapters.websocket.payload_orchestrator.asyncio.to_thread",
+        "vibesensor.adapters.websocket.payload_orchestrator.anyio.to_thread.run_sync",
         side_effect=fake_to_thread,
     ):
         first, second = await asyncio.gather(

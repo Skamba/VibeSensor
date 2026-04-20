@@ -214,7 +214,7 @@ async def start_udp_data_receiver(
     registry: ClientRegistry,
     processor: SignalProcessor,
     queue_maxsize: int = 1024,
-) -> tuple[asyncio.DatagramTransport, asyncio.Task[None]]:
+) -> tuple[asyncio.DatagramTransport, DataDatagramProtocol]:
     """Bind the UDP data socket and start the background consumer task."""
     loop = asyncio.get_running_loop()
     protocol = DataDatagramProtocol(
@@ -226,5 +226,4 @@ async def start_udp_data_receiver(
         lambda: protocol,
         local_addr=(host, port),
     )
-    consumer = asyncio.create_task(protocol.process_queue(), name="udp-data-consumer")
-    return transport, consumer
+    return transport, protocol
