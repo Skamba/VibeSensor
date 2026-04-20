@@ -35,7 +35,7 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
 - Hardware simulator for full-stack testing without physical sensors
 - Extensive pytest suite with CI integration
 - Playwright visual regression tests across 4 viewports
-- Ruff backend linting plus UI linting and TypeScript type checking enforced in CI
+- Ruff lint + Ruff format for backend/tooling Python, plus UI linting and TypeScript type checking enforced in CI
 - Custom binary UDP protocol with sequence-based loss detection
 
 ## Units
@@ -102,7 +102,8 @@ For supported Python and Node policy by environment, use
 
 Run `make doctor` after cloning to validate the pinned toolchain and see which
 workflow paths are available on your machine. Run bare `make` to list the
-supported repo commands.
+supported repo commands. Use `make format` as the only supported Python
+formatter for backend and tooling files.
 
 ## Quick Start
 

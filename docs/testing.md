@@ -6,6 +6,7 @@
 - UI validation lives under `apps/ui/` (Vite build/typecheck plus Playwright browser checks).
 - Firmware build/flash guidance lives in `firmware/esp/README.md`.
 - Pi-image build/validation guidance lives in `infra/pi-image/pi-gen/README.md`.
+- `make format` is the canonical Python formatting command for backend and tooling files; no other Python formatter is supported in the repo workflow.
 - Use `make test-ci-lite` (`python3 tools/tests/run_ci_parallel.py --ci-lite`) for the non-Docker blocking-CI subset.
 - Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for the broader local runner.
 - Use `make benchmark-backend` for the explicit pytest-benchmark backend suite; pass `BENCHMARK_OPTS="--benchmark-save=<name>"` to save runs and `BACKEND_BENCHMARK_TARGETS=...` to focus one benchmark file.
