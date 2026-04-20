@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from vibesensor.app.settings import DEFAULT_CONFIG
+from vibesensor.app.config_defaults import DEFAULT_CONFIG
 
 
 def _warn(message: str) -> None:

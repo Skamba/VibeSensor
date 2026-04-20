@@ -196,7 +196,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
 )
 def test_config_shutdown_analysis_timeout(tmp_path: Path, cfg_timeout, expected) -> None:
     """shutdown_analysis_timeout_s must default to 30 and accept overrides."""
-    from vibesensor.app.settings import load_config
+    from vibesensor.app.config_loader import load_config
 
     logging_cfg: dict = {}
     if cfg_timeout is not None:

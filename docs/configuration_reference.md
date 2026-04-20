@@ -1,7 +1,7 @@
 # Configuration Reference
 
 Scope: operator-facing reference for the YAML runtime configuration accepted by
-`vibesensor.app.settings`.
+`vibesensor.app.config_loader.load_config()`.
 
 The source of truth for defaults lives in
 `apps/server/vibesensor/app/config_defaults.py`. Typed validation and clamping

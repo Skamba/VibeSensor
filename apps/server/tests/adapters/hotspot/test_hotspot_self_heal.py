@@ -15,7 +15,7 @@ from vibesensor.adapters.hotspot.self_heal import (
     CommandRunner,
     run_self_heal_once,
 )
-from vibesensor.app.settings import APConfig, APSelfHealConfig
+from vibesensor.app.config_schema import APConfig, APSelfHealConfig
 
 
 @dataclass

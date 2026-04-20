@@ -415,7 +415,7 @@ def test_runtime_state_uses_focused_ports_for_read_side_runtime_fields() -> None
     from vibesensor.adapters.websocket.hub import WebSocketHub
     from vibesensor.app import runtime_state as runtime_state_module
     from vibesensor.app.runtime_state import RuntimeState
-    from vibesensor.app.settings import AppConfig
+    from vibesensor.app.config_schema import AppConfig
     from vibesensor.infra.runtime.lifecycle import LifecycleHistoryDb, LifecycleObdRunner
     from vibesensor.shared.ports import ClientTracker, SettingsReader, SignalSource
 

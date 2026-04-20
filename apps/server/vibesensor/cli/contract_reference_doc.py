@@ -26,7 +26,7 @@ from vibesensor.adapters.udp.protocol import (
     MSG_HELLO_ACK,
     VERSION,
 )
-from vibesensor.app.settings import DEFAULT_CONFIG
+from vibesensor.app.config_defaults import DEFAULT_CONFIG
 from vibesensor.shared.types.json_types import JsonObject
 
 
