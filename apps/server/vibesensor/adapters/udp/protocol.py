@@ -237,30 +237,30 @@ def parse_hello(data: bytes) -> HelloMessage:
         raw_name = raw_name[:HELLO_MAX_NAME_BYTES]
     name = raw_name.decode("utf-8", errors="replace")
 
-    firmware_version = ""
-    queue_overflow_drops = 0
-    capabilities = 0
-    if len(data) > offset:
-        firmware_len = data[offset]
-        offset += 1
-        if len(data) < offset + firmware_len:
-            raise _ProtocolError("HELLO firmware length out of range")
-        raw_fw = data[offset : offset + firmware_len]
-        offset += firmware_len
-        if firmware_len > HELLO_MAX_NAME_BYTES:
-            LOGGER.warning(
-                "HELLO firmware_version field is %d bytes (max expected %d); "
-                "accepting but truncating stored value",
-                firmware_len,
-                HELLO_MAX_NAME_BYTES,
-            )
-            raw_fw = raw_fw[:HELLO_MAX_NAME_BYTES]
-        firmware_version = raw_fw.decode("utf-8", errors="replace")
-        if len(data) >= offset + 4:
-            queue_overflow_drops = struct.unpack_from("<I", data, offset)[0]
-            offset += 4
-        if len(data) > offset:
-            capabilities = data[offset]
+    if len(data) < offset + 1:
+        raise _ProtocolError("HELLO missing firmware length")
+    firmware_len = data[offset]
+    offset += 1
+    if len(data) < offset + firmware_len:
+        raise _ProtocolError("HELLO firmware length out of range")
+    raw_fw = data[offset : offset + firmware_len]
+    offset += firmware_len
+    if firmware_len > HELLO_MAX_NAME_BYTES:
+        LOGGER.warning(
+            "HELLO firmware_version field is %d bytes (max expected %d); "
+            "accepting but truncating stored value",
+            firmware_len,
+            HELLO_MAX_NAME_BYTES,
+        )
+        raw_fw = raw_fw[:HELLO_MAX_NAME_BYTES]
+    firmware_version = raw_fw.decode("utf-8", errors="replace")
+    if len(data) < offset + 4:
+        raise _ProtocolError("HELLO missing queue_overflow_drops")
+    queue_overflow_drops = struct.unpack_from("<I", data, offset)[0]
+    offset += 4
+    if len(data) < offset + 1:
+        raise _ProtocolError("HELLO missing capabilities")
+    capabilities = data[offset]
 
     return HelloMessage(
         client_id=client_id,
@@ -282,7 +282,7 @@ def pack_hello(
     frame_samples: int = 0,
     firmware_version: str = "",
     queue_overflow_drops: int = 0,
-    capabilities: int = 0,
+    capabilities: int = HELLO_CAP_EXPLICIT_ACK,
 ) -> bytes:
     """Encode a HELLO message as bytes."""
     validate_client_id(client_id)

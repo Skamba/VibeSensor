@@ -10,6 +10,7 @@ from vibesensor.adapters.simulator.sim_client import SimClient
 from vibesensor.adapters.simulator.sim_scene import RoadSceneController
 from vibesensor.adapters.udp.protocol import (
     CMD_IDENTIFY,
+    HELLO_CAP_EXPLICIT_ACK,
     MSG_CMD,
     pack_ack,
     pack_data,
@@ -131,6 +132,7 @@ async def hello_loop(sim: SimClient, hello_interval_s: float, stop_event: asynci
                 name=sim.name,
                 frame_samples=sim.frame_samples,
                 firmware_version="sim-0.2",
+                capabilities=HELLO_CAP_EXPLICIT_ACK,
             )
             sim.control_transport.sendto(packet, (sim.server_host, sim.server_control_port))
         await asyncio.sleep(hello_interval_s)

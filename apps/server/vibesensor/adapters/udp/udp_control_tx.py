@@ -15,7 +15,6 @@ import time
 from typing import cast
 
 from vibesensor.adapters.udp.protocol import (
-    HELLO_CAP_EXPLICIT_ACK,
     MSG_ACK,
     MSG_DATA_ACK,
     MSG_HELLO,
@@ -57,7 +56,7 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
             if msg_type == MSG_HELLO:
                 hello = parse_hello(data)
                 registry.update_from_hello(hello, addr, now_ts)
-                if self.transport is not None and (hello.capabilities & HELLO_CAP_EXPLICIT_ACK):
+                if self.transport is not None:
                     self.transport.sendto(
                         pack_hello_ack(hello.client_id),
                         (addr[0], hello.control_port),

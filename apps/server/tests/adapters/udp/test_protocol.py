@@ -76,7 +76,7 @@ def test_hello_roundtrip() -> None:
     assert decoded.capabilities == HELLO_CAP_EXPLICIT_ACK
 
 
-def test_parse_hello_defaults_capabilities_to_zero_for_legacy_packet() -> None:
+def test_parse_hello_rejects_missing_capabilities() -> None:
     client_id = bytes.fromhex("a1b2c3d4e5f6")
     legacy_packet = pack_hello(
         client_id=client_id,
@@ -88,8 +88,8 @@ def test_parse_hello_defaults_capabilities_to_zero_for_legacy_packet() -> None:
         queue_overflow_drops=7,
         capabilities=HELLO_CAP_EXPLICIT_ACK,
     )[:-1]
-    decoded = parse_hello(legacy_packet)
-    assert decoded.capabilities == 0
+    with pytest.raises(ProtocolError, match="HELLO missing capabilities"):
+        parse_hello(legacy_packet)
 
 
 def test_data_roundtrip() -> None:
@@ -331,7 +331,7 @@ def test_parse_hello_rejects_zero_sample_rate() -> None:
     import struct as _struct
 
     raw = HELLO_BASE.pack(MSG_HELLO, 1, client_id, 9000, 0, 200, len(name_bytes))
-    raw += name_bytes + bytes([0]) + _struct.pack("<I", 0)
+    raw += name_bytes + bytes([0]) + _struct.pack("<I", 0) + bytes([HELLO_CAP_EXPLICIT_ACK])
     with pytest.raises(ProtocolError, match="sample_rate_hz must not be zero"):
         parse_hello(raw)
 
@@ -344,7 +344,7 @@ def test_parse_hello_warns_on_zero_control_port(caplog: pytest.LogCaptureFixture
     client_id = bytes.fromhex("aabbccddeeff")
     name_bytes = b"sensor"
     raw = HELLO_BASE.pack(MSG_HELLO, 1, client_id, 0, 800, 200, len(name_bytes))
-    raw += name_bytes + bytes([0]) + _struct.pack("<I", 0)
+    raw += name_bytes + bytes([0]) + _struct.pack("<I", 0) + bytes([HELLO_CAP_EXPLICIT_ACK])
     with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.udp.protocol"):
         msg = parse_hello(raw)
     assert msg.control_port == 0
