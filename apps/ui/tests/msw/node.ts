@@ -44,6 +44,8 @@ export function createUiMswTestServer(testHooks: PlaywrightTestHooks) {
   const server = setupServer();
   let restoreInterception = () => undefined;
 
+  // Use this shared lifecycle only for tests that cross the real HTTP/fetch
+  // boundary. Transport-injected or pure view/state tests should stay below it.
   testHooks.beforeAll(() => {
     restoreInterception = installUiMswInterception(server);
   });
