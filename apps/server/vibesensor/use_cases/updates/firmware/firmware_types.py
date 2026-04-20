@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass, field
 from typing import TypedDict
 
+import msgspec
+
 from vibesensor.shared.constants.github import GITHUB_REPO
 from vibesensor.shared.process_settings import (
     DEFAULT_FIRMWARE_CACHE_DIR,
@@ -13,15 +15,19 @@ from vibesensor.shared.process_settings import (
 
 __all__ = [
     "BundleMeta",
+    "BundleMetaRecord",
     "FirmwareCacheConfig",
     "FirmwareCacheInfoPayload",
     "FlashManifest",
+    "FlashManifestRecord",
     "GitHubReleaseAssetPayload",
     "GitHubReleasePayload",
     "ManifestEnvironment",
     "ManifestEnvironmentPayload",
+    "ManifestEnvironmentRecord",
     "ManifestSegment",
     "ManifestSegmentPayload",
+    "ManifestSegmentRecord",
 ]
 
 _DEFAULT_CACHE_DIR = str(DEFAULT_FIRMWARE_CACHE_DIR)
@@ -62,6 +68,30 @@ class FirmwareCacheInfoPayload(TypedDict, total=False):
     bundle_path: str
 
 
+class BundleMetaRecord(msgspec.Struct, kw_only=True, frozen=True):
+    tag: str = ""
+    asset: str = ""
+    timestamp: str = ""
+    sha256: str = ""
+    source: str = ""
+
+
+class ManifestSegmentRecord(msgspec.Struct, kw_only=True, frozen=True):
+    file: str = ""
+    offset: str = ""
+    sha256: str = ""
+
+
+class ManifestEnvironmentRecord(msgspec.Struct, kw_only=True, frozen=True):
+    name: str = ""
+    segments: list[ManifestSegmentRecord] = msgspec.field(default_factory=list)
+
+
+class FlashManifestRecord(msgspec.Struct, kw_only=True, frozen=True):
+    generated_from: str = ""
+    environments: list[ManifestEnvironmentRecord] = msgspec.field(default_factory=list)
+
+
 @dataclass
 class FirmwareCacheConfig:
     """Configuration for the local ESP32 firmware download cache."""
@@ -95,15 +125,6 @@ class BundleMeta:
     timestamp: str = ""
     sha256: str = ""
     source: str = ""  # "downloaded" or "baseline"
-
-    def to_dict(self) -> dict[str, str]:
-        return {
-            "tag": self.tag,
-            "asset": self.asset,
-            "timestamp": self.timestamp,
-            "sha256": self.sha256,
-            "source": self.source,
-        }
 
 
 @dataclass

@@ -3,23 +3,33 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import tempfile
 import zipfile
+from collections.abc import Mapping
 from pathlib import Path
 
-from vibesensor.shared.types.json_types import JsonObject, is_json_array, is_json_object
+import msgspec
+
+from vibesensor.shared.types.json_types import is_json_array, is_json_object
 from vibesensor.use_cases.updates.firmware.firmware_types import (
     BundleMeta,
+    BundleMetaRecord,
     FlashManifest,
+    FlashManifestRecord,
     ManifestEnvironment,
+    ManifestEnvironmentRecord,
     ManifestSegment,
+    ManifestSegmentRecord,
 )
 
 __all__ = [
+    "bundle_meta_record_from_json",
+    "bundle_meta_record_to_json",
     "dir_sha256",
     "extract_bundle_archive",
+    "flash_manifest_record_from_json",
+    "flash_manifest_record_to_json",
     "parse_manifest",
     "read_meta",
     "safe_extractall",
@@ -31,12 +41,32 @@ _META_FILE = "_meta.json"
 _MANIFEST_FILE = "flash.json"
 
 
-def _read_json_file(path: Path) -> JsonObject:
-    """Read and parse a JSON file. Raises JSONDecodeError or OSError on failure."""
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    if not is_json_object(payload):
-        raise ValueError(f"Expected JSON object in {path}, got {type(payload).__name__}")
-    return payload
+def flash_manifest_record_from_json(raw: bytes | str) -> FlashManifestRecord:
+    try:
+        return msgspec.json.decode(raw, type=FlashManifestRecord)
+    except msgspec.ValidationError as exc:
+        decoded = msgspec.json.decode(raw)
+        if not is_json_object(decoded):
+            raise ValueError("Firmware manifest root must be a JSON object") from exc
+        return _flash_manifest_record_from_object(decoded)
+
+
+def flash_manifest_record_to_json(record: FlashManifestRecord) -> bytes:
+    return msgspec.json.encode(record) + b"\n"
+
+
+def bundle_meta_record_from_json(raw: bytes | str) -> BundleMetaRecord:
+    try:
+        return msgspec.json.decode(raw, type=BundleMetaRecord)
+    except msgspec.ValidationError as exc:
+        decoded = msgspec.json.decode(raw)
+        if not is_json_object(decoded):
+            raise ValueError("Firmware bundle metadata root must be a JSON object") from exc
+        return _bundle_meta_record_from_object(decoded)
+
+
+def bundle_meta_record_to_json(record: BundleMetaRecord) -> bytes:
+    return msgspec.json.encode(record) + b"\n"
 
 
 def safe_extractall(zf: zipfile.ZipFile, dest: Path) -> None:
@@ -60,37 +90,30 @@ def extract_bundle_archive(zip_path: Path, dest_dir: Path) -> Path:
     return dest_dir
 
 
-def parse_manifest(data: JsonObject) -> FlashManifest:
-    """Parse a flash.json manifest dict into a FlashManifest."""
+def parse_manifest(data: FlashManifestRecord | object) -> FlashManifest:
+    """Parse a flash.json manifest record or JSON-like object into a FlashManifest."""
+
+    record = _coerce_flash_manifest_record(data)
     envs: list[ManifestEnvironment] = []
-    environments = data.get("environments", [])
-    if is_json_array(environments):
-        for env_data in environments:
-            if not is_json_object(env_data):
-                continue
-            segments_raw = env_data.get("segments", [])
-            segs: list[ManifestSegment] = []
-            if is_json_array(segments_raw):
-                for segment in segments_raw:
-                    if not is_json_object(segment):
-                        continue
-                    file_name = segment.get("file")
-                    offset = segment.get("offset")
-                    if not isinstance(file_name, str) or not isinstance(offset, str):
-                        continue
-                    sha256 = segment.get("sha256", "")
-                    segs.append(
-                        ManifestSegment(
-                            file=file_name,
-                            offset=offset,
-                            sha256=str(sha256) if isinstance(sha256, str) else "",
-                        ),
+    for env_record in record.environments:
+        if not env_record.name:
+            continue
+        envs.append(
+            ManifestEnvironment(
+                name=env_record.name,
+                segments=[
+                    ManifestSegment(
+                        file=segment.file,
+                        offset=segment.offset,
+                        sha256=segment.sha256,
                     )
-            name = env_data.get("name")
-            if isinstance(name, str) and name:
-                envs.append(ManifestEnvironment(name=name, segments=segs))
+                    for segment in env_record.segments
+                    if segment.file and segment.offset
+                ],
+            )
+        )
     return FlashManifest(
-        generated_from=str(data.get("generated_from", "")),
+        generated_from=record.generated_from,
         environments=envs,
     )
 
@@ -108,11 +131,11 @@ def validate_bundle(bundle_dir: Path) -> FlashManifest:
             "Run the updater while online or reinstall the Pi image.",
         )
     try:
-        manifest_data = _read_json_file(manifest_path)
-    except (json.JSONDecodeError, OSError) as exc:
+        manifest_record = flash_manifest_record_from_json(manifest_path.read_bytes())
+    except (msgspec.DecodeError, OSError, ValueError) as exc:
         raise ValueError(f"Firmware manifest is corrupt in {bundle_dir}: {exc}") from exc
 
-    manifest = parse_manifest(manifest_data)
+    manifest = parse_manifest(manifest_record)
     if not manifest.environments:
         raise ValueError(
             f"Firmware manifest in {bundle_dir} has no environments. The bundle may be incomplete.",
@@ -142,15 +165,15 @@ def read_meta(bundle_dir: Path) -> BundleMeta | None:
     if not meta_path.is_file():
         return None
     try:
-        data = _read_json_file(meta_path)
-    except (json.JSONDecodeError, OSError) as exc:
+        record = bundle_meta_record_from_json(meta_path.read_bytes())
+    except (msgspec.DecodeError, OSError, ValueError) as exc:
         raise ValueError(f"Firmware bundle metadata is corrupt in {bundle_dir}: {exc}") from exc
     return BundleMeta(
-        tag=str(data.get("tag", "")),
-        asset=str(data.get("asset", "")),
-        timestamp=str(data.get("timestamp", "")),
-        sha256=str(data.get("sha256", "")),
-        source=str(data.get("source", "")),
+        tag=record.tag,
+        asset=record.asset,
+        timestamp=record.timestamp,
+        sha256=record.sha256,
+        source=record.source,
     )
 
 
@@ -161,18 +184,88 @@ def write_meta(bundle_dir: Path, meta: BundleMeta) -> None:
     a truncated ``_meta.json``.
     """
     meta_path = bundle_dir / _META_FILE
-    payload = json.dumps(meta.to_dict(), indent=2) + "\n"
+    payload = bundle_meta_record_to_json(
+        BundleMetaRecord(
+            tag=meta.tag,
+            asset=meta.asset,
+            timestamp=meta.timestamp,
+            sha256=meta.sha256,
+            source=meta.source,
+        )
+    )
     fd, tmp = tempfile.mkstemp(
         dir=str(bundle_dir),
         prefix="._meta_",
         suffix=".tmp",
     )
     try:
-        os.write(fd, payload.encode("utf-8"))
+        os.write(fd, payload)
         os.fsync(fd)
     finally:
         os.close(fd)
     Path(tmp).replace(meta_path)
+
+
+def _coerce_flash_manifest_record(data: FlashManifestRecord | object) -> FlashManifestRecord:
+    if isinstance(data, FlashManifestRecord):
+        return data
+    if not is_json_object(data):
+        return FlashManifestRecord()
+    return _flash_manifest_record_from_object(data)
+
+
+def _flash_manifest_record_from_object(payload: Mapping[str, object]) -> FlashManifestRecord:
+    environments: list[ManifestEnvironmentRecord] = []
+    raw_environments = payload.get("environments")
+    if is_json_array(raw_environments):
+        for raw_environment in raw_environments:
+            if is_json_object(raw_environment):
+                environments.append(_manifest_environment_record_from_object(raw_environment))
+            else:
+                environments.append(ManifestEnvironmentRecord())
+    return FlashManifestRecord(
+        generated_from=str(payload.get("generated_from", "")),
+        environments=environments,
+    )
+
+
+def _manifest_environment_record_from_object(
+    payload: Mapping[str, object],
+) -> ManifestEnvironmentRecord:
+    segments: list[ManifestSegmentRecord] = []
+    raw_segments = payload.get("segments")
+    if is_json_array(raw_segments):
+        for raw_segment in raw_segments:
+            if is_json_object(raw_segment):
+                segments.append(_manifest_segment_record_from_object(raw_segment))
+            else:
+                segments.append(ManifestSegmentRecord())
+    name = payload.get("name")
+    return ManifestEnvironmentRecord(
+        name=name if isinstance(name, str) else "",
+        segments=segments,
+    )
+
+
+def _manifest_segment_record_from_object(payload: Mapping[str, object]) -> ManifestSegmentRecord:
+    file_name = payload.get("file")
+    offset = payload.get("offset")
+    sha256 = payload.get("sha256", "")
+    return ManifestSegmentRecord(
+        file=file_name if isinstance(file_name, str) else "",
+        offset=offset if isinstance(offset, str) else "",
+        sha256=sha256 if isinstance(sha256, str) else "",
+    )
+
+
+def _bundle_meta_record_from_object(payload: Mapping[str, object]) -> BundleMetaRecord:
+    return BundleMetaRecord(
+        tag=str(payload.get("tag", "")),
+        asset=str(payload.get("asset", "")),
+        timestamp=str(payload.get("timestamp", "")),
+        sha256=str(payload.get("sha256", "")),
+        source=str(payload.get("source", "")),
+    )
 
 
 def dir_sha256(directory: Path) -> str:
