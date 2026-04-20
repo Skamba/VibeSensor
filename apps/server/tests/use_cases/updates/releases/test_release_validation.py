@@ -23,6 +23,8 @@ from vibesensor.use_cases.updates.releases.release_validation import (
     validate_release_wheel_metadata,
 )
 
+_BLOCKED_RELEASE_VALIDATION_OPTIONAL_DEPS = ("httpx", "msgspec", "pydantic", "tenacity")
+
 
 def test_build_release_smoke_config_rewrites_runtime_paths(tmp_path: Path) -> None:
     config_path = build_release_smoke_config(
@@ -217,7 +219,7 @@ def test_release_validation_cli_validate_wheel_metadata_does_not_require_optiona
 
         class _BlockOptionalDeps(importlib.abc.MetaPathFinder):
             def find_spec(self, fullname, path=None, target=None):
-                blocked = {{"httpx", "msgspec", "pydantic", "tenacity"}}
+                blocked = {_BLOCKED_RELEASE_VALIDATION_OPTIONAL_DEPS!r}
                 if fullname in blocked or any(fullname.startswith(name + ".") for name in blocked):
                     raise ModuleNotFoundError(f"No module named '{{fullname}}'")
                 return None
@@ -287,7 +289,7 @@ def test_release_validation_cli_validate_firmware_manifest_does_not_require_opti
 
         class _BlockOptionalDeps(importlib.abc.MetaPathFinder):
             def find_spec(self, fullname, path=None, target=None):
-                blocked = {{"httpx", "msgspec", "pydantic", "tenacity"}}
+                blocked = {_BLOCKED_RELEASE_VALIDATION_OPTIONAL_DEPS!r}
                 if fullname in blocked or any(fullname.startswith(name + ".") for name in blocked):
                     raise ModuleNotFoundError(f"No module named '{{fullname}}'")
                 return None
