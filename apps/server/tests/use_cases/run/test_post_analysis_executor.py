@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import sqlite3
+from pathlib import Path
 
 import pytest
 from test_support.persisted_analysis import make_persisted_analysis
+from test_support.tracing import configured_trace_output, read_trace_output
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
@@ -81,6 +83,39 @@ def test_execute_post_analysis_success_stores_summary() -> None:
     assert isinstance(result, PostAnalysisExecutionSuccess)
     assert stored["run_id"] == "run-ok"
     assert stored["analysis"]["lang"] == "nl"
+
+
+def test_execute_post_analysis_exports_trace_span(tmp_path: Path) -> None:
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            return None
+
+        def store_analysis_error(self, run_id, error):
+            raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
+
+    with configured_trace_output(tmp_path) as trace_path:
+        result = execute_post_analysis(
+            run_id="run-trace",
+            db=FakeDB(),
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=_run_metadata(run_id),
+                language="en",
+                samples=_samples(),
+                total_sample_count=1,
+                stride=1,
+            ),
+            analysis_runner=lambda _run: make_persisted_analysis({"run_suitability": []}),
+        )
+
+    assert isinstance(result, PostAnalysisExecutionSuccess)
+    span = next(
+        item
+        for item in read_trace_output(trace_path)
+        if item["name"] == "run.post_analysis.execute"
+    )
+    assert span["attributes"]["vibesensor.run_id"] == "run-trace"
+    assert span["attributes"]["vibesensor.sample_count"] == 1
 
 
 def test_execute_post_analysis_handles_missing_metadata() -> None:

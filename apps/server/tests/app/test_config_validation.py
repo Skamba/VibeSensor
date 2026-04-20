@@ -17,6 +17,7 @@ from vibesensor.app.config_schema import (
     LoggingConfig,
     ProcessingConfig,
     ServerConfig,
+    TracingConfig,
     UDPConfig,
 )
 
@@ -210,6 +211,15 @@ class TestLoggingConfigValidation:
     def test_non_positive_run_retention_days_clamped(self) -> None:
         cfg = self._make(run_retention_days=0)
         assert cfg.run_retention_days >= 1
+
+
+class TestTracingConfigValidation:
+    """TracingConfig stores the enabled flag and resolved output path."""
+
+    def test_tracing_config_round_trip(self) -> None:
+        cfg = TracingConfig(enabled=True, output_path=Path("/tmp/traces.jsonl"))
+        assert cfg.enabled is True
+        assert cfg.output_path == Path("/tmp/traces.jsonl")
 
 
 # ---------------------------------------------------------------------------

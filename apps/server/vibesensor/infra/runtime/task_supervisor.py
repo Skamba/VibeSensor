@@ -7,8 +7,11 @@ import logging
 import time
 from collections.abc import Callable, Coroutine
 
+from opentelemetry.trace import SpanKind, Status, StatusCode
+
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.shared.failure_utils import bounded_failure_message
+from vibesensor.shared.tracing import mark_span_error, start_span
 
 __all__ = ["TaskSupervisor", "task_failure_message"]
 
@@ -97,34 +100,52 @@ class TaskSupervisor:
         async def _run_supervised() -> None:
             restart_count = 0
             while True:
-                started_at = time.monotonic()
-                try:
-                    await task_factory()
-                except asyncio.CancelledError:
-                    raise
-                except restartable_exceptions as exc:
-                    runtime_s = time.monotonic() - started_at
-                    if runtime_s >= self._reset_after_s:
-                        restart_count = 0
-                    if restart_count >= self._max_attempts:
+                with start_span(
+                    __name__,
+                    "runtime.managed_task",
+                    kind=SpanKind.INTERNAL,
+                    attributes={
+                        "vibesensor.task.name": name,
+                        "vibesensor.task.attempt": restart_count + 1,
+                    },
+                ) as span:
+                    started_at = time.monotonic()
+                    try:
+                        await task_factory()
+                    except asyncio.CancelledError:
+                        span.set_attribute("vibesensor.cancelled", True)
                         raise
-                    restart_count += 1
-                    delay_s = self._restart_delay_s(restart_count)
-                    self._health_state.record_task_failure(name, task_failure_message(exc))
-                    self._logger.error(
-                        (
-                            "Managed task %s failed with restartable error; "
-                            "restarting in %.1fs (%d/%d)."
-                        ),
-                        name,
-                        delay_s,
-                        restart_count,
-                        self._max_attempts,
-                        exc_info=exc,
-                    )
-                    await asyncio.sleep(delay_s)
-                    self._health_state.clear_task_failure(name)
-                    continue
+                    except restartable_exceptions as exc:
+                        runtime_s = time.monotonic() - started_at
+                        span.set_attribute("vibesensor.runtime_s", round(runtime_s, 3))
+                        mark_span_error(span, exc)
+                        if runtime_s >= self._reset_after_s:
+                            restart_count = 0
+                        if restart_count >= self._max_attempts:
+                            span.set_attribute("vibesensor.restart_exhausted", True)
+                            raise
+                        restart_count += 1
+                        delay_s = self._restart_delay_s(restart_count)
+                        span.set_attribute("vibesensor.restart_delay_s", delay_s)
+                        self._health_state.record_task_failure(name, task_failure_message(exc))
+                        self._logger.error(
+                            (
+                                "Managed task %s failed with restartable error; "
+                                "restarting in %.1fs (%d/%d)."
+                            ),
+                            name,
+                            delay_s,
+                            restart_count,
+                            self._max_attempts,
+                            exc_info=exc,
+                        )
+                        await asyncio.sleep(delay_s)
+                        self._health_state.clear_task_failure(name)
+                        continue
+                    runtime_s = time.monotonic() - started_at
+                    span.set_attribute("vibesensor.runtime_s", round(runtime_s, 3))
+                    span.set_attribute("vibesensor.unexpected_exit", True)
+                    span.set_status(Status(StatusCode.ERROR, "managed task exited unexpectedly"))
                 raise RuntimeError(f"managed task {name} exited unexpectedly")
 
         task = asyncio.create_task(_run_supervised(), name=name)

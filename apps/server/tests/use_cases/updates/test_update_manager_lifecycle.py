@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from test_support.tracing import configured_trace_output, read_trace_output
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
 from vibesensor.use_cases.updates.manager import UpdateManager
@@ -120,3 +122,22 @@ async def test_cleanup_error_propagates_explicitly() -> None:
     reporter.fail.assert_called_once_with(error, default_phase="cleanup")
     tracker.clear_secrets.assert_called_once_with()
     tracker.finish_cleanup.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+async def test_start_exports_update_workflow_trace_span(tmp_path: Path) -> None:
+    manager, tracker, reporter, workflow_run = _build_manager()
+    request = _wifi_request()
+
+    with configured_trace_output(tmp_path) as trace_path:
+        manager.start(request.ssid, request.password, transport=request.transport)
+        task = manager.job_task
+        assert task is not None
+        await task
+
+    workflow_run.assert_awaited_once_with(request=request)
+    tracker.clear_secrets.assert_called_once_with()
+    tracker.finish_cleanup.assert_called_once_with()
+    assert reporter.fail.call_count == 0
+    span = next(item for item in read_trace_output(trace_path) if item["name"] == "update.workflow")
+    assert span["attributes"]["vibesensor.transport"] == "wifi"
