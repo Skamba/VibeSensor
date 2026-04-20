@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
+from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -142,15 +143,13 @@ class TestFirmwareCacheStreamingDownload:
         dest = tmp_path / "firmware.bin"
         test_data = b"firmware_content_bytes_here"
 
-        # Mock urlopen to return test data
+        # Mock the shared streaming helper to return test data.
         mock_resp = MagicMock()
-        mock_resp.read.side_effect = [test_data, b""]
-        mock_resp.__enter__ = lambda s: s
-        mock_resp.__exit__ = lambda s, *a: None
+        mock_resp.iter_bytes.return_value = iter([test_data])
 
         with patch(
-            "vibesensor.use_cases.updates.asset_download.urlopen",
-            return_value=mock_resp,
+            "vibesensor.use_cases.updates.asset_download.stream_http_response",
+            return_value=nullcontext(mock_resp),
         ):
             fetcher._download_asset("https://example.com/fw.bin", dest)
 
