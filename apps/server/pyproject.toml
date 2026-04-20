@@ -16,7 +16,7 @@ dependencies = [
   "msgspec>=0.19,<1",
   "pydantic>=2.7,<3",
   "pydantic-settings>=2.10,<3",
-  "starlette>=0.37.2,<1",
+  "starlette>=0.37.2,<2",
   "tenacity>=9.1,<10",
   "granian[reload]>=2.7,<3",
   "uvloop>=0.22,<1; sys_platform == 'linux'",
