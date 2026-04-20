@@ -1,4 +1,4 @@
-"""Benchmark comparing numpy pocketfft vs pyFFTW for the processing rfft hot path.
+"""Benchmark comparing numpy PocketFFT vs pyFFTW for the processing rfft hot path.
 
 These are opt-in explicit benchmarks (``benchmark_*.py`` filenames are not
 collected under the default ``test_*`` pattern). Invoke with::

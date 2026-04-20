@@ -51,8 +51,15 @@ def _get_rfft_plan(axes_count: int, fft_n: int) -> pyfftw.FFTW:
     The plan's ``input_array`` and ``output_array`` are pre-aligned scratch
     buffers owned by the plan. Callers must write their windowed input into
     ``input_array`` (e.g. via ``np.multiply(..., out=plan.input_array)``) and
-    consume ``output_array`` before issuing another call from the same
-    thread.
+    fully consume ``output_array`` before issuing another call on the same
+    thread, because the next plan execution overwrites both buffers in
+    place.
+
+    Thread safety: each thread gets its own plan instance via
+    :class:`threading.local`, so independent threads can call their plans
+    concurrently. A single thread must not invoke the same plan
+    recursively (e.g. from a callback running during ``plan()``), since
+    the I/O buffers are shared between calls.
     """
     key = (axes_count, fft_n)
     with _PLAN_CACHE_LOCK:
