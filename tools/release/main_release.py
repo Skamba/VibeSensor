@@ -205,7 +205,6 @@ def select_superseded_releases(
     *,
     current_tag: str,
     release_title_prefix: str,
-    legacy_title_prefix: str = "Release ",
 ) -> list[ReleaseSummary]:
     title_prefix = f"{release_title_prefix} "
     selected: list[ReleaseSummary] = []
@@ -217,9 +216,7 @@ def select_superseded_releases(
         title = str(release.get("name") or "")
         if tag == current_tag or not tag.startswith("server-v"):
             continue
-        if not title.startswith(title_prefix) and not title.startswith(
-            legacy_title_prefix
-        ):
+        if not title.startswith(title_prefix):
             continue
         selected.append(ReleaseSummary(id=release_id, tag=tag, title=title))
     return selected
@@ -270,13 +267,11 @@ def cleanup_superseded_releases(
     *,
     current_tag: str,
     release_title_prefix: str,
-    legacy_title_prefix: str = "Release ",
 ) -> list[ReleaseSummary]:
     removed = select_superseded_releases(
         _list_releases(repo),
         current_tag=current_tag,
         release_title_prefix=release_title_prefix,
-        legacy_title_prefix=legacy_title_prefix,
     )
     for release in removed:
         print(f"Deleting superseded Wheel / ESP release {release.tag}", flush=True)
@@ -315,10 +310,6 @@ def main(argv: list[str] | None = None) -> int:
         "--release-title-prefix",
         default="Wheel / ESP release",
     )
-    cleanup_parser.add_argument(
-        "--legacy-title-prefix",
-        default="Release ",
-    )
     cleanup_parser.add_argument("--dry-run", action="store_true")
 
     args = parser.parse_args(argv)
@@ -347,7 +338,6 @@ def main(argv: list[str] | None = None) -> int:
         _list_releases(args.repo),
         current_tag=args.current_tag,
         release_title_prefix=args.release_title_prefix,
-        legacy_title_prefix=args.legacy_title_prefix,
     )
     if args.dry_run:
         print(json.dumps([asdict(release) for release in selected], indent=2))
@@ -356,7 +346,6 @@ def main(argv: list[str] | None = None) -> int:
         args.repo,
         current_tag=args.current_tag,
         release_title_prefix=args.release_title_prefix,
-        legacy_title_prefix=args.legacy_title_prefix,
     )
     return 0
 

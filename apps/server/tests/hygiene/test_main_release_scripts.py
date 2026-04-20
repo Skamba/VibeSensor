@@ -171,12 +171,9 @@ def test_cleanup_superseded_releases_keeps_current_and_ignores_missing_tags(monk
 
     assert removed == [
         module.ReleaseSummary(id=2, tag="server-v2026.4.5", title="Wheel / ESP release 2026.4.5"),
-        module.ReleaseSummary(id=3, tag="server-v2026.4.4", title="Release 2026.4.4"),
     ]
     assert calls == [
         ("GET", "Skamba/VibeSensor", "releases?per_page=100&page=1"),
         ("DELETE", "Skamba/VibeSensor", "releases/2"),
         ("DELETE", "Skamba/VibeSensor", "git/refs/tags/server-v2026.4.5"),
-        ("DELETE", "Skamba/VibeSensor", "releases/3"),
-        ("DELETE", "Skamba/VibeSensor", "git/refs/tags/server-v2026.4.4"),
     ]
