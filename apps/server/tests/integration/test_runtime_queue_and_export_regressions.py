@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.infra.processing import SignalProcessor
 
 
@@ -16,13 +16,13 @@ class TestSQLiteBusyTimeout:
 
     def test_busy_timeout_is_set(self, tmp_path: Path) -> None:
         """HistoryDB must set PRAGMA busy_timeout to avoid immediate SQLITE_BUSY."""
-        db = HistoryDB(tmp_path / "test.db")
+        db = create_history_persistence_adapters(tmp_path / "test.db")
         try:
-            result = db._conn.execute("PRAGMA busy_timeout").fetchone()
+            result = db.lifecycle._conn.execute("PRAGMA busy_timeout").fetchone()
             assert result is not None
             assert result[0] == 5000
         finally:
-            db.close()
+            db.lifecycle.close()
 
 
 # ---------------------------------------------------------------------------

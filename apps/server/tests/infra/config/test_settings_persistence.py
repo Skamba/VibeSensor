@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from test_support.settings_services import build_settings_services, write_raw_settings_snapshot
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
 
@@ -25,13 +25,21 @@ class FakeSettingsSnapshotStore:
 
 
 def _sabotaged_services(tmp_path: Path):
-    db = HistoryDB(tmp_path / "history.db")
-    services = build_settings_services(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    services = build_settings_services(db=db.settings_snapshot_repository)
+    original_repo = db.settings_snapshot_repository
 
     def _boom(payload: object) -> None:
         raise OSError("disk full")
 
-    db.set_settings_snapshot = _boom
+    class _SabotagedSettingsSnapshotStore:
+        def get_settings_snapshot(self) -> SettingsSnapshotPayload | None:
+            return original_repo.get_settings_snapshot()
+
+        def set_settings_snapshot(self, snapshot: SettingsSnapshotPayload) -> None:
+            _boom(snapshot)
+
+    services.coordinator._db = _SabotagedSettingsSnapshotStore()
     return services
 
 
@@ -47,8 +55,8 @@ def test_settings_snapshot_defaults_are_empty_and_gps() -> None:
 
 
 def test_settings_snapshot_persists_and_loads(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    services = build_settings_services(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    services = build_settings_services(db=db.settings_snapshot_repository)
     added = services.car_settings.add_car({"name": "Persisted Car", "type": "suv"})
     services.car_settings.set_active_car(added.cars[0]["id"])
     services.speed_source_settings.update_speed_source(
@@ -63,7 +71,7 @@ def test_settings_snapshot_persists_and_loads(tmp_path: Path) -> None:
     services.ui_preferences.set_language("nl")
     services.ui_preferences.set_speed_unit("mps")
 
-    reloaded = build_settings_services(db=db)
+    reloaded = build_settings_services(db=db.settings_snapshot_repository)
     snapshot = reloaded.coordinator.snapshot()
     assert len(snapshot["cars"]) == 1
     assert snapshot["cars"][0]["name"] == "Persisted Car"
@@ -92,9 +100,9 @@ def test_settings_snapshot_persists_with_protocol_shaped_store() -> None:
 
 
 def test_settings_snapshot_corrupted_json_falls_back_to_defaults(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    write_raw_settings_snapshot(db, "not-valid-json{{{")
-    services = build_settings_services(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    write_raw_settings_snapshot(db.lifecycle, "not-valid-json{{{")
+    services = build_settings_services(db=db.settings_snapshot_repository)
     snapshot = services.coordinator.snapshot()
     assert snapshot["cars"] == []
     assert snapshot["activeCarId"] is None
@@ -102,24 +110,24 @@ def test_settings_snapshot_corrupted_json_falls_back_to_defaults(tmp_path: Path)
 
 
 def test_settings_snapshot_with_empty_cars_stays_empty(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    write_raw_settings_snapshot(db, '{"cars": [], "activeCarId": ""}')
-    services = build_settings_services(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    write_raw_settings_snapshot(db.lifecycle, '{"cars": [], "activeCarId": ""}')
+    services = build_settings_services(db=db.settings_snapshot_repository)
     snapshot = services.coordinator.snapshot()
     assert snapshot["cars"] == []
     assert snapshot["activeCarId"] is None
 
 
 def test_settings_snapshot_invalid_active_car_id_clears_selection(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
+    db = create_history_persistence_adapters(tmp_path / "history.db")
     write_raw_settings_snapshot(
-        db,
+        db.lifecycle,
         (
             '{"cars": [{"id": "car-1", "name": "Only", "type": "sedan", "aspects": {}}], '
             '"activeCarId": "missing-car"}'
         ),
     )
-    services = build_settings_services(db=db)
+    services = build_settings_services(db=db.settings_snapshot_repository)
     snapshot = services.coordinator.snapshot()
     assert len(snapshot["cars"]) == 1
     assert snapshot["activeCarId"] is None

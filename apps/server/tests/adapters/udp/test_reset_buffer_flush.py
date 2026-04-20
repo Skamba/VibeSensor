@@ -9,7 +9,7 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage, pack_data
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 from vibesensor.infra.processing import SignalProcessor
@@ -143,8 +143,8 @@ def _data_msg(seq: int, t0_us: int) -> DataMessage:
 @pytest.fixture
 def registry_ctx(tmp_path: Path) -> ClientRegistry:
     """Registry pre-registered with a single client."""
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    registry = ClientRegistry(db=db.client_name_repository)
     registry.update_from_hello(
         HelloMessage(
             client_id=_CLIENT_ID,
