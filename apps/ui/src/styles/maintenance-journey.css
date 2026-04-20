@@ -2,9 +2,9 @@
   display: grid;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 1px solid var(--border);
+  border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--radius-sm);
-  background: var(--surface);
+  background: var(--md-sys-color-surface-container);
 }
 
 .maintenance-stage-list {
@@ -22,8 +22,8 @@
   align-items: start;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-high);
   transition:
     border-color 180ms ease,
     background-color 180ms ease,
@@ -75,7 +75,7 @@
 }
 
 .maintenance-stage__detail {
-  color: var(--muted);
+  color: var(--md-sys-color-on-surface-variant);
   font-size: 0.84rem;
   line-height: 1.45;
   transition: color 180ms ease;
@@ -83,11 +83,11 @@
 
 @keyframes maintenance-stage-live-pulse {
   0%, 100% {
-    box-shadow: inset 0 0 0 1px var(--brand-500);
+    box-shadow: inset 0 0 0 1px var(--md-sys-color-primary);
   }
   50% {
     box-shadow:
-      inset 0 0 0 1px var(--brand-500),
+      inset 0 0 0 1px var(--md-sys-color-primary),
       0 0 0 0.22rem rgba(139, 92, 246, 0.12);
   }
 }
@@ -104,20 +104,20 @@
 }
 
 .maintenance-stage[data-stage-state="active"] {
-  border-color: var(--brand-500);
+  border-color: var(--md-sys-color-primary);
   background: var(--menu-hover);
-  box-shadow: inset 0 0 0 1px var(--brand-500);
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-primary);
   animation: maintenance-stage-live-pulse 1.6s ease-in-out infinite;
 }
 
 .maintenance-stage[data-stage-state="active"] .maintenance-stage__marker {
-  background: var(--brand-500);
+  background: var(--md-sys-color-primary);
   color: var(--on-fill);
   animation: maintenance-stage-marker-pulse 1.6s ease-in-out infinite;
 }
 
 .maintenance-stage[data-stage-state="active"] .maintenance-stage__state {
-  background: var(--brand-500);
+  background: var(--md-sys-color-primary);
   color: var(--on-fill);
 }
 
@@ -128,7 +128,7 @@
 
 .maintenance-stage[data-stage-state="done"] .maintenance-stage__marker,
 .maintenance-stage[data-stage-state="done"] .maintenance-stage__state {
-  background: var(--success);
+  background: var(--md-sys-color-tertiary);
   color: var(--on-fill);
 }
 
@@ -143,6 +143,6 @@
 
 .maintenance-stage[data-stage-state="attention"] .maintenance-stage__marker,
 .maintenance-stage[data-stage-state="attention"] .maintenance-stage__state {
-  background: var(--danger);
+  background: var(--md-sys-color-error);
   color: var(--on-fill);
 }

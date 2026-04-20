@@ -4,15 +4,15 @@ button,
 .btn {
   height: 38px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--md-sys-color-outline);
   padding: 0 var(--space-3);
   font-size: 0.93rem;
 }
 
 select,
 input {
-  background: var(--surface);
-  color: var(--text);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
 }
 
 .lang-picker,
@@ -21,8 +21,8 @@ input {
 .menu {
   margin: 0;
   display: inline-flex;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: 999px;
   padding: 4px;
   gap: 4px;
@@ -32,7 +32,7 @@ input {
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: var(--muted);
+  color: var(--md-sys-color-on-surface-variant);
   padding: 0.5rem 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -41,11 +41,11 @@ input {
 
 .menu-btn:hover {
   background: var(--menu-hover);
-  color: var(--text);
+  color: var(--md-sys-color-on-surface);
 }
 
 .menu-btn[aria-selected="true"] {
-  background: var(--brand-500);
+  background: var(--md-sys-color-primary);
   color: var(--on-fill);
   box-shadow: none;
 }
@@ -58,7 +58,7 @@ button,
   font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
-  background: var(--surface);
+  background: var(--md-sys-color-surface-container);
   color: var(--md-sys-color-on-surface);
   border-color: var(--md-sys-color-outline);
   box-shadow: none;
@@ -67,9 +67,9 @@ button,
 
 button:hover,
 .btn:hover {
-  border-color: var(--border-strong);
+  border-color: var(--md-sys-color-outline);
   box-shadow: none;
-  background: var(--surface-2);
+  background: var(--md-sys-color-surface-container-high);
   transform: none;
 }
 button:active,
@@ -81,7 +81,7 @@ button:active,
 
 .btn--primary,
 button.primary {
-  background: var(--brand-500);
+  background: var(--md-sys-color-primary);
   border-color: var(--brand-600);
   color: var(--on-fill);
 }
@@ -93,14 +93,14 @@ button.primary:hover {
 
 .btn--success,
 button.success {
-  background: var(--success);
+  background: var(--md-sys-color-tertiary);
   border-color: var(--success-700);
   color: var(--on-fill);
 }
 
 .btn--danger,
 button.warn {
-  background: var(--danger);
+  background: var(--md-sys-color-error);
   border-color: var(--danger-700);
   color: var(--on-fill);
 }
@@ -129,7 +129,7 @@ button:focus-visible,
 select:focus-visible,
 input:focus-visible,
 .menu-btn:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--md-sys-color-focus);
   outline-offset: 2px;
 }
 
@@ -162,9 +162,9 @@ button[hidden],
 
 .card,
 .panel {
-  border: 1px solid var(--border);
+  border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background: var(--md-sys-color-surface-container);
   box-shadow: none;
   padding: var(--space-4);
 }
@@ -182,7 +182,7 @@ button[hidden],
 .card__title { margin: 0; font-size: 1rem; font-weight: 700; }
 .card__subtle,
 .subtle,
-.mini-label { color: var(--muted); font-size: 0.86rem; }
+.mini-label { color: var(--md-sys-color-on-surface-variant); font-size: 0.86rem; }
 
 .empty-state {
   position: absolute;
@@ -193,10 +193,10 @@ button[hidden],
   justify-content: center;
   text-align: center;
   gap: var(--space-1);
-  border: 1px solid var(--border);
+  border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--radius-sm);
   background: rgba(248, 249, 251, 0.94);
-  color: var(--muted);
+  color: var(--md-sys-color-on-surface-variant);
   padding: var(--space-4);
 }
 .empty-state::before {
@@ -213,22 +213,22 @@ button[hidden],
   justify-content: flex-start;
   text-align: left;
   margin: var(--space-3) 0;
-  background: var(--surface-2);
+  background: var(--md-sys-color-surface-container-high);
 }
 .empty-state--actionable {
   gap: var(--space-2);
 }
 .empty-state__title {
-  color: var(--text);
+  color: var(--md-sys-color-on-surface);
   font-size: 0.95rem;
   line-height: 1.35;
 }
 .empty-state__body {
-  color: var(--text);
+  color: var(--md-sys-color-on-surface);
   line-height: 1.45;
 }
 .empty-state__detail {
-  color: var(--muted);
+  color: var(--md-sys-color-on-surface-variant);
   font-size: 0.82rem;
   line-height: 1.45;
 }
@@ -252,7 +252,7 @@ button[hidden],
 }
 
 .stat { min-height: 72px; }
-.stat__label { font-size: 0.76rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.stat__label { font-size: 0.76rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
 .stat__value { margin-top: var(--space-1); font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
 .stat__value[data-variant] { color: var(--variant-text); }
 .stat__value[data-has-icon="true"] {
@@ -303,7 +303,7 @@ button[hidden],
   width: min(520px, calc(100vw - 2rem));
   display: grid;
   gap: var(--space-3);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--md-sys-color-outline);
   box-shadow: 0 28px 80px rgba(15, 23, 42, 0.24);
 }
 
@@ -318,7 +318,7 @@ button[hidden],
 
 .confirmation-dialog__message {
   margin: 0;
-  color: var(--text);
+  color: var(--md-sys-color-on-surface);
   white-space: pre-wrap;
 }
 
@@ -329,11 +329,11 @@ button[hidden],
   gap: var(--space-2);
 }
 
-.uplot { color: var(--text); font-family: inherit; }
+.uplot { color: var(--md-sys-color-on-surface); font-family: inherit; }
 .uplot .u-title,
 .uplot .u-label,
-.uplot .u-legend { color: var(--muted); }
-.uplot .u-axis text { fill: var(--muted); }
+.uplot .u-legend { color: var(--md-sys-color-on-surface-variant); }
+.uplot .u-axis text { fill: var(--md-sys-color-on-surface-variant); }
 .uplot .u-axis line,
 .uplot .u-grid line { stroke: var(--chart-grid); }
 .uplot .u-select { background: rgba(124, 58, 237, 0.12); }
