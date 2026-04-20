@@ -100,8 +100,28 @@ browser-side fetch boundary.
 - Feature-specific reusable handlers belong under `tests/msw/handlers/` as they
   appear. Keep cross-feature primitives in `tests/msw/http.ts`, and name
   scenario factories `build<Feature><Scenario>Handlers(...)`.
-- Browser-worker wiring for optional local backend-free flows stays with the
-  later MSW follow-up issues; keep WebSocket mocking out of that layer.
+
+## Optional browser MSW mock mode
+
+Use the explicit mock-mode dev server when you want to exercise the UI without a
+live backend HTTP stack:
+
+```bash
+cd apps/ui
+npm run dev:mock
+```
+
+- `npm run dev` remains the normal backend-backed path. `npm run dev:mock` is
+  the opt-in browser-worker mode and is easy to disable by switching back to the
+  normal dev command.
+- Browser mock mode starts the app with `msw/browser` before `startUiApp()`,
+  serves a checked-in `mockServiceWorker.js`, and bypasses any HTTP requests
+  that do not have an explicit mock handler.
+- The mode currently reuses the shared history and settings MSW handler owners
+  plus lightweight startup/update defaults so local settings and history flows
+  can load without the backend.
+- WebSocket mocking is still out of scope for this mode. Local smoke tests that
+  need stable live-session behavior can still stub WebSocket separately.
 
 ## Bundle analysis
 
