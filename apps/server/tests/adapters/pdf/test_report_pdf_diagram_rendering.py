@@ -277,6 +277,7 @@ def test_build_report_pdf_hotspot_panel_explains_intensity_and_certainty() -> No
             }
         ],
         sensor_locations=["front-left wheel", "front-right wheel"],
+        sensor_locations_connected_throughout=["front-left wheel", "front-right wheel"],
         sensor_intensity_by_location=[
             LocationIntensitySummary(location="front-left wheel", p95_intensity_db=32.0),
             LocationIntensitySummary(location="front-right wheel", p95_intensity_db=18.0),
