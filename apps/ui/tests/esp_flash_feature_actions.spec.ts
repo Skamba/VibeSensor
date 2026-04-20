@@ -4,17 +4,24 @@ import {
   createDeferred,
   flushAsyncWork,
   installTimerHarness,
-  jsonResponse,
 } from "./async_test_helpers";
 import {
   createEspFlashFeatureHarness,
   createEspFlashPort,
   expectPollDelays,
-  installFeatureFetchMock,
   installMaintenanceFeatureGlobals,
 } from "./maintenance_feature_test_support";
+import {
+  buildEspFlashHandlers,
+  makeEspFlashHistoryPayload,
+  makeEspFlashLogsPayload,
+  makeEspFlashPortsPayload,
+  makeEspFlashStatusPayload,
+} from "./msw/handlers/maintenance";
+import { createUiMswTestServer } from "./msw/node";
 
 let restoreDomGlobals = () => undefined;
+const mswServer = createUiMswTestServer(test);
 
 test.beforeEach(() => {
   restoreDomGlobals = installMaintenanceFeatureGlobals();
@@ -28,24 +35,7 @@ test.afterEach(() => {
 test.describe("createEspFlashFeature actions", () => {
   test("start replaces the previous poll timeout instead of creating a second chain", async () => {
     const timers = installTimerHarness();
-    const restoreFetch = installFeatureFetchMock(async (url, method) => {
-      if (url.pathname === "/api/esp-flash/ports") {
-        return jsonResponse({ ports: [createEspFlashPort()] });
-      }
-      if (url.pathname === "/api/esp-flash/start" && method === "POST") {
-        return jsonResponse({ status: "started", job_id: 1 });
-      }
-      if (url.pathname === "/api/esp-flash/status") {
-        return jsonResponse({ state: "idle", log_count: 0, error: null });
-      }
-      if (url.pathname === "/api/esp-flash/logs") {
-        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
-      }
-      if (url.pathname === "/api/esp-flash/history") {
-        return jsonResponse({ attempts: [] });
-      }
-      return jsonResponse({});
-    });
+    mswServer.use(...buildEspFlashHandlers());
 
     try {
       const { deps, feature } = createEspFlashFeatureHarness();
@@ -56,17 +46,17 @@ test.describe("createEspFlashFeature actions", () => {
 
       deps.espFlashStartBtn.click();
       await expectPollDelays(timers, [4_000]);
+      feature.dispose();
     } finally {
-      restoreFetch();
       timers.restore();
     }
   });
 
   test("manual port selection is reflected in the flash start payload", async () => {
-    let startBody: Record<string, unknown> | null = null;
-    const restoreFetch = installFeatureFetchMock(async (url, method, body) => {
-      if (url.pathname === "/api/esp-flash/ports") {
-        return jsonResponse({
+    const startRequests: Array<{ auto_detect: boolean; port: string | null }> = [];
+    mswServer.use(
+      ...buildEspFlashHandlers({
+        ports: makeEspFlashPortsPayload({
           ports: [
             createEspFlashPort(),
             createEspFlashPort({
@@ -77,65 +67,39 @@ test.describe("createEspFlashFeature actions", () => {
               vid: 3,
             }),
           ],
-        });
-      }
-      if (url.pathname === "/api/esp-flash/start" && method === "POST") {
-        startBody = JSON.parse(body) as Record<string, unknown>;
-        return jsonResponse({ status: "started", job_id: 1 });
-      }
-      if (url.pathname === "/api/esp-flash/status") {
-        return jsonResponse({ state: "idle", log_count: 0, error: null });
-      }
-      if (url.pathname === "/api/esp-flash/logs") {
-        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
-      }
-      if (url.pathname === "/api/esp-flash/history") {
-        return jsonResponse({ attempts: [] });
-      }
-      return jsonResponse({});
-    });
+        }),
+        startRequests,
+      }),
+    );
 
-    try {
-      const { deps, feature } = createEspFlashFeatureHarness();
+    const { deps, feature } = createEspFlashFeatureHarness();
 
-      feature.bindHandlers();
-      feature.startPolling();
-      await flushAsyncWork();
+    feature.bindHandlers();
+    feature.startPolling();
+    await flushAsyncWork();
 
-      deps.els.espFlashPortSelect.value = "/dev/ttyUSB1";
-      deps.els.espFlashPortSelect.dispatchEvent(new Event("change"));
-      deps.espFlashStartBtn.click();
-      await flushAsyncWork();
+    deps.els.espFlashPortSelect.value = "/dev/ttyUSB1";
+    deps.els.espFlashPortSelect.dispatchEvent(new Event("change"));
+    deps.espFlashStartBtn.click();
+    await flushAsyncWork();
 
-      expect(startBody).toEqual({
-        auto_detect: false,
-        port: "/dev/ttyUSB1",
-      });
-    } finally {
-      restoreFetch();
-    }
+    expect(startRequests).toEqual([{
+      auto_detect: false,
+      port: "/dev/ttyUSB1",
+    }]);
+    feature.dispose();
   });
 
   test("cancel replaces the previous poll timeout instead of creating a second chain", async () => {
     const timers = installTimerHarness();
-    const restoreFetch = installFeatureFetchMock(async (url, method) => {
-      if (url.pathname === "/api/esp-flash/ports") {
-        return jsonResponse({ ports: [] });
-      }
-      if (url.pathname === "/api/esp-flash/cancel" && method === "POST") {
-        return jsonResponse({ status: "cancelled" });
-      }
-      if (url.pathname === "/api/esp-flash/status") {
-        return jsonResponse({ state: "idle", log_count: 0, error: null });
-      }
-      if (url.pathname === "/api/esp-flash/logs") {
-        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
-      }
-      if (url.pathname === "/api/esp-flash/history") {
-        return jsonResponse({ attempts: [] });
-      }
-      return jsonResponse({});
-    });
+    mswServer.use(
+      ...buildEspFlashHandlers({
+        history: makeEspFlashHistoryPayload(),
+        logs: makeEspFlashLogsPayload(),
+        ports: makeEspFlashPortsPayload({ ports: [] }),
+        status: makeEspFlashStatusPayload(),
+      }),
+    );
 
     try {
       const { deps, feature } = createEspFlashFeatureHarness();
@@ -146,30 +110,24 @@ test.describe("createEspFlashFeature actions", () => {
 
       deps.espFlashCancelBtn.click();
       await expectPollDelays(timers, [4_000]);
+      feature.dispose();
     } finally {
-      restoreFetch();
       timers.restore();
     }
   });
 
   test("stopPolling prevents an in-flight poll from reviving the loop", async () => {
     const timers = installTimerHarness();
-    const deferredStatus = createDeferred<Response>();
-    const restoreFetch = installFeatureFetchMock(async (url) => {
-      if (url.pathname === "/api/esp-flash/ports") {
-        return jsonResponse({ ports: [] });
-      }
-      if (url.pathname === "/api/esp-flash/status") {
-        return deferredStatus.promise;
-      }
-      if (url.pathname === "/api/esp-flash/logs") {
-        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
-      }
-      if (url.pathname === "/api/esp-flash/history") {
-        return jsonResponse({ attempts: [] });
-      }
-      return jsonResponse({});
-    });
+    const deferredStatus = createDeferred<void>();
+    mswServer.use(
+      ...buildEspFlashHandlers({
+        ports: makeEspFlashPortsPayload({ ports: [] }),
+        status: async () => {
+          await deferredStatus.promise;
+          return makeEspFlashStatusPayload();
+        },
+      }),
+    );
 
     try {
       const { feature } = createEspFlashFeatureHarness();
@@ -182,16 +140,14 @@ test.describe("createEspFlashFeature actions", () => {
       );
 
       feature.stopPolling();
-      deferredStatus.resolve(
-        jsonResponse({ state: "idle", log_count: 0, error: null }),
-      );
+      deferredStatus.resolve();
       await flushAsyncWork();
 
       expect(timers.pendingDelays().filter((delay) => delay !== 10_000)).toEqual(
         [],
       );
+      feature.dispose();
     } finally {
-      restoreFetch();
       timers.restore();
     }
   });
