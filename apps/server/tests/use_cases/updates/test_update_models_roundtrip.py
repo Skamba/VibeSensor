@@ -122,65 +122,53 @@ class TestUpdateJobStatusRoundTrip:
                 finished_at=10.0,
             )
 
-    def test_from_payload_preserves_partial_valid_fields(self) -> None:
-        """Malformed nested fields must drop cleanly while valid pieces survive."""
-        status = update_status_from_builtins(
-            {
-                "state": "failed",
-                "phase": "installing",
-                "transport": "usb_internet",
-                "started_at": "10.5",
-                "finished_at": "20.5",
-                "last_success_at": "7",
-                "phase_started_at": "12.25",
-                "updated_at": "18",
-                "ssid": 123,
-                "uplink_interface": ["usb0"],
-                "issues": [
-                    "bad",
-                    {"phase": "downloading", "message": "warn", "detail": 99},
-                    {"phase": "installing", "message": "retry"},
-                ],
-                "log_tail": ["ok", 7, None],
-                "exit_code": "5",
-                "runtime": {
-                    "version": 9,
-                    "commit": None,
-                    "assets_verified": 1,
-                    "has_packaged_static": "true",
+    def test_from_payload_rejects_legacy_nested_shapes(self) -> None:
+        with pytest.raises(msgspec.ValidationError):
+            update_status_from_builtins(
+                {
+                    "state": "failed",
+                    "phase": "installing",
+                    "transport": "usb_internet",
+                    "started_at": "10.5",
+                    "finished_at": "20.5",
+                    "last_success_at": "7",
+                    "phase_started_at": "12.25",
+                    "updated_at": "18",
+                    "ssid": 123,
+                    "uplink_interface": ["usb0"],
+                    "issues": [
+                        "bad",
+                        {"phase": "downloading", "message": "warn", "detail": 99},
+                        {"phase": "installing", "message": "retry"},
+                    ],
+                    "log_tail": ["ok", 7, None],
+                    "exit_code": "5",
+                    "runtime": {
+                        "version": 9,
+                        "commit": None,
+                        "assets_verified": 1,
+                        "has_packaged_static": "true",
+                    },
                 },
-            },
-        )
+            )
 
-        assert status.state == UpdateState.failed
-        assert status.phase == UpdatePhase.installing
-        assert status.transport == UpdateTransport.usb_internet
-        assert status.started_at == 10.5
-        assert status.finished_at == 20.5
-        assert status.last_success_at == 7.0
-        assert status.phase_started_at == 12.25
-        assert status.updated_at == 18.0
-        assert status.ssid is None
-        assert status.uplink_interface is None
-        assert status.log_tail == ["ok", "7", "None"]
-        assert status.exit_code == 5
-        assert status.issues == [
-            UpdateIssue(phase="downloading", message="warn", detail="99"),
-            UpdateIssue(phase="installing", message="retry", detail=""),
-        ]
-        assert status.runtime == UpdateRuntimeDetails(
-            version="9",
-            commit="",
-            assets_verified=True,
-            has_packaged_static=True,
-        )
+    def test_from_payload_rejects_legacy_boolish_runtime_flags(self) -> None:
+        with pytest.raises(msgspec.ValidationError):
+            update_status_from_builtins(
+                {
+                    "runtime": {
+                        "assets_verified": 1,
+                        "has_packaged_static": "true",
+                    },
+                },
+            )
 
-    def test_from_payload_coerces_legacy_boolish_runtime_flags(self) -> None:
+    def test_from_payload_accepts_canonical_runtime_flags(self) -> None:
         status = update_status_from_builtins(
             {
                 "runtime": {
-                    "assets_verified": 1,
-                    "has_packaged_static": "true",
+                    "assets_verified": True,
+                    "has_packaged_static": True,
                 },
             },
         )

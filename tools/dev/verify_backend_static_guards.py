@@ -1905,6 +1905,27 @@ def _check_history_db_facade_removed() -> list[str]:
     return violations
 
 
+def _check_update_status_legacy_decode_removed() -> list[str]:
+    codec_path = (
+        VIBESENSOR_DIR / "use_cases" / "updates" / "status" / "payload_codec.py"
+    )
+    text = _read_text(codec_path)
+    violations: list[str] = []
+    for legacy_name in (
+        "_normalize_legacy_issues",
+        "_normalize_legacy_log_tail",
+        "_normalize_legacy_runtime",
+        "_legacy_text",
+        "_coerce_legacy_bool",
+    ):
+        if legacy_name in text:
+            violations.append(
+                f"{codec_path.relative_to(REPO_ROOT)} must not define {legacy_name}; "
+                "require the canonical UpdateJobStatusPayload shape instead"
+            )
+    return violations
+
+
 Check = tuple[str, Callable[[], list[str]]]
 CHECKS: tuple[Check, ...] = (
     (
@@ -2138,6 +2159,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "HistoryDB facade stays removed",
         _check_history_db_facade_removed,
+    ),
+    (
+        "Updater status legacy decode stays removed",
+        _check_update_status_legacy_decode_removed,
     ),
 )
 
