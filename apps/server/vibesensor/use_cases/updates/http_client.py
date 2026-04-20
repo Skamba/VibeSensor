@@ -16,11 +16,28 @@ import httpx
 from vibesensor.shared.types.json_types import JsonValue
 
 __all__ = [
+    "build_request",
     "build_get_request",
     "read_json_response",
     "read_text_response",
     "stream_http_response",
 ]
+
+
+def build_request(
+    method: str,
+    url: str,
+    *,
+    headers: Mapping[str, str] | None = None,
+    content: bytes | None = None,
+    context: str = "operation",
+    require_https: bool = False,
+) -> httpx.Request:
+    """Build a request after applying the shared runtime safety checks."""
+
+    if require_https and not url.startswith("https://"):
+        raise ValueError(f"Refusing non-HTTPS URL for {context}: {url}")
+    return httpx.Request(method.upper(), url, headers=dict(headers or {}), content=content)
 
 
 def build_get_request(
@@ -32,9 +49,13 @@ def build_get_request(
 ) -> httpx.Request:
     """Build a GET request after applying the shared runtime safety checks."""
 
-    if require_https and not url.startswith("https://"):
-        raise ValueError(f"Refusing non-HTTPS URL for {context}: {url}")
-    return httpx.Request("GET", url, headers=dict(headers or {}))
+    return build_request(
+        "GET",
+        url,
+        headers=headers,
+        context=context,
+        require_https=require_https,
+    )
 
 
 def _http_error_as_oserror(exc: httpx.HTTPError, *, context: str, url: str) -> OSError:
@@ -58,17 +79,21 @@ def _client(
 def read_json_response(
     url: str,
     *,
+    method: str = "GET",
     headers: Mapping[str, str] | None = None,
+    content: bytes | None = None,
     timeout_s: float,
     context: str,
     require_https: bool = False,
     transport: httpx.BaseTransport | None = None,
 ) -> JsonValue:
-    """GET *url* and decode the body as JSON."""
+    """Send a request and decode the response body as JSON."""
 
-    request = build_get_request(
+    request = build_request(
+        method,
         url,
         headers=headers,
+        content=content,
         context=context,
         require_https=require_https,
     )
@@ -89,17 +114,21 @@ def read_json_response(
 def read_text_response(
     url: str,
     *,
+    method: str = "GET",
     headers: Mapping[str, str] | None = None,
+    content: bytes | None = None,
     timeout_s: float,
     context: str,
     require_https: bool = False,
     transport: httpx.BaseTransport | None = None,
 ) -> tuple[int, str, str]:
-    """GET *url* and return status, content type, and decoded body text."""
+    """Send a request and return status, content type, and decoded body text."""
 
-    request = build_get_request(
+    request = build_request(
+        method,
         url,
         headers=headers,
+        content=content,
         context=context,
         require_https=require_https,
     )
@@ -115,23 +144,32 @@ def read_text_response(
 def stream_http_response(
     url: str,
     *,
+    method: str = "GET",
     headers: Mapping[str, str] | None = None,
+    content: bytes | None = None,
     timeout_s: float,
     context: str,
     require_https: bool = False,
     transport: httpx.BaseTransport | None = None,
 ) -> Iterator[httpx.Response]:
-    """Stream a successful GET response body for updater-owned callers."""
+    """Stream a successful response body for updater-owned callers."""
 
-    request = build_get_request(
+    request = build_request(
+        method,
         url,
         headers=headers,
+        content=content,
         context=context,
         require_https=require_https,
     )
     try:
         with _client(timeout_s=timeout_s, transport=transport) as client:
-            with client.stream("GET", request.url, headers=request.headers) as response:
+            with client.stream(
+                request.method,
+                request.url,
+                headers=request.headers,
+                content=request.content,
+            ) as response:
                 response.raise_for_status()
                 yield response
     except httpx.HTTPError as exc:
