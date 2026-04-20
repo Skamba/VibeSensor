@@ -1821,6 +1821,35 @@ def _check_run_lifecycle_only() -> list[str]:
     return violations
 
 
+def _check_process_settings_shim_removed() -> list[str]:
+    legacy_path = VIBESENSOR_DIR / "app" / "process_settings.py"
+    violations: list[str] = []
+    if legacy_path.exists():
+        violations.append(
+            f"{legacy_path.relative_to(REPO_ROOT)} should stay removed; use "
+            "vibesensor.shared.process_settings directly"
+        )
+
+    for root in (SERVER_ROOT, REPO_ROOT / "tools"):
+        for path in _python_files(root):
+            for lineno, module, names, level in _scan_imports(path):
+                if level > 0:
+                    continue
+                if module == "vibesensor.app.process_settings":
+                    violations.append(
+                        f"{path.relative_to(REPO_ROOT)}:{lineno}: imports from "
+                        "vibesensor.app.process_settings; use "
+                        "vibesensor.shared.process_settings directly"
+                    )
+                if module == "vibesensor.app" and "process_settings" in names:
+                    violations.append(
+                        f"{path.relative_to(REPO_ROOT)}:{lineno}: imports "
+                        "process_settings from vibesensor.app; use "
+                        "vibesensor.shared.process_settings directly"
+                    )
+    return violations
+
+
 Check = tuple[str, Callable[[], list[str]]]
 CHECKS: tuple[Check, ...] = (
     (
@@ -2042,6 +2071,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "Run lifecycle class stays out of analysis/report code",
         _check_run_lifecycle_only,
+    ),
+    (
+        "Process settings shim stays removed",
+        _check_process_settings_shim_removed,
     ),
 )
 
