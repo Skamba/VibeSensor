@@ -46,6 +46,7 @@ _SERVER_SUBPROCESS_BOOTSTRAP = "\n".join(
         "    host=runtime.config.server.host,",
         "    port=runtime.config.server.port,",
         "    log_level='info',",
+        "    loop='asyncio',",
         ")",
     ],
 )
