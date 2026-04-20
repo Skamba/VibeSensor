@@ -114,7 +114,7 @@ class TestEvidencePeakPresentFormat:
     """Regression: EVIDENCE_PEAK_PRESENT i18n template must use .1f for dB values."""
 
     def test_dB_format_is_one_decimal(self) -> None:
-        i18n_path = SERVER_ROOT / "data" / "report_i18n.json"
+        i18n_path = SERVER_ROOT / "vibesensor" / "data" / "report_i18n.json"
         data = json.loads(i18n_path.read_text())
 
         en_template = data["EVIDENCE_PEAK_PRESENT"]["en"]
