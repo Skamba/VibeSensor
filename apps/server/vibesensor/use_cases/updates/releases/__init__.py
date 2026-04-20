@@ -3,55 +3,24 @@
 from __future__ import annotations
 
 from importlib import import_module
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from . import release_validation
-    from .github_api import (
-        DOWNLOAD_CHUNK_BYTES,
-        GitHubApiClient,
-        github_api_headers,
-        validate_https_url,
-    )
-    from .models import (
-        GitHubRelease,
-        GitHubReleaseAsset,
-        ReleaseFetcherConfig,
-        ReleaseInfo,
-        resolve_release_fetcher_config,
-    )
-    from .release_fetcher import ServerReleaseFetcher
-    from .version_policy import select_update_release
+_EXPORTS = (
+    ("DOWNLOAD_CHUNK_BYTES", ".github_api"),
+    ("GitHubApiClient", ".github_api"),
+    ("GitHubRelease", ".models"),
+    ("GitHubReleaseAsset", ".models"),
+    ("ReleaseFetcherConfig", ".models"),
+    ("ReleaseInfo", ".models"),
+    ("ServerReleaseFetcher", ".release_fetcher"),
+    ("github_api_headers", ".github_api"),
+    ("release_validation", ".release_validation"),
+    ("resolve_release_fetcher_config", ".models"),
+    ("select_update_release", ".version_policy"),
+    ("validate_https_url", ".github_api"),
+)
 
-_EXPORT_MODULES = {
-    "DOWNLOAD_CHUNK_BYTES": ".github_api",
-    "GitHubApiClient": ".github_api",
-    "GitHubRelease": ".models",
-    "GitHubReleaseAsset": ".models",
-    "ReleaseFetcherConfig": ".models",
-    "ReleaseInfo": ".models",
-    "ServerReleaseFetcher": ".release_fetcher",
-    "github_api_headers": ".github_api",
-    "release_validation": ".release_validation",
-    "resolve_release_fetcher_config": ".models",
-    "select_update_release": ".version_policy",
-    "validate_https_url": ".github_api",
-}
-
-__all__ = [
-    "DOWNLOAD_CHUNK_BYTES",
-    "GitHubApiClient",
-    "GitHubRelease",
-    "GitHubReleaseAsset",
-    "ReleaseFetcherConfig",
-    "ReleaseInfo",
-    "ServerReleaseFetcher",
-    "github_api_headers",
-    "release_validation",
-    "resolve_release_fetcher_config",
-    "select_update_release",
-    "validate_https_url",
-]
+_EXPORT_MODULES = dict(_EXPORTS)
+__all__ = [name for name, _module_name in _EXPORTS]
 
 
 def __getattr__(name: str) -> object:

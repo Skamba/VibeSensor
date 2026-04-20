@@ -253,9 +253,11 @@ def run_server_smoke(
                     json.JSONDecodeError,
                 ) as exc:
                     last_error = exc
-                    if time.monotonic() >= deadline:
+                    now = time.monotonic()
+                    if now >= deadline:
                         break
-                    time.sleep(_RELEASE_SMOKE_RETRY_WAIT_S)
+                    remaining = deadline - now
+                    time.sleep(min(_RELEASE_SMOKE_RETRY_WAIT_S, remaining))
 
             output = process.stdout.read() if process.stdout is not None else ""
             raise RuntimeError(
