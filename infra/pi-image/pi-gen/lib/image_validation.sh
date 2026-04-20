@@ -462,7 +462,7 @@ if [ "$code" -ne 0 ] && [ "$code" -ne 124 ]; then
   tail -n 80 /tmp/vibesensor-smoke.log || true
   exit 1
 fi
-if ! grep -q "Application startup complete" /tmp/vibesensor-smoke.log; then
+if ! grep -q "Listening at:" /tmp/vibesensor-smoke.log; then
   echo "Server startup smoke did not reach successful startup"
   tail -n 80 /tmp/vibesensor-smoke.log || true
   exit 1
