@@ -383,7 +383,7 @@ jobs:
         uses: ./.github/actions/setup-python
 
       - name: Download release-smoke UI static artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: release-smoke-ui-static
           path: artifacts/release-smoke
