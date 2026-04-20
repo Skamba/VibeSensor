@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import logging
-import sqlite3
 from collections.abc import Callable, Iterable
 from threading import RLock
 from typing import TYPE_CHECKING
+
+import aiosqlite
 
 from vibesensor.domain import normalize_sensor_id
 
@@ -62,7 +63,7 @@ class ClientMetadataManager:
             return
         try:
             rows = self._list_client_names()
-        except sqlite3.Error as exc:
+        except (aiosqlite.Error, OSError) as exc:
             LOGGER.warning("Could not load persisted client names from DB: %s", exc)
             return
 
@@ -77,7 +78,7 @@ class ClientMetadataManager:
             return
         try:
             self._persist_client_name(client_id, name)
-        except sqlite3.Error:
+        except (aiosqlite.Error, OSError):
             LOGGER.warning("Failed to persist client name to DB", exc_info=True)
 
     def _delete_persisted_name(self, client_id: str) -> None:
@@ -85,7 +86,7 @@ class ClientMetadataManager:
             return
         try:
             self._delete_client_name(client_id)
-        except sqlite3.Error:
+        except (aiosqlite.Error, OSError):
             LOGGER.warning("Failed to delete client name from DB", exc_info=True)
 
     @staticmethod

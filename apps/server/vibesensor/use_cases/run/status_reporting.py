@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
-import sqlite3
 import time
 from dataclasses import dataclass
+
+import aiosqlite
 
 from vibesensor.domain import CaptureReadiness
 from vibesensor.shared.ports import RunPersistence
@@ -85,7 +86,7 @@ def build_run_recorder_health_snapshot(
             analyzing_run_count = analyzing_health.analyzing_run_count
             if analyzing_health.analyzing_oldest_age_s is not None:
                 analyzing_oldest_age_s = max(0.0, analyzing_health.analyzing_oldest_age_s)
-        except sqlite3.Error:
+        except aiosqlite.Error:
             logger.warning("Failed to read analyzing-run health snapshot", exc_info=True)
 
     persist = persistence.status_snapshot()

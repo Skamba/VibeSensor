@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import logging
-import sqlite3
-from contextlib import AbstractContextManager
+from contextlib import AbstractAsyncContextManager
 from datetime import UTC, datetime
 
+import aiosqlite
+
 from vibesensor.domain.run_status import RunStatus
+from vibesensor.shared.async_bridge import run_coro_blocking
 from vibesensor.shared.boundaries.analysis_payloads import (
     persisted_analysis_from_storage_json_object,
 )
@@ -26,7 +28,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class _HistoryDBQueryMixin:
-    def _cursor(self, *, commit: bool = True) -> AbstractContextManager[sqlite3.Cursor]:
+    def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
         raise NotImplementedError
 
     @staticmethod
@@ -79,22 +81,25 @@ class _HistoryDBQueryMixin:
         return run_metadata_from_mapping(parsed)
 
     def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
-        with self._cursor(commit=False) as cur:
+        return run_coro_blocking(self.alist_runs(limit))
+
+    async def alist_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
+        async with self._cursor(commit=False) as cur:
             limit = max(limit, 0)
             if limit > 0:
-                cur.execute(
+                await cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
                     "r.created_at, r.error_message, r.sample_count, r.metadata_json "
                     "FROM runs r ORDER BY r.created_at DESC LIMIT ?",
                     (limit,),
                 )
             else:
-                cur.execute(
+                await cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
                     "r.created_at, r.error_message, r.sample_count, r.metadata_json "
                     "FROM runs r ORDER BY r.created_at DESC",
                 )
-            rows = cur.fetchall()
+            rows = await cur.fetchall()
         result: list[HistoryRunListEntry] = []
         for row in rows:
             run_id, status_raw, start, end, created, error, sample_count, metadata_json = row
@@ -125,15 +130,18 @@ class _HistoryDBQueryMixin:
         return result
 
     def get_run(self, run_id: str) -> StoredHistoryRun | None:
-        with self._cursor(commit=False) as cur:
-            cur.execute(
+        return run_coro_blocking(self.aget_run(run_id))
+
+    async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
+        async with self._cursor(commit=False) as cur:
+            await cur.execute(
                 "SELECT run_id, case_id, status, start_time_utc, end_time_utc, "
                 "metadata_json, analysis_json, error_message, created_at, "
                 "sample_count, analysis_started_at, analysis_completed_at "
                 "FROM runs WHERE run_id = ?",
                 (run_id,),
             )
-            row = cur.fetchone()
+            row = await cur.fetchone()
         if row is None:
             return None
         (
@@ -193,12 +201,15 @@ class _HistoryDBQueryMixin:
         )
 
     def get_run_metadata(self, run_id: str) -> RunMetadata | None:
-        with self._cursor(commit=False) as cur:
-            cur.execute(
+        return run_coro_blocking(self.aget_run_metadata(run_id))
+
+    async def aget_run_metadata(self, run_id: str) -> RunMetadata | None:
+        async with self._cursor(commit=False) as cur:
+            await cur.execute(
                 "SELECT start_time_utc, end_time_utc, metadata_json FROM runs WHERE run_id = ?",
                 (run_id,),
             )
-            row = cur.fetchone()
+            row = await cur.fetchone()
         if row is None:
             return None
         start_time_utc, end_time_utc, metadata_json = row
@@ -212,28 +223,37 @@ class _HistoryDBQueryMixin:
         )
 
     def get_active_run_id(self) -> str | None:
-        with self._cursor(commit=False) as cur:
-            cur.execute(
+        return run_coro_blocking(self.aget_active_run_id())
+
+    async def aget_active_run_id(self) -> str | None:
+        async with self._cursor(commit=False) as cur:
+            await cur.execute(
                 "SELECT run_id FROM runs WHERE status = 'recording' "
                 "ORDER BY created_at DESC LIMIT 1",
             )
-            row = cur.fetchone()
+            row = await cur.fetchone()
         return str(row[0]) if row else None
 
     def stale_analyzing_run_ids(self) -> list[str]:
-        with self._cursor(commit=False) as cur:
-            cur.execute(
+        return run_coro_blocking(self.astale_analyzing_run_ids())
+
+    async def astale_analyzing_run_ids(self) -> list[str]:
+        async with self._cursor(commit=False) as cur:
+            await cur.execute(
                 "SELECT run_id FROM runs WHERE status = 'analyzing' "
                 "ORDER BY created_at ASC LIMIT 1000",
             )
-            return [str(row[0]) for row in cur.fetchall()]
+            return [str(row[0]) for row in await cur.fetchall()]
 
     def analyzing_run_health(self) -> AnalyzingRunHealth:
-        with self._cursor(commit=False) as cur:
-            cur.execute(
+        return run_coro_blocking(self.aanalyzing_run_health())
+
+    async def aanalyzing_run_health(self) -> AnalyzingRunHealth:
+        async with self._cursor(commit=False) as cur:
+            await cur.execute(
                 "SELECT COUNT(*), MIN(analysis_started_at) FROM runs WHERE status = 'analyzing'",
             )
-            row = cur.fetchone()
+            row = await cur.fetchone()
         count = int(row[0]) if row and row[0] is not None else 0
         oldest_started_at = str(row[1]) if row and row[1] else None
         oldest_age_s: float | None = None
@@ -256,25 +276,29 @@ class _HistoryDBQueryMixin:
         )
 
     def verify_run_integrity(self, run_id: str) -> list[str]:
+        return run_coro_blocking(self.averify_run_integrity(run_id))
+
+    async def averify_run_integrity(self, run_id: str) -> list[str]:
         """Check a completed run for consistency issues. Returns problem descriptions."""
         problems: list[str] = []
-        with self._cursor(commit=False) as cur:
-            cur.execute(
+        async with self._cursor(commit=False) as cur:
+            await cur.execute(
                 "SELECT status, sample_count, analysis_json FROM runs WHERE run_id = ?",
                 (run_id,),
             )
-            row = cur.fetchone()
+            row = await cur.fetchone()
             if row is None:
                 return ["run not found"]
             status, stored_count, analysis_raw = row[0], row[1], row[2]
             if status == "complete" and not analysis_raw:
                 problems.append("complete run missing analysis_json")
             if stored_count is not None:
-                cur.execute(
+                await cur.execute(
                     "SELECT COUNT(*) FROM samples_v2 WHERE run_id = ?",
                     (run_id,),
                 )
-                actual_count = int(cur.fetchone()[0])
+                count_row = await cur.fetchone()
+                actual_count = int(count_row[0]) if count_row is not None else 0
                 stored_int = int(stored_count)
                 if actual_count != stored_int:
                     problems.append(
