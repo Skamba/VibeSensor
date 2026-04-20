@@ -222,8 +222,7 @@ def run_server_smoke(
                 if process.poll() is not None:
                     output = process.stdout.read() if process.stdout is not None else ""
                     raise RuntimeError(
-                        "Release smoke server exited before becoming healthy.\n"
-                        f"Output:\n{output}",
+                        f"Release smoke server exited before becoming healthy.\nOutput:\n{output}",
                     )
                 try:
                     status, content_type, body = _read_http(health_url)
