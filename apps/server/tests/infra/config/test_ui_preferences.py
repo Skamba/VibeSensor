@@ -29,12 +29,12 @@ def test_ui_preferences_speed_unit_roundtrip(tmp_path: Path) -> None:
     assert reloaded.ui_preferences.speed_unit == "mps"
 
 
-def test_ui_preferences_load_normalizes_language_and_speed_unit(tmp_path: Path) -> None:
+def test_ui_preferences_load_legacy_language_and_speed_unit_defaults(tmp_path: Path) -> None:
     db = create_history_persistence_adapters(tmp_path / "history.db")
     write_raw_settings_snapshot(db.lifecycle, '{"language": " NL ", "speedUnit": " MPS "}')
     services = build_settings_services(db=db.settings_snapshot_repository)
-    assert services.ui_preferences.language == "nl"
-    assert services.ui_preferences.speed_unit == "mps"
+    assert services.ui_preferences.language == "en"
+    assert services.ui_preferences.speed_unit == "kmh"
 
 
 def test_ui_preferences_load_whitespace_only_values_default(tmp_path: Path) -> None:
