@@ -131,6 +131,26 @@ Shutdown does not start new work:
 - an in-flight analysis attempt is allowed to finish its current call path; the
   worker checks the shutdown flag before starting the next queued item or retry
 
+## Runtime concurrency ownership
+
+The run lifecycle is coordinated inside the backend runtime, but concurrency
+ownership now stays in one AnyIO-based path instead of split `asyncio`
+task/timeout helpers:
+
+- `LifecycleManager` opens one runtime-scoped AnyIO task group before startup
+  phases begin
+- `BackgroundTaskCoordinator` starts named runtime services inside that task
+  group and owns per-service cancel scopes for shutdown
+- `TaskSupervisor` owns restart/backoff for long-lived runtime services such as
+  `processing-loop`, `ws-broadcast`, `gps-speed`, `obd-speed`, and the UDP data
+  consumer while still recording terminal failures into health state
+- runtime shutdown closes ingress first, cancels those service scopes with a
+  bounded wait, then drains `RunRecorder.shutdown_report()` and closes the
+  worker pool / history DB
+- WebSocket tick timing, send timeouts, and thread offloads in the runtime path
+  use AnyIO scheduling/timeouts (`sleep`, `fail_after`, `to_thread.run_sync`)
+  so startup/shutdown behavior stays on the same cancellation model
+
 ## Key invariants
 
 - At most one live recording run is active at a time.

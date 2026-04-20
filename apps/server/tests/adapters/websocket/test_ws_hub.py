@@ -179,7 +179,7 @@ async def test_broadcast_uses_latest_selection_when_selection_changes_during_ser
         return func(*args, **kwargs)
 
     monkeypatch.setattr(
-        "vibesensor.adapters.websocket.payload_orchestrator.asyncio.to_thread",
+        "vibesensor.adapters.websocket.payload_orchestrator.anyio.to_thread.run_sync",
         fake_to_thread,
     )
 
@@ -213,7 +213,7 @@ async def test_broadcast_reuses_lazy_payload_for_connections_converging_on_same_
         return func(*args, **kwargs)
 
     monkeypatch.setattr(
-        "vibesensor.adapters.websocket.payload_orchestrator.asyncio.to_thread",
+        "vibesensor.adapters.websocket.payload_orchestrator.anyio.to_thread.run_sync",
         fake_to_thread,
     )
 
@@ -246,7 +246,7 @@ async def test_payload_error_affected_count_uses_updated_selection(
         return func(*args, **kwargs)
 
     monkeypatch.setattr(
-        "vibesensor.adapters.websocket.payload_orchestrator.asyncio.to_thread",
+        "vibesensor.adapters.websocket.payload_orchestrator.anyio.to_thread.run_sync",
         fake_to_thread,
     )
 
@@ -385,7 +385,7 @@ async def test_broadcast_offloads_serialization_to_thread(monkeypatch: pytest.Mo
         return func(*args, **kwargs)
 
     monkeypatch.setattr(
-        "vibesensor.adapters.websocket.payload_orchestrator.asyncio.to_thread",
+        "vibesensor.adapters.websocket.payload_orchestrator.anyio.to_thread.run_sync",
         fake_to_thread,
     )
 
@@ -556,12 +556,10 @@ async def test_send_error_logging_is_rate_limited(caplog) -> None:
     await hub.add(ws1, "c1")
     await hub.add(ws2, "c2")
 
-    fake_loop = MagicMock()
-    fake_loop.time.side_effect = [1000.0, 1001.0]
     with (
         patch(
-            "vibesensor.adapters.websocket.broadcast_runner.asyncio.get_running_loop",
-            return_value=fake_loop,
+            "vibesensor.adapters.websocket.broadcast_runner.anyio.current_time",
+            side_effect=[1000.0, 1001.0],
         ),
         caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"),
     ):

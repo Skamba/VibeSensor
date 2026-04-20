@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 from typing import TYPE_CHECKING
+
+import anyio
 
 from vibesensor.shared.ports import ClockSyncBroadcaster
 
@@ -87,7 +88,7 @@ class ProcessingLoop:
                     interval_s=interval,
                 )
                 delay = await self._apply_failure(decision)
-            await asyncio.sleep(delay)
+            await anyio.sleep(delay)
 
     def _apply_success(self, decision: ProcessingSuccessDecision) -> None:
         self.state.last_tick_duration_s = decision.tick_duration_s

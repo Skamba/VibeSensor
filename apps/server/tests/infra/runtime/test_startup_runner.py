@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -33,15 +32,13 @@ def _make_runner() -> tuple[StartupRunner, RuntimeHealthState, MagicMock]:
     runtime.update_manager.startup_recover = AsyncMock()
 
     task_supervisor = MagicMock()
-    task_supervisor.start = MagicMock(return_value=MagicMock(spec=asyncio.Task))
+    task_supervisor.run = AsyncMock()
 
-    def _start_background_task(coro, *, name: str) -> MagicMock:
+    def _start_background_task(task_factory, *, name: str) -> None:
         del name
-        coro.close()
-        return MagicMock(spec=asyncio.Task)
+        task_factory().close()
 
     background_tasks = MagicMock()
-    background_tasks.add = MagicMock()
     background_tasks.start = MagicMock(side_effect=_start_background_task)
 
     udp_transport = MagicMock()
@@ -114,9 +111,7 @@ class TestStartupRunnerPhases:
 
         await runner.run()
 
-        restartable = runner._task_supervisor.start.call_args_list[1].kwargs[
-            "restartable_exceptions"
-        ]
+        restartable = runner._task_supervisor.run.call_args_list[1].kwargs["restartable_exceptions"]
         assert restartable == (BroadcastTickLoopFailure,)
 
     @pytest.mark.asyncio
@@ -142,16 +137,16 @@ class TestStartupRunnerPhases:
 
         runner._udp_transport_lifecycle.startup = recording_startup
 
-        orig_add = runner._background_tasks.add
+        orig_start = runner._background_tasks.start
 
-        def recording_add(*a, **kw):
-            call_order.append("background_add")
-            return orig_add(*a, **kw)
+        def recording_start(*a, **kw):
+            call_order.append("background_start")
+            return orig_start(*a, **kw)
 
-        runner._background_tasks.add = recording_add
+        runner._background_tasks.start = recording_start
 
         await runner.run()
 
         udp_idx = call_order.index("udp_startup")
-        bg_idx = call_order.index("background_add")
+        bg_idx = call_order.index("background_start")
         assert udp_idx < bg_idx
