@@ -43,6 +43,7 @@ type IntIndexArray = npt.NDArray[np.intp]
 # itself is guarded by a lock; plan construction is lazy on first use.
 _PLAN_CACHE_LOCK = threading.Lock()
 _PLAN_CACHE: dict[tuple[int, int], threading.local] = {}
+_RFFT_PLAN_FLAGS = ("FFTW_ESTIMATE",)
 
 
 def _get_rfft_plan(axes_count: int, fft_n: int) -> pyfftw.FFTW:
@@ -79,7 +80,9 @@ def _get_rfft_plan(axes_count: int, fft_n: int) -> pyfftw.FFTW:
             output_array,
             axes=(1,),
             direction="FFTW_FORWARD",
-            flags=("FFTW_MEASURE",),
+            # Short live runs need their first FFT immediately; avoid expensive
+            # runtime planning work on the hot path.
+            flags=_RFFT_PLAN_FLAGS,
             threads=1,
         )
         tls.plan = plan
