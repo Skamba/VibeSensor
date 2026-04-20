@@ -13,7 +13,29 @@ import { adaptServerPayload } from "../src/server_payload";
 import {
   EXPECTED_SCHEMA_VERSION,
   type StrengthMetricsPayload,
+  type WsClientInfo,
 } from "../src/contracts/ws_payload_types";
+import type { components as HttpComponents } from "../src/generated/http_api_contracts";
+
+// Compile-time guard: if `frame_samples` ever regresses to optional in either
+// generated contract, this file fails `tsc` before runtime tests run. Keeps
+// #3000 closed for good — matches schema `required` list.
+type RequiredKeys<T> = {
+  [K in keyof T]-?: object extends Pick<T, K> ? never : K;
+}[keyof T];
+
+type _WsFrameSamplesRequired = "frame_samples" extends RequiredKeys<WsClientInfo>
+  ? true
+  : never;
+type _HttpFrameSamplesRequired = "frame_samples" extends RequiredKeys<
+  HttpComponents["schemas"]["ClientApiRow"]
+>
+  ? true
+  : never;
+const _wsFrameSamplesRequired: _WsFrameSamplesRequired = true;
+const _httpFrameSamplesRequired: _HttpFrameSamplesRequired = true;
+void _wsFrameSamplesRequired;
+void _httpFrameSamplesRequired;
 
 function makeStrengthMetrics(
   overrides: Partial<StrengthMetricsPayload> = {},
