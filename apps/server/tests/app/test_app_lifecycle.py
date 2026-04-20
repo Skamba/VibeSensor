@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 import pytest
@@ -48,7 +49,7 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
     monkeypatch.setattr(UDPControlPlane, "start", _fake_start)
     monkeypatch.setattr(SQLiteHistoryEngine, "close", _fake_close)
 
-    app = app_module.create_app(config_path=cfg_path)
+    app = await asyncio.to_thread(app_module.create_app, config_path=cfg_path)
     async with app.router.lifespan_context(app):
         pass
 
@@ -73,7 +74,7 @@ async def test_lifespan_startup_runtime_error_cleans_up(tmp_path: Path, monkeypa
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "start", _failing_start)
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "stop", _fake_stop)
 
-    app = app_module.create_app(config_path=cfg_path)
+    app = await asyncio.to_thread(app_module.create_app, config_path=cfg_path)
 
     with pytest.raises(RuntimeError, match="start failed"):
         async with app.router.lifespan_context(app):
@@ -103,7 +104,7 @@ async def test_lifespan_startup_programmer_error_does_not_clean_up(
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "start", _failing_start)
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "stop", _fake_stop)
 
-    app = app_module.create_app(config_path=cfg_path)
+    app = await asyncio.to_thread(app_module.create_app, config_path=cfg_path)
 
     with pytest.raises(TypeError, match="bad bootstrap wiring"):
         async with app.router.lifespan_context(app):

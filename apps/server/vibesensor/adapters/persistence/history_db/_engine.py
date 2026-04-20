@@ -247,8 +247,13 @@ class SQLiteHistoryEngine:
                 await conn.close()
                 raise
 
-    def close(self) -> None:
-        run_coro_blocking(self.aclose())
+    def close(self) -> object:
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            run_coro_blocking(self.aclose())
+            return None
+        return self.aclose()
 
     async def aclose(self) -> None:
         async with _async_lock_context(self._lock):

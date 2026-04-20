@@ -15,7 +15,6 @@ from vibesensor.adapters.persistence.history_db._run_repository import RunHistor
 from vibesensor.adapters.persistence.history_db._settings_repository import (
     SettingsSnapshotRepository,
 )
-from vibesensor.shared.async_bridge import run_coro_blocking
 
 __all__ = [
     "ClientNameRepository",
@@ -39,10 +38,16 @@ class HistoryPersistenceAdapters:
     settings_snapshot_repository: SettingsSnapshotRepository
     client_name_repository: ClientNameRepository
 
-    async def open(self) -> None:
+    def open(self) -> None:
+        self.lifecycle.open()
+
+    async def aopen(self) -> None:
         await self.lifecycle.aopen()
 
-    async def close(self) -> None:
+    def close(self) -> object:
+        return self.lifecycle.close()
+
+    async def aclose(self) -> None:
         await self.lifecycle.aclose()
 
 
@@ -81,7 +86,7 @@ def create_history_persistence_adapters(
         db_path,
         corruption_reporter=corruption_reporter,
     )
-    run_coro_blocking(history.open())
+    history.open()
     return history
 
 
@@ -94,5 +99,5 @@ async def create_history_persistence_adapters_async(
         db_path,
         corruption_reporter=corruption_reporter,
     )
-    await history.open()
+    await history.aopen()
     return history

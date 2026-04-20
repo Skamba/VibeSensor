@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
@@ -272,7 +273,8 @@ async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected
     from vibesensor.infra.runtime.registry import ClientRegistry
 
     db = create_history_persistence_adapters(tmp_path / "history.db")
-    registry = ClientRegistry(
+    registry = await asyncio.to_thread(
+        ClientRegistry,
         db=db.client_name_repository,
         live_ttl_seconds=5.0,
         retention_ttl_seconds=30.0,
@@ -340,7 +342,7 @@ async def test_get_clients_overlays_canonical_settings_metadata_after_restart(
     )
 
     settings_store = build_settings_services(db=db.settings_snapshot_repository).sensor_settings
-    registry = ClientRegistry(db=db.client_name_repository)
+    registry = await asyncio.to_thread(ClientRegistry, db=db.client_name_repository)
     registry.update_from_hello(
         HelloMessage(
             client_id=bytes.fromhex("001122334455"),
