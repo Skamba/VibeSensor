@@ -342,35 +342,35 @@ test("history feature reloads the expanded run when the language changes", async
   const state = createAppState();
   state.history.runs.value = [historyListRun("run-001")];
   const { feature, getRenderCount } = createFeatureHarness(state);
-  const originalFetch = globalThis.fetch;
   const requests: string[] = [];
-  globalThis.fetch = (async (input: string | URL | RequestInfo) => {
-    const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
-    requests.push(url);
-    if (url === "/api/history/run-001/insights?lang=en") {
-      return jsonResponse(historyInsightsPayload("run-001", 1));
-    }
-    if (url === "/api/history/run-001/insights?lang=nl") {
-      return jsonResponse(historyInsightsPayload("run-001", 2));
-    }
-    throw new Error(`Unexpected request: ${url}`);
-  }) as typeof fetch;
+  mswServer.use(
+    ...buildHistoryHandlers({
+      insights: (request) => {
+        const url = new URL(request.url);
+        const requestPath = `${url.pathname}${url.search}`;
+        requests.push(requestPath);
+        if (requestPath === "/api/history/run-001/insights?lang=en") {
+          return historyInsightsPayload("run-001", 1);
+        }
+        if (requestPath === "/api/history/run-001/insights?lang=nl") {
+          return historyInsightsPayload("run-001", 2);
+        }
+        return { detail: `Unexpected request: ${requestPath}`, status: 500 };
+      },
+    }),
+  );
 
-  try {
-    feature.toggleRunDetails("run-001");
-    await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(1);
-    await feature.onHistoryTableAction("load-insights", "run-001");
-    expect(state.history.runDetailsById.value["run-001"]?.insights?.sensor_count_used).toBe(1);
+  feature.toggleRunDetails("run-001");
+  await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(1);
+  await feature.onHistoryTableAction("load-insights", "run-001");
+  expect(state.history.runDetailsById.value["run-001"]?.insights?.sensor_count_used).toBe(1);
 
-    state.shell.lang.value = "nl";
-    await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
-    await expect.poll(() => state.history.runDetailsById.value["run-001"]?.insights?.sensor_count_used ?? null).toBe(2);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  state.shell.lang.value = "nl";
+  await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
+  await expect.poll(() => state.history.runDetailsById.value["run-001"]?.insights?.sensor_count_used ?? null).toBe(2);
 
   expect(getRenderCount()).toBeGreaterThanOrEqual(6);
-  expect(requests.filter((url) => url.startsWith("/api/history/"))).toEqual([
+  expect(requests).toEqual([
     "/api/history/run-001/insights?lang=en",
     "/api/history/run-001/insights?lang=en",
     "/api/history/run-001/insights?lang=nl",
@@ -382,31 +382,34 @@ test("history feature treats analyzing insights responses as not-yet-available",
   const state = createAppState();
   state.history.runs.value = [historyListRun("run-001")];
   const { feature, getRenderCount } = createFeatureHarness(state);
-  const originalFetch = globalThis.fetch;
   const requests: string[] = [];
-  globalThis.fetch = (async (input: string | URL | RequestInfo) => {
-    const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
-    requests.push(url);
-    if (url === "/api/history/run-001/insights?lang=en") {
-      return jsonResponse(historyInsightsAnalyzingPayload("run-001"), { status: 202 });
-    }
-    throw new Error(`Unexpected request: ${url}`);
-  }) as typeof fetch;
+  mswServer.use(
+    ...buildHistoryHandlers({
+      insights: (request) => {
+        const url = new URL(request.url);
+        const requestPath = `${url.pathname}${url.search}`;
+        requests.push(requestPath);
+        if (requestPath === "/api/history/run-001/insights?lang=en") {
+          return {
+            json: historyInsightsAnalyzingPayload("run-001"),
+            status: 202,
+          };
+        }
+        return { detail: `Unexpected request: ${requestPath}`, status: 500 };
+      },
+    }),
+  );
 
-  try {
-    feature.toggleRunDetails("run-001");
-    await expect.poll(() => state.history.runDetailsById.value["run-001"]?.previewLoading ?? false).toBe(false);
-    await feature.onHistoryTableAction("load-insights", "run-001");
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  feature.toggleRunDetails("run-001");
+  await expect.poll(() => state.history.runDetailsById.value["run-001"]?.previewLoading ?? false).toBe(false);
+  await feature.onHistoryTableAction("load-insights", "run-001");
 
   expect(state.history.runDetailsById.value["run-001"]?.preview).toBeNull();
   expect(state.history.runDetailsById.value["run-001"]?.previewError).toBe("");
   expect(state.history.runDetailsById.value["run-001"]?.insights).toBeNull();
   expect(state.history.runDetailsById.value["run-001"]?.insightsError).toBe("");
   expect(getRenderCount()).toBeGreaterThanOrEqual(4);
-  expect(requests.filter((url) => url.startsWith("/api/history/"))).toEqual([
+  expect(requests).toEqual([
     "/api/history/run-001/insights?lang=en",
     "/api/history/run-001/insights?lang=en",
   ]);
@@ -450,32 +453,37 @@ test("history feature rendering promotes loaded findings ahead of supporting sta
 test("history feature preloads collapsed row context for completed runs", async () => {
   const state = createAppState();
   const { feature, getLatestModel } = createFeatureHarness(state);
-  const originalFetch = globalThis.fetch;
   const requests: string[] = [];
-  globalThis.fetch = (async (input: string | URL | RequestInfo) => {
-    const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
-    requests.push(url);
-    if (url === "/api/history") {
-      return jsonResponse({ runs: [historyListRun("run-001")] });
-    }
-    if (url === "/api/history/run-001/insights?lang=en") {
-      return jsonResponse(historyInsightsWithFindingsPayload("run-001", 2));
-    }
-    throw new Error(`Unexpected request: ${url}`);
-  }) as typeof fetch;
+  mswServer.use(
+    ...buildHistoryHandlers({
+      insights: (request) => {
+        const url = new URL(request.url);
+        const requestPath = `${url.pathname}${url.search}`;
+        requests.push(requestPath);
+        if (requestPath === "/api/history/run-001/insights?lang=en") {
+          return historyInsightsWithFindingsPayload("run-001", 2);
+        }
+        return { detail: `Unexpected request: ${requestPath}`, status: 500 };
+      },
+      list: (request) => {
+        const url = new URL(request.url);
+        requests.push(url.pathname);
+        if (url.pathname === "/api/history") {
+          return { runs: [historyListRun("run-001")] };
+        }
+        return { detail: `Unexpected request: ${url.pathname}`, status: 500 };
+      },
+    }),
+  );
 
-  try {
-    await feature.refreshHistory();
-    await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  await feature.refreshHistory();
+  await expect.poll(() => state.history.runDetailsById.value["run-001"]?.preview?.sensor_count_used ?? null).toBe(2);
 
   const row = latestRowModels({ getLatestModel })[0];
   expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.complete");
   expect(row.summaryHeadline).toBe("Front-right wheel imbalance");
   expect(row.summaryMeta?.includes("report.confidence")).toBe(true);
-  expect(requests.filter((url) => url.startsWith("/api/history"))).toEqual([
+  expect(requests).toEqual([
     "/api/history",
     "/api/history/run-001/insights?lang=en",
   ]);
@@ -484,52 +492,49 @@ test("history feature preloads collapsed row context for completed runs", async 
 test("history feature prefetches collapsed run previews in parallel batches", async () => {
   const state = createAppState();
   const { feature } = createFeatureHarness(state);
-  const originalFetch = globalThis.fetch;
   const previewRequests: string[] = [];
   const previewResolvers = new Map<string, (response: Response) => void>();
-
-  globalThis.fetch = (async (input: string | URL | RequestInfo) => {
-    const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
-    if (url === "/api/history") {
-      return jsonResponse({
+  mswServer.use(
+    ...buildHistoryHandlers({
+      insights: async (request) => {
+        const url = new URL(request.url);
+        const requestPath = `${url.pathname}${url.search}`;
+        if (requestPath.startsWith("/api/history/run-") && requestPath.endsWith("/insights?lang=en")) {
+          previewRequests.push(requestPath);
+          return await new Promise<Response>((resolve) => {
+            previewResolvers.set(requestPath, resolve);
+          });
+        }
+        return { detail: `Unexpected request: ${requestPath}`, status: 500 };
+      },
+      list: makeHistoryListPayload({
         runs: [
           historyListRun("run-001"),
           historyListRun("run-002"),
           historyListRun("run-003"),
           historyListRun("run-004"),
         ],
-      });
-    }
-    if (url.startsWith("/api/history/run-") && url.endsWith("/insights?lang=en")) {
-      previewRequests.push(url);
-      return await new Promise<Response>((resolve) => {
-        previewResolvers.set(url, resolve);
-      });
-    }
-    throw new Error(`Unexpected request: ${url}`);
-  }) as typeof fetch;
+      }),
+    }),
+  );
 
-  try {
-    await feature.refreshHistory();
-    await expect.poll(() => previewRequests.length).toBe(3);
+  await feature.refreshHistory();
+  await expect.poll(() => previewRequests.length).toBe(3);
 
-    previewResolvers.get("/api/history/run-001/insights?lang=en")
-      ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-001", 2)));
-    previewResolvers.get("/api/history/run-002/insights?lang=en")
-      ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-002", 2)));
-    previewResolvers.get("/api/history/run-003/insights?lang=en")
-      ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-003", 2)));
+  previewResolvers.get("/api/history/run-001/insights?lang=en")
+    ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-001", 2)));
+  previewResolvers.get("/api/history/run-002/insights?lang=en")
+    ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-002", 2)));
+  previewResolvers.get("/api/history/run-003/insights?lang=en")
+    ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-003", 2)));
 
-    await expect.poll(() => previewRequests.length).toBe(4);
+  await expect.poll(() => previewRequests.length).toBe(4);
 
-    previewResolvers.get("/api/history/run-004/insights?lang=en")
-      ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-004", 2)));
+  previewResolvers.get("/api/history/run-004/insights?lang=en")
+    ?.call(null, jsonResponse(historyInsightsWithFindingsPayload("run-004", 2)));
 
-    await expect.poll(() => state.history.runDetailsById.value["run-004"]?.preview?.sensor_count_used ?? null)
-      .toBe(2);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  await expect.poll(() => state.history.runDetailsById.value["run-004"]?.preview?.sensor_count_used ?? null)
+    .toBe(2);
 
   expect(previewRequests).toEqual([
     "/api/history/run-001/insights?lang=en",

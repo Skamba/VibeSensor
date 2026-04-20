@@ -11,7 +11,14 @@ type ErrorResponse = {
   status?: number;
 };
 
-type JsonHandlerResult<T> = T | ErrorResponse | ((request: Request) => T | ErrorResponse | Promise<T | ErrorResponse>);
+type JsonResponseInit<T> = {
+  headers?: HeadersInit;
+  json: T;
+  status?: number;
+  statusText?: string;
+};
+type JsonResult<T> = T | ErrorResponse | JsonResponseInit<T> | Response;
+type JsonHandlerResult<T> = JsonResult<T> | ((request: Request) => JsonResult<T> | Promise<JsonResult<T>>);
 type BinaryResponseInit = {
   body?: BodyInit | null;
   contentType?: string;
@@ -35,6 +42,13 @@ function isErrorResponse(value: unknown): value is ErrorResponse {
   return !!value && typeof value === "object" && "detail" in value;
 }
 
+function isJsonResponseInit<T>(value: unknown): value is JsonResponseInit<T> {
+  return !!value
+    && typeof value === "object"
+    && !(value instanceof Response)
+    && Object.hasOwn(value, "json");
+}
+
 async function resolveJsonResult<T>(
   request: Request,
   result: JsonHandlerResult<T>,
@@ -45,6 +59,16 @@ async function resolveJsonResult<T>(
       { detail: resolved.detail },
       { status: resolved.status ?? 400 },
     );
+  }
+  if (isJsonResponseInit<T>(resolved)) {
+    return HttpResponse.json(resolved.json, {
+      status: resolved.status,
+      statusText: resolved.statusText,
+      headers: resolved.headers,
+    });
+  }
+  if (resolved instanceof Response) {
+    return resolved;
   }
   return HttpResponse.json(resolved);
 }
