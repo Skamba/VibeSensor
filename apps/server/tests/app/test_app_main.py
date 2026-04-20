@@ -30,15 +30,27 @@ def _run_main(monkeypatch, *, port: int, fail_port: int | None = None) -> list[i
         "parse_args",
         lambda self: Namespace(config=None, reload=False),
     )
-    monkeypatch.setattr(app_module, "create_app", lambda config_path=None: _runtime_app(port))
+    monkeypatch.setattr(
+        app_module,
+        "load_config",
+        lambda config_path=None: SimpleNamespace(
+            server=SimpleNamespace(host="0.0.0.0", port=port),
+        ),
+    )
+    monkeypatch.setattr(app_module, "export_config_path_env", lambda config_path: None)
     calls: list[int] = []
 
-    def _fake_run(*args, **kwargs):
-        calls.append(kwargs["port"])
-        if fail_port is not None and kwargs["port"] == fail_port:
-            raise OSError(errno.EACCES, "permission denied")
+    class FakeGranian:
+        def __init__(self, *args, **kwargs):
+            calls.append(kwargs["port"])
+            if fail_port is not None and kwargs["port"] == fail_port:
+                raise OSError(errno.EACCES, "permission denied")
 
-    monkeypatch.setattr(app_module.uvicorn, "run", _fake_run)
+        def serve(self) -> None:
+            return None
+
+    monkeypatch.setattr(app_module, "Granian", FakeGranian)
+    monkeypatch.setattr(app_module, "_granian_loop", lambda: "uvloop")
     app_module.main()
     return calls
 
@@ -86,17 +98,17 @@ def test_main_reload_uses_factory_target(monkeypatch, tmp_path) -> None:
             server=SimpleNamespace(host="127.0.0.1", port=8000),
         ),
     )
-    monkeypatch.setattr(
-        app_module,
-        "create_app",
-        lambda *args, **kwargs: pytest.fail("reload mode should not eagerly build the app object"),
-    )
     calls: list[tuple[object, dict[str, object]]] = []
 
-    def _fake_run(app_target, **kwargs):
-        calls.append((app_target, kwargs))
+    class FakeGranian:
+        def __init__(self, *args, **kwargs):
+            calls.append((args[0], kwargs))
 
-    monkeypatch.setattr(app_module.uvicorn, "run", _fake_run)
+        def serve(self) -> None:
+            return None
+
+    monkeypatch.setattr(app_module, "Granian", FakeGranian)
+    monkeypatch.setattr(app_module, "_granian_loop", lambda: "uvloop")
 
     app_module.main()
 
@@ -104,10 +116,12 @@ def test_main_reload_uses_factory_target(monkeypatch, tmp_path) -> None:
         (
             "vibesensor.app.bootstrap:create_app_from_env",
             {
-                "host": "127.0.0.1",
+                "address": "127.0.0.1",
                 "port": 8000,
+                "interface": "asgi",
+                "log_enabled": True,
                 "log_level": "info",
-                "loop": "asyncio",
+                "loop": "uvloop",
                 "reload": True,
                 "factory": True,
             },

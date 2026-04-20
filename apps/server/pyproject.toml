@@ -16,7 +16,7 @@ dependencies = [
   "pydantic-settings>=2.10,<3",
   "starlette>=0.37.2,<1",
   "tenacity>=9.1,<10",
-  "uvicorn[standard]>=0.30,<1",
+  "granian[reload]>=2.7,<3",
   "uvloop>=0.22,<1; sys_platform == 'linux'",
   "numpy>=2.4.4,<3",
   "orjson>=3.11.4,<4",
