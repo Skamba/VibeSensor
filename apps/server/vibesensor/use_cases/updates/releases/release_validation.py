@@ -161,7 +161,8 @@ def _read_http(url: str) -> tuple[int, str, str]:
         content_type = exc.headers.get("Content-Type", "") if exc.headers is not None else ""
         return exc.code, content_type, body
     except URLError as exc:
-        raise OSError(f"release smoke request failed for {url}: {exc}") from exc
+        reason = exc.reason if exc.reason is not None else exc
+        raise OSError(f"release smoke network request failed for {url}: {reason}") from exc
 
 
 def packaged_static_index_path() -> Path:
@@ -255,16 +256,14 @@ def run_server_smoke(
                     last_error = exc
                     now = time.monotonic()
                     if now >= deadline:
-                        break
+                        output = process.stdout.read() if process.stdout is not None else ""
+                        raise RuntimeError(
+                            "Release smoke validation timed out waiting for server readiness.\n"
+                            f"Last error: {last_error}\n"
+                            f"Output:\n{output}",
+                        ) from exc
                     remaining = deadline - now
                     time.sleep(min(_RELEASE_SMOKE_RETRY_WAIT_S, remaining))
-
-            output = process.stdout.read() if process.stdout is not None else ""
-            raise RuntimeError(
-                "Release smoke validation timed out waiting for server readiness.\n"
-                f"Last error: {last_error}\n"
-                f"Output:\n{output}",
-            )
         finally:
             terminate_subprocess(process)
 
