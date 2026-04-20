@@ -13,6 +13,7 @@ import urllib.request
 from collections.abc import Sequence
 from pathlib import Path
 
+import msgspec
 from tenacity import Retrying, retry_if_exception_type, stop_after_delay, wait_fixed
 
 from vibesensor.use_cases.updates.artifact_validation import wheel_metadata_validation_errors
@@ -57,59 +58,53 @@ def build_release_smoke_config(
 
 
 def validate_firmware_dist(dist_dir: Path) -> list[str]:
+    from vibesensor.use_cases.updates.firmware.firmware_bundle import (
+        flash_manifest_record_from_json,
+    )
+
     errors: list[str] = []
     manifest_path = dist_dir / "flash.json"
     if not manifest_path.is_file():
         return [f"Missing firmware manifest: {manifest_path}"]
 
     try:
-        manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
+        manifest = flash_manifest_record_from_json(manifest_path.read_bytes())
+    except msgspec.DecodeError as exc:
         return [f"Invalid firmware manifest JSON: {exc}"]
+    except (OSError, ValueError) as exc:
+        return [str(exc)]
 
-    if not isinstance(manifest_data, dict):
-        return ["Firmware manifest root must be a JSON object"]
-
-    environments = manifest_data.get("environments")
-    if not isinstance(environments, list) or not environments:
+    if not manifest.environments:
         return ["Firmware manifest must contain at least one environment"]
 
     seen_names: set[str] = set()
-    for index, raw_environment in enumerate(environments):
+    for index, environment in enumerate(manifest.environments):
         prefix = f"environments[{index}]"
-        if not isinstance(raw_environment, dict):
-            errors.append(f"{prefix} must be an object")
-            continue
-
-        env_name = raw_environment.get("name")
-        if not isinstance(env_name, str) or not env_name:
+        env_name = environment.name
+        if not env_name:
             errors.append(f"{prefix}.name must be a non-empty string")
             continue
         if env_name in seen_names:
             errors.append(f"Duplicate firmware environment name: {env_name}")
         seen_names.add(env_name)
 
-        segments = raw_environment.get("segments")
-        if not isinstance(segments, list) or not segments:
+        segments = environment.segments
+        if not segments:
             errors.append(f"{prefix}.segments must contain at least one segment")
             continue
 
         firmware_seen = False
-        for seg_index, raw_segment in enumerate(segments):
+        for seg_index, segment in enumerate(segments):
             seg_prefix = f"{prefix}.segments[{seg_index}]"
-            if not isinstance(raw_segment, dict):
-                errors.append(f"{seg_prefix} must be an object")
-                continue
-
-            file_name = raw_segment.get("file")
-            offset = raw_segment.get("offset")
-            sha256 = raw_segment.get("sha256")
-            if not isinstance(file_name, str) or not file_name:
+            file_name = segment.file
+            offset = segment.offset
+            sha256 = segment.sha256
+            if not file_name:
                 errors.append(f"{seg_prefix}.file must be a non-empty string")
                 continue
-            if not isinstance(offset, str) or not offset.startswith("0x"):
+            if not offset.startswith("0x"):
                 errors.append(f"{seg_prefix}.offset must be a hex string")
-            if not isinstance(sha256, str) or len(sha256) != 64:
+            if len(sha256) != 64:
                 errors.append(f"{seg_prefix}.sha256 must be a 64-character hex digest")
 
             artifact_path = dist_dir / file_name
