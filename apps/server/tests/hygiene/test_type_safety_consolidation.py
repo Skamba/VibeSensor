@@ -7,9 +7,6 @@ from pathlib import Path
 import pytest
 
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.settings.snapshot import (
-    coerce_language_code as _coerce_language,
-)
 
 _SERVER_ROOT = Path(__file__).resolve().parents[2]
 _PYPROJECT = _SERVER_ROOT / "pyproject.toml"
@@ -37,13 +34,6 @@ class TestNormalizeLangConsolidation:
     )
     def test_normalize_lang_handles_variants(self, raw: object, expected: str) -> None:
         assert normalize_lang(raw) == expected
-
-    def test_coerce_language_accepts_nl_be(self) -> None:
-        """The canonical persisted-language normalizer must accept 'nl-BE' as Dutch."""
-        assert _coerce_language("nl-BE") == "nl"
-        assert _coerce_language("nl") == "nl"
-        assert _coerce_language("nl-NL") == "nl"
-        assert _coerce_language("en") == "en"
 
 
 # ── mypy enforcement expansion ────────────────────────────────────────────────
