@@ -7,9 +7,7 @@ import time
 import msgspec
 
 from vibesensor.shared.types.json_types import (
-    JsonArray,
     JsonObject,
-    is_json_array,
     is_json_object,
 )
 from vibesensor.use_cases.updates.models import (
@@ -125,10 +123,7 @@ def update_status_from_builtins(data: object) -> UpdateJobStatus:
 def update_status_from_json(raw: bytes | str) -> UpdateJobStatus:
     """Decode persisted updater status JSON into the domain status model."""
 
-    try:
-        payload = msgspec.json.decode(raw, type=UpdateJobStatusPayload)
-    except msgspec.ValidationError:
-        payload = _convert_status_payload_object(msgspec.json.decode(raw))
+    payload = msgspec.json.decode(raw, type=UpdateJobStatusPayload)
     return _status_from_payload(payload)
 
 
@@ -143,73 +138,7 @@ def _status_from_payload(payload: UpdateJobStatusPayload) -> UpdateJobStatus:
 
 
 def _convert_status_payload_object(data: object) -> UpdateJobStatusPayload:
-    try:
-        return msgspec.convert(data, type=UpdateJobStatusPayload, strict=False)
-    except msgspec.ValidationError:
-        if not is_json_object(data):
-            raise
-        # Legacy persisted updater status files allowed loose nested values.
-        normalized = dict(data)
-        normalized["issues"] = _normalize_legacy_issues(data.get("issues"))
-        normalized["log_tail"] = _normalize_legacy_log_tail(data.get("log_tail"))
-        normalized["runtime"] = _normalize_legacy_runtime(data.get("runtime"))
-        normalized["ssid"] = data.get("ssid") if isinstance(data.get("ssid"), str) else None
-        normalized["uplink_interface"] = (
-            data.get("uplink_interface") if isinstance(data.get("uplink_interface"), str) else None
-        )
-        return msgspec.convert(normalized, type=UpdateJobStatusPayload, strict=False)
-
-
-def _normalize_legacy_issues(value: object) -> JsonArray:
-    if not is_json_array(value):
-        return []
-    issues: JsonArray = []
-    for issue in value:
-        if not is_json_object(issue):
-            continue
-        issues.append(
-            {
-                "phase": str(issue.get("phase", "")),
-                "message": str(issue.get("message", "")),
-                "detail": str(issue.get("detail", "")),
-            }
-        )
-    return issues
-
-
-def _normalize_legacy_log_tail(value: object) -> JsonArray:
-    if not is_json_array(value):
-        return []
-    return [str(line) for line in value[-UPDATE_STATUS_LOG_TAIL_LIMIT:]]
-
-
-def _normalize_legacy_runtime(value: object) -> JsonObject:
-    if not is_json_object(value):
-        return {}
-    return {
-        "version": _legacy_text(value.get("version")),
-        "commit": _legacy_text(value.get("commit")),
-        "ui_source_hash": _legacy_text(value.get("ui_source_hash")),
-        "static_assets_hash": _legacy_text(value.get("static_assets_hash")),
-        "static_build_source_hash": _legacy_text(value.get("static_build_source_hash")),
-        "static_build_commit": _legacy_text(value.get("static_build_commit")),
-        "assets_verified": _coerce_legacy_bool(value.get("assets_verified")),
-        "has_packaged_static": _coerce_legacy_bool(value.get("has_packaged_static")),
-    }
-
-
-def _legacy_text(value: object) -> str:
-    return "" if value is None else str(value)
-
-
-def _coerce_legacy_bool(value: object) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return value != 0
-    if isinstance(value, str):
-        return value.strip().lower() in {"1", "true", "yes", "on"}
-    return False
+    return msgspec.convert(data, type=UpdateJobStatusPayload, strict=True)
 
 
 def _phase_elapsed_s(status: UpdateJobStatus, *, now_s: float | None) -> float | None:

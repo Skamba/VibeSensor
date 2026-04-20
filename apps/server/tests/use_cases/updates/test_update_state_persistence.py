@@ -206,7 +206,7 @@ class TestUpdateStateStore:
         assert loaded.issues[0].message == "ok"
         assert loaded.log_tail == ["log entry 1"]
 
-    def test_load_accepts_backward_compatible_legacy_payload(self, tmp_path: Path) -> None:
+    def test_load_rejects_legacy_payload_shape(self, tmp_path: Path) -> None:
         path = tmp_path / "state.json"
         path.write_text(
             """
@@ -233,20 +233,7 @@ class TestUpdateStateStore:
 
         loaded = store.load()
 
-        assert loaded is not None
-        assert loaded.state == UpdateState.failed
-        assert loaded.phase == UpdatePhase.installing
-        assert loaded.transport == UpdateTransport.usb_internet
-        assert loaded.started_at == 10.5
-        assert loaded.issues == [
-            UpdateIssue(phase="downloading", message="warn", detail="99"),
-        ]
-        assert loaded.log_tail == ["ok", "7", "None"]
-        assert loaded.runtime == UpdateRuntimeDetails(
-            version="9",
-            assets_verified=True,
-            has_packaged_static=True,
-        )
+        assert loaded is None
 
     @pytest.mark.parametrize(
         "file_content",
