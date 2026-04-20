@@ -16,6 +16,12 @@ from _history_endpoint_helpers import (
 from fastapi import HTTPException
 
 
+async def _close_history_db(db) -> None:
+    close_result = db.close()
+    if close_result is not None:
+        await close_result
+
+
 @pytest.mark.asyncio
 async def test_ws_selected_client_id_validation() -> None:
     router, state = make_router_and_state(language="en")
@@ -263,6 +269,98 @@ async def test_set_client_location_persists_canonical_name_and_location() -> Non
 
 
 @pytest.mark.asyncio
+async def test_set_client_location_works_with_real_persistence_in_async_route(
+    tmp_path: Path,
+) -> None:
+    from test_support.settings_services import build_settings_services
+
+    from vibesensor.adapters.http.clients import create_client_routes
+    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+    from vibesensor.adapters.udp.protocol import HelloMessage
+    from vibesensor.infra.runtime.registry import ClientRegistry
+
+    db = await asyncio.to_thread(create_history_persistence_adapters, tmp_path / "history.db")
+    try:
+        settings_store = (
+            await asyncio.to_thread(
+                build_settings_services,
+                db=db.settings_snapshot_repository,
+            )
+        ).sensor_settings
+        registry = await asyncio.to_thread(ClientRegistry, db=db.client_name_repository)
+        await asyncio.to_thread(
+            registry.update_from_hello,
+            HelloMessage(
+                client_id=bytes.fromhex("001122334455"),
+                control_port=9010,
+                sample_rate_hz=800,
+                name="advertised-name",
+                firmware_version="fw",
+            ),
+            ("10.4.0.2", 9010),
+            1.0,
+            now_mono=1.0,
+        )
+
+        router = create_client_routes(registry, MagicMock(), settings_store, MagicMock())
+        endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/location", "POST")
+
+        resp = response_payload(
+            await endpoint(
+                "00:11:22:33:44:55",
+                type("Req", (), {"location_code": "front_left_wheel"})(),
+            ),
+        )
+
+        assert resp["name"] == "Front Left Wheel"
+        assert resp["location_code"] == "front_left_wheel"
+        assert await asyncio.to_thread(settings_store.get_sensors) == {
+            "001122334455": {
+                "name": "Front Left Wheel",
+                "location_code": "front_left_wheel",
+            }
+        }
+    finally:
+        await _close_history_db(db)
+
+
+@pytest.mark.asyncio
+async def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) -> None:
+    from vibesensor.adapters.http.clients import create_client_routes
+    from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
+    from vibesensor.adapters.udp.protocol import HelloMessage
+    from vibesensor.infra.runtime.registry import ClientRegistry
+
+    db = await asyncio.to_thread(create_history_persistence_adapters, tmp_path / "history.db")
+    try:
+        registry = await asyncio.to_thread(ClientRegistry, db=db.client_name_repository)
+        await asyncio.to_thread(
+            registry.update_from_hello,
+            HelloMessage(
+                client_id=bytes.fromhex("001122334455"),
+                control_port=9010,
+                sample_rate_hz=800,
+                name="advertised-name",
+                firmware_version="fw",
+            ),
+            ("10.4.0.2", 9010),
+            1.0,
+            now_mono=1.0,
+        )
+        await asyncio.to_thread(registry.set_name, "001122334455", "Front Left Wheel")
+
+        router = create_client_routes(registry, MagicMock(), MagicMock(), MagicMock())
+        endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}", "DELETE")
+
+        resp = response_payload(await endpoint("00:11:22:33:44:55"))
+
+        assert resp == {"id": "001122334455", "status": "removed"}
+        assert await asyncio.to_thread(db.client_name_repository.list_client_names) == {}
+    finally:
+        await _close_history_db(db)
+
+
+@pytest.mark.asyncio
 async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
     tmp_path: Path,
     monkeypatch,
@@ -272,54 +370,57 @@ async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    registry = await asyncio.to_thread(
-        ClientRegistry,
-        db=db.client_name_repository,
-        live_ttl_seconds=5.0,
-        retention_ttl_seconds=30.0,
-    )
-    hello = HelloMessage(
-        client_id=bytes.fromhex("001122334455"),
-        control_port=9010,
-        sample_rate_hz=800,
-        name="sensor",
-        firmware_version="fw",
-    )
-    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0, now_mono=1.0)
+    db = await asyncio.to_thread(create_history_persistence_adapters, tmp_path / "history.db")
+    try:
+        registry = await asyncio.to_thread(
+            ClientRegistry,
+            db=db.client_name_repository,
+            live_ttl_seconds=5.0,
+            retention_ttl_seconds=30.0,
+        )
+        hello = HelloMessage(
+            client_id=bytes.fromhex("001122334455"),
+            control_port=9010,
+            sample_rate_hz=800,
+            name="sensor",
+            firmware_version="fw",
+        )
+        registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0, now_mono=1.0)
 
-    now = {"wall": 9.0, "mono": 9.0}
-    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: now["wall"])
-    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: now["mono"])
+        now = {"wall": 9.0, "mono": 9.0}
+        monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: now["wall"])
+        monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: now["mono"])
 
-    control_plane = MagicMock()
-    settings_store = MagicMock()
-    settings_store.get_sensors.return_value = {}
-    processor = MagicMock()
-    processor.all_latest_metrics.return_value = {}
-    router = create_client_routes(registry, control_plane, settings_store, processor)
-    endpoint = route_endpoint(router, "/api/clients")
+        control_plane = MagicMock()
+        settings_store = MagicMock()
+        settings_store.get_sensors.return_value = {}
+        processor = MagicMock()
+        processor.all_latest_metrics.return_value = {}
+        router = create_client_routes(registry, control_plane, settings_store, processor)
+        endpoint = route_endpoint(router, "/api/clients")
 
-    resp = response_payload(await endpoint())
-    assert processor.all_latest_metrics.call_args.args == ([],)
-    assert resp["clients"] == [
-        {
-            "id": "001122334455",
-            "mac_address": "00:11:22:33:44:55",
-            "name": "sensor",
-            "connected": False,
-            "location_code": "",
-            "firmware_version": "fw",
-            "sample_rate_hz": 800,
-            "frame_samples": 0,
-            "last_seen_age_ms": 8000,
-            "frames_total": 0,
-            "dropped_frames": 0,
-            "latest_metrics": {},
-            "reset_count": 0,
-            "last_reset_time": None,
-        },
-    ]
+        resp = response_payload(await endpoint())
+        assert processor.all_latest_metrics.call_args.args == ([],)
+        assert resp["clients"] == [
+            {
+                "id": "001122334455",
+                "mac_address": "00:11:22:33:44:55",
+                "name": "sensor",
+                "connected": False,
+                "location_code": "",
+                "firmware_version": "fw",
+                "sample_rate_hz": 800,
+                "frame_samples": 0,
+                "last_seen_age_ms": 8000,
+                "frames_total": 0,
+                "dropped_frames": 0,
+                "latest_metrics": {},
+                "reset_count": 0,
+                "last_reset_time": None,
+            },
+        ]
+    finally:
+        await _close_history_db(db)
 
 
 @pytest.mark.asyncio
@@ -334,57 +435,69 @@ async def test_get_clients_overlays_canonical_settings_metadata_after_restart(
     from vibesensor.adapters.udp.protocol import HelloMessage
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-    db = create_history_persistence_adapters(tmp_path / "history.db")
-    initial_settings = build_settings_services(db=db.settings_snapshot_repository)
-    initial_settings.sensor_settings.assign_sensor_location(
-        "00:11:22:33:44:55",
-        "rear_left_wheel",
-    )
+    db = await asyncio.to_thread(create_history_persistence_adapters, tmp_path / "history.db")
+    try:
+        initial_settings = await asyncio.to_thread(
+            build_settings_services,
+            db=db.settings_snapshot_repository,
+        )
+        await asyncio.to_thread(
+            initial_settings.sensor_settings.assign_sensor_location,
+            "00:11:22:33:44:55",
+            "rear_left_wheel",
+        )
 
-    settings_store = build_settings_services(db=db.settings_snapshot_repository).sensor_settings
-    registry = await asyncio.to_thread(ClientRegistry, db=db.client_name_repository)
-    registry.update_from_hello(
-        HelloMessage(
-            client_id=bytes.fromhex("001122334455"),
-            control_port=9010,
-            sample_rate_hz=800,
-            name="advertised-name",
-            firmware_version="fw",
-        ),
-        ("10.4.0.2", 9010),
-        now=1.0,
-        now_mono=1.0,
-    )
-    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: 1.0)
-    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: 1.0)
+        settings_store = (
+            await asyncio.to_thread(
+                build_settings_services,
+                db=db.settings_snapshot_repository,
+            )
+        ).sensor_settings
+        registry = await asyncio.to_thread(ClientRegistry, db=db.client_name_repository)
+        registry.update_from_hello(
+            HelloMessage(
+                client_id=bytes.fromhex("001122334455"),
+                control_port=9010,
+                sample_rate_hz=800,
+                name="advertised-name",
+                firmware_version="fw",
+            ),
+            ("10.4.0.2", 9010),
+            now=1.0,
+            now_mono=1.0,
+        )
+        monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: 1.0)
+        monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: 1.0)
 
-    control_plane = MagicMock()
-    processor = MagicMock()
-    processor.all_latest_metrics.return_value = {}
-    router = create_client_routes(registry, control_plane, settings_store, processor)
-    endpoint = route_endpoint(router, "/api/clients")
+        control_plane = MagicMock()
+        processor = MagicMock()
+        processor.all_latest_metrics.return_value = {}
+        router = create_client_routes(registry, control_plane, settings_store, processor)
+        endpoint = route_endpoint(router, "/api/clients")
 
-    resp = response_payload(await endpoint())
+        resp = response_payload(await endpoint())
 
-    assert settings_store.get_sensors()["001122334455"] == {
-        "name": "Rear Left Wheel",
-        "location_code": "rear_left_wheel",
-    }
-    assert resp["clients"] == [
-        {
-            "id": "001122334455",
-            "mac_address": "00:11:22:33:44:55",
+        assert settings_store.get_sensors()["001122334455"] == {
             "name": "Rear Left Wheel",
-            "connected": True,
             "location_code": "rear_left_wheel",
-            "firmware_version": "fw",
-            "sample_rate_hz": 800,
-            "frame_samples": 0,
-            "last_seen_age_ms": 0,
-            "frames_total": 0,
-            "dropped_frames": 0,
-            "latest_metrics": {},
-            "reset_count": 0,
-            "last_reset_time": None,
-        },
-    ]
+        }
+        assert resp["clients"] == [
+            {
+                "id": "001122334455",
+                "mac_address": "00:11:22:33:44:55",
+                "name": "Rear Left Wheel",
+                "connected": True,
+                "location_code": "rear_left_wheel",
+                "firmware_version": "fw",
+                "sample_rate_hz": 800,
+                "frame_samples": 0,
+                "last_seen_age_ms": 0,
+                "frames_total": 0,
+                "dropped_frames": 0,
+                "latest_metrics": {},
+                "reset_count": 0,
+                "last_reset_time": None,
+            },
+        ]
+    finally:
+        await _close_history_db(db)
