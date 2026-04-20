@@ -21,6 +21,7 @@
       "playwright.config.ts",
       "playwright.smoke.config.ts",
       "vite.config.ts",
+      "vitest.config.ts",
       "take-screenshot.mjs",
       "update-snapshots.mjs"
     ],
@@ -39,6 +40,7 @@
       "playwright.config.ts",
       "playwright.smoke.config.ts",
       "vite.config.ts",
+      "vitest.config.ts",
       "take-screenshot.mjs",
       "update-snapshots.mjs",
       "tsconfig.json",

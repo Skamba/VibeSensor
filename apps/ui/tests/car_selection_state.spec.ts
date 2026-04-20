@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   createCarSelectionDerivedState,
 } from "../src/app/car_selection_state";
@@ -17,7 +16,7 @@ function makeCar(overrides: Partial<CarRecord> = {}): CarRecord {
   };
 }
 
-test.describe("car selection derived state", () => {
+describe("car selection derived state", () => {
   test("tracks loading, empty, missing-active, and active states reactively", () => {
     const state = createAppState();
     const derived = createCarSelectionDerivedState(state.settings.car);

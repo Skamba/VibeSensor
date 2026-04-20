@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   resolveWizardFocusTarget,
   type CarsWizardFocusElements,
@@ -30,7 +29,7 @@ function makeFocusElements(
   };
 }
 
-test.describe("resolveWizardFocusTarget", () => {
+describe("resolveWizardFocusTarget", () => {
   test("falls back from option targets to the matching manual control", () => {
     const customBrandInput = {} as HTMLInputElement;
     const customModelInput = {} as HTMLInputElement;

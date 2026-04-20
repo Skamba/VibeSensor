@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import { getCarCompleteness } from "../src/app/car_selection_state";
 import {
   buildCarsGuidanceRenderModel,

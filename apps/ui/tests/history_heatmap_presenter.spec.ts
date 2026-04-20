@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import type { HistoryInsightsPayload } from "../src/api/types";
 import { buildHistoryHeatmapViewModel } from "../src/app/views/history_heatmap_presenter";
 

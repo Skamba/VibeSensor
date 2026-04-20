@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import type { InternetPanelRenderModel } from "../src/app/views/internet_panel";
 import type { UpdatePanelRenderModel } from "../src/app/views/update_panel";
 import { signal } from "../src/app/ui_signals";
@@ -97,7 +96,7 @@ function makeInternet(
   };
 }
 
-test.describe("buildUpdateFeaturePanelModels", () => {
+describe("buildUpdateFeaturePanelModels", () => {
   test("keeps the Wi-Fi path active while readiness is blocked by a missing SSID", () => {
     const models = buildUpdateFeaturePanelModels(
       {
@@ -314,7 +313,7 @@ test.describe("buildUpdateFeaturePanelModels", () => {
   });
 });
 
-test.describe("createUpdateFeaturePresenter", () => {
+describe("createUpdateFeaturePresenter", () => {
   test("hydrates Wi-Fi inputs from initial render state once", () => {
     const renderState = signal({
       internetStatus: makeInternet(),

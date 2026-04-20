@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   buildEspFlashPanelRenderModel,
   createEspFlashFeaturePresenter,
@@ -74,7 +73,7 @@ function makeState(
   };
 }
 
-test.describe("buildEspFlashPanelRenderModel", () => {
+describe("buildEspFlashPanelRenderModel", () => {
   test("builds ready idle models with rendered port options and empty states", () => {
     const model = buildEspFlashPanelRenderModel(
       makeState({
@@ -225,7 +224,7 @@ test.describe("buildEspFlashPanelRenderModel", () => {
   });
 });
 
-test.describe("createEspFlashFeaturePresenter", () => {
+describe("createEspFlashFeaturePresenter", () => {
   test("renders log output without a DOM-backed panel view", () => {
     const renderState = signal(makeState({
       availablePorts: [makePort()],

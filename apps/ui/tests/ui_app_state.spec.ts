@@ -1,11 +1,10 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   createAppState,
 } from "../src/app/ui_app_state";
 import { batch, effect } from "../src/app/ui_signals";
 
-test.describe("ui_app_state reactivity", () => {
+describe("ui_app_state reactivity", () => {
   test("tracks shell writes directly through field signals without slice tracking", () => {
     const state = createAppState();
     const seenShellState: string[] = [];

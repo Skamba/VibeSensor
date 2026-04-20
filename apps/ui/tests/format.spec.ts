@@ -1,8 +1,7 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { fmtTs, formatEpochTimestamp } from "../src/format";
 
-test.describe("timestamp formatting helpers", () => {
+describe("timestamp formatting helpers", () => {
   test("formats ISO strings and epoch seconds through the same locale path", () => {
     const iso = "2024-01-02T03:04:05Z";
     const expected = new Date(iso).toLocaleString();

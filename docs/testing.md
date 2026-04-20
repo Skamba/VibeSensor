@@ -175,20 +175,34 @@ Use the standard UI workflow for `apps/ui/**` changes:
 
 ```bash
 make ui-typecheck
+cd apps/ui && npm run test:unit
 cd apps/ui && npm run build
 cd apps/ui && npm run test:visual
 cd apps/ui && npm run test:visual:audit   # optional broader visual sweep
-python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
+python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-unit --job ui-smoke
 ```
 
+The UI has three test layers; pick the one that matches the seam under test:
+
+| Layer | Runner | What it covers | Command |
+|-------|--------|----------------|---------|
+| Unit / integration | Vitest + `happy-dom` | Logic-heavy modules below the browser boundary (payload decoders, runtime helpers, feature workflows, signal-mounted islands, view-level pure helpers) | `npm run test:unit` |
+| Smoke | Playwright (Chromium) | End-to-end flows against a real Vite dev/preview server; file pattern `tests/smoke*.spec.ts` | `npm run test:smoke` |
+| Visual / snapshot | Playwright (Chromium) | Rendered-state regression baselines under `tests/snapshots/`; file pattern `tests/visual.spec.ts` | `npm run test:visual` |
+
+- `npm run test:unit` is the canonical fast test lane. It auto-discovers
+  `tests/**/*.spec.ts` and excludes the Playwright-owned browser/visual/smoke
+  specs via [`apps/ui/vitest.config.ts`](../apps/ui/vitest.config.ts). Prefer it
+  for anything that does not need a real browser.
 - `npm run test:visual` is the rendered-state and snapshot gate; use
   `npm run test:visual:update` only for intentional baseline changes.
 - `npm run test:visual:audit` is the opt-in four-project visual audit sweep
   when you need dark/tablet coverage on purpose instead of in the default lane.
 - `frontend-typecheck` is the UI contract/type/tooling gate: it syncs generated
   contract artifacts, then runs Biome, dependency-cruiser, knip, and TypeScript.
-  `ui-smoke` is the CI browser path. Use
-  `act -j frontend-typecheck -W .github/workflows/ci.yml` or
+  `ui-unit` runs the Vitest suite and `ui-smoke` is the CI browser path. Use
+  `act -j frontend-typecheck -W .github/workflows/ci.yml`,
+  `act -j ui-unit -W .github/workflows/ci.yml`, or
   `act -j ui-smoke -W .github/workflows/ci.yml` when you need GitHub-workflow
   parity for those jobs.
 

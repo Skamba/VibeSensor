@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, describe, expect, test } from "vitest";
 import { EXPECTED_SCHEMA_VERSION, type LiveWsPayload } from "../src/contracts/ws_payload_types";
 import { UiLiveTransportController } from "../src/app/runtime/ui_live_transport_controller";
 import { createAppState } from "../src/app/ui_app_state";
@@ -28,6 +27,7 @@ function makeClient(id: string): LiveWsPayload["clients"][number] {
     last_seen_age_ms: 0,
     dropped_frames: 0,
     frames_total: 1,
+    frame_samples: 1024,
     sample_rate_hz: 1600,
     firmware_version: "1.0.0",
   };
@@ -75,8 +75,8 @@ function installLocation(search: string): () => void {
   };
 }
 
-test.describe("UiLiveTransportController", () => {
-  test.beforeEach(() => {
+describe("UiLiveTransportController", () => {
+  beforeEach(() => {
     installWindowGlobal();
   });
 

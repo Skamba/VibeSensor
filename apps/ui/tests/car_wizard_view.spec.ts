@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import type {
   CarLibraryGearbox,
   CarLibraryModel,
@@ -104,7 +103,7 @@ function createRenderState(overrides: Partial<CarsFeatureRenderState> = {}): Car
   };
 }
 
-test.describe("car wizard view helpers", () => {
+describe("car wizard view helpers", () => {
   test("createClosedCarsWizardRenderModel preserves the manual-spec defaults before the first open", () => {
     const model = createClosedCarsWizardRenderModel();
 

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { describe, expect, test } from "vitest";
 import type { JSX } from "preact";
 
 import {
@@ -22,7 +22,7 @@ function makeKeyboardEvent(key: string): {
   };
 }
 
-test.describe("tab_list_keyboard_navigation", () => {
+describe("tab_list_keyboard_navigation", () => {
   test("normalizes wrapped tab indexes", () => {
     expect(normalizeTabListIndex(3, 3)).toBe(0);
     expect(normalizeTabListIndex(-1, 3)).toBe(2);

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   buildRealtimeCaptureReadinessChecklistModel,
   buildRealtimeLoggingPanelViewModel,
@@ -74,7 +73,7 @@ function makeCaptureReadiness(
   };
 }
 
-test.describe("realtime logging view models", () => {
+describe("realtime logging view models", () => {
   test("builds the no-cars blocked panel as typed model data", () => {
     const model = buildRealtimeLoggingPanelViewModel({
       status: makeStatus(),

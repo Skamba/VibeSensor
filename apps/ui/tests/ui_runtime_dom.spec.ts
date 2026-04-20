@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { getUiShellChromeHost } from "../src/app/runtime/ui_shell_chrome";
 import {
   createUiSettingsPanelHostRefs,
@@ -114,7 +113,7 @@ test("shell chrome host and panel registry resolve the startup anchors", () => {
   }
 });
 
-test.describe("runtime locator missing required feature anchors", () => {
+describe("runtime locator missing required feature anchors", () => {
   test("fails at the shell boundary when the chrome host is missing", () => {
     const restore = installDomFixture({ missingId: "appShellChromeRoot" });
     try {

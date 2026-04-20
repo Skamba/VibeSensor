@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   buildUpdateCurrentStatusSectionModel,
   buildUpdateLogSectionModel,
@@ -84,7 +83,7 @@ const deps = {
   selectedTransport: "wifi" as const,
 };
 
-test.describe("update status view models", () => {
+describe("update status view models", () => {
   test("keeps runtime asset verification visible for asset-related failures", () => {
     const model = buildUpdateCurrentStatusSectionModel(
       makeStatus({

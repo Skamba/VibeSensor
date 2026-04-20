@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, describe, expect, test } from "vitest";
 import type { SpectrumChart } from "../src/spectrum_chart";
 import { flushSignalUpdates, installWindowGlobal } from "./async_test_helpers";
 import {
@@ -10,8 +9,8 @@ import {
   withSpectrumRendererHarness,
 } from "./spectrum_canvas_renderer_test_support";
 
-test.describe("createSpectrumCanvasRenderer tween cadence", () => {
-  test.beforeEach(() => {
+describe("createSpectrumCanvasRenderer tween cadence", () => {
+  beforeEach(() => {
     installWindowGlobal();
   });
 

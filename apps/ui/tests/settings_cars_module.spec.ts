@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import { createSettingsCarsModule } from "../src/app/features/settings_cars_module";
 import { effect, signal } from "../src/app/ui_signals";
 import type { CarsListRenderModel, CarsListPanelView } from "../src/app/views/cars_panel";

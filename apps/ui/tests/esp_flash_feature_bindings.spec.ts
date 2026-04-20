@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import { signal } from "../src/app/ui_signals";
 import type { EspFlashPanelActionHandlers } from "../src/app/views/esp_flash_panel";

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { createAppState, applyLivePayloadUpdate } from "../src/app/ui_app_state";
 import type { AdaptedPayload } from "../src/transport/live_models";
 
@@ -28,7 +27,7 @@ function makeClient(id: string) {
   };
 }
 
-test.describe("applyLivePayloadUpdate", () => {
+describe("applyLivePayloadUpdate", () => {
   test("applies client, speed, spectrum, and selection changes and reports side-effect decisions", () => {
     const state = createAppState();
 
