@@ -238,7 +238,9 @@ Common runtime files under `apps/server/data/` include:
 - `history.db`: persisted run history and settings.
 - `metrics.jsonl`: optional metrics log output.
 - `clients.json`: persisted client metadata.
-- `report_i18n.json`: report translation data.
+
+Bundled static data ships under `apps/server/vibesensor/data/`, including
+`report_i18n.json`, `car_library.json`, and the scripted scenario resources.
 
 ## Pi deployment & service operations
 

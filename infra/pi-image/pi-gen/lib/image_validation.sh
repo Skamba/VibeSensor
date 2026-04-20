@@ -244,13 +244,13 @@ validate_image_artifact() {
     exit 1
   fi
 
-  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/data/report_i18n.json" ]; then
-    echo "Validation failed: missing ${ROOT_MNT}/opt/VibeSensor/apps/server/data/report_i18n.json"
+  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor/data/report_i18n.json" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor/data/report_i18n.json"
     exit 1
   fi
 
-  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/data/car_library.json" ]; then
-    echo "Validation failed: missing ${ROOT_MNT}/opt/VibeSensor/apps/server/data/car_library.json"
+  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor/data/car_library.json" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor/data/car_library.json"
     exit 1
   fi
 

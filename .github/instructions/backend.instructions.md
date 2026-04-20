@@ -14,7 +14,7 @@ Backend (scope: backend-specific behavioral rules and deltas; see `docs/ai/repo-
 	- Preserve persistence-aware diagnostics and ranking behavior; do not regress report ranking to max-only peak selection.
 	- Keep transient/impact events visible in report output, but not promoted above likely persistent faults by default.
 	- Validate report-facing output (rendered/report API/PDF text and ordering), not just internal helper outputs.
-	- When user-facing report text changes, update `apps/server/data/report_i18n.json`.
+	- When user-facing report text changes, update `apps/server/vibesensor/data/report_i18n.json`.
 	- `apps/server/vibesensor/use_cases/updates/`: wheel-based updater package; `apps/server/vibesensor/use_cases/updates/manager.py` is the public facade with workflow orchestration and validation; other modules handle Wi-Fi, releases, ESP flash, firmware cache, release validation, install and rollback, and status. Do not add backward-compatibility shims, static method passthroughs, or module-level aliases in `apps/server/vibesensor/use_cases/updates/`; when methods move to sub-modules, update callers directly.
 - Use the backend command list (defined in the copilot instructions "Commands" section); its backend type gate runs mypy across the `vibesensor` package by default without an internal module denylist, and `docs/testing.md` covers backend test placement and command details.
 - Keep route-facing modules on shared ports or adapter-local protocols rather than direct `infra` imports, and keep sensor metadata writes in `apps/server/vibesensor/adapters/http/settings/sensors.py` with the client location-assignment handoff in `apps/server/vibesensor/adapters/http/clients.py`.

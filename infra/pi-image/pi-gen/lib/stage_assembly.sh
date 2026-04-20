@@ -23,10 +23,7 @@ sync_stage_repo_snapshot() {
     --exclude "firmware/" \
     --exclude "hardware/" \
     --exclude "tools/tests/" \
-    --include "apps/server/data/" \
-    --include "apps/server/data/car_library.json" \
-    --include "apps/server/data/report_i18n.json" \
-    --exclude "apps/server/data/*" \
+    --exclude "apps/server/data/" \
     --exclude "infra/pi-image/pi-gen/.cache/" \
     --exclude "infra/pi-image/pi-gen/.pip-cache-stage/" \
     --exclude "infra/pi-image/pi-gen/out/" \
