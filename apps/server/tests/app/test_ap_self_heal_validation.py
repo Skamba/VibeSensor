@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.app.settings import APSelfHealConfig
+from vibesensor.app.config_schema import APSelfHealConfig
 
 
 def _make_self_heal(**overrides) -> APSelfHealConfig:

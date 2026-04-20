@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from vibesensor.adapters.http.dependencies import RouterDeps
+from vibesensor.app.config_schema import AppConfig
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop
 from vibesensor.infra.runtime.processing_state import ProcessingLoopState
@@ -25,7 +26,6 @@ if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
     from vibesensor.adapters.websocket.hub import WebSocketHub
-    from vibesensor.app.settings import AppConfig
     from vibesensor.infra.runtime.lifecycle import LifecycleHistoryDb, LifecycleObdRunner
 
 

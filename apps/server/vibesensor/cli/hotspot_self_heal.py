@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 
 from vibesensor.adapters.hotspot.self_heal import run_self_heal
-from vibesensor.app.settings import load_config
+from vibesensor.app.config_loader import load_config
 
 
 def main() -> None:

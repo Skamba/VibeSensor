@@ -1850,6 +1850,33 @@ def _check_process_settings_shim_removed() -> list[str]:
     return violations
 
 
+def _check_settings_facade_removed() -> list[str]:
+    legacy_path = VIBESENSOR_DIR / "app" / "settings.py"
+    violations: list[str] = []
+    if legacy_path.exists():
+        violations.append(
+            f"{legacy_path.relative_to(REPO_ROOT)} should stay removed; import "
+            "config owners directly"
+        )
+
+    for root in (SERVER_ROOT, REPO_ROOT / "tools"):
+        for path in _python_files(root):
+            for lineno, module, names, level in _scan_imports(path):
+                if level > 0:
+                    continue
+                if module == "vibesensor.app.settings":
+                    violations.append(
+                        f"{path.relative_to(REPO_ROOT)}:{lineno}: imports from "
+                        "vibesensor.app.settings; import config owners directly"
+                    )
+                if module == "vibesensor.app" and "settings" in names:
+                    violations.append(
+                        f"{path.relative_to(REPO_ROOT)}:{lineno}: imports settings "
+                        "from vibesensor.app; import config owners directly"
+                    )
+    return violations
+
+
 Check = tuple[str, Callable[[], list[str]]]
 CHECKS: tuple[Check, ...] = (
     (
@@ -2075,6 +2102,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "Process settings shim stays removed",
         _check_process_settings_shim_removed,
+    ),
+    (
+        "Settings facade stays removed",
+        _check_settings_facade_removed,
     ),
 )
 
