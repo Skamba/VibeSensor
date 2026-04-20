@@ -101,6 +101,16 @@ def test_report_summary_from_mapping_projects_canonical_metadata_and_rows() -> N
     assert summary.timeline_intervals[0].speed_min_kmh == 58.0
 
 
+def test_report_summary_from_mapping_ignores_sensor_locations_without_connected_throughout() -> None:
+    summary = report_summary_from_mapping(
+        {
+            "sensor_locations": ["front-left", "rear-right"],
+        }
+    )
+
+    assert summary.active_sensor_locations == ()
+
+
 def test_report_summary_from_mapping_drops_non_finite_summary_scalars() -> None:
     summary = report_summary_from_mapping(
         {
