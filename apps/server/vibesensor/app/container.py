@@ -31,8 +31,8 @@ from vibesensor.adapters.persistence.history_db import (
 from vibesensor.adapters.speed import SpeedSourceServices, build_speed_source_services
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
+from vibesensor.app.config_schema import AppConfig
 from vibesensor.app.runtime_state import AppRuntime, RuntimeState
-from vibesensor.app.settings import AppConfig
 from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.infra.config.car_settings import CarSettingsService
 from vibesensor.infra.config.sensor_settings import SensorSettingsService

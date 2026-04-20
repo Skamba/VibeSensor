@@ -12,12 +12,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.app.settings import (
+from vibesensor.app.config_loader import load_config
+from vibesensor.app.config_schema import (
     LoggingConfig,
     ProcessingConfig,
     ServerConfig,
     UDPConfig,
-    load_config,
 )
 
 
