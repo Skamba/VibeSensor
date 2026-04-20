@@ -109,6 +109,28 @@ def test_settings_snapshot_corrupted_json_falls_back_to_defaults(tmp_path: Path)
     assert snapshot["speedSource"] == "gps"
 
 
+def test_settings_snapshot_legacy_payload_falls_back_to_defaults(tmp_path: Path) -> None:
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    write_raw_settings_snapshot(
+        db.lifecycle,
+        (
+            '{"cars": [{"id": "", "name": " Legacy ", "type": " coupe ", "aspects": {}}], '
+            '"activeCarId": "missing-car", "manualSpeedKph": "80", "language": " NL ", '
+            '"speedUnit": " MPS ", "sensorsByMac": {"11:22:33:44:55:66": '
+            '{"name": "Rear Left Wheel", "location_code": "rear_left_wheel"}}}'
+        ),
+    )
+    services = build_settings_services(db=db.settings_snapshot_repository)
+    snapshot = services.coordinator.snapshot()
+    assert snapshot["cars"] == []
+    assert snapshot["activeCarId"] is None
+    assert snapshot["speedSource"] == "gps"
+    assert snapshot["manualSpeedKph"] is None
+    assert snapshot["language"] == "en"
+    assert snapshot["speedUnit"] == "kmh"
+    assert snapshot["sensorsByMac"] == {}
+
+
 def test_settings_snapshot_with_empty_cars_stays_empty(tmp_path: Path) -> None:
     db = create_history_persistence_adapters(tmp_path / "history.db")
     write_raw_settings_snapshot(db.lifecycle, '{"cars": [], "activeCarId": ""}')
