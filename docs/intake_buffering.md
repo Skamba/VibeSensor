@@ -77,7 +77,7 @@ then analyzes that one block.
 `infra/processing/compute.py` owns the cached FFT setup:
 
 - `SignalMetricsComputer` precomputes a Hann window with
-  `np.hanning(config.fft_n)`.
+  `scipy.signal.windows.hann(config.fft_n)`.
 - `fft_scale = 2.0 / max(1.0, sum(window))` keeps amplitudes normalized after
   windowing.
 - `fft_params(sample_rate_hz)` caches the frequency slice and valid FFT indices
@@ -90,13 +90,13 @@ then analyzes that one block.
    content.
 2. `SignalMetricsComputer.compute()` detrends the captured windows by removing
    the per-axis mean before RMS/P2P and FFT computation.
-3. `compute_fft_spectrum()` applies the Hann window, runs `np.fft.rfft()`,
-   scales the magnitudes, slices the configured frequency range, and produces
-   both per-axis spectra and a combined amplitude curve.
-4. `top_peaks()` smooths the spectrum with a 5-bin sliding average, estimates a
-   P20 noise floor, thresholds peaks above that floor, and returns the strongest
-   bins with SNR metadata.
-5. `compute_vibration_strength_db()` converts the dominant peak band into the
+3. `compute_fft_spectrum()` applies the SciPy-backed Hann window, runs the
+   planned pyFFTW RFFT backend, slices the configured frequency range via
+   SciPy FFT frequency bins, and produces both per-axis spectra and a combined
+   amplitude curve.
+4. `compute_vibration_strength_db()` uses SciPy peak finding to select dominant
+   candidate bins, estimates a P20/median noise floor, and converts the
+   dominant peak band into the
    shared dB metric used by both live telemetry and post-stop analysis:
 
    ```text
