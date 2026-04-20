@@ -24,7 +24,7 @@
     "pretest:smoke": "npm run sync:generated-contracts",
     "test:smoke": "npx playwright test --config=playwright.smoke.config.ts --project=laptop-light",
     "test:smoke:mock": "npx playwright test --config=playwright.smoke.msw.config.ts --project=laptop-light",
-    "test:signals": "tsx tests/signal_view_reference_tests.ts",
+    "test:signals": "tsx tests/signal_view_reference_tests.ts && tsx tests/maintenance_feature_signal_tests.ts",
     "test:visual": "npx playwright test",
     "test:visual:update": "npx playwright test --update-snapshots",
     "test:visual:audit": "npx playwright test --config=playwright.visual-audit.config.ts",

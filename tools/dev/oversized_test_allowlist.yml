@@ -4,8 +4,6 @@
 threshold_lines: 700
 report_limit: 10
 allowlist:
-  # Shared maintenance-flow harness reused by several focused ESP/update specs.
-  apps/ui/tests/maintenance_feature_test_support.ts: Shared maintenance feature harness for ESP flash and updater feature specs.
   # Projection regressions intentionally stay together so report-shape drift is reviewed in one place.
   apps/server/tests/adapters/pdf/test_report_document_projection.py: High-density report projection regression matrix kept together by document-output seam.
   # Settings smoke keeps the full multi-tab settings journey in one browser spec.
