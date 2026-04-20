@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -8,6 +9,7 @@ import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
+from test_support.tracing import configured_trace_output, read_trace_output
 
 from vibesensor.adapters.http.error_boundary import install_http_exception_handlers
 from vibesensor.adapters.http.middleware import install_request_logging_middleware
@@ -195,3 +197,24 @@ def test_request_validation_error_keeps_status_code_and_request_id(
     assert request_log.request_id == "validation-request"
     assert request_log.status_code == 422
     assert all(rec.message != "http_request_failed" for rec in caplog.records)
+
+
+def test_request_logging_middleware_exports_http_trace_span(tmp_path: Path) -> None:
+    app = FastAPI()
+    install_request_logging_middleware(app)
+
+    @app.get("/ping")
+    async def ping() -> dict[str, bool]:
+        return {"ok": True}
+
+    with configured_trace_output(tmp_path) as trace_path:
+        with TestClient(app) as client:
+            response = client.get("/ping", headers={REQUEST_ID_HEADER: "trace-request"})
+
+    assert response.status_code == 200
+    span = next(item for item in read_trace_output(trace_path) if item["name"] == "http.request")
+    assert span["kind"] == "server"
+    assert span["attributes"]["http.method"] == "GET"
+    assert span["attributes"]["url.path"] == "/ping"
+    assert span["attributes"]["http.status_code"] == 200
+    assert span["attributes"]["vibesensor.request_id"] == "trace-request"

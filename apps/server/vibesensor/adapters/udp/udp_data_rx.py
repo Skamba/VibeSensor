@@ -12,6 +12,8 @@ import logging
 import time
 from typing import cast
 
+from opentelemetry.trace import SpanKind
+
 from vibesensor.adapters.udp.protocol import (
     MSG_DATA,
     DataMessage,
@@ -21,8 +23,9 @@ from vibesensor.adapters.udp.protocol import (
 )
 from vibesensor.adapters.udp.protocol_validator import ProtocolVersionMismatch
 from vibesensor.infra.processing import SignalProcessor
-from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.infra.runtime.registry import ClientRegistry, DataUpdateResult
 from vibesensor.shared.exceptions import ProtocolError
+from vibesensor.shared.tracing import mark_span_error, start_span
 
 LOGGER = logging.getLogger(__name__)
 
@@ -122,10 +125,29 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                 self._queue.task_done()
 
     def _process_datagram(self, data: bytes, addr: tuple[str, int]) -> None:
-        msg = self._parse_data_message(data, addr)
-        if msg is None:
-            return
-        self._dispatch_data_message(msg, addr)
+        with start_span(
+            __name__,
+            "udp.data.dispatch",
+            kind=SpanKind.CONSUMER,
+            attributes={
+                "net.peer.ip": addr[0],
+                "net.peer.port": addr[1],
+            },
+        ) as span:
+            msg = self._parse_data_message(data, addr)
+            if msg is None:
+                span.set_attribute("vibesensor.datagram.accepted", False)
+                return
+            span.set_attribute("vibesensor.datagram.accepted", True)
+            span.set_attribute("vibesensor.client_id", msg.client_id.hex())
+            span.set_attribute("vibesensor.sample_count", len(msg.samples))
+            try:
+                result = self._dispatch_data_message(msg, addr)
+            except Exception as exc:
+                mark_span_error(span, exc)
+                raise
+            span.set_attribute("vibesensor.is_duplicate", result.is_duplicate)
+            span.set_attribute("vibesensor.reset_detected", result.reset_detected)
 
     def _parse_data_message(self, data: bytes, addr: tuple[str, int]) -> DataMessage | None:
         try:
@@ -141,7 +163,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             self.registry.note_parse_error(client_id)
             return None
 
-    def _dispatch_data_message(self, msg: DataMessage, addr: tuple[str, int]) -> None:
+    def _dispatch_data_message(self, msg: DataMessage, addr: tuple[str, int]) -> DataUpdateResult:
         client_id = msg.client_id.hex()
         registry = self.registry
         processor = self.processor
@@ -163,6 +185,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                 t0_us=msg.t0_us,
             )
         self._send_data_ack(msg, addr, client_id=client_id)
+        return result
 
     def _send_data_ack(
         self,

@@ -12,12 +12,15 @@ import contextlib
 import logging
 from collections.abc import Callable
 
+from opentelemetry.trace import SpanKind
+
 from vibesensor.adapters.websocket.connection_tracker import (
     ConnectionTracker,
     WSConnectionSnapshot,
 )
 from vibesensor.adapters.websocket.payload_orchestrator import PayloadBuildOrchestrator
 from vibesensor.shared.structured_logging import log_extra
+from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.payload_types import LiveWsPayload
 
 LOGGER = logging.getLogger(__name__)
@@ -52,19 +55,40 @@ class BroadcastRunner:
         conns = await self._tracker.snapshot()
         if not conns:
             return
-        payloads = PayloadBuildOrchestrator(
-            payload_builder,
-            capture_debug=capture_debug,
-        )
-        await payloads.prepare(conn.selected_client_id for conn in conns)
-        sent_selected_client_ids: dict[int, str | None] = {}
+        with start_span(
+            __name__,
+            "ws.broadcast.tick",
+            kind=SpanKind.INTERNAL,
+            attributes={
+                "vibesensor.connection_count": len(conns),
+                "vibesensor.capture_debug": capture_debug,
+            },
+        ) as span:
+            payloads = PayloadBuildOrchestrator(
+                payload_builder,
+                capture_debug=capture_debug,
+            )
+            try:
+                await payloads.prepare(conn.selected_client_id for conn in conns)
+                sent_selected_client_ids: dict[int, str | None] = {}
 
-        dead_ws = await asyncio.gather(
-            *(self._send_current_conn(conn, payloads, sent_selected_client_ids) for conn in conns),
-        )
-        await self._cleanup_dead(dead_ws)
-        self._log_build_failures(payloads, sent_selected_client_ids)
-        self._log_debug(payloads, conns, dead_ws)
+                dead_ws = await asyncio.gather(
+                    *(
+                        self._send_current_conn(conn, payloads, sent_selected_client_ids)
+                        for conn in conns
+                    ),
+                )
+                await self._cleanup_dead(dead_ws)
+            except Exception as exc:
+                mark_span_error(span, exc)
+                raise
+            span.set_attribute("vibesensor.payload_variant_count", len(payloads.payload_cache))
+            span.set_attribute("vibesensor.failed_client_count", len(payloads.failed_client_ids))
+            span.set_attribute(
+                "vibesensor.removed_connection_count", sum(1 for ws in dead_ws if ws)
+            )
+            self._log_build_failures(payloads, sent_selected_client_ids)
+            self._log_debug(payloads, conns, dead_ws)
 
     async def _send_conn(
         self,

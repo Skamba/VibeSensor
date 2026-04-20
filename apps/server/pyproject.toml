@@ -20,6 +20,8 @@ dependencies = [
   "granian[reload]>=2.7,<3",
   "uvloop>=0.22,<1; sys_platform == 'linux'",
   "numpy>=2.4.4,<3",
+  "opentelemetry-api>=1.38,<2",
+  "opentelemetry-sdk>=1.38,<2",
   "scipy>=1.16.3,<2",
   "structlog>=25.4,<26",
   "orjson>=3.11.4,<4",
@@ -192,7 +194,7 @@ forbidden_modules = ["vibesensor.app", "vibesensor.cli"]
 [tool.deptry]
 known_first_party = ["test_support"]
 optional_dependencies_dev_groups = ["dev"]
-package_module_name_map = { PyYAML = ["yaml"], pyserial = ["serial"] }
+package_module_name_map = { PyYAML = ["yaml"], pyserial = ["serial"], "opentelemetry-api" = ["opentelemetry"], "opentelemetry-sdk" = ["opentelemetry"] }
 # ESP flashing intentionally resolves esptool via PATH / `python -m esptool`
 # rather than importing it directly, so DEP002 would otherwise be a false
 # positive for the optional firmware-flash extra.
