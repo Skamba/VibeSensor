@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -71,11 +72,11 @@ _TARGET_ENV_SNAPSHOT_SCRIPT = "\n".join(
 )
 
 
-def _target_environment_snapshot_request_json(distribution_names: list[str]) -> str:
+def _target_environment_snapshot_request_json(distribution_names: Sequence[str]) -> str:
     """Encode the target-environment snapshot request as one JSON CLI argument."""
 
     return msgspec.json.encode(
-        _TargetEnvironmentSnapshotRequest(distribution_names=distribution_names)
+        _TargetEnvironmentSnapshotRequest(distribution_names=list(distribution_names))
     ).decode("utf-8")
 
 
