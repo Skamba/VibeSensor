@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, describe, expect, test } from "vitest";
 import { addSettingsCar } from "../src/api/settings";
 import { getHistoryInsights } from "../src/api/history";
 import { getLoggingStatus } from "../src/api/logging";
@@ -13,10 +12,10 @@ import { HttpResponse, http, uiTestUrl } from "./msw/http";
 import { buildCarsHandlers, makeCarsPayload } from "./msw/handlers/settings";
 import { createUiMswTestServer } from "./msw/node";
 
-const mswServer = createUiMswTestServer(test);
+const mswServer = createUiMswTestServer();
 
-test.describe("API adapter clone usage", () => {
-  test.beforeEach(() => {
+describe("API adapter clone usage", () => {
+  beforeEach(() => {
     installWindowGlobal();
   });
 

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import { createSettingsSpeedSourceModule } from "../src/app/features/settings_speed_source_module";
 import { createAppState } from "../src/app/ui_app_state";
 import { signal } from "../src/app/ui_signals";

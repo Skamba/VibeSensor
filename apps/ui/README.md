@@ -10,7 +10,8 @@ server over HTTP (REST) and WebSocket (live data).
 - **Preact + @preact/signals** — UI rendering plus shared reactive state
 - **Vite** — build tool and dev server
 - **uPlot** — high-performance spectrum charts
-- **Playwright** — visual regression testing
+- **Vitest + happy-dom** — canonical fast unit/integration test runner
+- **Playwright** — browser, visual regression, and smoke testing
 - **CSS custom properties** — Material Design 3 inspired theming
 
 ## Setup
@@ -410,6 +411,32 @@ current error payload is `{"error": "payload_build_failed"}`, which indicates
 the backend could not assemble the live update tick and sent an explicit error
 frame instead of the normal payload.
 
+## Test layers
+
+The UI has two complementary test layers; pick the one that matches the seam
+under test.
+
+| Layer | Runner | What it covers | Command |
+|-------|--------|----------------|---------|
+| **Unit / integration** | Vitest (`happy-dom`) | Payload decoders, runtime helpers, feature orchestration, signal-mounted islands, view-level pure helpers — anything that does not require a real browser | `npm run test:unit` |
+| **Smoke** | Playwright (Chromium) | End-to-end UI flows against a real Vite dev/preview server; file pattern `tests/smoke*.spec.ts` | `npm run test:smoke` |
+| **Visual / snapshot** | Playwright (Chromium) | Rendered-state regression baselines in `tests/snapshots/`; file pattern `tests/visual.spec.ts` | `npm run test:visual` |
+
+Vitest is the canonical fast test layer; reach for it whenever the test does not
+need a real browser. Keep Playwright for the narrow slice that exercises a live
+browser, navigation, or visual snapshots.
+
+```bash
+npm run test:unit            # run the Vitest unit suite once
+npm run test:unit:watch      # watch mode during local iteration
+```
+
+Vitest auto-discovers `tests/**/*.spec.ts` and excludes the Playwright-owned
+`smoke*.spec.ts`, `visual.spec.ts`, and `msw-browser.smoke.spec.ts` files via
+[`vitest.config.ts`](./vitest.config.ts). New logic-level tests should land as
+`tests/<feature>_*.spec.ts`; new browser flows should land as
+`tests/smoke.<feature>.spec.ts`.
+
 ## Visual Tests
 
 Playwright snapshot tests default to one intentional regression target:
@@ -446,13 +473,12 @@ cost. Both visual commands only run `tests/visual.spec.ts`.
   returns a typed bridge plus deterministic cleanup.
 - Drive island state with `signal()` and `computed()` inputs instead of
   rebuilding the old `render(model)` fixture pattern.
-  `tests/signal_view_reference_tests.ts` contains the reference panel coverage
+  `tests/signal_view_reference.spec.ts` contains the reference panel coverage
   for direct signal JSX bindings, computed-driven output assertions, and
   effect-backed subscription seams.
-- Run `npm run test:signals` to execute the reference signal-view coverage
-  directly in Node. That lane now also covers the mounted maintenance feature
-  harness in `tests/maintenance_feature_signal_tests.ts`, so isolated panel
-  tests do not need the Playwright unit runner just to exercise mounted DOM.
+- That Vitest spec also pairs with `tests/maintenance_feature_signal.spec.ts`,
+  which exercises the mounted maintenance feature harness. Both run under
+  `npm run test:unit` alongside the rest of the unit suite.
 - Use `tests/async_test_helpers.ts::flushSignalUpdates()` after mutating signals
   or when waiting on effect-owned side effects.
   The same reference file also covers an effect-backed subscription seam through

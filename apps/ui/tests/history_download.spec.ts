@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import {
   downloadBlobFile,
   filenameFromDisposition,
@@ -10,7 +9,7 @@ import {
 } from "./msw/handlers/history";
 import { createUiMswTestServer } from "./msw/node";
 
-const mswServer = createUiMswTestServer(test);
+const mswServer = createUiMswTestServer();
 
 test("filenameFromDisposition decodes UTF-8 and falls back when needed", () => {
   expect(

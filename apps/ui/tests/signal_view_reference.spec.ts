@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { test } from "vitest";
 
 import {
   computed,
@@ -376,6 +377,5 @@ const referenceTests = [
 ];
 
 for (const referenceTest of referenceTests) {
-  await referenceTest.run();
-  console.log(`PASS ${referenceTest.name}`);
+  test(referenceTest.name, referenceTest.run);
 }

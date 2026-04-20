@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   createCarsFeatureWorkflow,
   type CarsFeatureFocusTarget,
@@ -92,7 +91,7 @@ function makeModel(overrides: Partial<CarLibraryModel> = {}): CarLibraryModel {
   };
 }
 
-test.describe("createCarsFeatureWorkflow", () => {
+describe("createCarsFeatureWorkflow", () => {
   test("surfaces brand-load failures through render state and focuses the custom-brand input", async () => {
     const harness = createHarness();
     const workflow = createCarsFeatureWorkflow({

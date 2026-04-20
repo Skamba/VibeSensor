@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import type { HistoryEntry } from "../src/api/types";
 import { buildHistoryTableRowsViewModel } from "../src/app/views/history_table_presenters";
 import type { RunDetail } from "../src/app/ui_app_state";

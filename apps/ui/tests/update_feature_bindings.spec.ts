@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import { createUpdateFeature } from "../src/app/features/update_feature";
 import { signal } from "../src/app/ui_signals";
 import type { InternetPanelActionHandlers } from "../src/app/views/internet_panel";

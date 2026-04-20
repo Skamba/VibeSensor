@@ -1,8 +1,7 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { createSpectrumPanel } from "../src/app/views/spectrum_panel";
 
-test.describe("createSpectrumPanel", () => {
+describe("createSpectrumPanel", () => {
   test("keeps hover-only inspector updates out of the live announcer", () => {
     const panel = createSpectrumPanel();
 

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   createCarsManualInputStore,
   type CarsFeatureManualInputState,
@@ -16,7 +15,7 @@ function formatManualInputs(inputs: CarsFeatureManualInputState): string {
   ].join(":");
 }
 
-test.describe("createCarsManualInputStore", () => {
+describe("createCarsManualInputStore", () => {
   test("batches multi-field writes into one reactive invalidation", () => {
     const step = signal(4);
     const store = createCarsManualInputStore(step);
