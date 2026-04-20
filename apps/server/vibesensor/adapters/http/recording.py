@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
@@ -63,16 +64,16 @@ def create_recording_routes(
     @router.get("/api/recording/status", response_model=RecordingStatusResponse)
     async def get_logging_status() -> RecordingStatusResponse:
         """Return the current recording state, counters, and last completed run details."""
-        return _recording_status_response(run_recorder.status())
+        return _recording_status_response(await asyncio.to_thread(run_recorder.status))
 
     @router.post("/api/recording/start", response_model=RecordingStatusResponse)
     async def start_logging() -> RecordingStatusResponse:
         """Start recording a new run and return the updated recorder status snapshot."""
-        return _recording_status_response(run_recorder.start_recording())
+        return _recording_status_response(await asyncio.to_thread(run_recorder.start_recording))
 
     @router.post("/api/recording/stop", response_model=RecordingStatusResponse)
     async def stop_logging() -> RecordingStatusResponse:
         """Stop the active recording and return the updated recorder status snapshot."""
-        return _recording_status_response(run_recorder.stop_recording())
+        return _recording_status_response(await asyncio.to_thread(run_recorder.stop_recording))
 
     return router

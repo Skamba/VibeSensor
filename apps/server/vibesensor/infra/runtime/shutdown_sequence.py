@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging
-import sqlite3
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+
+import aiosqlite
 
 if TYPE_CHECKING:
     from vibesensor.infra.runtime.background_task_coordinator import BackgroundTaskCoordinator
@@ -57,7 +59,7 @@ class LifecycleShutdownSequence:
         lingering_managed = await self._cancel_managed_jobs()
         await self._drain_analysis()
         await self._shutdown_worker_pool(issues)
-        self._close_history_db(issues)
+        await self._close_history_db(issues)
         return LifecycleShutdownResult(
             lingering_managed=tuple(lingering_managed),
             issues=tuple(issues),
@@ -117,10 +119,12 @@ class LifecycleShutdownSequence:
                 )
             )
 
-    def _close_history_db(self, issues: list[LifecycleShutdownIssue]) -> None:
+    async def _close_history_db(self, issues: list[LifecycleShutdownIssue]) -> None:
         try:
-            self._runtime.history_db.close()
-        except (sqlite3.Error, OSError) as exc:
+            close_result = self._runtime.history_db.close()
+            if inspect.isawaitable(close_result):
+                await close_result
+        except (aiosqlite.Error, OSError) as exc:
             issues.append(
                 LifecycleShutdownIssue(
                     phase="close_history_db",

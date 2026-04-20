@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
-import sqlite3
 import time
 from typing import Protocol
+
+import aiosqlite
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -62,7 +63,7 @@ def execute_post_analysis(
     LOGGER.info("Analysis started for run %s", run_id)
     try:
         load_result = load_run(run_id=run_id, db=db)
-    except (sqlite3.Error, OSError, MemoryError) as exc:
+    except (aiosqlite.Error, OSError, MemoryError) as exc:
         if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
             return _retryable_failure_result(
                 run_id=run_id,
@@ -99,7 +100,7 @@ def execute_post_analysis(
     try:
         summary = analysis_runner(run_input)
         db.store_analysis(loaded.run_id, summary)
-    except (sqlite3.Error, OSError, MemoryError) as exc:
+    except (aiosqlite.Error, OSError, MemoryError) as exc:
         if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
             return _retryable_failure_result(
                 run_id=loaded.run_id,
@@ -132,7 +133,7 @@ def _store_load_error(
 ) -> PostAnalysisExecutionResult:
     try:
         db.store_analysis_error(run_id, completed_error)
-    except sqlite3.Error:
+    except aiosqlite.Error:
         LOGGER.warning("Failed to store analysis error for run %s", run_id, exc_info=True)
         return PostAnalysisExecutionPersistenceFailure(
             run_id=run_id,
@@ -192,7 +193,7 @@ def _persistence_failure_result(
 
     try:
         db.store_analysis_error(run_id, completed_error)
-    except sqlite3.Error as store_exc:
+    except aiosqlite.Error as store_exc:
         LOGGER.warning("Failed to store analysis error for run %s", run_id, exc_info=True)
         return PostAnalysisExecutionPersistenceFailure(
             run_id=run_id,

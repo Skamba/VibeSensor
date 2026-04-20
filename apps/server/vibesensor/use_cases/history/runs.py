@@ -8,7 +8,7 @@ from typing import Never, cast
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.summary_fields.warnings import localize_warning_list
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
-from vibesensor.shared.ports import RunPersistence
+from vibesensor.shared.ports import AsyncRunPersistence, RunPersistence
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_array
 from vibesensor.use_cases.history.helpers import (
@@ -24,11 +24,15 @@ class HistoryRunService:
 
     __slots__ = ("_history_db",)
 
-    def __init__(self, history_db: RunPersistence) -> None:
+    def __init__(self, history_db: AsyncRunPersistence) -> None:
         self._history_db = history_db
 
     async def list_runs(self) -> list[HistoryRunListEntry]:
-        return await asyncio.to_thread(self._history_db.list_runs)
+        alist_runs = getattr(self._history_db, "alist_runs", None)
+        if callable(alist_runs):
+            return cast(list[HistoryRunListEntry], await alist_runs())
+        sync_history_db = cast(RunPersistence, self._history_db)
+        return await asyncio.to_thread(sync_history_db.list_runs)
 
     async def get_run(self, run_id: str) -> StoredHistoryRun:
         return await async_require_run(self._history_db, run_id)
@@ -60,7 +64,12 @@ class HistoryRunService:
         return analysis
 
     async def delete_run(self, run_id: str) -> dict[str, str]:
-        deleted, reason = await asyncio.to_thread(self._history_db.delete_run_if_safe, run_id)
+        adelete_run_if_safe = getattr(self._history_db, "adelete_run_if_safe", None)
+        if callable(adelete_run_if_safe):
+            deleted, reason = await adelete_run_if_safe(run_id)
+        else:
+            sync_history_db = cast(RunPersistence, self._history_db)
+            deleted, reason = await asyncio.to_thread(sync_history_db.delete_run_if_safe, run_id)
         if deleted:
             return {"run_id": run_id, "status": "deleted"}
         raise_delete_run_error(reason)
@@ -75,7 +84,7 @@ def raise_delete_run_error(reason: str | None) -> Never:
             "Cannot delete the active run; stop recording first",
             status="active",
         )
-    if reason == RunStatus.ANALYZING:
+    if reason == RunStatus.ANALYZING.value:
         raise AnalysisNotReadyError(
             "Cannot delete run while analysis is in progress",
             status="in_progress",
