@@ -17,7 +17,6 @@ import msgspec
 from tenacity import Retrying, retry_if_exception_type, stop_after_delay, wait_fixed
 
 from vibesensor.use_cases.updates.artifact_validation import wheel_metadata_validation_errors
-from vibesensor.use_cases.updates.firmware.firmware_bundle import flash_manifest_record_from_json
 
 _RELEASE_SMOKE_RETRY_WAIT_S = 0.5
 
@@ -59,6 +58,10 @@ def build_release_smoke_config(
 
 
 def validate_firmware_dist(dist_dir: Path) -> list[str]:
+    from vibesensor.use_cases.updates.firmware.firmware_bundle import (
+        flash_manifest_record_from_json,
+    )
+
     errors: list[str] = []
     manifest_path = dist_dir / "flash.json"
     if not manifest_path.is_file():

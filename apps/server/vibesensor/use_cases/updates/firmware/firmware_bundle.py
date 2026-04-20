@@ -248,10 +248,12 @@ def _manifest_environment_record_from_object(
 
 
 def _manifest_segment_record_from_object(payload: Mapping[str, object]) -> ManifestSegmentRecord:
+    file_name = payload.get("file")
+    offset = payload.get("offset")
     sha256 = payload.get("sha256", "")
     return ManifestSegmentRecord(
-        file=payload.get("file") if isinstance(payload.get("file"), str) else "",
-        offset=payload.get("offset") if isinstance(payload.get("offset"), str) else "",
+        file=file_name if isinstance(file_name, str) else "",
+        offset=offset if isinstance(offset, str) else "",
         sha256=sha256 if isinstance(sha256, str) else "",
     )
 
