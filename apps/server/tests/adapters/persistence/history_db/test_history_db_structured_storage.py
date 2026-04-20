@@ -9,7 +9,7 @@ from typing import cast
 import pytest
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import (
     sensor_frame_from_mapping,
@@ -80,12 +80,14 @@ def _sensor_frame_dict(i: int, *, run_id: str = "run-v2") -> dict[str, object]:
 
 
 def test_v2_structured_roundtrip(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-v2", "2026-01-01T00:00:00Z", _metadata("run-v2"))
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db.run_repository.create_run("run-v2", "2026-01-01T00:00:00Z", _metadata("run-v2"))
     originals = [_sensor_frame_dict(i) for i in range(5)]
-    db.append_samples("run-v2", [sensor_frame_from_mapping(sample) for sample in originals])
+    db.run_repository.append_samples(
+        "run-v2", [sensor_frame_from_mapping(sample) for sample in originals]
+    )
 
-    retrieved = db.get_run_samples("run-v2")
+    retrieved = db.run_repository.get_run_samples("run-v2")
     assert len(retrieved) == 5
     for i, row in enumerate(retrieved):
         orig = originals[i]
@@ -98,12 +100,12 @@ def test_v2_structured_roundtrip(tmp_path: Path) -> None:
 
 
 def test_v2_nan_inf_sanitized(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-nan", "2026-01-01T00:00:00Z", _metadata("run-nan"))
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db.run_repository.create_run("run-nan", "2026-01-01T00:00:00Z", _metadata("run-nan"))
     sample = {"speed_kmh": float("nan"), "accel_x_g": float("inf"), "t_s": 1.0}
-    db.append_samples("run-nan", [sensor_frame_from_mapping(sample)])
+    db.run_repository.append_samples("run-nan", [sensor_frame_from_mapping(sample)])
 
-    rows = db.get_run_samples("run-nan")
+    rows = db.run_repository.get_run_samples("run-nan")
     assert len(rows) == 1
     assert rows[0].speed_kmh is None
     assert rows[0].accel_x_g is None
@@ -111,11 +113,13 @@ def test_v2_nan_inf_sanitized(tmp_path: Path) -> None:
 
 
 def test_v2_no_json_blobs_in_storage(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-check", "2026-01-01T00:00:00Z", _metadata("run-check"))
-    db.append_samples("run-check", [sensor_frame_from_mapping(_sensor_frame_dict(0))])
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db.run_repository.create_run("run-check", "2026-01-01T00:00:00Z", _metadata("run-check"))
+    db.run_repository.append_samples(
+        "run-check", [sensor_frame_from_mapping(_sensor_frame_dict(0))]
+    )
 
-    with db._cursor(commit=False) as cur:
+    with db.lifecycle._cursor(commit=False) as cur:
         cur.execute("PRAGMA table_info(samples_v2)")
         columns = {row[1] for row in cur.fetchall()}
 
@@ -167,17 +171,17 @@ def test_v4_db_rejected(tmp_path: Path) -> None:
 
     # No migrations are registered — opening a v4 database raises RuntimeError.
     with pytest.raises(RuntimeError, match="incompatible"):
-        HistoryDB(db_path)
+        create_history_persistence_adapters(db_path)
 
 
 def test_v2_sensor_frame_objects(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-sf", "2026-01-01T00:00:00Z", _metadata("run-sf"))
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db.run_repository.create_run("run-sf", "2026-01-01T00:00:00Z", _metadata("run-sf"))
 
     frame = sensor_frame_from_mapping(_sensor_frame_dict(0, run_id="run-sf"))
-    db.append_samples("run-sf", [frame])
+    db.run_repository.append_samples("run-sf", [frame])
 
-    rows = db.get_run_samples("run-sf")
+    rows = db.run_repository.get_run_samples("run-sf")
     assert len(rows) == 1
     assert rows[0].client_id == "aabbccddeeff"
     assert rows[0].speed_kmh == 60.0
@@ -185,87 +189,97 @@ def test_v2_sensor_frame_objects(tmp_path: Path) -> None:
 
 
 def test_v2_delete_cascades_legacy_and_v2(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-del2", "2026-01-01T00:00:00Z", _metadata("run-del2"))
-    db.append_samples(
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db.run_repository.create_run("run-del2", "2026-01-01T00:00:00Z", _metadata("run-del2"))
+    db.run_repository.append_samples(
         "run-del2",
         [sensor_frame_from_mapping(_sensor_frame_dict(i, run_id="run-del2")) for i in range(3)],
     )
 
-    assert len(db.get_run_samples("run-del2")) == 3
-    db.delete_run("run-del2")
+    assert len(db.run_repository.get_run_samples("run-del2")) == 3
+    db.run_repository.delete_run("run-del2")
 
-    with db._cursor(commit=False) as cur:
+    with db.lifecycle._cursor(commit=False) as cur:
         cur.execute("SELECT COUNT(*) FROM samples_v2 WHERE run_id = ?", ("run-del2",))
         assert cur.fetchone()[0] == 0
 
 
 def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-full", "2026-01-01T00:00:00Z", _metadata("run-full", source="roundtrip"))
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db.run_repository.create_run(
+        "run-full", "2026-01-01T00:00:00Z", _metadata("run-full", source="roundtrip")
+    )
 
     for batch_start in range(0, 20, 5):
         batch = [
             _sensor_frame_dict(i, run_id="run-full") for i in range(batch_start, batch_start + 5)
         ]
-        db.append_samples("run-full", [sensor_frame_from_mapping(sample) for sample in batch])
+        db.run_repository.append_samples(
+            "run-full", [sensor_frame_from_mapping(sample) for sample in batch]
+        )
 
-    db.finalize_run("run-full", "2026-01-01T00:00:20Z")
-    assert db.get_run("run-full").status.value == "analyzing"
+    db.run_repository.finalize_run("run-full", "2026-01-01T00:00:20Z")
+    assert db.run_repository.get_run("run-full").status.value == "analyzing"
 
     analysis = _analysis("run-full", score=42)
-    db.store_analysis("run-full", make_persisted_analysis(analysis))
-    assert db.get_run("run-full").status.value == "complete"
+    db.run_repository.store_analysis("run-full", make_persisted_analysis(analysis))
+    assert db.run_repository.get_run("run-full").status.value == "complete"
 
-    all_samples = db.get_run_samples("run-full")
+    all_samples = db.run_repository.get_run_samples("run-full")
     assert len(all_samples) == 20
 
-    batched = list(db.iter_run_samples("run-full", batch_size=7))
+    batched = list(db.run_repository.iter_run_samples("run-full", batch_size=7))
     flat = [s for b in batched for s in b]
     assert len(flat) == 20
     assert [s.t_s for s in flat] == [float(i) for i in range(20)]
 
-    run = db.get_run("run-full")
+    run = db.run_repository.get_run("run-full")
     assert run is not None
     assert run.sample_count == 20
     assert run.status.value == "complete"
-    assert db.get_run("run-full").analysis == analysis
+    assert db.run_repository.get_run("run-full").analysis == analysis
 
 
 def test_v2_iter_with_offset(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-off", "2026-01-01T00:00:00Z", _metadata("run-off"))
-    db.append_samples("run-off", [sensor_frame_from_mapping({"t_s": float(i)}) for i in range(10)])
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db.run_repository.create_run("run-off", "2026-01-01T00:00:00Z", _metadata("run-off"))
+    db.run_repository.append_samples(
+        "run-off", [sensor_frame_from_mapping({"t_s": float(i)}) for i in range(10)]
+    )
 
-    rows0 = [s for b in db.iter_run_samples("run-off", offset=0) for s in b]
+    rows0 = [s for b in db.run_repository.iter_run_samples("run-off", offset=0) for s in b]
     assert [r.t_s for r in rows0] == [float(i) for i in range(10)]
 
-    rows1 = [s for b in db.iter_run_samples("run-off", offset=1) for s in b]
+    rows1 = [s for b in db.run_repository.iter_run_samples("run-off", offset=1) for s in b]
     assert [r.t_s for r in rows1] == [float(i) for i in range(1, 10)]
 
-    rows5 = [s for b in db.iter_run_samples("run-off", batch_size=3, offset=5) for s in b]
+    rows5 = [
+        s for b in db.run_repository.iter_run_samples("run-off", batch_size=3, offset=5) for s in b
+    ]
     assert [r.t_s for r in rows5] == [5.0, 6.0, 7.0, 8.0, 9.0]
 
-    rows_past = [s for b in db.iter_run_samples("run-off", offset=20) for s in b]
+    rows_past = [s for b in db.run_repository.iter_run_samples("run-off", offset=20) for s in b]
     assert rows_past == []
 
 
 def test_iter_run_samples_skips_corrupt_rows_and_continues(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-corrupt", "2026-01-01T00:00:00Z", _metadata("run-corrupt"))
-    db.append_samples(
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db.run_repository.create_run("run-corrupt", "2026-01-01T00:00:00Z", _metadata("run-corrupt"))
+    db.run_repository.append_samples(
         "run-corrupt",
         [sensor_frame_from_mapping({"t_s": 1.0}), sensor_frame_from_mapping({"t_s": 2.0})],
     )
-    with db._cursor() as cur:
+    with db.lifecycle._cursor() as cur:
         cur.execute(
             "INSERT INTO samples_v2 (run_id, top_peaks) VALUES (?, ?)",
             ("run-corrupt", "{bad"),
         )
-    db.append_samples("run-corrupt", [sensor_frame_from_mapping({"t_s": 3.0})])
+    db.run_repository.append_samples("run-corrupt", [sensor_frame_from_mapping({"t_s": 3.0})])
 
     rows = [
-        sample for batch in db.iter_run_samples("run-corrupt", batch_size=2) for sample in batch
+        sample
+        for batch in db.run_repository.iter_run_samples("run-corrupt", batch_size=2)
+        for sample in batch
     ]
     assert len(rows) == 3
     assert rows[0].t_s == 1.0
@@ -277,10 +291,12 @@ def test_v2_row_to_dict_non_list_peak_column_warns_and_skips_row(
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-peak-warn", "2026-01-01T00:00:00Z", _metadata("run-peak-warn"))
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    db.run_repository.create_run(
+        "run-peak-warn", "2026-01-01T00:00:00Z", _metadata("run-peak-warn")
+    )
 
-    with db._cursor() as cur:
+    with db.lifecycle._cursor() as cur:
         cur.execute(
             "INSERT INTO samples_v2 (run_id, top_peaks) VALUES (?, ?)",
             ("run-peak-warn", '{"unexpected": "dict"}'),
@@ -289,7 +305,7 @@ def test_v2_row_to_dict_non_list_peak_column_warns_and_skips_row(
     import logging
 
     with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.persistence.history_db"):
-        rows = db.get_run_samples("run-peak-warn")
+        rows = db.run_repository.get_run_samples("run-peak-warn")
 
     assert rows == []
     assert "top_peaks" in caplog.text

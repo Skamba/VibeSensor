@@ -10,7 +10,7 @@ import pytest
 from test_support.core import wait_until
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
 from vibesensor.shared.types.history_records import AnalyzingRunHealth
 from vibesensor.use_cases.run import _recorder_runtime
@@ -398,7 +398,7 @@ def test_stop_recording_does_not_block_on_post_analysis(
     promptly. This test simulates a slow summarizer and requires stop_recording to return quickly
     while analysis completes asynchronously afterward.
     """
-    history_db = HistoryDB(tmp_path / "history.db")
+    history_db = create_history_persistence_adapters(tmp_path / "history.db")
     summary_started = threading.Event()
     allow_summary_finish = threading.Event()
 
@@ -418,7 +418,7 @@ def test_stop_recording_does_not_block_on_post_analysis(
         "vibesensor.use_cases.run.logger.build_post_analysis_summary",
         _slow_analysis_runner,
     )
-    logger = make_logger(history_db=history_db)
+    logger = make_logger(history_db=history_db.run_repository)
 
     snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
@@ -437,7 +437,7 @@ def test_stop_recording_does_not_block_on_post_analysis(
     allow_summary_finish.set()
 
     def _status():
-        run = history_db.get_run(run_id)
+        run = history_db.run_repository.get_run(run_id)
         return run.status.value if run is not None else None
 
     assert wait_until(lambda: _status() == "complete", timeout_s=5.0)
@@ -448,7 +448,7 @@ def test_post_analysis_unexpected_failure_surfaces_worker_error_status(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    history_db = HistoryDB(tmp_path / "history.db")
+    history_db = create_history_persistence_adapters(tmp_path / "history.db")
 
     def _failing_analysis_runner(_run) -> dict[str, object]:
         raise RuntimeError("analysis exploded")
@@ -457,7 +457,7 @@ def test_post_analysis_unexpected_failure_surfaces_worker_error_status(
         "vibesensor.use_cases.run.logger.build_post_analysis_summary",
         _failing_analysis_runner,
     )
-    logger = make_logger(history_db=history_db)
+    logger = make_logger(history_db=history_db.run_repository)
 
     snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
@@ -475,7 +475,7 @@ def test_post_analysis_unexpected_failure_surfaces_worker_error_status(
     status = logger.status()
     assert status.last_completed_run_error == expected_worker_bug
     assert status.write_error == f"post-analysis worker bug for run {run_id}: analysis exploded"
-    run = history_db.get_run(run_id)
+    run = history_db.run_repository.get_run(run_id)
     assert run is not None
     assert run.analysis is None
     assert run.status.value == "error"
@@ -585,8 +585,11 @@ def test_post_analysis_uses_run_language_from_metadata(
     make_logger,
     tmp_path: Path,
 ) -> None:
-    history_db = HistoryDB(tmp_path / "history.db")
-    logger = make_logger(history_db=history_db, language_reader=SimpleNamespace(language="nl"))
+    history_db = create_history_persistence_adapters(tmp_path / "history.db")
+    logger = make_logger(
+        history_db=history_db.run_repository,
+        language_reader=SimpleNamespace(language="nl"),
+    )
 
     snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
@@ -617,11 +620,11 @@ def test_post_analysis_uses_run_language_from_metadata(
     logger.stop_recording()
 
     def _status():
-        run = history_db.get_run(run_id)
+        run = history_db.run_repository.get_run(run_id)
         return run.status.value if run is not None else None
 
     assert wait_until(lambda: _status() == "complete", timeout_s=2.0)
-    stored = history_db.get_run(run_id).analysis
+    stored = history_db.run_repository.get_run(run_id).analysis
     assert stored is not None
     assert stored["lang"] == "nl"
 
@@ -679,8 +682,8 @@ def test_run_metadata_captures_recorded_utc_offset(
 
 
 def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
-    history_db = HistoryDB(tmp_path / "history.db")
-    logger = make_logger(history_db=history_db, persist_history_db=True)
+    history_db = create_history_persistence_adapters(tmp_path / "history.db")
+    logger = make_logger(history_db=history_db.run_repository, persist_history_db=True)
 
     snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
@@ -689,8 +692,8 @@ def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
     logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
     logger.stop_recording()
 
-    assert history_db.get_run(run_id) is not None
-    assert history_db.get_run_samples(run_id)
+    assert history_db.run_repository.get_run(run_id) is not None
+    assert history_db.run_repository.get_run_samples(run_id)
 
 
 def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
@@ -705,8 +708,8 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
         cap,
     )
 
-    history_db = HistoryDB(tmp_path / "history.db")
-    logger = make_logger(history_db=history_db)
+    history_db = create_history_persistence_adapters(tmp_path / "history.db")
+    logger = make_logger(history_db=history_db.run_repository)
 
     snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
@@ -744,11 +747,11 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     logger.stop_recording()
 
     def _status():
-        run = history_db.get_run(run_id)
+        run = history_db.run_repository.get_run(run_id)
         return run.status.value if run is not None else None
 
     assert wait_until(lambda: _status() == "complete", timeout_s=3.0)
-    stored = history_db.get_run(run_id).analysis
+    stored = history_db.run_repository.get_run(run_id).analysis
     assert stored is not None
     assert stored["row_count"] <= cap
     assert stored["analysis_metadata"]["total_sample_count"] >= stored["row_count"]

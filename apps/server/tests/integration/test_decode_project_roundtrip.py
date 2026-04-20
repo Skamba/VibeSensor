@@ -21,7 +21,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import analysis_result_to_summary
 from vibesensor.adapters.history import build_projected_run_details_json
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.analysis_payloads import project_analysis_summary
 from vibesensor.shared.boundaries.reporting import prepare_report_input
@@ -66,9 +66,9 @@ def _run_analysis() -> tuple[RunAnalysis, AnalysisResult]:
 
 def _persist_and_reload(tmp_path: Path, summary: dict[str, Any]) -> StoredHistoryRun:
     """Persist summary to HistoryDB and reload as a run payload."""
-    db = HistoryDB(tmp_path / "roundtrip.db")
+    db = create_history_persistence_adapters(tmp_path / "roundtrip.db")
     try:
-        db.create_run(
+        db.run_repository.create_run(
             _RUN_ID,
             "2026-01-01T00:00:00Z",
             run_metadata_from_mapping(
@@ -79,11 +79,11 @@ def _persist_and_reload(tmp_path: Path, summary: dict[str, Any]) -> StoredHistor
                 }
             ),
         )
-        db.finalize_run(_RUN_ID, "2026-01-01T00:01:00Z")
-        db.store_analysis(_RUN_ID, make_persisted_analysis(summary))
-        run = db.get_run(_RUN_ID)
+        db.run_repository.finalize_run(_RUN_ID, "2026-01-01T00:01:00Z")
+        db.run_repository.store_analysis(_RUN_ID, make_persisted_analysis(summary))
+        run = db.run_repository.get_run(_RUN_ID)
     finally:
-        db.close()
+        db.lifecycle.close()
     assert run is not None
     return run
 

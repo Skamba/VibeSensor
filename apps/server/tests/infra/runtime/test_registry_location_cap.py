@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import create_history_persistence_adapters
 from vibesensor.infra.runtime.registry import ClientRegistry, _resolve_now_mono
 from vibesensor.shared.boundaries.clients import snapshot_for_api
 
@@ -19,8 +19,8 @@ _CLIENT_ID = "aabbccddeeff"
 
 
 def _make_registry(tmp_path: Path) -> ClientRegistry:
-    db = HistoryDB(tmp_path / "history.db")
-    return ClientRegistry(db=db)
+    db = create_history_persistence_adapters(tmp_path / "history.db")
+    return ClientRegistry(db=db.client_name_repository)
 
 
 # ── Location cap at 64 bytes ──────────────────────────────────────────────────
