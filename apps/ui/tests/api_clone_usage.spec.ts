@@ -9,7 +9,11 @@ import type {
   HistoryInsightsAnalyzingPayload,
   LoggingStatusPayload,
 } from "../src/api/types";
-import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
+import { installWindowGlobal } from "./async_test_helpers";
+import { HttpResponse, http, uiTestUrl } from "./msw/http";
+import { createUiMswTestServer } from "./msw/node";
+
+const mswServer = createUiMswTestServer(test);
 
 test.describe("API adapter clone usage", () => {
   test.beforeEach(() => {
@@ -17,7 +21,6 @@ test.describe("API adapter clone usage", () => {
   });
 
   test("returns logging status without structuredClone", async () => {
-    const originalFetch = globalThis.fetch;
     const originalStructuredClone = globalThis.structuredClone;
     const payload: LoggingStatusPayload = {
       enabled: false,
@@ -37,19 +40,17 @@ test.describe("API adapter clone usage", () => {
       structuredCloneCalls += 1;
       return originalStructuredClone(value);
     }) as typeof structuredClone;
-    globalThis.fetch = (async () => jsonResponse(payload)) as typeof fetch;
+    mswServer.use(http.get(uiTestUrl("/api/recording/status"), () => HttpResponse.json(payload)));
 
     try {
       await expect(getLoggingStatus()).resolves.toEqual(payload);
       expect(structuredCloneCalls).toBe(0);
     } finally {
-      globalThis.fetch = originalFetch;
       globalThis.structuredClone = originalStructuredClone;
     }
   });
 
   test("serializes car payloads without structuredClone", async () => {
-    const originalFetch = globalThis.fetch;
     const originalStructuredClone = globalThis.structuredClone;
     const requestPayload: CarUpsertRequest = {
       name: "Project Car",
@@ -71,23 +72,23 @@ test.describe("API adapter clone usage", () => {
       structuredCloneCalls += 1;
       return originalStructuredClone(value);
     }) as typeof structuredClone;
-    globalThis.fetch = (async (_input: string | URL | RequestInfo, init?: RequestInit) => {
-      requestBody = String(init?.body ?? "");
-      return jsonResponse(responsePayload);
-    }) as typeof fetch;
+    mswServer.use(
+      http.post(uiTestUrl("/api/settings/cars"), async ({ request }) => {
+        requestBody = await request.text();
+        return HttpResponse.json(responsePayload);
+      }),
+    );
 
     try {
       await expect(addSettingsCar(requestPayload)).resolves.toEqual(responsePayload);
       expect(JSON.parse(requestBody)).toEqual(requestPayload);
       expect(structuredCloneCalls).toBe(0);
     } finally {
-      globalThis.fetch = originalFetch;
       globalThis.structuredClone = originalStructuredClone;
     }
   });
 
   test("returns history insights bodies without structuredClone", async () => {
-    const originalFetch = globalThis.fetch;
     const originalStructuredClone = globalThis.structuredClone;
     const payload: HistoryInsightsAnalyzingPayload = {
       status: "analyzing",
@@ -99,13 +100,16 @@ test.describe("API adapter clone usage", () => {
       structuredCloneCalls += 1;
       return originalStructuredClone(value);
     }) as typeof structuredClone;
-    globalThis.fetch = (async () => jsonResponse(payload, { status: 202 })) as typeof fetch;
+    mswServer.use(
+      http.get(uiTestUrl("/api/history/run-001/insights"), () =>
+        HttpResponse.json(payload, { status: 202 }),
+      ),
+    );
 
     try {
       await expect(getHistoryInsights("run-001", "en")).resolves.toEqual(payload);
       expect(structuredCloneCalls).toBe(0);
     } finally {
-      globalThis.fetch = originalFetch;
       globalThis.structuredClone = originalStructuredClone;
     }
   });
