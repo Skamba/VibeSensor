@@ -120,6 +120,7 @@ def test_restart_recording_emits_stop_then_start_lifecycle_events(
         first_snapshot.start_mono_s,
     )
 
+    caplog.clear()
     with caplog.at_level(logging.INFO, logger="vibesensor.use_cases.run.logger"):
         second_status = logger.start_recording()
 
