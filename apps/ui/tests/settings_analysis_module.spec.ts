@@ -9,7 +9,14 @@ import type {
   AnalysisPanelRenderModel,
   AnalysisPanelView,
 } from "../src/app/views/analysis_panel";
-import { installWindowGlobal, jsonResponse } from "./async_test_helpers";
+import { installWindowGlobal } from "./async_test_helpers";
+import {
+  buildAnalysisSettingsHandlers,
+  makeAnalysisSettingsPayload,
+} from "./msw/handlers/settings";
+import { createUiMswTestServer } from "./msw/node";
+
+const mswServer = createUiMswTestServer(test);
 
 function lastRender(renders: AnalysisPanelRenderModel[]): AnalysisPanelRenderModel {
   const render = renders.at(-1);
@@ -129,7 +136,6 @@ test("settings analysis module renders guidance and surfaces invalid input throu
 });
 
 test("settings analysis module keeps active-car geometry when loading server analysis settings", async () => {
-  const originalFetch = globalThis.fetch;
   const state = createAppState().settings;
   let refreshSpectrumDecorationCalls = 0;
 
@@ -149,18 +155,21 @@ test("settings analysis module keeps active-car geometry when loading server ana
     min_abs_band_hz: 0.2,
   };
 
-  globalThis.fetch = (async () =>
-    jsonResponse({
-      tire_width_mm: 999,
-      tire_aspect_pct: 99,
-      rim_in: 24,
-      final_drive_ratio: 9.99,
-      current_gear_ratio: 2.22,
-      tire_deflection_factor: 0.5,
-      wheel_bandwidth_pct: 7.5,
-      speed_uncertainty_pct: 2.5,
-      min_abs_band_hz: 1.5,
-    })) as typeof fetch;
+  mswServer.use(
+    ...buildAnalysisSettingsHandlers({
+      load: makeAnalysisSettingsPayload({
+        tire_width_mm: 999,
+        tire_aspect_pct: 99,
+        rim_in: 24,
+        final_drive_ratio: 9.99,
+        current_gear_ratio: 2.22,
+        tire_deflection_factor: 0.5,
+        wheel_bandwidth_pct: 7.5,
+        speed_uncertainty_pct: 2.5,
+        min_abs_band_hz: 1.5,
+      }),
+    }),
+  );
 
   const module = createSettingsAnalysisModule({
     panel: {
@@ -184,11 +193,7 @@ test("settings analysis module keeps active-car geometry when loading server ana
     },
   });
 
-  try {
-    await module.loadAnalysisSettingsFromServer();
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  await module.loadAnalysisSettingsFromServer();
 
   expect(state.car.activeVehicleSettings.value).toMatchObject({
     tire_width_mm: 245,

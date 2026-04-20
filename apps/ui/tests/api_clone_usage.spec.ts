@@ -5,12 +5,12 @@ import { getHistoryInsights } from "../src/api/history";
 import { getLoggingStatus } from "../src/api/logging";
 import type {
   CarUpsertRequest,
-  CarsPayload,
   HistoryInsightsAnalyzingPayload,
   LoggingStatusPayload,
 } from "../src/api/types";
 import { installWindowGlobal } from "./async_test_helpers";
 import { HttpResponse, http, uiTestUrl } from "./msw/http";
+import { buildCarsHandlers, makeCarsPayload } from "./msw/handlers/settings";
 import { createUiMswTestServer } from "./msw/node";
 
 const mswServer = createUiMswTestServer(test);
@@ -61,10 +61,7 @@ test.describe("API adapter clone usage", () => {
         current_gear_ratio: 0.82,
       },
     };
-    const responsePayload: CarsPayload = {
-      active_car_id: null,
-      cars: [],
-    };
+    const responsePayload = makeCarsPayload({ active_car_id: null, cars: [] });
     let structuredCloneCalls = 0;
     let requestBody = "";
 
@@ -73,9 +70,11 @@ test.describe("API adapter clone usage", () => {
       return originalStructuredClone(value);
     }) as typeof structuredClone;
     mswServer.use(
-      http.post(uiTestUrl("/api/settings/cars"), async ({ request }) => {
-        requestBody = await request.text();
-        return HttpResponse.json(responsePayload);
+      ...buildCarsHandlers({
+        create: async (request) => {
+          requestBody = await request.text();
+          return responsePayload;
+        },
       }),
     );
 
