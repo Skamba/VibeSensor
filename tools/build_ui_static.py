@@ -10,22 +10,13 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import shutil
 import subprocess
 from pathlib import Path
 
-import msgspec
-
 # Keep in sync with vibesensor.use_cases.updates.status.UI_BUILD_METADATA_FILE
 UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
-
-
-class _UiBuildMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
-    """Local copy of the updater UI build metadata sidecar contract."""
-
-    ui_source_hash: str
-    static_assets_hash: str
-    git_commit: str
 
 
 def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
@@ -131,16 +122,19 @@ def main(argv: list[str] | None = None) -> None:
     )
     static_assets_hash = _hash_tree(static_dir, ignore_names={UI_BUILD_METADATA_FILE})
     git_commit = _git_head_commit(repo_root)
-    # Keep this local codec in sync with updates.status.runtime_details.py.
+    # Keep this local payload shape in sync with updates.status.runtime_details.py.
     (static_dir / UI_BUILD_METADATA_FILE).write_bytes(
-        msgspec.json.encode(
-            _UiBuildMetadataRecord(
-                ui_source_hash=ui_source_hash,
-                static_assets_hash=static_assets_hash,
-                git_commit=git_commit,
-            )
+        (
+            json.dumps(
+                {
+                    "ui_source_hash": ui_source_hash,
+                    "static_assets_hash": static_assets_hash,
+                    "git_commit": git_commit,
+                },
+                sort_keys=True,
+            ).encode("utf-8")
+            + b"\n"
         )
-        + b"\n",
     )
     print(f"Synced {dist_dir} -> {static_dir}")
 
