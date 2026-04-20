@@ -4,6 +4,10 @@ import {
   downloadBlobFile,
   filenameFromDisposition,
 } from "../src/app/features/history_download";
+import { HttpResponse, http, uiTestUrl } from "./msw/http";
+import { createUiMswTestServer } from "./msw/node";
+
+const mswServer = createUiMswTestServer(test);
 
 test("filenameFromDisposition decodes UTF-8 and falls back when needed", () => {
   expect(
@@ -20,7 +24,6 @@ test("filenameFromDisposition decodes UTF-8 and falls back when needed", () => {
 });
 
 test("downloadBlobFile downloads with decoded filename and revokes the blob URL", async () => {
-  const originalFetch = globalThis.fetch;
   const originalDocument = (globalThis as { document?: Document }).document;
   const originalCreateObjectURL = URL.createObjectURL;
   const originalRevokeObjectURL = URL.revokeObjectURL;
@@ -28,14 +31,17 @@ test("downloadBlobFile downloads with decoded filename and revokes the blob URL"
   const anchorState = { href: "", download: "", clicks: 0, removed: 0 };
   const revoked: string[] = [];
 
-  globalThis.fetch = (async () =>
-    new Response("PDF", {
-      status: 200,
-      headers: {
-        "content-type": "application/pdf",
-        "content-disposition": "attachment; filename*=UTF-8''run%20%C3%BC.pdf",
-      },
-    })) as typeof fetch;
+  mswServer.use(
+    http.get(uiTestUrl("/api/history/run-001/report.pdf"), () =>
+      new HttpResponse("PDF", {
+        status: 200,
+        headers: {
+          "content-type": "application/pdf",
+          "content-disposition": "attachment; filename*=UTF-8''run%20%C3%BC.pdf",
+        },
+      }),
+    ),
+  );
   (globalThis as { document?: Document }).document = {
     body: {
       appendChild() {
@@ -80,7 +86,6 @@ test("downloadBlobFile downloads with decoded filename and revokes the blob URL"
   try {
     await downloadBlobFile("/api/history/run-001/report.pdf", "fallback.pdf");
   } finally {
-    globalThis.fetch = originalFetch;
     (globalThis as { document?: Document }).document = originalDocument;
     URL.createObjectURL = originalCreateObjectURL;
     URL.revokeObjectURL = originalRevokeObjectURL;
