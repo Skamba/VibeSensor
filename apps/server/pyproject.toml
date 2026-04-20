@@ -19,6 +19,7 @@ dependencies = [
   "granian[reload]>=2.7,<3",
   "uvloop>=0.22,<1; sys_platform == 'linux'",
   "numpy>=2.4.4,<3",
+  "scipy>=1.16.3,<2",
   "orjson>=3.11.4,<4",
   "pyfftw>=0.15.1,<0.16",
   "packaging>=24,<27",
@@ -197,6 +198,8 @@ per_rule_ignores = { DEP002 = ["esptool"] }
 
 [[tool.mypy.overrides]]
 module = [
+  "scipy",
+  "scipy.*",
   "pyfftw",
   "pyfftw.*",
   "reportlab.*",

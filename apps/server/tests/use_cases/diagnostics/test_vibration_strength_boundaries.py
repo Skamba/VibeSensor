@@ -112,6 +112,15 @@ class TestComputeVibrationStrengthBoundaries:
         assert result["vibration_strength_db"] > 0.0
         assert len(result["top_peaks"]) >= 1
 
+    def test_last_bin_peak_is_still_reported(self) -> None:
+        result = compute_vibration_strength_db(
+            freq_hz=[0.0, 1.0, 2.0, 3.0, 4.0],
+            combined_spectrum_amp_g_values=[0.001, 0.001, 0.001, 0.004, 0.08],
+        )
+        assert result["top_peaks"]
+        assert result["top_peaks"][0]["hz"] == pytest.approx(4.0)
+        assert result["vibration_strength_db"] > 0.0
+
 
 # -- vibration_strength_db_scalar direct tests --------------------------------
 
