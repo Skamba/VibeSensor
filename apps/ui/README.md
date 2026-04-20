@@ -94,12 +94,39 @@ source-of-truth export commands remain the only writers for those files.
 Use `msw` as the shared HTTP mocking layer for UI tests that exercise the real
 browser-side fetch boundary.
 
-- Node-side Playwright specs should install the shared lifecycle from
-  `tests/msw/node.ts`; it normalizes relative `/api/...` requests onto the
-  test origin and fails unhandled HTTP requests loudly by default.
-- Feature-specific reusable handlers belong under `tests/msw/handlers/` as they
-  appear. Keep cross-feature primitives in `tests/msw/http.ts`, and name
-  scenario factories `build<Feature><Scenario>Handlers(...)`.
+- Install the shared Node-side lifecycle from `tests/msw/node.ts` whenever the
+  spec calls the real UI HTTP client or otherwise exercises the fetch boundary.
+  The harness normalizes relative `/api/...` requests onto the test origin and
+  fails unhandled HTTP requests loudly by default, so missing handlers stay
+  obvious instead of silently falling through.
+- Keep reusable feature-area handlers under `tests/msw/handlers/`. Organize
+  them by the feature that owns the HTTP surface (`history.ts`, `settings.ts`,
+  `maintenance.ts`) instead of by individual spec files.
+- Keep cross-feature HTTP primitives in `tests/msw/http.ts`. That file owns the
+  shared origin, route helpers, and any low-level helpers that are reused across
+  multiple feature handler modules.
+- Name reusable handler composition helpers `build<Feature>Handlers(...)` or
+  `build<Feature><Scenario>Handlers(...)` when a feature needs a narrower
+  scenario bundle. Name payload builders `make<Feature><Thing>Payload(...)` so
+  handlers and callers read consistently.
+- Prefer composing a realistic scenario from those shared builders over
+  redefining ad hoc `fetch` replacements inside one spec. Reuse existing
+  contract-shaped payload builders instead of inventing mock-only response
+  shapes.
+
+Use MSW when the behavior under test depends on the real HTTP boundary:
+
+- request URLs, methods, payloads, or status handling matter
+- the feature should exercise the actual `fetch`/API wrapper path end to end
+- one shared handler can serve multiple specs in the same feature area
+
+Do **not** use MSW when the test is already below the network seam:
+
+- pure presenters, state derivations, and DOM-only views should stay network-free
+- workflow/controller tests with injected transport ports should keep those
+  focused fakes instead of layering on MSW unnecessarily
+- WebSocket behavior is separate; keep using the existing fake WebSocket helpers
+  for live-session flows instead of trying to route WS traffic through MSW
 
 ## Optional browser MSW mock mode
 
@@ -117,6 +144,8 @@ npm run dev:mock
 - Browser mock mode starts the app with `msw/browser` before `startUiApp()`,
   serves a checked-in `mockServiceWorker.js`, and bypasses any HTTP requests
   that do not have an explicit mock handler.
+- Browser mock mode should reuse the same shared handler owners under
+  `tests/msw/handlers/` rather than growing a second browser-only mock universe.
 - The mode currently reuses the shared history and settings MSW handler owners
   plus lightweight startup/update defaults so local settings and history flows
   can load without the backend.
