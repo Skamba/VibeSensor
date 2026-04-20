@@ -146,27 +146,6 @@ def test_control_datagram_sends_hello_ack_for_capable_firmware(
     assert addr == ("127.0.0.1", 9010)
 
 
-def test_control_datagram_skips_hello_ack_for_legacy_firmware(
-    tmp_path: Path,
-    fake_transport,
-) -> None:
-    registry = _make_registry(tmp_path)
-    protocol = ControlDatagramProtocol(registry)
-    protocol.transport = fake_transport
-    packet = pack_hello(
-        client_id=bytes.fromhex("aabbccddeeff"),
-        control_port=9010,
-        sample_rate_hz=800,
-        name="node",
-        frame_samples=200,
-        firmware_version="fw",
-    )
-
-    protocol.datagram_received(packet, ("127.0.0.1", 54000))
-
-    assert fake_transport.sent == []
-
-
 def test_close_closes_transport_once_and_clears_reference(tmp_path: Path, fake_transport) -> None:
     registry = _make_registry(tmp_path)
     plane = UDPControlPlane(registry=registry, bind_host="127.0.0.1", bind_port=9001)

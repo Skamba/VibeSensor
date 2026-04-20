@@ -1978,6 +1978,46 @@ def _check_settings_snapshot_legacy_decode_removed() -> list[str]:
     return violations
 
 
+def _check_udp_hello_legacy_compat_removed() -> list[str]:
+    protocol_path = VIBESENSOR_DIR / "adapters" / "udp" / "protocol.py"
+    control_path = VIBESENSOR_DIR / "adapters" / "udp" / "udp_control_tx.py"
+    protocol_tests = TESTS_DIR / "adapters" / "udp" / "test_protocol.py"
+    control_tests = TESTS_DIR / "adapters" / "udp" / "test_udp_control_tx.py"
+    violations: list[str] = []
+
+    control_text = _read_text(control_path)
+    if "HELLO_CAP_EXPLICIT_ACK" in control_text:
+        violations.append(
+            f"{control_path.relative_to(REPO_ROOT)} must not gate HELLO_ACK on "
+            "HELLO_CAP_EXPLICIT_ACK"
+        )
+
+    protocol_text = _read_text(protocol_path)
+    for legacy_text in (
+        "if len(data) >= offset + 4:",
+        "if len(data) > offset:",
+    ):
+        if legacy_text in protocol_text:
+            violations.append(
+                f"{protocol_path.relative_to(REPO_ROOT)} still contains legacy HELLO "
+                "tail fallback logic"
+            )
+
+    if "test_parse_hello_defaults_capabilities_to_zero_for_legacy_packet" in _read_text(
+        protocol_tests
+    ):
+        violations.append(
+            f"{protocol_tests.relative_to(REPO_ROOT)} must not preserve legacy short HELLO tests"
+        )
+    if "test_control_datagram_skips_hello_ack_for_legacy_firmware" in _read_text(
+        control_tests
+    ):
+        violations.append(
+            f"{control_tests.relative_to(REPO_ROOT)} must not preserve legacy HELLO_ACK skips"
+        )
+    return violations
+
+
 Check = tuple[str, Callable[[], list[str]]]
 CHECKS: tuple[Check, ...] = (
     (
@@ -2219,6 +2259,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "Settings snapshot legacy decode stays removed",
         _check_settings_snapshot_legacy_decode_removed,
+    ),
+    (
+        "UDP HELLO legacy compatibility stays removed",
+        _check_udp_hello_legacy_compat_removed,
     ),
 )
 
