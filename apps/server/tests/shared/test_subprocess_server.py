@@ -73,6 +73,6 @@ def test_build_server_subprocess_cmd_uses_embedded_bootstrap(tmp_path: Path) -> 
     cmd = build_server_subprocess_cmd(config_path)
 
     assert cmd[:2] == [sys.executable, "-c"]
-    assert "from vibesensor.app import create_app" in cmd[2]
-    assert "loop='asyncio'" in cmd[2]
+    assert "_run_server_with_port_fallback" in cmd[2]
+    assert "create_app_from_env" in cmd[2]
     assert cmd[3] == str(config_path)
