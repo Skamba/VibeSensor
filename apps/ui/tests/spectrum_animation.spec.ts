@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   createSpectrumTweenDerivedState,
   resolveSpectrumTweenDurationMs,
@@ -13,7 +12,7 @@ const baseFrame: SpectrumHeavyFrame = {
   values: [[1, 2, 3], [4, 5, 6]],
 };
 
-test.describe("spectrum tween derived state", () => {
+describe("spectrum tween derived state", () => {
   test("tracks compatibility and interpolated frame from signal inputs", () => {
     const previous = signal<SpectrumHeavyFrame | null>(baseFrame);
     const next = signal<SpectrumHeavyFrame | null>({

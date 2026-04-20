@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { createRafAnimation, type RafApi } from "../src/app/dom/raf_animation";
 
 function createFakeRafApi() {
@@ -23,7 +22,7 @@ function createFakeRafApi() {
   return { api, cancelled, scheduled };
 }
 
-test.describe("createRafAnimation", () => {
+describe("createRafAnimation", () => {
   test("cancels the in-flight frame before restarting or stopping", () => {
     const { api, cancelled, scheduled } = createFakeRafApi();
     const animation = createRafAnimation(

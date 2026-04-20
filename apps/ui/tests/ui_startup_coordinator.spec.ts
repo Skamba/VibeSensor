@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, describe, expect, test } from "vitest";
 import { UiStartupCoordinator } from "../src/app/runtime/ui_startup_coordinator";
 import { flushAsyncWork, installWindowGlobal } from "./async_test_helpers";
 
@@ -114,8 +113,8 @@ function installLocation(search: string): () => void {
   };
 }
 
-test.describe("UiStartupCoordinator", () => {
-  test.beforeEach(() => {
+describe("UiStartupCoordinator", () => {
+  beforeEach(() => {
     installWindowGlobal();
   });
 

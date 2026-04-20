@@ -1,9 +1,8 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { effect } from "../src/app/ui_signals";
 import { createApiLoader } from "../src/app/features/api_loader";
 
-test.describe("createApiLoader", () => {
+describe("createApiLoader", () => {
   test("runs lifecycle hooks and toggles loading on success", async () => {
     const events: string[] = [];
     const loader = createApiLoader({

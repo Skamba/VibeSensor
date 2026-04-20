@@ -1,12 +1,11 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, describe, expect, test } from "vitest";
 import { runDemoMode } from "../src/app/demo_mode";
 import { createAppState } from "../src/app/ui_app_state";
 import { adaptServerPayload } from "../src/server_payload";
 import { installWindowGlobal } from "./async_test_helpers";
 
-test.describe("runDemoMode", () => {
-  test.beforeEach(() => {
+describe("runDemoMode", () => {
+  beforeEach(() => {
     installWindowGlobal();
   });
 

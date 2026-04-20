@@ -8,7 +8,7 @@
  *  4. EXPECTED_SCHEMA_VERSION matches the server's current version
  */
 
-import { expect, test } from "@playwright/test";
+import { describe, expect, test } from "vitest";
 import { adaptServerPayload } from "../src/server_payload";
 import {
   EXPECTED_SCHEMA_VERSION,
@@ -52,7 +52,7 @@ function requireSpectra(adapted: ReturnType<typeof adaptServerPayload>) {
 // ---------------------------------------------------------------------------
 // Schema version handling
 // ---------------------------------------------------------------------------
-test.describe("schema_version handling", () => {
+describe("schema_version handling", () => {
   test("accepts matching schema_version without error", () => {
     const adapted = adaptServerPayload({ ...basePayload });
     expect(adapted).toBeDefined();
@@ -122,7 +122,7 @@ test.describe("schema_version handling", () => {
 // ---------------------------------------------------------------------------
 // Shared freq optimization (Part A1)
 // ---------------------------------------------------------------------------
-test.describe("shared freq optimization", () => {
+describe("shared freq optimization", () => {
   test("uses shared top-level freq when per-client freq is absent", () => {
     const adapted = adaptServerPayload({
       ...basePayload,

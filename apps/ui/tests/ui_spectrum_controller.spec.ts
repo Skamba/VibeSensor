@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, describe, expect, test } from "vitest";
 import type { SpectrumPanelView } from "../src/app/runtime/spectrum_panel_view";
 import { applyLivePayloadUpdate, createAppState } from "../src/app/ui_app_state";
 import { batch } from "../src/app/ui_signals";
@@ -81,8 +80,8 @@ function createPanelStub(): {
   };
 }
 
-test.describe("UiSpectrumController", () => {
-  test.beforeEach(() => {
+describe("UiSpectrumController", () => {
+  beforeEach(() => {
     installWindowGlobal();
   });
 

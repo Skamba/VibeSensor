@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import { createRealtimeFeatureViewState } from "../src/app/features/realtime_feature_view_state";
 import { createRealtimeFeatureWorkflowState } from "../src/app/features/realtime_feature_workflow";
 import { createAppState } from "../src/app/ui_app_state";

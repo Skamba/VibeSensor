@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "vitest";
 import { buildInternetStatusPanelModel } from "../src/app/views/internet_status_view";
 test("buildInternetStatusPanelModel returns semantic badge and status rows", () => {
   const model = buildInternetStatusPanelModel({

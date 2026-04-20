@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   createSettingsSpeedSourceWorkflow,
   type SettingsSpeedSourceWorkflowViewPorts,
@@ -81,7 +80,7 @@ function makeObdDevice(
   };
 }
 
-test.describe("createSettingsSpeedSourceWorkflow", () => {
+describe("createSettingsSpeedSourceWorkflow", () => {
   test("applies loaded payload updates as one render-state invalidation", async () => {
     const harness = createHarness();
     const appState = createAppState();

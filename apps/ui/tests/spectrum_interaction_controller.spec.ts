@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { SpectrumInteractionController } from "../src/app/runtime/spectrum_interaction_controller";
 import type {
   SpectrumInspectorRenderModel,
@@ -95,7 +94,7 @@ function createTimerHarness(): {
   };
 }
 
-test.describe("SpectrumInteractionController", () => {
+describe("SpectrumInteractionController", () => {
   test("renders legend models and toggles isolated series", () => {
     const panel = createPanelStub();
 

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, describe, expect, test } from "vitest";
 import { createAppState } from "../src/app/ui_app_state";
 import { batch } from "../src/app/ui_signals";
 import { createWsClient } from "../src/ws";
@@ -99,8 +98,8 @@ function installTimeoutHarness() {
   };
 }
 
-test.describe("createWsClient", () => {
-  test.beforeEach(() => {
+describe("createWsClient", () => {
+  beforeEach(() => {
     installWindowGlobal();
     FakeWebSocket.reset();
   });

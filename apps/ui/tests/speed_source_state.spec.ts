@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   createSpeedSourceDerivedState,
   deriveDisplayedSpeedSourceMode,
@@ -10,7 +9,7 @@ import {
 import { createAppState } from "../src/app/ui_app_state";
 import { signal } from "../src/app/ui_signals";
 
-test.describe("speed source state helpers", () => {
+describe("speed source state helpers", () => {
   test("prefers the resolved fallback-manual source over gps configuration", () => {
     const settings = {
       speedSource: "gps" as const,

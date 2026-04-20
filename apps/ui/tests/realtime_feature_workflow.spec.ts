@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import {
   createRealtimeFeatureWorkflow,
   createRealtimeFeatureWorkflowState,
@@ -49,7 +48,7 @@ function createHarness(): WorkflowHarness {
   };
 }
 
-test.describe("createRealtimeFeatureWorkflow", () => {
+describe("createRealtimeFeatureWorkflow", () => {
   test("starts logging through signal-backed workflow state and restarts polling", async () => {
     const harness = createHarness();
     harness.state.realtime.loggingStatus.value = {

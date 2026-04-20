@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, describe, expect, test } from "vitest";
 import { effect } from "../src/app/ui_signals";
 import type { CreateSpectrumChartDeps, SpectrumChart } from "../src/spectrum_chart";
 import { flushSignalUpdates, installWindowGlobal } from "./async_test_helpers";
@@ -11,8 +10,8 @@ import {
   withSpectrumRendererHarness,
 } from "./spectrum_canvas_renderer_test_support";
 
-test.describe("createSpectrumCanvasRenderer cache reuse", () => {
-  test.beforeEach(() => {
+describe("createSpectrumCanvasRenderer cache reuse", () => {
+  beforeEach(() => {
     installWindowGlobal();
   });
 

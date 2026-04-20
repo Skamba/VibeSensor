@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { describe, expect, test } from "vitest";
 import { createLazyUiPanels } from "../src/app/ui_lazy_panels";
 import { signal } from "../src/app/ui_signals";
 import type { AnalysisPanelView } from "../src/app/views/analysis_panel";
@@ -108,7 +107,7 @@ function createSpeedSourcePanelSpy() {
   };
 }
 
-test.describe("createLazyUiPanels", () => {
+describe("createLazyUiPanels", () => {
   test("replays deferred settings shell and focus bindings after settings attach", () => {
     const analysisPanel = createAnalysisPanelSpy();
     const carsPanel = createCarsPanelSpy();

@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { beforeEach, describe, expect, test } from "vitest";
 import { installWindowGlobal } from "./async_test_helpers";
 import {
   installClientSpectra,
@@ -8,8 +7,8 @@ import {
   withSpectrumRendererHarness,
 } from "./spectrum_canvas_renderer_test_support";
 
-test.describe("createSpectrumCanvasRenderer frame preparation", () => {
-  test.beforeEach(() => {
+describe("createSpectrumCanvasRenderer frame preparation", () => {
+  beforeEach(() => {
     installWindowGlobal();
   });
 
