@@ -1,8 +1,8 @@
 """Static library of BMW and Audi cars with realistic drivetrain data.
 
-Data is loaded from ``apps/server/data/car_library.json`` which is the
-canonical source.  This module caches the parsed list at import time and
-exposes lightweight query helpers used by the API layer.
+Data is loaded from ``apps/server/vibesensor/data/car_library.json``.
+This module caches the parsed list at import time and exposes lightweight
+query helpers used by the API layer.
 """
 
 from __future__ import annotations
