@@ -19,11 +19,11 @@ from vibesensor.shared._data_files import resolve_static_data_file
 LOGGER = logging.getLogger(__name__)
 
 __all__ = [
-    "CAR_LIBRARY",
     "CarLibraryEntry",
     "get_brands",
     "get_models_for_brand_type",
     "get_types_for_brand",
+    "load_car_library",
     "get_variants_for_model",
     "resolve_variant",
 ]
@@ -116,23 +116,25 @@ def _load_library() -> list[CarLibraryEntry]:
         return []
 
 
-# Eagerly loaded; on transient failures the module-level list stays empty
-# but callers can call ``_load_library()`` again to retry.
+# Query helpers reuse one import-time snapshot; explicit loaders can call
+# ``load_car_library()`` when they need a fresh validated read from disk.
+_CAR_LIBRARY: list[CarLibraryEntry] = _load_library()
 
 
-# Module-level alias keeps
-# ``from vibesensor.adapters.persistence.car_library import CAR_LIBRARY`` working.
-CAR_LIBRARY: list[CarLibraryEntry] = _load_library()
+def load_car_library() -> list[CarLibraryEntry]:
+    """Load and return a fresh validated car-library snapshot."""
+
+    return _load_library()
 
 
 def get_brands() -> list[str]:
     """Return sorted list of unique brands in the library."""
-    return sorted({entry["brand"] for entry in CAR_LIBRARY})
+    return sorted({entry["brand"] for entry in _CAR_LIBRARY})
 
 
 def get_types_for_brand(brand: str) -> list[str]:
     """Return sorted body types available for *brand*."""
-    return sorted({entry["type"] for entry in CAR_LIBRARY if entry["brand"] == brand})
+    return sorted({entry["type"] for entry in _CAR_LIBRARY if entry["brand"] == brand})
 
 
 def get_models_for_brand_type(brand: str, car_type: str) -> list[CarLibraryEntry]:
@@ -142,7 +144,7 @@ def get_models_for_brand_type(brand: str, car_type: str) -> list[CarLibraryEntry
     """
     return [
         _deep_copy_entry(entry)
-        for entry in CAR_LIBRARY
+        for entry in _CAR_LIBRARY
         if entry["brand"] == brand and entry["type"] == car_type
     ]
 
@@ -152,7 +154,7 @@ def get_variants_for_model(brand: str, car_type: str, model: str) -> list[CarLib
 
     Returns deep copies so callers cannot corrupt the cached library.
     """
-    for entry in CAR_LIBRARY:
+    for entry in _CAR_LIBRARY:
         if _entry_matches_identity(entry, brand=brand, car_type=car_type, model=model):
             return _deep_copy_variants(entry["variants"])
     return []
