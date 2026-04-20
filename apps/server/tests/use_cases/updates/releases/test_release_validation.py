@@ -204,7 +204,9 @@ def test_validate_release_wheel_metadata_rejects_version_mismatch(tmp_path: Path
     assert any("does not match expected '2025.6.15'" in error for error in errors)
 
 
-def test_release_validation_cli_import_path_does_not_require_pydantic(tmp_path: Path) -> None:
+def test_release_validation_cli_validate_wheel_metadata_does_not_require_optional_deps(
+    tmp_path: Path,
+) -> None:
     wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
     _build_fake_release_wheel(wheel_path, version="2025.6.15")
     script = textwrap.dedent(
@@ -213,13 +215,14 @@ def test_release_validation_cli_import_path_does_not_require_pydantic(tmp_path: 
         import runpy
         import sys
 
-        class _BlockPydantic(importlib.abc.MetaPathFinder):
+        class _BlockOptionalDeps(importlib.abc.MetaPathFinder):
             def find_spec(self, fullname, path=None, target=None):
-                if fullname == "pydantic" or fullname.startswith("pydantic."):
-                    raise ModuleNotFoundError("No module named 'pydantic'")
+                blocked = {{"httpx", "msgspec", "pydantic", "tenacity"}}
+                if fullname in blocked or any(fullname.startswith(name + ".") for name in blocked):
+                    raise ModuleNotFoundError(f"No module named '{{fullname}}'")
                 return None
 
-        sys.meta_path.insert(0, _BlockPydantic())
+        sys.meta_path.insert(0, _BlockOptionalDeps())
         sys.argv = [
             "vibesensor.use_cases.updates.releases.release_validation",
             "validate-wheel-metadata",
@@ -246,6 +249,74 @@ def test_release_validation_cli_import_path_does_not_require_pydantic(tmp_path: 
 
     assert result.returncode == 0, result.stderr
     assert "Validated release wheel metadata" in result.stdout
+
+
+def test_release_validation_cli_validate_firmware_manifest_does_not_require_optional_deps(
+    tmp_path: Path,
+) -> None:
+    dist_dir = tmp_path / "dist"
+    env_dir = dist_dir / "esp32dev"
+    env_dir.mkdir(parents=True)
+    firmware_bin = env_dir / "firmware.bin"
+    firmware_bin.write_bytes(b"firmware")
+    (dist_dir / "flash.json").write_text(
+        json.dumps(
+            {
+                "generated_from": "deadbeef",
+                "environments": [
+                    {
+                        "name": "esp32dev",
+                        "segments": [
+                            {
+                                "file": "esp32dev/firmware.bin",
+                                "offset": "0x10000",
+                                "sha256": hashlib.sha256(b"firmware").hexdigest(),
+                            },
+                        ],
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    script = textwrap.dedent(
+        f"""
+        import importlib.abc
+        import runpy
+        import sys
+
+        class _BlockOptionalDeps(importlib.abc.MetaPathFinder):
+            def find_spec(self, fullname, path=None, target=None):
+                blocked = {{"httpx", "msgspec", "pydantic", "tenacity"}}
+                if fullname in blocked or any(fullname.startswith(name + ".") for name in blocked):
+                    raise ModuleNotFoundError(f"No module named '{{fullname}}'")
+                return None
+
+        sys.meta_path.insert(0, _BlockOptionalDeps())
+        sys.argv = [
+            "vibesensor.use_cases.updates.releases.release_validation",
+            "validate-firmware-manifest",
+            "--dist-dir",
+            {str(dist_dir)!r},
+        ]
+        runpy.run_module(
+            "vibesensor.use_cases.updates.releases.release_validation",
+            run_name="__main__",
+        )
+        """,
+    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(SERVER_ROOT)
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Validated firmware manifest" in result.stdout
 
 
 def _patch_release_smoke_process(
