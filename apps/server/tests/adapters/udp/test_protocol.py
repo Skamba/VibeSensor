@@ -364,18 +364,14 @@ def test_pack_data_rejects_empty_samples() -> None:
         pack_data(client_id, seq=1, t0_us=0, samples=np.zeros((0, 3), dtype="<i2"))
 
 
-def test_parse_cmd_warns_on_unknown_cmd_id(caplog: pytest.LogCaptureFixture) -> None:
-    """parse_cmd must log a warning for an unrecognized cmd_id (Fix 5)."""
-    import logging
+def test_parse_cmd_rejects_unknown_cmd_id() -> None:
+    """parse_cmd must reject an unrecognized cmd_id."""
     import struct as _struct
 
     client_id = bytes.fromhex("aabbccddeeff")
-    # Build a CMD header with cmd_id=99 (unknown)
     raw = _struct.pack("<BB6sBI", 3, 1, client_id, 99, 42)
-    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.udp.protocol"):
-        cmd = parse_cmd(raw)
-    assert cmd.cmd_id == 99
-    assert any("unrecognized cmd_id" in r.message for r in caplog.records)
+    with pytest.raises(ProtocolError, match="unsupported cmd_id=99"):
+        parse_cmd(raw)
 
 
 def test_pack_cmd_identify_rejects_negative_cmd_seq() -> None:

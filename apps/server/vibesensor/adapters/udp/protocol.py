@@ -354,10 +354,7 @@ def parse_cmd(data: bytes) -> CmdMessage:
     )
     _msg_type, _version, client_id, cmd_id, cmd_seq = header
     if cmd_id not in (CMD_IDENTIFY, CMD_SYNC_CLOCK):
-        LOGGER.warning(
-            "parse_cmd: unrecognized cmd_id=%d; continuing for forward compatibility",
-            cmd_id,
-        )
+        raise _ProtocolError(f"CMD has unsupported cmd_id={cmd_id}")
     params = data[CMD_HEADER_BYTES:]
     return CmdMessage(client_id=client_id, cmd_id=cmd_id, cmd_seq=cmd_seq, params=params)
 
