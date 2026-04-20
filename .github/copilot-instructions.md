@@ -44,6 +44,7 @@ Domain model (scope: behavioral rules only; see `docs/domain-model.md` for the f
 Commands
 - Other AI guidance and docs should reference this list instead of repeating it.
 - `make setup`
+- `make format`
 - `python -m pip install -e "./apps/server[dev]"`
 - `make lint`
 - `make typecheck-backend`

@@ -71,6 +71,9 @@ Current hook behavior:
 
 ## Validation workflow
 
+Use `make format` as the only supported Python formatter for backend and tooling
+files. Do not run competing Python formatters in this repo.
+
 Use `make test-changed` as a heuristic shortcut for the files changed on your
 current branch when you want a fast first pass. It is not a replacement for the
 broader tiers below before merge.
@@ -90,6 +93,7 @@ Additional local-only convenience commands:
 | Goal | Command |
 |---|---|
 | Docker dev stack | `make dev` |
+| Python formatting | `make format` |
 | Fast backend tests | `make test` |
 | UI lint | `make ui-lint` |
 | Changed-file heuristic | `make test-changed` |
