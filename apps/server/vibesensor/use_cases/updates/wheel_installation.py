@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import json
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+import msgspec
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
@@ -18,17 +19,38 @@ from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.venv_paths import reinstall_python_executable
 
+
+class _TargetEnvironmentSnapshotRequest(msgspec.Struct, kw_only=True, frozen=True):
+    """Typed request passed to the target-environment snapshot subprocess."""
+
+    distribution_names: list[str]
+
+
+class _TargetEnvironmentSnapshotResponse(msgspec.Struct, kw_only=True, frozen=True):
+    """Typed response returned by the target-environment snapshot subprocess."""
+
+    python_full_version: str
+    marker_environment: dict[str, str]
+    installed_versions: dict[str, str]
+
+
 _TARGET_ENV_SNAPSHOT_SCRIPT = "\n".join(
     [
         "import importlib.metadata as metadata",
-        "import json",
+        "import msgspec",
         "import sys",
         "from packaging.markers import default_environment",
         "from packaging.utils import canonicalize_name",
-        "payload = json.loads(sys.argv[1])",
+        "class TargetEnvironmentSnapshotRequest(msgspec.Struct, kw_only=True, frozen=True):",
+        "    distribution_names: list[str]",
+        "class TargetEnvironmentSnapshotResponse(msgspec.Struct, kw_only=True, frozen=True):",
+        "    python_full_version: str",
+        "    marker_environment: dict[str, str]",
+        "    installed_versions: dict[str, str]",
+        "payload = msgspec.json.decode(sys.argv[1], type=TargetEnvironmentSnapshotRequest)",
         "distribution_names = [",
         "    canonicalize_name(str(name))",
-        "    for name in payload.get('distribution_names', [])",
+        "    for name in payload.distribution_names",
         "]",
         "installed_versions = {}",
         "for distribution_name in distribution_names:",
@@ -37,13 +59,33 @@ _TARGET_ENV_SNAPSHOT_SCRIPT = "\n".join(
         "    except metadata.PackageNotFoundError:",
         "        installed_versions[distribution_name] = ''",
         "marker_environment = default_environment()",
-        "print(json.dumps({",
-        "    'python_full_version': marker_environment.get('python_full_version', ''),",
-        "    'marker_environment': marker_environment,",
-        "    'installed_versions': installed_versions,",
-        "}))",
+        "response = TargetEnvironmentSnapshotResponse(",
+        "    python_full_version=marker_environment.get('python_full_version', ''),",
+        "    marker_environment={",
+        "        str(key): str(value) for key, value in marker_environment.items()",
+        "    },",
+        "    installed_versions=installed_versions,",
+        ")",
+        "sys.stdout.buffer.write(msgspec.json.encode(response))",
+        "sys.stdout.buffer.write(b'\\n')",
     ],
 )
+
+
+def _target_environment_snapshot_request_json(distribution_names: Sequence[str]) -> str:
+    """Encode the target-environment snapshot request as one JSON CLI argument."""
+
+    return msgspec.json.encode(
+        _TargetEnvironmentSnapshotRequest(distribution_names=list(distribution_names))
+    ).decode("utf-8")
+
+
+def _target_environment_snapshot_response_from_json(
+    raw: bytes | str,
+) -> _TargetEnvironmentSnapshotResponse:
+    """Decode one target-environment snapshot response from subprocess stdout."""
+
+    return msgspec.json.decode(raw, type=_TargetEnvironmentSnapshotResponse)
 
 
 @dataclass(frozen=True, slots=True)
@@ -201,7 +243,7 @@ class WheelInstallExecutor:
                 venv_python,
                 "-c",
                 _TARGET_ENV_SNAPSHOT_SCRIPT,
-                json.dumps({"distribution_names": requirement_names}),
+                _target_environment_snapshot_request_json(requirement_names),
             ],
             phase="installing",
             timeout=30,
@@ -219,22 +261,8 @@ class WheelInstallExecutor:
             self._status.mark_failed()
             return False
         try:
-            snapshot = json.loads(dependency_check.stdout or "{}")
-        except json.JSONDecodeError:
-            self._status.add_issue(
-                "installing",
-                "Could not parse wheel dependency compatibility results",
-                dependency_check.stdout or dependency_check.stderr,
-            )
-            self._status.mark_failed()
-            return False
-
-        marker_environment_raw = snapshot.get("marker_environment", {})
-        installed_versions_raw = snapshot.get("installed_versions", {})
-        if not isinstance(marker_environment_raw, dict) or not isinstance(
-            installed_versions_raw,
-            dict,
-        ):
+            snapshot = _target_environment_snapshot_response_from_json(dependency_check.stdout)
+        except (msgspec.DecodeError, msgspec.ValidationError):
             self._status.add_issue(
                 "installing",
                 "Could not parse wheel dependency compatibility results",
@@ -244,17 +272,9 @@ class WheelInstallExecutor:
             return False
         issues = wheel_dependency_issues(
             metadata,
-            python_full_version=str(snapshot.get("python_full_version") or ""),
-            marker_environment={
-                str(key): str(value)
-                for key, value in marker_environment_raw.items()
-                if isinstance(key, str)
-            },
-            installed_versions={
-                str(key): str(value)
-                for key, value in installed_versions_raw.items()
-                if isinstance(key, str)
-            },
+            python_full_version=snapshot.python_full_version,
+            marker_environment=snapshot.marker_environment,
+            installed_versions=snapshot.installed_versions,
         )
         if issues:
             self._status.add_issue(
