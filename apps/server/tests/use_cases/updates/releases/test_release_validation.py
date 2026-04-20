@@ -86,6 +86,69 @@ def test_validate_firmware_dist_reports_missing_firmware_bin(tmp_path: Path) -> 
     assert any("must contain at least one segment" in error for error in errors)
 
 
+def test_validate_firmware_dist_reports_invalid_manifest_json(tmp_path: Path) -> None:
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir(parents=True)
+    (dist_dir / "flash.json").write_text("{not-json", encoding="utf-8")
+
+    errors = validate_firmware_dist(dist_dir)
+
+    assert any("Invalid firmware manifest JSON" in error for error in errors)
+
+
+def test_validate_firmware_dist_reports_missing_environment_name(tmp_path: Path) -> None:
+    dist_dir = tmp_path / "dist"
+    env_dir = dist_dir / "esp32dev"
+    env_dir.mkdir(parents=True)
+    (env_dir / "firmware.bin").write_bytes(b"firmware")
+    manifest = {
+        "generated_from": "deadbeef",
+        "environments": [
+            {
+                "segments": [
+                    {
+                        "file": "esp32dev/firmware.bin",
+                        "offset": "0x10000",
+                        "sha256": hashlib.sha256(b"firmware").hexdigest(),
+                    },
+                ],
+            },
+        ],
+    }
+    (dist_dir / "flash.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    errors = validate_firmware_dist(dist_dir)
+
+    assert "environments[0].name must be a non-empty string" in errors
+
+
+def test_validate_firmware_dist_reports_checksum_mismatch(tmp_path: Path) -> None:
+    dist_dir = tmp_path / "dist"
+    env_dir = dist_dir / "esp32dev"
+    env_dir.mkdir(parents=True)
+    (env_dir / "firmware.bin").write_bytes(b"firmware")
+    manifest = {
+        "generated_from": "deadbeef",
+        "environments": [
+            {
+                "name": "esp32dev",
+                "segments": [
+                    {
+                        "file": "esp32dev/firmware.bin",
+                        "offset": "0x10000",
+                        "sha256": "0" * 64,
+                    },
+                ],
+            },
+        ],
+    }
+    (dist_dir / "flash.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    errors = validate_firmware_dist(dist_dir)
+
+    assert any("sha256 mismatch for esp32dev/firmware.bin" in error for error in errors)
+
+
 def _build_fake_release_wheel(
     path: Path,
     *,
