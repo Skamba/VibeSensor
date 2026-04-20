@@ -95,20 +95,36 @@ class TestRoundTripParity:
         assert snap.has_acceleration is False
         assert snap.cruise_pct == 0.0
 
-    def test_phase_summary_fallback_to_phase_counts(self) -> None:
+    def test_phase_summary_derives_flags_from_phase_counts(self) -> None:
         snap = driving_phase_summary_from_mapping(
             {"phase_counts": {"cruise": 10, "acceleration": 5}}
         )
         assert snap.has_cruise is True
         assert snap.has_acceleration is True
 
-    def test_phase_summary_fallback_to_phase_pcts(self) -> None:
+    def test_phase_summary_derives_percentages_from_phase_pcts(self) -> None:
         snap = driving_phase_summary_from_mapping(
             {"phase_pcts": {"cruise": 45.0, "idle": 12.0, "speed_unknown": 8.0}}
         )
         assert snap.cruise_pct == pytest.approx(45.0)
         assert snap.idle_pct == pytest.approx(12.0)
         assert snap.speed_unknown_pct == pytest.approx(8.0)
+
+    def test_phase_summary_ignores_legacy_flat_fields_without_canonical_values(self) -> None:
+        snap = driving_phase_summary_from_mapping(
+            {
+                "has_cruise": True,
+                "has_acceleration": True,
+                "cruise_pct": 45.0,
+                "idle_pct": 12.0,
+                "speed_unknown_pct": 8.0,
+            }
+        )
+        assert snap.has_cruise is False
+        assert snap.has_acceleration is False
+        assert snap.cruise_pct == 0.0
+        assert snap.idle_pct == 0.0
+        assert snap.speed_unknown_pct == 0.0
 
     def test_speed_profile_from_typed_snapshots_with_empty_inputs(self) -> None:
         speed_profile = SpeedProfile.from_stats(speed_profile_summary_from_mapping({}))
