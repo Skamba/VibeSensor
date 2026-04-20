@@ -8,8 +8,6 @@ import json
 import subprocess
 import sys
 import tempfile
-import urllib.error
-import urllib.request
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -17,6 +15,7 @@ import msgspec
 from tenacity import Retrying, retry_if_exception_type, stop_after_delay, wait_fixed
 
 from vibesensor.use_cases.updates.artifact_validation import wheel_metadata_validation_errors
+from vibesensor.use_cases.updates.http_client import read_text_response
 
 _RELEASE_SMOKE_RETRY_WAIT_S = 0.5
 
@@ -145,11 +144,12 @@ def validate_release_wheel_metadata(
 def _read_http(url: str) -> tuple[int, str, str]:
     """Fetch a URL and return status, content type, and decoded body text."""
 
-    request = urllib.request.Request(url, headers={"Connection": "close"})
-    with urllib.request.urlopen(request, timeout=3.0) as response:
-        body = response.read().decode("utf-8", errors="replace")
-        content_type = response.headers.get("Content-Type", "")
-        return response.status, content_type, body
+    return read_text_response(
+        url,
+        headers={"Connection": "close"},
+        timeout_s=3.0,
+        context="release smoke",
+    )
 
 
 def packaged_static_index_path() -> Path:
@@ -245,7 +245,6 @@ def run_server_smoke(
                         except (
                             OSError,
                             RuntimeError,
-                            urllib.error.URLError,
                             json.JSONDecodeError,
                         ) as exc:
                             last_error = exc

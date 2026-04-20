@@ -11,6 +11,7 @@ Covers:
 
 from __future__ import annotations
 
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -98,16 +99,15 @@ class TestDownloadAssetFdLeakGuard:
 
         dest = tmp_path / "firmware.bin"
 
-        # Patch urlopen to provide a fake response, and os.fdopen to fail
+        # Patch the shared streaming helper to provide a fake response, and
+        # os.fdopen to fail.
         fake_resp = MagicMock()
-        fake_resp.read.return_value = b"data"
-        fake_resp.__enter__ = lambda s: s
-        fake_resp.__exit__ = lambda s, *a: None
+        fake_resp.iter_bytes.return_value = iter([b"data"])
 
         with (
             patch(
-                "vibesensor.use_cases.updates.asset_download.urlopen",
-                return_value=fake_resp,
+                "vibesensor.use_cases.updates.asset_download.stream_http_response",
+                return_value=nullcontext(fake_resp),
             ),
             patch("os.fdopen", side_effect=OSError("mock fdopen failure")),
             patch("os.close") as mock_close,
