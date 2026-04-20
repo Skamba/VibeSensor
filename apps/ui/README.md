@@ -89,6 +89,20 @@ The release-smoke artifact helper is the intentional narrow exception: after the
 Generated contract artifacts stay out of the lint/format path on purpose so the
 source-of-truth export commands remain the only writers for those files.
 
+## HTTP boundary tests with MSW
+
+Use `msw` as the shared HTTP mocking layer for UI tests that exercise the real
+browser-side fetch boundary.
+
+- Node-side Playwright specs should install the shared lifecycle from
+  `tests/msw/node.ts`; it normalizes relative `/api/...` requests onto the
+  test origin and fails unhandled HTTP requests loudly by default.
+- Feature-specific reusable handlers belong under `tests/msw/handlers/` as they
+  appear. Keep cross-feature primitives in `tests/msw/http.ts`, and name
+  scenario factories `build<Feature><Scenario>Handlers(...)`.
+- `tests/msw/browser.ts` is the shared entrypoint for future browser-worker
+  flows; keep WebSocket mocking out of that layer.
+
 ## Bundle analysis
 
 Run `npm run analyze` to build the production bundle and emit
