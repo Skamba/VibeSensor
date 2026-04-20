@@ -69,10 +69,14 @@ async def test_controller_escalates_after_consecutive_failures(caplog) -> None:
     )
     sleep_calls: list[float] = []
     original_sleep = asyncio.sleep
+    fake_now = 0.0
 
     async def fake_sleep(duration: float) -> None:
         sleep_calls.append(duration)
         await original_sleep(0)
+
+    def fake_current_time() -> float:
+        return fake_now
 
     async def failing_broadcast() -> None:
         raise OSError("boom")
@@ -82,12 +86,16 @@ async def test_controller_escalates_after_consecutive_failures(caplog) -> None:
             "vibesensor.adapters.websocket.tick_controller.anyio.sleep",
             side_effect=fake_sleep,
         ),
+        patch(
+            "vibesensor.adapters.websocket.tick_controller.anyio.current_time",
+            side_effect=fake_current_time,
+        ),
         caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"),
         pytest.raises(BroadcastTickLoopFailure, match="2 consecutive times"),
     ):
         await controller.run(broadcast_tick=failing_broadcast)
 
-    assert sleep_calls == [pytest.approx(0.1, rel=0.2)]
+    assert sleep_calls == [pytest.approx(0.1, rel=1e-6)]
     assert any("1 consecutive" in record.message for record in caplog.records)
     assert any("2 consecutive times; escalating." in record.message for record in caplog.records)
 
@@ -102,6 +110,9 @@ async def test_controller_clamps_hz_to_minimum_one(caplog) -> None:
         sleep_calls.append(duration)
         raise asyncio.CancelledError
 
+    def fake_current_time() -> float:
+        return 0.0
+
     async def broadcast_tick() -> None:
         return None
 
@@ -110,10 +121,14 @@ async def test_controller_clamps_hz_to_minimum_one(caplog) -> None:
             "vibesensor.adapters.websocket.tick_controller.anyio.sleep",
             side_effect=fake_sleep,
         ),
+        patch(
+            "vibesensor.adapters.websocket.tick_controller.anyio.current_time",
+            side_effect=fake_current_time,
+        ),
         caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"),
         pytest.raises(asyncio.CancelledError),
     ):
         await controller.run(broadcast_tick=broadcast_tick)
 
-    assert sleep_calls == [pytest.approx(1.0, rel=0.05)]
+    assert sleep_calls == [pytest.approx(1.0, rel=1e-6)]
     assert any("clamping to 1 Hz" in record.message for record in caplog.records)
