@@ -244,13 +244,31 @@ validate_image_artifact() {
     exit 1
   fi
 
-  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor/data/report_i18n.json" ]; then
-    echo "Validation failed: missing ${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor/data/report_i18n.json"
+  # Static data ships inside the installed `vibesensor` package wheel
+  # (site-packages/vibesensor/data/*). The source tree under
+  # /opt/VibeSensor/apps/server/vibesensor is intentionally removed after install,
+  # so check the wheel-install path instead. `shopt -s nullglob` avoids literal
+  # glob strings when the path is missing; the explicit -f check then fails.
+  local venv_site_packages_glob="${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/lib/python*/site-packages/vibesensor/data"
+  local venv_data_dir=""
+  for candidate in ${venv_site_packages_glob}; do
+    if [ -d "${candidate}" ]; then
+      venv_data_dir="${candidate}"
+      break
+    fi
+  done
+  if [ -z "${venv_data_dir}" ]; then
+    echo "Validation failed: missing site-packages/vibesensor/data directory under ${ROOT_MNT}/opt/VibeSensor/apps/server/.venv"
     exit 1
   fi
 
-  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor/data/car_library.json" ]; then
-    echo "Validation failed: missing ${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor/data/car_library.json"
+  if [ ! -f "${venv_data_dir}/report_i18n.json" ]; then
+    echo "Validation failed: missing ${venv_data_dir}/report_i18n.json"
+    exit 1
+  fi
+
+  if [ ! -f "${venv_data_dir}/car_library.json" ]; then
+    echo "Validation failed: missing ${venv_data_dir}/car_library.json"
     exit 1
   fi
 
