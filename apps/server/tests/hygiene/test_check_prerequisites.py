@@ -15,9 +15,7 @@ def _load_module():
         "check_prerequisites_for_tests",
         _CHECK_PREREQUISITES,
     )
-    assert spec is not None and spec.loader is not None, (
-        f"Unable to load {_CHECK_PREREQUISITES}"
-    )
+    assert spec is not None and spec.loader is not None, f"Unable to load {_CHECK_PREREQUISITES}"
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
