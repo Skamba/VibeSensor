@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from urllib.error import URLError
-
 import pytest
 
 from vibesensor.adapters.simulator.scripted_speed_sync import (
@@ -27,7 +25,7 @@ async def test_apply_scripted_speed_disables_sync_after_handled_http_error(
         speed_kmh: float,
         timeout_s: float,
     ) -> float:
-        raise URLError("connection refused")
+        raise OSError("connection refused")
 
     monkeypatch.setattr(
         "vibesensor.adapters.simulator.scripted_speed_sync.set_server_speed_override_kmh",
@@ -45,7 +43,7 @@ async def test_apply_scripted_speed_disables_sync_after_handled_http_error(
 
     assert clients[0].current_speed_kmh == 42.0
     assert result.server_speed_sync_enabled is False
-    assert result.failure_message == speed_sync_disable_message(URLError("connection refused"))
+    assert result.failure_message == speed_sync_disable_message(OSError("connection refused"))
 
 
 @pytest.mark.asyncio

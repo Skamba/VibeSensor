@@ -6,8 +6,8 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from urllib.error import URLError
-from urllib.request import Request, urlopen
+
+from vibesensor.use_cases.updates.http_client import read_json_response, read_text_response
 
 LOCAL_SERVER_HOSTS = {"127.0.0.1", "localhost", "0.0.0.0"}
 
@@ -27,9 +27,13 @@ def _speed_source_url(host: str, port: int) -> str:
 def check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:
     url = server_health_url(host, port)
     try:
-        with urlopen(url, timeout=timeout_s) as resp:
-            return bool(resp.status == 200)
-    except (URLError, OSError, TimeoutError):
+        status, _content_type, _body = read_text_response(
+            url,
+            timeout_s=timeout_s,
+            context="simulator health check",
+        )
+        return status == 200
+    except OSError:
         return False
 
 
@@ -39,16 +43,15 @@ def set_server_speed_override_kmh(
     payload = json.dumps({"speed_source": "manual", "manual_speed_kph": float(speed_kmh)}).encode(
         "utf-8"
     )
-    req = Request(
+    parsed = read_json_response(
         _speed_source_url(host, port),
-        data=payload,
         method="PUT",
         headers={"Content-Type": "application/json"},
+        content=payload,
+        timeout_s=timeout_s,
+        context="simulator speed override",
     )
-    with urlopen(req, timeout=timeout_s) as resp:
-        body = resp.read()
-    parsed = json.loads(body.decode("utf-8")) if body else {}
-    value = parsed.get("manual_speed_kph")
+    value = parsed.get("manual_speed_kph") if isinstance(parsed, dict) else None
     return float(value) if isinstance(value, (int, float)) else None
 
 
