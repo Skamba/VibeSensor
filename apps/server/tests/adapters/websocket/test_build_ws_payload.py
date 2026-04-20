@@ -23,6 +23,7 @@ def _client_row(client_id: str, name: str) -> ClientApiRow:
         "last_seen_age_ms": 0,
         "frames_total": 0,
         "dropped_frames": 0,
+        "frame_samples": 200,
     }
 
 

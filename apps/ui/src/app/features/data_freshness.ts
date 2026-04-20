@@ -1,6 +1,6 @@
 export interface FreshnessClient {
   sample_rate_hz?: number | null;
-  frame_samples?: number | null;
+  frame_samples: number;
 }
 
 const LEGACY_FRESH_THRESHOLD_MS = 250;

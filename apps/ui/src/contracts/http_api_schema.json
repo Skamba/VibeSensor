@@ -1352,7 +1352,8 @@
           "sample_rate_hz",
           "last_seen_age_ms",
           "frames_total",
-          "dropped_frames"
+          "dropped_frames",
+          "frame_samples"
         ],
         "title": "ClientApiRow",
         "type": "object"

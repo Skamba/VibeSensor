@@ -79,6 +79,26 @@ test.describe("schema_version handling", () => {
     });
   });
 
+  test("rejects client rows that omit required frame_samples", () => {
+    expectInvalidPayload({
+      ...basePayload,
+      clients: [
+        {
+          id: "sensor1",
+          name: "Front Left",
+          connected: true,
+          mac_address: "001122334455",
+          location_code: "front_left_wheel",
+          last_seen_age_ms: 5,
+          dropped_frames: 0,
+          frames_total: 100,
+          sample_rate_hz: 1600,
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+    });
+  });
+
   test("rejects partial strength_metrics instead of defaulting missing fields", () => {
     expectInvalidPayload({
       ...basePayload,
