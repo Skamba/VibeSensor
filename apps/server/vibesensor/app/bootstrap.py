@@ -11,6 +11,7 @@ import argparse
 import asyncio
 import errno
 import logging
+import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from logging.handlers import RotatingFileHandler
@@ -55,6 +56,21 @@ _LOG_BACKUP_COUNT = 3
 _CONFIG_PATH_ENV = CONFIG_PATH_ENV
 
 
+def _install_runtime_event_loop_policy() -> None:
+    """Install the canonical runtime event-loop policy for this platform."""
+    if not sys.platform.startswith("linux"):
+        return
+    if type(asyncio.get_event_loop_policy()).__module__.startswith("uvloop"):
+        return
+    try:
+        import uvloop
+    except ImportError as exc:
+        raise RuntimeError(
+            "uvloop is required on Linux runtimes; reinstall the backend dependencies.",
+        ) from exc
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+
 def _setup_file_logging(log_path: Path | None) -> None:
     """Attach a RotatingFileHandler to the root logger when *log_path* is set."""
     if log_path is None:
@@ -77,6 +93,7 @@ def _setup_file_logging(log_path: Path | None) -> None:
 
 def create_app(config_path: Path | None = None) -> FastAPI:
     """Create and configure the VibeSensor FastAPI application."""
+    _install_runtime_event_loop_policy()
     config = load_config(config_path)
     bootstrap_settings = load_bootstrap_env_settings()
     _setup_file_logging(config.logging.app_log_path)
@@ -170,6 +187,7 @@ def _run_server(
         host=host,
         port=port,
         log_level="info",
+        loop="asyncio",
         reload=reload,
         factory=factory,
     )

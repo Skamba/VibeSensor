@@ -83,6 +83,14 @@ sudo systemctl status vibesensor-hotspot-self-heal.timer --no-pager
 sudo journalctl -u vibesensor.service -u vibesensor-hotspot.service -n 200 --no-pager
 ```
 
+Linux, Docker, and Raspberry Pi backends install `uvloop` automatically during
+startup. If the service exits before `/api/health` responds, confirm the active
+environment still imports it cleanly:
+
+```bash
+python -c "import uvloop"
+```
+
 3. Validate the on-device config before restarting anything:
 
 ```bash
@@ -181,6 +189,9 @@ vibesensor-sim --count 5 --duration 10 --no-interactive
 ```
 
 If the stack does not serve on port `80`, use `http://127.0.0.1:8000` as the dev fallback.
+On Linux/Docker/Pi, this stack should be running on the canonical `uvloop`
+policy by default; unsupported non-Linux local development is the only place
+the default asyncio loop remains expected.
 
 ## CI failure triage
 
