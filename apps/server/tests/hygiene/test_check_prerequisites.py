@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from pathlib import Path
 
 from tests._paths import REPO_ROOT
 
@@ -16,7 +15,9 @@ def _load_module():
         "check_prerequisites_for_tests",
         _CHECK_PREREQUISITES,
     )
-    assert spec is not None and spec.loader is not None, f"Unable to load {_CHECK_PREREQUISITES}"
+    assert spec is not None and spec.loader is not None, (
+        f"Unable to load {_CHECK_PREREQUISITES}"
+    )
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
@@ -26,7 +27,10 @@ def _load_module():
 def test_check_docker_accepts_compose_v2_and_keeps_daemon_check(monkeypatch) -> None:
     module = _load_module()
 
-    monkeypatch.setattr(module, "_which", lambda command: "/usr/bin/docker" if command == "docker" else None)
+    def _docker_only(command: str) -> str | None:
+        return "/usr/bin/docker" if command == "docker" else None
+
+    monkeypatch.setattr(module, "_which", _docker_only)
 
     def _fake_run(command: list[str]) -> tuple[bool, str]:
         if command == ["docker", "compose", "version"]:
@@ -76,6 +80,10 @@ def test_check_docker_requires_compose_v2_even_if_legacy_binary_exists(monkeypat
 
     assert [(item.name, item.status, item.message) for item in results] == [
         ("docker", "OK", "installed"),
-        ("docker compose", "WARN", "v2 unavailable: docker: 'compose' is not a docker command."),
+        (
+            "docker compose",
+            "WARN",
+            "v2 unavailable: docker: 'compose' is not a docker command.",
+        ),
         ("docker daemon", "OK", "reachable"),
     ]
