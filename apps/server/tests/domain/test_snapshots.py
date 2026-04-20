@@ -305,7 +305,7 @@ class TestSpeedProfileSummaryFromDict:
 class TestDrivingPhaseSummaryFromDict:
     """from_dict() constructor tests."""
 
-    def test_counts_percentages_and_flags_fall_back_consistently(self) -> None:
+    def test_counts_percentages_and_flags_derive_from_canonical_fields(self) -> None:
         snap = driving_phase_summary_from_mapping(
             {
                 "phase_counts": {"cruise": "100", "acceleration": 50, "idle": "bad"},
@@ -325,7 +325,7 @@ class TestDrivingPhaseSummaryFromDict:
         assert snap.idle_pct == pytest.approx(0.10)
         assert snap.speed_unknown_pct == 0.0
 
-    def test_explicit_flags_and_percentages_override_count_fallbacks(self) -> None:
+    def test_legacy_flat_fields_do_not_override_canonical_phase_fields(self) -> None:
         snap = driving_phase_summary_from_mapping(
             {
                 "phase_counts": {"cruise": 10, "acceleration": 3},
@@ -336,9 +336,9 @@ class TestDrivingPhaseSummaryFromDict:
             }
         )
 
-        assert snap.has_cruise is False
-        assert snap.has_acceleration is False
-        assert snap.cruise_pct == 0.0
+        assert snap.has_cruise is True
+        assert snap.has_acceleration is True
+        assert snap.cruise_pct == pytest.approx(0.9)
 
     def test_invalid_phase_counts_skipped(self) -> None:
         snap = driving_phase_summary_from_mapping({"phase_counts": {"cruise": "bad", "accel": 10}})

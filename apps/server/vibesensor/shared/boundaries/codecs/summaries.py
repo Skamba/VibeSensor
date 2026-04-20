@@ -63,30 +63,16 @@ def driving_phase_summary_from_mapping(payload: object) -> DrivingPhaseSummary:
             if isinstance(key, str) and (parsed_pct := _float_from(value)) is not None:
                 phase_pcts[key] = parsed_pct
 
-    def _flag_fallback(key: str, phase_key: str) -> bool:
-        value = payload.get(key)
-        if isinstance(value, bool):
-            return value
-        if value is not None:
-            return bool(value)
-        return phase_counts.get(phase_key, 0) > 0
-
-    def _pct_fallback(key: str, phase_key: str) -> float:
-        value = optional_float(payload.get(key))
-        if value is not None or key in payload:
-            return value or 0.0
-        return phase_pcts.get(phase_key, 0.0)
-
     return DrivingPhaseSummary(
         phase_counts=phase_counts,
         phase_pcts=phase_pcts,
         total_samples=_int_or(payload.get("total_samples")),
         segment_count=_int_or(payload.get("segment_count")),
-        has_cruise=_flag_fallback("has_cruise", "cruise"),
-        has_acceleration=_flag_fallback("has_acceleration", "acceleration"),
-        cruise_pct=_pct_fallback("cruise_pct", "cruise"),
-        idle_pct=_pct_fallback("idle_pct", "idle"),
-        speed_unknown_pct=_pct_fallback("speed_unknown_pct", "speed_unknown"),
+        has_cruise=phase_counts.get("cruise", 0) > 0,
+        has_acceleration=phase_counts.get("acceleration", 0) > 0,
+        cruise_pct=phase_pcts.get("cruise", 0.0),
+        idle_pct=phase_pcts.get("idle", 0.0),
+        speed_unknown_pct=phase_pcts.get("speed_unknown", 0.0),
     )
 
 

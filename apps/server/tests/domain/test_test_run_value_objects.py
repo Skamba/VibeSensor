@@ -290,7 +290,10 @@ class TestTestRunWithValueObjects:
                 "steady_speed": True,
                 "sample_count": 500,
             },
-            "phase_summary": {"has_cruise": True, "cruise_pct": 65.0},
+            "phase_summary": {
+                "phase_counts": {"cruise": 325},
+                "phase_pcts": {"cruise": 65.0},
+            },
         }
         result = reconstruct_test_run_from_summary(summary)
         assert result.speed_profile is not None
