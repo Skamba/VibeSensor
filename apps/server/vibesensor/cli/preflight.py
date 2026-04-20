@@ -7,10 +7,8 @@ from pathlib import Path
 from vibesensor.app.config_defaults import documented_default_config
 from vibesensor.app.config_loader import load_config
 from vibesensor.app.config_schema import AppConfig
-from vibesensor.shared.process_settings import (
-    summarize_process_settings,
-)
 from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
+from vibesensor.shared.process_settings import summarize_process_settings
 
 
 def summarize(cfg: AppConfig) -> dict[str, object]:
