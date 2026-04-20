@@ -19,7 +19,8 @@ updates:
           - "packaging"
           - "PyYAML"
           - "reportlab"
-          - "uvicorn*"
+          - "granian*"
+          - "uvloop"
           - "websockets"
           - "esptool"
         update-types:
@@ -35,7 +36,8 @@ updates:
           - "packaging"
           - "PyYAML"
           - "reportlab"
-          - "uvicorn*"
+          - "granian*"
+          - "uvloop"
           - "websockets"
           - "esptool"
         update-types:

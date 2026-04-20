@@ -382,7 +382,7 @@ mods = [
     "yaml",
     "reportlab",
     "fastapi",
-    "uvicorn",
+    "granian",
     "vibesensor",
     "vibesensor.vibration_strength",
 ]
