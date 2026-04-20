@@ -139,14 +139,9 @@ if [ "${#INSTALLED_TRIM_PACKAGES[@]}" -gt 0 ]; then
   echo "Purging trim-only packages: ${INSTALLED_TRIM_PACKAGES[*]}"
   apt-get purge -y --auto-remove "${INSTALLED_TRIM_PACKAGES[@]}"
 fi
-SITE_PACKAGES="$(/opt/VibeSensor/apps/server/.venv/bin/python - <<'PY'
-import site
-print(site.getsitepackages()[0])
-PY
-)"
-rm -rf "${SITE_PACKAGES}/data" "${SITE_PACKAGES}/public" "${SITE_PACKAGES}/static"
-cp -a /opt/VibeSensor/apps/server/data "${SITE_PACKAGES}/data"
 # Keep runtime assets/scripts/config while ensuring Python code comes from wheels.
+# Static data lives inside the installed `vibesensor` package (site-packages/vibesensor/data);
+# no sibling copy needed after the data-tree collapse (#2951).
 rm -rf \
   /opt/VibeSensor/apps/server/vibesensor \
   /opt/VibeSensor/apps/server/tests \
