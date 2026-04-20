@@ -25,6 +25,8 @@ import type {
 import { flushAsyncWork, installWindowGlobal } from "./async_test_helpers";
 import type { TimerHarness } from "./async_test_helpers";
 import { createPanel, installFakeDomGlobals } from "./dom_render_test_support";
+import { http } from "./msw/http";
+import { createUiMswTestScope } from "./msw/node";
 
 type ClickListener = (() => void) | null;
 
@@ -80,30 +82,19 @@ export function installFeatureFetchMock(
     body: string,
   ) => Promise<Response> | Response,
 ): () => void {
-  const originalFetch = globalThis.fetch;
-
-  globalThis.fetch = (async (
-    input: string | URL | RequestInfo,
-    init?: RequestInit,
-  ) => {
-    const requestUrl =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : input.url;
-    const requestMethod =
-      init?.method ?? (input instanceof Request ? input.method : "GET");
-    const requestBody = typeof init?.body === "string" ? init.body : "";
-    return handler(
-      new URL(requestUrl, "http://vibesensor.test"),
-      requestMethod,
-      requestBody,
-    );
-  }) as typeof fetch;
+  const scope = createUiMswTestScope();
+  scope.server.use(
+    http.all("*", async ({ request }) => {
+      const requestBody =
+        request.method === "GET" || request.method === "HEAD"
+          ? ""
+          : await request.text();
+      return await handler(new URL(request.url), request.method, requestBody);
+    }),
+  );
 
   return () => {
-    globalThis.fetch = originalFetch;
+    scope.close();
   };
 }
 

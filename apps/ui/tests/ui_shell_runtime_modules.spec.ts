@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { HttpResponse, http, uiTestUrl } from "./msw/http";
+import { createUiMswTestServer } from "./msw/node";
 import { createAppState } from "../src/app/ui_app_state";
 import { UiShellController } from "../src/app/runtime/ui_shell_controller";
 import {
@@ -20,31 +22,7 @@ import { createUiShellStatusModule } from "../src/app/runtime/ui_shell_status_mo
 import { signal, type ReadonlySignal } from "../src/app/ui_signals";
 import { installDocumentStub } from "./spectrum_test_support";
 
-function jsonResponse(body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    headers: { "content-type": "application/json" },
-    status: 200,
-  });
-}
-
-function requestUrl(input: string | URL | RequestInfo): string {
-  return String(
-    typeof input === "string" ? input : input instanceof URL ? input : input.url,
-  );
-}
-
-async function withMockFetch(
-  mockFetch: typeof fetch,
-  run: () => Promise<void>,
-): Promise<void> {
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = mockFetch;
-  try {
-    await run();
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-}
+const mswServer = createUiMswTestServer(test);
 
 function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : key;
@@ -360,22 +338,18 @@ test.describe("createUiShellPreferencesModule", () => {
       normalizeLanguage: (lang) => String(lang),
     });
 
-    await withMockFetch(
-      (async (input: string | URL | RequestInfo) => {
-        const url = requestUrl(input);
-        requests.push(url);
-        if (url.endsWith("/api/settings/language")) {
-          return jsonResponse({ language: "nl" });
-        }
-        if (url.endsWith("/api/settings/speed-unit")) {
-          return jsonResponse({ speed_unit: "mps" });
-        }
-        throw new Error(`Unexpected request: ${url}`);
-      }) as typeof fetch,
-      async () => {
-        await module.hydratePersistedPreferences();
-      },
+    mswServer.use(
+      http.get(uiTestUrl("/api/settings/language"), ({ request }) => {
+        requests.push(new URL(request.url).pathname);
+        return HttpResponse.json({ language: "nl" });
+      }),
+      http.get(uiTestUrl("/api/settings/speed-unit"), ({ request }) => {
+        requests.push(new URL(request.url).pathname);
+        return HttpResponse.json({ speed_unit: "mps" });
+      }),
     );
+
+    await module.hydratePersistedPreferences();
 
     expect(requests).toEqual([
       "/api/settings/language",
@@ -397,19 +371,20 @@ test.describe("createUiShellPreferencesModule", () => {
       normalizeLanguage: (lang) => String(lang),
     });
 
-    await withMockFetch(
-      (async () =>
-        new Promise<Response>((resolve) => {
+    mswServer.use(
+      http.put(uiTestUrl("/api/settings/language"), () => {
+        return new Promise<Response>((resolve) => {
           resolveResponse = resolve;
-        })) as typeof fetch,
-      async () => {
-        const savePromise = module.saveLanguage("nl");
-        expect(module.selectedLanguage.value).toBe("nl");
-        expect(state.shell.lang.value).toBe("en");
-        resolveResponse?.(jsonResponse({ language: "nl" }));
-        await savePromise;
-      },
+        });
+      }),
     );
+
+    const savePromise = module.saveLanguage("nl");
+    expect(module.selectedLanguage.value).toBe("nl");
+    expect(state.shell.lang.value).toBe("en");
+    await expect.poll(() => resolveResponse !== null).toBe(true);
+    resolveResponse?.(HttpResponse.json({ language: "nl" }));
+    await savePromise;
 
     expect(state.shell.lang.value).toBe("nl");
     expect(module.selectedLanguage.value).toBe("nl");
@@ -424,14 +399,14 @@ test.describe("createUiShellPreferencesModule", () => {
       normalizeLanguage: (lang) => String(lang),
     });
 
-    await withMockFetch(
-      (async () => {
-        throw new Error("save failed");
-      }) as typeof fetch,
-      async () => {
-        await module.saveSpeedUnit("mps");
-      },
+    mswServer.use(
+      http.put(
+        uiTestUrl("/api/settings/speed-unit"),
+        () => HttpResponse.json({ detail: "save failed" }, { status: 500 }),
+      ),
     );
+
+    await module.saveSpeedUnit("mps");
 
     expect(state.shell.speedUnit.value).toBe("kmh");
     expect(module.selectedSpeedUnit.value).toBe("kmh");
