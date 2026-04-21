@@ -1,9 +1,14 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import type { SpectrumFramePreparer } from "../src/app/runtime/spectrum_frame_preparer";
 import type { SpectrumPanelView } from "../src/app/runtime/spectrum_panel_view";
 import { applyLivePayloadUpdate, createAppState } from "../src/app/ui_app_state";
 import { batch } from "../src/app/ui_signals";
 import type { AdaptedPayload } from "../src/transport/live_models";
-import { installWindowGlobal } from "./async_test_helpers";
+import {
+  createDeferred,
+  flushSignalUpdates,
+  installWindowGlobal,
+} from "./async_test_helpers";
 import { createElementStub, installDocumentStub } from "./spectrum_test_support";
 
 async function importUiSpectrumController() {
@@ -77,6 +82,15 @@ function createPanelStub(): {
     get lastOverlayModel() {
       return lastOverlayModel;
     },
+  };
+}
+
+function createFramePreparerStub(
+  prepare: SpectrumFramePreparer["prepare"],
+): SpectrumFramePreparer {
+  return {
+    dispose() {},
+    prepare,
   };
 }
 
@@ -222,7 +236,6 @@ describe("UiSpectrumController", () => {
       });
       const canvas = (controller as unknown as {
         canvas: {
-          prepareFrame: () => unknown;
           refreshPreparedFrameMetadata: () => {
             entries: [];
             freqAxis: [];
@@ -233,13 +246,8 @@ describe("UiSpectrumController", () => {
           refreshDecorations: () => void;
         };
       }).canvas;
-      let prepareCalls = 0;
       let refreshCalls = 0;
 
-      canvas.prepareFrame = () => {
-        prepareCalls += 1;
-        return null;
-      };
       canvas.refreshPreparedFrameMetadata = () => ({
         entries: [],
         freqAxis: [],
@@ -253,8 +261,113 @@ describe("UiSpectrumController", () => {
 
       controller.refreshSpectrumDecorations();
 
-      expect(prepareCalls).toBe(0);
       expect(refreshCalls).toBe(1);
+    } finally {
+      restoreDocument();
+    }
+  });
+
+  test("shows worker frame-preparation failures through the overlay", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const UiSpectrumController = await importUiSpectrumController();
+      const state = createAppState();
+      state.transport.wsState.value = "connected";
+      state.transport.hasReceivedPayload.value = true;
+      const panel = createPanelStub();
+      const controller = new UiSpectrumController({
+        state,
+        panel: panel.panel,
+        t: (key, vars) =>
+          key === "spectrum.frame_prepare_error"
+            ? `frame prep failed: ${String(vars?.message)}`
+            : key,
+        framePreparer: createFramePreparerStub(async () => {
+          throw new Error("worker crashed");
+        }),
+      });
+
+      controller.renderSpectrum();
+      await flushSignalUpdates();
+
+      expect(panel.lastOverlayModel).toEqual({
+        hidden: false,
+        text: "frame prep failed: worker crashed",
+      });
+      expect(state.spectrum.framePrepareErrorDetail.value).toBe("worker crashed");
+    } finally {
+      restoreDocument();
+    }
+  });
+
+  test("drops stale worker results and applies only newest spectrum frame", async () => {
+    const restoreDocument = installDocumentStub();
+    try {
+      const UiSpectrumController = await importUiSpectrumController();
+      const state = createAppState();
+      const panel = createPanelStub();
+      const first = createDeferred<{
+        entries: [];
+        freqAxis: [];
+        frame: null;
+        hasData: false;
+      }>();
+      const second = createDeferred<{
+        entries: [];
+        freqAxis: [];
+        frame: null;
+        hasData: false;
+      }>();
+      const calls: string[] = [];
+      const controller = new UiSpectrumController({
+        state,
+        panel: panel.panel,
+        t: (key) => key,
+        framePreparer: createFramePreparerStub(async (input) => {
+          calls.push(String(input.spectraByClient["sensor-a"]?.combined[2] ?? "empty"));
+          if (calls.length === 1) {
+            return first.promise;
+          }
+          return second.promise;
+        }),
+      });
+      const applyCalls: string[] = [];
+      const controllerForTest = controller as UiSpectrumController & {
+        applyPreparedSpectrum: (prepared: { hasData: boolean }) => void;
+      };
+      controllerForTest.applyPreparedSpectrum = ((prepared) => {
+        applyCalls.push(String(prepared.hasData));
+      }) as typeof controllerForTest.applyPreparedSpectrum;
+
+      applyLivePayloadUpdate({
+        realtime: state.realtime,
+        spectrum: state.spectrum,
+        adaptedPayload: makeSpectrumPayload([0.1, 0.2, 0.3]),
+      });
+      applyLivePayloadUpdate({
+        realtime: state.realtime,
+        spectrum: state.spectrum,
+        adaptedPayload: makeSpectrumPayload([0.1, 0.2, 0.4]),
+      });
+      first.resolve({
+        entries: [],
+        freqAxis: [],
+        frame: null,
+        hasData: false,
+      });
+      await flushSignalUpdates();
+      expect(applyCalls).toEqual([]);
+
+      second.resolve({
+        entries: [],
+        freqAxis: [],
+        frame: null,
+        hasData: false,
+      });
+      await flushSignalUpdates();
+
+      expect(calls).toEqual(["0.3", "0.4"]);
+      expect(applyCalls).toEqual(["false"]);
     } finally {
       restoreDocument();
     }

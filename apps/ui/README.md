@@ -9,6 +9,7 @@ server over HTTP (REST) and WebSocket (live data).
 - **TypeScript** — application logic
 - **Preact + @preact/signals** — UI rendering plus shared reactive state
 - **@tanstack/query-core** — canonical server-state fetch, cache, polling, and invalidation ownership
+- **comlink** — typed Web Worker bridge for off-main-thread spectrum frame preparation
 - **Vite** — build tool and dev server
 - **uPlot** — high-performance spectrum charts
 - **Vitest + happy-dom** — canonical fast unit/integration test runner
@@ -105,6 +106,26 @@ Frontend server-state ownership is centralized on the runtime-owned
   and invalidation instead of reintroducing ad hoc loaders or poll loops.
 - Mutations should either write authoritative results into the cache with
   `setQueryData(...)` or explicitly invalidate/refetch the affected keys.
+
+## Worker-owned spectrum frame preparation
+
+Live spectrum payload adaptation stays on the main thread, but heavy spectrum
+frame preparation does not.
+
+- `src/app/runtime/ui_spectrum_controller.ts` owns worker startup, stale-result
+  suppression, surfaced worker failure state, and teardown.
+- `src/app/runtime/spectrum_frame_preparer_worker.ts` exposes the canonical
+  Comlink worker API. Do not add a second production owner for spectrum frame
+  preparation.
+- `src/app/runtime/spectrum_frame_preparer.ts` owns the shared typed frame-prep
+  contract plus the pure preparation core reused by the worker and focused
+  tests.
+- `src/app/runtime/spectrum_canvas_renderer.ts` no longer prepares frames from
+  raw AppState. It only composes chart-band metadata, owns uPlot/canvas
+  lifecycle, and renders already prepared frames.
+- Worker responses may return transferable typed arrays (`Float64Array`) for the
+  prepared frequency/series payloads. Treat those series as read-only numeric
+  buffers.
 
 ## HTTP boundary tests with MSW
 
@@ -205,10 +226,13 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/runtime/ui_shell_chrome.tsx` | Preact owner for the primary nav, header preferences, pills, app-level error banner, and the top-level dashboard/history/settings view containers plus the typed shell bridge |
 | `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, and the reactive shell-chrome model that feeds header pills, feedback, and app-level banners |
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport coordinator that queues payloads through AppState, throttles live-session adaptation, and lets realtime, shell, and spectrum surfaces react from signal-backed state |
-| `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that splits heavy data refreshes from lighter settings-driven decoration refreshes while wiring overlay, canvas, interaction, and panel modules |
+| `app/runtime/ui_spectrum_controller.ts` | Thin spectrum coordinator that owns Comlink worker lifecycle for heavy spectrum frame preparation, splits data refreshes from lighter settings-driven decoration refreshes, and wires overlay, canvas, interaction, and panel modules |
 | `app/runtime/ui_startup_coordinator.ts` | Declarative startup-task runner that lets the shell own its initial bind/language/view boot while startup loads and transport start from a named sync/async plan |
 | `app/runtime/ui_startup_feature_ports.ts` | Narrow startup-only feature contract for initial refresh/load work |
-| `app/runtime/spectrum_canvas_renderer.ts` | Spectrum frame preparation, cached per-client display-series reuse, plot lifecycle, cadence-aware tween scheduling, stable uPlot buffer reuse for same-shape frames, and canvas draw plugin orchestration |
+| `app/runtime/spectrum_canvas_renderer.ts` | Prepared-frame chart-band composition, plot lifecycle, cadence-aware tween scheduling, stable uPlot buffer reuse for same-shape frames, and canvas draw plugin orchestration |
+| `app/runtime/spectrum_frame_preparer.ts` | Typed spectrum frame-prep contract plus pure interpolation/dB conversion core shared by worker and focused tests |
+| `app/runtime/spectrum_frame_preparer_worker.ts` | Canonical Comlink worker entrypoint for off-main-thread spectrum frame preparation plus transferable response packing |
+| `app/runtime/spectrum_frame_preparer_worker_client.ts` | Runtime-owned worker client wrapper that creates, proxies, and disposes the spectrum frame-prep worker |
 | `app/runtime/spectrum_interaction_controller.ts` | Spectrum focus, band-toggle, cursor, and legend/isolation interaction state with explicit ports plus throttled hover-inspector updates and announcement routing |
 | `app/runtime/spectrum_panel_view.ts` | Typed spectrum panel contract for the signal-backed legend, band legend, split visual inspector vs live announcer, band-toggle, and chart-host refs |
 | `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
