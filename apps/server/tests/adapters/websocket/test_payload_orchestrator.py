@@ -64,6 +64,28 @@ async def test_prepare_falls_back_to_error_payload_on_serialization_failure() ->
 
 
 @pytest.mark.asyncio
+async def test_prepare_serializes_plain_non_finite_payload_without_sanitizer() -> None:
+    payload_builder = MagicMock(
+        side_effect=lambda selected: {
+            "selected_client_id": selected,
+            "value": float("nan"),
+        }
+    )
+    orchestrator = PayloadBuildOrchestrator(payload_builder, capture_debug=False)
+
+    with patch(
+        "vibesensor.adapters.websocket.payload_orchestrator.sanitize_for_json",
+        side_effect=AssertionError("plain Python NaN should stay on the direct dump path"),
+    ):
+        await orchestrator.prepare(["sensor-a"])
+
+    assert json.loads(orchestrator.payload_cache["sensor-a"]) == {
+        "selected_client_id": "sensor-a",
+        "value": None,
+    }
+
+
+@pytest.mark.asyncio
 async def test_prepare_reuses_serialized_template_across_selected_clients() -> None:
     shared_clients = [{"id": "sensor-a", "connected": True}]
     shared_rotational_speeds = {
