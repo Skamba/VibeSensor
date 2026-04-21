@@ -1,52 +1,14 @@
-import { render } from "preact";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
+import type { FunctionComponent } from "preact";
 
-import "../../styles/maintenance-cards.css";
-import "../../styles/maintenance-readiness.css";
-import "../../styles/maintenance-journey.css";
-import "../../styles/maintenance-details.css";
-import "../../styles/maintenance-layout.css";
-import "../../styles/settings-common.css";
-import "../../styles/settings-shell.css";
-import "../../styles/settings-transport.css";
-import "../../styles/settings-speed-source.css";
-import "../../styles/settings-cars.css";
-import "../../styles/settings-sensors.css";
-import "../../styles/settings-cars-wizard.css";
-import "../../styles/settings-adaptive.css";
-
-import {
-  mountAnalysisPanel,
-  type AnalysisPanelView,
-} from "./analysis_panel";
-import {
-  mountCarsPanel,
-  type CarsPanelView,
-} from "./cars_panel";
-import {
-  mountEspFlashPanel,
-  type EspFlashPanelView,
-} from "./esp_flash_panel";
-import {
-  mountInternetPanel,
-  type InternetPanelView,
-} from "./internet_panel";
-import {
-  mountSensorsPanel,
-  type SensorsPanelView,
-} from "./sensors_panel";
-import {
-  mountSettingsShell,
-  type SettingsShellView,
-} from "./settings_shell";
-import {
-  mountSpeedSourcePanel,
-  type SpeedSourcePanelView,
-} from "./speed_source_panel";
-import {
-  mountUpdatePanel,
-  type UpdatePanelView,
-} from "./update_panel";
+import type { AnalysisPanelView } from "./analysis_panel";
+import type { CarsPanelView } from "./cars_panel";
+import type { EspFlashPanelView } from "./esp_flash_panel";
+import type { InternetPanelView } from "./internet_panel";
+import type { SensorsPanelView } from "./sensors_panel";
+import type { SettingsShellView } from "./settings_shell";
+import type { SpeedSourcePanelView } from "./speed_source_panel";
+import type { UpdatePanelView } from "./update_panel";
 
 interface SettingsLazyViewReadyHandles {
   settingsShell: SettingsShellView;
@@ -62,6 +24,7 @@ interface SettingsLazyViewReadyHandles {
 }
 
 export interface SettingsLazyViewProps {
+  active: boolean;
   onReady(handles: SettingsLazyViewReadyHandles): void;
   settings: {
     analysis: AnalysisPanelView;
@@ -74,42 +37,49 @@ export interface SettingsLazyViewProps {
   };
 }
 
+type SettingsLazyViewImpl = FunctionComponent<SettingsLazyViewProps>;
+
+let settingsLazyViewPromise: Promise<SettingsLazyViewImpl> | null = null;
+
+function loadSettingsLazyView(): Promise<SettingsLazyViewImpl> {
+  if (settingsLazyViewPromise === null) {
+    settingsLazyViewPromise = import("./settings_lazy_view_content")
+      .then((module) => module.default)
+      .catch((error) => {
+        settingsLazyViewPromise = null;
+        throw error;
+      });
+  }
+  return settingsLazyViewPromise;
+}
+
 export default function SettingsLazyView(props: SettingsLazyViewProps) {
-  const hostRef = useRef<HTMLDivElement | null>(null);
+  const [LoadedView, setLoadedView] = useState<SettingsLazyViewImpl | null>(null);
 
   useEffect(() => {
-    const host = hostRef.current;
-    if (!host) {
+    if (!props.active || LoadedView !== null) {
       return;
     }
-
-    const settingsShellMount = mountSettingsShell(host);
-    const settingsShell = settingsShellMount.view;
-    const settingsHosts = settingsShellMount.panelHosts;
-    const cars = mountCarsPanel(settingsHosts.cars, props.settings.cars);
-    const analysis = mountAnalysisPanel(settingsHosts.analysis, props.settings.analysis);
-    const internet = mountInternetPanel(settingsHosts.internet, props.settings.internet);
-    mountUpdatePanel(settingsHosts.update, props.settings.update);
-    mountSensorsPanel(settingsHosts.sensors, props.settings.sensors);
-    const speedSource = mountSpeedSourcePanel(
-      settingsHosts.speedSource,
-      props.settings.speedSource,
-    );
-    mountEspFlashPanel(settingsHosts.espFlash, props.settings.espFlash);
-    props.onReady({
-      settingsShell,
-      settings: {
-        analysis,
-        cars,
-        internet,
-        speedSource,
-      },
-    });
-
+    let cancelled = false;
+    void loadSettingsLazyView()
+      .then((nextLoadedView) => {
+        if (!cancelled) {
+          setLoadedView(() => nextLoadedView);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error("[VibeSensor] Failed to load settings view.", error);
+        }
+      });
     return () => {
-      render(null, host);
+      cancelled = true;
     };
-  }, [props.onReady, props.settings]);
+  }, [LoadedView, props.active]);
 
-  return <div ref={hostRef} />;
+  if (LoadedView === null) {
+    return null;
+  }
+
+  return <LoadedView {...props} />;
 }

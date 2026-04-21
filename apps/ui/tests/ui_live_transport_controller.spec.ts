@@ -76,8 +76,13 @@ function installLocation(search: string): () => void {
 }
 
 describe("UiLiveTransportController", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     installWindowGlobal();
+    await Promise.all([
+      import("../src/app/demo_mode"),
+      import("../src/server_payload"),
+      import("../src/ws"),
+    ]);
   });
 
   test("applies queued transport payloads through shared state without transport ports", async () => {
@@ -107,7 +112,7 @@ describe("UiLiveTransportController", () => {
       });
       await flushAsyncWork();
       raf.flushNext();
-      await flushAsyncWork();
+      await flushAsyncWork(30);
 
       expect(state.transport.pendingPayload.value).toBeNull();
       expect(state.realtime.clients.value.map((client) => client.id)).toEqual(["client-1"]);
@@ -266,7 +271,7 @@ describe("UiLiveTransportController", () => {
     expect(state.transport.wsState.value).toBe("connected");
   });
 
-  test("applies payloads without requiring feature-port attachment", () => {
+  test("applies payloads without requiring feature-port attachment", async () => {
     const state = createAppState();
     const controller = new UiLiveTransportController({
       state,
@@ -274,6 +279,7 @@ describe("UiLiveTransportController", () => {
     });
 
     expect(() => applyPayload(controller, makeLivePayload())).not.toThrow();
+    await flushAsyncWork(30);
     expect(state.realtime.speedMps.value).toBe(10);
   });
 
@@ -287,14 +293,14 @@ describe("UiLiveTransportController", () => {
     const raf = installRafHarness();
     try {
       controller.startTransportMode();
-      await flushAsyncWork();
+      await flushAsyncWork(30);
 
       expect(state.transport.wsState.value).toBe("connected");
       expect(state.transport.hasReceivedPayload.value).toBe(true);
       expect(state.transport.pendingPayload.value).not.toBeNull();
 
       raf.flushNext();
-      await flushAsyncWork();
+      await flushAsyncWork(30);
 
       expect(state.transport.pendingPayload.value).toBeNull();
       expect(state.realtime.clients.value).toHaveLength(5);
