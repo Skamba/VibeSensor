@@ -4,7 +4,6 @@ import type {
   EspFlashJourneyStageState,
 } from "./esp_flash_panel";
 import {
-  formatEspFlashPhase,
   safeEspFlashState,
   type EspFlashFeatureRenderState,
 } from "./esp_flash_readiness_presenter";

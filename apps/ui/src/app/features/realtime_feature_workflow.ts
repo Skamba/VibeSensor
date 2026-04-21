@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import {
   getClientLocations as getClientLocationsApi,
   getLoggingStatus as getLoggingStatusApi,
@@ -24,12 +26,9 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "../ui_signals";
-import {
-  createPollingController,
-  type PollingController,
-  type PollingControllerOptions,
-} from "./polling_controller";
 import type { RealtimeLoggingPendingAction } from "../views/realtime_logging_view_models";
+import { createObservedServerStateQuery } from "./server_state_query";
+import { serverStateQueryKeys } from "./server_state_query_keys";
 
 export interface RealtimeFeatureWorkflowApi {
   getLoggingStatus(): Promise<LoggingStatusPayload>;
@@ -67,6 +66,7 @@ export function createRealtimeFeatureWorkflowState(): RealtimeFeatureWorkflowSta
 }
 
 export interface RealtimeFeatureWorkflowDeps {
+  queryClient: QueryClient;
   realtime: RealtimeState;
   t: (key: string, vars?: Record<string, unknown>) => string;
   showError: (message: string) => void;
@@ -81,7 +81,6 @@ export interface RealtimeFeatureWorkflowDeps {
   confirmRemoveClient: (message: string) => Promise<boolean>;
   state?: RealtimeFeatureWorkflowState;
   api?: Partial<RealtimeFeatureWorkflowApi>;
-  createPollingController?: (options: PollingControllerOptions) => PollingController;
 }
 
 export interface RealtimeFeatureWorkflow {
@@ -99,7 +98,6 @@ export interface RealtimeFeatureWorkflow {
 
 const LOGGING_STATUS_IDLE_POLL_MS = 2_000;
 const LOGGING_STATUS_ACTIVE_POLL_MS = 2_000;
-const LOGGING_STATUS_ERROR_POLL_MS = 5_000;
 
 function didHistoryAffectingStatusChange(
   previous: LoggingStatusPayload,
@@ -134,7 +132,6 @@ export function createRealtimeFeatureWorkflow(
     identifyClient: deps.api?.identifyClient ?? identifyClientApi,
     removeClient: deps.api?.removeClient ?? removeClientApi,
   };
-  const createPolling = deps.createPollingController ?? createPollingController;
   const state = deps.state ?? createRealtimeFeatureWorkflowState();
 
   let idleCaptureReadinessRefreshInFlight = false;
@@ -147,7 +144,7 @@ export function createRealtimeFeatureWorkflow(
       state.pendingLoggingAction.value ?? "",
       realtime.loggingStatus.value.enabled ? "1" : "0",
       realtime.loggingStatus.value.analysis_in_progress ? "1" : "0",
-      Boolean(realtime.loggingStatus.value.last_completed_run_id) ? "1" : "0",
+      realtime.loggingStatus.value.last_completed_run_id ? "1" : "0",
     ].join("::")
   );
 
@@ -203,37 +200,34 @@ export function createRealtimeFeatureWorkflow(
     void refreshIdleCaptureReadiness(deps.idleCaptureReadinessSignature.peek());
   });
 
-  const loggingStatusPolling = createPolling({
-    poll: async () => {
-      await refreshLoggingStatus();
-      return realtime.loggingStatus.value.enabled || realtime.loggingStatus.value.analysis_in_progress
-        ? LOGGING_STATUS_ACTIVE_POLL_MS
-        : LOGGING_STATUS_IDLE_POLL_MS;
-    },
-    onErrorDelayMs: LOGGING_STATUS_ERROR_POLL_MS,
-  });
-
-  function bindHandlers(): void {
-    if (state.handlersBound.peek()) {
+  function handleLoggingStatusData(nextStatus: LoggingStatusPayload): void {
+    const previousStatus = realtime.loggingStatus.peek();
+    realtime.loggingStatus.value = nextStatus;
+    state.loggingError.value = null;
+    if (!didHistoryAffectingStatusChange(previousStatus, nextStatus)) {
       return;
     }
-    state.handlersBound.value = true;
-    if (!isDemoMode) {
-      loggingStatusPolling.start();
-    }
+    void recording.onRecordingStatusChanged().catch((err) => {
+      const message = err instanceof Error ? err.message : t("status.unavailable");
+      showError(message || t("status.unavailable"));
+    });
   }
 
-  async function refreshLoggingStatus(): Promise<void> {
-    syncIdleCaptureReadinessSignature();
-    if (isDemoMode && state.pendingLoggingAction.peek() === null) {
-      state.loggingError.value = null;
-      return;
-    }
-    const previousStatus = realtime.loggingStatus.peek();
-    let nextStatus: LoggingStatusPayload;
-    try {
-      nextStatus = await api.getLoggingStatus();
-    } catch {
+  const loggingStatusPollingEnabled = computed(() => state.handlersBound.value && !isDemoMode);
+
+  const loggingStatusQuery = createObservedServerStateQuery<LoggingStatusPayload>({
+    enabled: loggingStatusPollingEnabled,
+    observerOptions: {
+      refetchInterval: (query) => {
+        const nextStatus = query.state.data;
+        return nextStatus?.enabled || nextStatus?.analysis_in_progress
+          ? LOGGING_STATUS_ACTIVE_POLL_MS
+          : LOGGING_STATUS_IDLE_POLL_MS;
+      },
+      refetchIntervalInBackground: true,
+    },
+    onData: handleLoggingStatusData,
+    onError: () => {
       batch(() => {
         state.pendingLoggingAction.value = null;
         state.loggingError.value = {
@@ -241,18 +235,31 @@ export function createRealtimeFeatureWorkflow(
           message: t("status.unavailable"),
         };
       });
+    },
+    queryClient: deps.queryClient,
+    queryFn: async () => {
+      syncIdleCaptureReadinessSignature();
+      if (isDemoMode && state.pendingLoggingAction.peek() === null) {
+        state.loggingError.value = null;
+        return realtime.loggingStatus.peek();
+      }
+      return api.getLoggingStatus();
+    },
+    queryKey: serverStateQueryKeys.realtime.loggingStatus(),
+  });
+
+  function bindHandlers(): void {
+    if (state.handlersBound.peek()) {
       return;
     }
-    realtime.loggingStatus.value = nextStatus;
-    state.loggingError.value = null;
-    if (!didHistoryAffectingStatusChange(previousStatus, nextStatus)) {
-      return;
-    }
+    state.handlersBound.value = true;
+  }
+
+  async function refreshLoggingStatus(): Promise<void> {
     try {
-      await recording.onRecordingStatusChanged();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t("status.unavailable");
-      showError(message || t("status.unavailable"));
+      await loggingStatusQuery.fetch();
+    } catch {
+      return;
     }
   }
 
@@ -266,7 +273,7 @@ export function createRealtimeFeatureWorkflow(
     try {
       realtime.loggingStatus.value = await api.startLoggingRun();
       await recording.onRecordingStatusChanged();
-      loggingStatusPolling.restart();
+      loggingStatusQuery.setData(() => realtime.loggingStatus.peek());
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       batch(() => {
@@ -294,7 +301,7 @@ export function createRealtimeFeatureWorkflow(
     try {
       realtime.loggingStatus.value = await api.stopLoggingRun();
       await recording.onRecordingStatusChanged();
-      loggingStatusPolling.restart();
+      loggingStatusQuery.setData(() => realtime.loggingStatus.peek());
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       batch(() => {
@@ -313,7 +320,11 @@ export function createRealtimeFeatureWorkflow(
   }
 
   async function refreshLocationOptions(): Promise<void> {
-    const payload = await api.getClientLocations();
+    const payload = await deps.queryClient.fetchQuery({
+      queryFn: () => api.getClientLocations(),
+      queryKey: serverStateQueryKeys.realtime.clientLocations(),
+      staleTime: 0,
+    });
     const codes = Array.isArray(payload.locations)
       ? payload.locations.map((row) => row.code).filter((code): code is string => typeof code === "string")
       : [];
@@ -371,7 +382,7 @@ export function createRealtimeFeatureWorkflow(
 
   return {
     dispose(): void {
-      loggingStatusPolling.dispose();
+      loggingStatusQuery.dispose();
       disposeIdleCaptureReadinessSync();
     },
     signals: state,

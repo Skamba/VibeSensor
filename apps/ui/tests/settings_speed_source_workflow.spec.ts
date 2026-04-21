@@ -10,6 +10,7 @@ import type {
 } from "../src/api/types";
 import { createAppState } from "../src/app/ui_app_state";
 import { effect, signal, type Signal } from "../src/app/ui_signals";
+import { createTestQueryClient } from "./query_client_test_support";
 
 type WorkflowHarness = {
   obdConfigVisible: Signal<boolean>;
@@ -86,6 +87,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     const appState = createAppState();
     const workflow = createSettingsSpeedSourceWorkflow({
       obdConfigVisible: harness.obdConfigVisible,
+      queryClient: createTestQueryClient(),
       settings: appState.settings,
       showError: (message) => {
         harness.errors.push(message);
@@ -128,6 +130,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     expect(harness.errors).toEqual([]);
 
     dispose();
+    workflow.dispose();
   });
 
   test("keeps the configured GPS source when saving fallback-manual edits without a radio change", async () => {
@@ -141,6 +144,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
 
     const workflow = createSettingsSpeedSourceWorkflow({
       obdConfigVisible: harness.obdConfigVisible,
+      queryClient: createTestQueryClient(),
       settings: appState.settings,
       showError: (message) => {
         harness.errors.push(message);
@@ -174,6 +178,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     expect(appState.settings.speed.manualSpeedKph.value).toBe(90);
     expect(harness.focuses).toEqual([]);
     expect(harness.errors).toEqual([]);
+    workflow.dispose();
   });
 
   test("surfaces OBD save validation without DOM fixtures", async () => {
@@ -181,6 +186,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     const appState = createAppState();
     const workflow = createSettingsSpeedSourceWorkflow({
       obdConfigVisible: harness.obdConfigVisible,
+      queryClient: createTestQueryClient(),
       settings: appState.settings,
       showError: (message) => {
         harness.errors.push(message);
@@ -204,6 +210,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
         tone: "error",
       },
     });
+    workflow.dispose();
   });
 
   test("clears manual validation feedback in one render-state invalidation", async () => {
@@ -211,6 +218,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     const appState = createAppState();
     const workflow = createSettingsSpeedSourceWorkflow({
       obdConfigVisible: harness.obdConfigVisible,
+      queryClient: createTestQueryClient(),
       settings: appState.settings,
       showError: (message) => {
         harness.errors.push(message);
@@ -245,6 +253,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     expect(harness.errors).toEqual([]);
 
     dispose();
+    workflow.dispose();
   });
 
   test("scans and pairs OBD devices without DOM bindings", async () => {
@@ -253,18 +262,8 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     const scannedDevice = makeObdDevice();
 
     const workflow = createSettingsSpeedSourceWorkflow({
-      createPollingController: () => ({
-        restart() {
-          /* no-op */
-        },
-        start() {
-          /* no-op */
-        },
-        stop() {
-          /* no-op */
-        },
-      }),
       settings: appState.settings,
+      queryClient: createTestQueryClient(),
       showError: (message) => {
         harness.errors.push(message);
       },
@@ -305,70 +304,15 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     expect(appState.settings.speed.obdDeviceMac.value).toBe(scannedDevice.mac_address);
     expect(appState.settings.speed.obdDeviceName.value).toBe("OBDLink CX");
     expect(harness.errors).toEqual([]);
-  });
-
-  test("background rescans react to navigation context changes without DOM bindings", async () => {
-    const harness = createHarness();
-    const appState = createAppState();
-    let pollingStarts = 0;
-    let pollingStops = 0;
-
-    const workflow = createSettingsSpeedSourceWorkflow({
-      createPollingController: () => ({
-        restart() {
-          /* no-op */
-        },
-        start() {
-          pollingStarts += 1;
-        },
-        stop() {
-          pollingStops += 1;
-        },
-      }),
-      settings: appState.settings,
-      showError: (message) => {
-        harness.errors.push(message);
-      },
-      t: createTranslator(),
-      transport: {
-        async scanObdDevices() {
-          return {
-            devices: [makeObdDevice()],
-          };
-        },
-      },
-      obdConfigVisible: harness.obdConfigVisible,
-      view: createViewPorts(harness),
-    });
-
-    harness.obdConfigVisible.value = true;
-    workflow.handleSpeedSourceChanged("obd2");
-    await workflow.scanObdDevices();
-
-    expect(pollingStarts).toBeGreaterThan(0);
-
-    harness.obdConfigVisible.value = false;
-    workflow.handleNavigateContext();
-
-    expect(pollingStops).toBeGreaterThan(0);
-
-    harness.obdConfigVisible.value = true;
-    workflow.handleNavigateContext();
-
-    expect(pollingStarts).toBeGreaterThan(1);
-    expect(harness.errors).toEqual([]);
+    workflow.dispose();
   });
 
   test("reflects polled effective speed updates in render state", () => {
     const harness = createHarness();
     const appState = createAppState();
     const workflow = createSettingsSpeedSourceWorkflow({
-      createPollingController: () => ({
-        restart() {},
-        start() {},
-        stop() {},
-      }),
       obdConfigVisible: harness.obdConfigVisible,
+      queryClient: createTestQueryClient(),
       settings: appState.settings,
       showError: (message) => {
         harness.errors.push(message);
@@ -383,18 +327,15 @@ describe("createSettingsSpeedSourceWorkflow", () => {
 
     expect(workflow.getRenderState().settings.gpsEffectiveSpeedKph).toBe(81);
     expect(harness.errors).toEqual([]);
+    workflow.dispose();
   });
 
   test("derives selected mode and manual input from settings when no draft exists", () => {
     const harness = createHarness();
     const appState = createAppState();
     const workflow = createSettingsSpeedSourceWorkflow({
-      createPollingController: () => ({
-        restart() {},
-        start() {},
-        stop() {},
-      }),
       obdConfigVisible: harness.obdConfigVisible,
+      queryClient: createTestQueryClient(),
       settings: appState.settings,
       showError: (message) => {
         harness.errors.push(message);
@@ -417,6 +358,7 @@ describe("createSettingsSpeedSourceWorkflow", () => {
       selectedMode: "manual",
     });
     expect(harness.errors).toEqual([]);
+    workflow.dispose();
   });
 
   test("keeps local manual input draft when settings change externally", () => {
@@ -426,12 +368,8 @@ describe("createSettingsSpeedSourceWorkflow", () => {
     appState.settings.speed.manualSpeedKph.value = 80;
 
     const workflow = createSettingsSpeedSourceWorkflow({
-      createPollingController: () => ({
-        restart() {},
-        start() {},
-        stop() {},
-      }),
       obdConfigVisible: harness.obdConfigVisible,
+      queryClient: createTestQueryClient(),
       settings: appState.settings,
       showError: (message) => {
         harness.errors.push(message);
@@ -458,5 +396,6 @@ describe("createSettingsSpeedSourceWorkflow", () => {
       selectedMode: "gps",
     });
     expect(harness.errors).toEqual([]);
+    workflow.dispose();
   });
 });

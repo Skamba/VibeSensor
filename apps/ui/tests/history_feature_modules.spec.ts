@@ -1,4 +1,4 @@
-import { beforeEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test } from "vitest";
 import { createHistoryFeature } from "../src/app/features/history_feature";
 import { createAppState, type RunDetail } from "../src/app/ui_app_state";
 import { effect, signal } from "../src/app/ui_signals";
@@ -14,8 +14,10 @@ import {
   makeHistoryListPayload,
 } from "./msw/handlers/history";
 import { createUiMswTestServer } from "./msw/node";
+import { createTestQueryClient } from "./query_client_test_support";
 
 const mswServer = createUiMswTestServer();
+const activeHarnessCleanups: Array<() => Promise<void>> = [];
 
 type ButtonStub = HTMLButtonElement & {
   disabled: boolean;
@@ -220,6 +222,7 @@ function createFeatureHarness(
   const panelElements = createHistoryElements();
   const errors: string[] = [];
   const primaryViewActivations: string[] = [];
+  const queryClient = createTestQueryClient();
   const feature = createHistoryFeature({
     panel: overrides.panel ?? panelElements.panel,
     navigation: {
@@ -232,6 +235,7 @@ function createFeatureHarness(
       },
     },
     history: state.history,
+    queryClient,
     shell: state.shell,
     services: {
       t: testTranslation,
@@ -247,6 +251,11 @@ function createFeatureHarness(
       formatInt: (value) => String(value),
     },
   });
+  activeHarnessCleanups.push(async () => {
+    feature.dispose();
+    await queryClient.cancelQueries();
+    queryClient.clear();
+  });
   return {
     feature,
     state,
@@ -258,6 +267,12 @@ function createFeatureHarness(
 
 beforeEach(() => {
   installWindowGlobal();
+});
+
+afterEach(async () => {
+  while (activeHarnessCleanups.length > 0) {
+    await activeHarnessCleanups.pop()?.();
+  }
 });
 
 test("history feature skips deletion when confirmation is declined", async () => {

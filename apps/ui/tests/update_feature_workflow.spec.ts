@@ -8,17 +8,17 @@ import type {
   UpdateStatusPayload,
   UsbInternetStatusPayload,
 } from "../src/api/types";
+import { signal } from "../src/app/ui_signals";
+import { createTestQueryClient } from "./query_client_test_support";
 
 type WorkflowHarness = {
   errors: string[];
-  pollerCalls: string[];
   viewCalls: string[];
 };
 
 function createHarness(): WorkflowHarness {
   return {
     errors: [],
-    pollerCalls: [],
     viewCalls: [],
   };
 }
@@ -135,6 +135,8 @@ describe("createUpdateFeatureWorkflow", () => {
         harness.errors.push(message);
       },
       view: createViewPorts(harness),
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
       api: {
         async getUpdateStatus() {
           return status;
@@ -161,33 +163,39 @@ describe("createUpdateFeatureWorkflow", () => {
       usable: true,
       interface_name: "usb0",
     });
+    workflow.dispose();
   });
 
-  test("starts an update without DOM fixtures and restarts polling after a successful request", async () => {
+  test("starts an update without DOM fixtures and refreshes status after a successful request", async () => {
     const harness = createHarness();
     let startPayload: unknown = null;
+    const runningStatus = makeStatus({
+      phase: "installing",
+      state: "running",
+      transport: "wifi",
+    });
     const workflow = createUpdateFeatureWorkflow({
       t: (key) => key,
       showError: (message) => {
         harness.errors.push(message);
       },
       view: createViewPorts(harness),
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
       api: {
+        async getHealthStatus() {
+          return makeHealth();
+        },
+        async getUpdateInternetStatus() {
+          return makeInternet();
+        },
+        async getUpdateStatus() {
+          return runningStatus;
+        },
         async startUpdate(payload) {
           startPayload = payload;
         },
       },
-      createPollingController: () => ({
-        start() {
-          harness.pollerCalls.push("start");
-        },
-        stop() {
-          harness.pollerCalls.push("stop");
-        },
-        restart() {
-          harness.pollerCalls.push("restart");
-        },
-      }),
     });
 
     await workflow.startUpdate({
@@ -204,8 +212,9 @@ describe("createUpdateFeatureWorkflow", () => {
       password: "secret",
     });
     expect(harness.viewCalls).toContain("clearPassword");
-    expect(harness.pollerCalls).toEqual(["restart"]);
+    expect(workflow.getRenderState().updateStatus).toEqual(runningStatus);
     expect(harness.errors).toEqual([]);
+    workflow.dispose();
   });
 
   test("focuses the SSID input instead of calling the API when wifi start is blocked", async () => {
@@ -216,6 +225,8 @@ describe("createUpdateFeatureWorkflow", () => {
         harness.errors.push(message);
       },
       view: createViewPorts(harness),
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
       api: {
         async startUpdate() {
           throw new Error("should not be called");
@@ -233,6 +244,7 @@ describe("createUpdateFeatureWorkflow", () => {
 
     expect(harness.viewCalls).toEqual(["focusSsidInput"]);
     expect(harness.errors).toEqual([]);
+    workflow.dispose();
   });
 
   test("still validates wifi inputs when a recovery retry bypasses readiness blocking", async () => {
@@ -243,6 +255,8 @@ describe("createUpdateFeatureWorkflow", () => {
         harness.errors.push(message);
       },
       view: createViewPorts(harness),
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
       api: {
         async startUpdate() {
           throw new Error("should not be called");
@@ -260,5 +274,6 @@ describe("createUpdateFeatureWorkflow", () => {
 
     expect(harness.viewCalls).toEqual(["focusSsidInput"]);
     expect(harness.errors).toEqual([]);
+    workflow.dispose();
   });
 });

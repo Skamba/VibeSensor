@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import {
   createAppFeatureBundlePorts,
   createRealtimeFeatureRecordingPorts,
@@ -27,6 +29,9 @@ export type { AppFeatureBundle } from "./app_feature_bundle_ports";
 export interface AppFeatureBundleSharedDeps {
   services: FeatureServices;
   formatting: FeatureFormatting;
+  serverState: {
+    queryClient: QueryClient;
+  };
 }
 
 export interface AppFeatureBundleRuntimePorts {
@@ -51,7 +56,7 @@ export function createAppFeatureBundle(
 ): AppFeatureBundle {
   const {
     state,
-    shared: { services, formatting },
+    shared: { services, formatting, serverState },
     runtime,
   } = deps;
   const { panels } = runtime;
@@ -63,6 +68,7 @@ export function createAppFeatureBundle(
     navigation: runtime.navigation,
     services,
     formatting,
+    queryClient: serverState.queryClient,
   });
 
   let carsFeature: CarsFeature | null = null;
@@ -96,6 +102,7 @@ export function createAppFeatureBundle(
     formatting: {
       formatInt: formatting.formatInt,
     },
+    queryClient: serverState.queryClient,
   });
 
   const settings: SettingsFeature = createSettingsFeature({
@@ -120,6 +127,7 @@ export function createAppFeatureBundle(
     formatting: {
       fmt: formatting.fmt,
     },
+    queryClient: serverState.queryClient,
   });
 
   const carCreation = createUiCarCreationCommand({
@@ -144,6 +152,7 @@ export function createAppFeatureBundle(
     formatting: {
       fmt: formatting.fmt,
     },
+    queryClient: serverState.queryClient,
     addCarFromWizard: (name, carType, aspects, variant) =>
       carCreation.addCarFromWizard(name, carType, aspects, variant),
   });
@@ -159,6 +168,7 @@ export function createAppFeatureBundle(
       activeSettingsTabId: panels.settingsShell.activeTabId,
     },
     services,
+    queryClient: serverState.queryClient,
   });
   const espFlash = createEspFlashFeature({
     panel: panels.settings.espFlash,
@@ -167,6 +177,7 @@ export function createAppFeatureBundle(
       activeSettingsTabId: panels.settingsShell.activeTabId,
     },
     services,
+    queryClient: serverState.queryClient,
   });
 
   return createAppFeatureBundlePorts({

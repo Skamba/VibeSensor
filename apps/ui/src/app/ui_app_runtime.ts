@@ -13,6 +13,7 @@ import {
   type UiMountedPanels,
 } from "./ui_lazy_panels";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
+import { createUiQueryClient } from "./runtime/ui_query_client";
 import {
   createUiShellChromeBindings,
   DEFAULT_UI_SHELL_CHROME_ACTIONS,
@@ -34,7 +35,7 @@ function requireUiRuntimeDependency<T>(value: T | null, name: string): T {
 
 function createUiAppSharedDeps(
   shell: UiShellController,
-): AppFeatureBundleSharedDeps {
+): Pick<AppFeatureBundleSharedDeps, "formatting" | "services"> {
   return {
     services: {
       t: (key, vars) => shell.t(key, vars),
@@ -92,6 +93,7 @@ export function createUiAppRuntime(
   deps: UiAppRuntimeDeps = {},
 ): UiAppRuntime {
   const state = deps.state ?? createAppState();
+  const queryClient = createUiQueryClient();
   const shellChromeActions: Signal<UiShellChromeActions> =
     signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS });
   const shellChrome = createUiShellChromeBindings(shellChromeActions);
@@ -117,7 +119,12 @@ export function createUiAppRuntime(
   });
   const featurePorts = createAppFeatureBundle({
     state,
-    shared: createUiAppSharedDeps(shell),
+    shared: {
+      ...createUiAppSharedDeps(shell),
+      serverState: {
+        queryClient,
+      },
+    },
     runtime: createUiAppFeatureRuntimePorts({
       panels: lazyPanels.panels,
       shell,
@@ -142,6 +149,7 @@ export function createUiAppRuntime(
       }
       disposed = true;
       featurePorts.dispose();
+      queryClient.clear();
       transport.dispose();
       spectrum.dispose();
       shell.dispose();

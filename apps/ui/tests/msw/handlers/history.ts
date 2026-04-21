@@ -42,6 +42,8 @@ type HistoryInsightsLike = ErrorResponse | {
   [key: string]: unknown;
 };
 
+const objectHasOwnProperty = Object.prototype.hasOwnProperty;
+
 function isErrorResponse(value: unknown): value is ErrorResponse {
   return !!value && typeof value === "object" && "detail" in value;
 }
@@ -50,7 +52,7 @@ function isJsonResponseInit<T extends JsonBodyType>(value: unknown): value is Js
   return !!value
     && typeof value === "object"
     && !(value instanceof Response)
-    && Object.prototype.hasOwnProperty.call(value, "json");
+    && objectHasOwnProperty.call(value, "json");
 }
 
 async function resolveJsonResult<T extends JsonBodyType>(

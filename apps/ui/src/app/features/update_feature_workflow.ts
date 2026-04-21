@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import {
   cancelUpdate as cancelUpdateApi,
   getHealthStatus as getHealthStatusApi,
@@ -25,11 +27,8 @@ import {
   signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import {
-  createPollingController,
-  type PollingController,
-  type PollingControllerOptions,
-} from "./polling_controller";
+import { createObservedServerStateQuery } from "./server_state_query";
+import { serverStateQueryKeys } from "./server_state_query_keys";
 
 export interface UpdateFeatureWorkflowApi {
   cancelUpdate(): Promise<unknown>;
@@ -47,9 +46,9 @@ export interface UpdateFeatureWorkflowViewPorts {
 export interface UpdateFeatureWorkflowDeps {
   t: (key: string, vars?: Record<string, unknown>) => string;
   showError: (message: string) => void;
+  queryClient: QueryClient;
   view: UpdateFeatureWorkflowViewPorts;
   api?: Partial<UpdateFeatureWorkflowApi>;
-  createPollingController?: (options: PollingControllerOptions) => PollingController;
   pollingEnabled?: ReadonlySignal<boolean>;
 }
 
@@ -59,9 +58,13 @@ export interface UpdateFeatureWorkflow {
   getRenderState(): UpdateFeatureRenderState;
   readonly renderState: ReadonlySignal<UpdateFeatureRenderState>;
   refreshStatus(): Promise<void>;
-  startPolling(): void;
   startUpdate(intent: UpdateFeatureStartIntent): Promise<void>;
-  stopPolling(): void;
+}
+
+interface UpdateStatusSnapshot {
+  health: HealthStatusPayload;
+  internet: UsbInternetStatusPayload;
+  status: UpdateStatusPayload;
 }
 
 function fallbackInternetStatus(
@@ -121,7 +124,6 @@ export function createUpdateFeatureWorkflow(
     getUpdateStatus: deps.api?.getUpdateStatus ?? getUpdateStatusApi,
     startUpdate: deps.api?.startUpdate ?? startUpdateApi,
   };
-  const createPolling = deps.createPollingController ?? createPollingController;
 
   const latestInternetStatus = signal<UsbInternetStatusPayload>(fallbackInternetStatus(deps.t));
   const latestHealthStatus = signal<HealthStatusPayload | null>(null);
@@ -140,11 +142,7 @@ export function createUpdateFeatureWorkflow(
     return renderState.value;
   }
 
-  async function fetchStatusSnapshot(): Promise<{
-    health: HealthStatusPayload;
-    internet: UsbInternetStatusPayload;
-    status: UpdateStatusPayload;
-  }> {
+  async function fetchStatusSnapshot(): Promise<UpdateStatusSnapshot> {
     const [status, health, internet] = await Promise.all([
       api.getUpdateStatus(),
       api.getHealthStatus(),
@@ -159,11 +157,7 @@ export function createUpdateFeatureWorkflow(
     };
   }
 
-  function applyStatusSnapshot(snapshot: {
-    health: HealthStatusPayload;
-    internet: UsbInternetStatusPayload;
-    status: UpdateStatusPayload;
-  }): void {
+  function applyStatusSnapshot(snapshot: UpdateStatusSnapshot): void {
     batch(() => {
       latestUpdateStatus.value = snapshot.status;
       latestHealthStatus.value = snapshot.health;
@@ -173,20 +167,22 @@ export function createUpdateFeatureWorkflow(
     });
   }
 
-  const polling = createPolling({
+  const statusSnapshotQuery = createObservedServerStateQuery<UpdateStatusSnapshot>({
     enabled: deps.pollingEnabled,
-    poll: async () => {
-      const snapshot = await fetchStatusSnapshot();
-      applyStatusSnapshot(snapshot);
-      return snapshot.status.state === "running"
+    observerOptions: {
+      refetchInterval: (query) => query.state.data?.status.state === "running"
         ? UPDATE_POLL_INTERVAL_RUNNING_MS
-        : UPDATE_POLL_INTERVAL_IDLE_MS;
+        : UPDATE_POLL_INTERVAL_IDLE_MS,
+      refetchIntervalInBackground: true,
     },
-    onErrorDelayMs: UPDATE_POLL_INTERVAL_RUNNING_MS,
+    onData: applyStatusSnapshot,
+    queryClient: deps.queryClient,
+    queryFn: fetchStatusSnapshot,
+    queryKey: serverStateQueryKeys.update.statusSnapshot(),
   });
 
   async function refreshStatus(): Promise<void> {
-    applyStatusSnapshot(await fetchStatusSnapshot());
+    await statusSnapshotQuery.fetch();
   }
 
   async function startUpdate(intent: UpdateFeatureStartIntent): Promise<void> {
@@ -220,7 +216,7 @@ export function createUpdateFeatureWorkflow(
     try {
       await api.startUpdate(payload);
       deps.view.clearPassword();
-      polling.restart();
+      await statusSnapshotQuery.fetch();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("409")) {
@@ -234,7 +230,7 @@ export function createUpdateFeatureWorkflow(
   async function cancelUpdate(): Promise<void> {
     try {
       await api.cancelUpdate();
-      polling.restart();
+      await statusSnapshotQuery.fetch();
     } catch {
       /* ignore */
     }
@@ -243,17 +239,11 @@ export function createUpdateFeatureWorkflow(
   return {
     cancelUpdate,
     dispose(): void {
-      polling.dispose();
+      statusSnapshotQuery.dispose();
     },
     getRenderState,
     renderState,
     refreshStatus,
-    startPolling() {
-      polling.start();
-    },
     startUpdate,
-    stopPolling() {
-      polling.stop();
-    },
   };
 }
