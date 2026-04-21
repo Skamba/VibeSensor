@@ -439,6 +439,20 @@ instead of controller-side variant class interpolation.
 
 Valibot-backed runtime validation now sits at the WebSocket boundary. Live payloads must satisfy the generated contract shape directly before the app-state adapter accepts them. The remaining UI-side handling is limited to current, explicit adapter behavior: schema-version warning logging, shared-`freq` fallback when the canonical shared axis is used, and dropping spectrum series that still cannot produce aligned bins for rendering.
 
+## HTTP runtime boundary validation
+
+- Generated HTTP TypeScript aliases in `src/api/types.ts` are compile-time shapes,
+  not runtime proof. Owned server-controlled responses must validate `unknown`
+  payloads at the API boundary before feature/runtime code reads them.
+- `src/runtime_boundary_validation.ts` owns the shared Valibot error-path/message
+  helper for frontend runtime boundaries.
+- `src/api/update_validators.ts` is the canonical HTTP pattern: parse once,
+  validate once, then return typed data from the API module.
+- Feature/workflow code may surface validated boundary failures to the UI, but it
+  must not rebuild ad hoc `typeof` normalizers for the same payload shape.
+- Keep custom fast-path validators only where large numeric arrays or similar hot
+  paths would make generic schema validation measurably more expensive.
+
 Top-level `LiveWsPayload` fields:
 
 - `schema_version` — current live-payload contract version.

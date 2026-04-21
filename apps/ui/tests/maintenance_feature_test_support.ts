@@ -12,12 +12,6 @@ import type {
 } from "../src/app/features/update_feature";
 import { createUpdateFeature } from "../src/app/features/update_feature";
 import type {
-  EspSerialPortPayload,
-  HealthStatusPayload,
-  UpdateStatusPayload,
-  UsbInternetStatusPayload,
-} from "../src/api/types";
-import type {
   EspFlashPanelActionHandlers,
   EspFlashPanelDom,
   EspFlashPanelRenderModel,
@@ -39,6 +33,12 @@ import type { TimerHarness } from "./async_test_helpers";
 import {
   installMountedDomGlobals,
 } from "./dom_render_test_support";
+import {
+  createEspFlashPort,
+  createHealthyUpdateStatus,
+  createIdleUpdateStatus,
+  createUsbInternetStatus,
+} from "./maintenance_payload_test_support";
 import { http } from "./msw/http";
 import { createUiMswTestScope } from "./msw/node";
 import { createTestQueryClient } from "./query_client_test_support";
@@ -430,95 +430,12 @@ export async function expectTimerDelays(
   expect(timers.pendingDelays()).toEqual(expected);
 }
 
-export function createEspFlashPort(
-  overrides: Partial<EspSerialPortPayload> = {},
-): EspSerialPortPayload {
-  return {
-    description: "USB UART",
-    pid: 2,
-    port: "/dev/ttyUSB0",
-    serial_number: "abc",
-    vid: 1,
-    ...overrides,
-  };
-}
-
-export function createIdleUpdateStatus(
-  overrides: Partial<UpdateStatusPayload> = {},
-): UpdateStatusPayload {
-  return {
-    state: "idle",
-    phase: "idle",
-    transport: "wifi",
-    ssid: null,
-    uplink_interface: null,
-    started_at: null,
-    phase_started_at: null,
-    phase_elapsed_s: null,
-    finished_at: null,
-    last_success_at: null,
-    updated_at: null,
-    issues: [],
-    log_tail: [],
-    exit_code: null,
-    runtime: {
-      version: "1.2.3",
-      commit: "abcdef1234567890",
-      ui_source_hash: "ui-hash",
-      static_assets_hash: "feedfacecafebeef",
-      static_build_source_hash: "build-hash",
-      static_build_commit: "build-commit",
-      assets_verified: true,
-      has_packaged_static: true,
-    },
-    ...overrides,
-  };
-}
-
-export function createHealthyUpdateStatus(
-  overrides: Partial<HealthStatusPayload> = {},
-): HealthStatusPayload {
-  return {
-    status: "ok",
-    processing_state: "idle",
-    processing_failures: 0,
-    degradation_reasons: [],
-    data_loss: {
-      affected_clients: 0,
-      tracked_clients: 0,
-      frames_dropped: 0,
-      queue_overflow_drops: 0,
-      server_queue_drops: 0,
-      parse_errors: 0,
-    },
-    persistence: {
-      analysis_active_run_id: null,
-      analysis_elapsed_s: null,
-      analysis_in_progress: false,
-      analysis_queue_depth: 0,
-      analysis_started_at: null,
-      write_error: null,
-    },
-    ...overrides,
-  };
-}
-
-export function createUsbInternetStatus(
-  overrides: Partial<UsbInternetStatusPayload> = {},
-): UsbInternetStatusPayload {
-  return {
-    detected: false,
-    usable: false,
-    interface_name: null,
-    connection_name: null,
-    driver: null,
-    ipv4_addresses: [],
-    gateway: null,
-    has_default_route: false,
-    diagnostic: "No USB network interface is currently detected.",
-    ...overrides,
-  };
-}
+export {
+  createEspFlashPort,
+  createHealthyUpdateStatus,
+  createIdleUpdateStatus,
+  createUsbInternetStatus,
+} from "./maintenance_payload_test_support";
 
 export async function createEspFlashFeatureHarness() {
   const deps = await createEspFlashFeatureDeps();

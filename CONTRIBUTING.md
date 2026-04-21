@@ -175,6 +175,13 @@ section for what `make sync-contracts` regenerates (including
 the locally generated derivative UI artifacts) and what to do when CI reports
 contract drift.
 
+For frontend runtime validation policy, treat generated HTTP/WS TypeScript types
+as compile-time contracts only. At owned server-controlled runtime boundaries,
+parse once, validate once, and only then hand typed data to features or
+presenters. Use the Valibot patterns documented in
+[apps/ui/README.md#http-runtime-boundary-validation](apps/ui/README.md#http-runtime-boundary-validation)
+unless a hot-path custom validator is explicitly justified.
+
 ## Common failure cases
 
 - Hook warning about missing `privacy_guard.py`: this is non-blocking; run the documented validation commands directly.

@@ -1,4 +1,9 @@
 import { apiJson } from "./http";
+import {
+  parseHealthStatusPayload,
+  parseUpdateStatusPayload,
+  parseUsbInternetStatusPayload,
+} from "./update_validators";
 import type * as Local from "../api/types";
 import type * as Transport from "./types";
 
@@ -118,15 +123,15 @@ export async function getSettingsObdStatus(): Promise<Local.ObdStatusPayload> {
 }
 
 export async function getUpdateStatus(): Promise<Local.UpdateStatusPayload> {
-  return await apiJson<Transport.UpdateStatusPayload>("/api/update/status");
+  return parseUpdateStatusPayload(await apiJson("/api/update/status"));
 }
 
 export async function getUpdateInternetStatus(): Promise<Local.UsbInternetStatusPayload> {
-  return await apiJson<Transport.UsbInternetStatusPayload>("/api/update/internet-status");
+  return parseUsbInternetStatusPayload(await apiJson("/api/update/internet-status"));
 }
 
 export async function getHealthStatus(): Promise<Local.HealthStatusPayload> {
-  return await apiJson<Transport.HealthStatusPayload>("/api/health");
+  return parseHealthStatusPayload(await apiJson("/api/health"));
 }
 
 export async function startUpdate(

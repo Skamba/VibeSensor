@@ -10,10 +10,7 @@ import type {
   WsSpectraPayload,
   WsSpectrumSeries,
 } from "./contracts/ws_payload_types";
-
-function invalidPayload(path: string, message: string): never {
-  throw new Error(`Invalid websocket payload: ${path} ${message}`);
-}
+import { parseRuntimeBoundary } from "./runtime_boundary_validation";
 
 function isFiniteNumberArray(input: unknown): input is number[] {
   if (!Array.isArray(input)) {
@@ -125,34 +122,12 @@ const liveWsPayloadSchema = v.looseObject({
   spectra: v.optional(spectraSchema),
 });
 
-type IssuePathItem = { key?: unknown };
-
-function formatIssuePath(path: ReadonlyArray<IssuePathItem> | undefined): string {
-  if (!path || path.length === 0) {
-    return "/";
-  }
-
-  const segments: string[] = [];
-  for (const item of path) {
-    if (item.key === undefined) {
-      continue;
-    }
-    segments.push(String(item.key));
-  }
-  return segments.length > 0 ? `/${segments.join("/")}` : "/";
-}
-
-function assertValidLiveWsPayload(payload: unknown): asserts payload is LiveWsPayload {
-  const result = v.safeParse(liveWsPayloadSchema, payload);
-  if (!result.success) {
-    const issue = result.issues[0];
-    invalidPayload(formatIssuePath(issue?.path), issue?.message ?? "is invalid");
-  }
-}
-
 export function validateLiveWsPayload(payload: unknown): LiveWsPayload {
-  assertValidLiveWsPayload(payload);
-  return payload;
+  return parseRuntimeBoundary({
+    boundary: "websocket payload",
+    payload,
+    schema: liveWsPayloadSchema,
+  });
 }
 
 void (strengthPeakSchema satisfies v.GenericSchema<StrengthMetricPeak>);
