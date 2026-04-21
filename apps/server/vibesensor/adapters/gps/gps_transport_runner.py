@@ -112,7 +112,10 @@ class GPSTransportRunner:
                 LOGGER.warning(
                     "GPS connection lost, retrying in %gs: %s",
                     transition.sleep_before_retry,
-                    exc,
+                    str(exc) or type(exc).__name__,
+                )
+                LOGGER.debug(
+                    "GPS reconnect exception detail",
                     exc_info=True,
                 )
                 await asyncio.sleep(transition.sleep_before_retry)  # type: ignore[arg-type]
