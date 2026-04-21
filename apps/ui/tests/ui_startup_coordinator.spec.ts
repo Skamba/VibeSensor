@@ -24,6 +24,7 @@ function createCoordinatorHarness() {
   const hydrate = createDeferred<void>();
   const refreshLocationOptions = createDeferred<void>();
   const refreshLoggingStatus = createDeferred<void>();
+  const primeDashboardState = createDeferred<void>();
 
   const coordinator = new UiStartupCoordinator({
     shell: {
@@ -46,6 +47,12 @@ function createCoordinatorHarness() {
           return refreshLoggingStatus.promise;
         },
       },
+      secondary: {
+        primeDashboardState(): Promise<void> {
+          calls.push("secondary.primeDashboardState");
+          return primeDashboardState.promise;
+        },
+      },
     },
     transport: {
       startTransportMode(): void {
@@ -64,6 +71,7 @@ function createCoordinatorHarness() {
     hydrate,
     refreshLocationOptions,
     refreshLoggingStatus,
+    primeDashboardState,
     coordinator,
   };
 }
@@ -102,6 +110,7 @@ describe("UiStartupCoordinator", () => {
         "shell.hydratePersistedPreferences",
         "realtime.refreshLocationOptions",
         "realtime.refreshLoggingStatus",
+        "secondary.primeDashboardState",
         "transport.startTransportMode",
       ]);
     } finally {
@@ -119,6 +128,7 @@ describe("UiStartupCoordinator", () => {
       harness.hydrate.reject(hydrateError);
       harness.refreshLocationOptions.resolve();
       harness.refreshLoggingStatus.resolve();
+      harness.primeDashboardState.resolve();
 
       await flushAsyncWork();
 

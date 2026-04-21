@@ -13,7 +13,7 @@ type HistoryLazyViewImpl = FunctionComponent<HistoryLazyViewProps>;
 
 let historyLazyViewPromise: Promise<HistoryLazyViewImpl> | null = null;
 
-function loadHistoryLazyView(): Promise<HistoryLazyViewImpl> {
+export function preloadHistoryLazyView(): Promise<HistoryLazyViewImpl> {
   if (historyLazyViewPromise === null) {
     historyLazyViewPromise = import("./history_lazy_view_content")
       .then((module) => module.default)
@@ -33,7 +33,7 @@ export default function HistoryLazyView(props: HistoryLazyViewProps) {
       return;
     }
     let cancelled = false;
-    void loadHistoryLazyView()
+    void preloadHistoryLazyView()
       .then((nextLoadedView) => {
         if (!cancelled) {
           setLoadedView(() => nextLoadedView);

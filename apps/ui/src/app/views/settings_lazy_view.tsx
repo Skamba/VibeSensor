@@ -41,7 +41,7 @@ type SettingsLazyViewImpl = FunctionComponent<SettingsLazyViewProps>;
 
 let settingsLazyViewPromise: Promise<SettingsLazyViewImpl> | null = null;
 
-function loadSettingsLazyView(): Promise<SettingsLazyViewImpl> {
+export function preloadSettingsLazyView(): Promise<SettingsLazyViewImpl> {
   if (settingsLazyViewPromise === null) {
     settingsLazyViewPromise = import("./settings_lazy_view_content")
       .then((module) => module.default)
@@ -61,7 +61,7 @@ export default function SettingsLazyView(props: SettingsLazyViewProps) {
       return;
     }
     let cancelled = false;
-    void loadSettingsLazyView()
+    void preloadSettingsLazyView()
       .then((nextLoadedView) => {
         if (!cancelled) {
           setLoadedView(() => nextLoadedView);

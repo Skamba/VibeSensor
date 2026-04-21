@@ -23,6 +23,7 @@ interface AppFeatureBundlePortSources {
   >;
   secondary?: {
     dispose(): void;
+    primeDashboardState(): Promise<void>;
   };
   ensureViewReady?: (viewId: string) => Promise<void>;
 }
@@ -56,6 +57,9 @@ export function createAppFeatureBundlePorts(
       realtime: {
         refreshLocationOptions: () => features.realtime.refreshLocationOptions(),
         refreshLoggingStatus: () => features.realtime.refreshLoggingStatus(),
+      },
+      secondary: {
+        primeDashboardState: () => features.secondary?.primeDashboardState() ?? Promise.resolve(),
       },
     },
   };

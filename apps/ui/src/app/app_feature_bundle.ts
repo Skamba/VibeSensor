@@ -16,6 +16,8 @@ import type { UiMountedPanels } from "./ui_lazy_panels";
 import { type ReadonlySignal } from "./ui_signals";
 import type { AppFeatureBundle } from "./app_feature_bundle_ports";
 import type { AppFeatureSecondaryBundle } from "./app_feature_secondary_bundle";
+import { preloadHistoryLazyView } from "./views/history_lazy_view";
+import { preloadSettingsLazyView } from "./views/settings_lazy_view";
 export type { AppFeatureBundle } from "./app_feature_bundle_ports";
 
 export interface AppFeatureBundleSharedDeps {
@@ -45,6 +47,7 @@ export interface AppFeatureBundleDeps {
 
 interface LazySecondaryFeatureBundle {
   dispose(): void;
+  ensureDashboardDataLoaded(): Promise<void>;
   ensureHistoryDataLoaded(): Promise<void>;
   ensureSettingsDataLoaded(): Promise<void>;
   openCarWizard(): Promise<void>;
@@ -56,8 +59,10 @@ function createLazySecondaryFeatureBundle(
 ): LazySecondaryFeatureBundle {
   let bundle: AppFeatureSecondaryBundle | null = null;
   let bundlePromise: Promise<AppFeatureSecondaryBundle> | null = null;
+  let dashboardDataLoadPromise: Promise<void> | null = null;
   let historyLoadPromise: Promise<void> | null = null;
   let settingsLoadPromise: Promise<void> | null = null;
+  let dashboardDataLoaded = false;
   let historyLoaded = false;
   let settingsLoaded = false;
   let disposed = false;
@@ -101,7 +106,6 @@ function createLazySecondaryFeatureBundle(
       await Promise.all([
         loadedBundle.settings.loadSpeedSourceFromServer(),
         loadedBundle.settings.loadAnalysisSettingsFromServer(),
-        loadedBundle.settings.loadCarsFromServer(),
       ]);
       settingsLoaded = true;
     })().catch((error) => {
@@ -109,6 +113,30 @@ function createLazySecondaryFeatureBundle(
       throw error;
     });
     return settingsLoadPromise;
+  }
+
+  function ensureDashboardDataLoaded(): Promise<void> {
+    if (dashboardDataLoaded || disposed) {
+      return Promise.resolve();
+    }
+    if (dashboardDataLoadPromise !== null) {
+      return dashboardDataLoadPromise;
+    }
+    dashboardDataLoadPromise = (async () => {
+      const loadedBundle = await ensureLoaded();
+      if (disposed) {
+        return;
+      }
+      await Promise.all([
+        loadedBundle.settings.loadSpeedSourceFromServer(),
+        loadedBundle.settings.loadCarsFromServer(),
+      ]);
+      dashboardDataLoaded = true;
+    })().catch((error) => {
+      dashboardDataLoadPromise = null;
+      throw error;
+    });
+    return dashboardDataLoadPromise;
   }
 
   function ensureHistoryDataLoaded(): Promise<void> {
@@ -138,6 +166,7 @@ function createLazySecondaryFeatureBundle(
       bundle?.dispose();
       bundle = null;
     },
+    ensureDashboardDataLoaded,
     ensureHistoryDataLoaded,
     ensureSettingsDataLoaded,
     openCarWizard(): Promise<void> {
@@ -170,10 +199,16 @@ export function createAppFeatureBundle(
   };
   const ensureSecondaryViewReady = (viewId: string): Promise<void> => {
     if (viewId === "historyView") {
-      return secondary.ensureHistoryDataLoaded();
+      return Promise.all([
+        preloadHistoryLazyView(),
+        secondary.ensureHistoryDataLoaded(),
+      ]).then(() => undefined);
     }
     if (viewId === "settingsView") {
-      return secondary.ensureSettingsDataLoaded();
+      return Promise.all([
+        preloadSettingsLazyView(),
+        secondary.ensureSettingsDataLoaded(),
+      ]).then(() => undefined);
     }
     return Promise.resolve();
   };
@@ -213,10 +248,16 @@ export function createAppFeatureBundle(
 
   return createAppFeatureBundlePorts({
     realtime,
-    secondary,
     ensureViewReady: (viewId) => ensureSecondaryViewReady(viewId).catch((error) => {
       reportSecondaryLoadError(error);
       throw error;
     }),
+    secondary: {
+      dispose: () => secondary.dispose(),
+      primeDashboardState: () => secondary.ensureDashboardDataLoaded().catch((error) => {
+        reportSecondaryLoadError(error);
+        throw error;
+      }),
+    },
   });
 }

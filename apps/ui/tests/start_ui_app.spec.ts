@@ -37,6 +37,7 @@ test("startUiApp returns a disposable mounted app handle", () => {
       runtimeCreations += 1;
       return {
         attachSettingsPanels() {},
+        bootReady: { value: true } as UiAppRuntime["bootReady"],
         dispose() {
           disposeCalls += 1;
         },

@@ -12,7 +12,7 @@ type RealtimeLoggingPanelImpl = FunctionComponent<RealtimeLoggingPanelLazyProps>
 
 let realtimeLoggingPanelPromise: Promise<RealtimeLoggingPanelImpl> | null = null;
 
-function loadRealtimeLoggingPanel(): Promise<RealtimeLoggingPanelImpl> {
+export function preloadRealtimeLoggingPanel(): Promise<RealtimeLoggingPanelImpl> {
   if (realtimeLoggingPanelPromise === null) {
     realtimeLoggingPanelPromise = import("./realtime_logging_panel")
       .then((module) => module.RealtimeLoggingPanelView as RealtimeLoggingPanelImpl)
@@ -34,7 +34,7 @@ export default function RealtimeLoggingPanelLazy(
       return;
     }
     let cancelled = false;
-    void loadRealtimeLoggingPanel()
+    void preloadRealtimeLoggingPanel()
       .then((nextLoadedPanel) => {
         if (!cancelled) {
           setLoadedPanel(() => nextLoadedPanel);

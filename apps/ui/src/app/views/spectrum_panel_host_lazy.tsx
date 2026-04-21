@@ -12,7 +12,7 @@ type SpectrumPanelHostImpl = FunctionComponent<SpectrumPanelHostLazyProps>;
 
 let spectrumPanelHostPromise: Promise<SpectrumPanelHostImpl> | null = null;
 
-function loadSpectrumPanelHost(): Promise<SpectrumPanelHostImpl> {
+export function preloadSpectrumPanelHost(): Promise<SpectrumPanelHostImpl> {
   if (spectrumPanelHostPromise === null) {
     spectrumPanelHostPromise = import("./spectrum_panel_host")
       .then((module) => module.SpectrumPanelHost as SpectrumPanelHostImpl)
@@ -32,7 +32,7 @@ export default function SpectrumPanelHostLazy(props: SpectrumPanelHostLazyProps)
       return;
     }
     let cancelled = false;
-    void loadSpectrumPanelHost()
+    void preloadSpectrumPanelHost()
       .then((nextLoadedPanelHost) => {
         if (!cancelled) {
           setLoadedPanelHost(() => nextLoadedPanelHost);

@@ -3,6 +3,7 @@ import type { ComponentChildren } from "preact";
 import { UiShellChrome, type UiShellChromeBindings } from "./runtime/ui_shell_chrome";
 import { DEFAULT_NAVIGATION_MODEL } from "./runtime/shell/ui_shell_chrome_shared";
 import type { UiMountedLazyPanelHandles, UiMountedPanels } from "./ui_lazy_panels";
+import type { ReadonlySignal } from "./ui_signals";
 import HistoryLazyView from "./views/history_lazy_view";
 import RealtimeLiveOverviewLazy from "./views/realtime_live_overview_lazy";
 import RealtimeLoggingPanelLazy from "./views/realtime_logging_panel_lazy";
@@ -34,10 +35,18 @@ function ShellViewSection(props: {
 
 export function UiAppRoot(props: {
   attachSettingsPanels(handles: UiMountedLazyPanelHandles): void;
+  bootReady: ReadonlySignal<boolean>;
   panels: UiMountedPanels;
   shellChrome: UiShellChromeBindings;
   spectrumPanel: CreatedSpectrumPanel;
 }) {
+  if (!props.bootReady.value) {
+    return (
+      <div id="appBootLoading" class="app-boot-loading" role="status" aria-live="polite">
+        Loading dashboard...
+      </div>
+    );
+  }
   const navigationModel = useDeferredModel(
     props.shellChrome.props.navigationModel,
     DEFAULT_NAVIGATION_MODEL,
