@@ -172,3 +172,31 @@ def test_on_ws_broadcast_tick_toggles_heavy_and_requests_matching_payload_weight
         ws_broadcast.build_payload(selected_client=None)
 
     assert payload_source.calls == [True, False, False, False, False, True]
+
+
+def test_on_ws_broadcast_tick_honors_fractional_heavy_cadence() -> None:
+    payload_source = _StubPayloadSource([_shared_payload()] * 11)
+    ws_broadcast = WsBroadcastService(
+        ui_push_hz=10,
+        ui_heavy_push_hz=4,
+        payload_source=payload_source,
+    )
+
+    ws_broadcast.build_payload(selected_client=None)
+    for _ in range(10):
+        ws_broadcast.on_tick()
+        ws_broadcast.build_payload(selected_client=None)
+
+    assert payload_source.calls == [
+        True,
+        False,
+        False,
+        True,
+        False,
+        True,
+        False,
+        False,
+        True,
+        False,
+        True,
+    ]

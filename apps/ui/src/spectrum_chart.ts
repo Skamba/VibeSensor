@@ -2,7 +2,7 @@ import "uplot/dist/uPlot.min.css";
 
 import uPlot from "uplot";
 
-import { SPECTRUM_DB_MAX, SPECTRUM_DB_MIN } from "./config";
+import { spectrumDbDisplayRangeFromDataBounds } from "./spectrum";
 import { getSpectrumCssVars } from "./spectrum_css_vars";
 import {
   computed,
@@ -104,7 +104,8 @@ export function createSpectrumChart(deps: CreateSpectrumChartDeps): SpectrumChar
         scales: {
           x: { time: false },
           y: {
-            range: [SPECTRUM_DB_MIN, SPECTRUM_DB_MAX] as uPlot.Range.MinMax,
+            range: (_self, dataMin, dataMax) =>
+              spectrumDbDisplayRangeFromDataBounds(dataMin, dataMax),
           },
         },
         axes: [
