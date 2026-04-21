@@ -110,6 +110,19 @@ Frontend server-state ownership is centralized on the runtime-owned
   narrow allowed exception is one-off browser-owned side effects such as binary
   file downloads that are not cacheable server state.
 
+## Live transport ownership
+
+Frontend live transport ingress is signal-native end to end.
+
+- `src/ws.ts` owns raw WebSocket lifecycle, reconnect/stale timers, and the
+  latest raw payload signal from the socket.
+- `src/app/runtime/ui_live_transport_controller.ts` owns the reactive bridge
+  from that socket signal into `AppState.transport`, client-selection sends, and
+  payload application into the runtime state slices.
+- Keep render throttling/RAF pacing only where it is explicitly needed for
+  spectrum or DOM performance. Do not reintroduce callback-style payload fan-out
+  from `ws.ts` into app/runtime consumers.
+
 ## Worker-owned spectrum frame preparation
 
 Live spectrum payload adaptation stays on the main thread, but heavy spectrum
