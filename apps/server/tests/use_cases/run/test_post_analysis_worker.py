@@ -239,11 +239,11 @@ class TestPostAnalysisWorkerErrorHandling:
         stored: dict[str, object] = {}
 
         class FakeDB:
-            def get_run_metadata(self, run_id):
+            async def aget_run_metadata(self, run_id):
                 assert run_id == "run-ok"
                 return _run_metadata(run_id, language="nl")
 
-            def iter_run_samples(self, run_id, batch_size=1024):
+            async def aiter_run_samples(self, run_id, batch_size=1024):
                 assert run_id == "run-ok"
                 yield sensor_frames_from_mappings(
                     [
@@ -252,11 +252,11 @@ class TestPostAnalysisWorkerErrorHandling:
                     ]
                 )
 
-            def store_analysis(self, run_id, analysis):
+            async def astore_analysis(self, run_id, analysis):
                 stored["run_id"] = run_id
                 stored["analysis"] = analysis
 
-            def store_analysis_error(self, run_id, msg):
+            async def astore_analysis_error(self, run_id, msg):
                 raise AssertionError(f"unexpected error storage for {run_id}: {msg}")
 
         def _analysis_runner(run):
@@ -302,13 +302,15 @@ class TestPostAnalysisWorkerErrorHandling:
         errors: list[str] = []
 
         class FakeDB:
-            def get_run_metadata(self, run_id):
+            async def aget_run_metadata(self, run_id):
                 return _run_metadata(run_id, language="en")
 
-            def iter_run_samples(self, run_id, batch_size=1024):
+            async def aiter_run_samples(self, run_id, batch_size=1024):
+                if False:
+                    yield []
                 raise RuntimeError("boom")
 
-            def store_analysis_error(self, run_id, msg):
+            async def astore_analysis_error(self, run_id, msg):
                 pass
 
         worker = PostAnalysisWorker(
@@ -365,7 +367,7 @@ class TestPostAnalysisWorkerErrorHandling:
         stored_errors: list[tuple[str, str]] = []
 
         class FakeDB:
-            def store_analysis_error(self, run_id, msg):
+            async def astore_analysis_error(self, run_id, msg):
                 stored_errors.append((run_id, msg))
 
         def _fail(_rid: str) -> None:

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -322,13 +323,13 @@ def test_history_db_runs_startup_quick_check(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls: list[Path] = []
-    original = SQLiteHistoryEngine._run_startup_quick_check_async
+    original = SQLiteHistoryEngine._run_startup_quick_check
 
     async def _tracking(self: SQLiteHistoryEngine) -> None:
         calls.append(self.db_path)
         await original(self)
 
-    monkeypatch.setattr(SQLiteHistoryEngine, "_run_startup_quick_check_async", _tracking)
+    monkeypatch.setattr(SQLiteHistoryEngine, "_run_startup_quick_check", _tracking)
     db = create_history_persistence_adapters(tmp_path / "history.db")
     try:
         assert calls == [tmp_path / "history.db"]
@@ -350,13 +351,13 @@ def test_startup_quick_check_logs_corruption(
         async def fetchall(self) -> list[tuple[str]]:
             return [("row 7 missing from index",)]
 
-    @contextmanager
-    def _fake_cursor(_self: SQLiteHistoryEngine, *, commit: bool = True):
+    @asynccontextmanager
+    async def _fake_cursor(_self: SQLiteHistoryEngine, *, commit: bool = True):
         yield _FakeCursor()
 
     monkeypatch.setattr(SQLiteHistoryEngine, "_cursor", _fake_cursor)
     with caplog.at_level(logging.CRITICAL):
-        db.lifecycle._run_startup_quick_check()
+        asyncio.run(db.lifecycle._run_startup_quick_check())
     assert "quick_check reported corruption" in caplog.text
     assert "row 7 missing from index" in caplog.text
     assert db.lifecycle.corruption_detected is True
@@ -381,12 +382,12 @@ def test_startup_quick_check_reports_corruption_via_callback(
         async def fetchall(self) -> list[tuple[str]]:
             return [("row 7 missing from index",)]
 
-    @contextmanager
-    def _fake_cursor(_self: SQLiteHistoryEngine, *, commit: bool = True):
+    @asynccontextmanager
+    async def _fake_cursor(_self: SQLiteHistoryEngine, *, commit: bool = True):
         yield _FakeCursor()
 
     monkeypatch.setattr(SQLiteHistoryEngine, "_cursor", _fake_cursor)
-    db.lifecycle._run_startup_quick_check()
+    asyncio.run(db.lifecycle._run_startup_quick_check())
     assert reported == ["row 7 missing from index"]
     assert db.lifecycle.corruption_detected is True
     db.lifecycle.close()
@@ -400,18 +401,18 @@ def test_startup_quick_check_blocks_future_writes(
     db.run_repository.create_run("run-corrupt", "2026-01-01T00:00:00Z", _metadata("run-corrupt"))
 
     class _FakeCursor:
-        def execute(self, sql: str) -> None:
+        async def execute(self, sql: str) -> None:
             assert sql == "PRAGMA quick_check"
 
-        def fetchall(self) -> list[tuple[str]]:
+        async def fetchall(self) -> list[tuple[str]]:
             return [("row 7 missing from index",)]
 
-    @contextmanager
-    def _fake_cursor(_self: SQLiteHistoryEngine, *, commit: bool = True):
+    @asynccontextmanager
+    async def _fake_cursor(_self: SQLiteHistoryEngine, *, commit: bool = True):
         yield _FakeCursor()
 
     monkeypatch.setattr(SQLiteHistoryEngine, "_cursor", _fake_cursor)
-    db.lifecycle._run_startup_quick_check()
+    asyncio.run(db.lifecycle._run_startup_quick_check())
 
     with pytest.raises(sqlite3.DatabaseError, match="Writes are disabled"):
         db.run_repository.append_samples("run-corrupt", [sensor_frame_from_mapping({"i": 1})])

@@ -56,11 +56,17 @@ class UnexpectedPostAnalysisBugRecorder:
         db = self._history_db
         if db is None:
             return
-        store_analysis_error = getattr(db, "store_analysis_error", None)
-        if not callable(store_analysis_error):
+        astore = getattr(db, "astore_analysis_error", None)
+        if not callable(astore):
             return
         try:
-            store_analysis_error(run_id, completed_error)
+            runner = getattr(db, "_run_on_engine_loop", None)
+            if callable(runner):
+                runner(astore(run_id, completed_error))
+            else:
+                import asyncio as _asyncio
+
+                _asyncio.run(astore(run_id, completed_error))
         except (aiosqlite.Error, OSError):
             LOGGER.exception(
                 "Failed to persist unexpected analysis failure for run %s",

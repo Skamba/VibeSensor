@@ -264,6 +264,8 @@ def build_runtime(**overrides: Any):
     if not isinstance(getattr(obd_runner, "run", None), AsyncMock):
         obd_runner.run = AsyncMock(side_effect=asyncio.CancelledError)
     history_db = overrides.pop("history_db", MagicMock())
+    if not isinstance(getattr(history_db, "aclose", None), AsyncMock):
+        history_db.aclose = AsyncMock()
     diagnostics = overrides.pop("run_recorder", MagicMock())
     update_manager = overrides.pop("update_manager", MagicMock())
     esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())

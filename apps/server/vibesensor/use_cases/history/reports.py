@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from opentelemetry.trace import SpanKind
 
 from vibesensor.shared.boundaries.reporting import PreparedReportInput
-from vibesensor.shared.ports import AsyncRunPersistence
+from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
@@ -41,7 +41,7 @@ class HistoryReportService:
 
     def __init__(
         self,
-        history_db: AsyncRunPersistence,
+        history_db: RunPersistence,
         *,
         pdf_renderer: PdfRendererFn,
     ) -> None:

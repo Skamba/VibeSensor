@@ -101,7 +101,7 @@ class LifecycleWorkerPool(Protocol):
 
 
 class LifecycleHistoryDb(Protocol):
-    def close(self) -> object: ...
+    async def aclose(self) -> None: ...
 
 
 @dataclass(slots=True)

@@ -7,16 +7,36 @@ the injected ``RunPersistence`` boundary.
 
 from __future__ import annotations
 
+import asyncio
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from threading import RLock
+from typing import Any
 
 import aiosqlite
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
+
+
+def _sync_call[T](db: Any, coro: Awaitable[T]) -> T:
+    """Synchronously resolve *coro* bound to *db*.
+
+    If *db* exposes a persistent engine loop, route through it so
+    aiosqlite futures resolve on the owning loop. Otherwise fall back
+    to ``asyncio.run`` (test stubs) which creates a short-lived loop.
+    """
+    runner = getattr(db, "_run_on_engine_loop", None)
+    if callable(runner):
+        return runner(coro)  # type: ignore[no-any-return]
+
+    async def _runner() -> T:
+        return await coro
+
+    return asyncio.run(_runner())
+
 
 __all__ = [
     "AppendRowsResult",
@@ -200,7 +220,7 @@ class RunPersistenceWriter:
                 self._history_create_fail_count = 0
         metadata = self._metadata_builder(run_id, start_time_utc)
         try:
-            history_db.create_run(run_id, start_time_utc, metadata)
+            _sync_call(history_db, history_db.acreate_run(run_id, start_time_utc, metadata))
             with self._lock:
                 if not self._run_id_matches(run_id):
                     return
@@ -270,7 +290,9 @@ class RunPersistenceWriter:
                 for attempt in range(_MAX_APPEND_RETRIES):
                     try:
                         write_start = self._monotonic()
-                        rows_written = history_db.append_samples(run_id, rows)
+                        rows_written = _sync_call(
+                            history_db, history_db.aappend_samples(run_id, rows)
+                        )
                         write_dur = self._monotonic() - write_start
                         with self._lock:
                             if not self._run_id_matches(run_id):
@@ -333,10 +355,13 @@ class RunPersistenceWriter:
         try:
             latest_metadata = self._metadata_builder(run_id, start_time_utc)
             latest_metadata.end_time_utc = end_utc
-            finalized = history_db.finalize_run(
-                run_id,
-                end_utc,
-                metadata=latest_metadata,
+            finalized = _sync_call(
+                history_db,
+                history_db.afinalize_run(
+                    run_id,
+                    end_utc,
+                    metadata=latest_metadata,
+                ),
             )
             if finalized is False:
                 self.set_last_write_error("history finalize_run skipped due to invalid state")

@@ -17,9 +17,7 @@ from fastapi import HTTPException
 
 
 async def _close_history_db(db) -> None:
-    close_result = db.close()
-    if close_result is not None:
-        await close_result
+    await db.aclose()
 
 
 @pytest.mark.asyncio

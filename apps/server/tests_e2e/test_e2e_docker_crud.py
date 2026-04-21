@@ -7,6 +7,8 @@ import pytest
 from tests_e2e.e2e_helpers import api_json
 
 pytestmark = pytest.mark.e2e
+
+
 def test_car_crud_edge_cases_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     cars_before = api_json(base, "/api/settings/cars")

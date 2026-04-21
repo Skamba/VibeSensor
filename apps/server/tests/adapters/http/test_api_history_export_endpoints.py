@@ -60,7 +60,7 @@ async def test_history_export_csv_nested_values_are_json() -> None:
 async def test_history_export_single_pass_fixed_columns() -> None:
     router, state = make_router_and_state(language="en", sample_count=50)
     db = state.history_db
-    original_iter = db.iter_run_samples
+    original_iter = db.aiter_run_samples
     call_count = 0
 
     def counting_iter(*args, **kwargs):
@@ -68,7 +68,7 @@ async def test_history_export_single_pass_fixed_columns() -> None:
         call_count += 1
         return original_iter(*args, **kwargs)
 
-    db.iter_run_samples = counting_iter
+    db.aiter_run_samples = counting_iter
     endpoint = route_endpoint(router, "/api/history/{run_id}/export")
     response = await endpoint("run-1")
     assert call_count == 1
@@ -144,17 +144,22 @@ async def test_history_export_sanitizes_filename_from_run_id() -> None:
     class NamedRunDB(FakeHistoryDB):
         accepted_run_id: str = run_id
 
-        def get_run(self, queried_run_id: str):
+        async def aget_run(self, queried_run_id: str):
             if queried_run_id != self.accepted_run_id:
                 return None
-            result = super().get_run("run-1")
+            result = await super().aget_run("run-1")
             assert result is not None
             return replace(result, run_id=queried_run_id)
 
-        def iter_run_samples(self, queried_run_id: str, batch_size: int = 1000):
+        async def aiter_run_samples(
+            self, queried_run_id: str, batch_size: int = 1000, *, stride: int = 1
+        ):
             if queried_run_id != self.accepted_run_id:
                 return
-            yield from super().iter_run_samples("run-1", batch_size=batch_size)
+            async for batch in super().aiter_run_samples(
+                "run-1", batch_size=batch_size, stride=stride
+            ):
+                yield batch
 
     db = NamedRunDB(metadata, samples, analysis)
     router = create_router(FakeState(db, FakeWsHub()))

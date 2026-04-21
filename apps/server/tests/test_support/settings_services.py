@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import Any
 
@@ -13,7 +14,6 @@ from vibesensor.infra.config.settings_derivation import SettingsDerivationServic
 from vibesensor.infra.config.settings_persistence import SettingsPersistenceCoordinator
 from vibesensor.infra.config.speed_source_settings import PersistedSpeedSourceSettingsService
 from vibesensor.infra.config.ui_preferences import UiPreferencesService
-from vibesensor.shared.async_bridge import run_coro_blocking
 from vibesensor.shared.ports import SettingsSnapshotPersistence
 from vibesensor.shared.time_utils import utc_now_iso
 
@@ -55,7 +55,7 @@ def write_raw_settings_snapshot(db: Any, value_json: str) -> None:
     """Write raw JSON into the settings snapshot table for load-path tests."""
 
     async def _run() -> None:
-        async with db._cursor_async() as cur:
+        async with db._cursor() as cur:
             await cur.execute(
                 "INSERT INTO settings_snapshot (id, value_json, updated_at) VALUES (1, ?, ?) "
                 "ON CONFLICT(id) DO UPDATE SET value_json = excluded.value_json, "
@@ -63,4 +63,4 @@ def write_raw_settings_snapshot(db: Any, value_json: str) -> None:
                 (value_json, utc_now_iso()),
             )
 
-    run_coro_blocking(_run())
+    asyncio.run(_run())

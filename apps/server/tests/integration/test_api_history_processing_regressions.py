@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 import pytest
+from test_support.history_db_async import execute_statements
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.http._helpers import safe_filename as _safe_filename
@@ -88,11 +89,13 @@ class TestHistoryDBAnalysisValidation:
 
     def test_rejects_non_dict_analysis(self, tmp_path: Path) -> None:
         db = self._make_db(tmp_path)
-        with db.lifecycle._cursor() as cur:
-            cur.execute(
+        execute_statements(
+            db.lifecycle,
+            (
                 "UPDATE runs SET status='complete', analysis_json=? WHERE run_id=?",
                 ("[1,2,3]", "run-1"),
-            )
+            ),
+        )
         run = db.run_repository.get_run("run-1")
         assert run is not None
         assert run.analysis is None
