@@ -526,13 +526,15 @@ async def test_broadcast_sanitizes_nan_to_null() -> None:
 
 
 @pytest.mark.asyncio
-async def test_broadcast_logs_warning_on_nan(caplog) -> None:
-    """A warning is logged when NaN/Inf values are found in the payload."""
+async def test_broadcast_logs_warning_when_sanitizer_replaces_non_finite_values(caplog) -> None:
+    """A warning is logged when the sanitize fallback replaces NaN/Inf values."""
     hub, [ws] = await build_hub("sensor_1")
+    payload = {"freq": np.array([1.0, float("nan"), 3.0], dtype=np.float32)}
 
     with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"):
-        await hub.broadcast(lambda _: {"val": float("nan")})
+        await hub.broadcast(lambda _: payload)
 
+    assert _sent_json(ws) == {"freq": [1.0, None, 3.0]}
     assert any("NaN/Inf" in r.message for r in caplog.records)
 
 
