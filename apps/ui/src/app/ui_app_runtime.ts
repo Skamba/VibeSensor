@@ -90,9 +90,7 @@ export interface UiAppRuntimeDeps {
   state?: AppState;
 }
 
-export function createUiAppRuntime(
-  deps: UiAppRuntimeDeps = {},
-): UiAppRuntime {
+export function createUiAppRuntime(deps: UiAppRuntimeDeps = {}): UiAppRuntime {
   const state = deps.state ?? createAppState();
   const queryClient = createUiQueryClient();
   const shellChromeActions: Signal<UiShellChromeActions> =
@@ -103,11 +101,15 @@ export function createUiAppRuntime(
   let shellBindings: AppFeatureBundle["shell"] | null = null;
   const shell = new UiShellController({
     bindFeatureHandlers: () =>
-      requireUiRuntimeDependency(shellBindings, "shell bindings").bindHandlers(),
+      requireUiRuntimeDependency(
+        shellBindings,
+        "shell bindings",
+      ).bindHandlers(),
     state,
     chrome: shellChrome.view,
     chromeActions: shellChromeActions,
     liveOverview: lazyPanels.panels.dashboard.liveOverview,
+    queryClient,
   });
   spectrum = new UiSpectrumController({
     state,

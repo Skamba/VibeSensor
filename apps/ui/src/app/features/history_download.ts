@@ -1,6 +1,9 @@
 import { triggerBlobDownload } from "../dom/download";
 
-export function filenameFromDisposition(headerValue: string | null, fallback: string): string {
+export function filenameFromDisposition(
+  headerValue: string | null,
+  fallback: string,
+): string {
   if (!headerValue) {
     return fallback;
   }
@@ -19,7 +22,12 @@ export function filenameFromDisposition(headerValue: string | null, fallback: st
   return fallback;
 }
 
-export async function downloadBlobFile(url: string, fallbackName: string): Promise<void> {
+export async function downloadBlobFile(
+  url: string,
+  fallbackName: string,
+): Promise<void> {
+  // Intentional direct fetch: binary browser downloads are one-shot side effects,
+  // not cache-owned server state to keep in TanStack Query.
   const response = await fetch(url);
   if (!response.ok) {
     let detail = `${response.status} ${response.statusText}`;

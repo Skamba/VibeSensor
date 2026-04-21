@@ -106,6 +106,9 @@ Frontend server-state ownership is centralized on the runtime-owned
   and invalidation instead of reintroducing ad hoc loaders or poll loops.
 - Mutations should either write authoritative results into the cache with
   `setQueryData(...)` or explicitly invalidate/refetch the affected keys.
+- If a production path stays direct, document the concrete reason in code. The
+  narrow allowed exception is one-off browser-owned side effects such as binary
+  file downloads that are not cacheable server state.
 
 ## Worker-owned spectrum frame preparation
 

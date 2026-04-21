@@ -59,6 +59,12 @@ export interface SettingsFeatureViewPorts {
 }
 
 export interface SettingsFeature {
+  addCarFromWizard(
+    name: string,
+    carType: string,
+    aspects: Record<string, number>,
+    variant?: string,
+  ): Promise<void>;
   bindHandlers(): void;
   dispose(): void;
   syncSettingsInputs(): void;
@@ -84,7 +90,9 @@ export function createSettingsFeature(
 
   function showSettingsSaveError(error: unknown): void {
     services.showError(
-      error instanceof Error ? error.message : services.t("settings.save_failed"),
+      error instanceof Error
+        ? error.message
+        : services.t("settings.save_failed"),
     );
   }
 
@@ -128,7 +136,8 @@ export function createSettingsFeature(
       ports: {
         activeViewId: ctx.ports.activeViewId,
         activeSettingsTabId: ctx.panels.settingsShell.activeTabId,
-        syncSpeedSourceSelectionUi: speedSourceModule.syncSpeedSourceSelectionUi,
+        syncSpeedSourceSelectionUi:
+          speedSourceModule.syncSpeedSourceSelectionUi,
       },
     });
   carsModule = createSettingsCarsModule({
@@ -176,6 +185,7 @@ export function createSettingsFeature(
   }
 
   return {
+    addCarFromWizard: carsModule.addCarFromWizard,
     bindHandlers,
     dispose(): void {
       disposeLanguageSync();
