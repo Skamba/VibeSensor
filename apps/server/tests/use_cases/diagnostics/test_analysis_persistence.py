@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
@@ -154,10 +155,11 @@ def test_store_analysis_persists_summary_directly(
         ("r1",),
     )[0]
     raw = row[0]
+    payload = json.loads(raw)
     # No envelope — summary stored directly
     assert '"summary"' not in raw
-    assert '"_schema_version": 1' in raw
-    assert '"lang"' in raw
+    assert payload["_schema_version"] == 1
+    assert payload["lang"] == "en"
     run = db.run_repository.get_run("r1")
     assert run is not None
     assert run.analysis == {"lang": "en", "findings": []}
