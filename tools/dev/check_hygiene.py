@@ -2193,7 +2193,9 @@ def main() -> int:
     else:
         print("Frontend legacy test-DOM guardrails passed.")
 
-    frontend_component_use_computed_errors = check_frontend_component_use_computed_guardrails()
+    frontend_component_use_computed_errors = (
+        check_frontend_component_use_computed_guardrails()
+    )
     if frontend_component_use_computed_errors:
         print("Frontend component useComputed guardrail drift detected:")
         for item in frontend_component_use_computed_errors:
