@@ -10,8 +10,10 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
+from typing import Any
 
 import httpx
+import msgspec
 
 from vibesensor.shared.types.json_types import JsonValue
 
@@ -19,6 +21,7 @@ __all__ = [
     "build_request",
     "build_get_request",
     "read_json_response",
+    "read_typed_json_response",
     "read_text_response",
     "stream_http_response",
 ]
@@ -107,6 +110,42 @@ def read_json_response(
     try:
         payload: JsonValue = json.loads(response.content)
     except json.JSONDecodeError as exc:
+        raise ValueError(f"{context} returned invalid JSON: {exc}") from exc
+    return payload
+
+
+def read_typed_json_response(
+    url: str,
+    *,
+    response_type: Any,
+    method: str = "GET",
+    headers: Mapping[str, str] | None = None,
+    content: bytes | None = None,
+    timeout_s: float,
+    context: str,
+    require_https: bool = False,
+    transport: httpx.BaseTransport | None = None,
+) -> Any:
+    """Send a request and decode the response body as typed JSON via msgspec."""
+
+    request = build_request(
+        method,
+        url,
+        headers=headers,
+        content=content,
+        context=context,
+        require_https=require_https,
+    )
+    try:
+        with _client(timeout_s=timeout_s, transport=transport) as client:
+            response = client.send(request)
+            response.raise_for_status()
+    except httpx.HTTPError as exc:
+        raise _http_error_as_oserror(exc, context=context, url=url) from exc
+
+    try:
+        payload = msgspec.json.decode(response.content, type=response_type)
+    except (msgspec.DecodeError, msgspec.ValidationError) as exc:
         raise ValueError(f"{context} returned invalid JSON: {exc}") from exc
     return payload
 

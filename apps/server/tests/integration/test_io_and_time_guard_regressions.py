@@ -26,6 +26,10 @@ from vibesensor.use_cases.history.report_document import build_report_document
 from vibesensor.use_cases.updates.firmware.firmware_cache import FirmwareCache
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
+from vibesensor.use_cases.updates.releases.github_api import (
+    GitHubApiAssetRecord,
+    GitHubApiReleaseRecord,
+)
 
 
 def _make_summary(report_date: str, **overrides: Any) -> dict[str, Any]:
@@ -75,8 +79,16 @@ class TestFirmwareCacheRefreshUnboundGuard:
 
         # Fake fetcher that raises during download
         fetcher = MagicMock()
-        fetcher.find_release.return_value = {"tag_name": "v999"}
-        fetcher.find_firmware_asset.return_value = {"name": "fw.zip"}
+        fetcher.find_release.return_value = GitHubApiReleaseRecord(
+            tag_name="v999",
+            draft=False,
+            prerelease=False,
+            assets=[GitHubApiAssetRecord(name="fw.zip", url="https://example.invalid/fw.zip")],
+        )
+        fetcher.find_firmware_asset.return_value = GitHubApiAssetRecord(
+            name="fw.zip",
+            url="https://example.invalid/fw.zip",
+        )
         fetcher.download_asset.side_effect = RuntimeError("download failed")
 
         with pytest.raises(RuntimeError, match="download failed"):

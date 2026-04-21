@@ -5,10 +5,11 @@ from __future__ import annotations
 import logging
 import tempfile
 from pathlib import Path
+from typing import cast
 
 from vibesensor.use_cases.updates.asset_download import download_release_asset
 
-from .github_api import DOWNLOAD_CHUNK_BYTES, GitHubApiClient
+from .github_api import DOWNLOAD_CHUNK_BYTES, GitHubApiClient, GitHubApiReleaseRecord
 from .models import ReleaseFetcherConfig, ReleaseInfo
 from .release_discovery import decode_server_releases, find_latest_server_release
 
@@ -61,7 +62,15 @@ class ServerReleaseFetcher:
         url = f"https://api.github.com/repos/{owner}/{repo}/releases?per_page=50"
         LOGGER.info("Querying releases from %s/%s", owner, repo)
         return find_latest_server_release(
-            decode_server_releases(self._client.get_json(url)),
+            decode_server_releases(
+                cast(
+                    list[GitHubApiReleaseRecord],
+                    self._client.get_typed_json(
+                        url,
+                        response_type=list[GitHubApiReleaseRecord],
+                    ),
+                )
+            ),
             server_repo=self._config.server_repo,
         )
 
