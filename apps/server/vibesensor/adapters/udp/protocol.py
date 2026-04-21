@@ -33,6 +33,8 @@ LOGGER = logging.getLogger(__name__)
 
 __all__ = [
     "AckMessage",
+    "ACK_SYNC_CLOCK_BYTES",
+    "ACK_SYNC_CLOCK_STRUCT",
     "CmdMessage",
     "DataAckMessage",
     "DataMessage",
@@ -44,6 +46,7 @@ __all__ = [
     "client_id_mac",
     "extract_client_id_hex",
     "pack_ack",
+    "pack_ack_sync_clock",
     "pack_cmd_identify",
     "pack_cmd_sync_clock",
     "pack_data",
@@ -76,15 +79,17 @@ CMD_SYNC_CLOCK = 2
 HELLO_BASE = struct.Struct("<BB6sHHHB")
 DATA_HEADER = struct.Struct("<BB6sIQH")
 ACK_STRUCT = struct.Struct("<BB6sIB")
+ACK_SYNC_CLOCK_STRUCT = struct.Struct("<BB6sIBQQ")
 DATA_ACK_STRUCT = struct.Struct("<BB6sI")
 HELLO_ACK_STRUCT = struct.Struct("<BB6s")
 CMD_HEADER = struct.Struct("<BB6sBI")
 CMD_IDENTIFY_STRUCT = struct.Struct("<BB6sBIH")
-CMD_SYNC_CLOCK_STRUCT = struct.Struct("<BB6sBIQ")
+CMD_SYNC_CLOCK_STRUCT = struct.Struct("<BB6sBIQqI")
 
 HELLO_FIXED_BYTES = HELLO_BASE.size + 1 + 4 + 1  # +fw_len byte +overflow uint32 +capabilities
 DATA_HEADER_BYTES: int = DATA_HEADER.size
 ACK_BYTES: int = ACK_STRUCT.size
+ACK_SYNC_CLOCK_BYTES: int = ACK_SYNC_CLOCK_STRUCT.size
 DATA_ACK_BYTES: int = DATA_ACK_STRUCT.size
 HELLO_ACK_BYTES: int = HELLO_ACK_STRUCT.size
 CMD_HEADER_BYTES: int = CMD_HEADER.size
@@ -154,6 +159,8 @@ class AckMessage:
     client_id: bytes
     cmd_seq: int
     status: int
+    device_receive_us: int | None = None
+    device_send_us: int | None = None
 
 
 @dataclass(slots=True)
@@ -372,9 +379,17 @@ def pack_cmd_identify(client_id: bytes, cmd_seq: int, duration_ms: int) -> bytes
     )
 
 
-def pack_cmd_sync_clock(client_id: bytes, cmd_seq: int, server_time_us: int) -> bytes:
+def pack_cmd_sync_clock(
+    client_id: bytes,
+    cmd_seq: int,
+    server_time_us: int,
+    *,
+    applied_offset_us: int = 0,
+    round_trip_us: int = 0,
+) -> bytes:
     """Encode a CMD_SYNC_CLOCK command as bytes."""
     validate_cmd_seq(cmd_seq)
+    clamped_offset_us = max(-(1 << 63), min((1 << 63) - 1, int(applied_offset_us)))
     return CMD_SYNC_CLOCK_STRUCT.pack(
         MSG_CMD,
         VERSION,
@@ -382,6 +397,8 @@ def pack_cmd_sync_clock(client_id: bytes, cmd_seq: int, server_time_us: int) -> 
         CMD_SYNC_CLOCK,
         cmd_seq,
         max(0, int(server_time_us)),
+        clamped_offset_us,
+        max(0, min((1 << 32) - 1, int(round_trip_us))),
     )
 
 
@@ -408,7 +425,12 @@ def pack_hello_ack(client_id: bytes) -> bytes:
 
 def parse_ack(data: bytes) -> AckMessage:
     """Decode a raw ACK message into an :class:`AckMessage`."""
-    validate_fixed_message_size(label="ACK", data_length=len(data), expected_size=ACK_BYTES)
+    validate_minimum_size(label="ACK", data_length=len(data), minimum=ACK_BYTES)
+    if len(data) not in (ACK_BYTES, ACK_SYNC_CLOCK_BYTES):
+        raise _ProtocolError(
+            "ACK has unexpected size "
+            f"{len(data)} bytes (expected {ACK_BYTES} or {ACK_SYNC_CLOCK_BYTES})"
+        )
     header = ACK_STRUCT.unpack_from(data, 0)
     _validate_unpacked_header(
         label="ACK",
@@ -416,6 +438,15 @@ def parse_ack(data: bytes) -> AckMessage:
         expected_msg_type=MSG_ACK,
     )
     _msg_type, _version, client_id, cmd_seq, status = header
+    if len(data) == ACK_SYNC_CLOCK_BYTES:
+        device_receive_us, device_send_us = struct.unpack_from("<QQ", data, ACK_BYTES)
+        return AckMessage(
+            client_id=client_id,
+            cmd_seq=cmd_seq,
+            status=status,
+            device_receive_us=device_receive_us,
+            device_send_us=device_send_us,
+        )
     return AckMessage(client_id=client_id, cmd_seq=cmd_seq, status=status)
 
 
@@ -423,6 +454,27 @@ def pack_ack(client_id: bytes, cmd_seq: int, status: int = 0) -> bytes:
     """Encode an ACK message as bytes."""
     validate_cmd_seq(cmd_seq)
     return ACK_STRUCT.pack(MSG_ACK, VERSION, client_id, cmd_seq, status & 0xFF)
+
+
+def pack_ack_sync_clock(
+    client_id: bytes,
+    cmd_seq: int,
+    *,
+    device_receive_us: int,
+    device_send_us: int,
+    status: int = 0,
+) -> bytes:
+    """Encode an ACK payload carrying sync-clock receive/send timestamps."""
+    validate_cmd_seq(cmd_seq)
+    return ACK_SYNC_CLOCK_STRUCT.pack(
+        MSG_ACK,
+        VERSION,
+        client_id,
+        cmd_seq,
+        status & 0xFF,
+        max(0, int(device_receive_us)),
+        max(0, int(device_send_us)),
+    )
 
 
 def parse_data_ack(data: bytes) -> DataAckMessage:

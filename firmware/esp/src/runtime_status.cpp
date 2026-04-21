@@ -39,7 +39,7 @@ void report_runtime_status(RuntimeStatus& status,
       "status wifi=%d q=%u/%u drop=%lu tx_fail={pack:%lu begin:%lu end:%lu} "
       "sensor={err:%lu stat:%lu data:%lu trunc:%lu bus:%lu/%lu reinit:%lu/%lu miss:%lu late:%lu handoff:%lu "
       "sq:%u/%u prefetch:%u refill:%u/%u} "
-      "wifi_retry={attempts:%lu fail:%lu} "
+      "wifi_retry={attempts:%lu fail:%lu} sync={offset_us:%lld rtt_us:%lu} "
       "parse={ctrl:%lu ack:%lu} last_error=%u@%lu\n",
       WiFi.status(),
       static_cast<unsigned>(queue_size),
@@ -66,6 +66,8 @@ void report_runtime_status(RuntimeStatus& status,
       static_cast<unsigned>(sampling.last_refill_request),
       static_cast<unsigned long>(status.wifi_reconnect_attempts),
       static_cast<unsigned long>(status.wifi_connect_failures),
+      static_cast<long long>(status.sync_offset_us),
+      static_cast<unsigned long>(status.sync_round_trip_us),
       static_cast<unsigned long>(status.control_parse_errors),
       static_cast<unsigned long>(status.data_ack_parse_errors),
       static_cast<unsigned>(last_error_code),
