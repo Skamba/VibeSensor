@@ -174,6 +174,11 @@ async def test_run_reconnects_on_connection_failure(
     await asyncio.wait_for(asyncio.gather(task, return_exceptions=True), timeout=5.0)
 
     assert "GPS connection lost, retrying" in caplog.text
+    reconnect_records = [
+        record for record in caplog.records if "GPS connection lost, retrying" in record.message
+    ]
+    assert reconnect_records
+    assert all(record.exc_info is None for record in reconnect_records)
 
 
 @pytest.mark.asyncio
