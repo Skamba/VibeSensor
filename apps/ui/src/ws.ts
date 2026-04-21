@@ -12,10 +12,10 @@ export interface WsClientOptions {
   staleAfterMs?: number;
   reconnectDelayMs?: number;
   hasData?: (payload: unknown) => boolean;
-  onMessage: (payload: unknown) => void;
 }
 
 export interface WsClient {
+  readonly latestPayload: ReadonlySignal<unknown | null>;
   readonly uiState: ReadonlySignal<WsUiState>;
   connect(): void;
   close(): void;
@@ -32,7 +32,7 @@ function hasSpectraClients(payload: unknown): boolean {
 }
 
 export function createWsClient(options: WsClientOptions): WsClient {
-  const resolvedOptions: Required<Omit<WsClientOptions, "onMessage">> & Pick<WsClientOptions, "onMessage"> = {
+  const resolvedOptions: Required<WsClientOptions> = {
     // 3s is too aggressive on weaker Pi + hotspot links and causes false stale flicker.
     staleAfterMs: 10000,
     reconnectDelayMs: 1200,
@@ -41,6 +41,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
   };
 
   let ws: WebSocket | null = null;
+  const latestPayload = signal<unknown | null>(null);
   const uiState = signal<WsUiState>("connecting");
   const lastMessageAtMs = signal(0);
   const hasReceivedData = signal(false);
@@ -55,6 +56,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
   let disposed = false;
 
   return {
+    latestPayload,
     uiState,
     connect,
     close,
@@ -108,6 +110,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
       commitState(initialState);
       hasReceivedData.value = false;
       lastMessageAtMs.value = 0;
+      latestPayload.value = null;
       socketOpen.value = false;
     });
     ws = new WebSocket(resolvedOptions.url);
@@ -132,7 +135,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
         lastMessageAtMs.value = receivedAt;
         hasReceivedData.value = hasReceivedData.value || resolvedOptions.hasData(payload);
         commitState(hasReceivedData.value ? "connected" : "no_data");
-        resolvedOptions.onMessage(payload);
+        latestPayload.value = payload;
       });
     };
 
