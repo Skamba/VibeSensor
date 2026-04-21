@@ -50,8 +50,8 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           ]);
         },
       },
-      async ({ renderer, state }) => {
-        renderer.renderPreparedFrame(renderer.prepareFrame());
+      async ({ prepareFrame, renderer, state }) => {
+        renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
 
         state.spectrum.spectra.value = {
@@ -63,7 +63,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           },
         };
 
-        renderer.renderPreparedFrame(renderer.prepareFrame());
+        renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
 
         expect(animationStarts).toEqual([75]);
@@ -115,8 +115,8 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           ]);
         },
       },
-      async ({ renderer, state }) => {
-        renderer.renderPreparedFrame(renderer.prepareFrame());
+      async ({ prepareFrame, renderer, state }) => {
+        renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
         setDataCalls = 0;
         redrawCalls = 0;
@@ -130,7 +130,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           },
         };
 
-        renderer.renderPreparedFrame(renderer.prepareFrame());
+        renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
 
         expect(setDataCalls).toBe(1);
@@ -175,8 +175,8 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           ]);
         },
       },
-      async ({ renderer, state }) => {
-        renderer.renderPreparedFrame(renderer.prepareFrame());
+      async ({ prepareFrame, renderer, state }) => {
+        renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
 
         state.spectrum.spectra.value = {
@@ -188,7 +188,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           },
         };
 
-        renderer.renderPreparedFrame(renderer.prepareFrame());
+        renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
 
         expect(animationStarts).toEqual([]);
@@ -232,8 +232,8 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           ]);
         },
       },
-      async ({ renderer, state }) => {
-        renderer.renderPreparedFrame(renderer.prepareFrame());
+      async ({ prepareFrame, renderer, state }) => {
+        renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
 
         state.spectrum.spectra.value = {
@@ -245,7 +245,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           },
         };
 
-        renderer.renderPreparedFrame(renderer.prepareFrame());
+        renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
 
         expect(animationStarts).toEqual([180]);

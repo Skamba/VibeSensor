@@ -1,10 +1,9 @@
 import type uPlot from "uplot";
 
 import { SPECTRUM_TWEEN_DURATION_MS } from "../../config";
-import { convertSpectrumAmplitudesToDbInPlace } from "../../spectrum";
 import type { SpectrumSeriesMeta, SpectrumText } from "../../spectrum_chart";
 import { getSpectrumCssVars } from "../../spectrum_css_vars";
-import { chartSeriesPalette, orderBandFills } from "../../theme";
+import { orderBandFills } from "../../theme";
 import {
   createRafAnimation,
   type RafAnimation,
@@ -17,8 +16,14 @@ import {
 } from "../spectrum_animation";
 import type { AppState, ChartBand } from "../ui_app_state";
 import { computed, effect, signal, untracked, type ReadonlySignal } from "../ui_signals";
+import type { SpectrumPreparedFrameData } from "./spectrum_frame_preparer";
 import type { SpectrumPanelChartDom } from "./spectrum_panel_view";
-import { closestFrequencyIndex, freqGridsMatch, type SpectrumFocusMarker, type SpectrumSeriesEntry } from "./spectrum_shared";
+import {
+  closestFrequencyIndex,
+  type SpectrumFocusMarker,
+  type SpectrumNumericSeries,
+  type SpectrumSeriesEntry,
+} from "./spectrum_shared";
 
 type SpectrumChartModule = Pick<typeof import("../../spectrum_chart"), "createSpectrumChart">;
 const EMPTY_FREQ_AXIS: number[] = [];
@@ -39,7 +44,7 @@ const bandKeyPresentation: Record<string, { color: string; labelKey: string }> =
 
 export interface SpectrumPreparedRenderData {
   entries: SpectrumSeriesEntry[];
-  freqAxis: number[];
+  freqAxis: SpectrumNumericSeries;
   chartBands: ChartBand[];
   frame: SpectrumHeavyFrame | null;
   hasData: boolean;
@@ -61,19 +66,11 @@ export interface SpectrumCanvasRendererDeps {
 
 export interface SpectrumCanvasRenderer {
   dispose(): void;
-  prepareFrame(): SpectrumPreparedRenderData;
+  composePreparedFrame(frameData: SpectrumPreparedFrameData): SpectrumPreparedRenderData;
   refreshPreparedFrameMetadata(): SpectrumPreparedRenderData;
   renderPreparedFrame(prepared: SpectrumPreparedRenderData): void;
   refreshDecorations(): void;
   setSeriesIsolation(seriesIndex: number | null): void;
-}
-
-interface PreparedSpectrumCacheEntry {
-  sourceCombined: readonly number[];
-  sourceFreq: readonly number[];
-  sourceLength: number;
-  targetFreq: readonly number[];
-  values: number[];
 }
 
 export function createSpectrumCanvasRenderer(
@@ -88,7 +85,6 @@ export function createSpectrumCanvasRenderer(
   let disposed = false;
   let lastAcceptedFrameAtMs: number | null = null;
   let lastPreparedFrame: SpectrumPreparedRenderData | null = null;
-  const preparedSpectrumCache = new Map<string, PreparedSpectrumCacheEntry>();
 
   const spectrumLastFrame = signal<SpectrumHeavyFrame | null>(null);
   const pendingPreparedFrame = signal<SpectrumPreparedRenderData | null>(null);
@@ -106,7 +102,7 @@ export function createSpectrumCanvasRenderer(
 
   const tweenTarget = signal<SpectrumHeavyFrame | null>(null);
   const currentEntries = signal<readonly SpectrumSeriesEntry[]>([]);
-  const currentFreqAxis = signal<readonly number[]>([]);
+  const currentFreqAxis = signal<SpectrumNumericSeries>(EMPTY_FREQ_AXIS);
   const chartSeriesMeta = signal<readonly SpectrumSeriesMeta[]>([]);
   const chartData = signal<uPlot.AlignedData>(EMPTY_CHART_DATA);
   const chartHeight = signal(360);
@@ -144,96 +140,13 @@ export function createSpectrumCanvasRenderer(
     });
   }
 
-  function prepareFrame(): SpectrumPreparedRenderData {
-    const entries: SpectrumSeriesEntry[] = [];
-    let targetFreq: number[] = [];
-
-    for (const [index, client] of deps.state.realtime.clients.value.entries()) {
-      if (!client?.connected) {
-        continue;
-      }
-      const spectrum = deps.state.spectrum.spectra.value.clients?.[client.id];
-      if (!spectrum || !Array.isArray(spectrum.combined)) {
-        continue;
-      }
-      const clientFreq = Array.isArray(spectrum.freq) && spectrum.freq.length
-        ? spectrum.freq
-        : EMPTY_FREQ_AXIS;
-      const length = Math.min(clientFreq.length, spectrum.combined.length);
-      if (!length) {
-        continue;
-      }
-
-      if (!targetFreq.length) {
-        targetFreq = clientFreq.length === length ? clientFreq : clientFreq.slice(0, length);
-      }
-
-      const preparedValues = getPreparedSpectrumValues(
-        client.id,
-        spectrum.combined,
-        clientFreq,
-        length,
-        targetFreq,
-      );
-      if (!preparedValues.length) {
-        continue;
-      }
-
-      entries.push({
-        id: client.id,
-        label: client.name || client.id,
-        color: colorForClient(index),
-        values: preparedValues,
-      });
-    }
-
-    const chartBands = calculateBands();
-    if (!targetFreq.length || !entries.length) {
-      return {
-        entries: [],
-        freqAxis: [],
-        chartBands,
-        frame: null,
-        hasData: false,
-      };
-    }
-
-    let minLen = targetFreq.length;
-    const seriesIds = new Array<string>(entries.length);
-    const frameValues = new Array<number[]>(entries.length);
-    for (let index = 0; index < entries.length; index += 1) {
-      const entry = entries[index];
-      seriesIds[index] = entry.id;
-      frameValues[index] = entry.values;
-      if (entry.values.length < minLen) {
-        minLen = entry.values.length;
-      }
-    }
-    if (minLen < targetFreq.length) {
-      targetFreq = targetFreq.slice(0, minLen);
-      for (let index = 0; index < frameValues.length; index += 1) {
-        const frameValuesEntry = frameValues[index];
-        const entry = entries[index];
-        if (!frameValuesEntry || !entry || frameValuesEntry.length === minLen) {
-          continue;
-        }
-        const trimmedValues = frameValuesEntry.slice(0, minLen);
-        frameValues[index] = trimmedValues;
-        entry.values = trimmedValues;
-      }
-    }
-    const frame: SpectrumHeavyFrame = {
-      seriesIds,
-      freq: targetFreq,
-      values: frameValues,
-    };
-
+  function composePreparedFrame(frameData: SpectrumPreparedFrameData): SpectrumPreparedRenderData {
     return {
-      entries,
-      freqAxis: frame.freq,
-      chartBands,
-      frame,
-      hasData: true,
+      entries: frameData.entries,
+      freqAxis: frameData.freqAxis,
+      chartBands: calculateBands(),
+      frame: frameData.frame,
+      hasData: frameData.hasData,
     };
   }
 
@@ -324,54 +237,6 @@ export function createSpectrumCanvasRenderer(
     deps.state.spectrum.spectrumPlot.value?.setSeriesIsolation(seriesIndex);
   }
 
-  function colorForClient(index: number): string {
-    return chartSeriesPalette[index % chartSeriesPalette.length];
-  }
-
-  function getPreparedSpectrumValues(
-    clientId: string,
-    combined: readonly number[],
-    clientFreq: readonly number[],
-    sourceLength: number,
-    targetFreq: readonly number[],
-  ): number[] {
-    const cached = preparedSpectrumCache.get(clientId);
-    if (
-      cached
-      && cached.sourceCombined === combined
-      && cached.sourceFreq === clientFreq
-      && cached.sourceLength === sourceLength
-      && cached.targetFreq.length === targetFreq.length
-      && (
-        cached.targetFreq === targetFreq
-        || freqGridsMatch(cached.targetFreq, targetFreq, targetFreq.length)
-      )
-    ) {
-      return cached.values;
-    }
-
-    const needsInterpolation = clientFreq.length !== targetFreq.length
-      || !freqGridsMatch(clientFreq, targetFreq, sourceLength);
-    const preparedValues = needsInterpolation
-      ? interpolateToTarget(clientFreq, combined, targetFreq, sourceLength)
-      : combined.slice(0, sourceLength);
-
-    if (!preparedValues.length) {
-      preparedSpectrumCache.delete(clientId);
-      return preparedValues;
-    }
-
-    convertSpectrumAmplitudesToDbInPlace(preparedValues);
-    preparedSpectrumCache.set(clientId, {
-      sourceCombined: combined,
-      sourceFreq: clientFreq,
-      sourceLength,
-      targetFreq,
-      values: preparedValues,
-    });
-    return preparedValues;
-  }
-
   function setSpectrumDataFromFrame(frame: SpectrumHeavyFrame): void {
     const plot = deps.state.spectrum.spectrumPlot.value;
     if (!plot) {
@@ -414,7 +279,10 @@ export function createSpectrumCanvasRenderer(
     chartSeriesMeta.value = nextMeta;
   }
 
-  function syncChartDataBuffer(freqAxis: readonly number[], seriesValues: readonly number[][]): void {
+  function syncChartDataBuffer(
+    freqAxis: SpectrumNumericSeries,
+    seriesValues: readonly SpectrumNumericSeries[],
+  ): void {
     if (freqAxis.length === 0 || seriesValues.length === 0) {
       chartData.value = EMPTY_CHART_DATA;
       return;
@@ -441,7 +309,7 @@ export function createSpectrumCanvasRenderer(
     }
   }
 
-  function copyNumbersInto(target: number[], source: readonly number[]): void {
+  function copyNumbersInto(target: number[], source: SpectrumNumericSeries): void {
     for (let index = 0; index < source.length; index += 1) {
       const value = source[index];
       if (value === undefined) {
@@ -639,6 +507,7 @@ export function createSpectrumCanvasRenderer(
   }
 
   return {
+    composePreparedFrame,
     dispose() {
       if (disposed) {
         return;
@@ -647,14 +516,12 @@ export function createSpectrumCanvasRenderer(
       disposeTweenEffect();
       tweenTarget.value = null;
       pendingPreparedFrame.value = null;
-      preparedSpectrumCache.clear();
       if (deps.state.spectrum.spectrumPlot.value) {
         deps.state.spectrum.spectrumPlot.value.destroy();
         deps.state.spectrum.spectrumPlot.value = null;
       }
       deps.state.spectrum.chartLoading.value = false;
     },
-    prepareFrame,
     refreshPreparedFrameMetadata,
     renderPreparedFrame,
     refreshDecorations,
@@ -679,33 +546,4 @@ function getChartLoadErrorDetail(error: unknown): string {
     return error;
   }
   return "Unknown error";
-}
-
-function interpolateToTarget(
-  sourceFreq: readonly number[],
-  sourceVals: readonly number[],
-  desiredFreq: readonly number[],
-  sourceLen: number,
-): number[] {
-  if (sourceLen < 2 || !desiredFreq.length) {
-    return [];
-  }
-  const output = new Array<number>(desiredFreq.length);
-  let index = 0;
-  for (let desiredIndex = 0; desiredIndex < desiredFreq.length; desiredIndex += 1) {
-    const freq = desiredFreq[desiredIndex];
-    while (index + 1 < sourceLen && sourceFreq[index + 1] < freq) {
-      index += 1;
-    }
-    if (index + 1 >= sourceLen) {
-      output[desiredIndex] = sourceVals[sourceLen - 1];
-      continue;
-    }
-    const f0 = sourceFreq[index];
-    const f1 = sourceFreq[index + 1];
-    const v0 = sourceVals[index];
-    const v1 = sourceVals[index + 1];
-    output[desiredIndex] = f1 <= f0 ? v0 : v0 + ((v1 - v0) * ((freq - f0) / (f1 - f0)));
-  }
-  return output;
 }

@@ -1,6 +1,10 @@
 import { batch, computed, effect, signal, type ReadonlySignal } from "../ui_signals";
 import type { ChartBand } from "../ui_app_state";
-import type { SpectrumFocusMarker, SpectrumSeriesEntry } from "./spectrum_shared";
+import type {
+  SpectrumFocusMarker,
+  SpectrumNumericSeries,
+  SpectrumSeriesEntry,
+} from "./spectrum_shared";
 import { closestFrequencyIndex } from "./spectrum_shared";
 import type {
   SpectrumBandLegendModel,
@@ -17,7 +21,7 @@ const HOVER_INSPECTOR_THROTTLE_MS = 33;
 
 export interface SpectrumInteractionSyncParams {
   entries: readonly SpectrumSeriesEntry[];
-  freqAxis: readonly number[];
+  freqAxis: SpectrumNumericSeries;
   chartBands: readonly ChartBand[];
 }
 
@@ -40,7 +44,7 @@ export interface SpectrumInteractionSyncOptions {
 export class SpectrumInteractionController {
   private readonly currentEntries = signal<readonly SpectrumSeriesEntry[]>([]);
 
-  private readonly currentFreqAxis = signal<readonly number[]>([]);
+  private readonly currentFreqAxis = signal<SpectrumNumericSeries>([]);
 
   private readonly currentBands = signal<readonly ChartBand[]>([]);
 

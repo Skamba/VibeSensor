@@ -1,9 +1,10 @@
 import { computed, type ReadonlySignal } from "./ui_signals";
+import type { SpectrumNumericSeries } from "./runtime/spectrum_shared";
 
 export interface SpectrumHeavyFrame {
   seriesIds: string[];
-  freq: number[];
-  values: number[][];
+  freq: SpectrumNumericSeries;
+  values: SpectrumNumericSeries[];
   /** Cached fingerprint for fast frequency-grid equality checks. */
   _freqFingerprint?: string;
 }
@@ -15,7 +16,7 @@ const MIN_TWEEN_DURATION_MS = 60;
 const FAST_FRAME_TWEEN_FRACTION = 0.75;
 
 /** Compute a lightweight fingerprint (length + sampled values) for a freq array. */
-function freqFingerprint(freq: number[]): string {
+function freqFingerprint(freq: SpectrumNumericSeries): string {
   const n = freq.length;
   if (n === 0) return "0";
   // Sample first, last, and up to 4 evenly-spaced interior points.

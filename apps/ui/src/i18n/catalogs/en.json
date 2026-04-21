@@ -489,6 +489,7 @@
   "spectrum.stale": "Data is stale. Waiting for fresh frames.",
   "spectrum.empty": "Connected, but no spectrum frames yet.",
   "spectrum.chart_load_error": "Failed to load the spectrum chart: {message}",
+  "spectrum.frame_prepare_error": "Failed to prepare the spectrum frame: {message}",
   "spectrum.inspector_idle": "Hover the chart or select a trace to inspect the peak.",
   "spectrum.inspector_hover": "{sensor} · {freq} Hz · {value} dB · {bands}",
   "spectrum.inspector_focus_selected": "Focused: {sensor} · {freq} Hz · {value} dB · {bands}",
