@@ -6,7 +6,6 @@ import {
   normalizeTabListIndex,
 } from "../../dom/tab_list_keyboard_navigation";
 import {
-  useComputed,
   useSignalProperties,
   type ReadonlySignal,
 } from "../../ui_signals";
@@ -94,9 +93,7 @@ function ShellNavigationTabButton(props: {
   onRef(element: HTMLButtonElement | null): void;
 }) {
   const { index, item, onActivateView } = props;
-  const isActive = useComputed(() => item.viewId === props.activeViewId.value);
-  const ariaSelected = useComputed(() => isActive.value ? "true" : "false");
-  const tabIndex = useComputed(() => isActive.value ? 0 : -1);
+  const isActive = item.viewId === props.activeViewId.value;
 
   return (
     <button
@@ -107,8 +104,8 @@ function ShellNavigationTabButton(props: {
       id={item.tabId}
       role="tab"
       aria-controls={item.viewId}
-      aria-selected={ariaSelected}
-      tabIndex={tabIndex}
+      aria-selected={isActive ? "true" : "false"}
+      tabIndex={isActive ? 0 : -1}
       onClick={() => onActivateView(item.viewId)}
       onKeyDown={(event) => props.onKeyDown(index, event)}
     >

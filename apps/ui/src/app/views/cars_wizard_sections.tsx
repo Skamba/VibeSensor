@@ -4,7 +4,6 @@ import { useMemo } from "preact/hooks";
 import type { CarsFeatureManualInputState } from "../features/cars_manual_input";
 import { getUiText as t } from "../ui_i18n";
 import {
-  useComputed,
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
@@ -277,7 +276,7 @@ function CarsManualInputForm(props: {
 }
 
 function WizardBrandStep(props: {
-  hidden: ReadonlySignal<boolean>;
+  hidden: boolean;
   refs: CarsWizardElementRefs;
   section: ReadonlySignal<CarsWizardOptionsRenderModel>;
   onSelectBrand(value: string): void;
@@ -285,7 +284,7 @@ function WizardBrandStep(props: {
 }) {
   const { onSelectBrand, onSubmitCustomBrand, refs, section } = props;
   return (
-    <div id="wizardStep0" class="wizard-step" hidden={props.hidden.value}>
+    <div id="wizardStep0" class="wizard-step" hidden={props.hidden}>
       <h3>
         {t("settings.car.step_brand", "Select Brand")}
       </h3>
@@ -310,7 +309,7 @@ function WizardBrandStep(props: {
 }
 
 function WizardTypeStep(props: {
-  hidden: ReadonlySignal<boolean>;
+  hidden: boolean;
   refs: CarsWizardElementRefs;
   section: ReadonlySignal<CarsWizardOptionsRenderModel>;
   onSelectType(value: string): void;
@@ -318,7 +317,7 @@ function WizardTypeStep(props: {
 }) {
   const { onSelectType, onSubmitCustomType, refs, section } = props;
   return (
-    <div id="wizardStep1" class="wizard-step" hidden={props.hidden.value}>
+    <div id="wizardStep1" class="wizard-step" hidden={props.hidden}>
       <h3>
         {t("settings.car.step_type", "Select Type")}
       </h3>
@@ -343,7 +342,7 @@ function WizardTypeStep(props: {
 }
 
 function WizardModelStep(props: {
-  hidden: ReadonlySignal<boolean>;
+  hidden: boolean;
   refs: CarsWizardElementRefs;
   section: ReadonlySignal<CarsWizardOptionsRenderModel>;
   onSelectModel(index: number): void;
@@ -351,7 +350,7 @@ function WizardModelStep(props: {
 }) {
   const { onSelectModel, onSubmitCustomModel, refs, section } = props;
   return (
-    <div id="wizardStep2" class="wizard-step" hidden={props.hidden.value}>
+    <div id="wizardStep2" class="wizard-step" hidden={props.hidden}>
       <h3>
         {t("settings.car.step_model", "Select Model")}
       </h3>
@@ -396,14 +395,14 @@ function WizardModelStep(props: {
 }
 
 function WizardVariantStep(props: {
-  hidden: ReadonlySignal<boolean>;
+  hidden: boolean;
   refs: CarsWizardElementRefs;
   section: ReadonlySignal<CarsWizardOptionsRenderModel>;
   onSelectVariant(index: number): void;
 }) {
   const { onSelectVariant, refs, section } = props;
   return (
-    <div id="wizardStep3" class="wizard-step" hidden={props.hidden.value}>
+    <div id="wizardStep3" class="wizard-step" hidden={props.hidden}>
       <h3>
         {t("settings.car.step_variant", "Select Variant")}
       </h3>
@@ -426,7 +425,7 @@ function WizardVariantStep(props: {
 function WizardSpecsStep(props: {
   emitManualInputs(field: keyof CarsFeatureManualInputState, value: string): void;
   gearboxOptions: ReadonlySignal<CarsWizardOptionsRenderModel>;
-  hidden: ReadonlySignal<boolean>;
+  hidden: boolean;
   manualInputs: ReadonlySignal<CarsWizardRenderModel["manualInputs"]>;
   refs: CarsWizardElementRefs;
   onSelectGearbox(index: number): void;
@@ -442,7 +441,7 @@ function WizardSpecsStep(props: {
     tireOptions,
   } = props;
   return (
-    <div id="wizardStep4" class="wizard-step" hidden={props.hidden.value}>
+    <div id="wizardStep4" class="wizard-step" hidden={props.hidden}>
       <div class="wizard-branch-card wizard-branch-card--library">
         <div class="wizard-branch-card__header">
           <strong class="wizard-branch-label">
@@ -571,11 +570,11 @@ export function CarsWizardSteps(props: {
     typeOptions,
     variantOptions,
   } = useSignalProperties(props.wizardModel, CARS_WIZARD_STEPS_KEYS);
-  const brandHidden = useComputed(() => step.value !== 0);
-  const typeHidden = useComputed(() => step.value !== 1);
-  const modelHidden = useComputed(() => step.value !== 2);
-  const variantHidden = useComputed(() => step.value !== 3);
-  const specsHidden = useComputed(() => step.value !== 4);
+  const brandHidden = step.value !== 0;
+  const typeHidden = step.value !== 1;
+  const modelHidden = step.value !== 2;
+  const variantHidden = step.value !== 3;
+  const specsHidden = step.value !== 4;
 
   return (
     <>

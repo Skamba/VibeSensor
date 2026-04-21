@@ -1,7 +1,6 @@
 import { useRef } from "preact/hooks";
 
 import {
-  useComputed,
   useSignalEffect,
   useSignalProperties,
   type ReadonlySignal,
@@ -16,20 +15,18 @@ export function AppErrorBanner(props: {
   dialogModel: ReadonlySignal<UiShellChromeDialogModel>;
 }) {
   const { appErrorBanner } = useSignalProperties(props.dialogModel, SHELL_DIALOG_MODEL_KEYS);
-  const appErrorHidden = useComputed(() => appErrorBanner.value.hidden);
-  const appErrorVariant = useComputed(() => appErrorBanner.value.variant ?? undefined);
-  const appErrorText = useComputed(() => appErrorBanner.value.text);
+  const currentBanner = appErrorBanner.value;
 
   return (
     <div
       id="appErrorBanner"
       class="connection-banner app-error-banner"
-      hidden={appErrorHidden}
-      data-variant={appErrorVariant}
+      hidden={currentBanner.hidden}
+      data-variant={currentBanner.variant ?? undefined}
       aria-live="assertive"
       role="alert"
     >
-      {appErrorText}
+      {currentBanner.text}
     </div>
   );
 }

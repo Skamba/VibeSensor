@@ -2,8 +2,6 @@ import { render, type ComponentChildren } from "preact";
 
 import { useUiText } from "../ui_i18n";
 import {
-  useComputed,
-  useSignalProperties,
   type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
@@ -37,34 +35,6 @@ export interface UpdatePanelActionHandlers {
   onStart(): void;
 }
 
-const UPDATE_PANEL_MODEL_KEYS = [
-  "cancelButtonDisabled",
-  "cancelButtonHidden",
-  "startButtonDisabled",
-  "startButtonHidden",
-  "startButtonLabelText",
-  "status",
-] as const;
-const UPDATE_STATUS_BADGE_KEYS = ["text", "variant"] as const;
-const UPDATE_CURRENT_STATUS_KEYS = [
-  "badge",
-  "emptyText",
-  "rows",
-  "summaryText",
-  "titleText",
-] as const;
-const UPDATE_JOURNEY_KEYS = ["failureNote", "stages", "subtitleText", "titleText"] as const;
-const UPDATE_ISSUES_KEYS = ["items", "subtitleText", "titleText"] as const;
-const UPDATE_LATEST_ATTEMPT_KEYS = [
-  "badge",
-  "failureNote",
-  "rows",
-  "subtitleText",
-  "titleText",
-] as const;
-const UPDATE_HEALTH_KEYS = ["badge", "rows", "summaryText", "titleText"] as const;
-const UPDATE_LOG_KEYS = ["emptyState", "lines", "noteText", "subtitleText", "titleText"] as const;
-
 export interface UpdatePanelView {
   actions: Signal<UpdatePanelActionHandlers | null>;
   model: DeferredModelSignal<UpdatePanelRenderModel>;
@@ -79,60 +49,11 @@ const DEFAULT_UPDATE_PANEL_MODEL: UpdatePanelRenderModel = {
   status: null,
 };
 
-const DEFAULT_UPDATE_BADGE_MODEL: UpdateStatusBadgeModel = {
-  text: "",
-  variant: "muted",
-};
-
-const DEFAULT_UPDATE_CURRENT_STATUS_SECTION_MODEL: UpdateCurrentStatusSectionModel = {
-  badge: DEFAULT_UPDATE_BADGE_MODEL,
-  emptyText: null,
-  rows: [],
-  summaryText: "",
-  titleText: "",
-};
-
-const DEFAULT_UPDATE_JOURNEY_SECTION_MODEL: UpdateJourneySectionModel = {
-  failureNote: null,
-  stages: [],
-  subtitleText: "",
-  titleText: "",
-};
-
-const DEFAULT_UPDATE_ISSUES_SECTION_MODEL: UpdateIssuesSectionModel = {
-  items: [],
-  subtitleText: "",
-  titleText: "",
-};
-
-const DEFAULT_UPDATE_LATEST_ATTEMPT_SECTION_MODEL: UpdateLatestAttemptSectionModel = {
-  badge: DEFAULT_UPDATE_BADGE_MODEL,
-  failureNote: null,
-  rows: [],
-  subtitleText: "",
-  titleText: "",
-};
-
-const DEFAULT_UPDATE_HEALTH_SECTION_MODEL: UpdateHealthSectionModel = {
-  badge: DEFAULT_UPDATE_BADGE_MODEL,
-  rows: [],
-  summaryText: "",
-  titleText: "",
-};
-
-const DEFAULT_UPDATE_LOG_SECTION_MODEL: UpdateLogSectionModel = {
-  emptyState: null,
-  lines: [],
-  noteText: null,
-  subtitleText: "",
-  titleText: "",
-};
-
-function UpdateBadge(props: { badge: ReadonlySignal<UpdateStatusBadgeModel> }) {
-  const { text, variant } = useSignalProperties(props.badge, UPDATE_STATUS_BADGE_KEYS);
+function UpdateBadge(props: { badge: UpdateStatusBadgeModel }) {
+  const { badge } = props;
   return (
-    <span class="pill" data-variant={variant.value}>
-      {text.value}
+    <span class="pill" data-variant={badge.variant}>
+      {badge.text}
     </span>
   );
 }
@@ -199,29 +120,22 @@ function MaintenanceCard(props: {
 }
 
 function UpdateCurrentStatusCard(props: {
-  model: ReadonlySignal<UpdateCurrentStatusSectionModel | null>;
+  model: UpdateCurrentStatusSectionModel | null;
 }) {
-  const hasModel = useComputed(() => props.model.value !== null);
-  const model = useComputed(
-    () => props.model.value ?? DEFAULT_UPDATE_CURRENT_STATUS_SECTION_MODEL,
-  );
-  const { badge, emptyText, rows, summaryText, titleText } = useSignalProperties(
-    model,
-    UPDATE_CURRENT_STATUS_KEYS,
-  );
-  if (!hasModel.value) {
+  const { model } = props;
+  if (!model) {
     return null;
   }
   return (
     <MaintenanceCard
-      badge={<UpdateBadge badge={badge} />}
-      subtitleText={summaryText.value}
-      titleText={titleText.value}
+      badge={<UpdateBadge badge={model.badge} />}
+      subtitleText={model.summaryText}
+      titleText={model.titleText}
     >
-      {rows.value.length > 0 ? (
-        <StatusGrid rows={rows.value} />
+      {model.rows.length > 0 ? (
+        <StatusGrid rows={model.rows} />
       ) : (
-        <MaintenanceNote text={emptyText.value ?? ""} />
+        <MaintenanceNote text={model.emptyText ?? ""} />
       )}
     </MaintenanceCard>
   );
@@ -267,28 +181,23 @@ function JourneyStageItem(props: {
 }
 
 function UpdateJourneyCard(props: {
-  model: ReadonlySignal<UpdateJourneySectionModel | null>;
+  model: UpdateJourneySectionModel | null;
 }) {
-  const hasModel = useComputed(() => props.model.value !== null);
-  const model = useComputed(() => props.model.value ?? DEFAULT_UPDATE_JOURNEY_SECTION_MODEL);
-  const { failureNote, stages, subtitleText, titleText } = useSignalProperties(
-    model,
-    UPDATE_JOURNEY_KEYS,
-  );
-  if (!hasModel.value) {
+  const { model } = props;
+  if (!model) {
     return null;
   }
   return (
     <MaintenanceCard
-      subtitleText={subtitleText.value}
-      titleText={titleText.value}
+      subtitleText={model.subtitleText}
+      titleText={model.titleText}
     >
       <div class="maintenance-journey">
-        {failureNote.value ? (
-          <JourneyFailureStack failure={failureNote.value} />
+        {model.failureNote ? (
+          <JourneyFailureStack failure={model.failureNote} />
         ) : null}
         <ol class="maintenance-stage-list">
-          {stages.value.map((stage) => (
+          {model.stages.map((stage) => (
             <JourneyStageItem key={stage.phase} stage={stage} />
           ))}
         </ol>
@@ -298,21 +207,19 @@ function UpdateJourneyCard(props: {
 }
 
 function UpdateIssuesCard(props: {
-  model: ReadonlySignal<UpdateIssuesSectionModel | null>;
+  model: UpdateIssuesSectionModel | null;
 }) {
-  const hasModel = useComputed(() => props.model.value !== null);
-  const model = useComputed(() => props.model.value ?? DEFAULT_UPDATE_ISSUES_SECTION_MODEL);
-  const { items, subtitleText, titleText } = useSignalProperties(model, UPDATE_ISSUES_KEYS);
-  if (!hasModel.value) {
+  const { model } = props;
+  if (!model) {
     return null;
   }
   return (
     <MaintenanceCard
-      subtitleText={subtitleText.value}
-      titleText={titleText.value}
+      subtitleText={model.subtitleText}
+      titleText={model.titleText}
     >
       <ul class="issue-list">
-        {items.value.map((item, index) => (
+        {model.items.map((item, index) => (
           <li class="issue-item" key={`${item.phaseText}:${index}`}>
             <div class="issue-phase">{item.phaseText}</div>
             <div>
@@ -327,31 +234,24 @@ function UpdateIssuesCard(props: {
 }
 
 function UpdateLatestAttemptCard(props: {
-  model: ReadonlySignal<UpdateLatestAttemptSectionModel | null>;
+  model: UpdateLatestAttemptSectionModel | null;
 }) {
-  const hasModel = useComputed(() => props.model.value !== null);
-  const model = useComputed(
-    () => props.model.value ?? DEFAULT_UPDATE_LATEST_ATTEMPT_SECTION_MODEL,
-  );
-  const { badge, failureNote, rows, subtitleText, titleText } = useSignalProperties(
-    model,
-    UPDATE_LATEST_ATTEMPT_KEYS,
-  );
-  if (!hasModel.value) {
+  const { model } = props;
+  if (!model) {
     return null;
   }
   return (
     <MaintenanceCard
-      badge={<UpdateBadge badge={badge} />}
-      subtitleText={subtitleText.value}
-      titleText={titleText.value}
+      badge={<UpdateBadge badge={model.badge} />}
+      subtitleText={model.subtitleText}
+      titleText={model.titleText}
     >
-      <StatusGrid rows={rows.value} />
-      {failureNote.value ? (
+      <StatusGrid rows={model.rows} />
+      {model.failureNote ? (
         <div class="maintenance-note maintenance-note--bad">
-          <strong>{failureNote.value.summaryText}</strong>
-          {failureNote.value.detailText ? (
-            <IssueDetail text={failureNote.value.detailText} />
+          <strong>{model.failureNote.summaryText}</strong>
+          {model.failureNote.detailText ? (
+            <IssueDetail text={model.failureNote.detailText} />
           ) : null}
         </div>
       ) : null}
@@ -360,52 +260,42 @@ function UpdateLatestAttemptCard(props: {
 }
 
 function UpdateHealthCard(props: {
-  model: ReadonlySignal<UpdateHealthSectionModel | null>;
+  model: UpdateHealthSectionModel | null;
 }) {
-  const hasModel = useComputed(() => props.model.value !== null);
-  const model = useComputed(() => props.model.value ?? DEFAULT_UPDATE_HEALTH_SECTION_MODEL);
-  const { badge, rows, summaryText, titleText } = useSignalProperties(
-    model,
-    UPDATE_HEALTH_KEYS,
-  );
-  if (!hasModel.value) {
+  const { model } = props;
+  if (!model) {
     return null;
   }
   return (
     <MaintenanceCard
-      badge={<UpdateBadge badge={badge} />}
-      subtitleText={summaryText.value}
-      titleText={titleText.value}
+      badge={<UpdateBadge badge={model.badge} />}
+      subtitleText={model.summaryText}
+      titleText={model.titleText}
     >
-      <StatusGrid rows={rows.value} />
+      <StatusGrid rows={model.rows} />
     </MaintenanceCard>
   );
 }
 
 function UpdateLogCard(props: {
-  model: ReadonlySignal<UpdateLogSectionModel | null>;
+  model: UpdateLogSectionModel | null;
 }) {
-  const hasModel = useComputed(() => props.model.value !== null);
-  const model = useComputed(() => props.model.value ?? DEFAULT_UPDATE_LOG_SECTION_MODEL);
-  const { emptyState, lines, noteText, subtitleText, titleText } = useSignalProperties(
-    model,
-    UPDATE_LOG_KEYS,
-  );
-  const logBody = useComputed(() => lines.value.map((line) => `${line}\n`).join(""));
-  if (!hasModel.value) {
+  const { model } = props;
+  if (!model) {
     return null;
   }
+  const logBody = model.lines.map((line) => `${line}\n`).join("");
   return (
     <MaintenanceCard
-      subtitleText={subtitleText.value}
-      titleText={titleText.value}
+      subtitleText={model.subtitleText}
+      titleText={model.titleText}
     >
-      {emptyState.value ? (
-        <InlineEmptyState emptyState={emptyState.value} />
+      {model.emptyState ? (
+        <InlineEmptyState emptyState={model.emptyState} />
       ) : (
         <>
-          {noteText.value ? <MaintenanceNote text={noteText.value} /> : null}
-          <pre class="log-pre">{logBody.value}</pre>
+          {model.noteText ? <MaintenanceNote text={model.noteText} /> : null}
+          <pre class="log-pre">{logBody}</pre>
         </>
       )}
     </MaintenanceCard>
@@ -413,53 +303,47 @@ function UpdateLogCard(props: {
 }
 
 function UpdateOverviewContent(props: {
-  status: ReadonlySignal<UpdateStatusPanelViewModel | null>;
+  status: UpdateStatusPanelViewModel | null;
 }) {
-  const hasStatus = useComputed(() => props.status.value !== null);
-  const currentStatus = useComputed(() => props.status.value?.currentStatus ?? null);
-  const health = useComputed(() => props.status.value?.health ?? null);
-  if (!hasStatus.value) {
+  const { status } = props;
+  if (!status) {
     return null;
   }
   return (
     <div class="maintenance-pair-grid maintenance-pair-grid--summary">
-      <UpdateCurrentStatusCard model={currentStatus} />
-      <UpdateHealthCard model={health} />
+      <UpdateCurrentStatusCard model={status.currentStatus} />
+      <UpdateHealthCard model={status.health} />
     </div>
   );
 }
 
 function UpdateStatusContent(props: {
-  status: ReadonlySignal<UpdateStatusPanelViewModel | null>;
+  status: UpdateStatusPanelViewModel | null;
 }) {
-  const hasStatus = useComputed(() => props.status.value !== null);
-  const journey = useComputed(() => props.status.value?.journey ?? null);
-  const log = useComputed(() => props.status.value?.log ?? null);
-  const latestAttempt = useComputed(() => props.status.value?.latestAttempt ?? null);
-  const issues = useComputed(() => props.status.value?.issues ?? null);
-  if (!hasStatus.value) {
+  const { status } = props;
+  if (!status) {
     return null;
   }
   return (
     <>
       <div class="maintenance-pair-grid maintenance-pair-grid--focus">
-        <UpdateJourneyCard model={journey} />
-        <UpdateLogCard model={log} />
+        <UpdateJourneyCard model={status.journey} />
+        <UpdateLogCard model={status.log} />
       </div>
-      <UpdateLatestAttemptCard model={latestAttempt} />
-      <UpdateIssuesCard model={issues} />
+      <UpdateLatestAttemptCard model={status.latestAttempt} />
+      <UpdateIssuesCard model={status.issues} />
     </>
   );
 }
 
 function UpdateActionRow(props: {
   actions: ReadonlySignal<UpdatePanelActionHandlers | null>;
-  cancelButtonDisabled: ReadonlySignal<boolean>;
-  cancelButtonHidden: ReadonlySignal<boolean>;
-  cancelLabel: ReadonlySignal<string>;
-  startButtonDisabled: ReadonlySignal<boolean>;
-  startButtonHidden: ReadonlySignal<boolean>;
-  startButtonLabelText: ReadonlySignal<string>;
+  cancelButtonDisabled: boolean;
+  cancelButtonHidden: boolean;
+  cancelLabel: string;
+  startButtonDisabled: boolean;
+  startButtonHidden: boolean;
+  startButtonLabelText: string;
 }) {
   const handleStart = () => {
     props.actions.peek()?.onStart();
@@ -473,18 +357,18 @@ function UpdateActionRow(props: {
         type="button"
         id="updateStartBtn"
         class="btn btn--success"
-        hidden={props.startButtonHidden.value}
-        disabled={props.startButtonDisabled.value}
+        hidden={props.startButtonHidden}
+        disabled={props.startButtonDisabled}
         onClick={handleStart}
       >
-        {props.startButtonLabelText.value}
+        {props.startButtonLabelText}
       </button>
       <button
         type="button"
         id="updateCancelBtn"
         class="btn btn--danger"
-        hidden={props.cancelButtonHidden.value}
-        disabled={props.cancelButtonDisabled.value}
+        hidden={props.cancelButtonHidden}
+        disabled={props.cancelButtonDisabled}
         onClick={handleCancel}
       >
         {props.cancelLabel}
@@ -497,7 +381,6 @@ function UpdatePanel(props: {
   actions: ReadonlySignal<UpdatePanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<UpdatePanelRenderModel> | null>;
 }) {
-  const actions = useComputed(() => props.actions.value);
   const cancelLabel = useUiText("settings.update.cancel", "Cancel Update");
   const hintText = useUiText(
     "settings.update.hint",
@@ -509,14 +392,7 @@ function UpdatePanel(props: {
   );
   const titleText = useUiText("settings.update.title", "System Update");
   const model = useDeferredModel(props.model, DEFAULT_UPDATE_PANEL_MODEL);
-  const {
-    cancelButtonDisabled,
-    cancelButtonHidden,
-    startButtonDisabled,
-    startButtonHidden,
-    startButtonLabelText,
-    status,
-  } = useSignalProperties(model, UPDATE_PANEL_MODEL_KEYS);
+  const currentModel = model.value;
   return (
     <div class="panel card">
       <div class="maintenance-layout maintenance-layout--compact">
@@ -540,16 +416,16 @@ function UpdatePanel(props: {
               class="maintenance-stack maintenance-stack--tight"
               aria-live="polite"
             >
-              <UpdateOverviewContent status={status} />
+              <UpdateOverviewContent status={currentModel.status} />
             </div>
             <UpdateActionRow
-              actions={actions}
-              cancelButtonDisabled={cancelButtonDisabled}
-              cancelButtonHidden={cancelButtonHidden}
-              cancelLabel={cancelLabel}
-              startButtonDisabled={startButtonDisabled}
-              startButtonHidden={startButtonHidden}
-              startButtonLabelText={startButtonLabelText}
+              actions={props.actions}
+              cancelButtonDisabled={currentModel.cancelButtonDisabled}
+              cancelButtonHidden={currentModel.cancelButtonHidden}
+              cancelLabel={cancelLabel.value}
+              startButtonDisabled={currentModel.startButtonDisabled}
+              startButtonHidden={currentModel.startButtonHidden}
+              startButtonLabelText={currentModel.startButtonLabelText}
             />
           </div>
         </section>
@@ -559,7 +435,7 @@ function UpdatePanel(props: {
           class="maintenance-stack maintenance-stack--tight"
           aria-live="polite"
         >
-          <UpdateStatusContent status={status} />
+          <UpdateStatusContent status={currentModel.status} />
         </div>
       </div>
     </div>

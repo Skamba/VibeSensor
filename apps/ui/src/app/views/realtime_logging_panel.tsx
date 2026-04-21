@@ -1,6 +1,5 @@
 import { useUiText } from "../ui_i18n";
 import {
-  useComputed,
   useSignalProperties,
   type Signal,
   type ReadonlySignal,
@@ -337,7 +336,6 @@ function RealtimeLoggingPanel(props: {
   actions: ReadonlySignal<RealtimeLoggingPanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<RealtimeLoggingPanelRenderModel> | null>;
 }) {
-  const actions = useComputed(() => props.actions.value);
   const elapsedLabel = useUiText("dashboard.recording_elapsed", "Elapsed");
   const runPhaseLabel = useUiText("dashboard.recording_phase", "Run phase");
   const runProgressLabel = useUiText("dashboard.recording_progress", "Run progress");
@@ -355,7 +353,7 @@ function RealtimeLoggingPanel(props: {
           <div class="card__title">
             {titleText}
           </div>
-          <RealtimeLoggingSummarySection actions={actions} model={model} />
+          <RealtimeLoggingSummarySection actions={props.actions} model={model} />
         </div>
       </div>
       <RealtimeLoggingStatusRow model={model} />
@@ -369,7 +367,7 @@ function RealtimeLoggingPanel(props: {
         model={model}
       />
       <RealtimeLoggingActionRow
-        actions={actions}
+        actions={props.actions}
         labels={{
           startLabel,
           stopLabel,

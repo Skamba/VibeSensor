@@ -1,7 +1,6 @@
 import type { ComponentChildren } from "preact";
 
 import {
-  useComputed,
   useSignalProperties,
   type ReadonlySignal,
 } from "../../ui_signals";
@@ -18,7 +17,7 @@ export function ShellChromeFrame(props: {
   statusModel: ReadonlySignal<UiShellChromeStatusModel>;
 }) {
   const { children, statusModel } = props;
-  const connectionState = useComputed(() => statusModel.value.connectionState);
+  const connectionState = statusModel.value.connectionState;
 
   return (
     <div class="wrap" data-connection-state={connectionState}>
@@ -34,7 +33,7 @@ export function ShellStatus(props: {
   const { navigationModel, statusModel } = props;
   const { activeViewId } = useSignalProperties(navigationModel, SHELL_ACTIVE_VIEW_KEY);
   const { shellLiveStatus, wsLinkState } = useSignalProperties(statusModel, SHELL_STATUS_MODEL_KEYS);
-  const statusHidden = useComputed(() => activeViewId.value === "dashboardView");
+  const statusHidden = activeViewId.value === "dashboardView";
 
   return (
     <div class="site-header__status" hidden={statusHidden}>
@@ -50,17 +49,16 @@ function ShellStatusPill(props: {
   id: string;
   model: ReadonlySignal<UiShellBadgeModel>;
 }) {
-  const variant = useComputed(() => props.model.value.variant);
-  const text = useComputed(() => props.model.value.text);
+  const model = props.model.value;
 
   return (
     <div
       id={props.id}
       class="pill"
-      data-variant={variant}
+      data-variant={model.variant}
       aria-live="polite"
     >
-      {text}
+      {model.text}
     </div>
   );
 }

@@ -389,13 +389,16 @@ instead of controller-side variant class interpolation.
 - Use `signal()` for shared state that spans modules or needs to outlive a
   single component render. Keep component-local transient state in hooks.
 - Use `computed()` for derived state instead of mirroring derived fields onto
-  mutable state bags or manual render-model caches.
-- Inside Preact components, prefer `useComputed()`, `useSignal()`, and
-  `useSignalEffect()` over ad-hoc local refs or render-time signal reads when a
-  hook-scoped reactive owner is clearer.
+  mutable state bags or manual render-model caches. Keep those computed owners
+  in runtime, feature, presenter, or shared adapter modules instead of
+  rebuilding ad-hoc derived state inside view components.
+- Inside Preact components, prefer plain signal reads for already-derived view
+  models. Reach for `useSignal()`, `useSignalEffect()`, or shared adapter hooks
+  only when the component truly owns transient local state or an imperative
+  integration.
 - When several JSX bindings unwrap stable properties from the same model signal,
-  prefer `useSignalProperties()` from `app/ui_signals.ts` over repeating one
-  `useComputed(() => model.value.foo)` line per property.
+  prefer `useSignalProperties()` from `app/ui_signals.ts` over repeating
+  property access or per-property `useComputed(...)` adapters.
 - Use `effect()` only for narrow imperative integrations such as timers,
   persistence, canvas/uPlot bridges, or other external-library coordination.
 - Preact-rendered copy should come from `getUiText()` or `useUiText()`.
