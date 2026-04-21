@@ -17,7 +17,7 @@ import {
   createHealthyUpdateStatus,
   createIdleUpdateStatus,
   createUsbInternetStatus,
-} from "../../maintenance_feature_test_support";
+} from "../../maintenance_payload_test_support";
 import { HttpResponse, http, uiTestUrl } from "../http";
 
 type ErrorResponse = {
