@@ -51,6 +51,7 @@ type UiShellControllerDeps = {
   chrome: UiShellChromeView;
   chromeActions: Signal<UiShellChromeActions>;
   liveOverview: RealtimeLiveOverviewBridge;
+  onViewActivated?: (viewId: string) => Promise<void>;
   queryClient: QueryClient;
   state: AppState;
 };
@@ -106,6 +107,12 @@ export class UiShellController {
       window,
     });
     this.navigation = createUiShellNavigationModule({
+      onViewActivated: deps.onViewActivated,
+      onViewActivationFailed: (_viewId, error) => {
+        this.showError(
+          error instanceof Error ? error.message : this.t("status.view_load_failed"),
+        );
+      },
       shell: this.state.shell,
       viewIds: SHELL_NAV_ITEMS.map((item) => item.viewId),
       onDashboardViewActivated: () => {
@@ -178,7 +185,7 @@ export class UiShellController {
 
   start(defaultViewId: string): void {
     this.bindFeatureHandlers();
-    this.setActiveView(defaultViewId);
+    this.setActiveView(this.activeViewId.value || defaultViewId);
   }
 
   dispose(): void {

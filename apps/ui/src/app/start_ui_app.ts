@@ -16,6 +16,7 @@ export function startUiApp(deps: Omit<StartUiAppDeps, "renderRoot"> = {}): Start
     renderApp: deps.renderApp ?? render,
     renderRoot: (runtime) => h(UiAppRoot, {
       attachSettingsPanels: runtime.attachSettingsPanels,
+      bootReady: runtime.bootReady,
       panels: runtime.panels,
       shellChrome: runtime.shellChrome,
       spectrumPanel: runtime.spectrumPanel,

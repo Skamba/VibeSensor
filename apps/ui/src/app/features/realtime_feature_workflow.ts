@@ -2,13 +2,15 @@ import type { QueryClient } from "@tanstack/query-core";
 
 import {
   getClientLocations as getClientLocationsApi,
-  getLoggingStatus as getLoggingStatusApi,
   identifyClient as identifyClientApi,
   removeClient as removeClientApi,
   setClientLocation as setClientLocationApi,
+} from "../../api/clients";
+import {
+  getLoggingStatus as getLoggingStatusApi,
   startLoggingRun as startLoggingRunApi,
   stopLoggingRun as stopLoggingRunApi,
-} from "../../api";
+} from "../../api/logging";
 import { defaultLocationCodes } from "../../constants";
 import type {
   ClientLocationsResponse,

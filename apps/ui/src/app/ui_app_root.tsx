@@ -3,11 +3,13 @@ import type { ComponentChildren } from "preact";
 import { UiShellChrome, type UiShellChromeBindings } from "./runtime/ui_shell_chrome";
 import { DEFAULT_NAVIGATION_MODEL } from "./runtime/shell/ui_shell_chrome_shared";
 import type { UiMountedLazyPanelHandles, UiMountedPanels } from "./ui_lazy_panels";
+import type { ReadonlySignal } from "./ui_signals";
 import HistoryLazyView from "./views/history_lazy_view";
-import { RealtimeLiveOverviewPanel } from "./views/realtime_live_overview";
-import { RealtimeLoggingPanelView } from "./views/realtime_logging_panel";
+import RealtimeLiveOverviewLazy from "./views/realtime_live_overview_lazy";
+import RealtimeLoggingPanelLazy from "./views/realtime_logging_panel_lazy";
 import SettingsLazyView from "./views/settings_lazy_view";
-import { SpectrumPanelHost, type CreatedSpectrumPanel } from "./views/spectrum_panel";
+import type { CreatedSpectrumPanel } from "./views/spectrum_panel";
+import SpectrumPanelHostLazy from "./views/spectrum_panel_host_lazy";
 import { useDeferredModel } from "./views/view_model_binding";
 
 function ShellViewSection(props: {
@@ -33,10 +35,18 @@ function ShellViewSection(props: {
 
 export function UiAppRoot(props: {
   attachSettingsPanels(handles: UiMountedLazyPanelHandles): void;
+  bootReady: ReadonlySignal<boolean>;
   panels: UiMountedPanels;
   shellChrome: UiShellChromeBindings;
   spectrumPanel: CreatedSpectrumPanel;
 }) {
+  if (!props.bootReady.value) {
+    return (
+      <div id="appBootLoading" class="app-boot-loading" role="status" aria-live="polite">
+        Loading dashboard...
+      </div>
+    );
+  }
   const navigationModel = useDeferredModel(
     props.shellChrome.props.navigationModel,
     DEFAULT_NAVIGATION_MODEL,
@@ -52,13 +62,22 @@ export function UiAppRoot(props: {
       >
         <div class="dashboard-grid">
           <div class="panel card dashboard-grid__overview">
-            <RealtimeLiveOverviewPanel view={props.panels.dashboard.liveOverview} />
+            <RealtimeLiveOverviewLazy
+              active={activeViewId === "dashboardView"}
+              view={props.panels.dashboard.liveOverview}
+            />
           </div>
           <div class="panel card dashboard-grid__main">
-            <SpectrumPanelHost panel={props.spectrumPanel} />
+            <SpectrumPanelHostLazy
+              active={activeViewId === "dashboardView"}
+              panel={props.spectrumPanel}
+            />
           </div>
           <div class="panel card dashboard-grid__controls">
-            <RealtimeLoggingPanelView view={props.panels.dashboard.logging} />
+            <RealtimeLoggingPanelLazy
+              active={activeViewId === "dashboardView"}
+              view={props.panels.dashboard.logging}
+            />
           </div>
         </div>
       </ShellViewSection>
@@ -69,7 +88,10 @@ export function UiAppRoot(props: {
         viewId="historyView"
       >
         <div class="panel card">
-          <HistoryLazyView view={props.panels.history} />
+          <HistoryLazyView
+            active={activeViewId === "historyView"}
+            view={props.panels.history}
+          />
         </div>
       </ShellViewSection>
 
@@ -79,6 +101,7 @@ export function UiAppRoot(props: {
         viewId="settingsView"
       >
         <SettingsLazyView
+          active={activeViewId === "settingsView"}
           onReady={props.attachSettingsPanels}
           settings={props.panels.settings}
         />
