@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import type {
   ObdDevicePayload,
   SpeedSourceKind,
@@ -20,15 +22,11 @@ import {
 import type { SettingsSpeedSourceRenderState } from "../views/settings_speed_source_presenter";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
 import {
-  createPollingController,
-  type PollingController,
-  type PollingControllerOptions,
-} from "./polling_controller";
-import {
   createSettingsSpeedSourceTransport,
   type SettingsSpeedSourceTransport,
 } from "./settings_speed_source_transport";
-import { createApiLoader } from "./api_loader";
+import { createObservedServerStateQuery } from "./server_state_query";
+import { serverStateQueryKeys } from "./server_state_query_keys";
 
 const OBD_BACKGROUND_RESCAN_DELAY_MS = 2_000;
 
@@ -39,8 +37,8 @@ export interface SettingsSpeedSourceWorkflowViewPorts {
 }
 
 export interface SettingsSpeedSourceWorkflowDeps {
-  createPollingController?: (options: PollingControllerOptions) => PollingController;
   obdConfigVisible: ReadonlySignal<boolean>;
+  queryClient: QueryClient;
   settings: SettingsState;
   showError: (message: string) => void;
   t: (key: string, vars?: Record<string, unknown>) => string;
@@ -137,7 +135,6 @@ export function createSettingsSpeedSourceWorkflow(
   deps: SettingsSpeedSourceWorkflowDeps,
 ): SettingsSpeedSourceWorkflow {
   const transport = createSettingsSpeedSourceTransport(deps.transport);
-  const createPolling = deps.createPollingController ?? createPollingController;
   const speedSourceState = createSpeedSourceDerivedState(deps.settings.speed);
   const selectedModeDraft = signal<DisplayedSpeedSourceMode | null>(null);
   const manualSpeedInputDraft = signal<string | null>(null);
@@ -154,8 +151,8 @@ export function createSettingsSpeedSourceWorkflow(
       : "";
   });
   const staleTimeoutInputValue = signal("");
-  let speedSourceContextVisible = false;
-  let backgroundRescanRequested = false;
+  const speedSourceContextVisible = signal(false);
+  const backgroundRescanRequested = signal(false);
   const scannedDevices = signal<readonly ObdDevicePayload[]>([]);
   const scanInFlight = signal(false);
   const pairInFlightMac = signal<string | null>(null);
@@ -203,24 +200,15 @@ export function createSettingsSpeedSourceWorkflow(
   }
 
   function shouldRunBackgroundRescan(): boolean {
-    return backgroundRescanRequested
-      && speedSourceContextVisible
+    return backgroundRescanRequested.value
+      && speedSourceContextVisible.value
       && selectedMode.value === "obd2"
       && !scanInFlight.value
       && pairInFlightMac.value === null;
   }
 
-  function syncBackgroundRescan(): void {
-    if (shouldRunBackgroundRescan()) {
-      obdBackgroundRescan.start();
-      return;
-    }
-    obdBackgroundRescan.stop();
-  }
-
   function syncContextVisibility(): void {
-    speedSourceContextVisible = deps.obdConfigVisible.value;
-    syncBackgroundRescan();
+    speedSourceContextVisible.value = deps.obdConfigVisible.value;
   }
 
   let contextSyncScheduled = false;
@@ -317,13 +305,13 @@ export function createSettingsSpeedSourceWorkflow(
     });
   }
 
-  const speedSourceLoader = createApiLoader({
-    load: () => transport.loadSpeedSource(),
-    apply: applyPayload,
-  });
-
   async function loadSpeedSourceFromServer(): Promise<void> {
-    await speedSourceLoader.load();
+    const payload = await deps.queryClient.fetchQuery({
+      queryFn: () => transport.loadSpeedSource(),
+      queryKey: serverStateQueryKeys.settings.speedSource(),
+      staleTime: 0,
+    });
+    applyPayload(payload);
   }
 
   function handleSpeedSourceChanged(mode: DisplayedSpeedSourceMode): void {
@@ -422,6 +410,8 @@ export function createSettingsSpeedSourceWorkflow(
 
     try {
       const saved = await transport.saveSpeedSource(payload);
+      deps.queryClient.setQueryData(serverStateQueryKeys.settings.speedSource(), saved);
+      await deps.queryClient.invalidateQueries({ queryKey: serverStateQueryKeys.settings.gpsStatus() });
       applyPayload(saved);
     } catch (error) {
       showSaveFeedback(
@@ -442,18 +432,20 @@ export function createSettingsSpeedSourceWorkflow(
         obdScanStatusMessage.value = deps.t("settings.speed.obd_scanning");
       }
     });
-    syncBackgroundRescan();
     try {
-      const payload = await transport.scanObdDevices();
+      const payload = await deps.queryClient.fetchQuery({
+        queryFn: () => transport.scanObdDevices(),
+        queryKey: serverStateQueryKeys.settings.speedSourceObdScan(),
+        staleTime: 0,
+      });
       if (mode === "manual") {
-        backgroundRescanRequested = true;
+        backgroundRescanRequested.value = true;
         batch(() => {
           setScannedDevices(payload.devices);
           obdScanStatusMessage.value = payload.devices.length > 0
             ? deps.t("settings.speed.obd_scan_found", { count: payload.devices.length })
             : deps.t("settings.speed.obd_scan_empty");
         });
-        syncBackgroundRescan();
       } else {
         mergeScannedDevices(payload.devices);
       }
@@ -464,7 +456,6 @@ export function createSettingsSpeedSourceWorkflow(
       }
     } finally {
       scanInFlight.value = false;
-      syncBackgroundRescan();
     }
   }
 
@@ -474,7 +465,6 @@ export function createSettingsSpeedSourceWorkflow(
       pairInFlightMac.value = macAddress;
       obdScanStatusMessage.value = deps.t("settings.speed.obd_pairing");
     });
-    syncBackgroundRescan();
     try {
       const payload = await transport.pairObdDevice(macAddress);
       batch(() => {
@@ -490,12 +480,14 @@ export function createSettingsSpeedSourceWorkflow(
         }]);
         obdScanStatusMessage.value = deps.t("settings.speed.obd_pair_success");
       });
+      await deps.queryClient.invalidateQueries({
+        queryKey: serverStateQueryKeys.settings.gpsStatus(),
+      });
     } catch (error) {
       obdScanStatusMessage.value = deps.t("settings.speed.obd_pair_failed");
       deps.showError(error instanceof Error ? error.message : deps.t("settings.speed.obd_pair_failed"));
     } finally {
       pairInFlightMac.value = null;
-      syncBackgroundRescan();
     }
   }
 
@@ -503,15 +495,20 @@ export function createSettingsSpeedSourceWorkflow(
     syncContextVisibility();
   }
 
-  const obdBackgroundRescan = createPolling({
-    onErrorDelayMs: OBD_BACKGROUND_RESCAN_DELAY_MS,
-    poll: async () => {
-      if (!shouldRunBackgroundRescan()) {
-        return OBD_BACKGROUND_RESCAN_DELAY_MS;
-      }
-      await scanObdDevices("background");
-      return OBD_BACKGROUND_RESCAN_DELAY_MS;
+  const obdBackgroundRescanEnabled = computed(() => shouldRunBackgroundRescan());
+
+  const obdBackgroundRescan = createObservedServerStateQuery({
+    enabled: obdBackgroundRescanEnabled,
+    observerOptions: {
+      refetchInterval: OBD_BACKGROUND_RESCAN_DELAY_MS,
+      refetchIntervalInBackground: true,
     },
+    onData: (payload) => {
+      mergeScannedDevices(payload.devices);
+    },
+    queryClient: deps.queryClient,
+    queryFn: () => transport.scanObdDevices(),
+    queryKey: serverStateQueryKeys.settings.speedSourceObdScan(),
   });
 
   return {

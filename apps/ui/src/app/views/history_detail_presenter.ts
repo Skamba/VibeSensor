@@ -12,7 +12,6 @@ import {
   findingSpeedBandText,
   findingTone,
   formatSourceLabel,
-  historyRowSummary,
   historyRunDisplayTitle,
   isInconclusiveFinding,
   summarizeFindings,

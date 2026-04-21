@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 
-import { expect } from "@playwright/test";
 import { render } from "preact";
+import { expect } from "vitest";
 
 import type {
   EspFlashFeatureDeps,
@@ -41,6 +41,7 @@ import {
 } from "./dom_render_test_support";
 import { http } from "./msw/http";
 import { createUiMswTestScope } from "./msw/node";
+import { createTestQueryClient } from "./query_client_test_support";
 
 type FeatureServices = UpdateFeatureDeps["services"];
 
@@ -239,6 +240,7 @@ async function createEspFlashFeatureDeps() {
     },
     panel,
     ports: navigation.ports,
+    queryClient: createTestQueryClient(),
     services: createFeatureServices(),
     setActiveSettingsTabId: navigation.setActiveSettingsTabId,
     setActiveViewId: navigation.setActiveViewId,
@@ -297,6 +299,7 @@ async function createUpdateFeatureDeps() {
       update,
     },
     ports: navigation.ports,
+    queryClient: createTestQueryClient(),
     services: createFeatureServices(),
     setActiveSettingsTabId: navigation.setActiveSettingsTabId,
     setActiveViewId: navigation.setActiveViewId,
@@ -526,6 +529,13 @@ export async function createEspFlashFeatureHarness() {
     deps,
     feature: {
       ...feature,
+      startPolling(): void {
+        deps.setActiveViewId("settingsView");
+        deps.setActiveSettingsTabId("espFlashTab");
+      },
+      stopPolling(): void {
+        deps.setActiveViewId("dashboardView");
+      },
       dispose(): void {
         disposeFeature();
         deps.cleanup();
@@ -543,6 +553,13 @@ export async function createUpdateFeatureHarness() {
     deps,
     feature: {
       ...feature,
+      startPolling(): void {
+        deps.setActiveViewId("settingsView");
+        deps.setActiveSettingsTabId("updateTab");
+      },
+      stopPolling(): void {
+        deps.setActiveViewId("dashboardView");
+      },
       dispose(): void {
         disposeFeature();
         deps.cleanup();

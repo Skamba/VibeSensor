@@ -10,6 +10,7 @@ import type {
   CarLibraryModel,
   CarLibraryTireOption,
 } from "../src/api/types";
+import { createTestQueryClient } from "./query_client_test_support";
 
 type WorkflowHarness = {
   focuses: CarsFeatureFocusTarget[];
@@ -97,6 +98,7 @@ describe("createCarsFeatureWorkflow", () => {
     const workflow = createCarsFeatureWorkflow({
       addCarFromWizard: async () => undefined,
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      queryClient: createTestQueryClient(),
       t: createTranslator(),
       transport: {
         async loadBrands() {
@@ -129,6 +131,7 @@ describe("createCarsFeatureWorkflow", () => {
         addCalls.push({ aspects, carType, name, variant });
       },
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      queryClient: createTestQueryClient(),
       t: createTranslator(),
       transport: {
         async loadBrands() {
@@ -177,6 +180,7 @@ describe("createCarsFeatureWorkflow", () => {
     const workflow = createCarsFeatureWorkflow({
       addCarFromWizard: async () => undefined,
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      queryClient: createTestQueryClient(),
       t: createTranslator(),
       transport: {
         async loadBrands() {
@@ -212,6 +216,7 @@ describe("createCarsFeatureWorkflow", () => {
     const workflow = createCarsFeatureWorkflow({
       addCarFromWizard: async () => undefined,
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      queryClient: createTestQueryClient(),
       t: createTranslator(),
       transport: {
         async loadBrands() {
@@ -252,6 +257,7 @@ describe("createCarsFeatureWorkflow", () => {
     const workflow = createCarsFeatureWorkflow({
       addCarFromWizard: async () => undefined,
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      queryClient: createTestQueryClient(),
       t: createTranslator(),
       transport: {
         async loadBrands() {
@@ -280,6 +286,7 @@ describe("createCarsFeatureWorkflow", () => {
     const workflow = createCarsFeatureWorkflow({
       addCarFromWizard: async () => undefined,
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      queryClient: createTestQueryClient(),
       t: createTranslator(),
       transport: {
         async loadBrands() {
@@ -311,6 +318,7 @@ describe("createCarsFeatureWorkflow", () => {
     const workflow = createCarsFeatureWorkflow({
       addCarFromWizard: async () => undefined,
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      queryClient: createTestQueryClient(),
       t: createTranslator(),
       transport: {
         async loadBrands() {
@@ -338,6 +346,7 @@ describe("createCarsFeatureWorkflow", () => {
     const workflow = createCarsFeatureWorkflow({
       addCarFromWizard: async () => undefined,
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      queryClient: createTestQueryClient(),
       t: createTranslator(),
       transport: {
         async loadBrands() {
@@ -380,6 +389,7 @@ describe("createCarsFeatureWorkflow", () => {
         addCalls.push({ aspects, carType, name, variant });
       },
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      queryClient: createTestQueryClient(),
       t: createTranslator(),
       transport: {
         async loadBrands() {

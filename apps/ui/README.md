@@ -8,6 +8,7 @@ server over HTTP (REST) and WebSocket (live data).
 
 - **TypeScript** — application logic
 - **Preact + @preact/signals** — UI rendering plus shared reactive state
+- **@tanstack/query-core** — canonical server-state fetch, cache, polling, and invalidation ownership
 - **Vite** — build tool and dev server
 - **uPlot** — high-performance spectrum charts
 - **Vitest + happy-dom** — canonical fast unit/integration test runner
@@ -89,6 +90,21 @@ The release-smoke artifact helper is the intentional narrow exception: after the
 
 Generated contract artifacts stay out of the lint/format path on purpose so the
 source-of-truth export commands remain the only writers for those files.
+
+## Server-state ownership
+
+Frontend server-state ownership is centralized on the runtime-owned
+`QueryClient` created in `src/app/runtime/ui_query_client.ts`.
+
+- Keep app-wide query-client creation in runtime/composition code.
+- Keep feature-specific query keys in
+  `src/app/features/server_state_query_keys.ts`.
+- Keep feature-owned observed-query bridges in
+  `src/app/features/server_state_query.ts` and the owning workflow/module.
+- Use TanStack Query for fetches, cache updates, background refetch intervals,
+  and invalidation instead of reintroducing ad hoc loaders or poll loops.
+- Mutations should either write authoritative results into the cache with
+  `setQueryData(...)` or explicitly invalidate/refetch the affected keys.
 
 ## HTTP boundary tests with MSW
 
@@ -182,7 +198,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/ui_app_root.tsx` | Single rendered app tree that owns the shell frame plus the dashboard/history/settings sections |
 | `app/ui_panel_host_registry.ts` | Ref-backed settings-shell host registry for the per-tab settings panels mounted inside the settings subtree |
 | `app/ui_lazy_panels.ts` | Typed panel binding factory that gives the runtime full dashboard/history/settings contracts up front, then attaches the real settings shell handles when that subtree mounts |
-| `app/dom/` | Focused DOM-only utilities for download and RAF lifecycles after removing the shared global query helper |
+| `app/dom/` | Focused DOM-only utilities for download and RAF lifecycles |
 | `app/ui_app_runtime.ts` | Thin UI composition root that creates the shell, spectrum, transport, feature bundle, and startup coordinator, then exposes one composed runtime `dispose()` |
 | `app/ui_app_state.ts` | Canonical AppState shape plus reactive slice helpers that keep object-style reads/writes working while shared shell/transport/realtime/history/settings/spectrum state becomes signal-observable, preserve light-tick spectrum frames, and dedupe unchanged heavy frames before redraws |
 | `app/ui_signals.ts` | Canonical re-export surface for shared `signal`, `computed`, and `effect` usage across runtime, features, and views |
@@ -196,20 +212,20 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/runtime/spectrum_interaction_controller.ts` | Spectrum focus, band-toggle, cursor, and legend/isolation interaction state with explicit ports plus throttled hover-inspector updates and announcement routing |
 | `app/runtime/spectrum_panel_view.ts` | Typed spectrum panel contract for the signal-backed legend, band legend, split visual inspector vs live announcer, band-toggle, and chart-host refs |
 | `app/app_feature_bundle.ts` | Creates concrete feature instances, then exposes explicit shell, transport, and startup port bundles back to the runtime |
-| `app/features/` | Feature owners for state changes, API calls, shared polling control, and typed actions emitted from local view surfaces |
-| `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, typed island action bridge, and settings-view polling context together |
-| `app/features/esp_flash_feature_workflow.ts` | DOM-free ESP flash workflow/controller for port refreshes, flash status polling, log/history hydration, and start/cancel orchestration |
+| `app/features/` | Feature owners for state changes, API calls, TanStack Query observers/fetches, and typed actions emitted from local view surfaces |
+| `app/features/esp_flash_feature.ts` | Thin ESP flash facade that wires the workflow, presenter, typed island action bridge, and settings-view query polling context together |
+| `app/features/esp_flash_feature_workflow.ts` | DOM-free ESP flash workflow/controller for query-backed port refreshes, flash status polling, log/history hydration, and start/cancel orchestration |
 | `app/features/cars_feature.ts` | Thin car-wizard facade that wires the DOM-free workflow plus island-owned wizard DOM adapter into typed wizard actions |
 | `app/features/cars_feature_transport.ts` | Car-library transport wrapper for loading wizard brands, types, and models through the UI API facade |
 | `app/features/cars_feature_workflow.ts` | DOM-free car-wizard workflow/controller for step transitions, library loading, branch selection, and finish validation |
 | `app/features/realtime_feature.ts` | Thin realtime facade that wires the workflow, derived realtime view-state, and typed logging/sensor action bridges together |
-| `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for polling, logging actions, location updates, and client mutations |
-| `app/features/settings_cars_module.ts` | Settings-side car controller that owns list loading, activation/deletion flows, highlight feedback, and typed tab/view-driven feedback dismissal plus the explicit open-wizard port |
+| `app/features/realtime_feature_workflow.ts` | DOM-free realtime workflow/controller for query-backed logging status refreshes, logging actions, location updates, and client mutations |
+| `app/features/settings_cars_module.ts` | Settings-side car controller that owns query-backed list loading, activation/deletion flows, highlight feedback, and typed tab/view-driven feedback dismissal plus the explicit open-wizard port |
 | `app/features/settings_cars_transport.ts` | Settings-car transport wrapper over load/activate/delete API calls |
 | `app/features/settings_analysis_module.ts` | Analysis-settings behavior owner for validation, save/reset orchestration, field guidance, and spectrum refreshes behind the typed analysis-panel bridge |
 | `app/features/settings_speed_source_module.ts` | Thin speed-source settings facade that wires the transport seam, DOM-free workflow, pure presenter, typed panel actions, and typed navigation subscriptions into the shared panel bridge |
 | `app/features/settings_speed_source_transport.ts` | Speed-source settings transport wrapper over the UI-local settings and OBD APIs |
-| `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, save/load orchestration, and background OBD rescans |
+| `app/features/settings_speed_source_workflow.ts` | DOM-free speed-source workflow/controller for draft state, validation, query-backed save/load orchestration, and background OBD rescans |
 | `app/views/analysis_panel.tsx` | Signal-backed Preact owner for the analysis-settings shell; local refs/effects handle guidance and field focus while analysis and car-selection modules feed typed model and availability updates |
 | `app/views/settings_shell.tsx` | Preact owner for the shared settings tab chrome and tab-panel wrappers that mount the per-tab panel hosts, keep tab selection in signal-backed shell state, and expose typed settings navigation APIs |
 | `app/views/esp_flash_panel.tsx` | Signal-backed Preact owner for the ESP flash settings shell, typed flash actions, and log-autoscroll lifecycle while feature/presenter code updates a semantic panel bridge |
@@ -222,9 +238,9 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `app/views/cars_wizard_panel.tsx` | Modal shell for the add-car wizard; it keeps dialog chrome and typed action wiring small while delegating step content to focused wizard sections |
 | `app/views/cars_wizard_sections.tsx` | Extracted add-car wizard step sections, option grids, manual-spec inputs, and summary helpers that keep the main wizard panel readable while preserving the existing selectors and flow |
 | `app/views/car_wizard_view.ts` | Typed add-car wizard render-model builders for progress, option sections, selected specs, and summary rows reused by the Preact car-management island |
-| `app/features/update_feature.ts` | Thin update facade that binds typed island actions, delegates island render-model updates to the presenter, and derives update/internet polling context from the shell and settings tab state |
-| `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for update polling, internet-status normalization, and start/cancel command orchestration |
-| `app/features/history_feature.ts` | Single owner for history refresh, expanded-run/detail state, download/delete actions, collapsed-preview prefetch, and the typed panel render model |
+| `app/features/update_feature.ts` | Thin update facade that binds typed island actions, delegates island render-model updates to the presenter, and derives update/internet query polling context from the shell and settings tab state |
+| `app/features/update_feature_workflow.ts` | DOM-free update workflow/controller for query-backed update polling, internet-status normalization, and start/cancel command orchestration |
+| `app/features/history_feature.ts` | Single owner for query-backed history refresh, expanded-run/detail state, download/delete actions, collapsed-preview prefetch, and the typed panel render model |
 | `app/features/history_download.ts` | Focused blob-download helper for the history PDF/report flow |
 | `app/views/esp_flash_readiness_presenter.ts` | ESP flash readiness presenter that derives start-readiness, status-banner, selected-target, and recent-attempt summary models |
 | `app/views/esp_flash_journey_presenter.ts` | ESP flash journey presenter that derives staged lifecycle progress and terminal stage state for the maintenance journey card |

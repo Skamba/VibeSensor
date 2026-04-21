@@ -3,6 +3,7 @@ import { createSettingsSpeedSourceModule } from "../src/app/features/settings_sp
 import { createAppState } from "../src/app/ui_app_state";
 import { signal } from "../src/app/ui_signals";
 import type { SpeedSourcePanelActionHandlers } from "../src/app/views/speed_source_panel";
+import { createTestQueryClient } from "./query_client_test_support";
 
 test("bindHandlers uses typed panel actions and navigation subscriptions", () => {
   const activeViewId = signal("settingsView");
@@ -22,6 +23,7 @@ test("bindHandlers uses typed panel actions and navigation subscriptions", () =>
   const module = createSettingsSpeedSourceModule({
     settings: createAppState().settings,
     panel,
+    queryClient: createTestQueryClient(),
     services: {
       t: (key) => key,
       requestConfirmation: async () => true,

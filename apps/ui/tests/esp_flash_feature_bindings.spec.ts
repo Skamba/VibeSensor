@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import { signal } from "../src/app/ui_signals";
 import type { EspFlashPanelActionHandlers } from "../src/app/views/esp_flash_panel";
+import { createTestQueryClient } from "./query_client_test_support";
 
 test("bindHandlers uses panel action surfaces instead of raw DOM bindings", () => {
   const panel = {
@@ -12,8 +13,9 @@ test("bindHandlers uses panel action surfaces instead of raw DOM bindings", () =
     panel,
     ports: {
       activeSettingsTabId: signal("espFlashTab"),
-      activeViewId: signal("settingsView"),
+      activeViewId: signal("dashboardView"),
     },
+    queryClient: createTestQueryClient(),
     services: {
       t: (key) => key,
       requestConfirmation: async () => true,

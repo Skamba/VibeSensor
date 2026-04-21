@@ -14,6 +14,7 @@ import {
   makeAnalysisSettingsPayload,
 } from "./msw/handlers/settings";
 import { createUiMswTestServer } from "./msw/node";
+import { createTestQueryClient } from "./query_client_test_support";
 
 const mswServer = createUiMswTestServer();
 
@@ -85,6 +86,7 @@ test("settings analysis module renders guidance and surfaces invalid input throu
     onMissingActiveCar: () => undefined,
     onSaveError: () => undefined,
     refreshSpectrumDecorations: () => undefined,
+    queryClient: createTestQueryClient(),
     settings: state,
     services: {
       t: translate,
@@ -184,6 +186,7 @@ test("settings analysis module keeps active-car geometry when loading server ana
     refreshSpectrumDecorations: () => {
       refreshSpectrumDecorationCalls += 1;
     },
+    queryClient: createTestQueryClient(),
     settings: state,
     services: {
       t: translate,

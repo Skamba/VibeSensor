@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import {
   buildSettingsSpeedSourcePanelModel,
@@ -21,6 +23,7 @@ interface SettingsSpeedSourceModulePorts {
 export interface SettingsSpeedSourceModuleDeps {
   panel: SpeedSourcePanelView;
   settings: SettingsState;
+  queryClient: QueryClient;
   services: FeatureServices;
   formatting: Pick<FeatureFormatting, "fmt">;
   getSpeedUnit: () => string;
@@ -54,6 +57,7 @@ export function createSettingsSpeedSourceModule(
   workflow = createSettingsSpeedSourceWorkflow({
     obdConfigVisible,
     settings,
+    queryClient: ctx.queryClient,
     showError: services.showError,
     t: services.t,
     view: {

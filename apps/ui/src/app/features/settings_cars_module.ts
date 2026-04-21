@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import {
   createCarSelectionDerivedState,
@@ -30,7 +32,7 @@ import {
   createSettingsCarsTransport,
   type SettingsCarsTransport,
 } from "./settings_cars_transport";
-import { createApiLoader } from "./api_loader";
+import { serverStateQueryKeys } from "./server_state_query_keys";
 
 interface SettingsCarsModulePanels {
   analysisPanel: Pick<AnalysisPanelView, "carAvailability">;
@@ -48,6 +50,7 @@ interface SettingsCarsModulePorts {
 
 export interface SettingsCarsModuleDeps {
   settings: SettingsState;
+  queryClient: QueryClient;
   panels: SettingsCarsModulePanels;
   ports: SettingsCarsModulePorts;
   services: FeatureServices;
@@ -168,16 +171,14 @@ export function createSettingsCarsModule(
     }
   }
 
-  const carsLoader = createApiLoader({
-    load: () => transport.loadCars(),
-    apply: (payload) => {
-      syncCarsPayload(payload);
-      syncActiveCarToInputs();
-    },
-  });
-
   async function loadCarsFromServer(): Promise<void> {
-    await carsLoader.load();
+    const payload = await ctx.queryClient.fetchQuery({
+      queryFn: () => transport.loadCars(),
+      queryKey: serverStateQueryKeys.settings.cars(),
+      staleTime: 0,
+    });
+    syncCarsPayload(payload);
+    syncActiveCarToInputs();
   }
 
   async function handleActivateCar(carId: string): Promise<void> {
@@ -193,7 +194,9 @@ export function createSettingsCarsModule(
       return;
     }
     try {
-      syncCarsPayload(await transport.activateCar(carId));
+      const payload = await transport.activateCar(carId);
+      ctx.queryClient.setQueryData(serverStateQueryKeys.settings.cars(), payload);
+      syncCarsPayload(payload);
       syncActiveCarToInputs();
       clearHighlightedCarFeedback();
       ctx.ports.refreshSpectrumDecorations();
@@ -212,7 +215,9 @@ export function createSettingsCarsModule(
     }
     try {
       if (car.id !== settings.car.activeCarId.value) {
-        syncCarsPayload(await transport.activateCar(carId));
+        const payload = await transport.activateCar(carId);
+        ctx.queryClient.setQueryData(serverStateQueryKeys.settings.cars(), payload);
+        syncCarsPayload(payload);
         syncActiveCarToInputs();
         ctx.ports.refreshSpectrumDecorations();
       }
@@ -235,7 +240,9 @@ export function createSettingsCarsModule(
       return;
     }
     try {
-      syncCarsPayload(await transport.deleteCar(carId));
+      const payload = await transport.deleteCar(carId);
+      ctx.queryClient.setQueryData(serverStateQueryKeys.settings.cars(), payload);
+      syncCarsPayload(payload);
       syncActiveCarToInputs();
       clearHighlightedCarFeedback();
       ctx.ports.refreshSpectrumDecorations();

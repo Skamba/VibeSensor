@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import {
   computed,
   effectOnChange,
@@ -17,14 +19,13 @@ interface EspFlashFeaturePorts {
 export interface EspFlashFeatureDeps {
   panel: EspFlashPanelView;
   ports: EspFlashFeaturePorts;
+  queryClient: QueryClient;
   services: FeatureServices;
 }
 
 export interface EspFlashFeature {
   bindHandlers(): void;
   dispose(): void;
-  startPolling(): void;
-  stopPolling(): void;
 }
 
 function isEspFlashPollingContext(viewId: string, tabId: string): boolean {
@@ -43,6 +44,7 @@ export function createEspFlashFeature(
   const workflow = createEspFlashFeatureWorkflow({
     t: services.t,
     showError: services.showError,
+    queryClient: ctx.queryClient,
     pollingEnabled,
   });
   const presenter = createEspFlashFeaturePresenter({
@@ -84,7 +86,5 @@ export function createEspFlashFeature(
       disposePollingContextSync();
       workflow.dispose();
     },
-    startPolling: () => workflow.startPolling(),
-    stopPolling: () => workflow.stopPolling(),
   };
 }
