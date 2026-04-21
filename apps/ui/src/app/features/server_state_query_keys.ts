@@ -7,11 +7,14 @@ export const serverStateQueryKeys = {
     analysis: () => ["settings", "analysis"] as const,
     cars: () => ["settings", "cars"] as const,
     gpsStatus: () => ["settings", "gps-status"] as const,
+    language: () => ["settings", "language"] as const,
     speedSource: () => ["settings", "speed-source"] as const,
     speedSourceObdScan: () => ["settings", "speed-source", "obd-scan"] as const,
+    speedUnit: () => ["settings", "speed-unit"] as const,
   },
   history: {
-    insights: (runId: string, lang: string) => ["history", "insights", runId, lang] as const,
+    insights: (runId: string, lang: string) =>
+      ["history", "insights", runId, lang] as const,
     insightsPrefix: (runId: string) => ["history", "insights", runId] as const,
     runs: () => ["history", "runs"] as const,
   },

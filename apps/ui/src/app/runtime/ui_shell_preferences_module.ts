@@ -1,9 +1,12 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import {
   getSettingsLanguage,
   getSettingsSpeedUnit,
   setSettingsLanguage,
   setSettingsSpeedUnit,
 } from "../../api/settings";
+import { serverStateQueryKeys } from "../features/server_state_query_keys";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
 import type { ShellState } from "../ui_app_state";
 import { signal, type ReadonlySignal } from "../ui_signals";
@@ -21,9 +24,12 @@ export interface UiShellPreferencesModule {
 
 type UiShellPreferencesDeps = {
   normalizeLanguage: (value: string | null | undefined) => string;
+  queryClient: QueryClient;
   shell: ShellState;
   t: (key: string, vars?: Record<string, unknown>) => string;
 };
+
+const PERSISTED_SHELL_PREFERENCES_STALE_TIME_MS = 5 * 60 * 1000;
 
 export function createUiShellPreferencesModule(
   deps: UiShellPreferencesDeps,
@@ -66,7 +72,8 @@ export function createUiShellPreferencesModule(
         value: activeValue,
       }),
       compact: true,
-      detail: error instanceof Error ? error.message : deps.t("settings.save_failed"),
+      detail:
+        error instanceof Error ? error.message : deps.t("settings.save_failed"),
       tone: "error",
     };
   }
@@ -81,21 +88,39 @@ export function createUiShellPreferencesModule(
       speedUnitFeedback.value = null;
     },
     async hydratePersistedPreferences() {
-      try {
-        const languageResponse = await getSettingsLanguage();
-        if (languageResponse?.language) {
-          applyLanguageValue(languageResponse.language);
-        }
-      } catch (error) {
-        console.warn("Failed to load persisted language", error);
+      const [languageResult, speedUnitResult] = await Promise.allSettled([
+        deps.queryClient.fetchQuery({
+          queryFn: () => getSettingsLanguage(),
+          queryKey: serverStateQueryKeys.settings.language(),
+          staleTime: PERSISTED_SHELL_PREFERENCES_STALE_TIME_MS,
+        }),
+        deps.queryClient.fetchQuery({
+          queryFn: () => getSettingsSpeedUnit(),
+          queryKey: serverStateQueryKeys.settings.speedUnit(),
+          staleTime: PERSISTED_SHELL_PREFERENCES_STALE_TIME_MS,
+        }),
+      ]);
+      if (
+        languageResult.status === "fulfilled" &&
+        languageResult.value?.language
+      ) {
+        applyLanguageValue(languageResult.value.language);
+      } else if (languageResult.status === "rejected") {
+        console.warn(
+          "Failed to load persisted language",
+          languageResult.reason,
+        );
       }
-      try {
-        const speedUnitResponse = await getSettingsSpeedUnit();
-        if (speedUnitResponse?.speed_unit) {
-          applySpeedUnitValue(speedUnitResponse.speed_unit);
-        }
-      } catch (error) {
-        console.warn("Failed to load persisted speed unit", error);
+      if (
+        speedUnitResult.status === "fulfilled" &&
+        speedUnitResult.value?.speed_unit
+      ) {
+        applySpeedUnitValue(speedUnitResult.value.speed_unit);
+      } else if (speedUnitResult.status === "rejected") {
+        console.warn(
+          "Failed to load persisted speed unit",
+          speedUnitResult.reason,
+        );
       }
     },
     async saveLanguage(lang) {
@@ -105,7 +130,12 @@ export function createUiShellPreferencesModule(
       selectedLanguage.value = nextLanguage;
       try {
         const payload = await setSettingsLanguage(nextLanguage);
-        applyLanguageValue(payload?.language || nextLanguage);
+        const resolvedLanguage = payload?.language || nextLanguage;
+        deps.queryClient.setQueryData(
+          serverStateQueryKeys.settings.language(),
+          { language: resolvedLanguage },
+        );
+        applyLanguageValue(resolvedLanguage);
       } catch (error) {
         selectedLanguage.value = previousLanguage;
         languageFeedback.value = buildSaveFailureFeedback(
@@ -122,7 +152,12 @@ export function createUiShellPreferencesModule(
       selectedSpeedUnit.value = nextUnit;
       try {
         const payload = await setSettingsSpeedUnit(nextUnit);
-        applySpeedUnitValue(payload?.speed_unit || nextUnit);
+        const resolvedSpeedUnit = payload?.speed_unit || nextUnit;
+        deps.queryClient.setQueryData(
+          serverStateQueryKeys.settings.speedUnit(),
+          { speed_unit: resolvedSpeedUnit },
+        );
+        applySpeedUnitValue(resolvedSpeedUnit);
       } catch (error) {
         selectedSpeedUnit.value = previousUnit;
         speedUnitFeedback.value = buildSaveFailureFeedback(

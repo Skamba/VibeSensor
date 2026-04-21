@@ -7,10 +7,11 @@ import {
   getCarCompleteness,
 } from "../car_selection_state";
 import {
+  composeVehicleSettings,
   mergeCarAspectSettings,
   type SettingsState,
 } from "../ui_app_state";
-import type { CarRecord, CarsPayload } from "../../api/types";
+import type { CarRecord, CarsPayload, CarUpsertRequest } from "../../api/types";
 import type {
   CarsListPanelView,
   CarsListRenderModel,
@@ -59,6 +60,12 @@ export interface SettingsCarsModuleDeps {
 }
 
 export interface SettingsCarsModule {
+  addCarFromWizard(
+    name: string,
+    carType: string,
+    aspects: Record<string, number>,
+    variant?: string,
+  ): Promise<void>;
   bindHandlers(): void;
   dispose(): void;
   hasValidActiveCar(): boolean;
@@ -94,8 +101,8 @@ export function createSettingsCarsModule(
   const highlightedCar = signal<CarsListHighlightedFeedback | null>(null);
   const carsContextVisible = computed(
     () =>
-      ctx.ports.activeViewId.value === "settingsView"
-      && ctx.ports.activeSettingsTabId.value === "carTab",
+      ctx.ports.activeViewId.value === "settingsView" &&
+      ctx.ports.activeSettingsTabId.value === "carTab",
   );
   const buildCarListRenderModel = createSettingsCarListRenderModelMemo();
 
@@ -116,15 +123,16 @@ export function createSettingsCarsModule(
         highlightedCarFeedback: highlightedCar.value,
         t,
       }),
-      table: carSelectionState.kind === "loading"
-        ? null
-        : buildCarListRenderModel({
-          activeCarId: settings.car.activeCarId.value,
-          cars: settings.car.cars.value,
-          highlightedCarId: highlightedCar.value?.carId ?? null,
-          fmt: formatting.fmt,
-          t,
-        }),
+      table:
+        carSelectionState.kind === "loading"
+          ? null
+          : buildCarListRenderModel({
+              activeCarId: settings.car.activeCarId.value,
+              cars: settings.car.cars.value,
+              highlightedCarId: highlightedCar.value?.carId ?? null,
+              fmt: formatting.fmt,
+              t,
+            }),
     };
   }
   const analysisAvailability = computed(() => {
@@ -144,6 +152,10 @@ export function createSettingsCarsModule(
     highlightedCar.value = null;
   }
 
+  function showCarCreationSuccess(carId: string, carName: string): void {
+    highlightedCar.value = { carId, carName };
+  }
+
   function syncCarsPayload(payload: CarsPayload): void {
     settings.car.cars.value = payload.cars;
     settings.car.carsLoaded.value = true;
@@ -151,10 +163,14 @@ export function createSettingsCarsModule(
     const hasRequestedActive = requestedActiveCarId
       ? settings.car.cars.value.some((car) => car.id === requestedActiveCarId)
       : false;
-    settings.car.activeCarId.value = hasRequestedActive ? requestedActiveCarId : null;
+    settings.car.activeCarId.value = hasRequestedActive
+      ? requestedActiveCarId
+      : null;
     if (
-      highlightedCar.value
-      && !settings.car.cars.value.some((car) => car.id === highlightedCar.value?.carId)
+      highlightedCar.value &&
+      !settings.car.cars.value.some(
+        (car) => car.id === highlightedCar.value?.carId,
+      )
     ) {
       highlightedCar.value = null;
     }
@@ -168,6 +184,55 @@ export function createSettingsCarsModule(
     copyActiveCarAspects(carSelection.activeCar.value, settings);
     if (hasValidActiveCar()) {
       ctx.ports.syncAnalysisInputs();
+    }
+  }
+
+  async function addCarFromWizard(
+    name: string,
+    carType: string,
+    aspects: Record<string, number>,
+    variant?: string,
+  ): Promise<void> {
+    try {
+      const payload: CarUpsertRequest = {
+        aspects: {
+          ...composeVehicleSettings(
+            settings.car.activeVehicleSettings.value,
+            settings.analysis.vehicleSettings.value,
+          ),
+          ...aspects,
+        },
+        name,
+        type: carType,
+      };
+      if (variant) {
+        payload.variant = variant;
+      }
+      const createdPayload = await transport.createCar(payload);
+      if (!Array.isArray(createdPayload.cars)) {
+        return;
+      }
+      ctx.queryClient.setQueryData(
+        serverStateQueryKeys.settings.cars(),
+        createdPayload,
+      );
+      syncCarsPayload(createdPayload);
+      const newCar = createdPayload.cars[createdPayload.cars.length - 1];
+      if (!newCar) {
+        return;
+      }
+      const activatedPayload = await transport.activateCar(newCar.id);
+      ctx.queryClient.setQueryData(
+        serverStateQueryKeys.settings.cars(),
+        activatedPayload,
+      );
+      syncCarsPayload(activatedPayload);
+      syncActiveCarToInputs();
+      showCarCreationSuccess(newCar.id, newCar.name);
+      ctx.ports.refreshSpectrumDecorations();
+    } catch (_err) {
+      // Preserve the current wizard behavior: failed creation does not close over
+      // extra UI state or grow a second error-handling path outside settings.
     }
   }
 
@@ -195,7 +260,10 @@ export function createSettingsCarsModule(
     }
     try {
       const payload = await transport.activateCar(carId);
-      ctx.queryClient.setQueryData(serverStateQueryKeys.settings.cars(), payload);
+      ctx.queryClient.setQueryData(
+        serverStateQueryKeys.settings.cars(),
+        payload,
+      );
       syncCarsPayload(payload);
       syncActiveCarToInputs();
       clearHighlightedCarFeedback();
@@ -216,7 +284,10 @@ export function createSettingsCarsModule(
     try {
       if (car.id !== settings.car.activeCarId.value) {
         const payload = await transport.activateCar(carId);
-        ctx.queryClient.setQueryData(serverStateQueryKeys.settings.cars(), payload);
+        ctx.queryClient.setQueryData(
+          serverStateQueryKeys.settings.cars(),
+          payload,
+        );
         syncCarsPayload(payload);
         syncActiveCarToInputs();
         ctx.ports.refreshSpectrumDecorations();
@@ -241,7 +312,10 @@ export function createSettingsCarsModule(
     }
     try {
       const payload = await transport.deleteCar(carId);
-      ctx.queryClient.setQueryData(serverStateQueryKeys.settings.cars(), payload);
+      ctx.queryClient.setQueryData(
+        serverStateQueryKeys.settings.cars(),
+        payload,
+      );
       syncCarsPayload(payload);
       syncActiveCarToInputs();
       clearHighlightedCarFeedback();
@@ -287,6 +361,7 @@ export function createSettingsCarsModule(
   }
 
   return {
+    addCarFromWizard,
     bindHandlers,
     dispose(): void {
       disposeHighlightedCarSync?.();
@@ -295,9 +370,7 @@ export function createSettingsCarsModule(
     hasValidActiveCar,
     loadCarsFromServer,
     renderCarList,
-    showCarCreationSuccess(carId: string, carName: string): void {
-      highlightedCar.value = { carId, carName };
-    },
+    showCarCreationSuccess,
     syncActiveCarToInputs,
     syncCarsPayload,
   };
