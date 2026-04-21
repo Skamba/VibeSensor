@@ -84,24 +84,12 @@ export class UiStartupCoordinator {
             run: () => this.features.realtime.refreshLocationOptions(),
           },
           {
-            name: "load speed source",
-            run: () => this.features.settings.loadSpeedSourceFromServer(),
-          },
-          {
-            name: "load analysis settings",
-            run: () => this.features.settings.loadAnalysisSettingsFromServer(),
-          },
-          {
-            name: "load cars",
-            run: () => this.features.settings.loadCarsFromServer(),
-          },
-          {
             name: "refresh logging status",
             run: () => this.features.realtime.refreshLoggingStatus(),
           },
           {
-            name: "refresh history",
-            run: () => this.features.history.refreshHistory(),
+            name: "prime dashboard state",
+            run: () => this.features.secondary.primeDashboardState(),
           },
         ];
 

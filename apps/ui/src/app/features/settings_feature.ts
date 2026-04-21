@@ -180,7 +180,7 @@ export function createSettingsFeature(
     try {
       await speedSourceModule.loadSpeedSourceFromServer();
     } finally {
-      gpsStatusModule.markStartupReady();
+      await gpsStatusModule.markStartupReady();
     }
   }
 

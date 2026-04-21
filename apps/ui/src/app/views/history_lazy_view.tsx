@@ -1,21 +1,57 @@
-import { useEffect } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
+import type { FunctionComponent } from "preact";
 
-import "../../styles/history-table.css";
-import "../../styles/history-detail.css";
-import "../../styles/history-adaptive.css";
-
-import { HistoryPanel } from "./history_panel";
 import type { HistoryPanelView } from "./history_table_view";
 
 export interface HistoryLazyViewProps {
+  active: boolean;
   onReady?(): void;
   view: HistoryPanelView;
 }
 
-export default function HistoryLazyView(props: HistoryLazyViewProps) {
-  useEffect(() => {
-    props.onReady?.();
-  }, [props.onReady]);
+type HistoryLazyViewImpl = FunctionComponent<HistoryLazyViewProps>;
 
-  return <HistoryPanel actions={props.view.actions} model={props.view.model} />;
+let historyLazyViewPromise: Promise<HistoryLazyViewImpl> | null = null;
+
+export function preloadHistoryLazyView(): Promise<HistoryLazyViewImpl> {
+  if (historyLazyViewPromise === null) {
+    historyLazyViewPromise = import("./history_lazy_view_content")
+      .then((module) => module.default)
+      .catch((error) => {
+        historyLazyViewPromise = null;
+        throw error;
+      });
+  }
+  return historyLazyViewPromise;
+}
+
+export default function HistoryLazyView(props: HistoryLazyViewProps) {
+  const [LoadedView, setLoadedView] = useState<HistoryLazyViewImpl | null>(null);
+
+  useEffect(() => {
+    if (!props.active || LoadedView !== null) {
+      return;
+    }
+    let cancelled = false;
+    void preloadHistoryLazyView()
+      .then((nextLoadedView) => {
+        if (!cancelled) {
+          setLoadedView(() => nextLoadedView);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error("[VibeSensor] Failed to load history view.", error);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [LoadedView, props.active]);
+
+  if (LoadedView === null) {
+    return null;
+  }
+
+  return <LoadedView {...props} />;
 }

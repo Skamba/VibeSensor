@@ -1,10 +1,3 @@
-import { fmt, fmtTs } from "../format";
-import {
-  createAppFeatureBundle,
-  type AppFeatureBundle,
-  type AppFeatureBundleRuntimePorts,
-  type AppFeatureBundleSharedDeps,
-} from "./app_feature_bundle";
 import { createAppState, type AppState } from "./ui_app_state";
 import {
   createLazyUiPanels,
@@ -12,73 +5,23 @@ import {
   type UiMountedLazyPanelHandles,
   type UiMountedPanels,
 } from "./ui_lazy_panels";
-import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
-import { createUiQueryClient } from "./runtime/ui_query_client";
 import {
   createUiShellChromeBindings,
   DEFAULT_UI_SHELL_CHROME_ACTIONS,
+  SHELL_NAV_ITEMS,
   type UiShellChromeActions,
   type UiShellChromeBindings,
+  type UiShellChromeNavigationModel,
 } from "./runtime/ui_shell_chrome";
-import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
-import { UiShellController } from "./runtime/ui_shell_controller";
-import { createWorkerSpectrumFramePreparer } from "./runtime/spectrum_frame_preparer_worker_client";
-import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
-import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
-import { signal, type Signal } from "./ui_signals";
-
-function requireUiRuntimeDependency<T>(value: T | null, name: string): T {
-  if (value === null) {
-    throw new Error(`UiAppRuntime ${name} used before initialization`);
-  }
-  return value;
-}
-
-function createUiAppSharedDeps(
-  shell: UiShellController,
-): Pick<AppFeatureBundleSharedDeps, "formatting" | "services"> {
-  return {
-    services: {
-      t: (key, vars) => shell.t(key, vars),
-      requestConfirmation: (message) => shell.requestConfirmation(message),
-      showError: (message) => shell.showError(message),
-    },
-    formatting: {
-      fmt,
-      fmtTs,
-      formatInt: (value) => shell.localFormatInt(value),
-    },
-  };
-}
-
-function createUiAppFeatureRuntimePorts(deps: {
-  panels: UiMountedPanels;
-  shell: UiShellController;
-  spectrum: UiSpectrumController;
-  transport: UiLiveTransportController;
-}): AppFeatureBundleRuntimePorts {
-  const { panels, shell, spectrum, transport } = deps;
-  return {
-    panels,
-    navigation: {
-      activatePrimaryView: (viewId) => shell.setActiveView(viewId),
-      activeViewId: shell.activeViewId,
-    },
-    realtimeChrome: {
-      setShellLiveStatus: (variant, text) => shell.setLiveStatus(variant, text),
-    },
-    view: {
-      renderSpectrum: () => spectrum.renderSpectrum(),
-      refreshSpectrumDecorations: () => spectrum.refreshSpectrumDecorations(),
-    },
-    transport: {
-      sendSelection: () => transport.sendSelection(),
-    },
-  };
-}
+import { computed, signal, type ReadonlySignal, type Signal } from "./ui_signals";
+import type { UiAppBootRuntime } from "./ui_app_boot_runtime";
+import { preloadRealtimeLiveOverviewPanel } from "./views/realtime_live_overview_lazy";
+import { preloadRealtimeLoggingPanel } from "./views/realtime_logging_panel_lazy";
+import { preloadSpectrumPanelHost } from "./views/spectrum_panel_host_lazy";
 
 export interface UiAppRuntime {
   attachSettingsPanels(handles: UiMountedLazyPanelHandles): void;
+  bootReady: ReadonlySignal<boolean>;
   dispose(): void;
   panels: UiMountedPanels;
   shellChrome: UiShellChromeBindings;
@@ -92,71 +35,76 @@ export interface UiAppRuntimeDeps {
 
 export function createUiAppRuntime(deps: UiAppRuntimeDeps = {}): UiAppRuntime {
   const state = deps.state ?? createAppState();
-  const queryClient = createUiQueryClient();
   const shellChromeActions: Signal<UiShellChromeActions> =
-    signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS });
-  const shellChrome = createUiShellChromeBindings(shellChromeActions);
-  const lazyPanels = createLazyUiPanels();
-  let spectrum: UiSpectrumController | null = null;
-  let shellBindings: AppFeatureBundle["shell"] | null = null;
-  const shell = new UiShellController({
-    bindFeatureHandlers: () =>
-      requireUiRuntimeDependency(
-        shellBindings,
-        "shell bindings",
-      ).bindHandlers(),
-    state,
-    chrome: shellChrome.view,
-    chromeActions: shellChromeActions,
-    liveOverview: lazyPanels.panels.dashboard.liveOverview,
-    queryClient,
-  });
-  spectrum = new UiSpectrumController({
-    state,
-    panel: lazyPanels.panels.dashboard.spectrum,
-    t: (key, vars) => shell.t(key, vars),
-    framePreparer: createWorkerSpectrumFramePreparer(),
-  });
-  const transport = new UiLiveTransportController({
-    state,
-    payloadErrorMessage: () => shell.t("ws.payload_error"),
-  });
-  const featurePorts = createAppFeatureBundle({
-    state,
-    shared: {
-      ...createUiAppSharedDeps(shell),
-      serverState: {
-        queryClient,
+    signal<UiShellChromeActions>({
+      ...DEFAULT_UI_SHELL_CHROME_ACTIONS,
+      activateView: (viewId) => {
+        state.shell.activeViewId.value = viewId;
       },
-    },
-    runtime: createUiAppFeatureRuntimePorts({
-      panels: lazyPanels.panels,
-      shell,
-      spectrum,
-      transport,
-    }),
-  });
-  shellBindings = featurePorts.shell;
-  const startup = new UiStartupCoordinator({
-    shell,
-    transport,
-    features: featurePorts.startup,
-    defaultViewId: DEFAULT_SHELL_VIEW_ID,
-  });
+    });
+  const shellChrome = createUiShellChromeBindings(shellChromeActions);
+  const bootReady = signal(false);
+  const prebootNavigationModel = computed<UiShellChromeNavigationModel>(() => ({
+    activeViewId: state.shell.activeViewId.value,
+    navItems: SHELL_NAV_ITEMS.map((item) => ({
+      labelText: item.fallbackLabel,
+      tabId: item.tabId,
+      viewId: item.viewId,
+    })),
+  }));
+  shellChrome.view.bindNavigationModel(prebootNavigationModel);
+  const lazyPanels = createLazyUiPanels();
+  let bootRuntime: UiAppBootRuntime | null = null;
+  let bootRuntimePromise: Promise<UiAppBootRuntime | null> | null = null;
   let disposed = false;
+
+  function ensureBootRuntime(): Promise<UiAppBootRuntime | null> {
+    if (bootRuntime !== null) {
+      return Promise.resolve(bootRuntime);
+    }
+    if (bootRuntimePromise !== null) {
+      return bootRuntimePromise;
+    }
+    bootRuntimePromise = Promise.all([
+      import("./ui_app_boot_runtime"),
+      preloadRealtimeLiveOverviewPanel(),
+      preloadRealtimeLoggingPanel(),
+      preloadSpectrumPanelHost(),
+    ]).then(([{ createUiAppBootRuntime }]) => {
+        if (disposed) {
+          return null;
+        }
+        const nextBootRuntime = createUiAppBootRuntime({
+          state,
+          shellChrome,
+          shellChromeActions,
+          lazyPanels,
+        });
+        if (disposed) {
+          nextBootRuntime.dispose();
+          return null;
+        }
+        bootRuntime = nextBootRuntime;
+        bootReady.value = true;
+        return nextBootRuntime;
+      })
+      .catch((error) => {
+        bootRuntimePromise = null;
+        throw error;
+      });
+    return bootRuntimePromise;
+  }
 
   return {
     attachSettingsPanels: lazyPanels.attachSettingsPanels,
+    bootReady,
     dispose() {
       if (disposed) {
         return;
       }
       disposed = true;
-      featurePorts.dispose();
-      queryClient.clear();
-      transport.dispose();
-      spectrum.dispose();
-      shell.dispose();
+      bootReady.value = false;
+      bootRuntime?.dispose();
       lazyPanels.dispose();
     },
     panels: lazyPanels.panels,
@@ -166,7 +114,13 @@ export function createUiAppRuntime(deps: UiAppRuntimeDeps = {}): UiAppRuntime {
       if (disposed) {
         return;
       }
-      startup.start();
+      void ensureBootRuntime()
+        .then((resolvedBootRuntime) => {
+          resolvedBootRuntime?.start();
+        })
+        .catch((error) => {
+          console.error("[VibeSensor] Failed to start UI boot runtime.", error);
+        });
     },
   };
 }

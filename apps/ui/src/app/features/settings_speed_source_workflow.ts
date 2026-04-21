@@ -293,13 +293,18 @@ export function createSettingsSpeedSourceWorkflow(
     scheduleContextVisibilitySync();
   }
 
-  function applyPayload(payload: SpeedSourcePayload): void {
+  function applyPayload(
+    payload: SpeedSourcePayload,
+    options: { preserveResolvedSource?: boolean } = {},
+  ): void {
     batch(() => {
       deps.settings.speed.source.value = payload.speed_source;
       deps.settings.speed.manualSpeedKph.value = payload.manual_speed_kph;
       deps.settings.speed.obdDeviceMac.value = payload.obd_device_mac ?? null;
       deps.settings.speed.obdDeviceName.value = payload.obd_device_name ?? null;
-      deps.settings.speed.resolvedSource.value = null;
+      if (!options.preserveResolvedSource) {
+        deps.settings.speed.resolvedSource.value = null;
+      }
       staleTimeoutInputValue.value = String(payload.stale_timeout_s);
       syncInputsFromSettings();
     });
@@ -311,7 +316,7 @@ export function createSettingsSpeedSourceWorkflow(
       queryKey: serverStateQueryKeys.settings.speedSource(),
       staleTime: 0,
     });
-    applyPayload(payload);
+    applyPayload(payload, { preserveResolvedSource: true });
   }
 
   function handleSpeedSourceChanged(mode: DisplayedSpeedSourceMode): void {

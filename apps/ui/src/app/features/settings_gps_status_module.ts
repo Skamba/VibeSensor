@@ -43,7 +43,7 @@ interface GpsStatusSnapshot {
 export interface SettingsGpsStatusModule {
   bindHandlers(): void;
   dispose(): void;
-  markStartupReady(): void;
+  markStartupReady(): Promise<void>;
 }
 
 export function createSettingsGpsStatusModule(
@@ -115,8 +115,9 @@ export function createSettingsGpsStatusModule(
     dispose(): void {
       gpsStatusQuery.dispose();
     },
-    markStartupReady(): void {
+    markStartupReady(): Promise<void> {
       startupReady.value = true;
+      return gpsStatusQuery.fetch().then(() => undefined).catch(() => undefined);
     },
   };
 }

@@ -8,12 +8,6 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
   const calls: string[] = [];
 
   const history = {
-    bindHandlers() {
-      calls.push("history.bindHandlers");
-    },
-    dispose() {
-      calls.push("history.dispose");
-    },
     async refreshHistory() {
       calls.push("history.refreshHistory");
     },
@@ -32,107 +26,41 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
       calls.push("realtime.refreshLoggingStatus");
     },
   };
-  const settings = {
-    bindHandlers() {
-      calls.push("settings.bindHandlers");
-    },
+  const secondary = {
     dispose() {
-      calls.push("settings.dispose");
+      calls.push("secondary.dispose");
     },
-    syncSettingsInputs() {
-      calls.push("settings.syncSettingsInputs");
-    },
-    async loadSpeedSourceFromServer() {
-      calls.push("settings.loadSpeedSourceFromServer");
-    },
-    async loadAnalysisSettingsFromServer() {
-      calls.push("settings.loadAnalysisSettingsFromServer");
-    },
-    async loadCarsFromServer() {
-      calls.push("settings.loadCarsFromServer");
-    },
-    syncCarsPayload() {
-      calls.push("settings.syncCarsPayload");
-    },
-    syncActiveCarToInputs() {
-      calls.push("settings.syncActiveCarToInputs");
-    },
-    showCarCreationSuccess(carId: string, carName: string) {
-      calls.push(`settings.showCarCreationSuccess:${carId}:${carName}`);
-    },
-    renderCarList() {
-      calls.push("settings.renderCarList");
-    },
-  };
-  const cars = {
-    bindWizardHandlers() {
-      calls.push("cars.bindWizardHandlers");
-    },
-    dispose() {
-      calls.push("cars.dispose");
-    },
-  };
-  const update = {
-    bindUpdateHandlers() {
-      calls.push("update.bindUpdateHandlers");
-    },
-    dispose() {
-      calls.push("update.dispose");
-    },
-  };
-  const espFlash = {
-    bindHandlers() {
-      calls.push("espFlash.bindHandlers");
-    },
-    dispose() {
-      calls.push("espFlash.dispose");
+    async primeDashboardState() {
+      calls.push("secondary.primeDashboardState");
     },
   };
 
   const recording = createRealtimeFeatureRecordingPorts(history);
   const bundle = createAppFeatureBundlePorts({
-    history,
     realtime,
-    settings,
-    cars,
-    update,
-    espFlash,
+    secondary,
   });
 
-  expect(Object.keys(bundle).sort()).toEqual(["dispose", "shell", "startup"]);
+  expect(Object.keys(bundle).sort()).toEqual(["dispose", "ensureViewReady", "shell", "startup"]);
 
   await recording.onRecordingStatusChanged();
 
   bundle.shell.bindHandlers();
+  await bundle.ensureViewReady("historyView");
 
-  await bundle.startup.history.refreshHistory();
   await bundle.startup.realtime.refreshLocationOptions();
   await bundle.startup.realtime.refreshLoggingStatus();
-  await bundle.startup.settings.loadSpeedSourceFromServer();
-  await bundle.startup.settings.loadAnalysisSettingsFromServer();
-  await bundle.startup.settings.loadCarsFromServer();
+  await bundle.startup.secondary.primeDashboardState();
   bundle.dispose();
 
   expect(calls).toEqual([
     "history.refreshHistory",
-    "settings.bindHandlers",
-    "cars.bindWizardHandlers",
     "realtime.bindHandlers",
-    "history.bindHandlers",
-    "update.bindUpdateHandlers",
-    "espFlash.bindHandlers",
-    "history.refreshHistory",
     "realtime.refreshLocationOptions",
     "realtime.refreshLoggingStatus",
-    "settings.loadSpeedSourceFromServer",
-    "settings.loadAnalysisSettingsFromServer",
-    "settings.loadCarsFromServer",
-    "espFlash.dispose",
-    "update.dispose",
-    "history.dispose",
+    "secondary.primeDashboardState",
+    "secondary.dispose",
     "realtime.dispose",
-    "settings.dispose",
-    "cars.dispose",
   ]);
 });
 
