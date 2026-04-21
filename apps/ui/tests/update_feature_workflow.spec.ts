@@ -276,4 +276,34 @@ describe("createUpdateFeatureWorkflow", () => {
     expect(harness.errors).toEqual([]);
     workflow.dispose();
   });
+
+  test("surfaces runtime-boundary failures instead of silently normalizing them", async () => {
+    const harness = createHarness();
+    const workflow = createUpdateFeatureWorkflow({
+      t: (key) => key,
+      showError: (message) => {
+        harness.errors.push(message);
+      },
+      view: createViewPorts(harness),
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
+      api: {
+        async getHealthStatus() {
+          return makeHealth();
+        },
+        async getUpdateInternetStatus() {
+          return makeInternet();
+        },
+        async getUpdateStatus() {
+          throw new Error("Invalid update status response: /state Expected one of [\"idle\",\"running\",\"success\",\"failed\"]");
+        },
+      },
+    });
+
+    await expect(workflow.refreshStatus()).rejects.toThrow(/Invalid update status response: \/state/);
+    expect(harness.errors).toContain(
+      "Invalid update status response: /state Expected one of [\"idle\",\"running\",\"success\",\"failed\"]",
+    );
+    workflow.dispose();
+  });
 });
