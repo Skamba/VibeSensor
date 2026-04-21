@@ -194,6 +194,7 @@ _UI_LEGACY_TEST_DOM_TOKENS = (
     "FakeElement",
     "FakeHTMLElement",
 )
+_UI_COMPONENT_USE_COMPUTED_TOKEN = "useComputed"
 _OVERSIZED_TEST_ALLOWLIST_PATH = ROOT / "tools" / "dev" / "oversized_test_allowlist.yml"
 _OVERSIZED_TEST_DEFAULT_LIMIT = 700
 _OVERSIZED_TEST_DEFAULT_REPORT_LIMIT = 10
@@ -598,6 +599,22 @@ def check_frontend_legacy_test_dom_bridge_guardrails() -> list[str]:
                 f"{rel} references {token!r}; keep UI tests on mountSignalView() plus real DOM panels "
                 "instead of legacy fake-element bridge helpers."
             )
+    return errors
+
+
+def check_frontend_component_use_computed_guardrails() -> list[str]:
+    errors: list[str] = []
+    for path in _ui_source_files():
+        rel = str(path.relative_to(ROOT))
+        if not rel.startswith("apps/ui/src/app/") or path.suffix != ".tsx":
+            continue
+        text = path.read_text(encoding="utf-8")
+        if _UI_COMPONENT_USE_COMPUTED_TOKEN not in text:
+            continue
+        errors.append(
+            f"{rel} references {_UI_COMPONENT_USE_COMPUTED_TOKEN!r}; keep computed owners in "
+            "runtime/feature/presenter/shared modules and let component .tsx files read already-derived signals."
+        )
     return errors
 
 
@@ -2175,6 +2192,17 @@ def main() -> int:
         failures += 1
     else:
         print("Frontend legacy test-DOM guardrails passed.")
+
+    frontend_component_use_computed_errors = (
+        check_frontend_component_use_computed_guardrails()
+    )
+    if frontend_component_use_computed_errors:
+        print("Frontend component useComputed guardrail drift detected:")
+        for item in frontend_component_use_computed_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("Frontend component useComputed guardrails passed.")
 
     oversized_test_errors, oversized_test_report = check_oversized_test_files()
     if oversized_test_errors:

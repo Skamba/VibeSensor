@@ -1,5 +1,4 @@
 import {
-  useComputed,
   useSignalProperties,
   type ReadonlySignal,
 } from "../../ui_signals";
@@ -33,18 +32,6 @@ export function ShellPreferences(props: {
     speedUnitLabelText,
     speedUnitOptionLabels,
   } = useSignalProperties(preferencesModel, SHELL_PREFERENCES_MODEL_KEYS);
-  const speedUnitAriaDescribedBy = useComputed(() =>
-    speedUnitFeedback.value ? "speedUnitFeedback" : undefined
-  );
-  const speedUnitAriaInvalid = useComputed(() =>
-    speedUnitFeedback.value?.tone === "error" ? "true" : undefined
-  );
-  const languageAriaDescribedBy = useComputed(() =>
-    languageFeedback.value ? "languageFeedback" : undefined
-  );
-  const languageAriaInvalid = useComputed(() =>
-    languageFeedback.value?.tone === "error" ? "true" : undefined
-  );
 
   return (
     <div class="site-header__preferences">
@@ -54,8 +41,8 @@ export function ShellPreferences(props: {
           id="speedUnitSelect"
           class="unit-picker"
           aria-label={speedUnitLabelText}
-          aria-describedby={speedUnitAriaDescribedBy}
-          aria-invalid={speedUnitAriaInvalid}
+          aria-describedby={speedUnitFeedback.value ? "speedUnitFeedback" : undefined}
+          aria-invalid={speedUnitFeedback.value?.tone === "error" ? "true" : undefined}
           value={selectedSpeedUnit}
           onChange={(event) => {
             void actions.value.saveSpeedUnit(event.currentTarget.value);
@@ -75,8 +62,8 @@ export function ShellPreferences(props: {
           id="languageSelect"
           class="lang-picker"
           aria-label={languageLabelText}
-          aria-describedby={languageAriaDescribedBy}
-          aria-invalid={languageAriaInvalid}
+          aria-describedby={languageFeedback.value ? "languageFeedback" : undefined}
+          aria-invalid={languageFeedback.value?.tone === "error" ? "true" : undefined}
           value={selectedLanguage}
           onChange={(event) => {
             void actions.value.saveLanguage(event.currentTarget.value);
@@ -99,27 +86,26 @@ function SettingsFeedbackSlot(props: {
   message: ReadonlySignal<SettingsFeedbackMessage | null>;
 }) {
   const { id, message } = props;
-  const ariaLive = useComputed(() => {
-    const nextMessage = message.value;
-    return nextMessage ? (nextMessage.tone === "error" ? "assertive" : "polite") : undefined;
-  });
-  const hidden = useComputed(() => !message.value);
+  const currentMessage = message.value;
+  const ariaLive = currentMessage
+    ? currentMessage.tone === "error" ? "assertive" : "polite"
+    : undefined;
 
   return (
     <div
       id={id}
       class="settings-feedback-slot settings-feedback-slot--compact"
-      hidden={hidden}
+      hidden={!currentMessage}
       aria-live={ariaLive}
     >
-      {message.value ? (
-        <div {...settingsFeedbackAttrs(message.value)}>
-          {message.value.title ? (
-            <strong class="settings-feedback__title">{message.value.title}</strong>
+      {currentMessage ? (
+        <div {...settingsFeedbackAttrs(currentMessage)}>
+          {currentMessage.title ? (
+            <strong class="settings-feedback__title">{currentMessage.title}</strong>
           ) : null}
-          <span class="settings-feedback__body">{message.value.body}</span>
-          {message.value.detail ? (
-            <span class="settings-feedback__detail">{message.value.detail}</span>
+          <span class="settings-feedback__body">{currentMessage.body}</span>
+          {currentMessage.detail ? (
+            <span class="settings-feedback__detail">{currentMessage.detail}</span>
           ) : null}
         </div>
       ) : null}

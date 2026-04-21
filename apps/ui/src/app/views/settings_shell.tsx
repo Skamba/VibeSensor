@@ -13,7 +13,6 @@ import {
 } from "../ui_panel_host_registry";
 import { useUiText } from "../ui_i18n";
 import {
-  useComputed,
   type ReadonlySignal,
   signal,
 } from "../ui_signals";
@@ -89,10 +88,8 @@ function SettingsShellTabButton(props: {
   tab: (typeof SETTINGS_TABS)[number];
 }) {
   const { index, onActivateTab, tab } = props;
-  const isActive = useComputed(() => tab.id === props.activeTabId.value);
+  const isActive = tab.id === props.activeTabId.value;
   const labelText = useUiText(tab.labelKey, tab.fallbackLabel);
-  const ariaSelected = useComputed(() => isActive.value ? "true" : "false");
-  const tabIndex = useComputed(() => isActive.value ? 0 : -1);
 
   function handleTabKeyDown(
     event: JSX.TargetedKeyboardEvent<HTMLButtonElement>,
@@ -115,8 +112,8 @@ function SettingsShellTabButton(props: {
       data-settings-tab={tab.id}
       role="tab"
       aria-controls={tab.id}
-      aria-selected={ariaSelected}
-      tabIndex={tabIndex}
+      aria-selected={isActive ? "true" : "false"}
+      tabIndex={isActive ? 0 : -1}
       onClick={() => onActivateTab(tab.id)}
       onKeyDown={handleTabKeyDown}
     >
@@ -130,8 +127,7 @@ function SettingsShellTabPanel(props: {
   hostRef: UiSettingsPanelHostRefs[keyof UiSettingsPanelHostRefs];
   tab: (typeof SETTINGS_TABS)[number];
 }) {
-  const isActive = useComputed(() => props.tab.id === props.activeTabId.value);
-  const hidden = useComputed(() => !isActive.value);
+  const hidden = props.tab.id !== props.activeTabId.value;
 
   return (
     <div
