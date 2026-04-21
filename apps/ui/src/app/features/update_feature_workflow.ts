@@ -33,7 +33,7 @@ import { serverStateQueryKeys } from "./server_state_query_keys";
 export interface UpdateFeatureWorkflowApi {
   cancelUpdate(): Promise<unknown>;
   getHealthStatus(): Promise<HealthStatusPayload>;
-  getUpdateInternetStatus(): Promise<unknown>;
+  getUpdateInternetStatus(): Promise<UsbInternetStatusPayload>;
   getUpdateStatus(): Promise<UpdateStatusPayload>;
   startUpdate(payload: UpdateStartRequestPayload): Promise<unknown>;
 }
@@ -83,31 +83,6 @@ function fallbackInternetStatus(
   };
 }
 
-function normalizeInternetStatus(
-  payload: unknown,
-  t: (key: string, vars?: Record<string, unknown>) => string,
-): UsbInternetStatusPayload {
-  if (!payload || typeof payload !== "object") {
-    return fallbackInternetStatus(t);
-  }
-  const record = payload as Record<string, unknown>;
-  return {
-    detected: record.detected === true,
-    usable: record.usable === true,
-    interface_name: typeof record.interface_name === "string" ? record.interface_name : null,
-    connection_name: typeof record.connection_name === "string" ? record.connection_name : null,
-    driver: typeof record.driver === "string" ? record.driver : null,
-    ipv4_addresses: Array.isArray(record.ipv4_addresses)
-      ? record.ipv4_addresses.filter((value): value is string => typeof value === "string")
-      : [],
-    gateway: typeof record.gateway === "string" ? record.gateway : null,
-    has_default_route: record.has_default_route === true,
-    diagnostic: typeof record.diagnostic === "string"
-      ? record.diagnostic
-      : t("settings.internet.load_failed"),
-  };
-}
-
 function safeUpdateTransport(
   transport: string | null | undefined,
 ): UpdateStartRequestPayload["transport"] {
@@ -146,9 +121,7 @@ export function createUpdateFeatureWorkflow(
     const [status, health, internet] = await Promise.all([
       api.getUpdateStatus(),
       api.getHealthStatus(),
-      api.getUpdateInternetStatus()
-        .then((payload) => normalizeInternetStatus(payload, deps.t))
-        .catch(() => fallbackInternetStatus(deps.t)),
+      api.getUpdateInternetStatus(),
     ]);
     return {
       health,
@@ -169,6 +142,9 @@ export function createUpdateFeatureWorkflow(
 
   const statusSnapshotQuery = createObservedServerStateQuery<UpdateStatusSnapshot>({
     enabled: deps.pollingEnabled,
+    onError: (error) => {
+      deps.showError(error instanceof Error ? error.message : deps.t("status.unavailable"));
+    },
     observerOptions: {
       refetchInterval: (query) => query.state.data?.status.state === "running"
         ? UPDATE_POLL_INTERVAL_RUNNING_MS

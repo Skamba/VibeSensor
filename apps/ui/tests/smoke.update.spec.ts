@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { createHealthyUpdateStatus } from "./maintenance_feature_test_support";
 import {
   bootLiveDashboard,
   fulfillJson,
@@ -43,28 +44,7 @@ test("settings update tab renders readiness guidance when idle", async ({
     });
   });
   await page.route("**/api/health", async (route) => {
-    await fulfillJson(route, {
-      status: "ok",
-      processing_state: "idle",
-      processing_failures: 0,
-      degradation_reasons: [],
-      data_loss: {
-        affected_clients: 0,
-        tracked_clients: 0,
-        frames_dropped: 0,
-        queue_overflow_drops: 0,
-        server_queue_drops: 0,
-        parse_errors: 0,
-      },
-      persistence: {
-        analysis_in_progress: false,
-        analysis_queue_depth: 0,
-        write_error: null,
-        analysis_active_run_id: null,
-        analysis_started_at: null,
-        analysis_elapsed_s: null,
-      },
-    });
+    await fulfillJson(route, createHealthyUpdateStatus());
   });
   await bootLiveDashboard(page, { installRoutes: false });
   await openUpdateTab(page);
@@ -172,28 +152,7 @@ test("settings internet tab and updater show USB internet when usable", async ({
     });
   });
   await page.route("**/api/health", async (route) => {
-    await fulfillJson(route, {
-      status: "ok",
-      processing_state: "idle",
-      processing_failures: 0,
-      degradation_reasons: [],
-      data_loss: {
-        affected_clients: 0,
-        tracked_clients: 0,
-        frames_dropped: 0,
-        queue_overflow_drops: 0,
-        server_queue_drops: 0,
-        parse_errors: 0,
-      },
-      persistence: {
-        analysis_in_progress: false,
-        analysis_queue_depth: 0,
-        write_error: null,
-        analysis_active_run_id: null,
-        analysis_started_at: null,
-        analysis_elapsed_s: null,
-      },
-    });
+    await fulfillJson(route, createHealthyUpdateStatus());
   });
   await page.route("**/api/update/internet-status", async (route) => {
     await fulfillJson(route, {
@@ -298,28 +257,7 @@ test("settings internet tab restores persisted Wi-Fi SSID after reboot", async (
     });
   });
   await page.route("**/api/health", async (route) => {
-    await fulfillJson(route, {
-      status: "ok",
-      processing_state: "idle",
-      processing_failures: 0,
-      degradation_reasons: [],
-      data_loss: {
-        affected_clients: 0,
-        tracked_clients: 0,
-        frames_dropped: 0,
-        queue_overflow_drops: 0,
-        server_queue_drops: 0,
-        parse_errors: 0,
-      },
-      persistence: {
-        analysis_in_progress: false,
-        analysis_queue_depth: 0,
-        write_error: null,
-        analysis_active_run_id: null,
-        analysis_started_at: null,
-        analysis_elapsed_s: null,
-      },
-    });
+    await fulfillJson(route, createHealthyUpdateStatus());
   });
   await bootLiveDashboard(page, { installRoutes: false });
   await openInternetTab(page);
@@ -364,28 +302,7 @@ test("settings internet tab toggles the Wi-Fi password field without losing the 
     });
   });
   await page.route("**/api/health", async (route) => {
-    await fulfillJson(route, {
-      status: "ok",
-      processing_state: "idle",
-      processing_failures: 0,
-      degradation_reasons: [],
-      data_loss: {
-        affected_clients: 0,
-        tracked_clients: 0,
-        frames_dropped: 0,
-        queue_overflow_drops: 0,
-        server_queue_drops: 0,
-        parse_errors: 0,
-      },
-      persistence: {
-        analysis_in_progress: false,
-        analysis_queue_depth: 0,
-        write_error: null,
-        analysis_active_run_id: null,
-        analysis_started_at: null,
-        analysis_elapsed_s: null,
-      },
-    });
+    await fulfillJson(route, createHealthyUpdateStatus());
   });
   await bootLiveDashboard(page, { installRoutes: false });
   await openInternetTab(page);
@@ -560,28 +477,14 @@ test("settings update recovery keeps Retry Update enabled even when readiness st
     });
   });
   await page.route("**/api/health", async (route) => {
-    await fulfillJson(route, {
+    await fulfillJson(route, createHealthyUpdateStatus({
       status: "degraded",
-      processing_state: "idle",
-      processing_failures: 0,
       degradation_reasons: ["disk"],
-      data_loss: {
-        affected_clients: 0,
-        tracked_clients: 0,
-        frames_dropped: 0,
-        queue_overflow_drops: 0,
-        server_queue_drops: 0,
-        parse_errors: 0,
-      },
       persistence: {
-        analysis_in_progress: false,
-        analysis_queue_depth: 0,
+        ...createHealthyUpdateStatus().persistence,
         write_error: "disk full",
-        analysis_active_run_id: null,
-        analysis_started_at: null,
-        analysis_elapsed_s: null,
       },
-    });
+    }));
   });
   await page.route("**/api/update/internet-status", async (route) => {
     await fulfillJson(route, {
