@@ -457,6 +457,39 @@ def test_run_server_smoke_retries_until_server_is_ready(monkeypatch, tmp_path: P
     assert recorded["terminated"] is True
 
 
+def test_run_server_smoke_does_not_retry_non_retryable_startup_failure(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    recorded: dict[str, object] = {}
+    _patch_release_smoke_process(monkeypatch, tmp_path, recorded)
+    responses = [
+        (
+            200,
+            "application/json",
+            '{"status":"ok","startup_state":"ready","background_task_failures":{"boot":"boom"}}',
+        ),
+        (
+            200,
+            "application/json",
+            '{"status":"ok","startup_state":"ready","background_task_failures":{}}',
+        ),
+        (200, "text/html; charset=utf-8", "<html><title>VibeSensor</title></html>"),
+    ]
+    monkeypatch.setattr(release_validation, "_read_http", lambda url: responses.pop(0))
+
+    with pytest.raises(RuntimeError, match="Managed startup task failed"):
+        run_server_smoke(
+            SERVER_ROOT / "config.dev.yaml",
+            host="127.0.0.1",
+            port=18081,
+            startup_timeout_s=1.0,
+        )
+
+    assert len(responses) == 2
+    assert recorded["terminated"] is True
+
+
 def test_run_server_smoke_times_out_with_last_error(monkeypatch, tmp_path: Path) -> None:
     recorded: dict[str, object] = {}
     _patch_release_smoke_process(monkeypatch, tmp_path, recorded)
