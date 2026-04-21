@@ -76,7 +76,7 @@ class SettingsPersistenceCoordinator:
     def _load(self) -> None:
         if self._db is None:
             return
-        snapshot = self._db.get_settings_snapshot()
+        snapshot = self._db.get_settings_snapshot()  # type: ignore[attr-defined]
         if snapshot is None:
             return
 
@@ -115,7 +115,7 @@ class SettingsPersistenceCoordinator:
             return
         payload = self.snapshot()
         try:
-            self._db.set_settings_snapshot(payload)
+            self._db.set_settings_snapshot(payload)  # type: ignore[attr-defined]
         except (aiosqlite.Error, OSError) as exc:
             LOGGER.error("Failed to persist settings to SQLite", exc_info=True)
             raise PersistenceError("Failed to persist settings to SQLite") from exc

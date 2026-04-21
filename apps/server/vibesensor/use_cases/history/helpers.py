@@ -7,7 +7,6 @@ routes layer translates domain exceptions to HTTP status codes.
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Mapping
 from typing import cast
 
@@ -16,7 +15,7 @@ from vibesensor.shared.exceptions import (
     AnalysisNotReadyError,
     RunNotFoundError,
 )
-from vibesensor.shared.ports import AsyncRunPersistence, RunPersistence
+from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -32,14 +31,9 @@ def resolve_run_language(run: StoredHistoryRun, requested: str | None) -> str:
     return run.metadata.language or "en"
 
 
-async def async_require_run(history_db: AsyncRunPersistence, run_id: str) -> StoredHistoryRun:
+async def async_require_run(history_db: RunPersistence, run_id: str) -> StoredHistoryRun:
     """Fetch a history run or raise a domain exception."""
-    aget_run = getattr(history_db, "aget_run", None)
-    if callable(aget_run):
-        run = cast(StoredHistoryRun | None, await aget_run(run_id))
-    else:
-        sync_history_db = cast(RunPersistence, history_db)
-        run = await asyncio.to_thread(sync_history_db.get_run, run_id)
+    run = await history_db.aget_run(run_id)
     if run is None:
         raise RunNotFoundError(f"Run {run_id!r} not found")
     return run

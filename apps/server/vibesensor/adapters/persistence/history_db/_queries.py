@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable
 from contextlib import AbstractAsyncContextManager
 from datetime import UTC, datetime
+from typing import TypeVar
 
 import aiosqlite
 
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.async_bridge import run_coro_blocking
 from vibesensor.shared.boundaries.analysis_payloads import (
     persisted_analysis_from_storage_json_object,
 )
@@ -26,9 +27,14 @@ from vibesensor.shared.types.run_schema import RunMetadata
 
 LOGGER = logging.getLogger(__name__)
 
+_T = TypeVar("_T")
+
 
 class _HistoryDBQueryMixin:
     def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
+        raise NotImplementedError
+
+    def _run_sync(self, coro: Awaitable[_T]) -> _T:
         raise NotImplementedError
 
     @staticmethod
@@ -81,7 +87,7 @@ class _HistoryDBQueryMixin:
         return run_metadata_from_mapping(parsed)
 
     def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
-        return run_coro_blocking(self.alist_runs(limit))
+        return self._run_sync(self.alist_runs(limit))
 
     async def alist_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         async with self._cursor(commit=False) as cur:
@@ -130,7 +136,7 @@ class _HistoryDBQueryMixin:
         return result
 
     def get_run(self, run_id: str) -> StoredHistoryRun | None:
-        return run_coro_blocking(self.aget_run(run_id))
+        return self._run_sync(self.aget_run(run_id))
 
     async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
         async with self._cursor(commit=False) as cur:
@@ -201,7 +207,7 @@ class _HistoryDBQueryMixin:
         )
 
     def get_run_metadata(self, run_id: str) -> RunMetadata | None:
-        return run_coro_blocking(self.aget_run_metadata(run_id))
+        return self._run_sync(self.aget_run_metadata(run_id))
 
     async def aget_run_metadata(self, run_id: str) -> RunMetadata | None:
         async with self._cursor(commit=False) as cur:
@@ -223,7 +229,7 @@ class _HistoryDBQueryMixin:
         )
 
     def get_active_run_id(self) -> str | None:
-        return run_coro_blocking(self.aget_active_run_id())
+        return self._run_sync(self.aget_active_run_id())
 
     async def aget_active_run_id(self) -> str | None:
         async with self._cursor(commit=False) as cur:
@@ -235,7 +241,7 @@ class _HistoryDBQueryMixin:
         return str(row[0]) if row else None
 
     def stale_analyzing_run_ids(self) -> list[str]:
-        return run_coro_blocking(self.astale_analyzing_run_ids())
+        return self._run_sync(self.astale_analyzing_run_ids())
 
     async def astale_analyzing_run_ids(self) -> list[str]:
         async with self._cursor(commit=False) as cur:
@@ -246,7 +252,7 @@ class _HistoryDBQueryMixin:
             return [str(row[0]) for row in await cur.fetchall()]
 
     def analyzing_run_health(self) -> AnalyzingRunHealth:
-        return run_coro_blocking(self.aanalyzing_run_health())
+        return self._run_sync(self.aanalyzing_run_health())
 
     async def aanalyzing_run_health(self) -> AnalyzingRunHealth:
         async with self._cursor(commit=False) as cur:
@@ -276,7 +282,7 @@ class _HistoryDBQueryMixin:
         )
 
     def verify_run_integrity(self, run_id: str) -> list[str]:
-        return run_coro_blocking(self.averify_run_integrity(run_id))
+        return self._run_sync(self.averify_run_integrity(run_id))
 
     async def averify_run_integrity(self, run_id: str) -> list[str]:
         """Check a completed run for consistency issues. Returns problem descriptions."""

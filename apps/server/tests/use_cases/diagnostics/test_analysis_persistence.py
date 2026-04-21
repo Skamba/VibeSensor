@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 from test_support import response_payload
-from test_support.history_db_async import fetch_all
+from test_support.history_db_async import execute_statements, fetch_all
 from test_support.persisted_analysis import make_persisted_analysis
 
 from tests.conftest import FakeState
@@ -148,10 +148,11 @@ def test_store_analysis_persists_summary_directly(
 
     db.run_repository.store_analysis("r1", make_persisted_analysis({"lang": "en", "findings": []}))
 
-    with db.lifecycle._cursor(commit=False) as cur:
-        cur.execute("SELECT analysis_json FROM runs WHERE run_id = ?", ("r1",))
-        row = cur.fetchone()
-    assert row is not None
+    row = fetch_all(
+        db.lifecycle,
+        "SELECT analysis_json FROM runs WHERE run_id = ?",
+        ("r1",),
+    )[0]
     raw = row[0]
     # No envelope — summary stored directly
     assert '"summary"' not in raw
@@ -168,11 +169,13 @@ def test_get_run_marks_unknown_analysis_storage_version_corrupt(tmp_path: Path) 
     db.run_repository.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
     db.run_repository.finalize_run("r1", "2026-01-01T00:01:00Z")
 
-    with db.lifecycle._cursor() as cur:
-        cur.execute(
+    execute_statements(
+        db.lifecycle,
+        (
             "UPDATE runs SET analysis_json = ? WHERE run_id = ?",
             ('{"_schema_version": 99, "findings": []}', "r1"),
-        )
+        ),
+    )
 
     run = db.run_repository.get_run("r1")
     assert run is not None
@@ -354,25 +357,25 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
 
     @dataclass
     class _FakeDB:
-        def get_run(self, run_id):
+        async def aget_run(self, run_id):
             if run_id != "run-pdf":
                 return None
             return _stored_run(run_id, metadata=metadata, analysis=analysis)
 
-        def iter_run_samples(self, run_id, batch_size=1000):
+        async def aiter_run_samples(self, run_id, batch_size=1000, *, stride=1):
             if run_id != "run-pdf":
                 return
             frames = [sensor_frame_from_mapping(sample) for sample in samples]
             for start in range(0, len(frames), batch_size):
                 yield frames[start : start + batch_size]
 
-        def list_runs(self):
+        async def alist_runs(self, limit=500):
             return []
 
-        def get_active_run_id(self):
+        async def aget_active_run_id(self):
             return None
 
-        def delete_run(self, run_id):
+        async def adelete_run(self, run_id):
             return False
 
     app = FastAPI()
@@ -409,7 +412,7 @@ async def test_insights_returns_persisted_analysis_no_lang() -> None:
 
     @dataclass
     class _DB:
-        def get_run(self, run_id):
+        async def aget_run(self, run_id):
             if run_id != "run-ins":
                 return None
             return _stored_run(run_id, metadata=metadata, analysis=analysis)
@@ -438,10 +441,10 @@ async def test_export_offloaded_to_thread() -> None:
 
     @dataclass
     class _DB:
-        def get_run(self, run_id):
+        async def aget_run(self, run_id):
             return _stored_run(run_id, metadata={})
 
-        def iter_run_samples(self, run_id, batch_size=1000):
+        async def aiter_run_samples(self, run_id, batch_size=1000, *, stride=1):
             frames = [sensor_frame_from_mapping(sample) for sample in samples]
             for start in range(0, len(frames), batch_size):
                 yield frames[start : start + batch_size]

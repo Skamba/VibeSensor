@@ -126,7 +126,7 @@ class FakeHistoryDB:
     analysis: dict[str, Any] | AnalysisSummary | PersistedAnalysis
     analysis_completed_at: str | None = "2026-01-01T00:01:00Z"
 
-    def get_run(self, run_id: str) -> StoredHistoryRun | None:
+    async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
         if run_id != "run-1":
             return None
         metadata = _coerce_metadata(self.metadata)
@@ -142,7 +142,7 @@ class FakeHistoryDB:
             analysis_completed_at=self.analysis_completed_at,
         )
 
-    def iter_run_samples(self, run_id: str, batch_size: int = 1000):
+    async def aiter_run_samples(self, run_id: str, batch_size: int = 1000, *, stride: int = 1):
         if run_id != "run-1":
             return
         rows = [
@@ -152,7 +152,7 @@ class FakeHistoryDB:
         for start in range(0, len(rows), batch_size):
             yield rows[start : start + batch_size]
 
-    def get_run_samples(self, run_id: str) -> list[SensorFrame]:
+    async def aget_run_samples(self, run_id: str) -> list[SensorFrame]:
         if run_id != "run-1":
             return []
         return [
@@ -160,7 +160,7 @@ class FakeHistoryDB:
             for row in self.samples
         ]
 
-    def list_runs(self) -> list[HistoryRunListEntry]:
+    async def alist_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         metadata = _coerce_metadata(self.metadata)
         return [
             HistoryRunListEntry(
@@ -174,13 +174,13 @@ class FakeHistoryDB:
             )
         ]
 
-    def get_active_run_id(self) -> str | None:
+    async def aget_active_run_id(self) -> str | None:
         return None
 
-    def delete_run(self, run_id: str) -> bool:
+    async def adelete_run(self, run_id: str) -> bool:
         return False
 
-    def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+    async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
         if run_id != "run-1":
             return False, "not_found"
         return True, None
@@ -461,7 +461,7 @@ def make_status_router(
         run_status: str = "complete"
         run_analysis: dict[str, Any] | None = None
 
-        def get_run(self, run_id: str) -> StoredHistoryRun | None:
+        async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
             if run_id != "run-1":
                 return None
             metadata = _coerce_metadata(self.metadata)

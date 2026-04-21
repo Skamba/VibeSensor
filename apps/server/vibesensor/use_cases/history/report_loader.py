@@ -15,7 +15,7 @@ from vibesensor.shared.boundaries.reporting import (
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.filenames import safe_filename
-from vibesensor.shared.ports import AsyncRunPersistence
+from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import is_json_array
@@ -52,7 +52,7 @@ class HistoryReportRequestLoader:
 
     __slots__ = ("_history_db",)
 
-    def __init__(self, history_db: AsyncRunPersistence) -> None:
+    def __init__(self, history_db: RunPersistence) -> None:
         self._history_db = history_db
 
     async def load_report_request(

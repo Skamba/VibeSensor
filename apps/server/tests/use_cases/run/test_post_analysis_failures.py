@@ -10,8 +10,9 @@ def test_unexpected_failure_recorder_persists_and_notifies() -> None:
     callbacks: list[str] = []
 
     class FakeDB:
-        def store_analysis_error(self, run_id: str, message: str) -> None:
+        async def astore_analysis_error(self, run_id: str, message: str) -> bool:
             stored_errors.append((run_id, message))
+            return True
 
     recorder = UnexpectedPostAnalysisBugRecorder(
         history_db=FakeDB(),
@@ -30,7 +31,7 @@ def test_unexpected_failure_recorder_tolerates_store_failures() -> None:
     callbacks: list[str] = []
 
     class FakeDB:
-        def store_analysis_error(self, run_id: str, message: str) -> None:
+        async def astore_analysis_error(self, run_id: str, message: str) -> bool:
             raise sqlite3.OperationalError("db locked")
 
     recorder = UnexpectedPostAnalysisBugRecorder(

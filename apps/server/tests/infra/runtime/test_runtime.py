@@ -377,6 +377,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     )
 
     history_db = MagicMock()
+    history_db.aclose = AsyncMock()
     worker_pool = MagicMock()
     control_plane = MagicMock()
     control_plane.start = AsyncMock()
@@ -416,7 +417,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     assert lifecycle.tasks == []
     run_recorder.shutdown_report.assert_called_once_with(5.0)
     worker_pool.shutdown.assert_called_once_with(True)
-    history_db.close.assert_called_once()
+    history_db.aclose.assert_called_once()
 
 
 @pytest.mark.parametrize("attr", ["settings_reader", "processing_loop", "ws_broadcast"])

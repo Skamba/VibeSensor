@@ -31,12 +31,12 @@ class _HistoryDbStub:
     run: dict[str, Any] | None = None
     samples: list[dict[str, Any]] | None = None
 
-    def get_run(self, run_id: str) -> StoredHistoryRun | None:
+    async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
         if self.run is None:
             return None
         return _stored_run(dict(self.run))
 
-    def iter_run_samples(self, run_id: str, batch_size: int = 1000):
+    async def aiter_run_samples(self, run_id: str, batch_size: int = 1000, *, stride: int = 1):
         rows = [
             row if isinstance(row, SensorFrame) else sensor_frame_from_mapping(row)
             for row in (self.samples or [])

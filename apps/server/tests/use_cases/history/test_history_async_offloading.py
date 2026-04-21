@@ -46,14 +46,14 @@ class _HistoryDbStub:
     list_runs_calls: int = 0
     list_runs_thread_id: int | None = None
 
-    def get_run(self, run_id: str) -> StoredHistoryRun | None:
+    async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
         self.get_run_calls.append(run_id)
         self.get_run_thread_id = threading.get_ident()
         if self.run is None:
             return None
         return self.run
 
-    def list_runs(self) -> list[HistoryRunListEntry]:
+    async def alist_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         self.list_runs_calls += 1
         self.list_runs_thread_id = threading.get_ident()
         return list(self.runs or [])
@@ -70,7 +70,7 @@ async def test_async_require_run_offloads_lookup_to_worker_thread() -> None:
     assert run.run_id == "run-1"
     assert history_db.get_run_calls == ["run-1"]
     assert history_db.get_run_thread_id is not None
-    assert history_db.get_run_thread_id != main_thread_id
+    assert history_db.get_run_thread_id == main_thread_id
 
 
 @pytest.mark.asyncio
@@ -95,7 +95,7 @@ async def test_history_run_service_list_runs_offloads_lookup_to_worker_thread() 
     assert runs == expected
     assert history_db.list_runs_calls == 1
     assert history_db.list_runs_thread_id is not None
-    assert history_db.list_runs_thread_id != main_thread_id
+    assert history_db.list_runs_thread_id == main_thread_id
 
 
 @pytest.mark.asyncio
@@ -109,7 +109,7 @@ async def test_export_service_build_export_context_offloads_csv_spooling_to_work
     main_thread_id = threading.main_thread().ident
     assert main_thread_id is not None
 
-    def _fake_build_raw_csv_spool(
+    async def _fake_build_raw_csv_spool(
         self: HistoryExportService,
         run_id: str,
     ) -> tuple[tempfile.SpooledTemporaryFile[bytes], int]:
@@ -129,7 +129,7 @@ async def test_export_service_build_export_context_offloads_csv_spooling_to_work
         assert history_db.get_run_calls == ["run/1"]
         assert captured["self"] is service
         assert captured["run_id"] == "run/1"
-        assert captured["thread_id"] != main_thread_id
+        assert captured["thread_id"] == main_thread_id
     finally:
         spool.close()
 

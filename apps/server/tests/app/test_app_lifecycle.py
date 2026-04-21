@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 from pathlib import Path
 
 import pytest
@@ -42,20 +41,18 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
         return None
 
     async def _fake_stop(self):
-        close_result = self._runtime.history_db.close()
-        if inspect.isawaitable(close_result):
-            await close_result
+        await self._runtime.history_db.aclose()
 
     closed = {"value": False}
 
-    def _fake_close(self):
+    async def _fake_close(self):
         closed["value"] = True
 
     monkeypatch.setattr(bootstrap_mod, "start_udp_data_receiver", _fake_udp_receiver)
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "start", _fake_start)
     monkeypatch.setattr(bootstrap_mod.LifecycleManager, "stop", _fake_stop)
     monkeypatch.setattr(UDPControlPlane, "start", _fake_start)
-    monkeypatch.setattr(SQLiteHistoryEngine, "close", _fake_close)
+    monkeypatch.setattr(SQLiteHistoryEngine, "aclose", _fake_close)
 
     app = await asyncio.to_thread(app_module.create_app, config_path=cfg_path)
     async with app.router.lifespan_context(app):

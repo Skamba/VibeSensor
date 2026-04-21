@@ -155,7 +155,7 @@ class TestCreateRunFailureExposesWriteError:
 
     def test_single_create_run_failure_sets_write_error(self, tmp_path: Path) -> None:
         db = MagicMock()
-        db.create_run.side_effect = OSError("disk full")
+        db.acreate_run.side_effect = OSError("disk full")
         logger = _make_logger(db, tmp_path)
 
         run_id, start_utc, start_mono = _start_and_snapshot(logger)
@@ -172,7 +172,7 @@ class TestCreateRunFailureExposesWriteError:
 
     def test_create_run_success_clears_write_error(self, tmp_path: Path) -> None:
         db = MagicMock()
-        db.create_run.side_effect = [OSError("first fail"), None]
+        db.acreate_run.side_effect = [OSError("first fail"), None]
         logger = _make_logger(db, tmp_path)
 
         run_id, start_utc, start_mono = _start_and_snapshot(logger)
@@ -198,7 +198,7 @@ class TestPersistentCreateRunFailureStopsRetrying:
 
     def test_gives_up_after_max_retries(self, tmp_path: Path) -> None:
         db = MagicMock()
-        db.create_run.side_effect = OSError("persistent failure")
+        db.acreate_run.side_effect = OSError("persistent failure")
         logger = _make_logger(db, tmp_path)
 
         run_id, start_utc, start_mono = _start_and_snapshot(logger)
@@ -210,7 +210,7 @@ class TestPersistentCreateRunFailureStopsRetrying:
             )
 
         # Should have been called exactly _MAX_HISTORY_CREATE_RETRIES times
-        assert db.create_run.call_count == _MAX_HISTORY_CREATE_RETRIES
+        assert db.acreate_run.call_count == _MAX_HISTORY_CREATE_RETRIES
         assert logger._persistence.history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
         assert not logger._persistence.history_run_created
         assert logger.status().write_error is not None
@@ -218,7 +218,7 @@ class TestPersistentCreateRunFailureStopsRetrying:
 
     def test_retry_counter_resets_on_new_session(self, tmp_path: Path) -> None:
         db = MagicMock()
-        db.create_run.side_effect = OSError("fail")
+        db.acreate_run.side_effect = OSError("fail")
         logger = _make_logger(db, tmp_path)
 
         run_id, start_utc, _ = _start_and_snapshot(logger)
@@ -232,7 +232,7 @@ class TestPersistentCreateRunFailureStopsRetrying:
         assert logger._persistence.history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
 
         # Starting a new session resets the counter
-        db.create_run.side_effect = None  # Next call succeeds
+        db.acreate_run.side_effect = None  # Next call succeeds
         logger.start_recording()
         assert logger._persistence.history_create_fail_count == 0
 
@@ -242,8 +242,8 @@ class TestAppendSamplesFailureExposesError:
 
     def test_append_failure_sets_write_error(self, tmp_path: Path) -> None:
         db = MagicMock()
-        db.create_run.return_value = None
-        db.append_samples.side_effect = OSError("write error")
+        db.acreate_run.return_value = None
+        db.aappend_samples.side_effect = OSError("write error")
         logger = _make_logger(db, tmp_path)
 
         run_id, start_utc, start_mono = _start_and_snapshot(logger)
@@ -262,7 +262,7 @@ class TestDroppedSamplesLogged:
 
     def test_dropped_samples_logged_when_create_run_failed(self, tmp_path: Path) -> None:
         db = MagicMock()
-        db.create_run.side_effect = OSError("fail")
+        db.acreate_run.side_effect = OSError("fail")
         logger = _make_logger(db, tmp_path)
 
         run_id, start_utc, start_mono = _start_and_snapshot(logger)
@@ -283,7 +283,7 @@ class TestDroppedSamplesLogged:
             ]
             assert len(warning_calls) > 0, "Expected warning about dropped samples"
         # append_samples should NOT have been called since run was never created
-        db.append_samples.assert_not_called()
+        db.aappend_samples.assert_not_called()
 
 
 class TestStatusAlwaysIncludesWriteError:
@@ -296,7 +296,7 @@ class TestStatusAlwaysIncludesWriteError:
 
     def test_write_error_survives_through_recording(self, tmp_path: Path) -> None:
         db = MagicMock()
-        db.create_run.side_effect = OSError("boom")
+        db.acreate_run.side_effect = OSError("boom")
         logger = _make_logger(db, tmp_path)
 
         run_id, start_utc, _ = _start_and_snapshot(logger)
@@ -311,7 +311,7 @@ class TestStatusAlwaysIncludesWriteError:
 
     def test_stop_recording_resets_write_error(self, tmp_path: Path) -> None:
         db = MagicMock()
-        db.create_run.side_effect = OSError("boom")
+        db.acreate_run.side_effect = OSError("boom")
         logger = _make_logger(db, tmp_path)
 
         run_id, start_utc, _ = _start_and_snapshot(logger)

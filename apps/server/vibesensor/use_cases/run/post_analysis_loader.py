@@ -51,39 +51,49 @@ def load_post_analysis_run(
     run_id: str,
     db: RunPersistence,
 ) -> PostAnalysisLoadResult:
-    get_run = getattr(db, "get_run", None)
-    stored_run = get_run(run_id) if callable(get_run) else None
-    if stored_run is not None:
-        metadata = stored_run.metadata
-        total_sample_count = max(0, int(stored_run.sample_count))
-    else:
-        metadata = db.get_run_metadata(run_id)
-        if metadata is None:
-            return MissingPostAnalysisMetadata(
-                run_id=run_id,
-                error_message="Metadata not found or corrupt; cannot analyse",
-            )
-        total_sample_count = 0
+    async def _aload() -> PostAnalysisLoadResult:
+        aget_run = getattr(db, "aget_run", None)
+        stored_run = await aget_run(run_id) if callable(aget_run) else None
+        if stored_run is not None:
+            metadata = stored_run.metadata
+            total_sample_count = max(0, int(stored_run.sample_count))
+        else:
+            metadata = await db.aget_run_metadata(run_id)
+            if metadata is None:
+                return MissingPostAnalysisMetadata(
+                    run_id=run_id,
+                    error_message="Metadata not found or corrupt; cannot analyse",
+                )
+            total_sample_count = 0
 
-    stride = _sample_stride(total_sample_count)
-    if stored_run is not None:
-        sample_batches = db.iter_run_samples(run_id, batch_size=1024, stride=stride)
-    else:
-        sample_batches = db.iter_run_samples(run_id, batch_size=1024)
-    samples = [sample for batch in sample_batches for sample in batch]
-    if total_sample_count <= 0:
-        total_sample_count = len(samples)
-    if not samples:
-        return EmptyPostAnalysisSamples(
+        stride = _sample_stride(total_sample_count)
+        samples: list[SensorFrame] = []
+        if stored_run is not None:
+            async for batch in db.aiter_run_samples(run_id, batch_size=1024, stride=stride):
+                samples.extend(batch)
+        else:
+            async for batch in db.aiter_run_samples(run_id, batch_size=1024):
+                samples.extend(batch)
+        if total_sample_count <= 0:
+            total_sample_count = len(samples)
+        if not samples:
+            return EmptyPostAnalysisSamples(
+                run_id=run_id,
+                error_message="No samples collected during run",
+            )
+
+        return LoadedPostAnalysisRun(
             run_id=run_id,
-            error_message="No samples collected during run",
+            metadata=metadata,
+            language=metadata.language or "en",
+            samples=samples,
+            total_sample_count=total_sample_count,
+            stride=stride,
         )
 
-    return LoadedPostAnalysisRun(
-        run_id=run_id,
-        metadata=metadata,
-        language=metadata.language or "en",
-        samples=samples,
-        total_sample_count=total_sample_count,
-        stride=stride,
-    )
+    runner = getattr(db, "_run_on_engine_loop", None)
+    if callable(runner):
+        return runner(_aload())  # type: ignore[no-any-return]
+    import asyncio as _asyncio
+
+    return _asyncio.run(_aload())
