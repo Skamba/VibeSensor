@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+import struct
+
 import numpy as np
 import pytest
 
 from vibesensor.adapters.udp.protocol import (
     ACK_BYTES,
     ACK_STRUCT,
+    ACK_SYNC_CLOCK_BYTES,
     CMD_HEADER_BYTES,
     CMD_IDENTIFY,
     CMD_IDENTIFY_BYTES,
     CMD_SYNC_CLOCK,
+    CMD_SYNC_CLOCK_BYTES,
     DATA_ACK_BYTES,
     DATA_ACK_STRUCT,
     DATA_HEADER_BYTES,
@@ -28,6 +32,7 @@ from vibesensor.adapters.udp.protocol import (
     client_id_mac,
     extract_client_id_hex,
     pack_ack,
+    pack_ack_sync_clock,
     pack_cmd_identify,
     pack_cmd_sync_clock,
     pack_data,
@@ -124,10 +129,37 @@ def test_pack_cmd_identify_clamps_duration_bounds() -> None:
 
 def test_pack_cmd_sync_clock_clamps_negative_server_time() -> None:
     client_id = bytes.fromhex("112233445566")
-    parsed = parse_cmd(pack_cmd_sync_clock(client_id, cmd_seq=7, server_time_us=-123))
+    parsed = parse_cmd(
+        pack_cmd_sync_clock(
+            client_id,
+            cmd_seq=7,
+            server_time_us=-123,
+            applied_offset_us=-456,
+            round_trip_us=-789,
+        )
+    )
     assert parsed.cmd_id == CMD_SYNC_CLOCK
     assert parsed.cmd_seq == 7
-    assert int.from_bytes(parsed.params[:8], "little") == 0
+    server_time_us, applied_offset_us, round_trip_us = struct.unpack("<QqI", parsed.params)
+    assert server_time_us == 0
+    assert applied_offset_us == -456
+    assert round_trip_us == 0
+
+
+def test_pack_cmd_sync_clock_roundtrip_includes_offset_and_rtt() -> None:
+    client_id = bytes.fromhex("112233445566")
+    parsed = parse_cmd(
+        pack_cmd_sync_clock(
+            client_id,
+            cmd_seq=9,
+            server_time_us=123_456_789,
+            applied_offset_us=-3_210,
+            round_trip_us=4_567,
+        )
+    )
+    assert parsed.cmd_id == CMD_SYNC_CLOCK
+    assert parsed.cmd_seq == 9
+    assert struct.unpack("<QqI", parsed.params) == (123_456_789, -3_210, 4_567)
 
 
 def test_client_id_mac_roundtrip() -> None:
@@ -145,10 +177,12 @@ def test_protocol_layout_constants_match_esp_side() -> None:
     assert HELLO_FIXED_BYTES == 21
     assert DATA_HEADER_BYTES == 22
     assert ACK_BYTES == 13
+    assert ACK_SYNC_CLOCK_BYTES == 29
     assert DATA_ACK_BYTES == 12
     assert HELLO_ACK_BYTES == 8
     assert CMD_HEADER_BYTES == 13
     assert CMD_IDENTIFY_BYTES == 15
+    assert CMD_SYNC_CLOCK_BYTES == 33
 
 
 # ---------------------------------------------------------------------------
@@ -270,6 +304,25 @@ def test_ack_roundtrip() -> None:
     assert decoded.client_id == client_id
     assert decoded.cmd_seq == 99
     assert decoded.status == 0
+    assert decoded.device_receive_us is None
+    assert decoded.device_send_us is None
+
+
+def test_sync_clock_ack_roundtrip() -> None:
+    client_id = bytes.fromhex("aabbccddeeff")
+    pkt = pack_ack_sync_clock(
+        client_id,
+        cmd_seq=101,
+        device_receive_us=987_000,
+        device_send_us=987_500,
+        status=0,
+    )
+    decoded = parse_ack(pkt)
+    assert decoded.client_id == client_id
+    assert decoded.cmd_seq == 101
+    assert decoded.status == 0
+    assert decoded.device_receive_us == 987_000
+    assert decoded.device_send_us == 987_500
 
 
 def test_hello_ack_roundtrip() -> None:
@@ -283,7 +336,7 @@ def test_hello_ack_roundtrip() -> None:
 @pytest.mark.parametrize(
     ("parse_fn", "short_data", "match"),
     [
-        (parse_ack, b"\x04\x01\x00", "ACK has unexpected size"),
+        (parse_ack, b"\x04\x01\x00", "ACK too short"),
         (parse_data_ack, b"\x05\x01\x00", "DATA_ACK has unexpected size"),
         (parse_hello_ack, b"\x06\x01\x00", "HELLO_ACK has unexpected size"),
     ],
@@ -307,6 +360,12 @@ def test_parse_ack_invalid_header(struct, parse_fn, pack_args, match) -> None:
     pkt = struct.pack(*pack_args)
     with pytest.raises(ProtocolError, match=match):
         parse_fn(pkt)
+
+
+def test_parse_ack_rejects_unknown_extended_size() -> None:
+    pkt = pack_ack(bytes.fromhex("aabbccddeeff"), cmd_seq=7, status=0) + b"\x00"
+    with pytest.raises(ProtocolError, match="ACK has unexpected size"):
+        parse_ack(pkt)
 
 
 def test_data_ack_roundtrip() -> None:

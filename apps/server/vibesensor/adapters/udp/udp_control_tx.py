@@ -64,7 +64,7 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
             elif msg_type == MSG_ACK:
                 ack = parse_ack(data)
                 LOGGER.info("ACK from %s: cmd_seq=%s status=%s", addr, ack.cmd_seq, ack.status)
-                registry.update_from_ack(ack, now_ts)
+                registry.update_from_ack(ack, now_ts, now_mono=time.monotonic())
             elif msg_type == MSG_DATA_ACK:
                 return
         except ProtocolVersionMismatch as exc:
@@ -167,7 +167,10 @@ class UDPControlPlane:
                 _fromhex(record.client_id),
                 seq,
                 server_time_us,
+                applied_offset_us=record.sync_offset_us or 0,
+                round_trip_us=record.sync_rtt_us or 0,
             )
             _sendto(payload, record.control_addr)
+            registry.mark_cmd_sent(client_id, seq, sync_send_us=server_time_us)
             sent += 1
         return sent

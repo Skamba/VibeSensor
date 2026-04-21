@@ -140,9 +140,11 @@ def test_esp_protocol_constants_match_python() -> None:
 
     from vibesensor.adapters.udp.protocol import (
         ACK_BYTES,
+        ACK_SYNC_CLOCK_BYTES,
         CMD_HEADER_BYTES,
         CMD_IDENTIFY,
         CMD_IDENTIFY_BYTES,
+        CMD_SYNC_CLOCK_BYTES,
         DATA_ACK_BYTES,
         DATA_HEADER_BYTES,
         HELLO_FIXED_BYTES,
@@ -178,17 +180,21 @@ def test_esp_protocol_constants_match_python() -> None:
         "HELLO_FIXED_BYTES": HELLO_FIXED_BYTES,
         "DATA_HEADER_BYTES": DATA_HEADER_BYTES,
         "ACK_BYTES": ACK_BYTES,
+        "ACK_SYNC_CLOCK_BYTES": ACK_SYNC_CLOCK_BYTES,
         "DATA_ACK_BYTES": DATA_ACK_BYTES,
         "CMD_HEADER_BYTES": CMD_HEADER_BYTES,
         "CMD_IDENTIFY_BYTES": CMD_IDENTIFY_BYTES,
+        "CMD_SYNC_CLOCK_BYTES": CMD_SYNC_CLOCK_BYTES,
     }
     cpp_names = {
         "HELLO_FIXED_BYTES": "kHelloFixedBytes",
         "DATA_HEADER_BYTES": "kDataHeaderBytes",
         "ACK_BYTES": "kAckBytes",
+        "ACK_SYNC_CLOCK_BYTES": "kAckSyncClockBytes",
         "DATA_ACK_BYTES": "kDataAckBytes",
         "CMD_HEADER_BYTES": "kCmdHeaderBytes",
         "CMD_IDENTIFY_BYTES": "kCmdIdentifyBytes",
+        "CMD_SYNC_CLOCK_BYTES": "kCmdSyncClockBytes",
     }
     # Evaluate C++ expressions by substituting kClientIdBytes and kCmdHeaderBytes
     for py_name, expected in py_sizes.items():
@@ -197,7 +203,11 @@ def test_esp_protocol_constants_match_python() -> None:
         assert m, f"C++ constant {cpp_name} not found"
         expr = m.group(1).strip()
         # Substitute known constants for eval
-        expr = expr.replace("kClientIdBytes", "6").replace("kCmdHeaderBytes", str(CMD_HEADER_BYTES))
+        expr = (
+            expr.replace("kClientIdBytes", "6")
+            .replace("kCmdHeaderBytes", str(CMD_HEADER_BYTES))
+            .replace("kAckBytes", str(ACK_BYTES))
+        )
         computed = eval(expr)  # noqa: S307
         assert computed == expected, f"{cpp_name} = {computed} but Python {py_name} = {expected}"
 
@@ -208,8 +218,10 @@ def test_protocol_docs_byte_sizes_match() -> None:
 
     from vibesensor.adapters.udp.protocol import (
         ACK_BYTES,
+        ACK_SYNC_CLOCK_BYTES,
         CMD_HEADER_BYTES,
         CMD_IDENTIFY_BYTES,
+        CMD_SYNC_CLOCK_BYTES,
         DATA_ACK_BYTES,
         DATA_HEADER_BYTES,
         HELLO_FIXED_BYTES,
@@ -223,7 +235,9 @@ def test_protocol_docs_byte_sizes_match() -> None:
         "DATA header bytes": DATA_HEADER_BYTES,
         "CMD header bytes": CMD_HEADER_BYTES,
         "CMD identify bytes": CMD_IDENTIFY_BYTES,
+        "CMD sync clock bytes": CMD_SYNC_CLOCK_BYTES,
         "ACK bytes": ACK_BYTES,
+        "ACK sync clock bytes": ACK_SYNC_CLOCK_BYTES,
         "DATA_ACK bytes": DATA_ACK_BYTES,
     }
     for label, value in expected.items():

@@ -41,6 +41,26 @@ void send_ack(TransportState& state,
   send_control_packet(state, status, packet, len, 8);
 }
 
+void send_sync_clock_ack(TransportState& state,
+                         RuntimeStatus& status,
+                         uint32_t cmd_seq,
+                         uint64_t device_receive_us,
+                         uint64_t device_send_us,
+                         uint8_t ack_status) {
+  uint8_t packet[vibesensor::kAckSyncClockBytes];
+  size_t len = vibesensor::pack_ack_sync_clock(packet,
+                                               sizeof(packet),
+                                               state.client_id,
+                                               cmd_seq,
+                                               device_receive_us,
+                                               device_send_us,
+                                               ack_status);
+  if (len == 0) {
+    return;
+  }
+  send_control_packet(state, status, packet, len, 8);
+}
+
 }  // namespace
 
 void initialize_transport(TransportState& state) {
@@ -179,13 +199,17 @@ void service_control_rx(TransportState& state,
   uint32_t cmd_seq = 0;
   uint16_t identify_ms = 0;
   uint64_t server_time_us = 0;
+  int64_t applied_offset_us = 0;
+  uint32_t round_trip_us = 0;
   bool ok = vibesensor::parse_cmd(packet,
                                   read,
                                   state.client_id,
                                   &cmd_id,
                                   &cmd_seq,
                                   &identify_ms,
-                                  &server_time_us);
+                                  &server_time_us,
+                                  &applied_offset_us,
+                                  &round_trip_us);
   if (!ok) {
     status.control_parse_errors++;
     set_last_error(status, 9);
@@ -197,9 +221,15 @@ void service_control_rx(TransportState& state,
     start_identify(led_state, identify_ms, millis());
     send_ack(state, status, cmd_seq, 0);
   } else if (cmd_id == vibesensor::kCmdSyncClock) {
-    int64_t local_us = static_cast<int64_t>(esp_timer_get_time());
-    state.clock_offset_us = static_cast<int64_t>(server_time_us) - local_us;
-    send_ack(state, status, cmd_seq, 0);
+    const uint64_t device_receive_us = static_cast<uint64_t>(esp_timer_get_time());
+    if (round_trip_us > 0) {
+      state.clock_offset_us = applied_offset_us;
+      status.sync_offset_us = applied_offset_us;
+      status.sync_round_trip_us = round_trip_us;
+    }
+    const uint64_t device_send_us = static_cast<uint64_t>(esp_timer_get_time());
+    send_sync_clock_ack(
+        state, status, cmd_seq, device_receive_us, device_send_us, 0);
   } else {
     send_ack(state, status, cmd_seq, 2);
   }

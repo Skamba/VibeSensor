@@ -32,7 +32,9 @@ This document is generated from code and shared contract files.
 - DATA header bytes (without sample payload): `22`
 - CMD header bytes: `13`
 - CMD identify bytes: `15`
+- CMD sync clock bytes: `33`
 - ACK bytes: `13`
+- ACK sync clock bytes: `29`
 - DATA_ACK bytes: `12`
 - HELLO_ACK bytes: `8`
 
