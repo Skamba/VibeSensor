@@ -97,7 +97,7 @@ class FirmwareCache:
             fetcher = GitHubReleaseFetcher(self._config)
 
         release = fetcher.find_release()
-        tag = release.get("tag_name", "")
+        tag = release.tag_name
         LOGGER.info("Selected release: %s", tag)
 
         current_meta: BundleMeta | None = None
@@ -114,7 +114,7 @@ class FirmwareCache:
             return current_meta
 
         asset = fetcher.find_firmware_asset(release)
-        asset_name = str(asset.get("name", "")) or "bundle.zip"
+        asset_name = asset.name or "bundle.zip"
 
         self._cache_dir.mkdir(parents=True, exist_ok=True)
         staging_dir = Path(tempfile.mkdtemp(prefix="fw-staging-", dir=str(self._cache_dir)))

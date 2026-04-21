@@ -3,17 +3,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import httpx
+import msgspec
 
 from vibesensor.shared.types.json_types import JsonValue
-from vibesensor.use_cases.updates.http_client import build_get_request, read_json_response
+from vibesensor.use_cases.updates.http_client import (
+    build_get_request,
+    read_json_response,
+    read_typed_json_response,
+)
 
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024  # 1 MB per read()
 
 __all__ = [
     "DOWNLOAD_CHUNK_BYTES",
+    "GitHubApiAssetRecord",
     "GitHubApiClient",
+    "GitHubApiReleaseRecord",
     "github_api_headers",
     "validate_https_url",
 ]
@@ -36,6 +44,20 @@ def github_api_headers(
     if token:
         headers["Authorization"] = f"Bearer {token}"
     return headers
+
+
+class GitHubApiAssetRecord(msgspec.Struct, kw_only=True, frozen=True):
+    name: str
+    url: str
+    digest: str = ""
+
+
+class GitHubApiReleaseRecord(msgspec.Struct, kw_only=True, frozen=True):
+    tag_name: str
+    draft: bool
+    prerelease: bool
+    assets: list[GitHubApiAssetRecord]
+    published_at: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,6 +89,19 @@ class GitHubApiClient:
 
         return read_json_response(
             url,
+            headers=self.api_headers(),
+            timeout_s=30,
+            context=self.context,
+            require_https=True,
+            transport=self.transport,
+        )
+
+    def get_typed_json(self, url: str, *, response_type: Any) -> Any:
+        """GET *url* and decode the JSON response into *response_type* via msgspec."""
+
+        return read_typed_json_response(
+            url,
+            response_type=response_type,
             headers=self.api_headers(),
             timeout_s=30,
             context=self.context,

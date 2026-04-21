@@ -20,8 +20,6 @@ __all__ = [
     "FirmwareCacheInfoPayload",
     "FlashManifest",
     "FlashManifestRecord",
-    "GitHubReleaseAssetPayload",
-    "GitHubReleasePayload",
     "ManifestEnvironment",
     "ManifestEnvironmentPayload",
     "ManifestEnvironmentRecord",
@@ -42,18 +40,6 @@ class ManifestSegmentPayload(TypedDict, total=False):
 class ManifestEnvironmentPayload(TypedDict, total=False):
     name: str
     segments: list[ManifestSegmentPayload]
-
-
-class GitHubReleaseAssetPayload(TypedDict, total=False):
-    name: str
-    url: str
-
-
-class GitHubReleasePayload(TypedDict, total=False):
-    tag_name: str
-    draft: bool
-    prerelease: bool
-    assets: list[GitHubReleaseAssetPayload]
 
 
 class FirmwareCacheInfoPayload(TypedDict, total=False):
