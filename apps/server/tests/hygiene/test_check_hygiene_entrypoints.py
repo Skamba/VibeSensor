@@ -29,6 +29,10 @@ _CHECK_ENTRYPOINTS = (
         id="frontend-dom-registry-guardrails",
     ),
     pytest.param(
+        "check_frontend_component_use_computed_guardrails",
+        id="frontend-component-usecomputed-guardrails",
+    ),
+    pytest.param(
         "check_frontend_generated_contract_boundaries",
         id="frontend-generated-contract-boundaries",
     ),

@@ -3,7 +3,6 @@ import { memo } from "preact/compat";
 import { getUiText } from "../ui_i18n";
 import {
   signal,
-  useComputed,
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
@@ -95,7 +94,7 @@ const SpectrumBandLegend = memo(function SpectrumBandLegend(props: {
     items,
     visible,
   } = useSignalProperties(props.bandLegend, SPECTRUM_BAND_LEGEND_KEYS);
-  const hidden = useComputed(() => !visible.value);
+  const hidden = !visible.value;
 
   return (
     <div id="bandLegend" class="legend band-legend" hidden={hidden}>
@@ -126,17 +125,13 @@ const SpectrumSensorLegend = memo(function SpectrumSensorLegend(props: {
   sensorLegend: ReadonlySignal<SpectrumSensorLegendModel | null>;
   sensorLegendHandlers: ReadonlySignal<SpectrumLegendHandlers | null>;
 }) {
-  const hasLegend = useComputed(() => {
-    const legend = props.sensorLegend.value;
-    return (
-      legend !== null
-      && legend.items.length > 0
-      && props.sensorLegendHandlers.value !== null
-    );
-  });
+  const legend = props.sensorLegend.value;
+  const hasLegend = legend !== null
+    && legend.items.length > 0
+    && props.sensorLegendHandlers.value !== null;
 
   return (
-    hasLegend.value
+    hasLegend
       ? (
         <SpectrumSensorLegendContent
           sensorLegend={props.sensorLegend}
@@ -153,27 +148,27 @@ const SpectrumSensorLegendContent = memo(function SpectrumSensorLegendContent(
     sensorLegendHandlers: ReadonlySignal<SpectrumLegendHandlers | null>;
   },
 ) {
-  const items = useComputed(
-    () => props.sensorLegend.value?.items ?? EMPTY_SPECTRUM_SENSOR_LEGEND_ITEMS,
-  );
-  const reset = useComputed(() => props.sensorLegend.value?.reset ?? null);
+  const legend = props.sensorLegend.value;
+  const items = legend?.items ?? EMPTY_SPECTRUM_SENSOR_LEGEND_ITEMS;
+  const reset = legend?.reset ?? null;
+  const handlers = props.sensorLegendHandlers.value;
 
   return (
-    reset.value !== null && props.sensorLegendHandlers.value !== null
+    reset !== null && handlers !== null
       ? (
         <>
           <button
             type="button"
             class="legend-item legend-item--interactive legend-item--reset"
-            aria-pressed={reset.value.ariaPressed ? "true" : "false"}
-            title={reset.value.titleText}
-            aria-label={reset.value.ariaLabel}
-            data-legend-state={reset.value.active ? "active" : undefined}
+            aria-pressed={reset.ariaPressed ? "true" : "false"}
+            title={reset.titleText}
+            aria-label={reset.ariaLabel}
+            data-legend-state={reset.active ? "active" : undefined}
             onClick={() => props.sensorLegendHandlers.peek()?.onReset()}
           >
-            <span class="legend-item__label">{reset.value.labelText}</span>
+            <span class="legend-item__label">{reset.labelText}</span>
           </button>
-          {items.value.map((item) => (
+          {items.map((item) => (
             <button
               key={item.id}
               type="button"
@@ -216,11 +211,11 @@ function SpectrumPanel(props: SpectrumPanelProps) {
   const { chartDom } = props;
   const bandLegend = useDeferredModel(props.bandLegendModel, DEFAULT_SPECTRUM_BAND_LEGEND_MODEL);
   const bandToggle = useDeferredModel(props.bandToggleModel, DEFAULT_SPECTRUM_BAND_TOGGLE_MODEL);
-  const overlayModel = useComputed(() => props.overlayModel.value ?? DEFAULT_SPECTRUM_OVERLAY_MODEL);
+  const overlayModel = props.overlayModel.value ?? DEFAULT_SPECTRUM_OVERLAY_MODEL;
   const sensorLegend = useDeferredModel(props.sensorLegendModel, null);
   const sensorLegendHandlers = useDeferredModel(props.sensorLegendHandlersModel, null);
-  const titleText = useComputed(() => getUiText("chart.spectrum_title", props.header.value.titleText));
-  const hintText = useComputed(() => getUiText("spectrum.controls_hint", props.header.value.hintText));
+  const titleText = getUiText("chart.spectrum_title", props.header.value.titleText);
+  const hintText = getUiText("spectrum.controls_hint", props.header.value.hintText);
   const {
     disabled: bandToggleDisabled,
     hidden: bandToggleHidden,
@@ -248,14 +243,14 @@ function SpectrumPanel(props: SpectrumPanelProps) {
             chartDom.specChart = element;
           }}
         />
-        <div id="spectrumOverlay" class="empty-state" hidden={overlayModel.value.hidden}>
-          {overlayModel.value.text}
+        <div id="spectrumOverlay" class="empty-state" hidden={overlayModel.hidden}>
+          {overlayModel.text}
         </div>
       </div>
         <div class="spectrum-controls-panel">
         <div class="spectrum-toolbar">
-          <div class="card__subtle spectrum-toolbar__hint">
-            {hintText}
+            <div class="card__subtle spectrum-toolbar__hint">
+              {hintText}
           </div>
           <div class="spectrum-toolbar__bands">
             <button

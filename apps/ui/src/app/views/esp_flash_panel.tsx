@@ -3,7 +3,6 @@ import { useRef } from "preact/hooks";
 
 import { useUiText } from "../ui_i18n";
 import {
-  useComputed,
   useSignalEffect,
   useSignalProperties,
   type ReadonlySignal,
@@ -271,7 +270,6 @@ function EspFlashPanel(props: {
   actions: ReadonlySignal<EspFlashPanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<EspFlashPanelRenderModel> | null>;
 }) {
-  const actions = useComputed(() => props.actions.value);
   const cancelLabel = useUiText("settings.esp_flash.cancel", "Cancel");
   const detailsCaption = useUiText(
     "settings.esp_flash.details_caption",
@@ -340,7 +338,7 @@ function EspFlashPanel(props: {
             </div>
             <div class="maintenance-card__body maintenance-card__body--hero">
               <EspFlashPortRow
-                actions={actions}
+                actions={props.actions}
                 portLabel={portLabel}
                 portOptions={portOptions}
                 portSelectDisabled={portSelectDisabled}
@@ -384,7 +382,7 @@ function EspFlashPanel(props: {
                 </div>
               </details>
               <EspFlashActionRow
-                actions={actions}
+                actions={props.actions}
                 cancelButtonDisabled={cancelButtonDisabled}
                 cancelButtonHidden={cancelButtonHidden}
                 cancelLabel={cancelLabel}
