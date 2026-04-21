@@ -26,6 +26,7 @@ class WsBroadcastService:
 
     __slots__ = (
         "_payload_source",
+        "_heavy_tick_credit",
         "_ui_heavy_push_hz",
         "_ui_push_hz",
         "include_heavy",
@@ -44,6 +45,7 @@ class WsBroadcastService:
     ) -> None:
         self.tick = 0
         self.include_heavy = True
+        self._heavy_tick_credit = 0
         self._shared_payload: LiveWsPayload | None = None
         self._shared_payload_tick: int = -1
         self._shared_payload_heavy: bool = True
@@ -53,12 +55,17 @@ class WsBroadcastService:
 
     def on_tick(self) -> None:
         """Advance the broadcast tick counter and toggle heavy-tick flag."""
-        heavy_every = max(
-            1,
-            int(self._ui_push_hz / max(1, self._ui_heavy_push_hz)),
-        )
+        push_hz = max(1, self._ui_push_hz)
+        heavy_hz = max(1, self._ui_heavy_push_hz)
         self.tick += 1
-        self.include_heavy = (self.tick % heavy_every) == 0
+        if heavy_hz >= push_hz:
+            self.include_heavy = True
+            self._heavy_tick_credit = 0
+            return
+        self._heavy_tick_credit += heavy_hz
+        self.include_heavy = self._heavy_tick_credit >= push_hz
+        if self.include_heavy:
+            self._heavy_tick_credit -= push_hz
 
     def _build_shared_payload(self) -> LiveWsPayload:
         return self._payload_source.build_shared_payload(include_heavy=self.include_heavy)

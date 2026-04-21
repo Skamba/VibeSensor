@@ -128,11 +128,11 @@ export function createSpectrumCanvasRenderer(
           tweenAlpha.value = alpha;
           const frame = tweenState.frame.value;
           if (frame) {
-            setSpectrumDataFromFrame(frame);
+            setSpectrumDataFromFrame(frame, { resetScales: false });
           }
         },
         onComplete: () => {
-          untracked(() => setSpectrumDataFromFrame(to));
+          untracked(() => setSpectrumDataFromFrame(to, { resetScales: true }));
         },
       });
       anim.start();
@@ -192,7 +192,7 @@ export function createSpectrumCanvasRenderer(
     const canTween = deps.state.transport.wsState.value === "connected"
       && tweenState.canTween.value;
     if (!canTween || !spectrumLastFrame.value || tweenDurationForFrameMs <= 0) {
-      setSpectrumDataFromFrame(nextFrame);
+      setSpectrumDataFromFrame(nextFrame, { resetScales: true });
       return;
     }
 
@@ -237,17 +237,22 @@ export function createSpectrumCanvasRenderer(
     deps.state.spectrum.spectrumPlot.value?.setSeriesIsolation(seriesIndex);
   }
 
-  function setSpectrumDataFromFrame(frame: SpectrumHeavyFrame): void {
+  function setSpectrumDataFromFrame(
+    frame: SpectrumHeavyFrame,
+    options: { resetScales: boolean },
+  ): void {
     const plot = deps.state.spectrum.spectrumPlot.value;
     if (!plot) {
       return;
     }
     currentFreqAxis.value = frame.freq;
     syncChartDataBuffer(frame.freq, frame.values);
-    plot.setData(chartData.value, false);
+    plot.setData(chartData.value, options.resetScales);
     // uPlot does not commit a paint when setData() skips scale recalculation.
     // Tween frames reuse fixed axes, so explicitly rebuild paths and redraw.
-    plot.redraw(true, false);
+    if (!options.resetScales) {
+      plot.redraw(true, false);
+    }
     spectrumLastFrame.value = frame;
   }
 

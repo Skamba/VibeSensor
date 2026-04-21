@@ -73,7 +73,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
 
   test("redraws tween frames when setData skips scale recalculation", async () => {
     let redrawCalls = 0;
-    let setDataCalls = 0;
+    const resetScaleValues: Array<boolean | undefined> = [];
     const renderTimesMs = [1_000, 1_165];
 
     await withSpectrumRendererHarness(
@@ -96,8 +96,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
                 },
                 resize() {},
                 setData(_data, resetScales) {
-                  expect(resetScales).toBe(false);
-                  setDataCalls += 1;
+                  resetScaleValues.push(resetScales);
                 },
                 setSeriesIsolation() {},
               };
@@ -118,7 +117,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
       async ({ prepareFrame, renderer, state }) => {
         renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
-        setDataCalls = 0;
+        resetScaleValues.length = 0;
         redrawCalls = 0;
 
         state.spectrum.spectra.value = {
@@ -133,7 +132,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
         renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
 
-        expect(setDataCalls).toBe(1);
+        expect(resetScaleValues).toContain(false);
         expect(redrawCalls).toBe(1);
       },
     );
