@@ -2,7 +2,9 @@ import type { SpectrumPanelChartDom } from "../src/app/runtime/spectrum_panel_vi
 import type {
   SpectrumCanvasRenderer,
   SpectrumCanvasRendererDeps,
+  SpectrumPreparedRenderData,
 } from "../src/app/runtime/spectrum_canvas_renderer";
+import { createSpectrumFramePreparerCore } from "../src/app/runtime/spectrum_frame_preparer";
 import { createAppState } from "../src/app/ui_app_state";
 import type { AdaptedClient } from "../src/transport/live_models";
 import { createElementStub, installDocumentStub } from "./spectrum_test_support";
@@ -31,6 +33,7 @@ export interface SpectrumRendererHarnessOptions {
 
 export interface SpectrumRendererHarness {
   dom: SpectrumPanelChartDom;
+  prepareFrame: () => SpectrumPreparedRenderData;
   renderer: SpectrumCanvasRenderer;
   state: AppState;
 }
@@ -103,6 +106,7 @@ export async function withSpectrumRendererHarness(
   run: (harness: SpectrumRendererHarness) => Promise<void> | void,
 ): Promise<void> {
   const restoreDocument = installDocumentStub();
+  const framePreparer = createSpectrumFramePreparerCore();
   try {
     const { createSpectrumCanvasRenderer } = await import(
       "../src/app/runtime/spectrum_canvas_renderer"
@@ -123,9 +127,18 @@ export async function withSpectrumRendererHarness(
       onCursorDataIndexChange: () => undefined,
       ...options.deps,
     });
+    const prepareFrame = () => renderer.composePreparedFrame(framePreparer.prepare({
+      clients: state.realtime.clients.value.map((client) => ({
+        id: client.id,
+        name: client.name,
+        connected: client.connected,
+      })),
+      spectraByClient: state.spectrum.spectra.value.clients,
+    }));
 
-    await run({ dom, renderer, state });
+    await run({ dom, prepareFrame, renderer, state });
   } finally {
+    framePreparer.dispose();
     restoreDocument();
   }
 }

@@ -1,8 +1,10 @@
+export type SpectrumNumericSeries = readonly number[] | Float64Array;
+
 export interface SpectrumSeriesEntry {
   id: string;
   label: string;
   color: string;
-  values: number[];
+  values: SpectrumNumericSeries;
 }
 
 export interface SpectrumFocusMarker {
@@ -14,7 +16,7 @@ export interface SpectrumFocusMarker {
 const FREQ_MATCH_EPSILON = 1e-6;
 
 export function closestFrequencyIndex(
-  freqAxis: readonly number[],
+  freqAxis: SpectrumNumericSeries,
   targetHz: number,
 ): number | null {
   if (!freqAxis.length || !Number.isFinite(targetHz)) {
@@ -33,8 +35,8 @@ export function closestFrequencyIndex(
 }
 
 export function freqGridsMatch(
-  left: readonly number[],
-  right: readonly number[],
+  left: SpectrumNumericSeries,
+  right: SpectrumNumericSeries,
   len: number,
 ): boolean {
   for (let index = 0; index < len; index += 1) {

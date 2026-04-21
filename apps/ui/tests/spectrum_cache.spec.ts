@@ -50,8 +50,8 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           ]);
         },
       },
-      async ({ renderer, state }) => {
-        const firstPrepared = renderer.prepareFrame();
+      async ({ prepareFrame, renderer, state }) => {
+        const firstPrepared = prepareFrame();
         renderer.renderPreparedFrame(firstPrepared);
         await flushSignalUpdates();
 
@@ -64,7 +64,7 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           },
         };
 
-        const nextPrepared = renderer.prepareFrame();
+        const nextPrepared = prepareFrame();
         renderer.renderPreparedFrame(nextPrepared);
         await flushSignalUpdates();
 
@@ -100,8 +100,8 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           ]);
         },
       },
-      async ({ renderer, state }) => {
-        const prepared = renderer.prepareFrame();
+      async ({ prepareFrame, renderer, state }) => {
+        const prepared = prepareFrame();
         renderer.renderPreparedFrame(prepared);
         await flushSignalUpdates();
 
@@ -155,9 +155,9 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           ]);
         },
       },
-      ({ renderer }) => {
-        const firstPrepared = renderer.prepareFrame();
-        const secondPrepared = renderer.prepareFrame();
+      ({ prepareFrame }) => {
+        const firstPrepared = prepareFrame();
+        const secondPrepared = prepareFrame();
 
         expect(secondPrepared.entries[0]?.values).toBe(firstPrepared.entries[0]?.values);
         expect(secondPrepared.entries[1]?.values).toBe(firstPrepared.entries[1]?.values);
@@ -186,8 +186,8 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           ]);
         },
       },
-      ({ renderer, state }) => {
-        const firstPrepared = renderer.prepareFrame();
+      ({ prepareFrame, state }) => {
+        const firstPrepared = prepareFrame();
 
         state.spectrum.spectra.value = {
           clients: {
@@ -199,7 +199,7 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           },
         };
 
-        const secondPrepared = renderer.prepareFrame();
+        const secondPrepared = prepareFrame();
 
         expect(secondPrepared.entries[0]?.values).toBe(firstPrepared.entries[0]?.values);
         expect(secondPrepared.entries[1]?.values).not.toBe(firstPrepared.entries[1]?.values);
@@ -237,8 +237,8 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           ]);
         },
       },
-      async ({ renderer, state }) => {
-        renderer.renderPreparedFrame(renderer.prepareFrame());
+      async ({ prepareFrame, renderer, state }) => {
+        renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
 
         state.spectrum.spectra.value = {
@@ -251,7 +251,7 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           },
         };
 
-        renderer.renderPreparedFrame(renderer.prepareFrame());
+        renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
 
         expect(setDataSnapshots).toHaveLength(2);

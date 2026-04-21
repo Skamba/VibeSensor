@@ -375,6 +375,7 @@ export interface SpectrumStateValue {
   hasSpectrumData: boolean;
   chartLoading: boolean;
   chartLoadErrorDetail: string | null;
+  framePrepareErrorDetail: string | null;
 }
 
 export type ShellState = SignalState<ShellStateValue>;
@@ -469,6 +470,7 @@ export function createAppState(): AppState {
       hasSpectrumData: signal(false),
       chartLoading: signal(false),
       chartLoadErrorDetail: signal<string | null>(null),
+      framePrepareErrorDetail: signal<string | null>(null),
     },
   };
 }
