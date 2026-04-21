@@ -62,8 +62,8 @@ describe("createSpectrumCanvasRenderer chart lifecycle", () => {
           ]);
         },
       },
-      async ({ renderer, state }) => {
-        const prepared = renderer.prepareFrame();
+      async ({ prepareFrame, renderer, state }) => {
+        const prepared = prepareFrame();
         renderer.renderPreparedFrame(prepared);
 
         expect(state.spectrum.chartLoading.value).toBe(true);
@@ -122,8 +122,8 @@ describe("createSpectrumCanvasRenderer chart lifecycle", () => {
           ]);
         },
       },
-      async ({ renderer, state }) => {
-        const prepared = renderer.prepareFrame();
+      async ({ prepareFrame, renderer, state }) => {
+        const prepared = prepareFrame();
         renderer.renderPreparedFrame(prepared);
         await flushSignalUpdates();
 
@@ -179,8 +179,8 @@ describe("createSpectrumCanvasRenderer chart lifecycle", () => {
           ]);
         },
       },
-      async ({ renderer }) => {
-        renderer.renderPreparedFrame(renderer.prepareFrame());
+      async ({ prepareFrame, renderer }) => {
+        renderer.renderPreparedFrame(prepareFrame());
         await flushSignalUpdates();
         setDataCalls = 0;
         redrawCalls = 0;

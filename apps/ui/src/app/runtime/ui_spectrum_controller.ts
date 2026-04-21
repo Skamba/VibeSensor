@@ -3,7 +3,13 @@ import { computed, effectOnChange, untracked } from "../ui_signals";
 import {
   createSpectrumCanvasRenderer,
   type SpectrumCanvasRenderer,
+  type SpectrumPreparedRenderData,
 } from "./spectrum_canvas_renderer";
+import {
+  createInlineSpectrumFramePreparer,
+  type SpectrumFramePreparer,
+  type SpectrumFramePreparationInput,
+} from "./spectrum_frame_preparer";
 import { SpectrumInteractionController } from "./spectrum_interaction_controller";
 import type { SpectrumPanelView } from "./spectrum_panel_view";
 
@@ -11,6 +17,7 @@ type UiSpectrumControllerDeps = {
   state: AppState;
   panel: SpectrumPanelView;
   t: (key: string, vars?: Record<string, unknown>) => string;
+  framePreparer?: SpectrumFramePreparer;
 };
 
 export class UiSpectrumController {
@@ -20,16 +27,27 @@ export class UiSpectrumController {
 
   private readonly canvas: SpectrumCanvasRenderer;
 
+  private readonly framePreparer: SpectrumFramePreparer;
+
   private readonly disposeLanguageSync: () => void;
 
   private readonly disposeSpectraSync: () => void;
 
   private readonly disposeTransportOverlaySync: () => void;
 
+  private disposed = false;
+
+  private framePreparationRunning = false;
+
+  private requestedSpectrumVersion = 0;
+
+  private processedSpectrumVersion = 0;
+
   constructor(
     private readonly deps: UiSpectrumControllerDeps,
   ) {
     this.panel = this.deps.panel;
+    this.framePreparer = this.deps.framePreparer ?? createInlineSpectrumFramePreparer();
     this.canvas = createSpectrumCanvasRenderer({
       state: this.state,
       dom: this.panel.chartDom,
@@ -83,7 +101,7 @@ export class UiSpectrumController {
   }
 
   private applyPreparedSpectrum(
-    prepared: ReturnType<SpectrumCanvasRenderer["prepareFrame"]>,
+    prepared: SpectrumPreparedRenderData,
     mode: "data" | "decorations",
   ): void {
     this.state.spectrum.chartBands.value = prepared.chartBands;
@@ -104,8 +122,12 @@ export class UiSpectrumController {
 
   renderSpectrum(): void {
     this.renderSpectrumHeader();
-    const prepared = this.canvas.prepareFrame();
-    this.applyPreparedSpectrum(prepared, "data");
+    this.requestedSpectrumVersion += 1;
+    if (this.framePreparationRunning) {
+      return;
+    }
+    this.framePreparationRunning = true;
+    void this.preparePendingSpectrumFrames();
   }
 
   refreshSpectrumDecorations(): void {
@@ -115,9 +137,11 @@ export class UiSpectrumController {
   }
 
   dispose(): void {
+    this.disposed = true;
     this.disposeTransportOverlaySync();
     this.disposeSpectraSync();
     this.disposeLanguageSync();
+    this.framePreparer.dispose();
     this.interaction.dispose();
     this.canvas.dispose();
   }
@@ -127,6 +151,10 @@ export class UiSpectrumController {
     if (this.state.spectrum.chartLoadErrorDetail.value) {
       message = this.t("spectrum.chart_load_error", {
         message: this.state.spectrum.chartLoadErrorDetail.value,
+      });
+    } else if (this.state.spectrum.framePrepareErrorDetail.value) {
+      message = this.t("spectrum.frame_prepare_error", {
+        message: this.state.spectrum.framePrepareErrorDetail.value,
       });
     } else if (this.state.transport.payloadError.value) {
       message = this.state.transport.payloadError.value;
@@ -184,6 +212,7 @@ export class UiSpectrumController {
   private bindReactiveOverlaySync(): () => void {
     const transportOverlayState = computed(() => ({
       hasReceivedPayload: this.state.transport.hasReceivedPayload.value,
+      framePrepareErrorDetail: this.state.spectrum.framePrepareErrorDetail.value,
       payloadError: this.state.transport.payloadError.value,
       wsState: this.state.transport.wsState.value,
     }));
@@ -191,4 +220,62 @@ export class UiSpectrumController {
       untracked(() => this.updateSpectrumOverlay());
     });
   }
+
+  private buildFramePreparationInput(): SpectrumFramePreparationInput {
+    return {
+      clients: this.state.realtime.clients.value.map((client) => ({
+        id: client.id,
+        name: client.name,
+        connected: client.connected,
+      })),
+      spectraByClient: this.state.spectrum.spectra.value.clients,
+    };
+  }
+
+  private async preparePendingSpectrumFrames(): Promise<void> {
+    try {
+      while (!this.disposed && this.processedSpectrumVersion < this.requestedSpectrumVersion) {
+        const version = this.requestedSpectrumVersion;
+        this.state.spectrum.framePrepareErrorDetail.value = null;
+        try {
+          const frameData = await this.framePreparer.prepare(this.buildFramePreparationInput());
+          if (this.disposed) {
+            return;
+          }
+          if (version !== this.requestedSpectrumVersion) {
+            continue;
+          }
+          this.processedSpectrumVersion = version;
+          const prepared = this.canvas.composePreparedFrame(frameData);
+          this.applyPreparedSpectrum(prepared, "data");
+        } catch (error: unknown) {
+          if (this.disposed) {
+            return;
+          }
+          if (version !== this.requestedSpectrumVersion) {
+            continue;
+          }
+          this.processedSpectrumVersion = version;
+          this.state.spectrum.framePrepareErrorDetail.value = getFramePrepareErrorDetail(error);
+          this.updateSpectrumOverlay();
+        }
+      }
+    } finally {
+      this.framePreparationRunning = false;
+      if (!this.disposed && this.processedSpectrumVersion < this.requestedSpectrumVersion) {
+        this.framePreparationRunning = true;
+        void this.preparePendingSpectrumFrames();
+      }
+    }
+  }
+}
+
+function getFramePrepareErrorDetail(error: unknown): string {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+  if (typeof error === "string" && error.trim().length > 0) {
+    return error;
+  }
+  return "Unknown error";
 }
