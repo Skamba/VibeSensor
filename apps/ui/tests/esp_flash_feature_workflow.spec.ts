@@ -5,16 +5,16 @@ import type {
   EspFlashStatusPayload,
   EspSerialPortPayload,
 } from "../src/api/types";
+import { signal } from "../src/app/ui_signals";
+import { createTestQueryClient } from "./query_client_test_support";
 
 type WorkflowHarness = {
   errors: string[];
-  pollerCalls: string[];
 };
 
 function createHarness(): WorkflowHarness {
   return {
     errors: [],
-    pollerCalls: [],
   };
 }
 
@@ -80,6 +80,8 @@ describe("createEspFlashFeatureWorkflow", () => {
       showError: (message) => {
         harness.errors.push(message);
       },
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
       api: {
         async getEspFlashStatus() {
           return status;
@@ -108,6 +110,7 @@ describe("createEspFlashFeatureWorkflow", () => {
     });
     expect(renderState.logText).toContain("erase ok");
     expect(renderState.attempts).toHaveLength(1);
+    workflow.dispose();
   });
 
   test("keeps the last running journey phase when a later status only reports failure", async () => {
@@ -122,6 +125,8 @@ describe("createEspFlashFeatureWorkflow", () => {
       showError: (message) => {
         harness.errors.push(message);
       },
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
       api: {
         async getEspFlashStatus() {
           return status;
@@ -152,16 +157,22 @@ describe("createEspFlashFeatureWorkflow", () => {
 
     expect(workflow.getRenderState().lastJourneyPhase).toBe("flashing");
     expect(harness.errors).toEqual([]);
+    workflow.dispose();
   });
 
-  test("starts flashing with the selected target and restarts polling without DOM bindings", async () => {
+  test("starts flashing with the selected target and refreshes query-backed state", async () => {
     const harness = createHarness();
     let startArgs: { autoDetect: boolean; port: string | null } | null = null;
+    let status = makeStatus({
+      log_count: 2,
+    });
     const workflow = createEspFlashFeatureWorkflow({
       t: (key) => key,
       showError: (message) => {
         harness.errors.push(message);
       },
+      pollingEnabled: signal(false),
+      queryClient: createTestQueryClient(),
       api: {
         async getEspFlashPorts() {
           return {
@@ -169,9 +180,7 @@ describe("createEspFlashFeatureWorkflow", () => {
           };
         },
         async getEspFlashStatus() {
-          return makeStatus({
-            log_count: 2,
-          });
+          return status;
         },
         async getEspFlashLogs() {
           return {
@@ -187,19 +196,13 @@ describe("createEspFlashFeatureWorkflow", () => {
         },
         async startEspFlash(port, autoDetect) {
           startArgs = { port, autoDetect };
+          status = makeStatus({
+            log_count: 0,
+            phase: "validating",
+            state: "running",
+          });
         },
       },
-      createPollingController: () => ({
-        start() {
-          harness.pollerCalls.push("start");
-        },
-        stop() {
-          harness.pollerCalls.push("stop");
-        },
-        restart() {
-          harness.pollerCalls.push("restart");
-        },
-      }),
     });
 
     await workflow.refreshPorts();
@@ -212,7 +215,8 @@ describe("createEspFlashFeatureWorkflow", () => {
       autoDetect: false,
     });
     expect(workflow.getRenderState().logText).toBe("");
-    expect(harness.pollerCalls).toEqual(["restart"]);
+    expect(workflow.getRenderState().status.state).toBe("running");
     expect(harness.errors).toEqual([]);
+    workflow.dispose();
   });
 });

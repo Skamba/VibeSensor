@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import type {
   CarsFeatureInteraction,
@@ -17,6 +19,7 @@ export interface CarsFeatureDeps {
   panel: CarsWizardPanelBridge;
   services: Pick<FeatureServices, "t">;
   formatting: Pick<FeatureFormatting, "fmt">;
+  queryClient: QueryClient;
 }
 
 export interface CarsFeature {
@@ -29,6 +32,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
   const workflow = createCarsFeatureWorkflow({
     addCarFromWizard: ctx.addCarFromWizard,
     fmt: ctx.formatting.fmt,
+    queryClient: ctx.queryClient,
     t: ctx.services.t,
     view: {
       focus(target): void {

@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import { getSettingsObdStatus, getSpeedSourceStatus } from "../../api";
 import { GPS_POLL_FAST_MS, GPS_POLL_SLOW_MS } from "../../config";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
@@ -14,7 +16,8 @@ import {
   buildSpeedSourceDiagnosticsRenderModel,
   type SettingsSpeedSourcePresenterDeps,
 } from "../views/settings_speed_source_presenter";
-import { createPollingController } from "./polling_controller";
+import { createObservedServerStateQuery } from "./server_state_query";
+import { serverStateQueryKeys } from "./server_state_query_keys";
 
 interface SettingsGpsStatusModulePorts {
   activeViewId: ReadonlySignal<string>;
@@ -25,10 +28,16 @@ interface SettingsGpsStatusModulePorts {
 export interface SettingsGpsStatusModuleDeps {
   panel: SpeedSourcePanelView;
   settings: SettingsState;
+  queryClient: QueryClient;
   services: Pick<FeatureServices, "t">;
   formatting: Pick<FeatureFormatting, "fmt">;
   getSpeedUnit: () => string;
   ports: SettingsGpsStatusModulePorts;
+}
+
+interface GpsStatusSnapshot {
+  obdStatus: Awaited<ReturnType<typeof getSettingsObdStatus>> | null;
+  status: Awaited<ReturnType<typeof getSpeedSourceStatus>>;
 }
 
 export interface SettingsGpsStatusModule {
@@ -62,15 +71,15 @@ export function createSettingsGpsStatusModule(
     )
   );
 
-  const polling = createPollingController({
+  const gpsStatusQuery = createObservedServerStateQuery<GpsStatusSnapshot>({
     enabled: pollingEnabled,
-    poll: async () => {
-      const shouldLoadObdStatus =
-        settings.speed.source.value === "obd2" || settings.speed.obdDeviceMac.value != null;
-      const [status, obdStatus] = await Promise.all([
-        getSpeedSourceStatus(),
-        shouldLoadObdStatus ? getSettingsObdStatus() : Promise.resolve(null),
-      ]);
+    observerOptions: {
+      refetchInterval: (query) => query.state.data?.status.connection_state === "connected"
+        ? GPS_POLL_FAST_MS
+        : GPS_POLL_SLOW_MS,
+      refetchIntervalInBackground: true,
+    },
+    onData: ({ status, obdStatus }) => {
       batch(() => {
         settings.speed.gpsFallbackActive.value = status.fallback_active;
         settings.speed.gpsEffectiveSpeedKph.value = status.effective_speed_kmh;
@@ -82,11 +91,21 @@ export function createSettingsGpsStatusModule(
         );
       });
       ctx.ports.syncSpeedSourceSelectionUi();
-      return status.connection_state === "connected"
-        ? GPS_POLL_FAST_MS
-        : GPS_POLL_SLOW_MS;
     },
-    onErrorDelayMs: GPS_POLL_SLOW_MS,
+    queryClient: ctx.queryClient,
+    queryFn: async () => {
+      const shouldLoadObdStatus =
+        settings.speed.source.value === "obd2" || settings.speed.obdDeviceMac.value != null;
+      const [status, obdStatus] = await Promise.all([
+        getSpeedSourceStatus(),
+        shouldLoadObdStatus ? getSettingsObdStatus() : Promise.resolve(null),
+      ]);
+      return {
+        obdStatus,
+        status,
+      };
+    },
+    queryKey: serverStateQueryKeys.settings.gpsStatus(),
   });
 
   return {
@@ -94,7 +113,7 @@ export function createSettingsGpsStatusModule(
       handlersBound.value = true;
     },
     dispose(): void {
-      polling.dispose();
+      gpsStatusQuery.dispose();
     },
     markStartupReady(): void {
       startupReady.value = true;

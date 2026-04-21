@@ -4,6 +4,7 @@ import { effect, signal } from "../src/app/ui_signals";
 import type { CarsListRenderModel, CarsListPanelView } from "../src/app/views/cars_panel";
 import { createAppState } from "../src/app/ui_app_state";
 import type { CarsPayload } from "../src/api/types";
+import { createTestQueryClient } from "./query_client_test_support";
 
 function lastRender(renders: CarsListRenderModel[]): CarsListRenderModel {
   const render = renders.at(-1);
@@ -32,6 +33,7 @@ test("settings cars module dismisses transient creation feedback through typed t
   });
 
   const module = createSettingsCarsModule({
+    queryClient: createTestQueryClient(),
     settings: state,
     panels: {
       analysisPanel: {
@@ -144,6 +146,7 @@ test("settings cars module loads cars through the shared async loader without ov
   });
 
   const module = createSettingsCarsModule({
+    queryClient: createTestQueryClient(),
     settings: state,
     panels: {
       analysisPanel: {

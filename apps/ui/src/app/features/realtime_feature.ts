@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import type {
   RealtimeState,
@@ -37,6 +39,7 @@ export interface RealtimeFeatureDeps {
   state: RealtimeFeatureStateDeps;
   panels: RealtimeFeaturePanelDeps;
   ports: RealtimeFeaturePortDeps;
+  queryClient: QueryClient;
   services: FeatureServices;
   formatting: Pick<FeatureFormatting, "formatInt">;
 }
@@ -97,6 +100,7 @@ export function createRealtimeFeature(
     realtime: state.realtime,
     t: services.t,
     showError: services.showError,
+    queryClient: ctx.queryClient,
     isDemoMode,
     idleCaptureReadinessSignature: viewState.idleCaptureReadinessSignature,
     selection: ports.selection,

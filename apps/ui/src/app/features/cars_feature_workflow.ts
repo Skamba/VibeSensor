@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import type {
   CarLibraryGearbox,
   CarLibraryModel,
@@ -34,13 +36,13 @@ import {
   createCarsFeatureTransport,
   type CarsFeatureTransport,
 } from "./cars_feature_transport";
-import { createApiLoader } from "./api_loader";
 import {
   batch,
   computed,
   signal,
   type ReadonlySignal,
 } from "../ui_signals";
+import { serverStateQueryKeys } from "./server_state_query_keys";
 
 export type CarsFeatureFocusTarget =
   | "brand-option"
@@ -114,6 +116,7 @@ export interface CarsFeatureWorkflowDeps {
     variant?: string,
   ): Promise<void>;
   fmt: (value: number, digits?: number) => string;
+  queryClient: QueryClient;
   t: (key: string, vars?: Record<string, unknown>) => string;
   transport?: Partial<CarsFeatureTransport>;
   view: CarsFeatureWorkflowViewPorts;
@@ -335,64 +338,55 @@ export function createCarsFeatureWorkflow(
     });
   }
 
-  const brandStepLoader = createApiLoader({
-    beforeLoad: () => {
-      brandOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
-    },
-    load: () => transport.loadBrands(),
-    apply: (brands) => {
+  async function loadBrandStep(): Promise<void> {
+    brandOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
+    try {
+      const brands = await deps.queryClient.fetchQuery({
+        queryFn: () => transport.loadBrands(),
+        queryKey: serverStateQueryKeys.carsWizard.brands(),
+        staleTime: 5 * 60 * 1000,
+      });
       brandOptions.value = createReadyOptionsState(brands);
       deps.view.focus("brand-option");
-    },
-    onError: () => {
+    } catch {
       brandOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_brands"));
       deps.view.focus("custom-brand");
-    },
-    swallowError: true,
-  });
-
-  const typeStepLoader = createApiLoader({
-    beforeLoad: () => {
-      typeOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
-    },
-    load: () => transport.loadTypes(wizardState.value.brand),
-    apply: (types) => {
-      typeOptions.value = createReadyOptionsState(types);
-      deps.view.focus("type-option");
-    },
-    onError: () => {
-      typeOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_types"));
-      deps.view.focus("custom-type");
-    },
-    swallowError: true,
-  });
-
-  const modelStepLoader = createApiLoader({
-    beforeLoad: () => {
-      modelOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
-    },
-    load: () => transport.loadModels(wizardState.value.brand, wizardState.value.carType),
-    apply: (models) => {
-      modelOptions.value = createReadyOptionsState(models);
-      deps.view.focus("model-option");
-    },
-    onError: () => {
-      modelOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_models"));
-      deps.view.focus("custom-model");
-    },
-    swallowError: true,
-  });
-
-  async function loadBrandStep(): Promise<void> {
-    await brandStepLoader.load();
+    }
   }
 
   async function loadTypeStep(): Promise<void> {
-    await typeStepLoader.load();
+    typeOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
+    try {
+      const types = await deps.queryClient.fetchQuery({
+        queryFn: () => transport.loadTypes(wizardState.value.brand),
+        queryKey: serverStateQueryKeys.carsWizard.types(wizardState.value.brand),
+        staleTime: 5 * 60 * 1000,
+      });
+      typeOptions.value = createReadyOptionsState(types);
+      deps.view.focus("type-option");
+    } catch {
+      typeOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_types"));
+      deps.view.focus("custom-type");
+    }
   }
 
   async function loadModelStep(): Promise<void> {
-    await modelStepLoader.load();
+    modelOptions.value = createLoadingOptionsState(deps.t("settings.wizard.loading"));
+    try {
+      const models = await deps.queryClient.fetchQuery({
+        queryFn: () => transport.loadModels(wizardState.value.brand, wizardState.value.carType),
+        queryKey: serverStateQueryKeys.carsWizard.models(
+          wizardState.value.brand,
+          wizardState.value.carType,
+        ),
+        staleTime: 5 * 60 * 1000,
+      });
+      modelOptions.value = createReadyOptionsState(models);
+      deps.view.focus("model-option");
+    } catch {
+      modelOptions.value = createErrorOptionsState(deps.t("settings.wizard.load_failed_models"));
+      deps.view.focus("custom-model");
+    }
   }
 
   function loadVariantStep(): void {
