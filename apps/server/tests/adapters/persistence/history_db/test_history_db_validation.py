@@ -74,7 +74,9 @@ def test_resolve_keyset_offset_rejects_invalid_table(tmp_path: Path) -> None:
     )
 
     with pytest.raises(ValueError, match="invalid table name"):
-        db.run_repository._resolve_keyset_offset("injected_table", "run-guard", 1)
+        db.run_repository._run_sync(
+            db.run_repository._aresolve_keyset_offset("injected_table", "run-guard", 1)
+        )
 
 
 def test_append_samples_empty_run_id_raises(tmp_path: Path) -> None:

@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 import logging
 import threading
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from pathlib import Path
-from types import TracebackType
-from typing import Any, cast
+from typing import Any, TypeVar, cast
 
 import aiosqlite
 
@@ -18,118 +16,53 @@ from vibesensor.adapters.persistence.history_db._schema import (
     SCHEMA_SQL,
     SCHEMA_VERSION,
 )
-from vibesensor.shared.async_bridge import run_coro_blocking
 
 LOGGER = logging.getLogger(__name__)
 
-__all__ = ["SQLiteHistoryEngine"]
+__all__ = ["SQLiteHistoryEngine", "run_startup_quick_check"]
+
+_T = TypeVar("_T")
 
 
-class _DualContextManager[CursorT]:
-    """Context manager that supports both ``with`` and ``async with``."""
+class _EngineLoopThread:
+    """Single persistent event loop backing aiosqlite I/O for one engine instance.
 
-    __slots__ = ("_manager",)
+    aiosqlite binds its worker thread to the event loop that opened the connection.
+    A persistent loop keeps the connection usable across many sync/async callers
+    without creating a fresh loop per request (which would orphan the worker thread).
+    """
 
-    def __init__(self, manager: object) -> None:
-        self._manager = manager
+    def __init__(self) -> None:
+        self._loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
+        self._thread = threading.Thread(
+            target=self._loop.run_forever,
+            name="history-db-loop",
+            daemon=True,
+        )
+        self._thread.start()
 
-    def __enter__(self) -> CursorT:
-        manager = cast(Any, self._manager)
-        if hasattr(manager, "__aenter__"):
-            result = run_coro_blocking(cast(Awaitable[CursorT], manager.__aenter__()))
-        else:
-            result = cast(CursorT, manager.__enter__())
-        return _syncify_result(result)
+    @property
+    def loop(self) -> asyncio.AbstractEventLoop:
+        return self._loop
 
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc: BaseException | None,
-        tb: TracebackType | None,
-    ) -> bool | None:
-        manager = cast(Any, self._manager)
-        if hasattr(manager, "__aexit__"):
-            return run_coro_blocking(
-                cast(Awaitable[bool | None], manager.__aexit__(exc_type, exc, tb))
-            )
-        return cast(bool | None, manager.__exit__(exc_type, exc, tb))
+    def run_sync(self, coro: Awaitable[_T]) -> _T:
+        future = asyncio.run_coroutine_threadsafe(cast(Any, coro), self._loop)
+        return cast(_T, future.result())
 
-    async def __aenter__(self) -> CursorT:
-        manager = cast(Any, self._manager)
-        if hasattr(manager, "__aenter__"):
-            return cast(CursorT, await manager.__aenter__())
-        return _asyncify_result(cast(CursorT, manager.__enter__()))
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc: BaseException | None,
-        tb: TracebackType | None,
-    ) -> bool | None:
-        manager = cast(Any, self._manager)
-        if hasattr(manager, "__aexit__"):
-            return cast(bool | None, await manager.__aexit__(exc_type, exc, tb))
-        return cast(bool | None, manager.__exit__(exc_type, exc, tb))
+    def stop(self) -> None:
+        if self._loop.is_closed():
+            return
+        self._loop.call_soon_threadsafe(self._loop.stop)
+        self._thread.join(timeout=5.0)
+        if not self._loop.is_closed():
+            self._loop.close()
 
 
-class _SyncCursorProxy:
-    """Expose awaitable cursor methods through a synchronous API."""
-
-    __slots__ = ("_cursor",)
-
-    def __init__(self, cursor: object) -> None:
-        self._cursor = cursor
-
-    def __getattr__(self, name: str) -> Any:
-        attr = getattr(self._cursor, name)
-        if not callable(attr):
-            return attr
-
-        def _wrapped(*args: object, **kwargs: object) -> Any:
-            result = attr(*args, **kwargs)
-            if inspect.isawaitable(result):
-                return run_coro_blocking(result)
-            return result
-
-        return _wrapped
-
-
-class _AsyncCursorProxy:
-    """Expose synchronous cursor methods through an awaitable API."""
-
-    __slots__ = ("_cursor",)
-
-    def __init__(self, cursor: object) -> None:
-        self._cursor = cursor
-
-    def __getattr__(self, name: str) -> Any:
-        attr = getattr(self._cursor, name)
-        if not callable(attr):
-            return attr
-
-        async def _wrapped(*args: object, **kwargs: object) -> Any:
-            result = attr(*args, **kwargs)
-            if inspect.isawaitable(result):
-                return await result
-            return result
-
-        return _wrapped
-
-
-def _syncify_result[ResultT](value: ResultT) -> ResultT:
-    if value is None:
-        return value
-    if hasattr(value, "execute") and (hasattr(value, "fetchone") or hasattr(value, "fetchall")):
-        return cast(ResultT, _SyncCursorProxy(value))
-    return value
-
-
-def _asyncify_result[ResultT](value: ResultT) -> ResultT:
-    if value is None:
-        return value
-    if hasattr(value, "execute") and (hasattr(value, "fetchone") or hasattr(value, "fetchall")):
-        return cast(ResultT, _AsyncCursorProxy(value))
-    return value
+def _current_loop() -> asyncio.AbstractEventLoop | None:
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        return None
 
 
 @asynccontextmanager
@@ -160,7 +93,7 @@ async def run_startup_quick_check(
     mark_corrupted: Callable[[str], None],
 ) -> None:
     try:
-        async with _DualContextManager[aiosqlite.Cursor](cursor_provider(commit=False)) as cur:
+        async with cursor_provider(commit=False) as cur:
             await cur.execute("PRAGMA quick_check")
             problems = [str(row[0]) for row in await cur.fetchall() if str(row[0]) != "ok"]
     except aiosqlite.Error:
@@ -189,6 +122,7 @@ class SQLiteHistoryEngine:
         "_corruption_details",
         "_corruption_reporter",
         "_lock",
+        "_loop_thread",
         "_open_lock",
         "_read_conn",
         "_read_lock",
@@ -210,6 +144,29 @@ class SQLiteHistoryEngine:
         self._use_separate_read_conn = str(db_path) != ":memory:"
         self._conn: aiosqlite.Connection | None = None
         self._read_conn: aiosqlite.Connection | None = None
+        self._loop_thread: _EngineLoopThread | None = None
+
+    def _ensure_loop_thread(self) -> _EngineLoopThread:
+        if self._loop_thread is None:
+            self._loop_thread = _EngineLoopThread()
+        return self._loop_thread
+
+    def _run_on_engine_loop(self, coro: Awaitable[_T]) -> _T:
+        """Run *coro* on the engine's dedicated loop; safe from any caller thread.
+
+        Sync callers block on the result. Async callers on a different loop should
+        await via :py:meth:`_await_on_engine_loop` instead.
+        """
+        return self._ensure_loop_thread().run_sync(coro)
+
+    async def _await_on_engine_loop(self, coro: Awaitable[_T]) -> _T:
+        """Await *coro* from an external loop while executing it on the engine loop."""
+        loop_thread = self._ensure_loop_thread()
+        caller_loop = _current_loop()
+        if caller_loop is loop_thread.loop:
+            return await coro
+        future = asyncio.run_coroutine_threadsafe(cast(Any, coro), loop_thread.loop)
+        return cast(_T, await asyncio.wrap_future(future))
 
     @staticmethod
     async def _configure_connection(conn: aiosqlite.Connection, *, read_only: bool) -> None:
@@ -222,9 +179,12 @@ class SQLiteHistoryEngine:
             await conn.execute("PRAGMA query_only=ON")
 
     def open(self) -> None:
-        run_coro_blocking(self.aopen())
+        self._run_on_engine_loop(self._aopen_impl())
 
     async def aopen(self) -> None:
+        await self._await_on_engine_loop(self._aopen_impl())
+
+    async def _aopen_impl(self) -> None:
         async with _async_lock_context(self._open_lock):
             if self._conn is not None:
                 return
@@ -235,7 +195,7 @@ class SQLiteHistoryEngine:
                 await self._configure_connection(conn, read_only=False)
                 self._conn = conn
                 await self._ensure_schema()
-                await self._run_startup_quick_check_async()
+                await self._run_startup_quick_check()
                 if self._use_separate_read_conn:
                     read_conn = await aiosqlite.connect(self.db_path, check_same_thread=False)
                     await self._configure_connection(read_conn, read_only=True)
@@ -247,15 +207,20 @@ class SQLiteHistoryEngine:
                 await conn.close()
                 raise
 
-    def close(self) -> object:
-        try:
-            asyncio.get_running_loop()
-        except RuntimeError:
-            run_coro_blocking(self.aclose())
-            return None
-        return self.aclose()
+    def close(self) -> None:
+        self._run_on_engine_loop(self._aclose_impl())
+        if self._loop_thread is not None:
+            self._loop_thread.stop()
+            self._loop_thread = None
 
     async def aclose(self) -> None:
+        await self._await_on_engine_loop(self._aclose_impl())
+        if self._loop_thread is not None:
+            loop_thread = self._loop_thread
+            self._loop_thread = None
+            await asyncio.to_thread(loop_thread.stop)
+
+    async def _aclose_impl(self) -> None:
         async with _async_lock_context(self._lock):
             if self._conn is not None:
                 await self._conn.close()
@@ -275,7 +240,7 @@ class SQLiteHistoryEngine:
         return self._conn, self._lock
 
     @asynccontextmanager
-    async def _cursor_async(self, *, commit: bool = True) -> AsyncIterator[aiosqlite.Cursor]:
+    async def _cursor(self, *, commit: bool = True) -> AsyncIterator[aiosqlite.Cursor]:
         conn, lock = self._cursor_connection(commit=commit)
         async with _async_lock_context(lock):
             if conn is None:
@@ -294,11 +259,8 @@ class SQLiteHistoryEngine:
                     await self._rollback_transaction(conn, context="_cursor")
                 await cur.close()
 
-    def _cursor(self, *, commit: bool = True) -> _DualContextManager[aiosqlite.Cursor]:
-        return _DualContextManager(self._cursor_async(commit=commit))
-
     @asynccontextmanager
-    async def write_transaction_cursor_async(self) -> AsyncIterator[aiosqlite.Cursor]:
+    async def write_transaction_cursor(self) -> AsyncIterator[aiosqlite.Cursor]:
         """Run a multi-step write sequence as one explicit transaction."""
         async with _async_lock_context(self._lock):
             if self._conn is None:
@@ -315,9 +277,6 @@ class SQLiteHistoryEngine:
                 if not completed:
                     await self._rollback_transaction(self._conn, context="write_transaction_cursor")
                 await cur.close()
-
-    def write_transaction_cursor(self) -> _DualContextManager[aiosqlite.Cursor]:
-        return _DualContextManager(self.write_transaction_cursor_async())
 
     @property
     def corruption_detected(self) -> bool:
@@ -388,10 +347,7 @@ class SQLiteHistoryEngine:
             row = await cur.fetchone()
         return int(row[0]) if row is not None else 0
 
-    def _run_startup_quick_check(self) -> None:
-        run_coro_blocking(self._run_startup_quick_check_async())
-
-    async def _run_startup_quick_check_async(self) -> None:
+    async def _run_startup_quick_check(self) -> None:
         await run_startup_quick_check(
             cursor_provider=self._cursor,
             db_path=self.db_path,

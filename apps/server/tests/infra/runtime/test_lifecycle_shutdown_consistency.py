@@ -6,7 +6,7 @@ import asyncio
 import contextlib
 import logging
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -49,7 +49,7 @@ def _make_lifecycle() -> LifecycleManager:
         update_manager=MagicMock(job_task=None),
         esp_flash_manager=MagicMock(job_task=None),
         worker_pool=MagicMock(),
-        history_db=MagicMock(),
+        history_db=MagicMock(aclose=AsyncMock()),
     )
     return LifecycleManager(runtime=runtime, start_udp_receiver=MagicMock())
 

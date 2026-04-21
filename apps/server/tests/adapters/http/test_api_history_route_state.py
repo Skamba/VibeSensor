@@ -29,10 +29,10 @@ from vibesensor.shared.types.history_records import StoredHistoryRun
 async def test_delete_active_run_returns_409() -> None:
     @dataclass
     class ActiveDB(FakeHistoryDB):
-        def get_active_run_id(self) -> str | None:
+        async def aget_active_run_id(self) -> str | None:
             return "run-1"
 
-        def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+        async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
             if run_id == "run-1":
                 return False, "active"
             return False, "not_found"
@@ -54,12 +54,12 @@ async def test_delete_active_run_returns_409() -> None:
 async def test_delete_analyzing_run_returns_409() -> None:
     @dataclass
     class AnalyzingDB(FakeHistoryDB):
-        def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+        async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
             if run_id == "run-1":
                 return False, "analyzing"
             return False, "not_found"
 
-        def delete_run(self, run_id: str) -> bool:
+        async def adelete_run(self, run_id: str) -> bool:
             raise AssertionError("delete_run should not be called for analyzing run")
 
     metadata = make_metadata()
@@ -123,7 +123,7 @@ async def test_delete_run_returns_404_for_not_found_reason() -> None:
 async def test_delete_run_returns_generic_409_for_unknown_reason() -> None:
     @dataclass
     class LockedDB(FakeHistoryDB):
-        def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+        async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
             if run_id == "run-1":
                 return False, "locked"
             return False, "not_found"
@@ -339,10 +339,10 @@ async def test_history_insights_localizes_and_adds_run_context_warnings() -> Non
 async def test_history_run_strips_internal_analysis_fields() -> None:
     @dataclass
     class InternalFieldDB(FakeHistoryDB):
-        def get_run(self, run_id: str) -> StoredHistoryRun | None:
+        async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
             if run_id != "run-1":
                 return None
-            result = super().get_run(run_id)
+            result = await super().aget_run(run_id)
             assert result is not None
             analysis = dict(result.analysis.to_json_object() if result.analysis is not None else {})
             analysis["_internal_secret"] = "should-not-appear"

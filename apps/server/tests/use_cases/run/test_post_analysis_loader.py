@@ -37,13 +37,13 @@ def _run_metadata(run_id: str, *, language: str | None = "en") -> RunMetadata:
 
 def test_load_post_analysis_run_returns_loaded_run() -> None:
     class FakeDB:
-        def get_run(self, run_id):
+        async def aget_run(self, run_id):
             return _StoredRun(
                 metadata=_run_metadata(run_id, language="nl"),
                 sample_count=2,
             )
 
-        def iter_run_samples(self, run_id, batch_size=1024, *, stride=1):
+        async def aiter_run_samples(self, run_id, batch_size=1024, *, stride=1):
             assert run_id == "run-ok"
             assert batch_size == 1024
             assert stride == 1
@@ -66,10 +66,10 @@ def test_load_post_analysis_run_returns_loaded_run() -> None:
 
 def test_load_post_analysis_run_handles_missing_metadata() -> None:
     class FakeDB:
-        def get_run(self, _run_id):
+        async def aget_run(self, _run_id):
             return None
 
-        def get_run_metadata(self, _run_id):
+        async def aget_run_metadata(self, _run_id):
             return None
 
     result = load_post_analysis_run(run_id="run-missing", db=FakeDB())
@@ -81,12 +81,13 @@ def test_load_post_analysis_run_handles_missing_metadata() -> None:
 
 def test_load_post_analysis_run_handles_no_samples() -> None:
     class FakeDB:
-        def get_run(self, run_id):
+        async def aget_run(self, run_id):
             return _StoredRun(metadata=_run_metadata(run_id), sample_count=0)
 
-        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
+        async def aiter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
             assert stride == 1
-            return iter([])
+            return
+            yield  # pragma: no cover
 
     result = load_post_analysis_run(run_id="run-empty", db=FakeDB())
 
@@ -105,10 +106,10 @@ def test_load_post_analysis_run_applies_upfront_stride(
     iter_calls: list[tuple[int, int]] = []
 
     class FakeDB:
-        def get_run(self, run_id):
+        async def aget_run(self, run_id):
             return _StoredRun(metadata=_run_metadata(run_id), sample_count=4)
 
-        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
+        async def aiter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
             iter_calls.append((batch_size, stride))
             yield sensor_frames_from_mappings(
                 [
@@ -128,13 +129,13 @@ def test_load_post_analysis_run_applies_upfront_stride(
 
 def test_load_post_analysis_run_defaults_language_to_en() -> None:
     class FakeDB:
-        def get_run(self, run_id):
+        async def aget_run(self, run_id):
             return _StoredRun(
                 metadata=_run_metadata(run_id, language=None),
                 sample_count=1,
             )
 
-        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
+        async def aiter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
             assert stride == 1
             yield sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}])
 

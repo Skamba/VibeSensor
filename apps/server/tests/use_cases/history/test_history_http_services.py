@@ -44,15 +44,15 @@ class _HistoryDbStub:
     delete_result: tuple[bool, str | None] = (True, None)
     samples: list[dict[str, Any]] | None = None
 
-    def get_run(self, run_id: str) -> StoredHistoryRun | None:
+    async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
         if self.run is None:
             return None
         return _stored_run(dict(self.run))
 
-    def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+    async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
         return self.delete_result
 
-    def iter_run_samples(self, run_id: str, batch_size: int = 1000):
+    async def aiter_run_samples(self, run_id: str, batch_size: int = 1000, *, stride: int = 1):
         rows = [
             row if isinstance(row, SensorFrame) else sensor_frame_from_mapping(row)
             for row in (self.samples or [])
@@ -216,7 +216,7 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
     request = await loader.load_report_request("run-1", "en")
     prepared = request.prepared
 
-    stored_analysis = loader._history_db.get_run("run-1")
+    stored_analysis = await loader._history_db.aget_run("run-1")
     assert stored_analysis is not None
     assert stored_analysis.analysis is not None
     assert [warning["code"] for warning in stored_analysis.analysis["warnings"]] == [

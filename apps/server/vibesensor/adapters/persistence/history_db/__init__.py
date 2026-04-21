@@ -38,14 +38,8 @@ class HistoryPersistenceAdapters:
     settings_snapshot_repository: SettingsSnapshotRepository
     client_name_repository: ClientNameRepository
 
-    def open(self) -> None:
-        self.lifecycle.open()
-
     async def aopen(self) -> None:
         await self.lifecycle.aopen()
-
-    def close(self) -> object:
-        return self.lifecycle.close()
 
     async def aclose(self) -> None:
         await self.lifecycle.aclose()
@@ -64,13 +58,16 @@ def _build_history_persistence_adapters(
     return HistoryPersistenceAdapters(
         lifecycle=lifecycle,
         run_repository=RunHistoryRepository(
+            engine=lifecycle,
             cursor_provider=cursor_provider,
             write_transaction_cursor_provider=lifecycle.write_transaction_cursor,
         ),
         settings_snapshot_repository=SettingsSnapshotRepository(
+            engine=lifecycle,
             cursor_provider=cursor_provider,
         ),
         client_name_repository=ClientNameRepository(
+            engine=lifecycle,
             cursor_provider=cursor_provider,
         ),
     )
@@ -81,12 +78,16 @@ def create_history_persistence_adapters(
     *,
     corruption_reporter: Callable[[str], None] | None = None,
 ) -> HistoryPersistenceAdapters:
-    """Build and open the shared history engine plus narrow repositories on top of it."""
+    """Build and open the shared history engine plus narrow repositories on top of it.
+
+    Called from synchronous startup before the event loop starts, so the engine is
+    opened with a fresh ``asyncio.run`` call.
+    """
     history = _build_history_persistence_adapters(
         db_path,
         corruption_reporter=corruption_reporter,
     )
-    history.open()
+    history.lifecycle.open()
     return history
 
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -126,9 +125,7 @@ class LifecycleShutdownSequence:
 
     async def _close_history_db(self, issues: list[LifecycleShutdownIssue]) -> None:
         try:
-            close_result = self._runtime.history_db.close()
-            if inspect.isawaitable(close_result):
-                await close_result
+            await self._runtime.history_db.aclose()
         except (aiosqlite.Error, OSError) as exc:
             issues.append(
                 LifecycleShutdownIssue(

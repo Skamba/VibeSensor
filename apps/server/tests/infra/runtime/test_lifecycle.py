@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import get_type_hints
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
@@ -40,7 +40,7 @@ def _make_lifecycle(db_path: str | None) -> tuple[LifecycleManager, RuntimeHealt
         update_manager=MagicMock(job_task=None),
         esp_flash_manager=MagicMock(job_task=None),
         worker_pool=MagicMock(),
-        history_db=MagicMock(),
+        history_db=MagicMock(aclose=AsyncMock()),
     )
 
     lifecycle = LifecycleManager(runtime=runtime, start_udp_receiver=MagicMock())
