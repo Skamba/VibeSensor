@@ -1,6 +1,4 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { createAppState } from "../src/app/ui_app_state";
-import { batch } from "../src/app/ui_signals";
 import { createWsClient } from "../src/ws";
 import { installWindowGlobal } from "./async_test_helpers";
 
@@ -104,19 +102,12 @@ describe("createWsClient", () => {
     FakeWebSocket.reset();
   });
 
-  test("exposes signal state and forwards queued payloads through onMessage", () => {
+  test("exposes signal state and stores the latest payload reactively", () => {
     const originalWebSocket = globalThis.WebSocket;
     globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
     try {
-      const state = createAppState();
       const client = createWsClient({
         url: "ws://example.test/ws",
-        onMessage: (payload) => {
-          batch(() => {
-            state.transport.hasReceivedPayload.value = true;
-            state.transport.pendingPayload.value = payload;
-          });
-        },
       });
 
       client.connect();
@@ -137,8 +128,7 @@ describe("createWsClient", () => {
       socket?.emitMessage(payload);
 
       expect(client.uiState.value).toBe("connected");
-      expect(state.transport.hasReceivedPayload.value).toBe(true);
-      expect(state.transport.pendingPayload.value).toEqual(payload);
+      expect(client.latestPayload.value).toEqual(payload);
 
       client.close();
     } finally {
@@ -157,7 +147,6 @@ describe("createWsClient", () => {
       const client = createWsClient({
         url: "ws://example.test/ws",
         staleAfterMs: 10,
-        onMessage: () => undefined,
       });
 
       client.connect();
@@ -208,7 +197,6 @@ describe("createWsClient", () => {
     try {
       const client = createWsClient({
         url: "ws://example.test/ws",
-        onMessage: () => undefined,
       });
 
       client.connect();
@@ -238,7 +226,6 @@ describe("createWsClient", () => {
     try {
       const client = createWsClient({
         url: "ws://example.test/ws",
-        onMessage: () => undefined,
       });
 
       client.connect();

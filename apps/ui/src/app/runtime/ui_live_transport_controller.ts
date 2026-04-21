@@ -6,7 +6,7 @@ import {
   applyLivePayloadUpdate,
   type AppState,
 } from "../ui_app_state";
-import { batch, effect, effectOnChange, untracked } from "../ui_signals";
+import { batch, computed, effectOnChange, untracked } from "../ui_signals";
 
 type UiLiveTransportControllerDeps = {
   state: AppState;
@@ -26,6 +26,8 @@ export class UiLiveTransportController {
 
   private readonly disposeTransportStateSync: () => void;
 
+  private readonly disposeTransportIngressSync: () => void;
+
   private readonly disposePendingPayloadSync: () => void;
 
   private readonly disposeWsStateSync: () => void;
@@ -41,6 +43,7 @@ export class UiLiveTransportController {
     this.payloadErrorMessage = deps.payloadErrorMessage;
     const disposers = this.bindTransportSignalSync();
     this.disposeTransportStateSync = disposers.transportStateSync;
+    this.disposeTransportIngressSync = disposers.transportIngressSync;
     this.disposePendingPayloadSync = disposers.pendingPayloadSync;
     this.disposeWsStateSync = disposers.wsStateSync;
     this.disposeSelectionSync = disposers.selectionSync;
@@ -80,27 +83,34 @@ export class UiLiveTransportController {
     this.disposeSelectionSync();
     this.disposeWsStateSync();
     this.disposePendingPayloadSync();
+    this.disposeTransportIngressSync();
     this.disposeTransportStateSync();
   }
 
   private bindTransportSignalSync(): {
     pendingPayloadSync: () => void;
     selectionSync: () => void;
+    transportIngressSync: () => void;
     transportStateSync: () => void;
     wsStateSync: () => void;
   } {
-    const transportStateSync = effect(() => {
-      const ws = this.state.transport.ws.value;
-      if (!ws) {
+    const wsUiState = computed(() => this.state.transport.ws.value?.uiState.value ?? null);
+    const wsLatestPayload = computed(
+      () => this.state.transport.ws.value?.latestPayload.value ?? null,
+    );
+
+    const transportStateSync = effectOnChange(wsUiState, (nextWsState) => {
+      if (nextWsState === null || this.state.transport.wsState.value === nextWsState) {
         return;
       }
-      const nextWsState = ws.uiState.value;
-      if (this.state.transport.wsState.value === nextWsState) {
+      this.state.transport.wsState.value = nextWsState;
+    });
+
+    const transportIngressSync = effectOnChange(wsLatestPayload, (nextPayload) => {
+      if (nextPayload === null) {
         return;
       }
-      batch(() => {
-        this.state.transport.wsState.value = nextWsState;
-      });
+      this.ingestTransportPayload(nextPayload);
     });
 
     const pendingPayloadSync = effectOnChange(this.state.transport.pendingPayload, (nextPendingPayload) => {
@@ -125,6 +135,7 @@ export class UiLiveTransportController {
     return {
       pendingPayloadSync,
       selectionSync,
+      transportIngressSync,
       transportStateSync,
       wsStateSync,
     };
@@ -137,7 +148,7 @@ export class UiLiveTransportController {
     const isDemoMode = new URLSearchParams(window.location.search).has("demo");
     if (isDemoMode) {
       runDemoMode({
-        queueTransportPayload: (payload) => this.queueTransportPayload(payload),
+        ingestTransportPayload: (payload) => this.ingestTransportPayload(payload, "connected"),
         state: this.state,
       });
       return;
@@ -160,6 +171,8 @@ export class UiLiveTransportController {
         now - this.state.transport.lastRenderTsMs.value
         < this.state.transport.minRenderIntervalMs.value
       ) {
+        // Retain RAF pacing here for render/spectrum throughput, not because the
+        // transport ingress path still needs callback-style fan-out.
         this.queueRender();
         return;
       }
@@ -199,12 +212,17 @@ export class UiLiveTransportController {
     });
   }
 
-  private queueTransportPayload(payload: unknown): void {
+  private ingestTransportPayload(
+    payload: unknown,
+    wsState: "connected" | null = null,
+  ): void {
     if (this.disposed) {
       return;
     }
     batch(() => {
-      this.state.transport.wsState.value = "connected";
+      if (wsState !== null) {
+        this.state.transport.wsState.value = wsState;
+      }
       this.state.transport.hasReceivedPayload.value = true;
       this.state.transport.pendingPayload.value = payload;
     });
@@ -217,10 +235,6 @@ export class UiLiveTransportController {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     this.state.transport.ws.value = createWsClient({
       url: `${protocol}//${window.location.host}/ws`,
-      onMessage: (payload) => {
-        this.state.transport.hasReceivedPayload.value = true;
-        this.state.transport.pendingPayload.value = payload;
-      },
     });
     this.state.transport.ws.value.connect();
   }

@@ -84,9 +84,11 @@ describe("UiLiveTransportController", () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
     state.transport.ws.value = {
+      latestPayload: signal<LiveWsPayload | null>(null),
       uiState: signal("connecting"),
       close() {},
       connect() {},
+      dispose() {},
       send(selection: { client_id: string | null }) {
         sentSelections.push(selection);
       },
@@ -145,10 +147,13 @@ describe("UiLiveTransportController", () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
     const wsUiState = signal("connecting");
+    const latestPayload = signal<LiveWsPayload | null>(null);
     state.transport.ws.value = {
+      latestPayload,
       uiState: wsUiState,
       close() {},
       connect() {},
+      dispose() {},
       send(selection: { client_id: string | null }) {
         sentSelections.push(selection);
       },
@@ -176,10 +181,13 @@ describe("UiLiveTransportController", () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
     const wsUiState = signal("connecting");
+    const latestPayload = signal<LiveWsPayload | null>(null);
     state.transport.ws.value = {
+      latestPayload,
       uiState: wsUiState,
       close() {},
       connect() {},
+      dispose() {},
       send(selection: { client_id: string | null }) {
         sentSelections.push(selection);
       },
@@ -212,9 +220,11 @@ describe("UiLiveTransportController", () => {
     const state = createAppState();
     const sentSelections: Array<{ client_id: string | null }> = [];
     state.transport.ws.value = {
+      latestPayload: signal<LiveWsPayload | null>(null),
       uiState: signal("connected"),
       close() {},
       connect() {},
+      dispose() {},
       send(selection: { client_id: string | null }) {
         sentSelections.push(selection);
       },
@@ -234,9 +244,11 @@ describe("UiLiveTransportController", () => {
     const state = createAppState();
     const wsUiState = signal("connecting");
     state.transport.ws.value = {
+      latestPayload: signal<LiveWsPayload | null>(null),
       uiState: wsUiState,
       close() {},
       connect() {},
+      dispose() {},
       send() {},
     } as typeof state.transport.ws.value;
 
@@ -291,6 +303,45 @@ describe("UiLiveTransportController", () => {
       expect(state.spectrum.hasSpectrumData.value).toBe(true);
     } finally {
       restoreLocation();
+      raf.restore();
+    }
+  });
+
+  test("mirrors websocket ingress payloads through the shared transport slice", async () => {
+    const state = createAppState();
+    const latestPayload = signal<LiveWsPayload | null>(null);
+    state.transport.ws.value = {
+      latestPayload,
+      uiState: signal("connected"),
+      close() {},
+      connect() {},
+      dispose() {},
+      send() {},
+    } as typeof state.transport.ws.value;
+
+    const controller = new UiLiveTransportController({
+      state,
+      payloadErrorMessage: () => "payload error",
+    });
+    const raf = installRafHarness();
+    try {
+      latestPayload.value = makeLivePayload({
+        clients: [makeClient("client-1")],
+        speed_mps: 12,
+      });
+      await flushAsyncWork();
+
+      expect(state.transport.hasReceivedPayload.value).toBe(true);
+      expect(state.transport.pendingPayload.value).not.toBeNull();
+
+      raf.flushNext();
+      await flushAsyncWork();
+
+      expect(state.transport.pendingPayload.value).toBeNull();
+      expect(state.realtime.selectedClientId.value).toBe("client-1");
+      expect(state.realtime.speedMps.value).toBe(12);
+    } finally {
+      controller.dispose();
       raf.restore();
     }
   });
