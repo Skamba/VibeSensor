@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 
 from opentelemetry.trace import SpanKind
@@ -15,6 +14,7 @@ from vibesensor.shared.boundaries.reporting import (
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.filenames import safe_filename
+from vibesensor.shared.json_utils import json_text_dumps
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.history_records import StoredHistoryRun
@@ -115,11 +115,9 @@ class HistoryReportRequestLoader:
 
     @staticmethod
     def _metadata_cache_token(metadata: RunMetadata) -> str:
-        return json.dumps(
+        return json_text_dumps(
             run_metadata_to_json_object(metadata),
             sort_keys=True,
-            default=str,
-            ensure_ascii=False,
         )
 
     def _report_pdf_cache_key(

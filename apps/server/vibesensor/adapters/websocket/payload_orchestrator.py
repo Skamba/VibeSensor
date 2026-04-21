@@ -8,9 +8,8 @@ from collections.abc import Callable, Iterable, Mapping
 from typing import cast
 
 import anyio
-import orjson
 
-from vibesensor.shared.json_utils import sanitize_for_json
+from vibesensor.shared.json_utils import json_text_dumps, sanitize_for_json
 from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.types.payload_types import LiveWsPayload, WsErrorPayload
 
@@ -19,12 +18,12 @@ LOGGER = logging.getLogger("vibesensor.adapters.websocket.hub")
 __all__ = ["PayloadBuildOrchestrator"]
 
 _ERROR_PAYLOAD_BODY: WsErrorPayload = {"error": "payload_build_failed"}
-_ERROR_PAYLOAD: str = orjson.dumps(_ERROR_PAYLOAD_BODY).decode()
+_ERROR_PAYLOAD: str = json_text_dumps(_ERROR_PAYLOAD_BODY)
 _SELECTED_CLIENT_ID_NULL_JSON = '"selected_client_id":null'
 
 
 def _dump_json_text(value: object) -> str:
-    return orjson.dumps(value).decode()
+    return json_text_dumps(value)
 
 
 def _payload_contains_non_finite(obj: object, *, _max_depth: int = 128) -> bool:
