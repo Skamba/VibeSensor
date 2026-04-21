@@ -3,7 +3,7 @@ import { composeVehicleSettings, type AppState } from "./ui_app_state";
 import { batch } from "./ui_signals";
 
 type DemoDeps = {
-  queueTransportPayload(payload: unknown): void;
+  ingestTransportPayload(payload: unknown): void;
   state: Pick<AppState, "settings">;
 };
 
@@ -198,7 +198,7 @@ export function runDemoMode(deps: DemoDeps): void {
     ];
     state.settings.car.activeCarId.value = "demo-car-1";
   });
-  deps.queueTransportPayload(demoPayload);
+  deps.ingestTransportPayload(demoPayload);
 
   window.__vibesensorDemoCleanup = undefined;
 }

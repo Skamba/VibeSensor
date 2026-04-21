@@ -16,7 +16,7 @@ describe("runDemoMode", () => {
     let queuedPayload: unknown = null;
 
     runDemoMode({
-      queueTransportPayload: (payload) => {
+      ingestTransportPayload: (payload) => {
         queuedPayload = payload;
       },
       state,
