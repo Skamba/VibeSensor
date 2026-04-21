@@ -171,13 +171,19 @@ class ClientRegistry:
         self._metadata = ClientMetadataManager(
             lock=self._lock,
             get_or_create=self._get_or_create,
-            list_client_names=(lambda: db.list_client_names()) if db is not None else None,
-            persist_client_name=(lambda client_id, name: db.upsert_client_name(client_id, name))
-            if db is not None
-            else None,
-            delete_client_name=(lambda client_id: db.delete_client_name(client_id))
-            if db is not None
-            else None,
+            list_client_names=(
+                (lambda: db.list_client_names()) if db is not None else None  # type: ignore[attr-defined]
+            ),
+            persist_client_name=(
+                (lambda client_id, name: db.upsert_client_name(client_id, name))  # type: ignore[attr-defined]
+                if db is not None
+                else None
+            ),
+            delete_client_name=(
+                (lambda client_id: db.delete_client_name(client_id))  # type: ignore[attr-defined]
+                if db is not None
+                else None
+            ),
         )
         self._snapshot_assembler = ClientSnapshotAssembler(
             lock=self._lock,

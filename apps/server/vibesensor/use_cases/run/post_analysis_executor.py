@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
-from typing import Protocol
+from typing import Any, Protocol
 
 import aiosqlite
 from opentelemetry.trace import SpanKind
@@ -35,6 +36,24 @@ from vibesensor.use_cases.run.post_analysis_outcomes import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _sync_call(db: Any, method_name: str, *args: Any, **kwargs: Any) -> Any:
+    """Invoke ``db.<method_name>`` synchronously from a worker thread.
+
+    If the db exposes a real async method and an engine loop runner, go
+    through that loop so aiosqlite futures resolve on the connection's
+    owning loop. Otherwise (test fakes, sync stubs) fall back to
+    ``asyncio.run`` or direct sync call.
+    """
+    method = getattr(db, method_name)
+    result = method(*args, **kwargs)
+    if asyncio.iscoroutine(result):
+        runner = getattr(db, "_run_on_engine_loop", None)
+        if callable(runner):
+            return runner(result)
+        return asyncio.run(result)
+    return result
 
 
 class PostAnalysisRunner(Protocol):
@@ -132,7 +151,7 @@ def execute_post_analysis(
         span.set_attribute("vibesensor.sample_count", len(run_input.samples))
         try:
             summary = analysis_runner(run_input)
-            db.store_analysis(loaded.run_id, summary)
+            _sync_call(db, "astore_analysis", loaded.run_id, summary)
         except (aiosqlite.Error, OSError, MemoryError) as exc:
             mark_span_error(span, exc)
             if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
@@ -173,7 +192,7 @@ def _store_load_error(
     kind: str,
 ) -> PostAnalysisExecutionResult:
     try:
-        db.store_analysis_error(run_id, completed_error)
+        _sync_call(db, "astore_analysis_error", run_id, completed_error)
     except aiosqlite.Error:
         LOGGER.warning(
             "Failed to store analysis error for run %s",
@@ -253,7 +272,7 @@ def _persistence_failure_result(
     callback_errors = (callback_error,)
 
     try:
-        db.store_analysis_error(run_id, completed_error)
+        _sync_call(db, "astore_analysis_error", run_id, completed_error)
     except aiosqlite.Error as store_exc:
         LOGGER.warning(
             "Failed to store analysis error for run %s",

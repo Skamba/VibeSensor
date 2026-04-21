@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable
 from contextlib import AbstractAsyncContextManager
 from datetime import UTC, datetime, timedelta
+from typing import TypeVar
 
 import aiosqlite
 
 from vibesensor.adapters.persistence.history_db._samples import V2_INSERT_SQL, sample_to_v2_row
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
-from vibesensor.shared.async_bridge import run_coro_blocking
 from vibesensor.shared.boundaries.analysis_payloads import (
     persisted_analysis_to_storage_json_object,
 )
@@ -26,12 +27,17 @@ LOGGER = logging.getLogger(__name__)
 _RECOMMENDED_METADATA_KEYS: frozenset[str] = frozenset({"sensor_model", "raw_sample_rate_hz"})
 _EXPECTED_ANALYSIS_KEYS: frozenset[str] = frozenset({"findings", "top_causes", "warnings"})
 
+_T = TypeVar("_T")
+
 
 class _HistoryDBRunLifecycleMixin:
     def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
         raise NotImplementedError
 
     def write_transaction_cursor(self) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
+        raise NotImplementedError
+
+    def _run_sync(self, coro: Awaitable[_T]) -> _T:
         raise NotImplementedError
 
     @staticmethod
@@ -49,7 +55,7 @@ class _HistoryDBRunLifecycleMixin:
         metadata: RunMetadata,
         case_id: str | None = None,
     ) -> None:
-        run_coro_blocking(self.acreate_run(run_id, start_time_utc, metadata, case_id))
+        self._run_sync(self.acreate_run(run_id, start_time_utc, metadata, case_id))
 
     async def acreate_run(
         self,
@@ -78,12 +84,8 @@ class _HistoryDBRunLifecycleMixin:
                 (run_id, case_id, start_time_utc, safe_json_dumps(metadata_payload), now),
             )
 
-    def append_samples(
-        self,
-        run_id: str,
-        samples: list[SensorFrame],
-    ) -> int:
-        return run_coro_blocking(self.aappend_samples(run_id, samples))
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
+        return self._run_sync(self.aappend_samples(run_id, samples))
 
     async def aappend_samples(
         self,
@@ -130,7 +132,7 @@ class _HistoryDBRunLifecycleMixin:
         metadata: RunMetadata | None = None,
         case_id: str | None = None,
     ) -> bool:
-        return run_coro_blocking(self.afinalize_run(run_id, end_time_utc, metadata, case_id))
+        return self._run_sync(self.afinalize_run(run_id, end_time_utc, metadata, case_id))
 
     async def afinalize_run(
         self,
@@ -166,12 +168,8 @@ class _HistoryDBRunLifecycleMixin:
             )
             return int(cur.rowcount) > 0
 
-    def update_run_metadata(
-        self,
-        run_id: str,
-        metadata: RunMetadata,
-    ) -> bool:
-        return run_coro_blocking(self.aupdate_run_metadata(run_id, metadata))
+    def update_run_metadata(self, run_id: str, metadata: RunMetadata) -> bool:
+        return self._run_sync(self.aupdate_run_metadata(run_id, metadata))
 
     async def aupdate_run_metadata(
         self,
@@ -185,11 +183,8 @@ class _HistoryDBRunLifecycleMixin:
             )
             return bool(int(cur.rowcount) > 0)
 
-    def delete_run_if_safe(
-        self,
-        run_id: str,
-    ) -> tuple[bool, str | None]:
-        return run_coro_blocking(self.adelete_run_if_safe(run_id))
+    def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+        return self._run_sync(self.adelete_run_if_safe(run_id))
 
     async def adelete_run_if_safe(
         self,
@@ -206,12 +201,8 @@ class _HistoryDBRunLifecycleMixin:
             await cur.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
             return bool(int(cur.rowcount) > 0), None
 
-    def store_analysis(
-        self,
-        run_id: str,
-        analysis: PersistedAnalysis,
-    ) -> bool:
-        return run_coro_blocking(self.astore_analysis(run_id, analysis))
+    def store_analysis(self, run_id: str, analysis: PersistedAnalysis) -> bool:
+        return self._run_sync(self.astore_analysis(run_id, analysis))
 
     async def astore_analysis(
         self,
@@ -258,7 +249,7 @@ class _HistoryDBRunLifecycleMixin:
             return int(cur.rowcount) > 0
 
     def store_analysis_error(self, run_id: str, error: str) -> bool:
-        return run_coro_blocking(self.astore_analysis_error(run_id, error))
+        return self._run_sync(self.astore_analysis_error(run_id, error))
 
     async def astore_analysis_error(self, run_id: str, error: str) -> bool:
         now = utc_now_iso()
@@ -288,7 +279,7 @@ class _HistoryDBRunLifecycleMixin:
             return int(cur.rowcount) > 0
 
     def delete_run(self, run_id: str) -> bool:
-        return run_coro_blocking(self.adelete_run(run_id))
+        return self._run_sync(self.adelete_run(run_id))
 
     async def adelete_run(self, run_id: str) -> bool:
         async with self._cursor() as cur:
@@ -296,7 +287,7 @@ class _HistoryDBRunLifecycleMixin:
             return bool(int(cur.rowcount) > 0)
 
     def recover_stale_recording_runs(self) -> int:
-        return run_coro_blocking(self.arecover_stale_recording_runs())
+        return self._run_sync(self.arecover_stale_recording_runs())
 
     async def arecover_stale_recording_runs(self) -> int:
         now = utc_now_iso()
@@ -308,7 +299,7 @@ class _HistoryDBRunLifecycleMixin:
             return int(cur.rowcount)
 
     def prune_terminal_runs_older_than_days(self, retention_days: int) -> int:
-        return run_coro_blocking(self.aprune_terminal_runs_older_than_days(retention_days))
+        return self._run_sync(self.aprune_terminal_runs_older_than_days(retention_days))
 
     async def aprune_terminal_runs_older_than_days(self, retention_days: int) -> int:
         if retention_days < 1:

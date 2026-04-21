@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Awaitable, Iterator
 from contextlib import AbstractAsyncContextManager
+from typing import TypeVar
 
 import aiosqlite
 
@@ -13,19 +14,23 @@ from vibesensor.adapters.persistence.history_db._samples import (
     V2_SELECT_SQL_COLS,
     v2_row_to_sensor_frame,
 )
-from vibesensor.shared.async_bridge import run_coro_blocking
 from vibesensor.shared.boundaries.codecs.sensor_frame_values import SensorFrameDecodeError
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
+
+_T = TypeVar("_T")
 
 
 class _HistoryDBSampleIOMixin:
     def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
         raise NotImplementedError
 
+    def _run_sync(self, coro: Awaitable[_T]) -> _T:
+        raise NotImplementedError
+
     def get_run_samples(self, run_id: str) -> list[SensorFrame]:
-        return run_coro_blocking(self.aget_run_samples(run_id))
+        return self._run_sync(self.aget_run_samples(run_id))
 
     async def aget_run_samples(self, run_id: str) -> list[SensorFrame]:
         rows: list[SensorFrame] = []
@@ -41,34 +46,18 @@ class _HistoryDBSampleIOMixin:
         *,
         stride: int = 1,
     ) -> Iterator[list[SensorFrame]]:
-        return iter(
-            run_coro_blocking(
-                self._collect_sample_batches(
+        async def _collect() -> list[list[SensorFrame]]:
+            return [
+                batch
+                async for batch in self.aiter_run_samples(
                     run_id,
                     batch_size=batch_size,
                     offset=offset,
                     stride=stride,
                 )
-            )
-        )
+            ]
 
-    async def _collect_sample_batches(
-        self,
-        run_id: str,
-        batch_size: int = 1000,
-        offset: int = 0,
-        *,
-        stride: int = 1,
-    ) -> list[list[SensorFrame]]:
-        return [
-            batch
-            async for batch in self.aiter_run_samples(
-                run_id,
-                batch_size=batch_size,
-                offset=offset,
-                stride=stride,
-            )
-        ]
+        return iter(self._run_sync(_collect()))
 
     async def aiter_run_samples(
         self,
@@ -84,14 +73,6 @@ class _HistoryDBSampleIOMixin:
             raise ValueError(f"iter_run_samples: stride must be >= 1, got {stride}")
         async for batch in self._iter_v2_samples(run_id, batch_size, offset, stride):
             yield batch
-
-    def _resolve_keyset_offset(
-        self,
-        table: str,
-        run_id: str,
-        offset: int,
-    ) -> int | None:
-        return run_coro_blocking(self._aresolve_keyset_offset(table, run_id, offset))
 
     async def _aresolve_keyset_offset(
         self,

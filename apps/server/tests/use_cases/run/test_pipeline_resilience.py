@@ -65,17 +65,17 @@ def _sample_rows(count: int) -> list[SensorFrame]:
 class _FailingDB:
     """History DB that always fails on create_run."""
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
+    async def acreate_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         raise sqlite3.OperationalError("db locked")
 
 
 class _FailingAppendDB:
     """History DB that succeeds on create_run but fails on append."""
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
+    async def acreate_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         pass
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
+    async def aappend_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
         raise sqlite3.OperationalError("disk full")
 
 
@@ -86,10 +86,10 @@ class _FailNAppendThenSucceedDB:
         self._remaining = fail_count
         self.appended: list[tuple[str, int]] = []
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
+    async def acreate_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         pass
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
+    async def aappend_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
         if self._remaining > 0:
             self._remaining -= 1
             raise sqlite3.OperationalError("db locked")
@@ -104,10 +104,10 @@ class _SucceedingDB:
         self.created: list[str] = []
         self.appended: list[tuple[str, int]] = []
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
+    async def acreate_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         self.created.append(run_id)
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
+    async def aappend_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
         self.appended.append((run_id, len(samples)))
         return len(samples)
 
@@ -119,13 +119,13 @@ class _FailNThenSucceedDB:
         self._remaining = fail_count
         self.created: list[str] = []
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
+    async def acreate_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         if self._remaining > 0:
             self._remaining -= 1
             raise sqlite3.OperationalError("transient error")
         self.created.append(run_id)
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
+    async def aappend_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
         return len(samples)
 
 
@@ -327,10 +327,10 @@ class TestPostAnalysisOutcomeTracking:
         """Last completed outcome is set after successful analysis."""
 
         class FakeDB:
-            def get_run_metadata(self, run_id):
+            async def aget_run_metadata(self, run_id):
                 return _run_metadata(run_id, language="en")
 
-            def iter_run_samples(self, run_id, batch_size=1024):
+            async def aiter_run_samples(self, run_id, batch_size=1024):
                 yield [
                     sensor_frame_from_mapping(
                         {
@@ -346,10 +346,10 @@ class TestPostAnalysisOutcomeTracking:
                     ),
                 ]
 
-            def store_analysis(self, run_id, analysis):
+            async def astore_analysis(self, run_id, analysis):
                 pass
 
-            def store_analysis_error(self, run_id, msg):
+            async def astore_analysis_error(self, run_id, msg):
                 pass
 
         worker = PostAnalysisWorker(history_db=FakeDB())
@@ -365,13 +365,15 @@ class TestPostAnalysisOutcomeTracking:
         errors: list[str] = []
 
         class FakeDB:
-            def get_run_metadata(self, run_id):
+            async def aget_run_metadata(self, run_id):
                 return _run_metadata(run_id, language="en")
 
-            def iter_run_samples(self, run_id, batch_size=1024):
+            async def aiter_run_samples(self, run_id, batch_size=1024):
+                if False:
+                    yield []
                 raise RuntimeError("sample read boom")
 
-            def store_analysis_error(self, run_id, msg):
+            async def astore_analysis_error(self, run_id, msg):
                 pass
 
         worker = PostAnalysisWorker(
@@ -389,10 +391,10 @@ class TestPostAnalysisOutcomeTracking:
         """Missing metadata sets error outcome."""
 
         class FakeDB:
-            def get_run_metadata(self, _run_id):
+            async def aget_run_metadata(self, _run_id):
                 return None
 
-            def store_analysis_error(self, _run_id, _msg):
+            async def astore_analysis_error(self, _run_id, _msg):
                 pass
 
         worker = PostAnalysisWorker(history_db=FakeDB())
@@ -408,13 +410,15 @@ class TestPostAnalysisOutcomeTracking:
         """Empty sample set sets error outcome."""
 
         class FakeDB:
-            def get_run_metadata(self, _run_id):
+            async def aget_run_metadata(self, _run_id):
                 return _run_metadata("run-empty", language="en")
 
-            def iter_run_samples(self, _run_id, batch_size=1024):
-                return iter([])
+            async def aiter_run_samples(self, _run_id, batch_size=1024):
+                if False:
+                    yield []
+                return
 
-            def store_analysis_error(self, _run_id, _msg):
+            async def astore_analysis_error(self, _run_id, _msg):
                 pass
 
         worker = PostAnalysisWorker(history_db=FakeDB())

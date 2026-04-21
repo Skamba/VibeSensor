@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator
 from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSourceKind
@@ -64,55 +64,55 @@ class ClockSyncBroadcaster(Protocol):
 
 
 class RunPersistence(Protocol):
-    """Persistence operations needed by history queries and recording flows."""
-
-    def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]: ...
-
-    def get_run(self, run_id: str) -> StoredHistoryRun | None: ...
-
-    def get_run_metadata(self, run_id: str) -> RunMetadata | None: ...
-
-    def iter_run_samples(
-        self,
-        run_id: str,
-        batch_size: int = 1000,
-        *,
-        stride: int = 1,
-    ) -> Iterator[list[SensorFrame]]: ...
-
-    def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]: ...
-
-    def create_run(
-        self,
-        run_id: str,
-        start_time_utc: str,
-        metadata: RunMetadata,
-    ) -> None: ...
-
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int: ...
-
-    def finalize_run(
-        self,
-        run_id: str,
-        end_time_utc: str,
-        metadata: RunMetadata | None = None,
-    ) -> bool: ...
-
-    def store_analysis(self, run_id: str, analysis: PersistedAnalysis) -> bool: ...
-
-    def store_analysis_error(self, run_id: str, error: str) -> bool: ...
-
-    def analyzing_run_health(self) -> AnalyzingRunHealth: ...
-
-
-class AsyncRunPersistence(Protocol):
-    """Async persistence operations used by native async history surfaces."""
+    """Async persistence operations needed by history queries and recording flows."""
 
     async def alist_runs(self, limit: int = 500) -> list[HistoryRunListEntry]: ...
 
     async def aget_run(self, run_id: str) -> StoredHistoryRun | None: ...
 
     async def aget_run_metadata(self, run_id: str) -> RunMetadata | None: ...
+
+    async def aget_active_run_id(self) -> str | None: ...
+
+    async def astale_analyzing_run_ids(self) -> list[str]: ...
+
+    async def aanalyzing_run_health(self) -> AnalyzingRunHealth: ...
+
+    async def averify_run_integrity(self, run_id: str) -> list[str]: ...
+
+    async def acreate_run(
+        self,
+        run_id: str,
+        start_time_utc: str,
+        metadata: RunMetadata,
+        case_id: str | None = None,
+    ) -> None: ...
+
+    async def aappend_samples(self, run_id: str, samples: list[SensorFrame]) -> int: ...
+
+    async def afinalize_run(
+        self,
+        run_id: str,
+        end_time_utc: str,
+        metadata: RunMetadata | None = None,
+        case_id: str | None = None,
+    ) -> bool: ...
+
+    async def aupdate_run_metadata(self, run_id: str, metadata: RunMetadata) -> bool: ...
+
+    async def astore_analysis(self, run_id: str, analysis: PersistedAnalysis) -> bool: ...
+
+    async def astore_analysis_error(self, run_id: str, error: str) -> bool: ...
+
+    async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]: ...
+
+    async def adelete_run(self, run_id: str) -> bool: ...
+
+    async def arecover_stale_recording_runs(self) -> int: ...
+
+    async def aprune_terminal_runs_older_than_days(self, retention_days: int) -> int: ...
+
+    async def aget_run_samples(self, run_id: str) -> list[SensorFrame]: ...
 
     def aiter_run_samples(
         self,
@@ -121,8 +121,6 @@ class AsyncRunPersistence(Protocol):
         *,
         stride: int = 1,
     ) -> AsyncIterator[list[SensorFrame]]: ...
-
-    async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]: ...
 
 
 class ActiveCarReader(Protocol):
@@ -216,11 +214,11 @@ class SensorMetadataStore(SensorMetadataReader, Protocol):
 
 
 class SettingsSnapshotPersistence(Protocol):
-    """Minimal settings snapshot persistence surface needed by focused settings services."""
+    """Async settings snapshot persistence surface needed by focused settings services."""
 
-    def get_settings_snapshot(self) -> SettingsSnapshotPayload | None: ...
+    async def aget_settings_snapshot(self) -> SettingsSnapshotPayload | None: ...
 
-    def set_settings_snapshot(self, snapshot: SettingsSnapshotPayload) -> None: ...
+    async def aset_settings_snapshot(self, snapshot: SettingsSnapshotPayload) -> None: ...
 
 
 class SignalSource(Protocol):
@@ -289,13 +287,13 @@ class ClientTracker(Protocol):
 
 
 class ClientNamePersistence(Protocol):
-    """Minimal persisted client-name operations needed by ClientRegistry."""
+    """Async persisted client-name operations needed by ClientRegistry."""
 
-    def list_client_names(self) -> dict[str, str]: ...
+    async def alist_client_names(self) -> dict[str, str]: ...
 
-    def upsert_client_name(self, client_id: str, name: str) -> None: ...
+    async def aupsert_client_name(self, client_id: str, name: str) -> None: ...
 
-    def delete_client_name(self, client_id: str) -> bool | None: ...
+    async def adelete_client_name(self, client_id: str) -> bool | None: ...
 
 
 class RegistryHelloMessage(Protocol):

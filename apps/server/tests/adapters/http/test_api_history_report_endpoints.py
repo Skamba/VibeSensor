@@ -157,8 +157,8 @@ async def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes()
         )
         idx: int = 0
 
-        def get_run(self, run_id: str):
-            result = super().get_run(run_id)
+        async def aget_run(self, run_id: str):
+            result = await super().aget_run(run_id)
             if result is None:
                 return None
             ts = self.timestamps[min(self.idx, len(self.timestamps) - 1)]

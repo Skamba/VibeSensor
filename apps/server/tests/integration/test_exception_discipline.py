@@ -78,9 +78,14 @@ class TestHistoryDBExceptionDiscipline:
     def test_attribute_error_in_cursor_propagates(self, tmp_path: Path) -> None:
         """AttributeError must not be silently caught."""
         db = create_history_persistence_adapters(tmp_path / "test.db")
-        with pytest.raises(AttributeError), db.lifecycle._cursor() as cur:
-            cur.execute("SELECT 1")
-            raise AttributeError("simulated code bug")
+
+        async def _raise_in_cursor() -> None:
+            async with db.lifecycle._cursor() as cur:
+                await cur.execute("SELECT 1")
+                raise AttributeError("simulated code bug")
+
+        with pytest.raises(AttributeError):
+            db.lifecycle._run_on_engine_loop(_raise_in_cursor())
         run_id = "run-after-attribute-error"
         db.run_repository.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, src="t"))
         assert any(run.run_id == run_id for run in db.run_repository.list_runs())

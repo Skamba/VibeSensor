@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Never, cast
 
 from opentelemetry.trace import SpanKind
@@ -10,7 +9,7 @@ from opentelemetry.trace import SpanKind
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.summary_fields.warnings import localize_warning_list
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
-from vibesensor.shared.ports import AsyncRunPersistence, RunPersistence
+from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_array
@@ -27,18 +26,13 @@ class HistoryRunService:
 
     __slots__ = ("_history_db",)
 
-    def __init__(self, history_db: AsyncRunPersistence) -> None:
+    def __init__(self, history_db: RunPersistence) -> None:
         self._history_db = history_db
 
     async def list_runs(self) -> list[HistoryRunListEntry]:
         with start_span(__name__, "history.runs.list", kind=SpanKind.INTERNAL) as span:
             try:
-                alist_runs = getattr(self._history_db, "alist_runs", None)
-                if callable(alist_runs):
-                    runs = cast(list[HistoryRunListEntry], await alist_runs())
-                else:
-                    sync_history_db = cast(RunPersistence, self._history_db)
-                    runs = await asyncio.to_thread(sync_history_db.list_runs)
+                runs = await self._history_db.alist_runs()
             except Exception as exc:
                 mark_span_error(span, exc)
                 raise
@@ -109,15 +103,7 @@ class HistoryRunService:
             attributes={"vibesensor.run_id": run_id},
         ) as span:
             try:
-                adelete_run_if_safe = getattr(self._history_db, "adelete_run_if_safe", None)
-                if callable(adelete_run_if_safe):
-                    deleted, reason = await adelete_run_if_safe(run_id)
-                else:
-                    sync_history_db = cast(RunPersistence, self._history_db)
-                    deleted, reason = await asyncio.to_thread(
-                        sync_history_db.delete_run_if_safe,
-                        run_id,
-                    )
+                deleted, reason = await self._history_db.adelete_run_if_safe(run_id)
                 if deleted:
                     span.set_attribute("vibesensor.deleted", True)
                     return {"run_id": run_id, "status": "deleted"}

@@ -290,14 +290,14 @@ class _FakeHistoryDB:
         self.finalize_calls: list[str] = []
         self.updated_metadata: list[tuple[str, RunMetadata]] = []
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
+    async def acreate_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         self.create_calls.append((run_id, start_time_utc))
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
+    async def aappend_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
         self.append_calls.append((run_id, len(samples)))
         return len(samples)
 
-    def finalize_run(
+    async def afinalize_run(
         self,
         run_id: str,
         end_time_utc: str,
@@ -307,16 +307,16 @@ class _FakeHistoryDB:
             self.updated_metadata.append((run_id, metadata))
         self.finalize_calls.append(run_id)
 
-    def update_run_metadata(self, run_id: str, metadata: RunMetadata) -> bool:
+    async def aupdate_run_metadata(self, run_id: str, metadata: RunMetadata) -> bool:
         self.updated_metadata.append((run_id, metadata))
         return True
 
-    def analyzing_run_health(self) -> AnalyzingRunHealth:
+    async def aanalyzing_run_health(self) -> AnalyzingRunHealth:
         return AnalyzingRunHealth(analyzing_run_count=0, analyzing_oldest_age_s=None)
 
 
 class _FailingCreateRunHistoryDB(_FakeHistoryDB):
-    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
+    async def acreate_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         raise sqlite3.OperationalError("create_run boom")
 
 
@@ -330,11 +330,11 @@ class _FailingAppendOnceHistoryDB(_FakeHistoryDB):
 
         self._append_failures_remaining = _MAX_APPEND_RETRIES
 
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
+    async def aappend_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
         if self._append_failures_remaining > 0:
             self._append_failures_remaining -= 1
             raise sqlite3.OperationalError("append boom")
-        return super().append_samples(run_id, samples)
+        return await super().aappend_samples(run_id, samples)
 
 
 # ---------------------------------------------------------------------------

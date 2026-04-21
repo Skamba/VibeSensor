@@ -31,7 +31,7 @@ pytestmark = pytest.mark.smoke
 class _RunPersistenceStub:
     run: StoredHistoryRun
 
-    def get_run(self, run_id: str) -> StoredHistoryRun | None:
+    async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
         if run_id != self.run.run_id:
             return None
         return self.run
