@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import logging
-import math
 from collections.abc import Callable, Iterable, Mapping
-from typing import cast
 
 import anyio
 
@@ -24,32 +22,6 @@ _SELECTED_CLIENT_ID_NULL_JSON = '"selected_client_id":null'
 
 def _dump_json_text(value: object) -> str:
     return json_text_dumps(value)
-
-
-def _payload_contains_non_finite(obj: object, *, _max_depth: int = 128) -> bool:
-    _isfinite = math.isfinite
-
-    def _walk(value: object, depth: int = 0) -> bool:
-        if depth > _max_depth:
-            return True
-        t = type(value)
-        if t is int or t is str or t is bool or value is None:
-            return False
-        if hasattr(value, "tolist") and hasattr(value, "ndim"):
-            value = value.tolist()
-            t = type(value)
-        elif hasattr(value, "item"):
-            value = value.item()
-            t = type(value)
-        if t is float:
-            return not _isfinite(cast(float, value))
-        if isinstance(value, dict):
-            return any(_walk(item, depth + 1) for item in value.values())
-        if isinstance(value, (list, tuple)):
-            return any(_walk(item, depth + 1) for item in value)
-        return False
-
-    return _walk(obj)
 
 
 class PayloadBuildOrchestrator:
@@ -124,22 +96,9 @@ class PayloadBuildOrchestrator:
         _dumps = _dump_json_text
         try:
             try:
-                if _payload_contains_non_finite(raw_payload):
-                    payload_for_debug, had_non_finite = sanitize_for_json(raw_payload)
-                    LOGGER.warning(
-                        "WebSocket payload for client %r contained NaN/Inf values; "
-                        "replaced with null.",
-                        selected_client_id,
-                        extra=log_extra(
-                            event="ws_payload_non_finite_replaced",
-                            selected_client_id=selected_client_id,
-                        ),
-                    )
-                else:
-                    had_non_finite = False
                 text = self._serialize_selected_client_payload(
                     selected_client_id,
-                    payload_for_debug,
+                    raw_payload,
                     _dumps,
                 )
             except (TypeError, ValueError, OverflowError):
