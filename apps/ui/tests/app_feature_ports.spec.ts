@@ -30,6 +30,9 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     dispose() {
       calls.push("secondary.dispose");
     },
+    async primeDashboardState() {
+      calls.push("secondary.primeDashboardState");
+    },
   };
 
   const recording = createRealtimeFeatureRecordingPorts(history);
@@ -47,6 +50,7 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
 
   await bundle.startup.realtime.refreshLocationOptions();
   await bundle.startup.realtime.refreshLoggingStatus();
+  await bundle.startup.secondary.primeDashboardState();
   bundle.dispose();
 
   expect(calls).toEqual([
@@ -54,6 +58,7 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     "realtime.bindHandlers",
     "realtime.refreshLocationOptions",
     "realtime.refreshLoggingStatus",
+    "secondary.primeDashboardState",
     "secondary.dispose",
     "realtime.dispose",
   ]);

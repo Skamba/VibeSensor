@@ -12,7 +12,7 @@ type RealtimeLiveOverviewPanelImpl = FunctionComponent<RealtimeLiveOverviewLazyP
 
 let realtimeLiveOverviewPromise: Promise<RealtimeLiveOverviewPanelImpl> | null = null;
 
-function loadRealtimeLiveOverviewPanel(): Promise<RealtimeLiveOverviewPanelImpl> {
+export function preloadRealtimeLiveOverviewPanel(): Promise<RealtimeLiveOverviewPanelImpl> {
   if (realtimeLiveOverviewPromise === null) {
     realtimeLiveOverviewPromise = import("./realtime_live_overview")
       .then((module) => module.RealtimeLiveOverviewPanel as RealtimeLiveOverviewPanelImpl)
@@ -34,7 +34,7 @@ export default function RealtimeLiveOverviewLazy(
       return;
     }
     let cancelled = false;
-    void loadRealtimeLiveOverviewPanel()
+    void preloadRealtimeLiveOverviewPanel()
       .then((nextLoadedPanel) => {
         if (!cancelled) {
           setLoadedPanel(() => nextLoadedPanel);

@@ -13,11 +13,15 @@ import {
   type UiShellChromeBindings,
   type UiShellChromeNavigationModel,
 } from "./runtime/ui_shell_chrome";
-import { computed, signal, type Signal } from "./ui_signals";
+import { computed, signal, type ReadonlySignal, type Signal } from "./ui_signals";
 import type { UiAppBootRuntime } from "./ui_app_boot_runtime";
+import { preloadRealtimeLiveOverviewPanel } from "./views/realtime_live_overview_lazy";
+import { preloadRealtimeLoggingPanel } from "./views/realtime_logging_panel_lazy";
+import { preloadSpectrumPanelHost } from "./views/spectrum_panel_host_lazy";
 
 export interface UiAppRuntime {
   attachSettingsPanels(handles: UiMountedLazyPanelHandles): void;
+  bootReady: ReadonlySignal<boolean>;
   dispose(): void;
   panels: UiMountedPanels;
   shellChrome: UiShellChromeBindings;
@@ -39,6 +43,7 @@ export function createUiAppRuntime(deps: UiAppRuntimeDeps = {}): UiAppRuntime {
       },
     });
   const shellChrome = createUiShellChromeBindings(shellChromeActions);
+  const bootReady = signal(false);
   const prebootNavigationModel = computed<UiShellChromeNavigationModel>(() => ({
     activeViewId: state.shell.activeViewId.value,
     navItems: SHELL_NAV_ITEMS.map((item) => ({
@@ -60,8 +65,12 @@ export function createUiAppRuntime(deps: UiAppRuntimeDeps = {}): UiAppRuntime {
     if (bootRuntimePromise !== null) {
       return bootRuntimePromise;
     }
-    bootRuntimePromise = import("./ui_app_boot_runtime")
-      .then(({ createUiAppBootRuntime }) => {
+    bootRuntimePromise = Promise.all([
+      import("./ui_app_boot_runtime"),
+      preloadRealtimeLiveOverviewPanel(),
+      preloadRealtimeLoggingPanel(),
+      preloadSpectrumPanelHost(),
+    ]).then(([{ createUiAppBootRuntime }]) => {
         if (disposed) {
           return null;
         }
@@ -76,6 +85,7 @@ export function createUiAppRuntime(deps: UiAppRuntimeDeps = {}): UiAppRuntime {
           return null;
         }
         bootRuntime = nextBootRuntime;
+        bootReady.value = true;
         return nextBootRuntime;
       })
       .catch((error) => {
@@ -87,11 +97,13 @@ export function createUiAppRuntime(deps: UiAppRuntimeDeps = {}): UiAppRuntime {
 
   return {
     attachSettingsPanels: lazyPanels.attachSettingsPanels,
+    bootReady,
     dispose() {
       if (disposed) {
         return;
       }
       disposed = true;
+      bootReady.value = false;
       bootRuntime?.dispose();
       lazyPanels.dispose();
     },
