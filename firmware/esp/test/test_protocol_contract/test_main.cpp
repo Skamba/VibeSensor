@@ -79,17 +79,35 @@ void test_parse_sync_clock_matches_python_fixture() {
   uint32_t cmd_seq = 0;
   uint16_t identify_duration_ms = 0;
   uint64_t server_time_us = 0;
+  int64_t applied_offset_us = 0;
+  uint32_t round_trip_us = 0;
   const bool ok = vibesensor::parse_cmd(fixture::kSyncClockPacket.data(),
                                         fixture::kSyncClockPacket.size(),
                                         fixture::kCommandClientId.data(),
                                         &cmd_id,
                                         &cmd_seq,
                                         &identify_duration_ms,
-                                        &server_time_us);
+                                        &server_time_us,
+                                        &applied_offset_us,
+                                        &round_trip_us);
   TEST_ASSERT_TRUE(ok);
   TEST_ASSERT_EQUAL_UINT8(vibesensor::kCmdSyncClock, cmd_id);
   TEST_ASSERT_EQUAL_UINT32(fixture::kSyncClockCmdSeq, cmd_seq);
   TEST_ASSERT_EQUAL_UINT64(fixture::kSyncClockServerTimeUs, server_time_us);
+  TEST_ASSERT_EQUAL_INT64(fixture::kSyncClockAppliedOffsetUs, applied_offset_us);
+  TEST_ASSERT_EQUAL_UINT32(fixture::kSyncClockRoundTripUs, round_trip_us);
+}
+
+void test_pack_sync_clock_ack_matches_python_fixture() {
+  std::array<uint8_t, fixture::kSyncClockAckPacket.size()> packet = {};
+  const size_t len = vibesensor::pack_ack_sync_clock(packet.data(),
+                                                     packet.size(),
+                                                     fixture::kCommandClientId.data(),
+                                                     fixture::kSyncClockCmdSeq,
+                                                     fixture::kSyncClockAckReceiveUs,
+                                                     fixture::kSyncClockAckSendUs,
+                                                     0);
+  expect_packet_matches_fixture(fixture::kSyncClockAckPacket, packet, len);
 }
 
 void test_pack_ack_matches_python_fixture() {
@@ -129,6 +147,7 @@ int main(int argc, char** argv) {
   RUN_TEST(test_pack_data_matches_python_fixture);
   RUN_TEST(test_parse_identify_matches_python_fixture);
   RUN_TEST(test_parse_sync_clock_matches_python_fixture);
+  RUN_TEST(test_pack_sync_clock_ack_matches_python_fixture);
   RUN_TEST(test_pack_ack_matches_python_fixture);
   RUN_TEST(test_parse_data_ack_matches_python_fixture);
   RUN_TEST(test_pack_data_ack_matches_python_fixture);

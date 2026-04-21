@@ -14,6 +14,8 @@ struct RuntimeStatus {
   uint32_t data_ack_parse_errors = 0;
   uint32_t wifi_reconnect_attempts = 0;
   uint32_t wifi_connect_failures = 0;
+  uint32_t sync_round_trip_us = 0;
+  int64_t sync_offset_us = 0;
   uint8_t last_error_code = 0;
   uint32_t last_error_ms = 0;
 };

@@ -24,6 +24,7 @@ OUTPUT = (
 from vibesensor.adapters.udp.protocol import (  # noqa: E402
     HELLO_CAP_EXPLICIT_ACK,
     pack_ack,
+    pack_ack_sync_clock,
     pack_cmd_identify,
     pack_cmd_sync_clock,
     pack_data,
@@ -84,10 +85,22 @@ def render_header() -> str:
 
     sync_clock_cmd_seq = 7
     sync_clock_server_time_us = 987_654_321
+    sync_clock_applied_offset_us = -4_321
+    sync_clock_round_trip_us = 6_789
     sync_clock_packet = pack_cmd_sync_clock(
         cmd_client_id,
         cmd_seq=sync_clock_cmd_seq,
         server_time_us=sync_clock_server_time_us,
+        applied_offset_us=sync_clock_applied_offset_us,
+        round_trip_us=sync_clock_round_trip_us,
+    )
+    sync_clock_ack_receive_us = 876_543_210
+    sync_clock_ack_send_us = 876_543_654
+    sync_clock_ack_packet = pack_ack_sync_clock(
+        cmd_client_id,
+        cmd_seq=sync_clock_cmd_seq,
+        device_receive_us=sync_clock_ack_receive_us,
+        device_send_us=sync_clock_ack_send_us,
     )
 
     ack_client_id = bytes.fromhex("aabbccddeeff")
@@ -142,7 +155,12 @@ constexpr std::array<uint8_t, {len(identify_packet)}> kIdentifyPacket = {{{_form
 
 constexpr uint32_t kSyncClockCmdSeq = {sync_clock_cmd_seq};
 constexpr uint64_t kSyncClockServerTimeUs = {sync_clock_server_time_us}ULL;
+constexpr int64_t kSyncClockAppliedOffsetUs = {sync_clock_applied_offset_us}LL;
+constexpr uint32_t kSyncClockRoundTripUs = {sync_clock_round_trip_us};
 constexpr std::array<uint8_t, {len(sync_clock_packet)}> kSyncClockPacket = {{{_format_u8_array(sync_clock_packet)}}};
+constexpr uint64_t kSyncClockAckReceiveUs = {sync_clock_ack_receive_us}ULL;
+constexpr uint64_t kSyncClockAckSendUs = {sync_clock_ack_send_us}ULL;
+constexpr std::array<uint8_t, {len(sync_clock_ack_packet)}> kSyncClockAckPacket = {{{_format_u8_array(sync_clock_ack_packet)}}};
 
 constexpr std::array<uint8_t, 6> kAckClientId = {{{_format_u8_array(ack_client_id)}}};
 constexpr uint32_t kAckCmdSeq = {ack_cmd_seq};

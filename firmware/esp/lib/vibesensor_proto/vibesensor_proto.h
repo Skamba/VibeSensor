@@ -9,11 +9,12 @@ constexpr size_t kClientIdBytes = 6;
 constexpr size_t kHelloFixedBytes = 1 + 1 + kClientIdBytes + 2 + 2 + 2 + 1 + 1 + 4 + 1;
 constexpr size_t kDataHeaderBytes = 1 + 1 + kClientIdBytes + 4 + 8 + 2;
 constexpr size_t kAckBytes = 1 + 1 + kClientIdBytes + 4 + 1;
+constexpr size_t kAckSyncClockBytes = kAckBytes + 8 + 8;
 constexpr size_t kDataAckBytes = 1 + 1 + kClientIdBytes + 4;
 constexpr size_t kHelloAckBytes = 1 + 1 + kClientIdBytes;
 constexpr size_t kCmdHeaderBytes = 1 + 1 + kClientIdBytes + 1 + 4;
 constexpr size_t kCmdIdentifyBytes = kCmdHeaderBytes + 2;
-constexpr size_t kCmdSyncClockBytes = kCmdHeaderBytes + 8;
+constexpr size_t kCmdSyncClockBytes = kCmdHeaderBytes + 8 + 8 + 4;
 
 enum MessageType : uint8_t {
   kMsgHello = 1,
@@ -61,13 +62,23 @@ bool parse_cmd(const uint8_t* data,
                uint8_t* out_cmd_id,
                uint32_t* out_cmd_seq,
                uint16_t* out_identify_duration_ms,
-               uint64_t* out_server_time_us = nullptr);
+               uint64_t* out_server_time_us = nullptr,
+               int64_t* out_applied_offset_us = nullptr,
+               uint32_t* out_round_trip_us = nullptr);
 
 size_t pack_ack(uint8_t* out,
                 size_t out_len,
                 const uint8_t client_id[6],
                 uint32_t cmd_seq,
                 uint8_t status);
+
+size_t pack_ack_sync_clock(uint8_t* out,
+                           size_t out_len,
+                           const uint8_t client_id[6],
+                           uint32_t cmd_seq,
+                           uint64_t device_receive_us,
+                           uint64_t device_send_us,
+                           uint8_t status = 0);
 
 size_t pack_data_ack(uint8_t* out,
                      size_t out_len,

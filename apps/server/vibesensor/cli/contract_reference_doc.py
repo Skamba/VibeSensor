@@ -10,9 +10,11 @@ __all__ = ["render_contract_reference_markdown"]
 
 from vibesensor.adapters.udp.protocol import (
     ACK_BYTES,
+    ACK_SYNC_CLOCK_BYTES,
     CMD_HEADER_BYTES,
     CMD_IDENTIFY,
     CMD_IDENTIFY_BYTES,
+    CMD_SYNC_CLOCK_BYTES,
     DATA_ACK_BYTES,
     DATA_HEADER_BYTES,
     HELLO_ACK_BYTES,
@@ -92,7 +94,9 @@ This document is generated from code and shared contract files.
 - DATA header bytes (without sample payload): `{DATA_HEADER_BYTES}`
 - CMD header bytes: `{CMD_HEADER_BYTES}`
 - CMD identify bytes: `{CMD_IDENTIFY_BYTES}`
+- CMD sync clock bytes: `{CMD_SYNC_CLOCK_BYTES}`
 - ACK bytes: `{ACK_BYTES}`
+- ACK sync clock bytes: `{ACK_SYNC_CLOCK_BYTES}`
 - DATA_ACK bytes: `{DATA_ACK_BYTES}`
 - HELLO_ACK bytes: `{HELLO_ACK_BYTES}`
 
