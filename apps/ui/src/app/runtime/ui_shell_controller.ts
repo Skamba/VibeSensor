@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import * as I18N from "../../i18n";
 import { formatIntLocale } from "../../format";
 import { setUiLanguage } from "../ui_i18n";
@@ -41,10 +43,7 @@ import type {
   UiShellChromeStatusModel,
   UiShellChromeView,
 } from "./ui_shell_chrome";
-import {
-  SHELL_NAV_ITEMS,
-  SPEED_UNIT_OPTIONS,
-} from "./ui_shell_chrome";
+import { SHELL_NAV_ITEMS, SPEED_UNIT_OPTIONS } from "./ui_shell_chrome";
 import type { RealtimeLiveOverviewBridge } from "../views/realtime_live_overview";
 
 type UiShellControllerDeps = {
@@ -52,11 +51,15 @@ type UiShellControllerDeps = {
   chrome: UiShellChromeView;
   chromeActions: Signal<UiShellChromeActions>;
   liveOverview: RealtimeLiveOverviewBridge;
+  queryClient: QueryClient;
   state: AppState;
 };
 
 function normalizeBadgeVariant(variant: string): VisualVariant {
-  return variant === "bad" || variant === "muted" || variant === "ok" || variant === "warn"
+  return variant === "bad" ||
+    variant === "muted" ||
+    variant === "ok" ||
+    variant === "warn"
     ? variant
     : "muted";
 }
@@ -120,6 +123,7 @@ export class UiShellController {
       t: (key, vars) => this.t(key, vars),
     });
     this.preferences = createUiShellPreferencesModule({
+      queryClient: deps.queryClient,
       shell: this.state.shell,
       t: (key, vars) => this.t(key, vars),
       normalizeLanguage: (lang) => I18N.normalizeLang(lang ?? ""),

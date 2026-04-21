@@ -19,10 +19,9 @@ import {
 } from "./features/settings_feature";
 import { createUpdateFeature } from "./features/update_feature";
 import type { FeatureFormatting, FeatureServices } from "./feature_deps_base";
-import { composeVehicleSettings, type AppState } from "./ui_app_state";
+import type { AppState } from "./ui_app_state";
 import type { UiMountedPanels } from "./ui_lazy_panels";
 import type { ReadonlySignal } from "./ui_signals";
-import { createUiCarCreationCommand } from "./runtime/ui_car_creation_command";
 import type { AppFeatureBundle } from "./app_feature_bundle_ports";
 export type { AppFeatureBundle } from "./app_feature_bundle_ports";
 
@@ -130,20 +129,6 @@ export function createAppFeatureBundle(
     queryClient: serverState.queryClient,
   });
 
-  const carCreation = createUiCarCreationCommand({
-    getVehicleSettings: () =>
-      composeVehicleSettings(
-        state.settings.car.activeVehicleSettings.value,
-        state.settings.analysis.vehicleSettings.value,
-      ),
-    syncCarsPayload: (payload) => settings.syncCarsPayload(payload),
-    syncActiveCarToInputs: () => settings.syncActiveCarToInputs(),
-    showCarCreationSuccess: (carId, carName) =>
-      settings.showCarCreationSuccess(carId, carName),
-    renderCarList: () => settings.renderCarList(),
-    refreshSpectrumDecorations: runtime.view.refreshSpectrumDecorations,
-  });
-
   const cars: CarsFeature = createCarsFeature({
     panel: panels.settings.cars.wizard,
     services: {
@@ -154,7 +139,7 @@ export function createAppFeatureBundle(
     },
     queryClient: serverState.queryClient,
     addCarFromWizard: (name, carType, aspects, variant) =>
-      carCreation.addCarFromWizard(name, carType, aspects, variant),
+      settings.addCarFromWizard(name, carType, aspects, variant),
   });
   carsFeature = cars;
 

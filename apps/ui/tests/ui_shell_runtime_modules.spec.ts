@@ -20,6 +20,7 @@ import { createUiShellPreferencesModule } from "../src/app/runtime/ui_shell_pref
 import { createUiShellStatusModule } from "../src/app/runtime/ui_shell_status_module";
 import { signal, type ReadonlySignal } from "../src/app/ui_signals";
 import { installDocumentStub } from "./spectrum_test_support";
+import { createTestQueryClient } from "./query_client_test_support";
 
 const mswServer = createUiMswTestServer();
 
@@ -30,7 +31,8 @@ function testTranslation(key: string, vars?: Record<string, unknown>): string {
 function installWindowStub(): void {
   (globalThis as { window?: Window & typeof globalThis }).window = {
     clearTimeout: () => undefined,
-    setTimeout: (() => 1 as unknown as ReturnType<typeof setTimeout>) as Window["setTimeout"],
+    setTimeout: (() =>
+      1 as unknown as ReturnType<typeof setTimeout>) as Window["setTimeout"],
   } as Window & typeof globalThis;
 }
 
@@ -65,7 +67,9 @@ function createChromeViewRecorder() {
         counts.navigation += 1;
         models.navigation = model;
       },
-      bindPreferencesModel(model: ReadonlySignal<UiShellChromePreferencesModel>) {
+      bindPreferencesModel(
+        model: ReadonlySignal<UiShellChromePreferencesModel>,
+      ) {
         counts.preferences += 1;
         models.preferences = model;
       },
@@ -168,7 +172,9 @@ describe("UiShellController", () => {
   test("publishes live shell actions through the provided signal", () => {
     const state = createAppState();
     const chrome = createChromeViewRecorder();
-    const chromeActions = signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS });
+    const chromeActions = signal<UiShellChromeActions>({
+      ...DEFAULT_UI_SHELL_CHROME_ACTIONS,
+    });
     new UiShellController({
       bindFeatureHandlers: () => undefined,
       chrome: chrome.view,
@@ -177,6 +183,7 @@ describe("UiShellController", () => {
         model: signal(null),
         speedText: signal<ReadonlySignal<string> | null>(null),
       },
+      queryClient: createTestQueryClient(),
       state,
     });
 
@@ -196,8 +203,11 @@ describe("UiShellController", () => {
     new UiShellController({
       bindFeatureHandlers: () => undefined,
       chrome: chrome.view,
-      chromeActions: signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS }),
+      chromeActions: signal<UiShellChromeActions>({
+        ...DEFAULT_UI_SHELL_CHROME_ACTIONS,
+      }),
       liveOverview,
+      queryClient: createTestQueryClient(),
       state,
     });
 
@@ -221,11 +231,14 @@ describe("UiShellController", () => {
       new UiShellController({
         bindFeatureHandlers: () => undefined,
         chrome: chrome.view,
-        chromeActions: signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS }),
+        chromeActions: signal<UiShellChromeActions>({
+          ...DEFAULT_UI_SHELL_CHROME_ACTIONS,
+        }),
         liveOverview: {
           model: signal(null),
           speedText: signal<ReadonlySignal<string> | null>(null),
         },
+        queryClient: createTestQueryClient(),
         state,
       });
 
@@ -245,11 +258,14 @@ describe("UiShellController", () => {
     const controller = new UiShellController({
       bindFeatureHandlers: () => undefined,
       chrome: chrome.view,
-      chromeActions: signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS }),
+      chromeActions: signal<UiShellChromeActions>({
+        ...DEFAULT_UI_SHELL_CHROME_ACTIONS,
+      }),
       liveOverview: {
         model: signal(null),
         speedText: signal<ReadonlySignal<string> | null>(null),
       },
+      queryClient: createTestQueryClient(),
       state,
     });
 
@@ -284,11 +300,14 @@ describe("UiShellController", () => {
     const controller = new UiShellController({
       bindFeatureHandlers: () => undefined,
       chrome: chrome.view,
-      chromeActions: signal<UiShellChromeActions>({ ...DEFAULT_UI_SHELL_CHROME_ACTIONS }),
+      chromeActions: signal<UiShellChromeActions>({
+        ...DEFAULT_UI_SHELL_CHROME_ACTIONS,
+      }),
       liveOverview: {
         model: signal(null),
         speedText: signal<ReadonlySignal<string> | null>(null),
       },
+      queryClient: createTestQueryClient(),
       state,
     });
 
@@ -318,7 +337,6 @@ describe("UiShellController", () => {
     expect(chrome.models.preferences?.value).toEqual(initialPreferencesModel);
     expect(chrome.models.status?.value).toEqual(initialStatusModel);
   });
-
 });
 
 describe("createUiShellPreferencesModule", () => {
@@ -332,6 +350,7 @@ describe("createUiShellPreferencesModule", () => {
     const requests: string[] = [];
 
     const module = createUiShellPreferencesModule({
+      queryClient: createTestQueryClient(),
       shell: state.shell,
       t: (key) => key,
       normalizeLanguage: (lang) => String(lang),
@@ -365,6 +384,7 @@ describe("createUiShellPreferencesModule", () => {
     let resolveResponse: ((response: Response) => void) | null = null;
 
     const module = createUiShellPreferencesModule({
+      queryClient: createTestQueryClient(),
       shell: state.shell,
       t: (key) => key,
       normalizeLanguage: (lang) => String(lang),
@@ -393,15 +413,15 @@ describe("createUiShellPreferencesModule", () => {
     const state = createAppState();
 
     const module = createUiShellPreferencesModule({
+      queryClient: createTestQueryClient(),
       shell: state.shell,
       t: testTranslation,
       normalizeLanguage: (lang) => String(lang),
     });
 
     mswServer.use(
-      http.put(
-        uiTestUrl("/api/settings/speed-unit"),
-        () => HttpResponse.json({ detail: "save failed" }, { status: 500 }),
+      http.put(uiTestUrl("/api/settings/speed-unit"), () =>
+        HttpResponse.json({ detail: "save failed" }, { status: 500 }),
       ),
     );
 
