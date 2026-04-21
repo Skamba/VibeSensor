@@ -17,9 +17,14 @@ from vibesensor.use_cases.updates.http_client import (
     build_get_request,
     build_request,
     read_text_response,
+    read_typed_json_response,
     stream_http_response,
 )
-from vibesensor.use_cases.updates.releases.github_api import GitHubApiClient
+from vibesensor.use_cases.updates.releases.github_api import (
+    GitHubApiAssetRecord,
+    GitHubApiClient,
+    GitHubApiReleaseRecord,
+)
 
 
 def test_build_get_request_rejects_non_https_when_required() -> None:
@@ -73,6 +78,50 @@ def test_github_api_client_get_json_rejects_invalid_json(httpx_mock: HTTPXMock) 
 
     with pytest.raises(ValueError, match="invalid JSON"):
         client.get_json(url)
+
+
+def test_github_api_client_get_typed_json_decodes_release_records(httpx_mock: HTTPXMock) -> None:
+    url = "https://api.github.com/repos/owner/repo/releases"
+    add_json_response(
+        httpx_mock,
+        url=url,
+        payload=[
+            {
+                "tag_name": "server-v2026.4.21.1",
+                "draft": False,
+                "prerelease": False,
+                "assets": [{"name": "wheel.whl", "url": "https://a"}],
+            }
+        ],
+    )
+    client = GitHubApiClient()
+
+    assert client.get_typed_json(url, response_type=list[GitHubApiReleaseRecord]) == [
+        GitHubApiReleaseRecord(
+            tag_name="server-v2026.4.21.1",
+            draft=False,
+            prerelease=False,
+            assets=[GitHubApiAssetRecord(name="wheel.whl", url="https://a")],
+        )
+    ]
+
+
+def test_read_typed_json_response_rejects_wrong_shape(httpx_mock: HTTPXMock) -> None:
+    url = "https://api.github.com/repos/owner/repo/releases"
+    add_json_response(
+        httpx_mock,
+        url=url,
+        payload={"tag_name": "server-v2026.4.21.1", "draft": False, "prerelease": False},
+    )
+
+    with pytest.raises(ValueError, match="invalid JSON"):
+        read_typed_json_response(
+            url,
+            response_type=list[GitHubApiReleaseRecord],
+            timeout_s=30,
+            context="github",
+            require_https=True,
+        )
 
 
 def test_read_text_response_returns_status_and_body_for_local_smoke_checks(
