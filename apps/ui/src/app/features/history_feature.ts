@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import {
   deleteHistoryRun as deleteHistoryRunApi,
   getHistory,
@@ -22,12 +24,14 @@ import {
   createHistoryTableRowsMemo,
 } from "../views/history_table_presenters";
 import { downloadBlobFile } from "./history_download";
+import { serverStateQueryKeys } from "./server_state_query_keys";
 
 export interface HistoryFeatureDeps {
   panel: HistoryPanelView;
   navigation: {
     activatePrimaryView(viewId: string): void;
   };
+  queryClient: QueryClient;
   history: HistoryState;
   shell: Pick<ShellState, "lang">;
   services: FeatureServices;
@@ -157,7 +161,11 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       previewError: "",
     }));
     try {
-      const response = await getHistoryInsights(runId, shell.lang.value);
+      const response = await ctx.queryClient.fetchQuery({
+        queryFn: () => getHistoryInsights(runId, shell.lang.value),
+        queryKey: serverStateQueryKeys.history.insights(runId, shell.lang.value),
+        staleTime: 0,
+      });
       updateRunDetail(runId, (current) => ({
         ...current,
         preview: response.status === "complete" ? response : null,
@@ -191,7 +199,11 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       insightsError: "",
     }));
     try {
-      const response = await getHistoryInsights(runId, shell.lang.value);
+      const response = await ctx.queryClient.fetchQuery({
+        queryFn: () => getHistoryInsights(runId, shell.lang.value),
+        queryKey: serverStateQueryKeys.history.insights(runId, shell.lang.value),
+        staleTime: 0,
+      });
       updateRunDetail(runId, (current) => ({
         ...current,
         insights: response.status === "complete" ? response : null,
@@ -263,14 +275,20 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
           index,
           index + COLLAPSED_RUN_PREVIEW_PREFETCH_CONCURRENCY,
         );
-        await Promise.all(batch.map((run) => loadRunPreview(run.run_id)));
+        await Promise.all(batch.map((run) =>
+          loadRunPreview(run.run_id)
+        ));
       }
     })();
   }
 
   async function refreshHistory(): Promise<void> {
     try {
-      const payload = await getHistory();
+      const payload = await ctx.queryClient.fetchQuery({
+        queryFn: () => getHistory(),
+        queryKey: serverStateQueryKeys.history.runs(),
+        staleTime: 0,
+      });
       history.runs.value = payload.runs ?? [];
     } catch (_err) {
       return;
@@ -299,6 +317,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (history.expandedRunId.value === runId) {
       collapseExpandedRun();
     }
+    await ctx.queryClient.invalidateQueries({ queryKey: serverStateQueryKeys.history.runs() });
     await refreshHistory();
   }
 
@@ -336,6 +355,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       }
     }
     history.deleteAllRunsInFlight.value = false;
+    await ctx.queryClient.invalidateQueries({ queryKey: serverStateQueryKeys.history.runs() });
     await refreshHistory();
     if (failed > 0) {
       const summary = services.t("history.delete_all_partial", {

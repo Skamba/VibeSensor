@@ -5,6 +5,7 @@ import type { InternetPanelActionHandlers } from "../src/app/views/internet_pane
 import type {
   UpdatePanelActionHandlers,
 } from "../src/app/views/update_panel";
+import { createTestQueryClient } from "./query_client_test_support";
 
 test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners", () => {
   const updatePanel = {
@@ -25,12 +26,13 @@ test("bindUpdateHandlers uses panel action surfaces instead of raw DOM listeners
     },
     ports: {
       activeSettingsTabId: signal("updateTab"),
-      activeViewId: signal("settingsView"),
+      activeViewId: signal("dashboardView"),
     },
     panels: {
       update: updatePanel,
       internet: internetPanel,
     },
+    queryClient: createTestQueryClient(),
   });
 
   expect(() => feature.bindUpdateHandlers()).not.toThrow();

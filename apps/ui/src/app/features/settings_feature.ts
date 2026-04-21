@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarSelectionDerivedState } from "../car_selection_state";
 import type { SettingsState, ShellState } from "../ui_app_state";
@@ -46,6 +48,7 @@ export interface SettingsFeatureDeps {
   state: SettingsFeatureStateDeps;
   panels: SettingsFeaturePanelDeps;
   ports: SettingsFeaturePortDeps;
+  queryClient: QueryClient;
   services: FeatureServices;
   formatting: Pick<FeatureFormatting, "fmt">;
 }
@@ -92,6 +95,7 @@ export function createSettingsFeature(
   const analysisModule: SettingsAnalysisModule = createSettingsAnalysisModule({
     panel: ctx.panels.analysisPanel,
     settings,
+    queryClient: ctx.queryClient,
     services,
     refreshSpectrumDecorations: ctx.ports.view.refreshSpectrumDecorations,
     hasValidActiveCar: () => carSelection.hasResolvedActiveCar.value,
@@ -102,6 +106,7 @@ export function createSettingsFeature(
     createSettingsSpeedSourceModule({
       panel: ctx.panels.speedSourcePanel,
       settings,
+      queryClient: ctx.queryClient,
       services,
       formatting,
       getSpeedUnit: () => ctx.state.shell.speedUnit.value,
@@ -114,6 +119,7 @@ export function createSettingsFeature(
     createSettingsGpsStatusModule({
       panel: ctx.panels.speedSourcePanel,
       settings,
+      queryClient: ctx.queryClient,
       services: {
         t: services.t,
       },
@@ -127,6 +133,7 @@ export function createSettingsFeature(
     });
   carsModule = createSettingsCarsModule({
     settings,
+    queryClient: ctx.queryClient,
     panels: {
       analysisPanel: ctx.panels.analysisPanel,
       panel: ctx.panels.carsPanel,

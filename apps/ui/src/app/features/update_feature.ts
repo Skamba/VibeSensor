@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import {
   computed,
   signal,
@@ -25,14 +27,13 @@ interface UpdateFeaturePorts {
 export interface UpdateFeatureDeps {
   panels: UpdateFeaturePanels;
   ports: UpdateFeaturePorts;
+  queryClient: QueryClient;
   services: FeatureServices;
 }
 
 export interface UpdateFeature {
   bindUpdateHandlers(): void;
   dispose(): void;
-  startPolling(): void;
-  stopPolling(): void;
 }
 
 function isUpdatePollingContext(viewId: string, tabId: string): boolean {
@@ -50,6 +51,7 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   const workflow = createUpdateFeatureWorkflow({
     t: services.t,
     showError: services.showError,
+    queryClient: ctx.queryClient,
     view: {
       clearPassword() {
         presenter.clearPassword();
@@ -101,7 +103,5 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     dispose(): void {
       workflow.dispose();
     },
-    startPolling: () => workflow.startPolling(),
-    stopPolling: () => workflow.stopPolling(),
   };
 }

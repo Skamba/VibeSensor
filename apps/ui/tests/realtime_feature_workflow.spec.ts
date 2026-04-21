@@ -5,12 +5,12 @@ import {
 } from "../src/app/features/realtime_feature_workflow";
 import { createAppState } from "../src/app/ui_app_state";
 import { signal, effect } from "../src/app/ui_signals";
-import { defaultLocationCodes } from "../src/constants";
 import type {
   ClientLocationsResponse,
   LoggingStatusPayload,
 } from "../src/api/types";
 import type { AdaptedClient } from "../src/transport/live_models";
+import { createTestQueryClient } from "./query_client_test_support";
 
 type WorkflowHarness = {
   state: ReturnType<typeof createAppState>;
@@ -18,7 +18,6 @@ type WorkflowHarness = {
   selectionCalls: string[];
   recordingCalls: string[];
   confirmMessages: string[];
-  pollerCalls: string[];
   showErrors: string[];
 };
 
@@ -43,7 +42,6 @@ function createHarness(): WorkflowHarness {
     selectionCalls: [],
     recordingCalls: [],
     confirmMessages: [],
-    pollerCalls: [],
     showErrors: [],
   };
 }
@@ -69,6 +67,7 @@ describe("createRealtimeFeatureWorkflow", () => {
     });
     const workflow = createRealtimeFeatureWorkflow({
       realtime: harness.state.realtime,
+      queryClient: createTestQueryClient(),
       t: (key) => key,
       showError: (message) => {
         harness.showErrors.push(message);
@@ -88,34 +87,27 @@ describe("createRealtimeFeatureWorkflow", () => {
       confirmRemoveClient: async () => true,
       state: workflowState,
       api: {
+        async getLoggingStatus() {
+          harness.apiCalls.push("getLoggingStatus");
+          return harness.state.realtime.loggingStatus.value;
+        },
         async startLoggingRun() {
           harness.apiCalls.push("startLoggingRun");
           return nextStatus;
         },
       },
-      createPollingController: () => ({
-        start() {
-          harness.pollerCalls.push("start");
-        },
-        stop() {
-          harness.pollerCalls.push("stop");
-        },
-        restart() {
-          harness.pollerCalls.push("restart");
-        },
-      }),
     });
 
     workflow.bindHandlers();
     await workflow.startLogging();
 
-    expect(harness.pollerCalls).toEqual(["start", "restart"]);
     expect(harness.recordingCalls).toEqual(["onRecordingStatusChanged"]);
-    expect(harness.apiCalls).toEqual(["startLoggingRun"]);
+    expect(harness.apiCalls).toContain("startLoggingRun");
     expect(pendingTransitions).toEqual([null, "starting", null]);
     expect(workflow.signals.handlersBound.value).toBe(true);
     expect(workflow.signals.loggingError.value).toBeNull();
     expect(harness.state.realtime.loggingStatus.value).toEqual(nextStatus);
+    workflow.dispose();
   });
 
   test("refreshes idle capture readiness from the signature signal instead of view render calls", async () => {
@@ -123,6 +115,7 @@ describe("createRealtimeFeatureWorkflow", () => {
     const idleCaptureReadinessSignature = signal("car-1##client-a");
     const workflow = createRealtimeFeatureWorkflow({
       realtime: harness.state.realtime,
+      queryClient: createTestQueryClient(),
       t: (key) => key,
       showError: (message) => {
         harness.showErrors.push(message);
@@ -146,28 +139,16 @@ describe("createRealtimeFeatureWorkflow", () => {
           return harness.state.realtime.loggingStatus.value;
         },
       },
-      createPollingController: () => ({
-        start() {
-          harness.pollerCalls.push("start");
-        },
-        stop() {
-          harness.pollerCalls.push("stop");
-        },
-        restart() {
-          harness.pollerCalls.push("restart");
-        },
-      }),
     });
 
     workflow.bindHandlers();
 
-    await expect.poll(() => harness.apiCalls.length).toBe(1);
+    await expect.poll(() => harness.apiCalls.length).toBeGreaterThanOrEqual(1);
+    const initialCalls = harness.apiCalls.length;
     idleCaptureReadinessSignature.value = "car-1##client-a|client-b";
-    await expect.poll(() => harness.apiCalls.length).toBe(2);
-    expect(harness.apiCalls).toEqual([
-      "getLoggingStatus:car-1##client-a",
-      "getLoggingStatus:car-1##client-a|client-b",
-    ]);
+    await expect.poll(() => harness.apiCalls.length).toBeGreaterThan(initialCalls);
+    expect(harness.apiCalls.at(-1)).toBe("getLoggingStatus:car-1##client-a|client-b");
+    workflow.dispose();
   });
 
 test("keeps the last known location codes and rejects when refreshing locations fails", async () => {
@@ -175,6 +156,7 @@ test("keeps the last known location codes and rejects when refreshing locations 
     harness.state.realtime.locationCodes.value = ["custom-code"];
     const workflow = createRealtimeFeatureWorkflow({
       realtime: harness.state.realtime,
+      queryClient: createTestQueryClient(),
       t: (key) => key,
       showError: (message) => {
         harness.showErrors.push(message);
@@ -202,6 +184,7 @@ test("keeps the last known location codes and rejects when refreshing locations 
     await expect(workflow.refreshLocationOptions()).rejects.toThrow("network unavailable");
 
   expect(harness.state.realtime.locationCodes.value).toEqual(["custom-code"]);
+  workflow.dispose();
 });
 
   test("refreshes history once when polling observes analysis completion", async () => {
@@ -219,6 +202,7 @@ test("keeps the last known location codes and rejects when refreshing locations 
     const responses = [completedStatus, completedStatus];
     const workflow = createRealtimeFeatureWorkflow({
       realtime: harness.state.realtime,
+      queryClient: createTestQueryClient(),
       t: (key) => key,
       showError: (message) => {
         harness.showErrors.push(message);
@@ -253,6 +237,7 @@ test("keeps the last known location codes and rejects when refreshing locations 
     expect(harness.state.realtime.loggingStatus.value).toEqual(completedStatus);
     expect(harness.recordingCalls).toEqual(["onRecordingStatusChanged"]);
     expect(workflow.signals.loggingError.value).toBeNull();
+    workflow.dispose();
   });
 
   test("removes the selected client and emits a new selection without DOM fixtures", async () => {
@@ -264,6 +249,7 @@ test("keeps the last known location codes and rejects when refreshing locations 
     harness.state.realtime.selectedClientId.value = "client-a";
     const workflow = createRealtimeFeatureWorkflow({
       realtime: harness.state.realtime,
+      queryClient: createTestQueryClient(),
       t: (key, vars) => `${key}:${String(vars?.id ?? "")}`,
       showError: (message) => {
         harness.showErrors.push(message);
@@ -298,6 +284,7 @@ test("keeps the last known location codes and rejects when refreshing locations 
     expect(harness.state.realtime.clients.value.map((client) => client.id)).toEqual(["client-b"]);
     expect(harness.state.realtime.selectedClientId.value).toBe("client-b");
     expect(harness.selectionCalls).toEqual(["sendSelection"]);
+    workflow.dispose();
   });
 
   test("does not remove a client when confirmation is declined", async () => {
@@ -309,6 +296,7 @@ test("keeps the last known location codes and rejects when refreshing locations 
     harness.state.realtime.selectedClientId.value = "client-a";
     const workflow = createRealtimeFeatureWorkflow({
       realtime: harness.state.realtime,
+      queryClient: createTestQueryClient(),
       t: (key, vars) => `${key}:${String(vars?.id ?? "")}`,
       showError: (message) => {
         harness.showErrors.push(message);
@@ -346,5 +334,6 @@ test("keeps the last known location codes and rejects when refreshing locations 
     ]);
     expect(harness.state.realtime.selectedClientId.value).toBe("client-a");
     expect(harness.selectionCalls).toEqual([]);
+    workflow.dispose();
   });
 });

@@ -4,7 +4,6 @@ import { test } from "vitest";
 import {
   createDeferred,
   flushAsyncWork,
-  installTimerHarness,
 } from "./async_test_helpers";
 import {
   createEspFlashFeatureHarness,
@@ -13,8 +12,6 @@ import {
   createIdleUpdateStatus,
   createUpdateFeatureHarness,
   createUsbInternetStatus,
-  expectPollDelays,
-  expectTimerDelays,
   installMaintenanceFeatureGlobals,
 } from "./maintenance_feature_test_support";
 import {
@@ -54,26 +51,32 @@ async function withMaintenanceScope(run: (scope: ReturnType<typeof createUiMswTe
   }
 }
 
-async function runEspFlashStartReplacesPreviousTimeout(): Promise<void> {
+async function runEspFlashStartRefreshesStatusImmediately(): Promise<void> {
   await withMaintenanceScope(async (scope) => {
-    const timers = installTimerHarness();
-    scope.server.use(...buildEspFlashHandlers());
+    let statusRequests = 0;
+    scope.server.use(
+      ...buildEspFlashHandlers({
+        status: () => {
+          statusRequests += 1;
+          return makeEspFlashStatusPayload();
+        },
+      }),
+    );
+
+    const { deps, feature } = await createEspFlashFeatureHarness();
 
     try {
-      const { deps, feature } = await createEspFlashFeatureHarness();
+      feature.bindHandlers();
+      feature.startPolling();
+      await flushAsyncWork();
+      const initialStatusRequests = statusRequests;
 
-      try {
-        feature.bindHandlers();
-        feature.startPolling();
-        await expectPollDelays(timers, [4_000]);
+      deps.espFlashStartBtn.click();
+      await flushAsyncWork();
 
-        deps.espFlashStartBtn.click();
-        await expectPollDelays(timers, [4_000]);
-      } finally {
-        feature.dispose();
-      }
+      assert.equal(statusRequests, initialStatusRequests + 1);
     } finally {
-      timers.restore();
+      feature.dispose();
     }
   });
 }
@@ -121,76 +124,69 @@ async function runEspFlashManualPortSelection(): Promise<void> {
   });
 }
 
-async function runEspFlashCancelReplacesPreviousTimeout(): Promise<void> {
+async function runEspFlashCancelRefreshesStatusImmediately(): Promise<void> {
   await withMaintenanceScope(async (scope) => {
-    const timers = installTimerHarness();
+    let statusRequests = 0;
     scope.server.use(
       ...buildEspFlashHandlers({
         history: makeEspFlashHistoryPayload(),
         logs: makeEspFlashLogsPayload(),
         ports: makeEspFlashPortsPayload({ ports: [] }),
-        status: makeEspFlashStatusPayload(),
+        status: () => {
+          statusRequests += 1;
+          return makeEspFlashStatusPayload();
+        },
       }),
     );
 
+    const { deps, feature } = await createEspFlashFeatureHarness();
+
     try {
-      const { deps, feature } = await createEspFlashFeatureHarness();
+      feature.bindHandlers();
+      feature.startPolling();
+      await flushAsyncWork();
+      const initialStatusRequests = statusRequests;
 
-      try {
-        feature.bindHandlers();
-        feature.startPolling();
-        await expectPollDelays(timers, [4_000]);
+      deps.espFlashCancelBtn.click();
+      await flushAsyncWork();
 
-        deps.espFlashCancelBtn.click();
-        await expectPollDelays(timers, [4_000]);
-      } finally {
-        feature.dispose();
-      }
+      assert.equal(statusRequests, initialStatusRequests + 1);
     } finally {
-      timers.restore();
+      feature.dispose();
     }
   });
 }
 
-async function runEspFlashStopPollingPreventsRevive(): Promise<void> {
+async function runEspFlashLeavingPollingContextStopsFollowupRefreshes(): Promise<void> {
   await withMaintenanceScope(async (scope) => {
-    const timers = installTimerHarness();
     const deferredStatus = createDeferred<void>();
+    let statusRequests = 0;
     scope.server.use(
       ...buildEspFlashHandlers({
         ports: makeEspFlashPortsPayload({ ports: [] }),
         status: async () => {
+          statusRequests += 1;
           await deferredStatus.promise;
           return makeEspFlashStatusPayload();
         },
       }),
     );
 
+    const { feature } = await createEspFlashFeatureHarness();
+
     try {
-      const { feature } = await createEspFlashFeatureHarness();
+      feature.bindHandlers();
+      feature.startPolling();
+      await flushAsyncWork();
 
-      try {
-        feature.bindHandlers();
-        feature.startPolling();
-        await flushAsyncWork();
-        assert.deepEqual(
-          timers.pendingDelays().filter((delay) => delay !== 10_000),
-          [],
-        );
+      feature.stopPolling();
+      deferredStatus.resolve();
+      await flushAsyncWork();
+      await flushAsyncWork();
 
-        feature.stopPolling();
-        deferredStatus.resolve();
-        await flushAsyncWork();
-
-        assert.deepEqual(
-          timers.pendingDelays().filter((delay) => delay !== 10_000),
-          [],
-        );
-      } finally {
-        feature.dispose();
-      }
+      assert.equal(statusRequests, 1);
     } finally {
-      timers.restore();
+      feature.dispose();
     }
   });
 }
@@ -347,14 +343,14 @@ async function runEspFlashFailedRefreshKeepsStoppedStage(): Promise<void> {
   });
 }
 
-async function runUpdateStartReplacesPreviousTimeout(): Promise<void> {
+async function runUpdateStartRefreshesStatusImmediately(): Promise<void> {
   await withMaintenanceScope(async (scope) => {
-    const timers = installTimerHarness();
     const startRequests: Array<{
       password: string;
       ssid?: string | null;
       transport: string;
     }> = [];
+    let statusRequests = 0;
     scope.server.use(
       ...buildUpdateHandlers({
         health: createHealthyUpdateStatus(),
@@ -364,36 +360,37 @@ async function runUpdateStartReplacesPreviousTimeout(): Promise<void> {
           ssid: "MyWiFi",
         }),
         startRequests,
-        status: createIdleUpdateStatus(),
+        status: () => {
+          statusRequests += 1;
+          return createIdleUpdateStatus();
+        },
       }),
     );
 
+    const { deps, feature } = await createUpdateFeatureHarness();
+
     try {
-      const { deps, feature } = await createUpdateFeatureHarness();
+      feature.bindUpdateHandlers();
+      feature.startPolling();
+      await flushAsyncWork();
+      const initialStatusRequests = statusRequests;
+      deps.updatePasswordInput.value = "secret";
+      deps.updatePasswordInput.dispatchEvent(new Event("input", { bubbles: true }));
+      deps.updateSsidInput.value = "MyWiFi";
+      deps.updateSsidInput.dispatchEvent(new Event("input", { bubbles: true }));
+      await flushAsyncWork();
 
-      try {
-        feature.bindUpdateHandlers();
-        feature.startPolling();
-        await expectTimerDelays(timers, [10_000]);
-        deps.updatePasswordInput.value = "secret";
-        deps.updatePasswordInput.dispatchEvent(new Event("input", { bubbles: true }));
-        deps.updateSsidInput.value = "MyWiFi";
-        deps.updateSsidInput.dispatchEvent(new Event("input", { bubbles: true }));
-        await flushAsyncWork();
-
-        deps.updateStartBtn.click();
-        await expectTimerDelays(timers, [10_000]);
-        assert.equal(deps.updatePasswordInput.value, "");
-        assert.deepEqual(startRequests, [{
-          transport: "wifi",
-          ssid: "MyWiFi",
-          password: "secret",
-        }]);
-      } finally {
-        feature.dispose();
-      }
+      deps.updateStartBtn.click();
+      await flushAsyncWork();
+      assert.equal(statusRequests, initialStatusRequests + 1);
+      assert.equal(deps.updatePasswordInput.value, "");
+      assert.deepEqual(startRequests, [{
+        transport: "wifi",
+        ssid: "MyWiFi",
+        password: "secret",
+      }]);
     } finally {
-      timers.restore();
+      feature.dispose();
     }
   });
 }
@@ -694,76 +691,84 @@ async function runUpdateFailedStateSurfacesRecovery(): Promise<void> {
   });
 }
 
-async function runUpdateCancelReplacesPreviousTimeout(): Promise<void> {
+async function runUpdateCancelRefreshesStatusImmediately(): Promise<void> {
   await withMaintenanceScope(async (scope) => {
-    const timers = installTimerHarness();
-    scope.server.use(...buildUpdateHandlers());
+    let statusRequests = 0;
+    scope.server.use(
+      ...buildUpdateHandlers({
+        status: () => {
+          statusRequests += 1;
+          return createIdleUpdateStatus();
+        },
+      }),
+    );
+
+    const { deps, feature } = await createUpdateFeatureHarness();
 
     try {
-      const { deps, feature } = await createUpdateFeatureHarness();
+      feature.bindUpdateHandlers();
+      feature.startPolling();
+      await flushAsyncWork();
+      const initialStatusRequests = statusRequests;
 
-      try {
-        feature.bindUpdateHandlers();
-        feature.startPolling();
-        await expectTimerDelays(timers, [10_000]);
+      deps.updateCancelBtn.click();
+      await flushAsyncWork();
 
-        deps.updateCancelBtn.click();
-        await expectTimerDelays(timers, [10_000]);
-      } finally {
-        feature.dispose();
-      }
+      assert.equal(statusRequests, initialStatusRequests + 1);
     } finally {
-      timers.restore();
+      feature.dispose();
     }
   });
 }
 
-async function runUpdateStopPollingPreventsRevive(): Promise<void> {
+async function runUpdateLeavingPollingContextStopsFollowupRefreshes(): Promise<void> {
   await withMaintenanceScope(async (scope) => {
-    const timers = installTimerHarness();
     const deferredStatus = createDeferred<ReturnType<typeof createIdleUpdateStatus>>();
+    let statusRequests = 0;
     scope.server.use(
       ...buildUpdateHandlers({
-        status: async () => await deferredStatus.promise,
+        status: async () => {
+          statusRequests += 1;
+          return await deferredStatus.promise;
+        },
       }),
     );
 
+    const { feature } = await createUpdateFeatureHarness();
+
     try {
-      const { feature } = await createUpdateFeatureHarness();
+      feature.bindUpdateHandlers();
+      feature.startPolling();
+      await flushAsyncWork();
 
-      try {
-        feature.bindUpdateHandlers();
-        feature.startPolling();
-        await expectTimerDelays(timers, [10_000]);
+      feature.stopPolling();
+      deferredStatus.resolve(createIdleUpdateStatus());
+      await flushAsyncWork();
+      await flushAsyncWork();
 
-        feature.stopPolling();
-        deferredStatus.resolve(createIdleUpdateStatus());
-        await expectTimerDelays(timers, []);
-      } finally {
-        feature.dispose();
-      }
+      assert.equal(statusRequests, 1);
     } finally {
-      timers.restore();
+      feature.dispose();
     }
   });
 }
 
 const maintenanceSignalTests = [
   {
-    name: "esp flash start replaces previous poll timeout",
-    run: runEspFlashStartReplacesPreviousTimeout,
+    name: "esp flash start refreshes status immediately",
+    run: runEspFlashStartRefreshesStatusImmediately,
   },
   {
     name: "esp flash manual port selection drives start payload",
     run: runEspFlashManualPortSelection,
   },
   {
-    name: "esp flash cancel replaces previous poll timeout",
-    run: runEspFlashCancelReplacesPreviousTimeout,
+    name: "esp flash cancel refreshes status immediately",
+    run: runEspFlashCancelRefreshesStatusImmediately,
   },
   {
-    name: "esp flash stopPolling prevents revive",
-    run: runEspFlashStopPollingPreventsRevive,
+    name: "esp flash leaving polling context stops followup refreshes",
+    run: runEspFlashLeavingPollingContextStopsFollowupRefreshes,
   },
   {
     name: "esp flash idle state renders readiness and history panels",
@@ -782,8 +787,8 @@ const maintenanceSignalTests = [
     run: runEspFlashFailedRefreshKeepsStoppedStage,
   },
   {
-    name: "update start replaces previous poll timeout",
-    run: runUpdateStartReplacesPreviousTimeout,
+    name: "update start refreshes status immediately",
+    run: runUpdateStartRefreshesStatusImmediately,
   },
   {
     name: "update USB transport flow uses USB payload",
@@ -814,12 +819,12 @@ const maintenanceSignalTests = [
     run: runUpdateFailedStateSurfacesRecovery,
   },
   {
-    name: "update cancel replaces previous poll timeout",
-    run: runUpdateCancelReplacesPreviousTimeout,
+    name: "update cancel refreshes status immediately",
+    run: runUpdateCancelRefreshesStatusImmediately,
   },
   {
-    name: "update stopPolling prevents revive",
-    run: runUpdateStopPollingPreventsRevive,
+    name: "update leaving polling context stops followup refreshes",
+    run: runUpdateLeavingPollingContextStopsFollowupRefreshes,
   },
 ];
 

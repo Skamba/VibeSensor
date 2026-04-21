@@ -80,6 +80,11 @@ export async function mountSignalView<TView>(
 export function installMountedDomGlobals(): () => void {
   const { window } = parseHTML("<!doctype html><html><body></body></html>");
   const globalRef = globalThis as typeof globalThis & MountedViewGlobals;
+  const requestAnimationFrameShim = ((callback: FrameRequestCallback) =>
+    setTimeout(() => callback(Date.now()), 0) as unknown as number) as typeof requestAnimationFrame;
+  const cancelAnimationFrameShim = ((handle: number) => {
+    clearTimeout(handle);
+  }) as typeof cancelAnimationFrame;
   const original: MountedViewGlobals = {
     CustomEvent: globalRef.CustomEvent,
     DocumentFragment: globalRef.DocumentFragment,
@@ -116,11 +121,8 @@ export function installMountedDomGlobals(): () => void {
       ({
         getPropertyValue: () => "",
       }) as CSSStyleDeclaration)) as typeof getComputedStyle;
-  globalRef.requestAnimationFrame = ((callback: FrameRequestCallback) =>
-    setTimeout(() => callback(Date.now()), 16) as unknown as number) as typeof requestAnimationFrame;
-  globalRef.cancelAnimationFrame = ((handle: number) => {
-    clearTimeout(handle);
-  }) as typeof cancelAnimationFrame;
+  globalRef.requestAnimationFrame = requestAnimationFrameShim;
+  globalRef.cancelAnimationFrame = cancelAnimationFrameShim;
 
   return () => {
     restoreMountedViewGlobal(globalRef, "window", original.window);
@@ -136,8 +138,16 @@ export function installMountedDomGlobals(): () => void {
     restoreMountedViewGlobal(globalRef, "KeyboardEvent", original.KeyboardEvent);
     restoreMountedViewGlobal(globalRef, "MouseEvent", original.MouseEvent);
     restoreMountedViewGlobal(globalRef, "getComputedStyle", original.getComputedStyle);
-    restoreMountedViewGlobal(globalRef, "requestAnimationFrame", original.requestAnimationFrame);
-    restoreMountedViewGlobal(globalRef, "cancelAnimationFrame", original.cancelAnimationFrame);
+    restoreMountedViewGlobal(
+      globalRef,
+      "requestAnimationFrame",
+      original.requestAnimationFrame ?? requestAnimationFrameShim,
+    );
+    restoreMountedViewGlobal(
+      globalRef,
+      "cancelAnimationFrame",
+      original.cancelAnimationFrame ?? cancelAnimationFrameShim,
+    );
   };
 }
 

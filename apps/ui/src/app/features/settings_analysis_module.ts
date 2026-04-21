@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import type {
   AnalysisSettingsPayload,
   AnalysisSettingsRequest,
@@ -17,10 +19,12 @@ import type {
   SettingsAnalysisGuidanceRenderModel,
 } from "../views/analysis_panel";
 import type { SettingsFeedbackMessage } from "../views/settings_feedback";
+import { serverStateQueryKeys } from "./server_state_query_keys";
 
 export interface SettingsAnalysisModuleDeps {
   panel: AnalysisPanelView;
   settings: SettingsState;
+  queryClient: QueryClient;
   services: FeatureServices;
   refreshSpectrumDecorations: () => void;
   hasValidActiveCar: () => boolean;
@@ -350,6 +354,7 @@ export function createSettingsAnalysisModule(
   ): Promise<void> {
     try {
       const saved = await setAnalysisSettings(payload);
+      ctx.queryClient.setQueryData(serverStateQueryKeys.settings.analysis(), saved);
       applyAnalysisSettingsPayload(saved);
     } catch (error) {
       openAnalysisGuidance();
@@ -365,7 +370,11 @@ export function createSettingsAnalysisModule(
   }
 
   async function loadAnalysisSettingsFromServer(): Promise<void> {
-    const serverSettings = await getAnalysisSettings();
+    const serverSettings = await ctx.queryClient.fetchQuery({
+      queryFn: () => getAnalysisSettings(),
+      queryKey: serverStateQueryKeys.settings.analysis(),
+      staleTime: 0,
+    });
     if (serverSettings) {
       applyAnalysisSettingsPayload(serverSettings);
     }
