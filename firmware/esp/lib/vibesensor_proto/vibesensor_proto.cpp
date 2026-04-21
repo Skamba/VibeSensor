@@ -159,7 +159,9 @@ bool parse_cmd(const uint8_t* data,
                uint8_t* out_cmd_id,
                uint32_t* out_cmd_seq,
                uint16_t* out_identify_duration_ms,
-               uint64_t* out_server_time_us) {
+               uint64_t* out_server_time_us,
+               int64_t* out_applied_offset_us,
+               uint32_t* out_round_trip_us) {
   const size_t base = kCmdHeaderBytes;
   if (len < base) {
     return false;
@@ -196,6 +198,12 @@ bool parse_cmd(const uint8_t* data,
     if (out_server_time_us != nullptr) {
       *out_server_time_us = read_u64_le(data + base);
     }
+    if (out_applied_offset_us != nullptr) {
+      *out_applied_offset_us = static_cast<int64_t>(read_u64_le(data + base + 8));
+    }
+    if (out_round_trip_us != nullptr) {
+      *out_round_trip_us = read_u32_le(data + base + 16);
+    }
   }
 
   return true;
@@ -218,6 +226,32 @@ size_t pack_ack(uint8_t* out,
   write_u32_le(out + o, cmd_seq);
   o += 4;
   out[o++] = status;
+  return o;
+}
+
+size_t pack_ack_sync_clock(uint8_t* out,
+                           size_t out_len,
+                           const uint8_t client_id[6],
+                           uint32_t cmd_seq,
+                           uint64_t device_receive_us,
+                           uint64_t device_send_us,
+                           uint8_t status) {
+  const size_t need = kAckSyncClockBytes;
+  if (out_len < need) {
+    return 0;
+  }
+  size_t o = 0;
+  out[o++] = kMsgAck;
+  out[o++] = kProtoVersion;
+  copy_client_id(out + o, client_id);
+  o += kClientIdBytes;
+  write_u32_le(out + o, cmd_seq);
+  o += 4;
+  out[o++] = status;
+  write_u64_le(out + o, device_receive_us);
+  o += 8;
+  write_u64_le(out + o, device_send_us);
+  o += 8;
   return o;
 }
 

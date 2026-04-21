@@ -80,6 +80,10 @@ class ClientRecord:
     last_seq: int | None = None
     last_ack_cmd_seq: int | None = None
     last_ack_status: int | None = None
+    pending_sync_cmd_seq: int | None = None
+    pending_sync_send_us: int | None = None
+    sync_offset_us: int | None = None
+    sync_rtt_us: int | None = None
     reset_count: int = 0
     last_reset_time: float | None = None
     last_t0_us: int | None = None
@@ -111,6 +115,8 @@ class ClientRecordSnapshot:
     last_seq: int | None = None
     last_ack_cmd_seq: int | None = None
     last_ack_status: int | None = None
+    sync_offset_us: int | None = None
+    sync_rtt_us: int | None = None
     reset_count: int = 0
     last_reset_time: float | None = None
     last_t0_us: int | None = None
@@ -139,6 +145,8 @@ def _snapshot_record(record: ClientRecord) -> ClientRecordSnapshot:
         last_seq=record.last_seq,
         last_ack_cmd_seq=record.last_ack_cmd_seq,
         last_ack_status=record.last_ack_status,
+        sync_offset_us=record.sync_offset_us,
+        sync_rtt_us=record.sync_rtt_us,
         reset_count=record.reset_count,
         last_reset_time=record.last_reset_time,
         last_t0_us=record.last_t0_us,
@@ -279,6 +287,25 @@ class ClientRegistry:
             record.last_seen_mono = mono
             record.last_ack_cmd_seq = ack.cmd_seq
             record.last_ack_status = ack.status
+            if record.pending_sync_cmd_seq == ack.cmd_seq:
+                if (
+                    ack.device_receive_us is not None
+                    and ack.device_send_us is not None
+                    and record.pending_sync_send_us is not None
+                ):
+                    server_receive_us = int(mono * 1_000_000)
+                    processing_us = max(0, ack.device_send_us - ack.device_receive_us)
+                    round_trip_us = max(
+                        0,
+                        server_receive_us - record.pending_sync_send_us - processing_us,
+                    )
+                    record.sync_offset_us = (
+                        (record.pending_sync_send_us - ack.device_receive_us)
+                        + (server_receive_us - ack.device_send_us)
+                    ) // 2
+                    record.sync_rtt_us = round_trip_us
+                record.pending_sync_cmd_seq = None
+                record.pending_sync_send_us = None
 
     def note_parse_error(self, client_id: str | None) -> None:
         self._diagnostics.note_parse_error(client_id)
@@ -368,11 +395,20 @@ class ClientRegistry:
                 self._clients.pop(client_id, None)
             return stale_ids
 
-    def mark_cmd_sent(self, client_id: str, cmd_seq: int) -> None:
+    def mark_cmd_sent(
+        self,
+        client_id: str,
+        cmd_seq: int,
+        *,
+        sync_send_us: int | None = None,
+    ) -> None:
         with self._lock:
             record = self._get_or_create(client_id)
             record.last_ack_cmd_seq = cmd_seq
             record.last_ack_status = None
+            if sync_send_us is not None:
+                record.pending_sync_cmd_seq = cmd_seq
+                record.pending_sync_send_us = sync_send_us
 
     def client_snapshots(
         self,

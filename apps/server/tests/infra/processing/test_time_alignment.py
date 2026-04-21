@@ -253,18 +253,28 @@ class TestCmdSyncClockProtocol:
         client_id = b"\x01\x02\x03\x04\x05\x06"
         cmd_seq = 42
         server_time_us = 123_456_789_012
+        applied_offset_us = -4_321
+        round_trip_us = 6_789
 
-        raw = pack_cmd_sync_clock(client_id, cmd_seq, server_time_us)
+        raw = pack_cmd_sync_clock(
+            client_id,
+            cmd_seq,
+            server_time_us,
+            applied_offset_us=applied_offset_us,
+            round_trip_us=round_trip_us,
+        )
         assert len(raw) == CMD_SYNC_CLOCK_BYTES
 
         msg = parse_cmd(raw)
         assert msg.cmd_id == CMD_SYNC_CLOCK
         assert msg.cmd_seq == cmd_seq
 
-        # Verify server_time_us is in the params payload
+        # Verify the sync payload fields stay stable on the wire.
         params = msg.params
-        parsed_time_us = struct.unpack("<Q", params)[0]
+        parsed_time_us, parsed_offset_us, parsed_round_trip_us = struct.unpack("<QqI", params)
         assert parsed_time_us == server_time_us
+        assert parsed_offset_us == applied_offset_us
+        assert parsed_round_trip_us == round_trip_us
 
     def test_pack_sync_clock_struct_size(self) -> None:
         from vibesensor.adapters.udp.protocol import CMD_SYNC_CLOCK_BYTES, CMD_SYNC_CLOCK_STRUCT

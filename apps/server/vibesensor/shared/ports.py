@@ -323,6 +323,8 @@ class RegistryAckMessage(Protocol):
     client_id: bytes
     cmd_seq: int
     status: int
+    device_receive_us: int | None
+    device_send_us: int | None
 
 
 class ResolvedSpeedSnapshot(Protocol):
