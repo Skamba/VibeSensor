@@ -12,6 +12,8 @@ import math
 from collections.abc import Sequence
 from typing import cast
 
+import orjson
+
 from vibesensor.domain import coerce_float
 from vibesensor.shared.types.json_types import (
     JsonObject,
@@ -26,6 +28,7 @@ __all__ = [
     "as_int_or_none",
     "deep_merge",
     "i18n_ref",
+    "json_text_dumps",
     "payload_object_from_json",
     "payload_objects_from_json",
     "payload_value_from_json",
@@ -80,6 +83,25 @@ def payload_objects_from_json(values: Sequence[JsonObject]) -> list[JsonSchemaOb
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+def json_text_dumps(
+    value: object,
+    *,
+    sort_keys: bool = False,
+    indent: int | None = None,
+) -> str:
+    """Serialize a JSON-safe value with ``orjson`` and return UTF-8 text."""
+
+    options = 0
+    if sort_keys:
+        options |= orjson.OPT_SORT_KEYS
+    if indent is not None:
+        if indent != 2:
+            msg = "json_text_dumps only supports indent=None or indent=2"
+            raise ValueError(msg)
+        options |= orjson.OPT_INDENT_2
+    return orjson.dumps(value, option=options).decode("utf-8")
 
 
 def sanitize_for_json(obj: object, *, _max_depth: int = 128) -> tuple[object, bool]:
@@ -147,10 +169,9 @@ def sanitize_value(value: object) -> object:
 def safe_json_dumps(value: object) -> str:
     """Sanitise *value* and serialise to a compact JSON string.
 
-    Combines :func:`sanitize_value` with ``json.dumps`` using safe
-    defaults (``allow_nan=False``, ``ensure_ascii=False``).
+    Combines :func:`sanitize_value` with ``orjson`` text serialization.
     """
-    return json.dumps(sanitize_value(value), ensure_ascii=False, allow_nan=False)
+    return json_text_dumps(sanitize_value(value))
 
 
 def safe_json_loads(value: str | None, *, context: str) -> JsonValue | None:

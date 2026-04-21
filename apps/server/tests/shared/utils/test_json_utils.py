@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from vibesensor.shared.json_utils import (
+    json_text_dumps,
     payload_object_from_json,
     payload_objects_from_json,
     payload_value_from_json,
@@ -218,6 +219,21 @@ class TestSafeJsonDumps:
     def test_always_returns_str(self) -> None:
         assert isinstance(safe_json_dumps(None), str)
         assert isinstance(safe_json_dumps([1, 2, 3]), str)
+
+
+class TestJsonTextDumps:
+    """Tests for :func:`json_text_dumps`."""
+
+    def test_supports_sorted_pretty_text(self) -> None:
+        result = json_text_dumps({"b": 2, "a": {"z": 1}}, sort_keys=True, indent=2)
+
+        assert isinstance(result, str)
+        assert result.splitlines()[1].strip() == '"a": {'
+        assert json.loads(result) == {"a": {"z": 1}, "b": 2}
+
+    def test_rejects_unsupported_indent(self) -> None:
+        with pytest.raises(ValueError, match="indent=None or indent=2"):
+            json_text_dumps({"a": 1}, indent=4)
 
 
 # ── safe_json_loads ──────────────────────────────────────────────────────────
