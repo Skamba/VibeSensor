@@ -7,13 +7,15 @@ import {
 } from "./async_test_helpers";
 import {
   createEspFlashFeatureHarness,
+  createUpdateFeatureHarness,
+  installMaintenanceFeatureGlobals,
+} from "./maintenance_feature_test_support";
+import {
   createEspFlashPort,
   createHealthyUpdateStatus,
   createIdleUpdateStatus,
-  createUpdateFeatureHarness,
   createUsbInternetStatus,
-  installMaintenanceFeatureGlobals,
-} from "./maintenance_feature_test_support";
+} from "./maintenance_payload_test_support";
 import {
   buildEspFlashHandlers,
   buildUpdateHandlers,
