@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from vibesensor.shared.types.json_types import is_json_array
-
+from .github_api import GitHubApiReleaseRecord
 from .models import GitHubRelease, GitHubReleaseAsset, ReleaseInfo
 
 __all__ = [
@@ -15,18 +14,10 @@ __all__ = [
 ]
 
 
-def decode_server_releases(releases_raw: object) -> tuple[GitHubRelease, ...]:
-    """Decode the GitHub releases response into typed server-release rows."""
+def decode_server_releases(releases: Iterable[GitHubApiReleaseRecord]) -> tuple[GitHubRelease, ...]:
+    """Project typed GitHub API release records into server-release rows."""
 
-    if not is_json_array(releases_raw):
-        raise ValueError("Unexpected GitHub API response format")
-    releases: list[GitHubRelease] = []
-    for item in releases_raw:
-        release = GitHubRelease.from_api_payload(item)
-        if release is None:
-            raise ValueError("Unexpected GitHub API response format")
-        releases.append(release)
-    return tuple(releases)
+    return tuple(GitHubRelease.from_api_record(item) for item in releases)
 
 
 def find_server_wheel_asset(release: GitHubRelease) -> GitHubReleaseAsset | None:

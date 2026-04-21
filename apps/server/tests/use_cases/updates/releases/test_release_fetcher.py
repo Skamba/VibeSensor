@@ -7,7 +7,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.use_cases.updates.releases.github_api import GitHubApiClient, validate_https_url
+from vibesensor.use_cases.updates.releases.github_api import (
+    GitHubApiAssetRecord,
+    GitHubApiClient,
+    GitHubApiReleaseRecord,
+    validate_https_url,
+)
 from vibesensor.use_cases.updates.releases.models import (
     GitHubRelease,
     GitHubReleaseAsset,
@@ -17,6 +22,32 @@ from vibesensor.use_cases.updates.releases.models import (
 )
 from vibesensor.use_cases.updates.releases.release_fetcher import ServerReleaseFetcher
 from vibesensor.use_cases.updates.releases.version_policy import select_update_release
+
+
+def _asset_record(
+    *,
+    name: str,
+    url: str,
+    digest: str = "",
+) -> GitHubApiAssetRecord:
+    return GitHubApiAssetRecord(name=name, url=url, digest=digest)
+
+
+def _release_record(
+    *,
+    tag_name: str,
+    draft: bool,
+    prerelease: bool,
+    assets: list[GitHubApiAssetRecord],
+    published_at: str = "",
+) -> GitHubApiReleaseRecord:
+    return GitHubApiReleaseRecord(
+        tag_name=tag_name,
+        draft=draft,
+        prerelease=prerelease,
+        published_at=published_at,
+        assets=assets,
+    )
 
 
 class TestValidateUrl:
@@ -81,20 +112,18 @@ class TestReleaseInfo:
 
 
 class TestGitHubReleaseAsset:
-    def test_from_api_payload_requires_name_and_url_strings(self) -> None:
-        assert GitHubReleaseAsset.from_api_payload({"name": "wheel.whl", "url": "https://a"}) == (
-            GitHubReleaseAsset(name="wheel.whl", url="https://a", sha256="")
-        )
-        assert GitHubReleaseAsset.from_api_payload({"name": "wheel.whl"}) is None
-        assert GitHubReleaseAsset.from_api_payload({"name": 1, "url": "https://a"}) is None
+    def test_from_api_record_projects_required_fields(self) -> None:
+        assert GitHubReleaseAsset.from_api_record(
+            _asset_record(name="wheel.whl", url="https://a")
+        ) == (GitHubReleaseAsset(name="wheel.whl", url="https://a", sha256=""))
 
-    def test_from_api_payload_parses_sha256_digest(self) -> None:
-        asset = GitHubReleaseAsset.from_api_payload(
-            {
-                "name": "wheel.whl",
-                "url": "https://a",
-                "digest": f"sha256:{'a' * 64}",
-            },
+    def test_from_api_record_parses_sha256_digest(self) -> None:
+        asset = GitHubReleaseAsset.from_api_record(
+            _asset_record(
+                name="wheel.whl",
+                url="https://a",
+                digest=f"sha256:{'a' * 64}",
+            )
         )
 
         assert asset == GitHubReleaseAsset(
@@ -105,21 +134,21 @@ class TestGitHubReleaseAsset:
 
 
 class TestGitHubRelease:
-    def test_from_api_payload_decodes_release(self) -> None:
-        release = GitHubRelease.from_api_payload(
-            {
-                "tag_name": "server-v2025.6.15",
-                "draft": False,
-                "prerelease": False,
-                "published_at": "2025-06-15T02:00:00Z",
-                "assets": [
-                    {
-                        "name": "vibesensor-2025.6.15-py3-none-any.whl",
-                        "url": "https://a",
-                        "digest": f"sha256:{'a' * 64}",
-                    },
+    def test_from_api_record_decodes_release(self) -> None:
+        release = GitHubRelease.from_api_record(
+            _release_record(
+                tag_name="server-v2025.6.15",
+                draft=False,
+                prerelease=False,
+                published_at="2025-06-15T02:00:00Z",
+                assets=[
+                    _asset_record(
+                        name="vibesensor-2025.6.15-py3-none-any.whl",
+                        url="https://a",
+                        digest=f"sha256:{'a' * 64}",
+                    )
                 ],
-            },
+            )
         )
 
         assert release == GitHubRelease(
@@ -134,32 +163,6 @@ class TestGitHubRelease:
                     sha256="a" * 64,
                 ),
             ),
-        )
-
-    def test_from_api_payload_rejects_non_release_shapes(self) -> None:
-        assert GitHubRelease.from_api_payload([]) is None
-        assert GitHubRelease.from_api_payload({"tag_name": "server-v2025.6.15"}) is None
-        assert (
-            GitHubRelease.from_api_payload(
-                {
-                    "tag_name": "server-v2025.6.15",
-                    "draft": False,
-                    "prerelease": False,
-                    "assets": [{"name": "missing-url"}],
-                },
-            )
-            is None
-        )
-        assert (
-            GitHubRelease.from_api_payload(
-                {
-                    "tag_name": "server-v2025.6.15",
-                    "draft": "false",
-                    "prerelease": False,
-                    "assets": [],
-                },
-            )
-            is None
         )
 
 
@@ -177,41 +180,43 @@ class TestGitHubApiClient:
 
 
 MOCK_RELEASES = [
-    {
-        "tag_name": "fw-v2025.6.14",
-        "draft": False,
-        "prerelease": False,
-        "published_at": "2025-06-14T02:30:00Z",
-        "assets": [
-            {"name": "vibesensor-fw-v2025.6.14.zip", "url": "https://api.github.com/fw-asset"},
+    _release_record(
+        tag_name="fw-v2025.6.14",
+        draft=False,
+        prerelease=False,
+        published_at="2025-06-14T02:30:00Z",
+        assets=[
+            _asset_record(
+                name="vibesensor-fw-v2025.6.14.zip", url="https://api.github.com/fw-asset"
+            )
         ],
-    },
-    {
-        "tag_name": "server-v2025.6.15",
-        "draft": False,
-        "prerelease": False,
-        "published_at": "2025-06-15T02:00:00Z",
-        "assets": [
-            {
-                "name": "vibesensor-2025.6.15-py3-none-any.whl",
-                "url": "https://api.github.com/assets/456",
-                "digest": f"sha256:{'a' * 64}",
-            },
+    ),
+    _release_record(
+        tag_name="server-v2025.6.15",
+        draft=False,
+        prerelease=False,
+        published_at="2025-06-15T02:00:00Z",
+        assets=[
+            _asset_record(
+                name="vibesensor-2025.6.15-py3-none-any.whl",
+                url="https://api.github.com/assets/456",
+                digest=f"sha256:{'a' * 64}",
+            )
         ],
-    },
-    {
-        "tag_name": "server-v2025.6.14",
-        "draft": False,
-        "prerelease": False,
-        "published_at": "2025-06-14T02:00:00Z",
-        "assets": [
-            {
-                "name": "vibesensor-2025.6.14-py3-none-any.whl",
-                "url": "https://api.github.com/assets/123",
-                "digest": f"sha256:{'b' * 64}",
-            },
+    ),
+    _release_record(
+        tag_name="server-v2025.6.14",
+        draft=False,
+        prerelease=False,
+        published_at="2025-06-14T02:00:00Z",
+        assets=[
+            _asset_record(
+                name="vibesensor-2025.6.14-py3-none-any.whl",
+                url="https://api.github.com/assets/123",
+                digest=f"sha256:{'b' * 64}",
+            )
         ],
-    },
+    ),
 ]
 
 
@@ -228,7 +233,7 @@ class TestServerReleaseFetcher:
 
     def test_find_latest_release(self) -> None:
         client = MagicMock(spec=GitHubApiClient)
-        client.get_json.return_value = MOCK_RELEASES
+        client.get_typed_json.return_value = MOCK_RELEASES
         fetcher = self._make_fetcher(client=client)
         release = fetcher.find_latest_release()
 
@@ -239,35 +244,26 @@ class TestServerReleaseFetcher:
 
     def test_find_latest_skips_draft(self) -> None:
         releases = [
-            {
-                "tag_name": "server-v2025.6.16",
-                "draft": True,
-                "prerelease": False,
-                "assets": [
-                    {"name": "vibesensor-2025.6.16-py3-none-any.whl", "url": "https://a"},
+            _release_record(
+                tag_name="server-v2025.6.16",
+                draft=True,
+                prerelease=False,
+                assets=[
+                    _asset_record(name="vibesensor-2025.6.16-py3-none-any.whl", url="https://a")
                 ],
-            },
+            ),
             *MOCK_RELEASES,
         ]
         client = MagicMock(spec=GitHubApiClient)
-        client.get_json.return_value = releases
+        client.get_typed_json.return_value = releases
         fetcher = self._make_fetcher(client=client)
         release = fetcher.find_latest_release()
 
         assert release.tag == "server-v2025.6.15"
 
-    def test_find_latest_rejects_malformed_release_rows(self) -> None:
-        releases = [
-            {
-                "tag_name": "server-v2025.6.16",
-                "draft": False,
-                "prerelease": False,
-                "assets": "not-a-list",
-            },
-            *MOCK_RELEASES,
-        ]
+    def test_find_latest_surfaces_typed_decode_failures(self) -> None:
         client = MagicMock(spec=GitHubApiClient)
-        client.get_json.return_value = releases
+        client.get_typed_json.side_effect = ValueError("Unexpected GitHub API response format")
         fetcher = self._make_fetcher(client=client)
 
         with pytest.raises(ValueError, match="Unexpected GitHub API response format"):
@@ -278,29 +274,31 @@ class TestServerReleaseFetcher:
         [
             pytest.param(
                 [
-                    {
-                        "tag_name": "fw-v2025.6.15",
-                        "draft": False,
-                        "prerelease": False,
-                        "assets": [{"name": "vibesensor-fw-v2025.6.15.zip", "url": "https://a"}],
-                    },
+                    _release_record(
+                        tag_name="fw-v2025.6.15",
+                        draft=False,
+                        prerelease=False,
+                        assets=[
+                            _asset_record(name="vibesensor-fw-v2025.6.15.zip", url="https://a")
+                        ],
+                    ),
                 ],
                 id="firmware-only-tags",
             ),
             pytest.param([], id="empty-releases"),
         ],
     )
-    def test_find_latest_no_server_release(self, releases: list[dict[str, object]]) -> None:
+    def test_find_latest_no_server_release(self, releases: list[GitHubApiReleaseRecord]) -> None:
         client = MagicMock(spec=GitHubApiClient)
-        client.get_json.return_value = releases
+        client.get_typed_json.return_value = releases
         fetcher = self._make_fetcher(client=client)
 
         with pytest.raises(ValueError, match="No server release found"):
             fetcher.find_latest_release()
 
-    def test_find_latest_rejects_non_array_api_response(self) -> None:
+    def test_find_latest_surfaces_non_array_api_response(self) -> None:
         client = MagicMock(spec=GitHubApiClient)
-        client.get_json.return_value = {"unexpected": "object"}
+        client.get_typed_json.side_effect = ValueError("Unexpected GitHub API response format")
         fetcher = self._make_fetcher(client=client)
 
         with pytest.raises(ValueError, match="Unexpected GitHub API response format"):
@@ -308,18 +306,18 @@ class TestServerReleaseFetcher:
 
     def test_find_latest_rejects_release_without_trusted_digest(self) -> None:
         client = MagicMock(spec=GitHubApiClient)
-        client.get_json.return_value = [
-            {
-                "tag_name": "server-v2025.6.15",
-                "draft": False,
-                "prerelease": False,
-                "assets": [
-                    {
-                        "name": "vibesensor-2025.6.15-py3-none-any.whl",
-                        "url": "https://api.github.com/assets/456",
-                    },
+        client.get_typed_json.return_value = [
+            _release_record(
+                tag_name="server-v2025.6.15",
+                draft=False,
+                prerelease=False,
+                assets=[
+                    _asset_record(
+                        name="vibesensor-2025.6.15-py3-none-any.whl",
+                        url="https://api.github.com/assets/456",
+                    )
                 ],
-            },
+            ),
         ]
         fetcher = self._make_fetcher(client=client)
 

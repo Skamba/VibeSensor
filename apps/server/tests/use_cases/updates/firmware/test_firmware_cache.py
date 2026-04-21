@@ -10,7 +10,11 @@ import pytest
 from vibesensor.use_cases.updates.firmware.firmware_bundle import safe_extractall
 from vibesensor.use_cases.updates.firmware.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware.firmware_types import FirmwareCacheConfig
-from vibesensor.use_cases.updates.releases.github_api import GitHubApiClient
+from vibesensor.use_cases.updates.releases.github_api import (
+    GitHubApiAssetRecord,
+    GitHubApiClient,
+    GitHubApiReleaseRecord,
+)
 
 
 def _make_fetcher(
@@ -32,6 +36,25 @@ def _make_zip(entries: dict[str, str | bytes]) -> io.BytesIO:
     return buf
 
 
+def _asset_record(name: str, url: str) -> GitHubApiAssetRecord:
+    return GitHubApiAssetRecord(name=name, url=url)
+
+
+def _release_record(
+    *,
+    tag_name: str,
+    draft: bool,
+    prerelease: bool,
+    assets: list[GitHubApiAssetRecord],
+) -> GitHubApiReleaseRecord:
+    return GitHubApiReleaseRecord(
+        tag_name=tag_name,
+        draft=draft,
+        prerelease=prerelease,
+        assets=assets,
+    )
+
+
 # ---------------------------------------------------------------------------
 # find_release – channel preference
 # ---------------------------------------------------------------------------
@@ -44,26 +67,25 @@ def _make_zip(entries: dict[str, str | bytes]) -> io.BytesIO:
             "stable",
             "server-v2026.2.28",
             [
-                {
-                    "tag_name": "server-v2026.2.28",
-                    "draft": False,
-                    "prerelease": False,
-                    "assets": [
-                        {
-                            "name": "vibesensor-2026.2.28-py3-none-any.whl",
-                            "url": "https://api.github.com/a",
-                        },
-                        {"name": "vibesensor-fw-v2026.2.28.zip", "url": "https://api.github.com/b"},
+                _release_record(
+                    tag_name="server-v2026.2.28",
+                    draft=False,
+                    prerelease=False,
+                    assets=[
+                        _asset_record(
+                            "vibesensor-2026.2.28-py3-none-any.whl", "https://api.github.com/a"
+                        ),
+                        _asset_record("vibesensor-fw-v2026.2.28.zip", "https://api.github.com/b"),
                     ],
-                },
-                {
-                    "tag_name": "fw-v2026.2.27",
-                    "draft": False,
-                    "prerelease": False,
-                    "assets": [
-                        {"name": "vibesensor-fw-v2026.2.27.zip", "url": "https://api.github.com/b"},
+                ),
+                _release_record(
+                    tag_name="fw-v2026.2.27",
+                    draft=False,
+                    prerelease=False,
+                    assets=[
+                        _asset_record("vibesensor-fw-v2026.2.27.zip", "https://api.github.com/b")
                     ],
-                },
+                ),
             ],
             id="stable-prefers-combined",
         ),
@@ -71,32 +93,30 @@ def _make_zip(entries: dict[str, str | bytes]) -> io.BytesIO:
             "prerelease",
             "server-v2026.2.28-rc1",
             [
-                {
-                    "tag_name": "server-v2026.2.28-rc1",
-                    "draft": False,
-                    "prerelease": True,
-                    "assets": [
-                        {
-                            "name": "vibesensor-2026.2.28rc1-py3-none-any.whl",
-                            "url": "https://api.github.com/a",
-                        },
-                        {
-                            "name": "vibesensor-fw-v2026.2.28-rc1.zip",
-                            "url": "https://api.github.com/b",
-                        },
+                _release_record(
+                    tag_name="server-v2026.2.28-rc1",
+                    draft=False,
+                    prerelease=True,
+                    assets=[
+                        _asset_record(
+                            "vibesensor-2026.2.28rc1-py3-none-any.whl",
+                            "https://api.github.com/a",
+                        ),
+                        _asset_record(
+                            "vibesensor-fw-v2026.2.28-rc1.zip", "https://api.github.com/b"
+                        ),
                     ],
-                },
-                {
-                    "tag_name": "fw-v2026.2.28-rc1",
-                    "draft": False,
-                    "prerelease": True,
-                    "assets": [
-                        {
-                            "name": "vibesensor-fw-v2026.2.28-rc1.zip",
-                            "url": "https://api.github.com/c",
-                        },
+                ),
+                _release_record(
+                    tag_name="fw-v2026.2.28-rc1",
+                    draft=False,
+                    prerelease=True,
+                    assets=[
+                        _asset_record(
+                            "vibesensor-fw-v2026.2.28-rc1.zip", "https://api.github.com/c"
+                        )
                     ],
-                },
+                ),
             ],
             id="prerelease-prefers-combined",
         ),
@@ -105,32 +125,32 @@ def _make_zip(entries: dict[str, str | bytes]) -> io.BytesIO:
 def test_find_release_prefers_combined_release_assets(
     channel: str,
     expected_tag: str,
-    releases: list[dict],
+    releases: list[GitHubApiReleaseRecord],
 ) -> None:
     client = MagicMock(spec=GitHubApiClient)
-    client.get_json.return_value = releases
+    client.get_typed_json.return_value = releases
     fetcher = _make_fetcher(channel, client=client)
     selected = fetcher.find_release()
-    assert selected["tag_name"] == expected_tag
+    assert selected.tag_name == expected_tag
 
 
 def test_find_release_raises_when_no_firmware_assets() -> None:
     releases = [
-        {
-            "tag_name": "server-v2026.2.27",
-            "draft": False,
-            "prerelease": False,
-            "assets": [
-                {
-                    "name": "vibesensor-2026.2.27-py3-none-any.whl",
-                    "url": "https://api.github.com/a",
-                },
+        _release_record(
+            tag_name="server-v2026.2.27",
+            draft=False,
+            prerelease=False,
+            assets=[
+                _asset_record(
+                    "vibesensor-2026.2.27-py3-none-any.whl",
+                    "https://api.github.com/a",
+                )
             ],
-        },
+        ),
     ]
 
     client = MagicMock(spec=GitHubApiClient)
-    client.get_json.return_value = releases
+    client.get_typed_json.return_value = releases
     fetcher = _make_fetcher(client=client)
 
     with pytest.raises(ValueError, match="No eligible firmware release found"):
