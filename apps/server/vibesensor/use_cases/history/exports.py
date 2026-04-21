@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import csv
 import io
-import json
 import logging
 import tempfile
 from collections.abc import Iterator
@@ -12,7 +11,7 @@ from dataclasses import dataclass
 
 from vibesensor.shared.boundaries.sensor_frames import sensor_frame_to_json_object
 from vibesensor.shared.filenames import safe_filename
-from vibesensor.shared.json_utils import sanitize_for_json
+from vibesensor.shared.json_utils import json_text_dumps, sanitize_for_json
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject
@@ -63,9 +62,7 @@ def flatten_for_csv(row: JsonObject) -> CsvRow:
     out: CsvRow = {}
     for key, value in row.items():
         if key in EXPORT_CSV_COLUMN_SET:
-            out[key] = (
-                json.dumps(value, ensure_ascii=False) if isinstance(value, (dict, list)) else value
-            )
+            out[key] = json_text_dumps(value) if isinstance(value, (dict, list)) else value
     return out
 
 
@@ -157,10 +154,8 @@ def serialize_run_details_json(run_details: JsonObject, *, sample_count: int, ru
     sanitized, had_non_finite = sanitize_for_json(run_details)
     if had_non_finite:
         LOGGER.warning("Export run %s: sanitized non-finite floats in analysis data", run_id)
-    return json.dumps(
+    return json_text_dumps(
         sanitized,
-        ensure_ascii=False,
         indent=2,
         sort_keys=True,
-        allow_nan=False,
     )
