@@ -5,7 +5,6 @@ import type { CarsFeatureFocusTarget } from "../features/cars_feature_workflow";
 import {
   computed,
   signal,
-  useComputed,
   type Signal,
   type ReadonlySignal,
 } from "../ui_signals";
@@ -65,12 +64,11 @@ function CarsPanel(props: {
   state: ReadonlySignal<CarsPanelBridgeState>;
   wizardFocusRequest: ReadonlySignal<CarsWizardFocusRequest | null>;
 }) {
-  const listActions = useComputed(() => props.state.value.actions);
-  const listModel = useComputed(() => props.state.value.model?.value ?? DEFAULT_CARS_PANEL_MODEL);
-  const wizardActions = useComputed(() => props.state.value.wizardActions);
-  const wizardModel = useComputed(
-    () => props.state.value.wizardModel?.value ?? DEFAULT_CARS_WIZARD_MODEL,
-  );
+  const state = props.state.value;
+  const listActions = state.actions;
+  const listModel = state.model?.value ?? DEFAULT_CARS_PANEL_MODEL;
+  const wizardActions = signal(state.wizardActions);
+  const wizardModel = signal(state.wizardModel?.value ?? DEFAULT_CARS_WIZARD_MODEL);
   const addCarButtonRef = useRef<HTMLButtonElement | null>(null);
   const wizardRefs = useCarsWizardElementRefs();
   const focusRequest = props.wizardFocusRequest.value;
@@ -81,9 +79,9 @@ function CarsPanel(props: {
   return (
     <>
       <CarsListSection
-        actions={listActions.value}
+        actions={listActions}
         addCarButtonRef={addCarButtonRef}
-        model={listModel.value}
+        model={listModel}
         onOpenWizard={openWizard}
       />
       <CarsWizardPanel

@@ -1,7 +1,6 @@
 import { render } from "preact";
 import { useUiText } from "../ui_i18n";
 import {
-  useComputed,
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
@@ -29,7 +28,6 @@ export function HistoryPanel(props: {
   actions: ReadonlySignal<HistoryPanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<HistoryPanelRenderModel> | null>;
 }) {
-  const actions = useComputed(() => props.actions.value);
   const actionsLabel = useUiText("history.table.actions", "Actions");
   const deleteAllLabel = useUiText("history.delete_all", "Delete All Runs");
   const refreshLabel = useUiText("history.refresh", "Refresh History");
@@ -42,10 +40,10 @@ export function HistoryPanel(props: {
     HISTORY_PANEL_MODEL_KEYS,
   );
   const handleRefreshHistory = () => {
-    actions.peek()?.onRefreshHistory();
+    props.actions.peek()?.onRefreshHistory();
   };
   const handleDeleteAllRuns = () => {
-    actions.peek()?.onDeleteAllRuns();
+    props.actions.peek()?.onDeleteAllRuns();
   };
   return (
     <>
@@ -85,7 +83,7 @@ export function HistoryPanel(props: {
           </tr>
         </thead>
         <tbody id="historyTableBody">
-          <HistoryTableBody handlers={actions.value} table={table} />
+          <HistoryTableBody handlers={props.actions.value} table={table} />
         </tbody>
       </table>
     </>

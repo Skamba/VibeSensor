@@ -1,6 +1,5 @@
 import { useUiText } from "../ui_i18n";
 import {
-  useComputed,
   useSignalProperties,
   type ReadonlySignal,
 } from "../ui_signals";
@@ -95,8 +94,8 @@ function RealtimeLiveOverviewActiveCarStat(props: {
   labelText: ReadonlySignal<string>;
 }) {
   const { text, warning } = useSignalProperties(props.activeCar, ["text", "warning"] as const);
-  const variant = useComputed(() => warning.value ? "warn" : undefined);
-  const hasIcon = useComputed(() => warning.value ? "true" : undefined);
+  const variant = warning.value ? "warn" : undefined;
+  const hasIcon = warning.value ? "true" : undefined;
 
   return (
     <div
@@ -132,12 +131,12 @@ function RealtimeLiveOverviewSensorRoster(props: {
   sensorCards: ReadonlySignal<RealtimeLiveOverviewSensorCardModel[]>;
   noSensorsText: ReadonlySignal<string>;
 }) {
-  const hasSensorCards = useComputed(() => props.sensorCards.value.length > 0);
+  const sensorCards = props.sensorCards.value;
 
   return (
     <div id="liveSensorRoster" class="live-sensor-roster">
-      {hasSensorCards.value
-        ? props.sensorCards.value.map((card) => {
+      {sensorCards.length > 0
+        ? sensorCards.map((card) => {
           const statusClass = card.connected ? "online" : "offline";
           return (
             <article

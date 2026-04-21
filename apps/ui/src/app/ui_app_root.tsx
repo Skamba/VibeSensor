@@ -2,7 +2,6 @@ import type { ComponentChildren } from "preact";
 
 import { UiShellChrome, type UiShellChromeBindings } from "./runtime/ui_shell_chrome";
 import { DEFAULT_NAVIGATION_MODEL } from "./runtime/shell/ui_shell_chrome_shared";
-import { useComputed } from "./ui_signals";
 import type { UiMountedLazyPanelHandles, UiMountedPanels } from "./ui_lazy_panels";
 import HistoryLazyView from "./views/history_lazy_view";
 import { RealtimeLiveOverviewPanel } from "./views/realtime_live_overview";
@@ -42,12 +41,12 @@ export function UiAppRoot(props: {
     props.shellChrome.props.navigationModel,
     DEFAULT_NAVIGATION_MODEL,
   );
-  const activeViewId = useComputed(() => navigationModel.value.activeViewId);
+  const activeViewId = navigationModel.value.activeViewId;
 
   return (
     <UiShellChrome {...props.shellChrome.props}>
       <ShellViewSection
-        activeViewId={activeViewId.value}
+        activeViewId={activeViewId}
         ariaLabelledBy="tab-dashboard"
         viewId="dashboardView"
       >
@@ -65,7 +64,7 @@ export function UiAppRoot(props: {
       </ShellViewSection>
 
       <ShellViewSection
-        activeViewId={activeViewId.value}
+        activeViewId={activeViewId}
         ariaLabelledBy="tab-history"
         viewId="historyView"
       >
@@ -75,7 +74,7 @@ export function UiAppRoot(props: {
       </ShellViewSection>
 
       <ShellViewSection
-        activeViewId={activeViewId.value}
+        activeViewId={activeViewId}
         ariaLabelledBy="tab-settings"
         viewId="settingsView"
       >

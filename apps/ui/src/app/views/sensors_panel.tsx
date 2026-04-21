@@ -4,7 +4,6 @@ import { render } from "preact";
 import { memo } from "preact/compat";
 import { useUiText } from "../ui_i18n";
 import {
-  useComputed,
   useSignalProperties,
   type Signal,
   type ReadonlySignal,
@@ -135,7 +134,6 @@ function SensorsPanel(props: {
   actions: ReadonlySignal<SensorsPanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<SensorsPanelRenderModel> | null>;
 }) {
-  const actions = useComputed(() => props.actions.value);
   const actionsLabel = useUiText("settings.sensors.actions", "Actions");
   const emptyText = useUiText("settings.sensors.no_sensors", "No sensors detected yet.");
   const hintText = useUiText(
@@ -172,7 +170,7 @@ function SensorsPanel(props: {
             </thead>
             <tbody id="sensorsSettingsBody">
               <SensorsTableBody
-                actions={actions.value}
+                actions={props.actions.peek()}
                 emptyText={emptyText}
                 table={table.value}
               />
