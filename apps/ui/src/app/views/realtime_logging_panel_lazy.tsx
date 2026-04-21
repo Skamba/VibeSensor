@@ -1,0 +1,58 @@
+import { useEffect, useState } from "preact/hooks";
+import type { FunctionComponent } from "preact";
+
+import type { RealtimeLoggingPanelBridge } from "./realtime_logging_panel";
+
+export interface RealtimeLoggingPanelLazyProps {
+  active: boolean;
+  view: RealtimeLoggingPanelBridge;
+}
+
+type RealtimeLoggingPanelImpl = FunctionComponent<RealtimeLoggingPanelLazyProps>;
+
+let realtimeLoggingPanelPromise: Promise<RealtimeLoggingPanelImpl> | null = null;
+
+function loadRealtimeLoggingPanel(): Promise<RealtimeLoggingPanelImpl> {
+  if (realtimeLoggingPanelPromise === null) {
+    realtimeLoggingPanelPromise = import("./realtime_logging_panel")
+      .then((module) => module.RealtimeLoggingPanelView as RealtimeLoggingPanelImpl)
+      .catch((error) => {
+        realtimeLoggingPanelPromise = null;
+        throw error;
+      });
+  }
+  return realtimeLoggingPanelPromise;
+}
+
+export default function RealtimeLoggingPanelLazy(
+  props: RealtimeLoggingPanelLazyProps,
+) {
+  const [LoadedPanel, setLoadedPanel] = useState<RealtimeLoggingPanelImpl | null>(null);
+
+  useEffect(() => {
+    if (!props.active || LoadedPanel !== null) {
+      return;
+    }
+    let cancelled = false;
+    void loadRealtimeLoggingPanel()
+      .then((nextLoadedPanel) => {
+        if (!cancelled) {
+          setLoadedPanel(() => nextLoadedPanel);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error("[VibeSensor] Failed to load realtime logging panel.", error);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [LoadedPanel, props.active]);
+
+  if (LoadedPanel === null) {
+    return null;
+  }
+
+  return <LoadedPanel {...props} />;
+}

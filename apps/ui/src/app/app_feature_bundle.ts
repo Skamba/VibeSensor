@@ -4,25 +4,18 @@ import {
   createAppFeatureBundlePorts,
   createRealtimeFeatureRecordingPorts,
 } from "./app_feature_bundle_ports";
-import { createCarsFeature, type CarsFeature } from "./features/cars_feature";
-import { createEspFlashFeature } from "./features/esp_flash_feature";
-import { createHistoryFeature } from "./features/history_feature";
 import {
   createRealtimeFeature,
   type RealtimeFeatureChromePorts,
   type RealtimeFeatureSelectionPorts,
 } from "./features/realtime_feature";
-import {
-  createSettingsFeature,
-  type SettingsFeature,
-  type SettingsFeatureViewPorts,
-} from "./features/settings_feature";
-import { createUpdateFeature } from "./features/update_feature";
+import type { SettingsFeatureViewPorts } from "./features/settings_feature";
 import type { FeatureFormatting, FeatureServices } from "./feature_deps_base";
 import type { AppState } from "./ui_app_state";
 import type { UiMountedPanels } from "./ui_lazy_panels";
-import type { ReadonlySignal } from "./ui_signals";
+import { type ReadonlySignal } from "./ui_signals";
 import type { AppFeatureBundle } from "./app_feature_bundle_ports";
+import type { AppFeatureSecondaryBundle } from "./app_feature_secondary_bundle";
 export type { AppFeatureBundle } from "./app_feature_bundle_ports";
 
 export interface AppFeatureBundleSharedDeps {
@@ -50,6 +43,116 @@ export interface AppFeatureBundleDeps {
   runtime: AppFeatureBundleRuntimePorts;
 }
 
+interface LazySecondaryFeatureBundle {
+  dispose(): void;
+  ensureHistoryDataLoaded(): Promise<void>;
+  ensureSettingsDataLoaded(): Promise<void>;
+  openCarWizard(): Promise<void>;
+  refreshHistory(): Promise<void>;
+}
+
+function createLazySecondaryFeatureBundle(
+  deps: AppFeatureBundleDeps,
+): LazySecondaryFeatureBundle {
+  let bundle: AppFeatureSecondaryBundle | null = null;
+  let bundlePromise: Promise<AppFeatureSecondaryBundle> | null = null;
+  let historyLoadPromise: Promise<void> | null = null;
+  let settingsLoadPromise: Promise<void> | null = null;
+  let historyLoaded = false;
+  let settingsLoaded = false;
+  let disposed = false;
+
+  function ensureLoaded(): Promise<AppFeatureSecondaryBundle> {
+    if (bundle !== null) {
+      return Promise.resolve(bundle);
+    }
+    if (bundlePromise !== null) {
+      return bundlePromise;
+    }
+    bundlePromise = import("./app_feature_secondary_bundle")
+      .then(({ createAppFeatureSecondaryBundle }) => {
+        const nextBundle = createAppFeatureSecondaryBundle(deps);
+        if (disposed) {
+          nextBundle.dispose();
+          return nextBundle;
+        }
+        bundle = nextBundle;
+        return nextBundle;
+      })
+      .catch((error) => {
+        bundlePromise = null;
+        throw error;
+      });
+    return bundlePromise;
+  }
+
+  function ensureSettingsDataLoaded(): Promise<void> {
+    if (settingsLoaded || disposed) {
+      return Promise.resolve();
+    }
+    if (settingsLoadPromise !== null) {
+      return settingsLoadPromise;
+    }
+    settingsLoadPromise = (async () => {
+      const loadedBundle = await ensureLoaded();
+      if (disposed) {
+        return;
+      }
+      await Promise.all([
+        loadedBundle.settings.loadSpeedSourceFromServer(),
+        loadedBundle.settings.loadAnalysisSettingsFromServer(),
+        loadedBundle.settings.loadCarsFromServer(),
+      ]);
+      settingsLoaded = true;
+    })().catch((error) => {
+      settingsLoadPromise = null;
+      throw error;
+    });
+    return settingsLoadPromise;
+  }
+
+  function ensureHistoryDataLoaded(): Promise<void> {
+    if (historyLoaded || disposed) {
+      return Promise.resolve();
+    }
+    if (historyLoadPromise !== null) {
+      return historyLoadPromise;
+    }
+    historyLoadPromise = (async () => {
+      const loadedBundle = await ensureLoaded();
+      if (disposed) {
+        return;
+      }
+      await loadedBundle.history.refreshHistory();
+      historyLoaded = true;
+    })().catch((error) => {
+      historyLoadPromise = null;
+      throw error;
+    });
+    return historyLoadPromise;
+  }
+
+  return {
+    dispose(): void {
+      disposed = true;
+      bundle?.dispose();
+      bundle = null;
+    },
+    ensureHistoryDataLoaded,
+    ensureSettingsDataLoaded,
+    openCarWizard(): Promise<void> {
+      return ensureLoaded().then((loadedBundle) => {
+        if (!disposed) {
+          loadedBundle.openCarWizard();
+        }
+      });
+    },
+    refreshHistory(): Promise<void> {
+      return ensureLoaded().then((loadedBundle) => loadedBundle.history.refreshHistory());
+    },
+  };
+}
+
 export function createAppFeatureBundle(
   deps: AppFeatureBundleDeps,
 ): AppFeatureBundle {
@@ -59,18 +162,22 @@ export function createAppFeatureBundle(
     runtime,
   } = deps;
   const { panels } = runtime;
+  const secondary = createLazySecondaryFeatureBundle(deps);
+  const reportSecondaryLoadError = (error: unknown): void => {
+    services.showError(
+      error instanceof Error ? error.message : services.t("status.view_load_failed"),
+    );
+  };
+  const ensureSecondaryViewReady = (viewId: string): Promise<void> => {
+    if (viewId === "historyView") {
+      return secondary.ensureHistoryDataLoaded();
+    }
+    if (viewId === "settingsView") {
+      return secondary.ensureSettingsDataLoaded();
+    }
+    return Promise.resolve();
+  };
 
-  const history = createHistoryFeature({
-    history: state.history,
-    shell: state.shell,
-    panel: panels.history,
-    navigation: runtime.navigation,
-    services,
-    formatting,
-    queryClient: serverState.queryClient,
-  });
-
-  let carsFeature: CarsFeature | null = null;
   const realtime = createRealtimeFeature({
     state: {
       realtime: state.realtime,
@@ -91,11 +198,11 @@ export function createAppFeatureBundle(
         activatePrimaryView: runtime.navigation.activatePrimaryView,
         activateSettingsTab: (tabId) => panels.settingsShell.activateTab(tabId),
         openCarWizard: () => {
-          carsFeature?.openWizard();
+          void secondary.openCarWizard().catch(reportSecondaryLoadError);
         },
       },
       selection: runtime.transport,
-      recording: createRealtimeFeatureRecordingPorts(history),
+      recording: createRealtimeFeatureRecordingPorts(() => secondary.refreshHistory()),
     },
     services,
     formatting: {
@@ -104,73 +211,12 @@ export function createAppFeatureBundle(
     queryClient: serverState.queryClient,
   });
 
-  const settings: SettingsFeature = createSettingsFeature({
-    state: {
-      settings: state.settings,
-      shell: state.shell,
-    },
-    panels: {
-      settingsShell: panels.settingsShell,
-      analysisPanel: panels.settings.analysis,
-      carsPanel: panels.settings.cars.list,
-      speedSourcePanel: panels.settings.speedSource,
-    },
-    ports: {
-      openCarWizard: () => {
-        carsFeature?.openWizard();
-      },
-      activeViewId: runtime.navigation.activeViewId,
-      view: runtime.view,
-    },
-    services,
-    formatting: {
-      fmt: formatting.fmt,
-    },
-    queryClient: serverState.queryClient,
-  });
-
-  const cars: CarsFeature = createCarsFeature({
-    panel: panels.settings.cars.wizard,
-    services: {
-      t: services.t,
-    },
-    formatting: {
-      fmt: formatting.fmt,
-    },
-    queryClient: serverState.queryClient,
-    addCarFromWizard: (name, carType, aspects, variant) =>
-      settings.addCarFromWizard(name, carType, aspects, variant),
-  });
-  carsFeature = cars;
-
-  const update = createUpdateFeature({
-    panels: {
-      update: panels.settings.update,
-      internet: panels.settings.internet,
-    },
-    ports: {
-      activeViewId: runtime.navigation.activeViewId,
-      activeSettingsTabId: panels.settingsShell.activeTabId,
-    },
-    services,
-    queryClient: serverState.queryClient,
-  });
-  const espFlash = createEspFlashFeature({
-    panel: panels.settings.espFlash,
-    ports: {
-      activeViewId: runtime.navigation.activeViewId,
-      activeSettingsTabId: panels.settingsShell.activeTabId,
-    },
-    services,
-    queryClient: serverState.queryClient,
-  });
-
   return createAppFeatureBundlePorts({
-    history,
     realtime,
-    settings,
-    cars,
-    update,
-    espFlash,
+    secondary,
+    ensureViewReady: (viewId) => ensureSecondaryViewReady(viewId).catch((error) => {
+      reportSecondaryLoadError(error);
+      throw error;
+    }),
   });
 }

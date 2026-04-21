@@ -1,10 +1,6 @@
 import type { UiStartupFeaturePorts } from "./runtime/ui_startup_feature_ports";
-import type { CarsFeature } from "./features/cars_feature";
-import type { EspFlashFeature } from "./features/esp_flash_feature";
 import type { HistoryFeature } from "./features/history_feature";
 import type { RealtimeFeature, RealtimeFeatureRecordingPorts } from "./features/realtime_feature";
-import type { SettingsFeature } from "./features/settings_feature";
-import type { UpdateFeature } from "./features/update_feature";
 
 export interface AppShellFeatureBindings {
   bindHandlers(): void;
@@ -12,12 +8,12 @@ export interface AppShellFeatureBindings {
 
 export interface AppFeatureBundle {
   dispose(): void;
+  ensureViewReady(viewId: string): Promise<void>;
   shell: AppShellFeatureBindings;
   startup: UiStartupFeaturePorts;
 }
 
 interface AppFeatureBundlePortSources {
-  history: Pick<HistoryFeature, "bindHandlers" | "dispose" | "refreshHistory">;
   realtime: Pick<
     RealtimeFeature,
     | "bindHandlers"
@@ -25,25 +21,20 @@ interface AppFeatureBundlePortSources {
     | "refreshLocationOptions"
     | "refreshLoggingStatus"
   >;
-  settings: Pick<
-    SettingsFeature,
-    | "bindHandlers"
-    | "dispose"
-    | "syncSettingsInputs"
-    | "loadSpeedSourceFromServer"
-    | "loadAnalysisSettingsFromServer"
-    | "loadCarsFromServer"
-  >;
-  cars: Pick<CarsFeature, "bindWizardHandlers" | "dispose">;
-  update: Pick<UpdateFeature, "bindUpdateHandlers" | "dispose">;
-  espFlash: Pick<EspFlashFeature, "bindHandlers" | "dispose">;
+  secondary?: {
+    dispose(): void;
+  };
+  ensureViewReady?: (viewId: string) => Promise<void>;
 }
 
 export function createRealtimeFeatureRecordingPorts(
-  history: Pick<HistoryFeature, "refreshHistory">,
+  history: Pick<HistoryFeature, "refreshHistory"> | (() => Promise<void>),
 ): RealtimeFeatureRecordingPorts {
+  const refreshHistory = typeof history === "function"
+    ? history
+    : () => history.refreshHistory();
   return {
-    onRecordingStatusChanged: () => history.refreshHistory(),
+    onRecordingStatusChanged: () => refreshHistory(),
   };
 }
 
@@ -52,36 +43,19 @@ export function createAppFeatureBundlePorts(
 ): AppFeatureBundle {
   return {
     dispose: () => {
-      features.espFlash.dispose();
-      features.update.dispose();
-      features.history.dispose();
+      features.secondary?.dispose();
       features.realtime.dispose();
-      features.settings.dispose();
-      features.cars.dispose();
     },
+    ensureViewReady: (viewId) => features.ensureViewReady?.(viewId) ?? Promise.resolve(),
     shell: {
       bindHandlers: () => {
-        features.settings.bindHandlers();
-        features.cars.bindWizardHandlers();
         features.realtime.bindHandlers();
-        features.history.bindHandlers();
-        features.update.bindUpdateHandlers();
-        features.espFlash.bindHandlers();
       },
     },
     startup: {
-      history: {
-        refreshHistory: () => features.history.refreshHistory(),
-      },
       realtime: {
         refreshLocationOptions: () => features.realtime.refreshLocationOptions(),
         refreshLoggingStatus: () => features.realtime.refreshLoggingStatus(),
-      },
-      settings: {
-        loadSpeedSourceFromServer: () => features.settings.loadSpeedSourceFromServer(),
-        loadAnalysisSettingsFromServer: () =>
-          features.settings.loadAnalysisSettingsFromServer(),
-        loadCarsFromServer: () => features.settings.loadCarsFromServer(),
       },
     },
   };
