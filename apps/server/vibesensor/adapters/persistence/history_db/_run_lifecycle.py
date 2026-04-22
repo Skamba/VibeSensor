@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import Awaitable
 from contextlib import AbstractAsyncContextManager
 from datetime import UTC, datetime, timedelta
-from typing import TypeVar
+from typing import TypeVar, cast
 
 import aiosqlite
 
+from vibesensor.adapters.persistence.history_db._raw_capture_store import (
+    HistoryRawCaptureStore,
+)
 from vibesensor.adapters.persistence.history_db._samples import V2_INSERT_SQL, sample_to_v2_row
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
 from vibesensor.shared.boundaries.analysis_payloads import (
@@ -19,6 +23,7 @@ from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_obje
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.raw_capture import RawCaptureChunk, RawCaptureManifest
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -31,6 +36,8 @@ _T = TypeVar("_T")
 
 
 class _HistoryDBRunLifecycleMixin:
+    _raw_capture_store: HistoryRawCaptureStore
+
     def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
         raise NotImplementedError
 
@@ -136,6 +143,26 @@ class _HistoryDBRunLifecycleMixin:
                 )
             return len(samples)
 
+    async def aappend_raw_capture_chunk(self, run_id: str, chunk: RawCaptureChunk) -> None:
+        await asyncio.to_thread(self._raw_capture_store.append_chunk, run_id, chunk)
+
+    async def afinalize_raw_capture(self, run_id: str) -> RawCaptureManifest | None:
+        manifest = cast(
+            RawCaptureManifest | None,
+            await asyncio.to_thread(self._raw_capture_store.finalize_run, run_id),
+        )
+        if manifest is None:
+            return None
+        async with self._cursor() as cur:
+            await cur.execute(
+                "UPDATE runs SET raw_capture_manifest_json = ? WHERE run_id = ?",
+                (safe_json_dumps(manifest.to_json_object()), run_id),
+            )
+            if int(cur.rowcount) <= 0:
+                await asyncio.to_thread(self._raw_capture_store.delete_run_artifacts, run_id)
+                return None
+        return manifest
+
     def finalize_run(
         self,
         run_id: str,
@@ -217,7 +244,10 @@ class _HistoryDBRunLifecycleMixin:
             if not is_run_deletable(status):
                 return False, "active" if status == RunStatus.RECORDING else status.value
             await cur.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
-            return bool(int(cur.rowcount) > 0), None
+            deleted = bool(int(cur.rowcount) > 0)
+        if deleted:
+            await asyncio.to_thread(self._raw_capture_store.delete_run_artifacts, run_id)
+        return deleted, None
 
     def store_analysis(self, run_id: str, analysis: PersistedAnalysis) -> bool:
         return self._run_sync(self.astore_analysis(run_id, analysis))
@@ -302,7 +332,10 @@ class _HistoryDBRunLifecycleMixin:
     async def adelete_run(self, run_id: str) -> bool:
         async with self._cursor() as cur:
             await cur.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
-            return bool(int(cur.rowcount) > 0)
+            deleted = bool(int(cur.rowcount) > 0)
+        if deleted:
+            await asyncio.to_thread(self._raw_capture_store.delete_run_artifacts, run_id)
+        return deleted
 
     def recover_stale_recording_runs(self) -> int:
         return self._run_sync(self.arecover_stale_recording_runs())
@@ -323,16 +356,25 @@ class _HistoryDBRunLifecycleMixin:
         if retention_days < 1:
             raise ValueError("retention_days must be at least 1")
         cutoff_utc = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
-        async with self._cursor() as cur:
+        async with self.write_transaction_cursor() as cur:
             await cur.execute(
                 """
-                DELETE FROM runs
+                SELECT run_id FROM runs
                 WHERE status IN ('complete', 'error')
                   AND COALESCE(analysis_completed_at, end_time_utc, created_at) < ?
                 """,
                 (cutoff_utc,),
             )
-            return int(cur.rowcount)
+            run_ids = [str(row[0]) for row in await cur.fetchall()]
+            if not run_ids:
+                return 0
+            await cur.executemany(
+                "DELETE FROM runs WHERE run_id = ?",
+                [(run_id,) for run_id in run_ids],
+            )
+        for run_id in run_ids:
+            await asyncio.to_thread(self._raw_capture_store.delete_run_artifacts, run_id)
+        return len(run_ids)
 
 
 def _has_recommended_metadata_value(key: str, value: object) -> bool:

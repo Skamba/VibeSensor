@@ -10,6 +10,9 @@ import aiosqlite
 
 from vibesensor.adapters.persistence.history_db._engine import SQLiteHistoryEngine
 from vibesensor.adapters.persistence.history_db._queries import _HistoryDBQueryMixin
+from vibesensor.adapters.persistence.history_db._raw_capture_store import (
+    HistoryRawCaptureStore,
+)
 from vibesensor.adapters.persistence.history_db._run_lifecycle import _HistoryDBRunLifecycleMixin
 from vibesensor.adapters.persistence.history_db._sample_io import _HistoryDBSampleIOMixin
 
@@ -27,7 +30,12 @@ class RunHistoryRepository(
 ):
     """Run/sample/query persistence bound to one shared SQLite history engine."""
 
-    __slots__ = ("_cursor_provider", "_engine", "_write_transaction_cursor_provider")
+    __slots__ = (
+        "_cursor_provider",
+        "_engine",
+        "_raw_capture_store",
+        "_write_transaction_cursor_provider",
+    )
 
     def __init__(
         self,
@@ -35,10 +43,12 @@ class RunHistoryRepository(
         engine: SQLiteHistoryEngine,
         cursor_provider: CursorProvider,
         write_transaction_cursor_provider: WriteTransactionCursorProvider,
+        raw_capture_store: HistoryRawCaptureStore,
     ) -> None:
         self._engine = engine
         self._cursor_provider = cursor_provider
         self._write_transaction_cursor_provider = write_transaction_cursor_provider
+        self._raw_capture_store = raw_capture_store
 
     def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
         return self._cursor_provider(commit=commit)

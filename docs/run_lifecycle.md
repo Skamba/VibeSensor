@@ -9,6 +9,8 @@ one big state-machine class:
 - `RunLifecycleState` owns only the in-memory active-run gate and timing fields.
 - `RunPersistenceWriter` owns history-run creation, sample append retries, and
   finalization.
+- `RunRawCaptureWriter` owns the recorder-side raw UDP chunk handoff and
+  artifact finalization for the active run.
 - `PostAnalysisWorker` owns the background queue and retry policy after a run
   stops.
 - `CaptureReadinessTracker` owns the backend pre-record readiness checklist for
@@ -22,6 +24,7 @@ one big state-machine class:
 | `RunLifecycleState` | `use_cases/run/lifecycle_state.py` | Active run identity, start timing, frame-progress tracking, and auto-stop gating. |
 | `SampleFlushOrchestrator` | `use_cases/run/sample_flush.py` | Build `SensorFrame` rows, refresh recent metrics, and decide when to flush or auto-stop. |
 | `RunPersistenceWriter` | `use_cases/run/persistence_writer.py` | Create the persisted run, append sample rows with retries, and finalize the run metadata. |
+| `RunRawCaptureWriter` | `use_cases/run/raw_capture_writer.py` | Buffer raw UDP chunks for the active run and finalize the raw artifact manifest into history. |
 | `CaptureReadinessTracker` | `use_cases/run/capture_readiness.py` | Evaluate live-sensor readiness, reference freshness, steady-speed dwell, and recent integrity quiet windows for the idle recording gate. |
 | `RunRecorder` | `use_cases/run/logger.py` | Start/stop entrypoint and coordinator for lifecycle, persistence, and post-analysis. |
 | `PostAnalysisWorker` | `use_cases/run/post_analysis.py` | Non-evicting queue and single daemon thread for completed runs. |
@@ -62,6 +65,9 @@ During recording:
 - `current_run.is_recording` is true
 - `SampleFlushOrchestrator` periodically builds `SensorFrame` rows from the
   registry, processor metrics, and resolved speed context
+- raw UDP ingress also streams full-run `int16` chunks through
+  `RunRawCaptureWriter`, which writes per-run artifacts under the history data
+  directory without bloating `samples_v2`
 - `refresh_data_progress()` / `mark_rows_written()` keep the no-data timeout
   clock moving
 - auto-stop is based on elapsed monotonic time since the last data progress, not
@@ -72,12 +78,14 @@ During recording:
 `RunRecorder.stop_recording()` performs the stop handoff in this order:
 
 1. capture one last pending flush if new data exists
-2. ask `RunPersistenceWriter.ready_for_analysis()` whether the run has both a
+2. finalize the raw artifact bundle and persist its compact manifest on the run
+   row when raw chunks were captured
+3. ask `RunPersistenceWriter.ready_for_analysis()` whether the run has both a
    created history row and at least one written sample
-3. call `RunPersistenceWriter.finalize_run()`
-4. call `RunLifecycleState.stop()` and clear the active run context
-5. reset the persistence helper for the next live run
-6. schedule post-analysis only when `ready_for_analysis()` returned the run ID
+4. call `RunPersistenceWriter.finalize_run()`
+5. call `RunLifecycleState.stop()` and clear the active run context
+6. reset the persistence helper for the next live run
+7. schedule post-analysis only when `ready_for_analysis()` returned the run ID
 
 If `finalize_run()` fails, `RunRecorder` still schedules post-analysis when the
 run was otherwise ready. The persistence layer handles that fallback path by
@@ -116,6 +124,10 @@ because there is nothing persistent to close.
   `_RETRY_DELAYS_S = (0.5, 1.0, 2.0)`
 - `execute_post_analysis()` loads the stored run, calls the injected analysis
   runner, and stores either analysis output or an analysis error record
+- the loaded post-stop input can now include both persisted summary rows and the
+  optional raw-capture bundle; the raw replay path rebuilds FFT-derived
+  strength/peak fields from raw windows when the bundle exists and falls back to
+  summary-only rows otherwise
 
 The worker also exposes `PostAnalysisHealthSnapshot`, which is what the health
 surface uses for queue depth, active run ID, and the most recent completion
@@ -169,6 +181,8 @@ task/timeout helpers:
 | `apps/server/vibesensor/use_cases/run/lifecycle_state.py` | In-memory active-run gate and timeout fields. |
 | `apps/server/vibesensor/use_cases/run/sample_flush.py` | Flush decisions, live metric refresh, and sample-row building. |
 | `apps/server/vibesensor/use_cases/run/persistence_writer.py` | History-run creation, append retries, counters, and finalize flow. |
+| `apps/server/vibesensor/use_cases/run/raw_capture_writer.py` | Recorder-side raw chunk queue and raw manifest finalization. |
 | `apps/server/vibesensor/use_cases/run/logger.py` | Public recording start/stop entrypoint. |
 | `apps/server/vibesensor/use_cases/run/post_analysis.py` | Queue, worker-thread, retry, and health behavior. |
 | `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` | Load -> analyze -> store execution path. |
+| `apps/server/vibesensor/use_cases/run/raw_capture_replay.py` | Raw-window replay for post-stop strength/peak rebuilding before diagnostics. |

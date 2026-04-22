@@ -11,6 +11,9 @@ from vibesensor.adapters.persistence.history_db._client_names_repository import 
     ClientNameRepository,
 )
 from vibesensor.adapters.persistence.history_db._engine import SQLiteHistoryEngine
+from vibesensor.adapters.persistence.history_db._raw_capture_store import (
+    HistoryRawCaptureStore,
+)
 from vibesensor.adapters.persistence.history_db._run_repository import RunHistoryRepository
 from vibesensor.adapters.persistence.history_db._settings_repository import (
     SettingsSnapshotRepository,
@@ -55,12 +58,14 @@ def _build_history_persistence_adapters(
         corruption_reporter=corruption_reporter,
     )
     cursor_provider = lifecycle._cursor
+    raw_capture_store = HistoryRawCaptureStore(data_dir=db_path.parent)
     return HistoryPersistenceAdapters(
         lifecycle=lifecycle,
         run_repository=RunHistoryRepository(
             engine=lifecycle,
             cursor_provider=cursor_provider,
             write_transaction_cursor_provider=lifecycle.write_transaction_cursor,
+            raw_capture_store=raw_capture_store,
         ),
         settings_snapshot_repository=SettingsSnapshotRepository(
             engine=lifecycle,

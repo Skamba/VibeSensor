@@ -30,7 +30,7 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
 | | Live Processing (`infra/processing/`) | Post-Stop Analysis (`use_cases/diagnostics/`) |
 |-|----------------------------------------|------------------------------------------------|
 | **When** | Continuously during recording (5–10 Hz) | Once, after recording stops |
-| **Input** | Raw accelerometer frames from UDP | Stored sample records from history DB |
+| **Input** | Raw accelerometer frames from UDP | Stored sample records from history DB, plus optional raw-capture artifacts for replay |
 | **Output** | Per-tick metrics: FFT spectrum, peaks, strength_db, RMS, P2P | Diagnostic findings, rankings, reports |
 | **Purpose** | Data acquisition — transform raw signals into structured metrics | Diagnostic reasoning — classify, rank, and explain vibration causes |
 | **Stateless?** | Yes — each tick processes the current rolling window | Yes — processes all stored samples in one pass |
@@ -60,7 +60,9 @@ RunRecorder.stop_recording()            # use_cases/run/logger.py
        └─ PostAnalysisWorker.schedule() # use_cases/run/post_analysis.py
             └─ _worker_loop()           # daemon thread, sequential queue
                  └─ _run_post_analysis(run_id)
-                      ├─ load metadata + samples via injected RunPersistence
+                      ├─ load metadata + samples (+ raw capture when present) via injected RunPersistence
+                      ├─ build_post_analysis_input(...)
+                      │    └─ raw_capture_replay.py rebuilds FFT-derived strength fields from raw windows when possible
                       ├─ analysis_runner(...)
                       │    ← injected by RunRecorder
                       │      └─ RunAnalysis(metadata, samples, …).summarize()
@@ -184,13 +186,17 @@ Output: AnalysisResult (TestRun, DiagnosticCase, diagnostics-local artifacts)
 
 After `RunAnalysis.summarize()` returns, `PostAnalysisWorker`:
 
-1. Adds `analysis_metadata` (sample count, stride info).
+1. Adds `analysis_metadata` (sample count, stride info, and whether raw-backed
+   replay was used).
 2. Adds language-neutral trust warnings when the captured run context
    was incomplete for confident order analysis.
 3. Stores the summary via `history_db.store_analysis()` as a
    versioned persistence envelope.
 
-History readers unwrap the envelope back to the summary shape. The core
+History readers unwrap the envelope back to the summary shape. When a run has a
+raw capture bundle, the persisted analysis summary already reflects raw-backed
+strength/peak metrics from post-stop replay; report/history readers still stay
+persistence-only and never re-run diagnostics. The core
 history/report projection is derived from persisted run data plus the persisted
 analysis summary only; any comparison against current mutable car settings is an
 explicit advisory overlay at the history delivery boundary, not a hidden input

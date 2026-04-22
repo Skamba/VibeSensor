@@ -7,7 +7,7 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
-SCHEMA_VERSION = 12
+SCHEMA_VERSION = 13
 
 SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS runs (
@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS runs (
     end_time_utc            TEXT,
     metadata_json           TEXT NOT NULL,
     car_name                TEXT,
+    raw_capture_manifest_json TEXT,
     analysis_json           TEXT,
     error_message           TEXT,
     sample_count            INTEGER NOT NULL DEFAULT 0,

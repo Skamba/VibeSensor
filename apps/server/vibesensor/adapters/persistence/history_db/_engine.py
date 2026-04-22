@@ -351,6 +351,10 @@ class SQLiteHistoryEngine:
             return
         if version == 11:
             await self._migrate_v11_to_v12()
+            await self._migrate_v12_to_v13()
+            return
+        if version == 12:
+            await self._migrate_v12_to_v13()
             return
         if version > SCHEMA_VERSION:
             raise RuntimeError(
@@ -387,6 +391,17 @@ class SQLiteHistoryEngine:
                         for run_id, metadata_json in rows
                     ],
                 )
+            await cur.execute("PRAGMA user_version = 12")
+
+    async def _migrate_v12_to_v13(self) -> None:
+        LOGGER.info("Migrating history DB schema v12 -> v13")
+        async with self._cursor(commit=False) as cur:
+            await cur.execute("PRAGMA table_info(runs)")
+            columns = {str(row[1]) for row in await cur.fetchall()}
+        if "raw_capture_manifest_json" not in columns:
+            async with self._cursor() as cur:
+                await cur.execute("ALTER TABLE runs ADD COLUMN raw_capture_manifest_json TEXT")
+        async with self._cursor() as cur:
             await cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 
     async def _run_startup_quick_check(self) -> None:

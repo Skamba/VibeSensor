@@ -9,15 +9,16 @@ The report generation pipeline has two distinct phases:
    then created at the boundary by `vibesensor.shared.boundaries.analysis_payloads`
    / `vibesensor.adapters.analysis_summary`.
 2. **History request loading + reporting-boundary preparation + rendering**
-     (`vibesensor.use_cases.history` →
-     `vibesensor.shared.boundaries.reporting` →
-     `vibesensor.adapters.pdf`) — loads the persisted analysis object, shapes
-     runtime warnings and cache metadata, prepares one explicit
+      (`vibesensor.use_cases.history` →
+      `vibesensor.shared.boundaries.reporting` →
+      `vibesensor.adapters.pdf`) — loads the persisted analysis object, shapes
+      runtime warnings and cache metadata, prepares one explicit
      `PreparedReportInput` with an authoritative reconstructed domain aggregate
      plus precomputed semantic report facts, builds one canonical
      `ReportDocument`, and renders a PDF. This phase performs **zero
-     analysis** — it only shapes persisted report data and formats pre-computed
-     results.
+      analysis** — it only shapes persisted report data and formats pre-computed
+      results. If a run had raw capture available, that evidence was already
+      folded into the persisted analysis during post-stop replay.
 
 ```text
 Recording stops

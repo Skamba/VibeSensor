@@ -8,6 +8,7 @@ from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [
@@ -60,6 +61,7 @@ class StoredHistoryRun:
     sample_count: int
     case_id: str | None = None
     analysis: PersistedAnalysis | None = None
+    raw_capture_manifest: RawCaptureManifest | None = None
     analysis_corrupt: bool = False
     error_message: str | None = None
     analysis_started_at: str | None = None
@@ -80,6 +82,8 @@ class StoredHistoryRun:
             payload["case_id"] = self.case_id
         if self.analysis is not None:
             payload["analysis"] = self.analysis.to_json_object()
+        if self.raw_capture_manifest is not None:
+            payload["raw_capture_manifest"] = self.raw_capture_manifest.to_json_object()
         if self.analysis_corrupt:
             payload["analysis_corrupt"] = True
         if self.error_message is not None:
