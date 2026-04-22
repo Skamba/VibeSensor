@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Multi-sensor throughput benchmark for VibeSensor pipeline.
 
-Measures ingest and compute latency with and without the parallel worker pool
-to quantify the improvement from multithreaded FFT.
+Measures ingest and compute latency with and without the adaptive worker-pool
+path to quantify when multithreaded FFT helps.
 
 Usage::
 
     python tools/tests/benchmark_pipeline.py
     python tools/tests/benchmark_pipeline.py --sensors 8 --rounds 20
 
-Output is a plain-text table comparing sequential vs parallel execution.
+Output is a plain-text table comparing sequential vs adaptive execution.
 
 For repeatable regression comparisons, use
 ``apps/server/tests/infra/workers/benchmark_compute_all.py`` through
@@ -37,28 +37,29 @@ def _p95(values: list[float]) -> float:
 
 
 SAMPLE_RATE_HZ = 800
-FFT_N = 512
 WAVEFORM_SECONDS = 4
 SPECTRUM_MAX_HZ = 200
 
 
-def _make_processor(pool: WorkerPool | None = None) -> SignalProcessor:
+def _make_processor(*, fft_n: int, pool: WorkerPool | None = None) -> SignalProcessor:
     return SignalProcessor(
         sample_rate_hz=SAMPLE_RATE_HZ,
         waveform_seconds=WAVEFORM_SECONDS,
         waveform_display_hz=100,
-        fft_n=FFT_N,
+        fft_n=fft_n,
         spectrum_max_hz=SPECTRUM_MAX_HZ,
         accel_scale_g_per_lsb=1.0 / 256.0,
         worker_pool=pool,
     )
 
 
-def _inject_signal(proc: SignalProcessor, client_id: str, freq_hz: float) -> None:
-    t = np.arange(FFT_N, dtype=np.float64) / SAMPLE_RATE_HZ
+def _inject_signal(
+    proc: SignalProcessor, client_id: str, freq_hz: float, *, fft_n: int
+) -> None:
+    t = np.arange(fft_n, dtype=np.float64) / SAMPLE_RATE_HZ
     x = (0.05 * np.sin(2.0 * pi * freq_hz * t) * 256.0).astype(np.int16)
     y = (0.03 * np.sin(2.0 * pi * (freq_hz + 10) * t) * 256.0).astype(np.int16)
-    z = np.zeros(FFT_N, dtype=np.int16)
+    z = np.zeros(fft_n, dtype=np.int16)
     samples = np.stack([x, y, z], axis=1)
     proc.ingest(client_id, samples, sample_rate_hz=SAMPLE_RATE_HZ)
 
@@ -67,15 +68,16 @@ def run_benchmark(
     n_sensors: int = 4,
     n_rounds: int = 10,
     n_ingest_per_round: int = 5,
+    fft_n: int = 512,
 ) -> dict[str, object]:
     """Run the benchmark and return a results dict."""
     client_ids = [f"sensor-{i:02d}" for i in range(n_sensors)]
     freqs = [20.0 + i * 7.5 for i in range(n_sensors)]
 
     # --- Sequential baseline ---
-    proc_seq = _make_processor(pool=None)
+    proc_seq = _make_processor(fft_n=fft_n, pool=None)
     for cid, freq in zip(client_ids, freqs, strict=True):
-        _inject_signal(proc_seq, cid, freq)
+        _inject_signal(proc_seq, cid, freq, fft_n=fft_n)
 
     seq_ingest_ms: list[float] = []
     seq_compute_ms: list[float] = []
@@ -83,19 +85,19 @@ def run_benchmark(
         t0 = time.monotonic()
         for cid, freq in zip(client_ids, freqs, strict=True):
             for _ in range(n_ingest_per_round):
-                _inject_signal(proc_seq, cid, freq)
+                _inject_signal(proc_seq, cid, freq, fft_n=fft_n)
         seq_ingest_ms.append((time.monotonic() - t0) * 1000)
 
         t0 = time.monotonic()
         proc_seq.compute_all(client_ids)
         seq_compute_ms.append((time.monotonic() - t0) * 1000)
 
-    # --- Parallel ---
+    # --- Adaptive worker-pool path ---
     pool = WorkerPool(max_workers=4, thread_name_prefix="bench-fft")
     try:
-        proc_par = _make_processor(pool=pool)
+        proc_par = _make_processor(fft_n=fft_n, pool=pool)
         for cid, freq in zip(client_ids, freqs, strict=True):
-            _inject_signal(proc_par, cid, freq)
+            _inject_signal(proc_par, cid, freq, fft_n=fft_n)
 
         par_ingest_ms: list[float] = []
         par_compute_ms: list[float] = []
@@ -103,7 +105,7 @@ def run_benchmark(
             t0 = time.monotonic()
             for cid, freq in zip(client_ids, freqs, strict=True):
                 for _ in range(n_ingest_per_round):
-                    _inject_signal(proc_par, cid, freq)
+                    _inject_signal(proc_par, cid, freq, fft_n=fft_n)
             par_ingest_ms.append((time.monotonic() - t0) * 1000)
 
             t0 = time.monotonic()
@@ -114,13 +116,13 @@ def run_benchmark(
 
     # --- Verify output equivalence ---
     # Re-run from fresh processors with identical input
-    proc_a = _make_processor(pool=None)
+    proc_a = _make_processor(fft_n=fft_n, pool=None)
     pool_b = WorkerPool(max_workers=4)
     try:
-        proc_b = _make_processor(pool=pool_b)
+        proc_b = _make_processor(fft_n=fft_n, pool=pool_b)
         for cid, freq in zip(client_ids, freqs, strict=True):
-            _inject_signal(proc_a, cid, freq)
-            _inject_signal(proc_b, cid, freq)
+            _inject_signal(proc_a, cid, freq, fft_n=fft_n)
+            _inject_signal(proc_b, cid, freq, fft_n=fft_n)
         res_a = proc_a.compute_all(client_ids)
         res_b = proc_b.compute_all(client_ids)
     finally:
@@ -136,13 +138,14 @@ def run_benchmark(
         "n_sensors": n_sensors,
         "n_rounds": n_rounds,
         "n_ingest_per_round": n_ingest_per_round,
+        "fft_n": fft_n,
         "sequential": {
             "ingest_median_ms": round(statistics.median(seq_ingest_ms), 3),
             "ingest_p95_ms": round(_p95(seq_ingest_ms), 3),
             "compute_median_ms": round(statistics.median(seq_compute_ms), 3),
             "compute_p95_ms": round(_p95(seq_compute_ms), 3),
         },
-        "parallel": {
+        "adaptive": {
             "ingest_median_ms": round(statistics.median(par_ingest_ms), 3),
             "ingest_p95_ms": round(_p95(par_ingest_ms), 3),
             "compute_median_ms": round(statistics.median(par_compute_ms), 3),
@@ -154,6 +157,7 @@ def run_benchmark(
             2,
         ),
         "output_equivalent": output_match,
+        "adaptive_worker_tasks": proc_par.intake_stats()["worker_pool"]["total_tasks"],
     }
 
 
@@ -165,15 +169,24 @@ def main() -> None:
     parser.add_argument(
         "--rounds", type=int, default=10, help="Number of benchmark rounds"
     )
+    parser.add_argument(
+        "--fft-n", type=int, default=512, help="FFT size for each compute round"
+    )
     args = parser.parse_args()
 
-    print(f"Benchmarking with {args.sensors} sensors, {args.rounds} rounds ...\n")
-    results = run_benchmark(n_sensors=args.sensors, n_rounds=args.rounds)
+    print(
+        f"Benchmarking with {args.sensors} sensors, fft_n={args.fft_n}, {args.rounds} rounds ...\n"
+    )
+    results = run_benchmark(
+        n_sensors=args.sensors,
+        n_rounds=args.rounds,
+        fft_n=args.fft_n,
+    )
 
     seq = results["sequential"]
-    par = results["parallel"]
+    par = results["adaptive"]
     print("=" * 60)
-    print(f"  {'Metric':<30} {'Sequential':>12} {'Parallel':>12}")
+    print(f"  {'Metric':<30} {'Sequential':>12} {'Adaptive':>12}")
     print("-" * 60)
     print(
         f"  {'Ingest median (ms)':<30} {seq['ingest_median_ms']:>12.3f} {par['ingest_median_ms']:>12.3f}"
@@ -192,6 +205,7 @@ def main() -> None:
     print(
         f"  {'Output equivalent':<30} {'YES' if results['output_equivalent'] else 'NO':>12}"
     )
+    print(f"  {'Adaptive worker tasks':<30} {results['adaptive_worker_tasks']:>12}")
     print("=" * 60)
 
 
