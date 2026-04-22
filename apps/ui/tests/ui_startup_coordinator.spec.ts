@@ -22,9 +22,9 @@ function createCoordinatorHarness() {
   const calls: string[] = [];
   const warnings: Array<{ message: string; error: unknown }> = [];
   const hydrate = createDeferred<void>();
+  const hydrateDashboardState = createDeferred<void>();
   const refreshLocationOptions = createDeferred<void>();
   const refreshLoggingStatus = createDeferred<void>();
-  const primeDashboardState = createDeferred<void>();
 
   const coordinator = new UiStartupCoordinator({
     shell: {
@@ -37,6 +37,12 @@ function createCoordinatorHarness() {
       },
     },
     features: {
+      dashboard: {
+        hydrateStartupState(): Promise<void> {
+          calls.push("dashboard.hydrateStartupState");
+          return hydrateDashboardState.promise;
+        },
+      },
       realtime: {
         refreshLocationOptions(): Promise<void> {
           calls.push("realtime.refreshLocationOptions");
@@ -45,12 +51,6 @@ function createCoordinatorHarness() {
         refreshLoggingStatus(): Promise<void> {
           calls.push("realtime.refreshLoggingStatus");
           return refreshLoggingStatus.promise;
-        },
-      },
-      secondary: {
-        primeDashboardState(): Promise<void> {
-          calls.push("secondary.primeDashboardState");
-          return primeDashboardState.promise;
         },
       },
     },
@@ -69,9 +69,9 @@ function createCoordinatorHarness() {
     calls,
     warnings,
     hydrate,
+    hydrateDashboardState,
     refreshLocationOptions,
     refreshLoggingStatus,
-    primeDashboardState,
     coordinator,
   };
 }
@@ -110,7 +110,7 @@ describe("UiStartupCoordinator", () => {
         "shell.hydratePersistedPreferences",
         "realtime.refreshLocationOptions",
         "realtime.refreshLoggingStatus",
-        "secondary.primeDashboardState",
+        "dashboard.hydrateStartupState",
         "transport.startTransportMode",
       ]);
     } finally {
@@ -126,9 +126,9 @@ describe("UiStartupCoordinator", () => {
     try {
       harness.coordinator.start();
       harness.hydrate.reject(hydrateError);
+      harness.hydrateDashboardState.resolve();
       harness.refreshLocationOptions.resolve();
       harness.refreshLoggingStatus.resolve();
-      harness.primeDashboardState.resolve();
 
       await flushAsyncWork();
 

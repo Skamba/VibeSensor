@@ -18,6 +18,7 @@ import {
 } from "../views/settings_speed_source_presenter";
 import { createObservedServerStateQuery } from "./server_state_query";
 import { serverStateQueryKeys } from "./server_state_query_keys";
+import { applySpeedSourceStatusToSettings } from "./speed_source_status_state";
 
 interface SettingsGpsStatusModulePorts {
   activeViewId: ReadonlySignal<string>;
@@ -63,11 +64,8 @@ export function createSettingsGpsStatusModule(
     handlersBound.value
     && startupReady.value
     && (
-      ctx.ports.activeViewId.value === "dashboardView"
-      || (
-        ctx.ports.activeViewId.value === "settingsView"
-        && ctx.ports.activeSettingsTabId.value === "speedSourceTab"
-      )
+      ctx.ports.activeViewId.value === "settingsView"
+      && ctx.ports.activeSettingsTabId.value === "speedSourceTab"
     )
   );
 
@@ -81,9 +79,7 @@ export function createSettingsGpsStatusModule(
     },
     onData: ({ status, obdStatus }) => {
       batch(() => {
-        settings.speed.gpsFallbackActive.value = status.fallback_active;
-        settings.speed.gpsEffectiveSpeedKph.value = status.effective_speed_kmh;
-        settings.speed.resolvedSource.value = status.speed_source;
+        applySpeedSourceStatusToSettings(settings.speed, status);
         diagnosticsModel.value = buildSpeedSourceDiagnosticsRenderModel(
           status,
           obdStatus,

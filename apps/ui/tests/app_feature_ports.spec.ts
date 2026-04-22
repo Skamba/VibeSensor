@@ -7,6 +7,11 @@ import {
 test("feature port helpers expose the narrowed shell and startup contracts", async () => {
   const calls: string[] = [];
 
+  const dashboard = {
+    async hydrateStartupState() {
+      calls.push("dashboard.hydrateStartupState");
+    },
+  };
   const history = {
     async refreshHistory() {
       calls.push("history.refreshHistory");
@@ -30,13 +35,11 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
     dispose() {
       calls.push("secondary.dispose");
     },
-    async primeDashboardState() {
-      calls.push("secondary.primeDashboardState");
-    },
   };
 
   const recording = createRealtimeFeatureRecordingPorts(history);
   const bundle = createAppFeatureBundlePorts({
+    dashboard,
     realtime,
     secondary,
   });
@@ -48,17 +51,17 @@ test("feature port helpers expose the narrowed shell and startup contracts", asy
   bundle.shell.bindHandlers();
   await bundle.ensureViewReady("historyView");
 
+  await bundle.startup.dashboard.hydrateStartupState();
   await bundle.startup.realtime.refreshLocationOptions();
   await bundle.startup.realtime.refreshLoggingStatus();
-  await bundle.startup.secondary.primeDashboardState();
   bundle.dispose();
 
   expect(calls).toEqual([
     "history.refreshHistory",
     "realtime.bindHandlers",
+    "dashboard.hydrateStartupState",
     "realtime.refreshLocationOptions",
     "realtime.refreshLoggingStatus",
-    "secondary.primeDashboardState",
     "secondary.dispose",
     "realtime.dispose",
   ]);
