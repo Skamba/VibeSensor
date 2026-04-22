@@ -385,6 +385,28 @@ def _peak_band_rms_amp_g_from_bounds(
     return float(np.sqrt(np.mean(np.square(band, dtype=np.float64))))
 
 
+def _peak_band_rms_amp_g_from_ranges(
+    *,
+    combined_spectrum_amp_g: npt.NDArray[np.float64],
+    left_bounds: npt.NDArray[np.intp],
+    right_bounds: npt.NDArray[np.intp],
+) -> npt.NDArray[np.float64]:
+    if left_bounds.size == 0:
+        return np.empty(0, dtype=np.float64)
+    squared = np.square(combined_spectrum_amp_g, dtype=np.float64)
+    prefix_sum = np.empty(squared.size + 1, dtype=np.float64)
+    prefix_sum[0] = 0.0
+    np.cumsum(squared, out=prefix_sum[1:])
+
+    counts = right_bounds - left_bounds
+    result = np.zeros(left_bounds.shape, dtype=np.float64)
+    valid = counts > 0
+    if np.any(valid):
+        sums = prefix_sum[right_bounds[valid]] - prefix_sum[left_bounds[valid]]
+        result[valid] = np.sqrt(sums / counts[valid])
+    return result
+
+
 def _candidate_peak_indexes(values: npt.NDArray[np.float64], threshold: float) -> list[int]:
     peak_indexes_raw, _properties = find_peaks(values, height=threshold)
     peak_indexes = np.asarray(peak_indexes_raw, dtype=np.intp)
@@ -516,14 +538,14 @@ def compute_vibration_strength_db(
             candidate_band_rms.append(float(band_rms))
     else:
         left_bounds, right_bounds = peak_band_ranges
+        band_rms_values = _peak_band_rms_amp_g_from_ranges(
+            combined_spectrum_amp_g=combined,
+            left_bounds=left_bounds,
+            right_bounds=right_bounds,
+        )
         for candidate_idx, idx in enumerate(scored_candidate_indexes):
-            band_rms = _peak_band_rms_amp_g_from_bounds(
-                combined_spectrum_amp_g=combined,
-                start_idx=int(left_bounds[candidate_idx]),
-                stop_idx=int(right_bounds[candidate_idx]),
-            )
             candidate_hz.append(float(freq[idx]))
-            candidate_band_rms.append(float(band_rms))
+            candidate_band_rms.append(float(band_rms_values[candidate_idx]))
     candidate_db = _batch_vibration_strength_db_aligned(
         peak_band_rms_amp_g_values=np.asarray(candidate_band_rms, dtype=np.float64),
         floor_amp_g=floor_strength,

@@ -65,8 +65,7 @@ def _http_error_as_oserror(exc: httpx.HTTPError, *, context: str, url: str) -> O
     if isinstance(exc, httpx.HTTPStatusError):
         diagnostic = _status_error_diagnostic(exc.response)
         return OSError(
-            f"{context} request failed with HTTP {exc.response.status_code}: {url}"
-            f"{diagnostic}"
+            f"{context} request failed with HTTP {exc.response.status_code}: {url}{diagnostic}"
         )
     return OSError(f"{context} request failed for {url}: {exc}")
 

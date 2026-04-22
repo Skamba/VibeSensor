@@ -226,6 +226,27 @@ def test_multi_spectrum_payload_compares_freq_axes_without_np_asarray(
     assert result["freq"]
 
 
+def test_multi_spectrum_payload_skips_allclose_for_shared_freq_object(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
+    samples = _random_samples(300)
+
+    proc.ingest("c1", samples, sample_rate_hz=200)
+    proc.ingest("c2", samples, sample_rate_hz=200)
+    proc.compute_metrics("c1", sample_rate_hz=200)
+    proc.compute_metrics("c2", sample_rate_hz=200)
+
+    def _fail_allclose(*args: object, **kwargs: object) -> None:
+        raise AssertionError("np.allclose should not be used for shared frequency arrays")
+
+    monkeypatch.setattr("vibesensor.infra.processing.payload.np.allclose", _fail_allclose)
+
+    result = proc.multi_spectrum_payload(["c1", "c2"])
+    assert sorted(result["clients"]) == ["c1", "c2"]
+    assert result["freq"]
+
+
 def test_multi_spectrum_payload_reuses_shared_freq_conversion_for_matching_clients(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
