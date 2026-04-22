@@ -114,7 +114,41 @@ def _aligned_float_arrays(
 def _quantile_or_zero(values: npt.NDArray[np.float64], q: float) -> float:
     if values.size == 0:
         return 0.0
-    return float(np.quantile(values, q))
+    q_value = float(q)
+    if not 0.0 <= q_value <= 1.0:
+        return float(np.quantile(values, q_value))
+    if values.size == 1:
+        return float(values[0])
+    if q_value == 0.0:
+        return float(np.min(values))
+    if q_value == 1.0:
+        return float(np.max(values))
+
+    # The linear-interpolation quantile only needs the two bracketing order
+    # statistics, so use partition instead of the heavier generic quantile path.
+    position = q_value * float(values.size - 1)
+    lower_idx = int(position)
+    upper_idx = int(np.ceil(position))
+    if lower_idx == upper_idx:
+        partitioned = np.partition(values, lower_idx)
+        return float(partitioned[lower_idx])
+
+    partitioned = np.partition(values, (lower_idx, upper_idx))
+    lower_value = float(partitioned[lower_idx])
+    upper_value = float(partitioned[upper_idx])
+    return lower_value + (upper_value - lower_value) * (position - lower_idx)
+
+
+def _median_or_zero(values: npt.NDArray[np.float64]) -> float:
+    if values.size == 0:
+        return 0.0
+    mid = values.size // 2
+    if values.size % 2:
+        partitioned = np.partition(values, mid)
+        return float(partitioned[mid])
+
+    partitioned = np.partition(values, (mid - 1, mid))
+    return float((partitioned[mid - 1] + partitioned[mid]) * 0.5)
 
 
 def _combined_spectrum_amp_g_array(
@@ -266,7 +300,7 @@ def _strength_floor_amp_g_aligned(
         # (assuming DC content at 0 Hz) — an assumption that breaks when
         # the caller has already stripped the DC bin from the spectrum.
         return _quantile_or_zero(amps[base_mask], 0.20)
-    return float(np.median(selected))
+    return _median_or_zero(selected)
 
 
 def _exclude_peak_regions_aligned(
