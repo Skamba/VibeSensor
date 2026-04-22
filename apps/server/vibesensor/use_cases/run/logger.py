@@ -8,6 +8,7 @@ from threading import RLock
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
+import numpy as np
 from opentelemetry.trace import SpanKind
 
 from vibesensor.shared.ports import (
@@ -34,6 +35,7 @@ from vibesensor.use_cases.run.persistence_writer import (
 )
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
+from vibesensor.use_cases.run.raw_capture_writer import RunRawCaptureWriter
 from vibesensor.use_cases.run.run_context import build_run_context_snapshot
 from vibesensor.use_cases.run.sample_flush import SampleFlushOrchestrator
 from vibesensor.use_cases.run.status_reporting import (
@@ -120,6 +122,10 @@ class RunRecorder:
             error_callback=self._persistence.set_last_write_error,
             clear_error_callback=self._persistence.clear_last_write_error,
             analysis_runner=build_post_analysis_summary,
+        )
+        self._raw_capture = RunRawCaptureWriter(
+            history_db=history_db if config.persist_history_db else None,
+            logger=LOGGER,
         )
 
         self._sample_flush = SampleFlushOrchestrator(
@@ -210,7 +216,25 @@ class RunRecorder:
         self._active_run_context = run_context
         self._persistence.reset()
         self._live_start_mono_s = snapshot.start_mono_s
+        self._raw_capture.start_run(snapshot.run_id)
         return snapshot
+
+    def capture_raw_samples(
+        self,
+        *,
+        client_id: str,
+        sample_rate_hz: int | None,
+        t0_us: int,
+        samples: object,
+    ) -> None:
+        if not isinstance(samples, np.ndarray):
+            return
+        self._raw_capture.capture_raw_samples(
+            client_id=client_id,
+            sample_rate_hz=sample_rate_hz,
+            t0_us=t0_us,
+            samples=samples,
+        )
 
     def status(self) -> RunRecorderStatusSnapshot:
         with self._lock:
@@ -302,6 +326,8 @@ class RunRecorder:
                         start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
                         end_time_utc = utc_now_iso()
                         persistence_snapshot = self._persistence.status_snapshot()
+                        if run_id:
+                            self._raw_capture.finalize_run(run_id)
                         if run_id and not self._persistence.finalize_run(
                             run_id,
                             start_time_utc,
@@ -398,6 +424,8 @@ class RunRecorder:
                     start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
                     end_time_utc = utc_now_iso()
                     persistence_snapshot = self._persistence.status_snapshot()
+                    if run_id:
+                        self._raw_capture.finalize_run(run_id)
                     if run_id and not self._persistence.finalize_run(
                         run_id,
                         start_time_utc,
@@ -463,6 +491,9 @@ class RunRecorder:
 
     def shutdown(self, timeout_s: float = 30.0) -> bool:
         return self.shutdown_report(timeout_s).completed
+
+    def shutdown_raw_capture(self, timeout_s: float = 5.0) -> bool:
+        return self._raw_capture.shutdown(timeout_s)
 
     async def run(self) -> None:
         await _recorder_runtime.run_loop(self, logger=LOGGER)

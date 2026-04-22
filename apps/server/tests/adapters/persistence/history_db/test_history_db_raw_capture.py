@@ -1,0 +1,113 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
+import numpy as np
+from test_support.history_db_async import execute_statements as _execute_statements
+from test_support.history_db_lifecycle import (
+    build_history_db,
+    create_completed_run,
+    create_recording_run,
+)
+
+from vibesensor.shared.types.raw_capture import RawCaptureChunk
+
+
+def _append_chunk(
+    db,
+    *,
+    run_id: str,
+    client_id: str,
+    t0_us: int,
+    samples: np.ndarray,
+    sample_rate_hz: int = 800,
+) -> None:
+    chunk = RawCaptureChunk(
+        client_id=client_id,
+        sample_rate_hz=sample_rate_hz,
+        t0_us=t0_us,
+        sample_count=int(samples.shape[0]),
+        samples_i16le=np.ascontiguousarray(samples, dtype=np.int16).tobytes(order="C"),
+    )
+    db.run_repository._run_sync(db.run_repository.aappend_raw_capture_chunk(run_id, chunk))
+
+
+def _finalize_raw_capture(db, run_id: str):
+    return db.run_repository._run_sync(db.run_repository.afinalize_raw_capture(run_id))
+
+
+def _load_raw_capture(db, run_id: str):
+    return db.run_repository._run_sync(db.run_repository.aload_raw_capture(run_id))
+
+
+def test_raw_capture_round_trip_persists_manifest_and_samples(tmp_path: Path) -> None:
+    db = build_history_db(tmp_path)
+    create_recording_run(db, "run-raw")
+    first = np.asarray([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
+    second = np.asarray([[7, 8, 9]], dtype=np.int16)
+
+    _append_chunk(db, run_id="run-raw", client_id="sensor-a", t0_us=1000, samples=first)
+    _append_chunk(db, run_id="run-raw", client_id="sensor-a", t0_us=2000, samples=second)
+
+    manifest = _finalize_raw_capture(db, "run-raw")
+
+    assert manifest is not None
+    assert manifest.total_samples == 3
+    assert manifest.sensor_manifest("sensor-a") is not None
+
+    stored = db.run_repository.get_run("run-raw")
+    assert stored is not None
+    assert stored.raw_capture_manifest == manifest
+
+    loaded = _load_raw_capture(db, "run-raw")
+    assert loaded is not None
+    sensor = loaded.sensor_data("sensor-a")
+    assert sensor is not None
+    assert sensor.manifest.chunk_count == 2
+    assert sensor.manifest.sample_count == 3
+    assert len(sensor.chunks) == 2
+    assert np.array_equal(sensor.samples_i16, np.vstack([first, second]))
+
+
+def test_delete_run_removes_raw_capture_artifacts(tmp_path: Path) -> None:
+    db = build_history_db(tmp_path)
+    create_recording_run(db, "run-delete")
+    samples = np.asarray([[11, 12, 13]], dtype=np.int16)
+
+    _append_chunk(db, run_id="run-delete", client_id="sensor-a", t0_us=1000, samples=samples)
+    manifest = _finalize_raw_capture(db, "run-delete")
+
+    assert manifest is not None
+    raw_dir = tmp_path / "raw-runs" / "run-delete"
+    assert raw_dir.exists()
+
+    db.run_repository.delete_run("run-delete")
+
+    assert not raw_dir.exists()
+
+
+def test_prune_terminal_runs_removes_raw_capture_artifacts(tmp_path: Path) -> None:
+    db = build_history_db(tmp_path)
+    create_completed_run(db, "run-prune")
+    samples = np.asarray([[21, 22, 23]], dtype=np.int16)
+
+    _append_chunk(db, run_id="run-prune", client_id="sensor-a", t0_us=1000, samples=samples)
+    manifest = _finalize_raw_capture(db, "run-prune")
+
+    assert manifest is not None
+    raw_dir = tmp_path / "raw-runs" / "run-prune"
+    assert raw_dir.exists()
+
+    old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
+    _execute_statements(
+        db.lifecycle,
+        (
+            "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
+            (old_timestamp, old_timestamp, "run-prune"),
+        ),
+    )
+
+    db.run_repository.prune_terminal_runs_older_than_days(1)
+
+    assert not raw_dir.exists()

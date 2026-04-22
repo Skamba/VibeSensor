@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import Awaitable
 from contextlib import AbstractAsyncContextManager
@@ -10,6 +11,9 @@ from typing import TypeVar
 
 import aiosqlite
 
+from vibesensor.adapters.persistence.history_db._raw_capture_store import (
+    HistoryRawCaptureStore,
+)
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.analysis_payloads import (
     persisted_analysis_from_storage_json_object,
@@ -23,6 +27,7 @@ from vibesensor.shared.types.history_records import (
 )
 from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
 from vibesensor.shared.types.run_schema import RunMetadata
 
 LOGGER = logging.getLogger(__name__)
@@ -31,6 +36,8 @@ _T = TypeVar("_T")
 
 
 class _HistoryDBQueryMixin:
+    _raw_capture_store: HistoryRawCaptureStore
+
     def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
         raise NotImplementedError
 
@@ -86,6 +93,25 @@ class _HistoryDBQueryMixin:
             parsed["end_time_utc"] = end_time_utc
         return run_metadata_from_mapping(parsed)
 
+    def _coerce_raw_capture_manifest(
+        self,
+        *,
+        run_id: str,
+        manifest_json: str | None,
+        source: str,
+    ) -> RawCaptureManifest | None:
+        parsed = safe_json_loads(manifest_json, context=f"run {run_id} raw_capture_manifest")
+        if not is_json_object(parsed):
+            if parsed is not None:
+                LOGGER.warning(
+                    "%s: run %s raw_capture_manifest_json parsed to %s, expected dict",
+                    source,
+                    run_id,
+                    type(parsed).__name__,
+                )
+            return None
+        return RawCaptureManifest.from_mapping(parsed)
+
     def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         return self._run_sync(self.alist_runs(limit))
 
@@ -133,7 +159,8 @@ class _HistoryDBQueryMixin:
         async with self._cursor(commit=False) as cur:
             await cur.execute(
                 "SELECT run_id, case_id, status, start_time_utc, end_time_utc, "
-                "metadata_json, analysis_json, error_message, created_at, "
+                "metadata_json, raw_capture_manifest_json, analysis_json, "
+                "error_message, created_at, "
                 "sample_count, analysis_started_at, analysis_completed_at "
                 "FROM runs WHERE run_id = ?",
                 (run_id,),
@@ -148,6 +175,7 @@ class _HistoryDBQueryMixin:
             start,
             end,
             meta_json,
+            raw_capture_manifest_json,
             analysis_json,
             error,
             created,
@@ -165,6 +193,13 @@ class _HistoryDBQueryMixin:
             allow_fallback=True,
         )
         assert metadata is not None
+        raw_capture_manifest = self._coerce_raw_capture_manifest(
+            run_id=str(rid),
+            manifest_json=str(raw_capture_manifest_json)
+            if raw_capture_manifest_json is not None
+            else None,
+            source="get_run",
+        )
         analysis: PersistedAnalysis | None = None
         analysis_corrupt = False
         if analysis_json:
@@ -189,6 +224,7 @@ class _HistoryDBQueryMixin:
             end_time_utc=str(end) if end is not None else None,
             metadata=metadata,
             analysis=analysis,
+            raw_capture_manifest=raw_capture_manifest,
             analysis_corrupt=analysis_corrupt,
             error_message=str(error) if error else None,
             created_at=str(created),
@@ -196,6 +232,27 @@ class _HistoryDBQueryMixin:
             analysis_started_at=str(analysis_started) if analysis_started else None,
             analysis_completed_at=str(analysis_completed) if analysis_completed else None,
         )
+
+    async def aget_raw_capture_manifest(self, run_id: str) -> RawCaptureManifest | None:
+        async with self._cursor(commit=False) as cur:
+            await cur.execute(
+                "SELECT raw_capture_manifest_json FROM runs WHERE run_id = ?",
+                (run_id,),
+            )
+            row = await cur.fetchone()
+        if row is None or row[0] is None:
+            return None
+        return self._coerce_raw_capture_manifest(
+            run_id=run_id,
+            manifest_json=str(row[0]),
+            source="get_raw_capture_manifest",
+        )
+
+    async def aload_raw_capture(self, run_id: str) -> RawRunCapture | None:
+        manifest = await self.aget_raw_capture_manifest(run_id)
+        if manifest is None:
+            return None
+        return await asyncio.to_thread(self._raw_capture_store.load_capture, manifest)
 
     def get_run_metadata(self, run_id: str) -> RunMetadata | None:
         return self._run_sync(self.aget_run_metadata(run_id))

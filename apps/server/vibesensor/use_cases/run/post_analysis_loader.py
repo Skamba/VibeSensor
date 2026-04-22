@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from math import ceil
 
 from vibesensor.shared.ports import RunPersistence
+from vibesensor.shared.types.raw_capture import RawRunCapture
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -20,6 +21,7 @@ class LoadedPostAnalysisRun:
     samples: list[SensorFrame]
     total_sample_count: int
     stride: int
+    raw_capture: RawRunCapture | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +83,8 @@ def load_post_analysis_run(
                 run_id=run_id,
                 error_message="No samples collected during run",
             )
+        load_raw_capture = getattr(db, "aload_raw_capture", None)
+        raw_capture = await load_raw_capture(run_id) if callable(load_raw_capture) else None
 
         return LoadedPostAnalysisRun(
             run_id=run_id,
@@ -89,6 +93,7 @@ def load_post_analysis_run(
             samples=samples,
             total_sample_count=total_sample_count,
             stride=stride,
+            raw_capture=raw_capture,
         )
 
     runner = getattr(db, "_run_on_engine_loop", None)
