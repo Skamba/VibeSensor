@@ -33,6 +33,7 @@ import {
   createSettingsCarsTransport,
   type SettingsCarsTransport,
 } from "./settings_cars_transport";
+import { applyCarsPayloadToSettings } from "./dashboard_startup_state";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 
 interface SettingsCarsModulePanels {
@@ -157,15 +158,7 @@ export function createSettingsCarsModule(
   }
 
   function syncCarsPayload(payload: CarsPayload): void {
-    settings.car.cars.value = payload.cars;
-    settings.car.carsLoaded.value = true;
-    const requestedActiveCarId = payload.active_car_id;
-    const hasRequestedActive = requestedActiveCarId
-      ? settings.car.cars.value.some((car) => car.id === requestedActiveCarId)
-      : false;
-    settings.car.activeCarId.value = hasRequestedActive
-      ? requestedActiveCarId
-      : null;
+    applyCarsPayloadToSettings(settings.car, payload);
     if (
       highlightedCar.value &&
       !settings.car.cars.value.some(

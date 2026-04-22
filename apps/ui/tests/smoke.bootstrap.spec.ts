@@ -398,6 +398,45 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect.poll(() => stopCalls).toBe(1);
 });
 
+test("dashboard bootstrap defers secondary bundle until a dependent view opens", async ({ page }) => {
+  const secondaryBundleRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("app_feature_secondary_bundle")) {
+      secondaryBundleRequests.push(request.url());
+    }
+  });
+
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      if (path === "/api/settings/cars") {
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Test Hatch", type: "Simulated setup", aspects: {} }],
+          active_car_id: "car-1",
+        });
+        return;
+      }
+      if (path === "/api/settings/speed-source") {
+        await fulfillJson(route, {
+          speed_source: "gps",
+          manual_speed_kph: null,
+          stale_timeout_s: 5,
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  await expect(page.locator("#liveActiveCar [data-value]")).toHaveText("Test Hatch");
+  expect(secondaryBundleRequests).toEqual([]);
+
+  await page.locator("#tab-settings").click();
+  await expect.poll(() => secondaryBundleRequests.length).toBeGreaterThan(0);
+});
+
 test("saved run state points directly to History", async ({ page }) => {
   const recordingStatus = {
     enabled: false,

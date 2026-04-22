@@ -14,6 +14,9 @@ export interface AppFeatureBundle {
 }
 
 interface AppFeatureBundlePortSources {
+  dashboard?: {
+    hydrateStartupState(): Promise<void>;
+  };
   realtime: Pick<
     RealtimeFeature,
     | "bindHandlers"
@@ -23,7 +26,6 @@ interface AppFeatureBundlePortSources {
   >;
   secondary?: {
     dispose(): void;
-    primeDashboardState(): Promise<void>;
   };
   ensureViewReady?: (viewId: string) => Promise<void>;
 }
@@ -54,12 +56,12 @@ export function createAppFeatureBundlePorts(
       },
     },
     startup: {
+      dashboard: {
+        hydrateStartupState: () => features.dashboard?.hydrateStartupState() ?? Promise.resolve(),
+      },
       realtime: {
         refreshLocationOptions: () => features.realtime.refreshLocationOptions(),
         refreshLoggingStatus: () => features.realtime.refreshLoggingStatus(),
-      },
-      secondary: {
-        primeDashboardState: () => features.secondary?.primeDashboardState() ?? Promise.resolve(),
       },
     },
   };

@@ -88,8 +88,8 @@ export class UiStartupCoordinator {
             run: () => this.features.realtime.refreshLoggingStatus(),
           },
           {
-            name: "prime dashboard state",
-            run: () => this.features.secondary.primeDashboardState(),
+            name: "hydrate dashboard state",
+            run: () => this.features.dashboard.hydrateStartupState(),
           },
         ];
 
