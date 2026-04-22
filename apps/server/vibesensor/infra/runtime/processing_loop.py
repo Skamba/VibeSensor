@@ -24,6 +24,9 @@ if TYPE_CHECKING:
     from vibesensor.infra.runtime.registry import ClientRegistry
 
 LOGGER = logging.getLogger(__name__)
+_LOW_LOAD_FAST_PATH_CLIENT_LIMIT = 8
+_LOW_LOAD_FAST_PATH_UPDATE_HZ = 10
+_LOW_LOAD_MAX_DUTY_CYCLE = 0.5
 
 
 class ProcessingLoop:
@@ -60,11 +63,28 @@ class ProcessingLoop:
             control_plane=control_plane,
         )
 
-    async def _run_tick(self, *, sync_clock: bool) -> None:
-        await self._tick_runner.run(sync_clock=sync_clock)
+    async def _run_tick(self, *, sync_clock: bool) -> int:
+        return await self._tick_runner.run(sync_clock=sync_clock)
+
+    def _success_delay_s(
+        self,
+        *,
+        interval_s: float,
+        tick_duration_s: float,
+        active_client_count: int,
+    ) -> float:
+        if active_client_count <= 0:
+            return interval_s
+        if active_client_count > _LOW_LOAD_FAST_PATH_CLIENT_LIMIT:
+            return interval_s
+
+        fast_path_period_s = 1.0 / _LOW_LOAD_FAST_PATH_UPDATE_HZ
+        duty_cycle_period_s = tick_duration_s / _LOW_LOAD_MAX_DUTY_CYCLE
+        target_period_s = max(fast_path_period_s, duty_cycle_period_s)
+        return max(0.0, target_period_s - tick_duration_s)
 
     async def run(self) -> None:
-        """~100 ms tick loop: evict stale clients, compute metrics, handle failures."""
+        """Tick loop: low-load fast path with bounded CPU, default cadence otherwise."""
         interval = 1.0 / max(1, self._fft_update_hz)
         _sync_clock_tick = 0
         _SYNC_CLOCK_EVERY_N_TICKS = max(1, int(5.0 / interval))  # ~every 5 s
@@ -77,8 +97,13 @@ class ProcessingLoop:
                     _sync_clock_tick = 0
                     sync_clock = True
                 tick_start = time.monotonic()
-                await self._run_tick(sync_clock=sync_clock)
+                active_client_count = await self._run_tick(sync_clock=sync_clock)
                 tick_dur = time.monotonic() - tick_start
+                delay = self._success_delay_s(
+                    interval_s=interval,
+                    tick_duration_s=tick_dur,
+                    active_client_count=active_client_count,
+                )
                 self._apply_success(
                     self._failure_policy.plan_success(tick_duration_s=tick_dur),
                 )
