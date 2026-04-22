@@ -1,7 +1,7 @@
 import enCatalog from "./i18n/catalogs/en.json" with { type: "json" };
-import nlCatalog from "./i18n/catalogs/nl.json" with { type: "json" };
 
 type Catalog = Record<string, string>;
+type CatalogModule = { default: Catalog };
 
 export type NumberVar = {
   number: number;
@@ -9,10 +9,19 @@ export type NumberVar = {
 };
 
 export const supported = ["en", "nl"] as const;
+type SupportedLanguage = (typeof supported)[number];
 
 const _PLACEHOLDER_RE = /\{([a-zA-Z0-9_]+)\}/g;
 const _numberFormatCache = new Map<string, Intl.NumberFormat>();
 const _HAS_OWN = Object.prototype.hasOwnProperty;
+const _catalogs: Partial<Record<SupportedLanguage, Catalog>> = {
+  en: enCatalog,
+};
+const _catalogLoads = new Map<SupportedLanguage, Promise<void>>();
+const _catalogLoaders: Record<SupportedLanguage, () => Promise<CatalogModule>> = {
+  nl: () => import("./i18n/catalogs/nl.json", { with: { type: "json" } }),
+  en: async () => ({ default: enCatalog }),
+};
 
 function _getDefaultNumberFormat(lang: string): Intl.NumberFormat {
   let fmt = _numberFormatCache.get(lang);
@@ -23,15 +32,39 @@ function _getDefaultNumberFormat(lang: string): Intl.NumberFormat {
   return fmt;
 }
 
-const dict: Record<string, Catalog> = {
-  en: enCatalog,
-  nl: nlCatalog,
-};
-
 export function normalizeLang(value: string): string {
   const raw = String(value || "").trim().toLowerCase();
   if (raw.startsWith("nl")) return "nl";
   return "en";
+}
+
+function normalizeSupportedLanguage(value: string): SupportedLanguage {
+  return normalizeLang(value) as SupportedLanguage;
+}
+
+export async function ensureCatalogLoaded(lang: string): Promise<void> {
+  const normalized = normalizeSupportedLanguage(lang);
+  if (_catalogs[normalized]) {
+    return;
+  }
+  const existingLoad = _catalogLoads.get(normalized);
+  if (existingLoad) {
+    await existingLoad;
+    return;
+  }
+  const load = _catalogLoaders[normalized]().then((module) => {
+    _catalogs[normalized] = module.default;
+  });
+  _catalogLoads.set(normalized, load);
+  try {
+    await load;
+  } finally {
+    _catalogLoads.delete(normalized);
+  }
+}
+
+function getLoadedCatalog(lang: string): Catalog | undefined {
+  return _catalogs[normalizeSupportedLanguage(lang)];
 }
 
 function isNumberVar(value: unknown): value is NumberVar {
@@ -52,8 +85,8 @@ function formatVar(lang: string, value: unknown): string {
 
 export function get(lang: string, key: string, vars?: Record<string, unknown>): string {
   const normalized = normalizeLang(lang);
-  const fallback = dict.en?.[key] || key;
-  const template = dict[normalized]?.[key] || fallback;
+  const fallback = getLoadedCatalog("en")?.[key] || key;
+  const template = getLoadedCatalog(normalized)?.[key] || fallback;
   if (!vars || typeof vars !== "object") return template;
   return String(template).replace(_PLACEHOLDER_RE, (_m, placeholder) => {
     if (_HAS_OWN.call(vars, placeholder)) {
@@ -64,5 +97,5 @@ export function get(lang: string, key: string, vars?: Record<string, unknown>): 
 }
 
 export function getForAllLangs(key: string): string[] {
-  return supported.map((lang) => get(lang, key));
+  return supported.map((lang) => getLoadedCatalog(lang)?.[key] || key);
 }

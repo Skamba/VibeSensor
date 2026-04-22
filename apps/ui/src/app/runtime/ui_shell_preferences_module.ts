@@ -24,6 +24,7 @@ export interface UiShellPreferencesModule {
 
 type UiShellPreferencesDeps = {
   normalizeLanguage: (value: string | null | undefined) => string;
+  prepareLanguage: (value: string) => Promise<void>;
   queryClient: QueryClient;
   shell: ShellState;
   t: (key: string, vars?: Record<string, unknown>) => string;
@@ -51,9 +52,11 @@ export function createUiShellPreferencesModule(
     return value === "nl" ? "Nederlands" : "English";
   }
 
-  function applyLanguageValue(rawLanguage: string): void {
-    deps.shell.lang.value = deps.normalizeLanguage(rawLanguage);
-    selectedLanguage.value = deps.shell.lang.value;
+  async function applyLanguageValue(rawLanguage: string): Promise<void> {
+    const nextLanguage = deps.normalizeLanguage(rawLanguage);
+    await deps.prepareLanguage(nextLanguage);
+    deps.shell.lang.value = nextLanguage;
+    selectedLanguage.value = nextLanguage;
   }
 
   function applySpeedUnitValue(rawUnit: string): void {
@@ -104,7 +107,7 @@ export function createUiShellPreferencesModule(
         languageResult.status === "fulfilled" &&
         languageResult.value?.language
       ) {
-        applyLanguageValue(languageResult.value.language);
+        await applyLanguageValue(languageResult.value.language);
       } else if (languageResult.status === "rejected") {
         console.warn(
           "Failed to load persisted language",
@@ -135,7 +138,7 @@ export function createUiShellPreferencesModule(
           serverStateQueryKeys.settings.language(),
           { language: resolvedLanguage },
         );
-        applyLanguageValue(resolvedLanguage);
+        await applyLanguageValue(resolvedLanguage);
       } catch (error) {
         selectedLanguage.value = previousLanguage;
         languageFeedback.value = buildSaveFailureFeedback(

@@ -2,7 +2,7 @@ import type { QueryClient } from "@tanstack/query-core";
 
 import * as I18N from "../../i18n";
 import { formatIntLocale } from "../../format";
-import { setUiLanguage } from "../ui_i18n";
+import { setUiLanguage, translateUiText } from "../ui_i18n";
 import type { AppState } from "../ui_app_state";
 import {
   computed,
@@ -134,6 +134,7 @@ export class UiShellController {
       shell: this.state.shell,
       t: (key, vars) => this.t(key, vars),
       normalizeLanguage: (lang) => I18N.normalizeLang(lang ?? ""),
+      prepareLanguage: (lang) => setUiLanguage(lang),
     });
     deps.chromeActions.value = {
       activateView: (viewId) => this.setActiveView(viewId),
@@ -153,7 +154,7 @@ export class UiShellController {
   }
 
   t(key: string, vars?: Record<string, unknown>): string {
-    return I18N.get(this.state.shell.lang.value, key, vars);
+    return translateUiText(key, vars);
   }
 
   localFormatInt(value: number): string {
@@ -201,7 +202,7 @@ export class UiShellController {
   private bindReactiveLanguageSync(): () => void {
     return effectOnChange(this.state.shell.lang, (currentLanguage) => {
       untracked(() => {
-        setUiLanguage(currentLanguage);
+        void setUiLanguage(currentLanguage);
       });
     });
   }
