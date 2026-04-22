@@ -111,7 +111,12 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
         measurement_y,
         width,
         measurement_h,
-        _tr(plan.lang, "REPORT_SUPPORTING_MEASUREMENTS_TITLE"),
+        _tr(
+            plan.lang,
+            "REPORT_SUPPORTING_WINDOWS_TITLE"
+            if appendix.proof_window_rows
+            else "REPORT_SUPPORTING_MEASUREMENTS_TITLE",
+        ),
     )
     measurement_source_values = {
         row.source_name for row in appendix.measurement_rows if row.source_name
@@ -169,7 +174,32 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
             )
             - 0.8 * mm
         )
-    if shared_measurement_context:
+    if appendix.proof_window_rows:
+        measurement_headers = [
+            _tr(plan.lang, "REPORT_WINDOW_ID_COLUMN"),
+            _tr(plan.lang, "REPORT_TIME_COLUMN"),
+            _tr(plan.lang, "REPORT_SPEED_COLUMN"),
+            _tr(plan.lang, "FREQUENCY_HZ"),
+            _tr(plan.lang, "REPORT_LOCATION_COLUMN"),
+            _tr(plan.lang, "REPORT_PHASE_COLUMN"),
+        ]
+        measurement_rows = [
+            [
+                row.window_id,
+                f"{row.time_s:.1f} s" if row.time_s is not None else _tr(plan.lang, "UNKNOWN"),
+                (
+                    f"{row.speed_kmh:.0f} km/h"
+                    if row.speed_kmh is not None
+                    else _tr(plan.lang, "UNKNOWN")
+                ),
+                _fmt_hz(row.matched_hz),
+                row.dominant_location or _tr(plan.lang, "UNKNOWN"),
+                row.phase or _tr(plan.lang, "UNKNOWN"),
+            ]
+            for row in appendix.proof_window_rows
+        ]
+        measurement_widths = [0.11, 0.14, 0.16, 0.18, 0.20, 0.21]
+    elif shared_measurement_context:
         measurement_headers = [
             _tr(plan.lang, "REPORT_MEASUREMENT_ID_COLUMN"),
             _tr(plan.lang, "FREQUENCY_HZ"),

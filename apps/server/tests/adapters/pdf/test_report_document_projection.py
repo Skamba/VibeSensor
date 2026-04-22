@@ -198,6 +198,93 @@ def test_build_report_document_surfaces_evidence_snapshot_rows() -> None:
     assert "driveline" in data.appendix_c.evidence_snapshot_rows[4].value.lower()
 
 
+def test_build_report_document_focuses_appendix_c_on_primary_proof_windows() -> None:
+    primary = make_finding_payload(
+        finding_id="F_PRIMARY_PROOF",
+        suspected_source="wheel/tire",
+        confidence=0.79,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+        frequency_hz_or_order="1x wheel order",
+        matched_points=[
+            {
+                "t_s": 1.0,
+                "speed_kmh": 64.0,
+                "predicted_hz": 15.0,
+                "matched_hz": 15.1,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.11,
+            },
+            {
+                "t_s": 1.5,
+                "speed_kmh": 66.0,
+                "predicted_hz": 15.2,
+                "matched_hz": 15.2,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.10,
+            },
+            {
+                "t_s": 2.0,
+                "speed_kmh": 68.0,
+                "predicted_hz": 15.3,
+                "matched_hz": 15.4,
+                "location": "Rear Left",
+                "phase": "decel",
+                "amp": 0.09,
+            },
+        ],
+    )
+    alternative = make_finding_payload(
+        finding_id="F_ALT_PROOF",
+        suspected_source="driveline",
+        confidence=0.71,
+        strongest_location="Rear Left",
+        strongest_speed_band="60-80 km/h",
+        frequency_hz_or_order="1x driveshaft",
+    )
+    prepared = prepare_persisted_report_input(
+        PersistedAnalysis.from_json_object(
+            minimal_summary(
+                run_id="appendix-c-proof-run",
+                lang="en",
+                metadata={
+                    "run_id": "appendix-c-proof-run",
+                    "record_type": "metadata",
+                    "schema_version": "v2-jsonl",
+                    "start_time_utc": "2026-03-23T07:31:01Z",
+                    "sensor_model": "ADXL345",
+                    "raw_sample_rate_hz": 800,
+                    "feature_interval_s": 0.5,
+                    "fft_window_size_samples": 256,
+                    "peak_picker_method": "fft",
+                    "incomplete_for_order_analysis": False,
+                },
+                sensor_count_used=2,
+                sensor_locations=["Front Left", "Rear Left"],
+                sensor_locations_connected_throughout=["Front Left", "Rear Left"],
+                findings=[primary, alternative],
+                top_causes=[primary, alternative],
+                analysis_metadata={
+                    "raw_capture_available": True,
+                    "raw_backed_sample_count": 24,
+                    "raw_capture_mode": "raw_backed",
+                },
+            )
+        )
+    )
+
+    data = build_report_document(prepared)
+
+    assert len(data.appendix_c.evidence_chain_rows) == 1
+    assert data.appendix_c.evidence_chain_rows[0].source_name.startswith("Wheel / Tire")
+    assert data.appendix_c.measurement_rows == []
+    assert [row.window_id for row in data.appendix_c.proof_window_rows] == ["W01", "W02", "W03"]
+    assert data.appendix_c.proof_window_rows[0].dominant_location == "Front Left"
+    assert data.appendix_c.proof_window_rows[2].phase == "Decel"
+
+
 def test_build_report_document_uses_domain_action_render_queries_for_next_steps() -> None:
     summary = minimal_summary(
         findings=[
