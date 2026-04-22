@@ -16,6 +16,7 @@ from vibesensor.use_cases.updates.http_client import (
 )
 
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024  # 1 MB per read()
+GITHUB_USER_AGENT = "VibeSensor-Updater"
 
 __all__ = [
     "DOWNLOAD_CHUNK_BYTES",
@@ -40,7 +41,10 @@ def github_api_headers(
 ) -> dict[str, str]:
     """Build standard GitHub REST API request headers."""
 
-    headers: dict[str, str] = {"Accept": accept}
+    headers: dict[str, str] = {
+        "Accept": accept,
+        "User-Agent": GITHUB_USER_AGENT,
+    }
     if token:
         headers["Authorization"] = f"Bearer {token}"
     return headers
