@@ -60,6 +60,7 @@ def test_github_api_client_get_json_decodes_payload(httpx_mock: HTTPXMock) -> No
     requests = httpx_mock.get_requests()
     assert len(requests) == 1
     assert requests[0].headers["Accept"] == "application/vnd.github+json"
+    assert requests[0].headers["User-Agent"] == "VibeSensor-Updater"
 
 
 def test_github_api_client_get_json_maps_non_200_to_oserror(httpx_mock: HTTPXMock) -> None:
