@@ -47,6 +47,8 @@ def assemble_report_document(
         top_causes=list(context.top_causes),
         sensor_intensity_by_location=list(context.sensor_facts.active_intensity),
         location_hotspot_rows=list(context.sensor_facts.location_hotspot_rows),
+        proof_sensor_intensity_by_location=list(context.sensor_facts.proof_intensity),
+        proof_location_hotspot_rows=list(context.sensor_facts.proof_location_hotspot_rows),
         verdict_page=sections.verdict_page,
         appendix_a=sections.appendix_a,
         appendix_b=sections.appendix_b,

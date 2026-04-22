@@ -285,6 +285,87 @@ def test_build_report_document_focuses_appendix_c_on_primary_proof_windows() -> 
     assert data.appendix_c.proof_window_rows[2].phase == "Decel"
 
 
+def test_build_report_document_uses_supporting_window_location_proof_in_appendix_b() -> None:
+    primary = make_finding_payload(
+        finding_id="F_LOCATION_PROOF",
+        suspected_source="wheel/tire",
+        confidence=0.81,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+        matched_points=[
+            {
+                "t_s": 1.0,
+                "speed_kmh": 64.0,
+                "predicted_hz": 15.0,
+                "matched_hz": 15.1,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.11,
+            },
+            {
+                "t_s": 1.5,
+                "speed_kmh": 66.0,
+                "predicted_hz": 15.2,
+                "matched_hz": 15.2,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.10,
+            },
+            {
+                "t_s": 2.0,
+                "speed_kmh": 68.0,
+                "predicted_hz": 15.4,
+                "matched_hz": 15.3,
+                "location": "Rear Left",
+                "phase": "cruise",
+                "amp": 0.03,
+            },
+        ],
+    )
+    prepared = prepare_persisted_report_input(
+        PersistedAnalysis.from_json_object(
+            minimal_summary(
+                run_id="appendix-b-location-proof-run",
+                lang="en",
+                metadata={
+                    "run_id": "appendix-b-location-proof-run",
+                    "record_type": "metadata",
+                    "schema_version": "v2-jsonl",
+                    "start_time_utc": "2026-03-23T07:31:01Z",
+                    "sensor_model": "ADXL345",
+                    "raw_sample_rate_hz": 800,
+                    "feature_interval_s": 0.5,
+                    "fft_window_size_samples": 256,
+                    "peak_picker_method": "fft",
+                    "incomplete_for_order_analysis": False,
+                },
+                sensor_count_used=2,
+                sensor_locations=["Front Left", "Rear Left"],
+                sensor_locations_connected_throughout=["Front Left", "Rear Left"],
+                sensor_intensity_by_location=[
+                    {"location": "Front Left", "p95_intensity_db": 11.0, "peak_intensity_db": 16.0},
+                    {"location": "Rear Left", "p95_intensity_db": 24.0, "peak_intensity_db": 30.0},
+                ],
+                findings=[primary],
+                top_causes=[primary],
+                analysis_metadata={
+                    "raw_capture_available": True,
+                    "raw_backed_sample_count": 24,
+                    "raw_capture_mode": "raw_backed",
+                },
+            )
+        )
+    )
+
+    data = build_report_document(prepared)
+
+    assert data.location_hotspot_rows[0].location == "Rear Left"
+    assert data.proof_location_hotspot_rows[0].location == "Front Left"
+    assert data.appendix_b.dominant_corner == "Front-Left"
+    assert data.appendix_b.runner_up_corner == "Rear-Left"
+    assert "raw-backed replay" in (data.appendix_b.proof_basis_note or "").lower()
+
+
 def test_build_report_document_uses_domain_action_render_queries_for_next_steps() -> None:
     summary = minimal_summary(
         findings=[

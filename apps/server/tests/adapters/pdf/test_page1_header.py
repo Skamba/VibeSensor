@@ -50,6 +50,8 @@ def test_draw_header_strip_truncates_long_car_name_to_single_line(
         sensor_locations=(),
         sensor_intensity_by_location=(),
         location_hotspot_rows=(),
+        proof_sensor_intensity_by_location=(),
+        proof_location_hotspot_rows=(),
         verdict_page=VerdictPageData(speed_window_label="60-90 km/h"),
         next_steps=(),
         findings=(),

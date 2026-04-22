@@ -5,14 +5,21 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
+from math import isfinite
 from statistics import mean as _mean
+from typing import TYPE_CHECKING
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary, TestRun
+from vibesensor.vibration_strength import compute_db, percentile
+
+if TYPE_CHECKING:
+    from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 
 __all__ = [
     "ReportCoverageSummary",
     "ReportSensorFacts",
     "build_report_sensor_facts",
+    "enrich_location_proof_sensor_facts",
     "primary_location_has_coverage_gap",
     "sensor_fallback_strength_db",
 ]
@@ -36,6 +43,9 @@ class ReportSensorFacts:
     active_intensity: tuple[LocationIntensitySummary, ...]
     location_hotspot_rows: tuple[LocationHotspotRow, ...]
     coverage: ReportCoverageSummary
+    proof_intensity: tuple[LocationIntensitySummary, ...]
+    proof_location_hotspot_rows: tuple[LocationHotspotRow, ...]
+    proof_basis: str
 
 
 def build_report_sensor_facts(
@@ -59,6 +69,36 @@ def build_report_sensor_facts(
             sensor_locations_active=sensor_locations_active,
             sensor_intensity=active_intensity,
         ),
+        proof_intensity=active_intensity,
+        proof_location_hotspot_rows=tuple(_compute_location_hotspot_rows(active_intensity)),
+        proof_basis="whole_run_summary",
+    )
+
+
+def enrich_location_proof_sensor_facts(
+    sensor_facts: ReportSensorFacts,
+    *,
+    primary_candidate: PrimaryReportFacts,
+    evidence_data_basis: str,
+) -> ReportSensorFacts:
+    """Return sensor facts with diagnosis-supporting location proof when available."""
+
+    proof_intensity = tuple(_supporting_window_location_intensity(primary_candidate))
+    if not proof_intensity:
+        return sensor_facts
+    proof_basis = (
+        "supporting_windows_raw_backed"
+        if evidence_data_basis == "raw_backed"
+        else "supporting_windows_summary_only"
+    )
+    return ReportSensorFacts(
+        active_locations=sensor_facts.active_locations,
+        active_intensity=sensor_facts.active_intensity,
+        location_hotspot_rows=sensor_facts.location_hotspot_rows,
+        coverage=sensor_facts.coverage,
+        proof_intensity=proof_intensity,
+        proof_location_hotspot_rows=tuple(_compute_location_hotspot_rows(proof_intensity)),
+        proof_basis=proof_basis,
     )
 
 
@@ -133,6 +173,51 @@ def _filter_active_sensor_intensity(
         if active_locations and row.location not in active_locations:
             continue
         rows.append(row)
+    return rows
+
+
+def _supporting_window_location_intensity(
+    primary_candidate: PrimaryReportFacts,
+) -> list[LocationIntensitySummary]:
+    finding = primary_candidate.domain_primary
+    if finding is None or not finding.matched_points:
+        return []
+    amp_by_location: dict[str, list[float]] = defaultdict(list)
+    all_amps: list[float] = []
+    for point in finding.matched_points:
+        amp = float(point.amp)
+        if not isfinite(amp) or amp <= 0.0:
+            continue
+        location = str(point.location or "").strip()
+        if not location:
+            continue
+        amp_by_location[location].append(amp)
+        all_amps.append(amp)
+    if not amp_by_location or not all_amps:
+        return []
+    floor_amp = percentile(sorted(all_amps), 0.20)
+    total_points = sum(len(values) for values in amp_by_location.values())
+    rows: list[LocationIntensitySummary] = []
+    for location, values in amp_by_location.items():
+        ordered = sorted(values)
+        sample_count = len(ordered)
+        rows.append(
+            LocationIntensitySummary(
+                location=location,
+                sample_count=sample_count,
+                sample_coverage_ratio=sample_count / max(1, total_points),
+                mean_intensity_db=compute_db(_mean(ordered), floor_amp),
+                p95_intensity_db=compute_db(percentile(ordered, 0.95), floor_amp),
+                max_intensity_db=compute_db(max(ordered), floor_amp),
+            )
+        )
+    rows.sort(
+        key=lambda row: (
+            row.p95_intensity_db if row.p95_intensity_db is not None else float("-inf"),
+            row.mean_intensity_db if row.mean_intensity_db is not None else float("-inf"),
+        ),
+        reverse=True,
+    )
     return rows
 
 

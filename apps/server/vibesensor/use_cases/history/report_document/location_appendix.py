@@ -26,6 +26,7 @@ def build_appendix_b_data(
     aggregate: TestRun,
     primary_candidate_facts: PrimaryReportFacts,
     active_sensor_intensity: Sequence[LocationIntensitySummary],
+    proof_basis: str,
     appendix_context: AppendixBContext,
     tr: Callable[..., str],
 ) -> AppendixBData:
@@ -60,6 +61,7 @@ def build_appendix_b_data(
         dominant_corner=display_location(primary_candidate_facts.primary_location, tr=tr),
         runner_up_corner=appendix_context.runner_up_corner,
         dominance_ratio_text=dominance_ratio_text,
+        proof_basis_note=_location_proof_basis_note(proof_basis, tr=tr),
         location_confidence=location_confidence_text(
             presented_location_confidence_key(
                 action_status_key=appendix_context.action_status_key,
@@ -76,3 +78,11 @@ def build_appendix_b_data(
             tr=tr,
         ),
     )
+
+
+def _location_proof_basis_note(proof_basis: str, *, tr: Callable[..., str]) -> str:
+    if proof_basis == "supporting_windows_raw_backed":
+        return tr("REPORT_LOCATION_PROOF_BASIS_SUPPORTING_WINDOWS_RAW")
+    if proof_basis == "supporting_windows_summary_only":
+        return tr("REPORT_LOCATION_PROOF_BASIS_SUPPORTING_WINDOWS_SUMMARY")
+    return tr("REPORT_LOCATION_PROOF_BASIS_WHOLE_RUN")
