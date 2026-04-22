@@ -1,7 +1,10 @@
-import type uPlot from "uplot";
-
 import { SPECTRUM_TWEEN_DURATION_MS } from "../../config";
-import type { SpectrumSeriesMeta, SpectrumText } from "../../spectrum_chart";
+import type {
+  SpectrumAlignedData,
+  SpectrumChartPlugin,
+  SpectrumSeriesMeta,
+  SpectrumText,
+} from "../../spectrum_chart";
 import { getSpectrumCssVars } from "../../spectrum_css_vars";
 import { orderBandFills } from "../../theme";
 import {
@@ -28,7 +31,7 @@ import {
 type SpectrumChartModule = Pick<typeof import("../../spectrum_chart"), "createSpectrumChart">;
 const EMPTY_FREQ_AXIS: number[] = [];
 const EMPTY_SERIES_VALUES: number[][] = [];
-const EMPTY_CHART_DATA: uPlot.AlignedData = [[]];
+const EMPTY_CHART_DATA: SpectrumAlignedData = [[]];
 
 const bandKeyPresentation: Record<string, { color: string; labelKey: string }> = {
   wheel_1x: { color: orderBandFills.wheel1, labelKey: "bands.wheel_1x" },
@@ -104,9 +107,9 @@ export function createSpectrumCanvasRenderer(
   const currentEntries = signal<readonly SpectrumSeriesEntry[]>([]);
   const currentFreqAxis = signal<SpectrumNumericSeries>(EMPTY_FREQ_AXIS);
   const chartSeriesMeta = signal<readonly SpectrumSeriesMeta[]>([]);
-  const chartData = signal<uPlot.AlignedData>(EMPTY_CHART_DATA);
+  const chartData = signal<SpectrumAlignedData>(EMPTY_CHART_DATA);
   const chartHeight = signal(360);
-  const chartPlugins = signal<readonly uPlot.Plugin[]>([]);
+  const chartPlugins = signal<readonly SpectrumChartPlugin[]>([]);
   const chartText: ReadonlySignal<SpectrumText> = computed(() => ({
     title: deps.t("chart.spectrum_title"),
     axisHz: deps.t("chart.axis.hz"),
@@ -299,7 +302,7 @@ export function createSpectrumCanvasRenderer(
       && seriesValues.every((seriesValuesEntry, index) => currentData[index + 1]?.length === seriesValuesEntry.length);
 
     if (!canReuse) {
-      const nextData = new Array(nextSeriesCount) as uPlot.AlignedData;
+      const nextData = new Array(nextSeriesCount) as SpectrumAlignedData;
       nextData[0] = Array.from(freqAxis);
       for (const [index, seriesValuesEntry] of seriesValues.entries()) {
         nextData[index + 1] = Array.from(seriesValuesEntry);
@@ -351,11 +354,11 @@ export function createSpectrumCanvasRenderer(
     return calculateBandsFromBackend() ?? [];
   }
 
-  function createBandPlugin(): uPlot.Plugin {
+  function createBandPlugin(): SpectrumChartPlugin {
     return {
       hooks: {
         setCursor: [
-          (plot: uPlot) => {
+          (plot) => {
             deps.onCursorDataIndexChange(
               typeof plot.cursor.idx === "number" && plot.cursor.idx >= 0
                 ? plot.cursor.idx
@@ -364,7 +367,7 @@ export function createSpectrumCanvasRenderer(
           },
         ],
         draw: [
-          (plot: uPlot) => {
+          (plot) => {
             const top = plot.bbox.top;
             const height = plot.bbox.height;
             if (deps.getBandsVisible()) {

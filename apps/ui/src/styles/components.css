@@ -328,12 +328,3 @@ button[hidden],
   justify-content: flex-end;
   gap: var(--space-2);
 }
-
-.uplot { color: var(--md-sys-color-on-surface); font-family: inherit; }
-.uplot .u-title,
-.uplot .u-label,
-.uplot .u-legend { color: var(--md-sys-color-on-surface-variant); }
-.uplot .u-axis text { fill: var(--md-sys-color-on-surface-variant); }
-.uplot .u-axis line,
-.uplot .u-grid line { stroke: var(--chart-grid); }
-.uplot .u-select { background: rgba(124, 58, 237, 0.12); }
