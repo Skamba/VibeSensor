@@ -14,6 +14,11 @@ from vibesensor.shared.types.history_records import (
 )
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.raw_capture import (
+    RawCaptureChunk,
+    RawCaptureManifest,
+    RawRunCapture,
+)
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_config import SensorsByMacPayload
 from vibesensor.shared.types.sensor_frame import SensorFrame
@@ -90,6 +95,8 @@ class RunPersistence(Protocol):
 
     async def aappend_samples(self, run_id: str, samples: list[SensorFrame]) -> int: ...
 
+    async def aappend_raw_capture_chunk(self, run_id: str, chunk: RawCaptureChunk) -> None: ...
+
     async def afinalize_run(
         self,
         run_id: str,
@@ -103,6 +110,12 @@ class RunPersistence(Protocol):
     async def astore_analysis(self, run_id: str, analysis: PersistedAnalysis) -> bool: ...
 
     async def astore_analysis_error(self, run_id: str, error: str) -> bool: ...
+
+    async def afinalize_raw_capture(self, run_id: str) -> RawCaptureManifest | None: ...
+
+    async def aget_raw_capture_manifest(self, run_id: str) -> RawCaptureManifest | None: ...
+
+    async def aload_raw_capture(self, run_id: str) -> RawRunCapture | None: ...
 
     async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]: ...
 

@@ -142,6 +142,7 @@ class StartupRunner:
             port=self._runtime.udp_data_port,
             registry=self._runtime.registry,
             processor=self._runtime.processor,
+            raw_capture_sink=self._runtime.run_recorder,
             queue_maxsize=self._runtime.udp_data_queue_maxsize,
         )
 

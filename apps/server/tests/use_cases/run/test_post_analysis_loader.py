@@ -54,6 +54,9 @@ def test_load_post_analysis_run_returns_loaded_run() -> None:
                 ]
             )
 
+        async def aload_raw_capture(self, _run_id):
+            return None
+
     result = load_post_analysis_run(run_id="run-ok", db=FakeDB())
 
     assert isinstance(result, LoadedPostAnalysisRun)
@@ -72,6 +75,9 @@ def test_load_post_analysis_run_handles_missing_metadata() -> None:
         async def aget_run_metadata(self, _run_id):
             return None
 
+        async def aload_raw_capture(self, _run_id):
+            return None
+
     result = load_post_analysis_run(run_id="run-missing", db=FakeDB())
 
     assert isinstance(result, MissingPostAnalysisMetadata)
@@ -88,6 +94,9 @@ def test_load_post_analysis_run_handles_no_samples() -> None:
             assert stride == 1
             return
             yield  # pragma: no cover
+
+        async def aload_raw_capture(self, _run_id):
+            return None
 
     result = load_post_analysis_run(run_id="run-empty", db=FakeDB())
 
@@ -118,6 +127,9 @@ def test_load_post_analysis_run_applies_upfront_stride(
                 ]
             )
 
+        async def aload_raw_capture(self, _run_id):
+            return None
+
     result = load_post_analysis_run(run_id="run-capped", db=FakeDB())
 
     assert isinstance(result, LoadedPostAnalysisRun)
@@ -139,7 +151,11 @@ def test_load_post_analysis_run_defaults_language_to_en() -> None:
             assert stride == 1
             yield sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}])
 
+        async def aload_raw_capture(self, _run_id):
+            return None
+
     result = load_post_analysis_run(run_id="run-lang", db=FakeDB())
 
     assert isinstance(result, LoadedPostAnalysisRun)
     assert result.language == "en"
+    assert result.raw_capture is None

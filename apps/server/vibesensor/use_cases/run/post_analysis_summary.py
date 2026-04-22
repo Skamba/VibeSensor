@@ -48,6 +48,9 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "analyzed_sample_count": len(run.samples),
         "total_sample_count": run.total_sample_count,
         "sampling_method": "full" if run.stride == 1 else f"stride_{run.stride}",
+        "raw_capture_available": run.raw_capture_available,
+        "raw_backed_sample_count": run.raw_backed_sample_count,
+        "raw_capture_mode": "raw_backed" if run.raw_backed_sample_count > 0 else "summary_only",
     }
     summary_payload["analysis_metadata"] = payload_object_from_json(analysis_metadata)
 

@@ -54,6 +54,7 @@ class UdpTransportLifecycle:
         port: int,
         registry: object,
         processor: object,
+        raw_capture_sink: object | None = None,
         queue_maxsize: int,
     ) -> None:
         self._data_transport, consumer = await self._start_udp_receiver(
@@ -61,6 +62,7 @@ class UdpTransportLifecycle:
             port=port,
             registry=registry,
             processor=processor,
+            raw_capture_sink=raw_capture_sink,
             queue_maxsize=queue_maxsize,
         )
         if consumer is not None:
