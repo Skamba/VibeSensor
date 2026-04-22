@@ -393,29 +393,28 @@ def test_compute_vibration_strength_db_does_not_mutate_cached_strength_range_mas
 def test_compute_vibration_strength_db_limits_scored_candidates_before_band_rms(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    scored_candidate_calls = 0
-    original = vibration_strength_module._peak_band_rms_amp_g_from_bounds
+    scored_candidate_counts: list[int] = []
+    original = vibration_strength_module._peak_band_rms_amp_g_from_ranges
 
-    def counting_peak_band_rms_amp_g_from_bounds(
+    def counting_peak_band_rms_amp_g_from_ranges(
         *,
         combined_spectrum_amp_g: vibration_strength_module.npt.NDArray[
             vibration_strength_module.np.float64
         ],
-        start_idx: int,
-        stop_idx: int,
-    ) -> float:
-        nonlocal scored_candidate_calls
-        scored_candidate_calls += 1
+        left_bounds: vibration_strength_module.npt.NDArray[vibration_strength_module.np.intp],
+        right_bounds: vibration_strength_module.npt.NDArray[vibration_strength_module.np.intp],
+    ) -> vibration_strength_module.npt.NDArray[vibration_strength_module.np.float64]:
+        scored_candidate_counts.append(int(left_bounds.size))
         return original(
             combined_spectrum_amp_g=combined_spectrum_amp_g,
-            start_idx=start_idx,
-            stop_idx=stop_idx,
+            left_bounds=left_bounds,
+            right_bounds=right_bounds,
         )
 
     monkeypatch.setattr(
         vibration_strength_module,
-        "_peak_band_rms_amp_g_from_bounds",
-        counting_peak_band_rms_amp_g_from_bounds,
+        "_peak_band_rms_amp_g_from_ranges",
+        counting_peak_band_rms_amp_g_from_ranges,
     )
 
     combined = [
@@ -431,7 +430,7 @@ def test_compute_vibration_strength_db_limits_scored_candidates_before_band_rms(
         top_n=4,
     )
 
-    assert scored_candidate_calls == 8
+    assert scored_candidate_counts == [8]
     assert [peak["hz"] for peak in result["top_peaks"]] == [23.0, 21.0, 19.0, 17.0]
     assert result["vibration_strength_db"] == result["top_peaks"][0]["vibration_strength_db"]
 

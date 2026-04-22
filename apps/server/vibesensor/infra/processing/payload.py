@@ -192,11 +192,14 @@ def build_multi_spectrum_payload(
             client_freq = np.array(client_freq, dtype=np.float32)
         if shared_freq is None:
             shared_freq = client_freq
-        elif len(client_freq) != len(shared_freq) or not np.allclose(
-            client_freq,
-            shared_freq,
-            rtol=0.0,
-            atol=1e-6,
+        elif client_freq is not shared_freq and (
+            len(client_freq) != len(shared_freq)
+            or not np.allclose(
+                client_freq,
+                shared_freq,
+                rtol=0.0,
+                atol=1e-6,
+            )
         ):
             mismatch_ids.append(client_id)
         per_client_freq[client_id] = client_freq
