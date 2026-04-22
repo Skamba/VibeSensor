@@ -63,8 +63,48 @@ def build_get_request(
 
 def _http_error_as_oserror(exc: httpx.HTTPError, *, context: str, url: str) -> OSError:
     if isinstance(exc, httpx.HTTPStatusError):
-        return OSError(f"{context} request failed with HTTP {exc.response.status_code}: {url}")
+        diagnostic = _status_error_diagnostic(exc.response)
+        return OSError(
+            f"{context} request failed with HTTP {exc.response.status_code}: {url}"
+            f"{diagnostic}"
+        )
     return OSError(f"{context} request failed for {url}: {exc}")
+
+
+def _status_error_diagnostic(response: httpx.Response) -> str:
+    parts = []
+    body = _response_body_excerpt(response)
+    if body:
+        parts.append(f"body={body!r}")
+    headers = _diagnostic_headers(response.headers)
+    if headers:
+        parts.append(f"headers={headers}")
+    if not parts:
+        return ""
+    return f" ({'; '.join(parts)})"
+
+
+def _response_body_excerpt(response: httpx.Response, *, limit: int = 500) -> str:
+    try:
+        text = response.text
+    except httpx.ResponseNotRead:
+        return ""
+    text = " ".join(text.split())
+    if len(text) <= limit:
+        return text
+    return f"{text[: limit - 3]}..."
+
+
+def _diagnostic_headers(headers: httpx.Headers) -> dict[str, str]:
+    names = (
+        "x-github-request-id",
+        "x-ratelimit-limit",
+        "x-ratelimit-remaining",
+        "x-ratelimit-used",
+        "x-ratelimit-reset",
+        "retry-after",
+    )
+    return {name: value for name in names if (value := headers.get(name))}
 
 
 def _client(

@@ -71,6 +71,40 @@ def test_github_api_client_get_json_maps_non_200_to_oserror(httpx_mock: HTTPXMoc
         client.get_json(url)
 
 
+def test_github_api_client_get_json_includes_status_diagnostics(
+    httpx_mock: HTTPXMock,
+) -> None:
+    url = "https://api.github.com/repos/owner/repo/releases"
+    add_json_response(
+        httpx_mock,
+        url=url,
+        payload={
+            "message": "API rate limit exceeded",
+            "documentation_url": "https://docs.github.com/rest",
+        },
+        status_code=403,
+        headers={
+            "x-github-request-id": "ABC:123",
+            "x-ratelimit-limit": "60",
+            "x-ratelimit-remaining": "0",
+            "x-ratelimit-used": "60",
+            "x-ratelimit-reset": "1776841530",
+        },
+    )
+    client = GitHubApiClient()
+
+    with pytest.raises(OSError) as exc_info:
+        client.get_json(url)
+
+    message = str(exc_info.value)
+    assert "HTTP 403" in message
+    assert "API rate limit exceeded" in message
+    assert "x-github-request-id" in message
+    assert "ABC:123" in message
+    assert "x-ratelimit-remaining" in message
+    assert "'0'" in message
+
+
 def test_github_api_client_get_json_rejects_invalid_json(httpx_mock: HTTPXMock) -> None:
     url = "https://api.github.com/repos/owner/repo/releases"
     add_text_response(httpx_mock, url=url, text="{not-json")
