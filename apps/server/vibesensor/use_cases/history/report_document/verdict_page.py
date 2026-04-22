@@ -24,6 +24,7 @@ from vibesensor.shared.report_presentation import (
 from vibesensor.shared.run_context_warning import RunContextWarning
 
 from ._candidate_resolver import PrimaryCandidateContext
+from .evidence_snapshot import build_evidence_snapshot_rows
 from .narrative_summaries import _proof_summary_text
 from .section_context import VerdictPageContext
 from .timeline_graph import build_timeline_graph_data
@@ -160,6 +161,11 @@ def build_verdict_page(*, context: ReportDocumentContext) -> VerdictPageData:
     return replace(
         verdict_page,
         proof_summary=proof_summary,
+        proof_snapshot_rows=build_evidence_snapshot_rows(
+            context.report_facts,
+            compact=True,
+            tr=context.tr,
+        ),
         timeline_graph=build_timeline_graph_data(
             context.report_facts,
             duration_s=context.run_facts.duration_s,

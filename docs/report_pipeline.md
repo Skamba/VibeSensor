@@ -76,6 +76,7 @@ Canonical report preparation now lives in
 normalization, and grouped semantic fact assembly:
 
 - `facts.py` builds `PreparedReportFacts(run=..., sensor=..., decision=..., findings=...)`
+- `evidence_facts.py` builds explicit proof facts (data basis, supporting-window count/duration, stable frequency band, strongest supporting sensors, and caveats) from persisted analysis + reconstructed domain findings
 - `findings.py` owns report-facing finding/top-cause presentation shaping
 - `sensor_facts.py` owns sensor/coverage shaping
 - `decision_facts.py` owns primary-candidate, warning, and action-decision shaping
@@ -102,6 +103,7 @@ needs:
 - **Next steps**: test plan or capture guidance (tier-dependent)
 - **Data trust items**: suitability checks
 - **Pattern evidence**: matched systems, certainty label, interpretation
+- **Evidence snapshots**: concise page-1 proof rows plus Appendix-C proof rows built from prepared evidence facts, not renderer-time DSP
 - **Peak rows**: top diagnostic peaks with classification
 - **Rendering context**: pre-computed findings (as ``FindingPresentation``
   snapshots), top causes, sensor intensity, location hotspot rows

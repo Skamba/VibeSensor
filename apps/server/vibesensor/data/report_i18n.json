@@ -1863,6 +1863,18 @@
     "en": "Spatial separation stayed weak.",
     "nl": "Ruimtelijke scheiding bleef zwak."
   },
+  "REPORT_EVIDENCE_BASIS_LABEL": {
+    "en": "Evidence basis",
+    "nl": "Bewijsbasis"
+  },
+  "REPORT_EVIDENCE_BASIS_RAW": {
+    "en": "Raw-backed replay ({samples} analyzed samples)",
+    "nl": "Raw-ondersteunde replay ({samples} geanalyseerde samples)"
+  },
+  "REPORT_EVIDENCE_BASIS_SUMMARY": {
+    "en": "Summary-only fallback",
+    "nl": "Alleen samenvattingsfallback"
+  },
   "REPORT_EXPORT_REFERENCE": {
     "en": "Export package",
     "nl": "Exportpakket"
@@ -1943,6 +1955,22 @@
     "en": "Sensor matches",
     "nl": "Sensormatches"
   },
+  "REPORT_SUPPORT_WINDOW_SUMMARY_LABEL": {
+    "en": "Support",
+    "nl": "Ondersteuning"
+  },
+  "REPORT_SUPPORT_WINDOW_SUMMARY_FULL": {
+    "en": "{count} supporting windows across {duration} s",
+    "nl": "{count} ondersteunende vensters over {duration} s"
+  },
+  "REPORT_SUPPORT_WINDOW_SUMMARY_COUNT_ONLY": {
+    "en": "{count} supporting windows",
+    "nl": "{count} ondersteunende vensters"
+  },
+  "REPORT_SUPPORT_WINDOW_SUMMARY_NONE": {
+    "en": "No retained supporting windows",
+    "nl": "Geen bewaarde ondersteunende vensters"
+  },
   "REPORT_MEASUREMENT_ID_COLUMN": {
     "en": "Measurement",
     "nl": "Meting"
@@ -1987,6 +2015,22 @@
     "en": "Phase summary",
     "nl": "Fase-overzicht"
   },
+  "REPORT_STABLE_FREQUENCY_LABEL": {
+    "en": "Stable frequency",
+    "nl": "Stabiele frequentie"
+  },
+  "REPORT_STABLE_FREQUENCY_BAND": {
+    "en": "{low}-{high} Hz matched band",
+    "nl": "{low}-{high} Hz gematchte band"
+  },
+  "REPORT_STABLE_FREQUENCY_SINGLE": {
+    "en": "{hz} Hz matched center",
+    "nl": "{hz} Hz gematcht centrum"
+  },
+  "REPORT_STABLE_FREQUENCY_UNKNOWN": {
+    "en": "No retained matched-frequency band",
+    "nl": "Geen bewaarde gematchte frequentieband"
+  },
   "REPORT_PHASE_SUMMARY_NONE": {
     "en": "No dominant phase breakdown available.",
     "nl": "Geen dominante faseverdeling beschikbaar."
@@ -2018,6 +2062,38 @@
   "REPORT_SOURCE_CONFIDENCE_NOTE": {
     "en": "The percentages below rank how strongly each source fits this run. They are source-confidence scores for this report, not repair probabilities.",
     "nl": "De percentages hieronder rangschikken hoe sterk elke bron bij deze run past. Het zijn bron-zekerheidsscores voor dit rapport, geen reparatiekansen."
+  },
+  "REPORT_SUPPORTING_SENSORS_LABEL": {
+    "en": "Strongest sensors",
+    "nl": "Sterkste sensoren"
+  },
+  "REPORT_SUPPORTING_SENSOR_ENTRY": {
+    "en": "{location} ({count})",
+    "nl": "{location} ({count})"
+  },
+  "REPORT_SUPPORTING_SENSORS_NONE": {
+    "en": "No retained supporting sensor split",
+    "nl": "Geen bewaarde verdeling van ondersteunende sensoren"
+  },
+  "REPORT_COUNTEREVIDENCE_LABEL": {
+    "en": "Caveat",
+    "nl": "Kanttekening"
+  },
+  "REPORT_COUNTEREVIDENCE_ALT_SOURCE": {
+    "en": "Close alternative remained: {source}",
+    "nl": "Dichtbij alternatief bleef over: {source}"
+  },
+  "REPORT_COUNTEREVIDENCE_WEAK_SPATIAL": {
+    "en": "Location separation stayed weak",
+    "nl": "Locatiescheiding bleef zwak"
+  },
+  "REPORT_COUNTEREVIDENCE_REFERENCE_GAP": {
+    "en": "Reference coverage was incomplete",
+    "nl": "Referentiedekking was onvolledig"
+  },
+  "REPORT_COUNTEREVIDENCE_NONE": {
+    "en": "No major counterevidence remained",
+    "nl": "Er bleef geen belangrijk tegenbewijs over"
   },
   "REPORT_PROOF_CAVEAT_MIXED": {
     "en": "Localization is mixed because either dominance or coverage was not fully clean.",

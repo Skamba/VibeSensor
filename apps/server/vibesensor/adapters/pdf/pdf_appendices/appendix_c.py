@@ -254,6 +254,16 @@ def _appendix_c_page(c: Canvas, plan: AppendixCRenderPlan) -> None:
             )
             - 1.2 * mm
         )
+    for snapshot in appendix.evidence_snapshot_rows[:5]:
+        block_y = _draw_section_block(
+            c,
+            block_x,
+            block_y,
+            context_w - 8 * mm,
+            snapshot.label,
+            snapshot.value or _tr(plan.lang, "UNKNOWN"),
+            max_lines=3,
+        )
     block_y = _draw_section_block(
         c,
         block_x,
