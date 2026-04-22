@@ -18,6 +18,7 @@ import type { UiAppBootRuntime } from "./ui_app_boot_runtime";
 import { preloadRealtimeLiveOverviewPanel } from "./views/realtime_live_overview_lazy";
 import { preloadRealtimeLoggingPanel } from "./views/realtime_logging_panel_lazy";
 import { preloadSpectrumPanelHost } from "./views/spectrum_panel_host_lazy";
+import { setUiLanguage } from "./ui_i18n";
 
 export interface UiAppRuntime {
   attachSettingsPanels(handles: UiMountedLazyPanelHandles): void;
@@ -66,11 +67,12 @@ export function createUiAppRuntime(deps: UiAppRuntimeDeps = {}): UiAppRuntime {
       return bootRuntimePromise;
     }
     bootRuntimePromise = Promise.all([
+      setUiLanguage(state.shell.lang.value),
       import("./ui_app_boot_runtime"),
       preloadRealtimeLiveOverviewPanel(),
       preloadRealtimeLoggingPanel(),
       preloadSpectrumPanelHost(),
-    ]).then(([{ createUiAppBootRuntime }]) => {
+    ]).then(([, { createUiAppBootRuntime }]) => {
         if (disposed) {
           return null;
         }

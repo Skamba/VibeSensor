@@ -348,12 +348,16 @@ describe("createUiShellPreferencesModule", () => {
   test("hydrates persisted language and speed unit from the server", async () => {
     const state = createAppState();
     const requests: string[] = [];
+    const preparedLanguages: string[] = [];
 
     const module = createUiShellPreferencesModule({
       queryClient: createTestQueryClient(),
       shell: state.shell,
       t: (key) => key,
       normalizeLanguage: (lang) => String(lang),
+      prepareLanguage: async (lang) => {
+        preparedLanguages.push(lang);
+      },
     });
 
     mswServer.use(
@@ -373,6 +377,7 @@ describe("createUiShellPreferencesModule", () => {
       "/api/settings/language",
       "/api/settings/speed-unit",
     ]);
+    expect(preparedLanguages).toEqual(["nl"]);
     expect(state.shell.lang.value).toBe("nl");
     expect(state.shell.speedUnit.value).toBe("mps");
     expect(module.selectedLanguage.value).toBe("nl");
@@ -382,12 +387,16 @@ describe("createUiShellPreferencesModule", () => {
   test("keeps the pending language selection visible until the save resolves", async () => {
     const state = createAppState();
     let resolveResponse: ((response: Response) => void) | null = null;
+    const preparedLanguages: string[] = [];
 
     const module = createUiShellPreferencesModule({
       queryClient: createTestQueryClient(),
       shell: state.shell,
       t: (key) => key,
       normalizeLanguage: (lang) => String(lang),
+      prepareLanguage: async (lang) => {
+        preparedLanguages.push(lang);
+      },
     });
 
     mswServer.use(
@@ -405,6 +414,7 @@ describe("createUiShellPreferencesModule", () => {
     resolveResponse?.(HttpResponse.json({ language: "nl" }));
     await savePromise;
 
+    expect(preparedLanguages).toEqual(["nl"]);
     expect(state.shell.lang.value).toBe("nl");
     expect(module.selectedLanguage.value).toBe("nl");
   });
@@ -417,6 +427,7 @@ describe("createUiShellPreferencesModule", () => {
       shell: state.shell,
       t: testTranslation,
       normalizeLanguage: (lang) => String(lang),
+      prepareLanguage: async () => undefined,
     });
 
     mswServer.use(
