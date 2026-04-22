@@ -129,6 +129,7 @@ class AppendixCData:
 
     evidence_chain_rows: list[EvidenceChainRow] = field(default_factory=list)
     measurement_rows: list[MeasurementRow] = field(default_factory=list)
+    evidence_snapshot_rows: list[ReportLabelValueRow] = field(default_factory=list)
     evidence_summary: str | None = None
     measurement_guide: str | None = None
     context_summary: str | None = None

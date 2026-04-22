@@ -13,6 +13,7 @@ from vibesensor.shared.boundaries.reporting.document import (
 )
 
 from ._candidate_resolver import PrimaryCandidateContext
+from .evidence_snapshot import build_evidence_snapshot_rows
 from .measurements import _evidence_chain_rows
 from .narrative_summaries import (
     _context_summary_text,
@@ -46,6 +47,9 @@ def build_appendix_c_data(
     return AppendixCData(
         evidence_chain_rows=evidence_rows,
         measurement_rows=measurements,
+        evidence_snapshot_rows=list(
+            build_evidence_snapshot_rows(report_facts, compact=False, tr=tr)
+        ),
         evidence_summary=_evidence_summary_text(aggregate, primary, report_facts, tr=tr),
         measurement_guide=tr("REPORT_MEASUREMENT_GUIDE"),
         context_summary=_context_summary_text(primary, report_facts, tr=tr),
