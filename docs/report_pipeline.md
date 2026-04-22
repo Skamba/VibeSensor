@@ -105,6 +105,7 @@ needs:
 - **Pattern evidence**: matched systems, certainty label, interpretation
 - **Evidence snapshots**: concise page-1 proof rows plus Appendix-C proof rows built from prepared evidence facts, not renderer-time DSP
 - **Appendix-C proof pack**: a diagnosis-focused evidence chain plus retained supporting-window exemplars for the selected diagnosis; the older ranked-measurement table is fallback-only when exemplar windows are unavailable
+- **Location proof surfaces**: page-1 and Appendix-B location diagrams/hotspot summaries should use diagnosis-supporting window location facts when they exist, with explicit summary-only / whole-run fallback notes instead of silently reusing whole-run intensity
 - **Peak rows**: top diagnostic peaks with classification
 - **Rendering context**: pre-computed findings (as ``FindingPresentation``
   snapshots), top causes, sensor intensity, location hotspot rows

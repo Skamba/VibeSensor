@@ -129,6 +129,7 @@ class AppendixBData:
     dominant_corner: str | None = None
     runner_up_corner: str | None = None
     dominance_ratio_text: str | None = None
+    proof_basis_note: str | None = None
     location_confidence: str | None = None
     coverage_label: str | None = None
     coverage_notes: list[str] = field(default_factory=list)

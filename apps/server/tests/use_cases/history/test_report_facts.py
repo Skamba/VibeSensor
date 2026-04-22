@@ -131,6 +131,70 @@ def test_prepare_report_facts_filters_to_active_sensor_locations() -> None:
     assert facts.run.firmware_version == "1.2.3"
 
 
+def test_prepare_report_facts_prefers_supporting_window_location_proof() -> None:
+    primary = make_finding_payload(
+        finding_id="F_LOCATION_PROOF",
+        suspected_source="wheel/tire",
+        confidence=0.81,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+        matched_points=[
+            {
+                "t_s": 1.0,
+                "speed_kmh": 64.0,
+                "predicted_hz": 15.0,
+                "matched_hz": 15.1,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.11,
+            },
+            {
+                "t_s": 1.5,
+                "speed_kmh": 66.0,
+                "predicted_hz": 15.2,
+                "matched_hz": 15.2,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.10,
+            },
+            {
+                "t_s": 2.0,
+                "speed_kmh": 68.0,
+                "predicted_hz": 15.4,
+                "matched_hz": 15.3,
+                "location": "Rear Left",
+                "phase": "cruise",
+                "amp": 0.03,
+            },
+        ],
+    )
+    summary = minimal_summary(
+        run_id="supporting-window-location-proof",
+        lang="en",
+        sensor_count_used=2,
+        sensor_locations=["Front Left", "Rear Left"],
+        sensor_locations_connected_throughout=["Front Left", "Rear Left"],
+        sensor_intensity_by_location=[
+            {"location": "Front Left", "p95_intensity_db": 11.0, "peak_intensity_db": 16.0},
+            {"location": "Rear Left", "p95_intensity_db": 24.0, "peak_intensity_db": 30.0},
+        ],
+        findings=[primary],
+        top_causes=[primary],
+        analysis_metadata={
+            "raw_capture_available": True,
+            "raw_backed_sample_count": 24,
+            "raw_capture_mode": "raw_backed",
+        },
+    )
+
+    facts = _prepare_facts(summary)
+
+    assert facts.sensor.location_hotspot_rows[0].location == "Rear Left"
+    assert facts.sensor.proof_basis == "supporting_windows_raw_backed"
+    assert [row.location for row in facts.sensor.proof_intensity] == ["Front Left", "Rear Left"]
+    assert facts.sensor.proof_location_hotspot_rows[0].location == "Front Left"
+
+
 def test_prepare_report_facts_keeps_canonical_warning_models() -> None:
     summary = _summary()
     facts = _prepare_facts(

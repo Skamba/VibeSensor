@@ -62,7 +62,8 @@ def build_report_document_sections(
     appendix_b = build_appendix_b_data(
         aggregate=context.test_run,
         primary_candidate_facts=context.decision_facts.primary_candidate,
-        active_sensor_intensity=context.sensor_facts.active_intensity,
+        active_sensor_intensity=context.sensor_facts.proof_intensity,
+        proof_basis=context.sensor_facts.proof_basis,
         appendix_context=context.appendix_b_context,
         tr=context.tr,
     )
