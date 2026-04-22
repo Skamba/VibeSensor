@@ -19,7 +19,7 @@ const _catalogs: Partial<Record<SupportedLanguage, Catalog>> = {
 };
 const _catalogLoads = new Map<SupportedLanguage, Promise<void>>();
 const _catalogLoaders: Record<SupportedLanguage, () => Promise<CatalogModule>> = {
-  nl: () => import("./i18n/catalogs/nl.json", { with: { type: "json" } }),
+  nl: () => import("./i18n/catalogs/nl"),
   en: async () => ({ default: enCatalog }),
 };
 
