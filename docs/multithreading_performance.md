@@ -2,26 +2,26 @@
 
 ## Summary
 
-Implemented parallel multi-sensor FFT processing using a fixed-size thread pool
-(4 workers, one per Raspberry Pi core) to reduce lag spikes and improve
-throughput when multiple sensors are connected.
+Implemented adaptive multi-sensor FFT processing using a fixed-size thread pool
+(4 workers, one per Raspberry Pi core) to reduce lag spikes on larger workloads
+without paying thread-pool overhead on trivially small compute rounds.
 
 ## Threading Opportunities Identified (ranked by impact)
 
-### 1. Parallel per-client FFT in `compute_all()` — **HIGH IMPACT, IMPLEMENTED**
+### 1. Adaptive per-client FFT in `compute_all()` — **HIGH IMPACT, IMPLEMENTED**
 
-- **Problem**: `compute_all()` ran `compute_metrics()` sequentially for each
-  connected sensor. With 4 sensors, the event loop blocked for 4× the
-  single-sensor FFT time on every processing tick.
+- **Problem**: `compute_all()` originally ran `compute_metrics()` sequentially for
+  each connected sensor. The first multithreaded version improved larger
+  workloads but still paid queue/scheduling overhead for small FFT rounds.
 - **Why it works**: `compute_metrics()` already uses a three-phase
   snapshot→compute→store design with brief locks. The heavy FFT math runs
   under NumPy, which releases the GIL, enabling true thread parallelism.
 - **Fix**: Added a `WorkerPool` wrapper with bounded outstanding work
   (`max_workers=4`, plus a small bounded waiting queue) and changed
-  `compute_all()` to dispatch per-client FFT tasks in parallel.
-  Single-client case stays sequential to avoid thread dispatch overhead.
-- **Impact**: P95 (tail) compute latency reduced by 25–30%, directly
-  reducing live-view lag spikes under multi-sensor load.
+  `compute_all()` to dispatch per-client FFT tasks adaptively. Small workloads
+  stay serial; larger multi-sensor rounds still fan out across the pool.
+- **Impact**: Larger workloads keep the tail-latency win from multithreading,
+  while small/default benchmark rounds stop paying unnecessary dispatch cost.
 
 ### 2. `asyncio.to_thread()` for `compute_all()` in the processing loop — already done
 
@@ -45,7 +45,7 @@ with explicit drop logging.
 | Component | Change |
 |-----------|--------|
 | `worker_pool.py` | Bounded worker pool wrapper: caps running + queued tasks, applies caller backpressure, isolates task failures, exposes metrics, supports clean shutdown |
-| `processing/` | `compute_all()` dispatches per-client FFT in parallel; ingest/compute timing counters added |
+| `processing/` | `compute_all()` dispatches per-client FFT adaptively; ingest/compute timing counters added |
 | `runtime/builders.py` | Creates shared `WorkerPool(max_workers=4)`, injects into `SignalProcessor`, runtime shuts it down on stop |
 | Tests | 14 new tests: pool correctness, parallel/sequential equivalence, concurrent ingest+compute safety |
 | Benchmark | `apps/server/tests/infra/workers/benchmark_compute_all.py` — canonical pytest-benchmark regression path; `tools/tests/benchmark_pipeline.py` stays as the standalone throughput table harness |
@@ -62,10 +62,10 @@ On a real 4-core Raspberry Pi, the parallel speedup is expected to be larger.
 | Ingest P95 (ms) | 0.95 | 0.78 | **−18% ingest jitter** |
 | Output equivalence | — | ✅ YES | Identical results |
 
-Key insight: the thread pool reduces **tail latency** (P95) significantly,
-which is the metric that causes visible lag spikes in the live view.
-Median overhead is from thread dispatch on very fast tasks; on a Pi with
-slower per-core performance, the median also improves.
+Key insight: the thread pool reduces **tail latency** (P95) when each
+per-client FFT round is large enough to amortize dispatch overhead. Small FFT
+workloads should stay serial; on a Pi with slower per-core performance or with
+larger FFT sizes, the adaptive parallel path still carries the benefit.
 
 ## How to run the benchmark
 
