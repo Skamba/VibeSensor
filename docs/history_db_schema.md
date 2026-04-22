@@ -1,4 +1,4 @@
-# History DB Schema (v11)
+# History DB Schema (v12)
 
 The VibeSensor server stores run history, samples, analysis results,
 application settings and client names in a single SQLite file located at
@@ -47,6 +47,7 @@ One row per recording session.
 | `start_time_utc` | TEXT | ISO-8601 start time |
 | `end_time_utc` | TEXT | ISO-8601 end time (set on finalize) |
 | `metadata_json` | TEXT | Run-level metadata (car config, language, sensor model, etc.) |
+| `car_name` | TEXT | Denormalized active car name used by the history list path |
 | `analysis_json` | TEXT | Post-run analysis summary |
 | `error_message` | TEXT | Error description when status = `error` |
 | `sample_count` | INTEGER | Running count of appended samples |
@@ -127,14 +128,12 @@ integer version:
 
 | Stored version | Action |
 |----------------|--------|
-| `0` on a fresh DB | Create all tables, stamp `user_version = 11` |
+| `0` on a fresh DB | Create all tables, stamp `user_version = 12` |
 | `0` with a legacy `schema_meta` table present | Raise `RuntimeError` directing the user to delete the incompatible DB |
-| `11` | No action needed |
-| `10` | Migrate stored persisted-analysis payloads to stamp the current schema version (v10→v11) |
-| `9` | Migrate `settings_kv` → `settings_snapshot` single-row table, then stamp persisted-analysis payload version (v9→v10→v11) |
-| `8` | Chain migrate: add `case_id` column (v8→v9), then `settings_kv` → `settings_snapshot` (v9→v10), then stamp persisted-analysis payload version (v10→v11) |
-| Older unsupported values (for example `1` or `4`) | Raise `RuntimeError` directing the user to delete the database file |
-| Newer than `11` | Raise `RuntimeError` (downgrade not supported) |
+| `12` | No action needed |
+| `11` | Add the denormalized `runs.car_name` column, backfill it from `metadata_json`, then stamp `user_version = 12` |
+| Older unsupported values (for example `1`, `4`, `8`, `9`, or `10`) | Raise `RuntimeError` directing the user to delete the database file |
+| Newer than `12` | Raise `RuntimeError` (downgrade not supported) |
 
 ### Schema versioning policy
 

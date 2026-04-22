@@ -95,32 +95,23 @@ class _HistoryDBQueryMixin:
             if limit > 0:
                 await cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                    "r.created_at, r.error_message, r.sample_count, r.metadata_json "
+                    "r.created_at, r.error_message, r.sample_count, r.car_name "
                     "FROM runs r ORDER BY r.created_at DESC LIMIT ?",
                     (limit,),
                 )
             else:
                 await cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                    "r.created_at, r.error_message, r.sample_count, r.metadata_json "
+                    "r.created_at, r.error_message, r.sample_count, r.car_name "
                     "FROM runs r ORDER BY r.created_at DESC",
                 )
             rows = await cur.fetchall()
         result: list[HistoryRunListEntry] = []
         for row in rows:
-            run_id, status_raw, start, end, created, error, sample_count, metadata_json = row
+            run_id, status_raw, start, end, created, error, sample_count, car_name = row
             normalized_run_id = str(run_id)
             normalized_start = str(start)
             normalized_end = str(end) if end is not None else None
-            normalized_metadata_json = str(metadata_json) if metadata_json is not None else None
-            metadata = self._coerce_run_metadata(
-                run_id=normalized_run_id,
-                start_time_utc=normalized_start,
-                end_time_utc=normalized_end,
-                metadata_json=normalized_metadata_json,
-                source="list_runs",
-                allow_fallback=True,
-            )
             result.append(
                 HistoryRunListEntry(
                     run_id=normalized_run_id,
@@ -129,7 +120,7 @@ class _HistoryDBQueryMixin:
                     end_time_utc=normalized_end,
                     created_at=str(created),
                     sample_count=int(sample_count or 0),
-                    car_name=metadata.car_name if metadata is not None else None,
+                    car_name=str(car_name) if car_name else None,
                     error_message=str(error) if error else None,
                 )
             )

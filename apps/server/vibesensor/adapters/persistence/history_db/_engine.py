@@ -16,12 +16,30 @@ from vibesensor.adapters.persistence.history_db._schema import (
     SCHEMA_SQL,
     SCHEMA_VERSION,
 )
+from vibesensor.shared.boundaries.codecs.scalars import text_or_none
+from vibesensor.shared.json_utils import safe_json_loads
+from vibesensor.shared.types.json_types import is_json_object
 
 LOGGER = logging.getLogger(__name__)
 
 __all__ = ["SQLiteHistoryEngine", "run_startup_quick_check"]
 
 _T = TypeVar("_T")
+
+
+def _extract_run_car_name(metadata_json: object) -> str | None:
+    parsed = safe_json_loads(
+        str(metadata_json) if metadata_json is not None else None,
+        context="history_db v11->v12 car_name migration",
+    )
+    if not is_json_object(parsed):
+        return None
+    active_car_snapshot = parsed.get("active_car_snapshot")
+    if is_json_object(active_car_snapshot):
+        nested_name = text_or_none(active_car_snapshot.get("name"))
+        if nested_name:
+            return nested_name
+    return text_or_none(parsed.get("car_name"))
 
 
 class _EngineLoopThread:
@@ -331,6 +349,9 @@ class SQLiteHistoryEngine:
 
         if version == SCHEMA_VERSION:
             return
+        if version == 11:
+            await self._migrate_v11_to_v12()
+            return
         if version > SCHEMA_VERSION:
             raise RuntimeError(
                 f"History DB schema version {version} is newer than "
@@ -346,6 +367,27 @@ class SQLiteHistoryEngine:
             await cur.execute("PRAGMA user_version")
             row = await cur.fetchone()
         return int(row[0]) if row is not None else 0
+
+    async def _migrate_v11_to_v12(self) -> None:
+        LOGGER.info("Migrating history DB schema v11 -> v12")
+        async with self._cursor(commit=False) as cur:
+            await cur.execute("PRAGMA table_info(runs)")
+            columns = {str(row[1]) for row in await cur.fetchall()}
+        if "car_name" not in columns:
+            async with self._cursor() as cur:
+                await cur.execute("ALTER TABLE runs ADD COLUMN car_name TEXT")
+        async with self.write_transaction_cursor() as cur:
+            await cur.execute("SELECT run_id, metadata_json FROM runs WHERE car_name IS NULL")
+            rows = await cur.fetchall()
+            if rows:
+                await cur.executemany(
+                    "UPDATE runs SET car_name = ? WHERE run_id = ?",
+                    [
+                        (_extract_run_car_name(metadata_json), str(run_id))
+                        for run_id, metadata_json in rows
+                    ],
+                )
+            await cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 
     async def _run_startup_quick_check(self) -> None:
         await run_startup_quick_check(
