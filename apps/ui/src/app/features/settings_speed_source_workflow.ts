@@ -25,6 +25,7 @@ import {
   createSettingsSpeedSourceTransport,
   type SettingsSpeedSourceTransport,
 } from "./settings_speed_source_transport";
+import { applySpeedSourcePayloadToSettings } from "./dashboard_startup_state";
 import { createObservedServerStateQuery } from "./server_state_query";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 
@@ -298,13 +299,11 @@ export function createSettingsSpeedSourceWorkflow(
     options: { preserveResolvedSource?: boolean } = {},
   ): void {
     batch(() => {
-      deps.settings.speed.source.value = payload.speed_source;
-      deps.settings.speed.manualSpeedKph.value = payload.manual_speed_kph;
-      deps.settings.speed.obdDeviceMac.value = payload.obd_device_mac ?? null;
-      deps.settings.speed.obdDeviceName.value = payload.obd_device_name ?? null;
-      if (!options.preserveResolvedSource) {
-        deps.settings.speed.resolvedSource.value = null;
-      }
+      applySpeedSourcePayloadToSettings(
+        deps.settings.speed,
+        payload,
+        options,
+      );
       staleTimeoutInputValue.value = String(payload.stale_timeout_s);
       syncInputsFromSettings();
     });

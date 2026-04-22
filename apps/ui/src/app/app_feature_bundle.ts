@@ -9,11 +9,13 @@ import {
   type RealtimeFeatureChromePorts,
   type RealtimeFeatureSelectionPorts,
 } from "./features/realtime_feature";
+import { createDashboardSpeedSourceStatusModule } from "./features/dashboard_speed_source_status_module";
+import { loadDashboardStartupState } from "./features/dashboard_startup_state";
 import type { SettingsFeatureViewPorts } from "./features/settings_feature";
 import type { FeatureFormatting, FeatureServices } from "./feature_deps_base";
 import type { AppState } from "./ui_app_state";
 import type { UiMountedPanels } from "./ui_lazy_panels";
-import { type ReadonlySignal } from "./ui_signals";
+import type { ReadonlySignal } from "./ui_signals";
 import type { AppFeatureBundle } from "./app_feature_bundle_ports";
 import type { AppFeatureSecondaryBundle } from "./app_feature_secondary_bundle";
 import { preloadHistoryLazyView } from "./views/history_lazy_view";
@@ -47,7 +49,6 @@ export interface AppFeatureBundleDeps {
 
 interface LazySecondaryFeatureBundle {
   dispose(): void;
-  ensureDashboardDataLoaded(): Promise<void>;
   ensureHistoryDataLoaded(): Promise<void>;
   ensureSettingsDataLoaded(): Promise<void>;
   openCarWizard(): Promise<void>;
@@ -59,10 +60,8 @@ function createLazySecondaryFeatureBundle(
 ): LazySecondaryFeatureBundle {
   let bundle: AppFeatureSecondaryBundle | null = null;
   let bundlePromise: Promise<AppFeatureSecondaryBundle> | null = null;
-  let dashboardDataLoadPromise: Promise<void> | null = null;
   let historyLoadPromise: Promise<void> | null = null;
   let settingsLoadPromise: Promise<void> | null = null;
-  let dashboardDataLoaded = false;
   let historyLoaded = false;
   let settingsLoaded = false;
   let disposed = false;
@@ -115,30 +114,6 @@ function createLazySecondaryFeatureBundle(
     return settingsLoadPromise;
   }
 
-  function ensureDashboardDataLoaded(): Promise<void> {
-    if (dashboardDataLoaded || disposed) {
-      return Promise.resolve();
-    }
-    if (dashboardDataLoadPromise !== null) {
-      return dashboardDataLoadPromise;
-    }
-    dashboardDataLoadPromise = (async () => {
-      const loadedBundle = await ensureLoaded();
-      if (disposed) {
-        return;
-      }
-      await Promise.all([
-        loadedBundle.settings.loadSpeedSourceFromServer(),
-        loadedBundle.settings.loadCarsFromServer(),
-      ]);
-      dashboardDataLoaded = true;
-    })().catch((error) => {
-      dashboardDataLoadPromise = null;
-      throw error;
-    });
-    return dashboardDataLoadPromise;
-  }
-
   function ensureHistoryDataLoaded(): Promise<void> {
     if (historyLoaded || disposed) {
       return Promise.resolve();
@@ -166,7 +141,6 @@ function createLazySecondaryFeatureBundle(
       bundle?.dispose();
       bundle = null;
     },
-    ensureDashboardDataLoaded,
     ensureHistoryDataLoaded,
     ensureSettingsDataLoaded,
     openCarWizard(): Promise<void> {
@@ -192,7 +166,12 @@ export function createAppFeatureBundle(
   } = deps;
   const { panels } = runtime;
   const secondary = createLazySecondaryFeatureBundle(deps);
-  const reportSecondaryLoadError = (error: unknown): void => {
+  const dashboardSpeedSourceStatus = createDashboardSpeedSourceStatusModule({
+    activeViewId: runtime.navigation.activeViewId,
+    queryClient: serverState.queryClient,
+    settings: state.settings,
+  });
+  const reportFeatureLoadError = (error: unknown): void => {
     services.showError(
       error instanceof Error ? error.message : services.t("status.view_load_failed"),
     );
@@ -233,7 +212,7 @@ export function createAppFeatureBundle(
         activatePrimaryView: runtime.navigation.activatePrimaryView,
         activateSettingsTab: (tabId) => panels.settingsShell.activateTab(tabId),
         openCarWizard: () => {
-          void secondary.openCarWizard().catch(reportSecondaryLoadError);
+          void secondary.openCarWizard().catch(reportFeatureLoadError);
         },
       },
       selection: runtime.transport,
@@ -246,18 +225,43 @@ export function createAppFeatureBundle(
     queryClient: serverState.queryClient,
   });
 
-  return createAppFeatureBundlePorts({
+  const bundle = createAppFeatureBundlePorts({
+    dashboard: {
+      hydrateStartupState: () => Promise.all([
+        loadDashboardStartupState(serverState.queryClient, state.settings),
+        dashboardSpeedSourceStatus.markStartupReady(),
+      ]).then(() => undefined),
+    },
     realtime,
     ensureViewReady: (viewId) => ensureSecondaryViewReady(viewId).catch((error) => {
-      reportSecondaryLoadError(error);
+      reportFeatureLoadError(error);
       throw error;
     }),
     secondary: {
       dispose: () => secondary.dispose(),
-      primeDashboardState: () => secondary.ensureDashboardDataLoaded().catch((error) => {
-        reportSecondaryLoadError(error);
-        throw error;
-      }),
     },
   });
+
+  return {
+    ...bundle,
+    dispose(): void {
+      dashboardSpeedSourceStatus.dispose();
+      bundle.dispose();
+    },
+    shell: {
+      bindHandlers(): void {
+        dashboardSpeedSourceStatus.bindHandlers();
+        bundle.shell.bindHandlers();
+      },
+    },
+    startup: {
+      ...bundle.startup,
+      dashboard: {
+        hydrateStartupState: () => bundle.startup.dashboard.hydrateStartupState().catch((error) => {
+          reportFeatureLoadError(error);
+          throw error;
+        }),
+      },
+    },
+  };
 }
