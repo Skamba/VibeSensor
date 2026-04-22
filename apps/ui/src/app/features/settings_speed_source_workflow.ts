@@ -26,7 +26,10 @@ import {
   type SettingsSpeedSourceTransport,
 } from "./settings_speed_source_transport";
 import { applySpeedSourcePayloadToSettings } from "./dashboard_startup_state";
-import { createObservedServerStateQuery } from "./server_state_query";
+import {
+  createHiddenTabPollingObserverOptions,
+  createObservedServerStateQuery,
+} from "./server_state_query";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 
 const OBD_BACKGROUND_RESCAN_DELAY_MS = 2_000;
@@ -503,10 +506,10 @@ export function createSettingsSpeedSourceWorkflow(
 
   const obdBackgroundRescan = createObservedServerStateQuery({
     enabled: obdBackgroundRescanEnabled,
-    observerOptions: {
-      refetchInterval: OBD_BACKGROUND_RESCAN_DELAY_MS,
-      refetchIntervalInBackground: true,
-    },
+    observerOptions: createHiddenTabPollingObserverOptions<
+      Awaited<ReturnType<SettingsSpeedSourceTransport["scanObdDevices"]>>,
+      ReturnType<typeof serverStateQueryKeys.settings.speedSourceObdScan>
+    >(OBD_BACKGROUND_RESCAN_DELAY_MS),
     onData: (payload) => {
       mergeScannedDevices(payload.devices);
     },

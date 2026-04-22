@@ -27,7 +27,10 @@ import {
   signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import { createObservedServerStateQuery } from "./server_state_query";
+import {
+  createHiddenTabPollingObserverOptions,
+  createObservedServerStateQuery,
+} from "./server_state_query";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 
 export interface UpdateFeatureWorkflowApi {
@@ -145,12 +148,11 @@ export function createUpdateFeatureWorkflow(
     onError: (error) => {
       deps.showError(error instanceof Error ? error.message : deps.t("status.unavailable"));
     },
-    observerOptions: {
-      refetchInterval: (query) => query.state.data?.status.state === "running"
+    observerOptions: createHiddenTabPollingObserverOptions<UpdateStatusSnapshot>(
+      (query) => query.state.data?.status.state === "running"
         ? UPDATE_POLL_INTERVAL_RUNNING_MS
         : UPDATE_POLL_INTERVAL_IDLE_MS,
-      refetchIntervalInBackground: true,
-    },
+    ),
     onData: applyStatusSnapshot,
     queryClient: deps.queryClient,
     queryFn: fetchStatusSnapshot,
