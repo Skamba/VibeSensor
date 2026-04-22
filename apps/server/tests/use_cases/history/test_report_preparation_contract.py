@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from test_support.findings import make_finding_payload
 
 from vibesensor.shared.boundaries.reporting import (
     prepare_persisted_report_input,
@@ -198,3 +199,92 @@ def test_prepare_report_input_tolerates_invalid_count_strings() -> None:
 
     assert prepared.report_facts.run.sample_count == 0
     assert prepared.report_facts.run.sensor_count == 0
+
+
+def test_prepare_persisted_report_input_builds_evidence_facts_from_raw_backed_summary() -> None:
+    primary = make_finding_payload(
+        finding_id="F_PRIMARY",
+        suspected_source="wheel/tire",
+        confidence=0.76,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+        matched_points=[
+            {
+                "t_s": 1.0,
+                "speed_kmh": 64.0,
+                "predicted_hz": 15.0,
+                "matched_hz": 15.1,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.11,
+            },
+            {
+                "t_s": 1.5,
+                "speed_kmh": 66.0,
+                "predicted_hz": 15.2,
+                "matched_hz": 15.2,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.10,
+            },
+            {
+                "t_s": 2.0,
+                "speed_kmh": 68.0,
+                "predicted_hz": 15.3,
+                "matched_hz": 15.4,
+                "location": "Rear Left",
+                "phase": "cruise",
+                "amp": 0.09,
+            },
+        ],
+    )
+    analysis = PersistedAnalysis.from_json_object(
+        {
+            "run_id": "persisted-run",
+            "lang": "en",
+            "metadata": {
+                "run_id": "persisted-run",
+                "record_type": "metadata",
+                "schema_version": "v2-jsonl",
+                "start_time_utc": "2026-03-23T07:31:01Z",
+                "sensor_model": "ADXL345",
+                "raw_sample_rate_hz": 800,
+                "feature_interval_s": 0.5,
+                "fft_window_size_samples": 256,
+                "peak_picker_method": "fft",
+                "incomplete_for_order_analysis": False,
+            },
+            "report_date": "2026-03-23T07:31:01Z",
+            "record_length": "5m",
+            "rows": 120,
+            "duration_s": 300.0,
+            "sensor_count_used": 2,
+            "sensor_locations": ["Front Left", "Rear Left"],
+            "sensor_locations_connected_throughout": ["Front Left", "Rear Left"],
+            "sensor_intensity_by_location": [],
+            "most_likely_origin": {},
+            "run_suitability": [],
+            "test_plan": [],
+            "findings": [primary],
+            "top_causes": [primary],
+            "warnings": [],
+            "analysis_metadata": {
+                "raw_capture_available": True,
+                "raw_backed_sample_count": 24,
+                "raw_capture_mode": "raw_backed",
+            },
+        }
+    )
+
+    prepared = prepare_persisted_report_input(analysis)
+
+    assert prepared.report_facts.evidence.data_basis == "raw_backed"
+    assert prepared.report_facts.evidence.raw_backed_sample_count == 24
+    assert prepared.report_facts.evidence.supporting_window_count == 3
+    assert prepared.report_facts.evidence.supporting_duration_s == pytest.approx(1.5)
+    assert prepared.report_facts.evidence.stable_frequency_min_hz == pytest.approx(15.1)
+    assert prepared.report_facts.evidence.stable_frequency_max_hz == pytest.approx(15.4)
+    assert prepared.report_facts.evidence.supporting_location_counts == (
+        ("Front Left", 2),
+        ("Rear Left", 1),
+    )

@@ -84,6 +84,17 @@ def draw_proof_block(
         )
         - 1.5 * mm
     )
+    for snapshot in verdict.proof_snapshot_rows[:3]:
+        text_y = draw_label_value(
+            c,
+            x=text_x,
+            y=text_y,
+            width=text_w,
+            label=snapshot.label,
+            value=snapshot.value or tr("UNKNOWN"),
+            value_size=FS_BODY,
+            max_lines=3,
+        )
     text_y = draw_label_value(
         c,
         x=text_x,

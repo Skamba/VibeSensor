@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .appendices import ReportLabelValueRow
+
 __all__ = [
     "PeakRow",
     "TimelineGraphData",
@@ -75,5 +77,6 @@ class VerdictPageData:
     proof_summary: str | None = None
     proof_caveat: str | None = None
     proof_panel_title: str | None = None
+    proof_snapshot_rows: tuple[ReportLabelValueRow, ...] = ()
     footer_routes: tuple[str, ...] = ()
     timeline_graph: TimelineGraphData | None = None
