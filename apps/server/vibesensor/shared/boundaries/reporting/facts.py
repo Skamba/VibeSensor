@@ -11,6 +11,7 @@ if TYPE_CHECKING:
         TestRun,
         VibrationOrigin,
     )
+    from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
     from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
     from vibesensor.shared.boundaries.reporting.evidence_facts import ReportEvidenceFacts
     from vibesensor.shared.boundaries.reporting.findings import PreparedReportFindings
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
     from vibesensor.shared.run_context_warning import RunContextWarningsInput
     from vibesensor.shared.types.analysis_views import PeakTableRow
 
+from vibesensor.shared.boundaries.reporting.confidence_facts import build_report_confidence_facts
 from vibesensor.shared.boundaries.reporting.decision_facts import (
     ActionStatusKey,
     LocationConfidenceKey,
@@ -83,6 +85,7 @@ class PreparedReportFacts:
     sensor: ReportSensorFacts
     decision: ReportDecisionFacts
     evidence: ReportEvidenceFacts
+    confidence: ReportConfidenceFacts
     findings: PreparedReportFindings
 
 
@@ -121,6 +124,12 @@ def prepare_report_facts(
         primary_candidate=decision_facts.primary_candidate,
         evidence_data_basis=evidence_facts.data_basis,
     )
+    confidence_facts = build_report_confidence_facts(
+        has_explicit_analysis_metadata=isinstance(payload.get("analysis_metadata"), Mapping),
+        primary_candidate=decision_facts.primary_candidate,
+        evidence_facts=evidence_facts,
+        decision_facts=decision_facts,
+    )
     return PreparedReportFacts(
         run=ReportRunFacts(
             run_id=summary.run_id,
@@ -154,6 +163,7 @@ def prepare_report_facts(
         sensor=sensor_facts,
         decision=decision_facts,
         evidence=evidence_facts,
+        confidence=confidence_facts,
         findings=prepare_report_findings(test_run),
     )
 

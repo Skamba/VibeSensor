@@ -6,9 +6,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from vibesensor.domain import ConfidenceAssessment, Finding, TestRun
+from vibesensor.domain import Finding, TestRun
 from vibesensor.report_i18n import human_source
-from vibesensor.shared.report_presentation import strength_label, strength_text
+from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
+from vibesensor.shared.report_presentation import (
+    confidence_reason_text,
+    strength_label,
+    strength_text,
+)
 
 if TYPE_CHECKING:
     from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
@@ -40,12 +45,14 @@ class PrimaryCandidateContext:
     certainty_pct: str
     certainty_reason: str
     tier: str
+    dominance_ratio: float | None = None
 
 
 def resolve_primary_report_candidate(
     *,
     aggregate: TestRun,
     facts: PrimaryReportFacts,
+    confidence_facts: ReportConfidenceFacts | None = None,
     tr: Callable[..., str],
     lang: str,
 ) -> PrimaryCandidateContext:
@@ -61,7 +68,13 @@ def resolve_primary_report_candidate(
         strength_label(facts.strength_db)[0] if facts.strength_db is not None else None
     )
 
-    if facts.domain_primary and facts.domain_primary.confidence_assessment:
+    if confidence_facts is not None:
+        certainty_key = confidence_facts.label_key
+        certainty_label_text = tr(confidence_facts.label_key)
+        certainty_pct = confidence_facts.pct_text
+        certainty_reason = confidence_reason_text(confidence_facts, tr=tr)
+        tier = confidence_facts.tier
+    elif facts.domain_primary and facts.domain_primary.confidence_assessment:
         ca = facts.domain_primary.confidence_assessment
         certainty_key = ca.label_key
         certainty_label_text = tr(ca.label_key)
@@ -73,10 +86,7 @@ def resolve_primary_report_candidate(
         certainty_label_text = tr("CONFIDENCE_LOW")
         certainty_pct = "0%"
         certainty_reason = ""
-        tier = ConfidenceAssessment.assess(
-            facts.confidence,
-            strength_band_key=strength_band_key,
-        ).tier
+        tier = "A"
     return PrimaryCandidateContext(
         primary_candidate=primary_candidate,
         primary_source=facts.primary_source,
@@ -90,6 +100,7 @@ def resolve_primary_report_candidate(
         strength_db=facts.strength_db,
         strength_text=strength_text_value,
         strength_band_key=strength_band_key,
+        dominance_ratio=facts.dominance_ratio,
         certainty_key=certainty_key,
         certainty_label_text=certainty_label_text,
         certainty_pct=certainty_pct,

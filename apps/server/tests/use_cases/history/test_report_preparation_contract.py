@@ -79,6 +79,7 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
     primary = resolve_primary_report_candidate(
         aggregate=prepared.domain_test_run,
         facts=prepared.report_facts.decision.primary_candidate,
+        confidence_facts=prepared.report_facts.confidence,
         tr=tr,
         lang="en",
     )

@@ -256,6 +256,7 @@ def test_pdf_renders_evidence_snapshot_labels_for_raw_backed_report() -> None:
 
     text = extract_pdf_text(pdf)
 
+    assert "Confidence" in text
     assert "Evidence basis" in text
     assert "Support" in text
     assert "Stable frequency" in text
