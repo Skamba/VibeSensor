@@ -7,7 +7,10 @@ from collections.abc import Callable
 from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts
 from vibesensor.shared.boundaries.reporting.document import ReportLabelValueRow
-from vibesensor.shared.report_presentation import display_location
+from vibesensor.shared.report_presentation import (
+    confidence_snapshot_text,
+    display_location,
+)
 
 __all__ = ["build_evidence_snapshot_rows"]
 
@@ -21,6 +24,10 @@ def build_evidence_snapshot_rows(
     """Build localized evidence snapshot rows for report proof surfaces."""
 
     rows: list[ReportLabelValueRow] = [
+        ReportLabelValueRow(
+            label=tr("CONFIDENCE_LABEL"),
+            value=confidence_snapshot_text(report_facts.confidence, tr=tr),
+        ),
         ReportLabelValueRow(
             label=tr("REPORT_EVIDENCE_BASIS_LABEL"),
             value=_data_basis_text(report_facts, tr=tr),

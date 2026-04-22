@@ -180,22 +180,25 @@ def test_build_report_document_surfaces_evidence_snapshot_rows() -> None:
     data = build_report_document(prepared)
 
     assert [row.label for row in data.verdict_page.proof_snapshot_rows] == [
+        "Confidence",
         "Evidence basis",
         "Support",
         "Stable frequency",
     ]
-    assert "Raw-backed replay" in data.verdict_page.proof_snapshot_rows[0].value
-    assert data.verdict_page.proof_snapshot_rows[1].value == "3 supporting windows across 1.5 s"
-    assert data.verdict_page.proof_snapshot_rows[2].value == "15.1-15.4 Hz matched band"
+    assert "Medium (" in data.verdict_page.proof_snapshot_rows[0].value
+    assert "Raw-backed replay" in data.verdict_page.proof_snapshot_rows[1].value
+    assert data.verdict_page.proof_snapshot_rows[2].value == "3 supporting windows across 1.5 s"
+    assert data.verdict_page.proof_snapshot_rows[3].value == "15.1-15.4 Hz matched band"
     assert [row.label for row in data.appendix_c.evidence_snapshot_rows] == [
+        "Confidence",
         "Evidence basis",
         "Support",
         "Stable frequency",
         "Strongest sensors",
         "Caveat",
     ]
-    assert data.appendix_c.evidence_snapshot_rows[3].value == "Front-Left (2), Rear-Left (1)"
-    assert "driveline" in data.appendix_c.evidence_snapshot_rows[4].value.lower()
+    assert data.appendix_c.evidence_snapshot_rows[4].value == "Front-Left (2), Rear-Left (1)"
+    assert "driveline" in data.appendix_c.evidence_snapshot_rows[5].value.lower()
 
 
 def test_build_report_document_focuses_appendix_c_on_primary_proof_windows() -> None:
