@@ -9,6 +9,7 @@ import {
   type RealtimeFeatureChromePorts,
   type RealtimeFeatureSelectionPorts,
 } from "./features/realtime_feature";
+import { createDashboardSpeedSourceStatusModule } from "./features/dashboard_speed_source_status_module";
 import { loadDashboardStartupState } from "./features/dashboard_startup_state";
 import type { SettingsFeatureViewPorts } from "./features/settings_feature";
 import type { FeatureFormatting, FeatureServices } from "./feature_deps_base";
@@ -165,6 +166,11 @@ export function createAppFeatureBundle(
   } = deps;
   const { panels } = runtime;
   const secondary = createLazySecondaryFeatureBundle(deps);
+  const dashboardSpeedSourceStatus = createDashboardSpeedSourceStatusModule({
+    activeViewId: runtime.navigation.activeViewId,
+    queryClient: serverState.queryClient,
+    settings: state.settings,
+  });
   const reportFeatureLoadError = (error: unknown): void => {
     services.showError(
       error instanceof Error ? error.message : services.t("status.view_load_failed"),
@@ -219,13 +225,12 @@ export function createAppFeatureBundle(
     queryClient: serverState.queryClient,
   });
 
-  return createAppFeatureBundlePorts({
+  const bundle = createAppFeatureBundlePorts({
     dashboard: {
-      hydrateStartupState: () => loadDashboardStartupState(serverState.queryClient, state.settings)
-        .catch((error) => {
-          reportFeatureLoadError(error);
-          throw error;
-        }),
+      hydrateStartupState: () => Promise.all([
+        loadDashboardStartupState(serverState.queryClient, state.settings),
+        dashboardSpeedSourceStatus.markStartupReady(),
+      ]).then(() => undefined),
     },
     realtime,
     ensureViewReady: (viewId) => ensureSecondaryViewReady(viewId).catch((error) => {
@@ -236,4 +241,27 @@ export function createAppFeatureBundle(
       dispose: () => secondary.dispose(),
     },
   });
+
+  return {
+    ...bundle,
+    dispose(): void {
+      dashboardSpeedSourceStatus.dispose();
+      bundle.dispose();
+    },
+    shell: {
+      bindHandlers(): void {
+        dashboardSpeedSourceStatus.bindHandlers();
+        bundle.shell.bindHandlers();
+      },
+    },
+    startup: {
+      ...bundle.startup,
+      dashboard: {
+        hydrateStartupState: () => bundle.startup.dashboard.hydrateStartupState().catch((error) => {
+          reportFeatureLoadError(error);
+          throw error;
+        }),
+      },
+    },
+  };
 }
