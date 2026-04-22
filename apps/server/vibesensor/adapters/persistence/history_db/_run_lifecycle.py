@@ -48,6 +48,10 @@ class _HistoryDBRunLifecycleMixin:
             return None
         return str(row[0])
 
+    @staticmethod
+    def _car_name_from_metadata(metadata: RunMetadata) -> str | None:
+        return metadata.car_name
+
     def create_run(
         self,
         run_id: str,
@@ -80,8 +84,15 @@ class _HistoryDBRunLifecycleMixin:
         async with self._cursor() as cur:
             await cur.execute(
                 "INSERT INTO runs (run_id, case_id, status, start_time_utc, metadata_json, "
-                "created_at) VALUES (?, ?, 'recording', ?, ?, ?)",
-                (run_id, case_id, start_time_utc, safe_json_dumps(metadata_payload), now),
+                "car_name, created_at) VALUES (?, ?, 'recording', ?, ?, ?, ?)",
+                (
+                    run_id,
+                    case_id,
+                    start_time_utc,
+                    safe_json_dumps(metadata_payload),
+                    self._car_name_from_metadata(metadata),
+                    now,
+                ),
             )
 
     def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
@@ -156,8 +167,11 @@ class _HistoryDBRunLifecycleMixin:
             assignments = ["status = 'analyzing'", "end_time_utc = ?", "analysis_started_at = ?"]
             params: list[object] = [end_time_utc, now]
             if metadata is not None:
-                assignments.insert(0, "metadata_json = ?")
-                params.insert(0, safe_json_dumps(run_metadata_to_json_object(metadata)))
+                assignments[0:0] = ["metadata_json = ?", "car_name = ?"]
+                params[0:0] = [
+                    safe_json_dumps(run_metadata_to_json_object(metadata)),
+                    self._car_name_from_metadata(metadata),
+                ]
             if case_id is not None:
                 assignments.insert(0, "case_id = ?")
                 params.insert(0, case_id)
@@ -178,8 +192,12 @@ class _HistoryDBRunLifecycleMixin:
     ) -> bool:
         async with self._cursor() as cur:
             await cur.execute(
-                "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
-                (safe_json_dumps(run_metadata_to_json_object(metadata)), run_id),
+                "UPDATE runs SET metadata_json = ?, car_name = ? WHERE run_id = ?",
+                (
+                    safe_json_dumps(run_metadata_to_json_object(metadata)),
+                    self._car_name_from_metadata(metadata),
+                    run_id,
+                ),
             )
             return bool(int(cur.rowcount) > 0)
 
