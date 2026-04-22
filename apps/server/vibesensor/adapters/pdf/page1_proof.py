@@ -55,9 +55,9 @@ def draw_proof_block(
         plan.top_causes or plan.findings,
         {
             "sensor_locations": plan.sensor_locations,
-            "sensor_intensity_by_location": plan.sensor_intensity_by_location,
+            "sensor_intensity_by_location": plan.proof_sensor_intensity_by_location,
         },
-        plan.location_hotspot_rows,
+        plan.proof_location_hotspot_rows,
         content_width=w - 8 * mm,
         tr=tr,
         diagram_width=left_w,

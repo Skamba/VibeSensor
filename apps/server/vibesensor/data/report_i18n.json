@@ -1815,6 +1815,18 @@
     "en": "Computed from matched-window evidence; compare separately from the p95 dB snapshot below.",
     "nl": "Berekend uit matched-window bewijs; vergelijk dit los van de p95 dB-snapshot hieronder."
   },
+  "REPORT_LOCATION_PROOF_BASIS_SUPPORTING_WINDOWS_RAW": {
+    "en": "Location proof uses retained diagnosis-supporting windows rebuilt from raw-backed replay.",
+    "nl": "Het locatiebewijs gebruikt bewaarde diagnose-ondersteunende vensters die opnieuw zijn opgebouwd uit raw-backed replay."
+  },
+  "REPORT_LOCATION_PROOF_BASIS_SUPPORTING_WINDOWS_SUMMARY": {
+    "en": "Location proof uses retained diagnosis-supporting windows from persisted summary evidence.",
+    "nl": "Het locatiebewijs gebruikt bewaarde diagnose-ondersteunende vensters uit persistente samenvattingsbewijzen."
+  },
+  "REPORT_LOCATION_PROOF_BASIS_WHOLE_RUN": {
+    "en": "No retained diagnosis-supporting windows were available, so location proof falls back to whole-run summary intensity.",
+    "nl": "Er waren geen bewaarde diagnose-ondersteunende vensters beschikbaar, dus het locatiebewijs valt terug op de samenvattingsintensiteit van de hele run."
+  },
   "REPORT_DOMINANCE_RATIO_UNKNOWN": {
     "en": "Not enough location-separation data",
     "nl": "Onvoldoende locatie-scheidingsdata"

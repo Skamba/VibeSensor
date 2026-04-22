@@ -97,7 +97,7 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
         location_confidence_key=decision_facts.location_confidence_key,
         tr=tr,
     )
-    runner_up = runner_up_corner(sensor_facts.active_intensity, tr=tr)
+    runner_up = runner_up_corner(sensor_facts.proof_intensity, tr=tr)
     speed_window_label = str(decision_facts.primary_candidate.primary_speed or "").strip() or None
     recapture = build_recapture_assessment(
         aggregate=test_run,

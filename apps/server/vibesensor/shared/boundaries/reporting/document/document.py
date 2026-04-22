@@ -74,6 +74,8 @@ class ReportDocument:
     top_causes: list[FindingPresentation] = field(default_factory=list)
     sensor_intensity_by_location: list[LocationIntensitySummary] = field(default_factory=list)
     location_hotspot_rows: list[LocationHotspotRow] = field(default_factory=list)
+    proof_sensor_intensity_by_location: list[LocationIntensitySummary] = field(default_factory=list)
+    proof_location_hotspot_rows: list[LocationHotspotRow] = field(default_factory=list)
     verdict_page: VerdictPageData = field(default_factory=VerdictPageData)
     appendix_a: AppendixAData = field(default_factory=AppendixAData)
     appendix_b: AppendixBData = field(default_factory=AppendixBData)

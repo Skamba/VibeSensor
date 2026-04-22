@@ -44,6 +44,8 @@ class Page1RenderPlan:
     sensor_locations: tuple[str, ...]
     sensor_intensity_by_location: tuple[LocationIntensitySummary, ...]
     location_hotspot_rows: tuple[LocationHotspotRow, ...]
+    proof_sensor_intensity_by_location: tuple[LocationIntensitySummary, ...]
+    proof_location_hotspot_rows: tuple[LocationHotspotRow, ...]
     verdict_page: VerdictPageData
     next_steps: tuple[NextStep, ...]
     findings: tuple[FindingPresentation, ...]
@@ -73,6 +75,8 @@ class AppendixBRenderPlan:
     sensor_locations: tuple[str, ...]
     sensor_intensity_by_location: tuple[LocationIntensitySummary, ...]
     location_hotspot_rows: tuple[LocationHotspotRow, ...]
+    proof_sensor_intensity_by_location: tuple[LocationIntensitySummary, ...]
+    proof_location_hotspot_rows: tuple[LocationHotspotRow, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,6 +105,16 @@ class ReportPdfRenderPlan:
 def build_page1_render_plan(data: ReportDocument) -> Page1RenderPlan:
     """Project the document boundary into the page-1-only render model."""
 
+    proof_sensor_intensity = (
+        tuple(data.proof_sensor_intensity_by_location)
+        if data.proof_sensor_intensity_by_location
+        else tuple(data.sensor_intensity_by_location)
+    )
+    proof_location_hotspot_rows = (
+        tuple(data.proof_location_hotspot_rows)
+        if data.proof_location_hotspot_rows
+        else tuple(data.location_hotspot_rows)
+    )
     return Page1RenderPlan(
         title=data.title,
         lang=data.lang,
@@ -112,6 +126,8 @@ def build_page1_render_plan(data: ReportDocument) -> Page1RenderPlan:
         sensor_locations=tuple(data.sensor_locations),
         sensor_intensity_by_location=tuple(data.sensor_intensity_by_location),
         location_hotspot_rows=tuple(data.location_hotspot_rows),
+        proof_sensor_intensity_by_location=proof_sensor_intensity,
+        proof_location_hotspot_rows=proof_location_hotspot_rows,
         verdict_page=data.verdict_page,
         next_steps=tuple(data.next_steps),
         findings=tuple(data.findings),
@@ -122,6 +138,16 @@ def build_page1_render_plan(data: ReportDocument) -> Page1RenderPlan:
 def build_appendix_b_render_plan(data: ReportDocument) -> AppendixBRenderPlan:
     """Project the document boundary into the spatial-proof appendix model."""
 
+    proof_sensor_intensity = (
+        tuple(data.proof_sensor_intensity_by_location)
+        if data.proof_sensor_intensity_by_location
+        else tuple(data.sensor_intensity_by_location)
+    )
+    proof_location_hotspot_rows = (
+        tuple(data.proof_location_hotspot_rows)
+        if data.proof_location_hotspot_rows
+        else tuple(data.location_hotspot_rows)
+    )
     return AppendixBRenderPlan(
         lang=data.lang,
         appendix=data.appendix_b,
@@ -130,6 +156,8 @@ def build_appendix_b_render_plan(data: ReportDocument) -> AppendixBRenderPlan:
         sensor_locations=tuple(data.sensor_locations),
         sensor_intensity_by_location=tuple(data.sensor_intensity_by_location),
         location_hotspot_rows=tuple(data.location_hotspot_rows),
+        proof_sensor_intensity_by_location=proof_sensor_intensity,
+        proof_location_hotspot_rows=proof_location_hotspot_rows,
     )
 
 
