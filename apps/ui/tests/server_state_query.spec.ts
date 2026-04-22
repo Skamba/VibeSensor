@@ -1,11 +1,26 @@
-import { describe, expect, test } from "vitest";
+import { focusManager } from "@tanstack/query-core";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
-import { createObservedServerStateQuery } from "../src/app/features/server_state_query";
+import {
+  createHiddenTabPollingObserverOptions,
+  createObservedServerStateQuery,
+} from "../src/app/features/server_state_query";
 import { signal } from "../src/app/ui_signals";
 import { createDeferred, flushAsyncWork } from "./async_test_helpers";
 import { createTestQueryClient } from "./query_client_test_support";
 
+async function flushMicrotasks(rounds = 6): Promise<void> {
+  for (let index = 0; index < rounds; index += 1) {
+    await Promise.resolve();
+  }
+}
+
 describe("createObservedServerStateQuery", () => {
+  afterEach(() => {
+    focusManager.setFocused(undefined);
+    vi.useRealTimers();
+  });
+
   test("fetch populates the current result data", async () => {
     const query = createObservedServerStateQuery({
       queryClient: createTestQueryClient(),
@@ -63,5 +78,36 @@ describe("createObservedServerStateQuery", () => {
     response.resolve(1);
     await flushAsyncWork();
     expect(query.result.value.data).toBeUndefined();
+  });
+
+  test("hidden-tab polling pauses until focus returns", async () => {
+    vi.useFakeTimers();
+    let calls = 0;
+    const queryClient = createTestQueryClient();
+    queryClient.mount();
+    const query = createObservedServerStateQuery({
+      observerOptions: createHiddenTabPollingObserverOptions<number>(500),
+      queryClient,
+      queryFn: async () => {
+        calls += 1;
+        return calls;
+      },
+      queryKey: ["test", "hidden-tab-polling"] as const,
+    });
+
+    await flushMicrotasks();
+    expect(calls).toBe(1);
+
+    focusManager.setFocused(false);
+    await vi.advanceTimersByTimeAsync(2_000);
+    await flushMicrotasks();
+    expect(calls).toBe(1);
+
+    focusManager.setFocused(true);
+    await flushMicrotasks();
+    expect(calls).toBe(2);
+
+    query.dispose();
+    queryClient.unmount();
   });
 });

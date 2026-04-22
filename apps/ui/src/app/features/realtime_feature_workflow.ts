@@ -29,7 +29,10 @@ import {
   type Signal,
 } from "../ui_signals";
 import type { RealtimeLoggingPendingAction } from "../views/realtime_logging_view_models";
-import { createObservedServerStateQuery } from "./server_state_query";
+import {
+  createHiddenTabPollingObserverOptions,
+  createObservedServerStateQuery,
+} from "./server_state_query";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 
 export interface RealtimeFeatureWorkflowApi {
@@ -219,15 +222,14 @@ export function createRealtimeFeatureWorkflow(
 
   const loggingStatusQuery = createObservedServerStateQuery<LoggingStatusPayload>({
     enabled: loggingStatusPollingEnabled,
-    observerOptions: {
-      refetchInterval: (query) => {
+    observerOptions: createHiddenTabPollingObserverOptions<LoggingStatusPayload>(
+      (query) => {
         const nextStatus = query.state.data;
         return nextStatus?.enabled || nextStatus?.analysis_in_progress
           ? LOGGING_STATUS_ACTIVE_POLL_MS
           : LOGGING_STATUS_IDLE_POLL_MS;
       },
-      refetchIntervalInBackground: true,
-    },
+    ),
     onData: handleLoggingStatusData,
     onError: () => {
       batch(() => {
