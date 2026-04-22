@@ -36,7 +36,10 @@ from vibesensor.shared.boundaries.reporting.projection import (
     normalize_origin_location,
     resolve_report_origin,
 )
-from vibesensor.shared.boundaries.reporting.sensor_facts import build_report_sensor_facts
+from vibesensor.shared.boundaries.reporting.sensor_facts import (
+    build_report_sensor_facts,
+    enrich_location_proof_sensor_facts,
+)
 
 __all__ = [
     "ActionStatusKey",
@@ -112,6 +115,11 @@ def prepare_report_facts(
         summary=summary,
         primary_candidate=decision_facts.primary_candidate,
         decision_facts=decision_facts,
+    )
+    sensor_facts = enrich_location_proof_sensor_facts(
+        sensor_facts,
+        primary_candidate=decision_facts.primary_candidate,
+        evidence_data_basis=evidence_facts.data_basis,
     )
     return PreparedReportFacts(
         run=ReportRunFacts(

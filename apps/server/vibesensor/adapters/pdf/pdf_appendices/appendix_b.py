@@ -64,9 +64,9 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
         plan.top_causes or plan.findings,
         {
             "sensor_locations": plan.sensor_locations,
-            "sensor_intensity_by_location": plan.sensor_intensity_by_location,
+            "sensor_intensity_by_location": plan.proof_sensor_intensity_by_location,
         },
-        plan.location_hotspot_rows,
+        plan.proof_location_hotspot_rows,
         content_width=left_w - 8 * mm,
         tr=lambda key, **kw: _tr(plan.lang, key, **kw),
         diagram_width=left_w - 12 * mm,
@@ -121,6 +121,21 @@ def _appendix_b_page(c: Canvas, plan: AppendixBRenderPlan) -> None:
                 color=SUB_CLR,
                 leading=FS_SMALL + 1.0,
                 max_lines=4,
+            )
+            - 0.8 * mm
+        )
+    if appendix.proof_basis_note:
+        text_y = (
+            _draw_text(
+                c,
+                text_x,
+                text_y,
+                right_w - 8 * mm,
+                appendix.proof_basis_note,
+                size=FS_SMALL,
+                color=SUB_CLR,
+                leading=FS_SMALL + 1.0,
+                max_lines=3,
             )
             - 0.8 * mm
         )
@@ -234,6 +249,7 @@ def _has_appendix_b_content(appendix: AppendixBData) -> bool:
             appendix.dominant_corner,
             appendix.runner_up_corner,
             appendix.dominance_ratio_text,
+            appendix.proof_basis_note,
             appendix.location_confidence,
             appendix.coverage_label,
             appendix.coverage_notes,
