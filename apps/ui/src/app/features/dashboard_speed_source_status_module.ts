@@ -4,10 +4,18 @@ import { getSpeedSourceStatus } from "../../api";
 import { GPS_POLL_FAST_MS, GPS_POLL_SLOW_MS } from "../../config";
 import type { SettingsState } from "../ui_app_state";
 import { computed, signal, type ReadonlySignal } from "../ui_signals";
-import { createObservedServerStateQuery } from "./server_state_query";
+import {
+  createHiddenTabPollingObserverOptions,
+  createObservedServerStateQuery,
+} from "./server_state_query";
 import { applySpeedSourceStatusToSettings } from "./speed_source_status_state";
 
 const DASHBOARD_SPEED_STATUS_QUERY_KEY = ["settings", "dashboard-gps-status"] as const;
+
+interface DashboardGpsStatusSnapshot {
+  obdStatus: null;
+  status: Awaited<ReturnType<typeof getSpeedSourceStatus>>;
+}
 
 interface DashboardSpeedSourceStatusModuleDeps {
   activeViewId: ReadonlySignal<string>;
@@ -34,17 +42,19 @@ export function createDashboardSpeedSourceStatusModule(
 
   const gpsStatusQuery = createObservedServerStateQuery({
     enabled: pollingEnabled,
-    observerOptions: {
-      refetchInterval: (query) => query.state.data?.status.connection_state === "connected"
+    observerOptions: createHiddenTabPollingObserverOptions<
+      DashboardGpsStatusSnapshot,
+      typeof DASHBOARD_SPEED_STATUS_QUERY_KEY
+    >(
+      (query) => query.state.data?.status.connection_state === "connected"
         ? GPS_POLL_FAST_MS
         : GPS_POLL_SLOW_MS,
-      refetchIntervalInBackground: true,
-    },
+    ),
     onData: ({ status }) => {
       applySpeedSourceStatusToSettings(deps.settings.speed, status);
     },
     queryClient: deps.queryClient,
-    queryFn: async () => ({
+    queryFn: async (): Promise<DashboardGpsStatusSnapshot> => ({
       obdStatus: null,
       status: await getSpeedSourceStatus(),
     }),

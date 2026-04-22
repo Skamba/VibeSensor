@@ -36,6 +36,24 @@ export interface ObservedServerStateQuery<TData> {
   setData(updater: Updater<TData | undefined, TData | undefined>): void;
 }
 
+export function createHiddenTabPollingObserverOptions<
+  TData,
+  TQueryKey extends QueryKey = QueryKey,
+>(
+  refetchInterval: NonNullable<
+    QueryObserverOptions<TData, unknown, TData, TData, TQueryKey>["refetchInterval"]
+  >,
+): Pick<
+  QueryObserverOptions<TData, unknown, TData, TData, TQueryKey>,
+  "refetchInterval" | "refetchIntervalInBackground" | "refetchOnWindowFocus"
+> {
+  return {
+    refetchInterval,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+  };
+}
+
 export function createObservedServerStateQuery<
   TData,
   TQueryKey extends QueryKey = QueryKey,

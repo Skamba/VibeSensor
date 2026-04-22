@@ -80,6 +80,7 @@ export function createUiAppBootRuntime(deps: {
   state: AppState;
 }): UiAppBootRuntime {
   const queryClient = createUiQueryClient();
+  queryClient.mount();
   let featurePorts!: AppFeatureBundle;
   const shell = new UiShellController({
     bindFeatureHandlers: () => featurePorts.shell.bindHandlers(),
@@ -132,6 +133,7 @@ export function createUiAppBootRuntime(deps: {
       disposed = true;
       featurePorts.dispose();
       queryClient.clear();
+      queryClient.unmount();
       transport.dispose();
       spectrum.dispose();
       shell.dispose();
