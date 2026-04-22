@@ -90,8 +90,6 @@
 
   .history-row[data-expanded="true"] td { background: var(--md-sys-color-surface-container-high) !important; }
 
-  .uplot .u-select { background: rgba(167, 139, 250, 0.15); }
-
 }
 
 /* ── Drive / tablet sizing mode ────────────────────────────── */
