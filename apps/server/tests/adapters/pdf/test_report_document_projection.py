@@ -20,10 +20,14 @@ from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.domain import VibrationOrigin
-from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting import (
+    prepare_persisted_report_input,
+    prepare_report_input,
+)
 from vibesensor.shared.boundaries.reporting.document import ReportDocument
 from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
 from vibesensor.shared.boundaries.summary_fields.origin import build_origin_explanation
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.diagnostics.run_analysis import (
     summarize_origin,
 )
@@ -95,6 +99,103 @@ def test_build_report_document_no_top_causes() -> None:
     assert data.system_cards == []
     assert data.certainty_tier_key == "A"
     assert len(data.next_steps) >= 1
+
+
+def test_build_report_document_surfaces_evidence_snapshot_rows() -> None:
+    primary = make_finding_payload(
+        finding_id="F_PRIMARY",
+        suspected_source="wheel/tire",
+        confidence=0.76,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+        weak_spatial_separation=True,
+        matched_points=[
+            {
+                "t_s": 1.0,
+                "speed_kmh": 64.0,
+                "predicted_hz": 15.0,
+                "matched_hz": 15.1,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.11,
+            },
+            {
+                "t_s": 1.5,
+                "speed_kmh": 66.0,
+                "predicted_hz": 15.2,
+                "matched_hz": 15.2,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.10,
+            },
+            {
+                "t_s": 2.0,
+                "speed_kmh": 68.0,
+                "predicted_hz": 15.3,
+                "matched_hz": 15.4,
+                "location": "Rear Left",
+                "phase": "cruise",
+                "amp": 0.09,
+            },
+        ],
+    )
+    alternative = make_finding_payload(
+        finding_id="F_ALT",
+        suspected_source="driveline",
+        confidence=0.72,
+        strongest_location="Rear Left",
+        strongest_speed_band="60-80 km/h",
+    )
+    prepared = prepare_persisted_report_input(
+        PersistedAnalysis.from_json_object(
+            minimal_summary(
+                run_id="evidence-run",
+                lang="en",
+                metadata={
+                    "run_id": "evidence-run",
+                    "record_type": "metadata",
+                    "schema_version": "v2-jsonl",
+                    "start_time_utc": "2026-03-23T07:31:01Z",
+                    "sensor_model": "ADXL345",
+                    "raw_sample_rate_hz": 800,
+                    "feature_interval_s": 0.5,
+                    "fft_window_size_samples": 256,
+                    "peak_picker_method": "fft",
+                    "incomplete_for_order_analysis": False,
+                },
+                sensor_count_used=2,
+                sensor_locations=["Front Left", "Rear Left"],
+                sensor_locations_connected_throughout=["Front Left", "Rear Left"],
+                findings=[primary, alternative],
+                top_causes=[primary, alternative],
+                analysis_metadata={
+                    "raw_capture_available": True,
+                    "raw_backed_sample_count": 24,
+                    "raw_capture_mode": "raw_backed",
+                },
+            )
+        )
+    )
+
+    data = build_report_document(prepared)
+
+    assert [row.label for row in data.verdict_page.proof_snapshot_rows] == [
+        "Evidence basis",
+        "Support",
+        "Stable frequency",
+    ]
+    assert "Raw-backed replay" in data.verdict_page.proof_snapshot_rows[0].value
+    assert data.verdict_page.proof_snapshot_rows[1].value == "3 supporting windows across 1.5 s"
+    assert data.verdict_page.proof_snapshot_rows[2].value == "15.1-15.4 Hz matched band"
+    assert [row.label for row in data.appendix_c.evidence_snapshot_rows] == [
+        "Evidence basis",
+        "Support",
+        "Stable frequency",
+        "Strongest sensors",
+        "Caveat",
+    ]
+    assert data.appendix_c.evidence_snapshot_rows[3].value == "Front-Left (2), Rear-Left (1)"
+    assert "driveline" in data.appendix_c.evidence_snapshot_rows[4].value.lower()
 
 
 def test_build_report_document_uses_domain_action_render_queries_for_next_steps() -> None:

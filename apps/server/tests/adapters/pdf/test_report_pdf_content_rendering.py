@@ -8,13 +8,21 @@ from pathlib import Path
 import pytest
 from _paths import SERVER_ROOT
 from test_support.core import extract_pdf_text
-from test_support.report_helpers import RUN_END, write_jsonl
+from test_support.findings import make_finding_payload
+from test_support.report_helpers import (
+    RUN_END,
+    minimal_summary,
+    write_jsonl,
+)
 from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.shared.boundaries.reporting import prepare_report_input
+from vibesensor.shared.boundaries.reporting import (
+    prepare_persisted_report_input,
+    prepare_report_input,
+)
 from vibesensor.shared.boundaries.reporting.document import (
     AppendixAData,
     AppendixCData,
@@ -27,6 +35,7 @@ from vibesensor.shared.boundaries.reporting.document import (
     VerdictPageData,
 )
 from vibesensor.shared.constants.units import KMH_TO_MPS
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.report_document import build_report_document
 
 _I18N_JSON = SERVER_ROOT / "vibesensor" / "data" / "report_i18n.json"
@@ -171,6 +180,87 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     assert i18n["ADDITIONAL_OBSERVATIONS"]["en"] in text
     assert "(22%)" not in text
+
+
+def test_pdf_renders_evidence_snapshot_labels_for_raw_backed_report() -> None:
+    primary = make_finding_payload(
+        finding_id="F_PRIMARY",
+        suspected_source="wheel/tire",
+        confidence=0.76,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+        matched_points=[
+            {
+                "t_s": 1.0,
+                "speed_kmh": 64.0,
+                "predicted_hz": 15.0,
+                "matched_hz": 15.1,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.11,
+            },
+            {
+                "t_s": 1.5,
+                "speed_kmh": 66.0,
+                "predicted_hz": 15.2,
+                "matched_hz": 15.2,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.10,
+            },
+            {
+                "t_s": 2.0,
+                "speed_kmh": 68.0,
+                "predicted_hz": 15.3,
+                "matched_hz": 15.4,
+                "location": "Rear Left",
+                "phase": "cruise",
+                "amp": 0.09,
+            },
+        ],
+    )
+    pdf = build_report_pdf(
+        build_report_document(
+            prepare_persisted_report_input(
+                PersistedAnalysis.from_json_object(
+                    minimal_summary(
+                        run_id="evidence-run",
+                        lang="en",
+                        metadata={
+                            "run_id": "evidence-run",
+                            "record_type": "metadata",
+                            "schema_version": "v2-jsonl",
+                            "start_time_utc": "2026-03-23T07:31:01Z",
+                            "sensor_model": "ADXL345",
+                            "raw_sample_rate_hz": 800,
+                            "feature_interval_s": 0.5,
+                            "fft_window_size_samples": 256,
+                            "peak_picker_method": "fft",
+                            "incomplete_for_order_analysis": False,
+                        },
+                        sensor_count_used=2,
+                        sensor_locations=["Front Left", "Rear Left"],
+                        sensor_locations_connected_throughout=["Front Left", "Rear Left"],
+                        findings=[primary],
+                        top_causes=[primary],
+                        analysis_metadata={
+                            "raw_capture_available": True,
+                            "raw_backed_sample_count": 24,
+                            "raw_capture_mode": "raw_backed",
+                        },
+                    )
+                )
+            )
+        )
+    )
+
+    text = extract_pdf_text(pdf)
+
+    assert "Evidence basis" in text
+    assert "Support" in text
+    assert "Stable frequency" in text
+    assert "Strongest sensors" in text
+    assert "Raw-backed replay" in text
 
 
 @pytest.mark.parametrize("lang", ["en", "nl"])

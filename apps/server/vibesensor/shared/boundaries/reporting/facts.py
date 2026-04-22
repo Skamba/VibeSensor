@@ -12,6 +12,7 @@ if TYPE_CHECKING:
         VibrationOrigin,
     )
     from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
+    from vibesensor.shared.boundaries.reporting.evidence_facts import ReportEvidenceFacts
     from vibesensor.shared.boundaries.reporting.findings import PreparedReportFindings
     from vibesensor.shared.boundaries.reporting.sensor_facts import ReportSensorFacts
     from vibesensor.shared.boundaries.reporting.summary import (
@@ -26,6 +27,7 @@ from vibesensor.shared.boundaries.reporting.decision_facts import (
     LocationConfidenceKey,
     build_report_decision_facts,
 )
+from vibesensor.shared.boundaries.reporting.evidence_facts import build_report_evidence_facts
 from vibesensor.shared.boundaries.reporting.findings import (
     PreparedReportFindings,
     prepare_report_findings,
@@ -77,6 +79,7 @@ class PreparedReportFacts:
     run: ReportRunFacts
     sensor: ReportSensorFacts
     decision: ReportDecisionFacts
+    evidence: ReportEvidenceFacts
     findings: PreparedReportFindings
 
 
@@ -103,6 +106,12 @@ def prepare_report_facts(
         origin_location=origin_location,
         sensor_facts=sensor_facts,
         warnings=warnings,
+    )
+    evidence_facts = build_report_evidence_facts(
+        payload,
+        summary=summary,
+        primary_candidate=decision_facts.primary_candidate,
+        decision_facts=decision_facts,
     )
     return PreparedReportFacts(
         run=ReportRunFacts(
@@ -136,6 +145,7 @@ def prepare_report_facts(
         ),
         sensor=sensor_facts,
         decision=decision_facts,
+        evidence=evidence_facts,
         findings=prepare_report_findings(test_run),
     )
 

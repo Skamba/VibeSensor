@@ -73,6 +73,8 @@ def _estimate_appendix_c_context_panel_height(plan: AppendixCRenderPlan, *, widt
             )
             + 1.2 * mm
         )
+    for snapshot in appendix_c.evidence_snapshot_rows[:5]:
+        total += _measure_section_block_height(snapshot.value, w=content_w, max_lines=3)
     total += _measure_section_block_height(
         appendix_c.speed_band_summary or _tr(plan.lang, "UNKNOWN"),
         w=content_w,
