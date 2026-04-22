@@ -10,6 +10,7 @@ from vibesensor.shared.boundaries.reporting.document import (
     AppendixCData,
     DataTrustItem,
     MeasurementRow,
+    ProofWindowRow,
 )
 
 from ._candidate_resolver import PrimaryCandidateContext
@@ -37,7 +38,8 @@ def build_appendix_c_data(
     data_trust: list[DataTrustItem],
     tr: Callable[..., str],
 ) -> AppendixCData:
-    evidence_rows = _evidence_chain_rows(aggregate, measurements=measurements, tr=tr)
+    evidence_rows = _evidence_chain_rows(aggregate, measurements=measurements, tr=tr)[:1]
+    proof_window_rows = _build_proof_window_rows(primary)
     speed_windows = [row.speed_window for row in evidence_rows if row.speed_window]
     speed_summary = (
         ", ".join(dict.fromkeys(speed_windows))
@@ -46,12 +48,17 @@ def build_appendix_c_data(
     )
     return AppendixCData(
         evidence_chain_rows=evidence_rows,
-        measurement_rows=measurements,
+        measurement_rows=measurements if not proof_window_rows else [],
+        proof_window_rows=proof_window_rows,
         evidence_snapshot_rows=list(
             build_evidence_snapshot_rows(report_facts, compact=False, tr=tr)
         ),
         evidence_summary=_evidence_summary_text(aggregate, primary, report_facts, tr=tr),
-        measurement_guide=tr("REPORT_MEASUREMENT_GUIDE"),
+        measurement_guide=(
+            tr("REPORT_SUPPORTING_WINDOWS_GUIDE")
+            if proof_window_rows
+            else tr("REPORT_MEASUREMENT_GUIDE")
+        ),
         context_summary=_context_summary_text(primary, report_facts, tr=tr),
         limits_summary=_run_limits_summary_text(
             report_facts,
@@ -64,3 +71,22 @@ def build_appendix_c_data(
         observations=_observation_texts(aggregate, tr=tr),
         suitability_items=data_trust,
     )
+
+
+def _build_proof_window_rows(primary: PrimaryCandidateContext) -> list[ProofWindowRow]:
+    finding = primary.primary_candidate
+    if finding is None or not finding.matched_points:
+        return []
+    rows: list[ProofWindowRow] = []
+    for index, observation in enumerate(finding.matched_points[:4], start=1):
+        rows.append(
+            ProofWindowRow(
+                window_id=f"W{index:02d}",
+                time_s=observation.t_s,
+                speed_kmh=observation.speed_kmh,
+                matched_hz=observation.matched_hz,
+                dominant_location=str(observation.location or "").strip() or None,
+                phase=(str(observation.phase or "").replace("_", " ").title() or None),
+            )
+        )
+    return rows

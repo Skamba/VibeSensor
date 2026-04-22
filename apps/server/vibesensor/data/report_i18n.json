@@ -2251,9 +2251,25 @@
     "en": "M01-M04 are ranked peak rows from this run, not sensor IDs. Frequency shows where the peak sat; peak dB is the strongest single peak in that row; strength dB is the sustained ranking value used by the report.",
     "nl": "M01-M04 zijn gerangschikte piekregels uit deze run, geen sensor-ID's. Frequentie toont waar de piek lag; piek dB is de sterkste enkele piek in die regel; sterkte dB is de blijvende rangschikkingswaarde die het rapport gebruikt."
   },
+  "REPORT_PHASE_COLUMN": {
+    "en": "Phase",
+    "nl": "Fase"
+  },
+  "REPORT_SPEED_COLUMN": {
+    "en": "Speed",
+    "nl": "Snelheid"
+  },
   "REPORT_SUPPORTING_MEASUREMENTS_TITLE": {
     "en": "Supporting measurements",
     "nl": "Ondersteunende meetwaarden"
+  },
+  "REPORT_SUPPORTING_WINDOWS_GUIDE": {
+    "en": "W01-W04 are retained supporting windows for the selected diagnosis. They show when the match held, at what speed, which frequency was retained, and where the strongest supporting location sat.",
+    "nl": "W01-W04 zijn bewaarde ondersteunende vensters voor de geselecteerde diagnose. Ze tonen wanneer de match standhield, bij welke snelheid, welke frequentie behouden bleef en waar de sterkste ondersteunende locatie lag."
+  },
+  "REPORT_SUPPORTING_WINDOWS_TITLE": {
+    "en": "Supporting windows",
+    "nl": "Ondersteunende vensters"
   },
   "REPORT_SUPPORTING_MEASUREMENTS_NOTE": {
     "en": "M01-M04 are ranked peak rows from this run, not one row per sensor.",
@@ -2262,6 +2278,14 @@
   "REPORT_SUPPORTING_MEASUREMENTS_SHARED_CONTEXT": {
     "en": "Ranked peak rows: {source} · {signal} · {location} · {speed}",
     "nl": "Gerangschikte piekregels: {source} · {signal} · {location} · {speed}"
+  },
+  "REPORT_TIME_COLUMN": {
+    "en": "Time",
+    "nl": "Tijd"
+  },
+  "REPORT_WINDOW_ID_COLUMN": {
+    "en": "Window",
+    "nl": "Venster"
   },
   "REPORT_SUSPECTED_SOURCE_LABEL": {
     "en": "Most likely source",

@@ -12,6 +12,7 @@ __all__ = [
     "AppendixCData",
     "EvidenceChainRow",
     "MeasurementRow",
+    "ProofWindowRow",
     "RankedCandidateRow",
     "ReportLabelValueRow",
     "SensorObservationCell",
@@ -81,6 +82,18 @@ class MeasurementRow:
 
 
 @dataclass
+class ProofWindowRow:
+    """One retained supporting-window exemplar for the chosen diagnosis."""
+
+    window_id: str = ""
+    time_s: float | None = None
+    speed_kmh: float | None = None
+    matched_hz: float | None = None
+    dominant_location: str | None = None
+    phase: str | None = None
+
+
+@dataclass
 class EvidenceChainRow:
     """One evidence-chain row tying a candidate to concrete measurements."""
 
@@ -129,6 +142,7 @@ class AppendixCData:
 
     evidence_chain_rows: list[EvidenceChainRow] = field(default_factory=list)
     measurement_rows: list[MeasurementRow] = field(default_factory=list)
+    proof_window_rows: list[ProofWindowRow] = field(default_factory=list)
     evidence_snapshot_rows: list[ReportLabelValueRow] = field(default_factory=list)
     evidence_summary: str | None = None
     measurement_guide: str | None = None
