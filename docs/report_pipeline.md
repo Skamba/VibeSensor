@@ -104,6 +104,7 @@ needs:
 - **Data trust items**: suitability checks
 - **Pattern evidence**: matched systems, certainty label, interpretation
 - **Evidence snapshots**: concise page-1 proof rows plus Appendix-C proof rows built from prepared evidence facts, not renderer-time DSP
+- **Appendix-C proof pack**: a diagnosis-focused evidence chain plus retained supporting-window exemplars for the selected diagnosis; the older ranked-measurement table is fallback-only when exemplar windows are unavailable
 - **Peak rows**: top diagnostic peaks with classification
 - **Rendering context**: pre-computed findings (as ``FindingPresentation``
   snapshots), top causes, sensor intensity, location hotspot rows
