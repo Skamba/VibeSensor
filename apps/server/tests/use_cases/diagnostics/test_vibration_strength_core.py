@@ -118,6 +118,13 @@ class TestNoiseFloorAmpP20G:
         result = noise_floor_amp_p20_g(combined_spectrum_amp_g=[100.0, 0.01, 0.02, 0.03])
         assert result < 1.0  # Should use P20 of [0.01, 0.02, 0.03]
 
+    def test_skips_dc_bin_with_exact_linear_interpolation(self) -> None:
+        result = noise_floor_amp_p20_g(
+            combined_spectrum_amp_g=[100.0, 0.01, 0.02, 0.04, 0.08, 0.10],
+        )
+        expected = float(np.quantile(np.array([0.01, 0.02, 0.04, 0.08, 0.10]), 0.20))
+        assert result == pytest.approx(expected)
+
     def test_negative_values_filtered(self) -> None:
         result = noise_floor_amp_p20_g(combined_spectrum_amp_g=[-1.0, -2.0, 0.01, 0.02])
         # Only non-negative finite values are used
