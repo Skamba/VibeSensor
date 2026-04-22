@@ -1,7 +1,7 @@
 import type { JSX } from "preact";
 import { memo } from "preact/compat";
 
-import { getUiText } from "../ui_i18n";
+import { useUiText } from "../ui_i18n";
 import {
   useSignalProperties,
   type ReadonlySignal,
@@ -183,8 +183,8 @@ function SpectrumPanel(props: SpectrumPanelProps) {
   const overlayModel = props.overlayModel.value ?? DEFAULT_SPECTRUM_OVERLAY_MODEL;
   const sensorLegend = useDeferredModel(props.sensorLegendModel, null);
   const sensorLegendHandlers = useDeferredModel(props.sensorLegendHandlersModel, null);
-  const titleText = getUiText("chart.spectrum_title", props.header.value.titleText);
-  const hintText = getUiText("spectrum.controls_hint", props.header.value.hintText);
+  const titleText = useUiText("chart.spectrum_title", props.header.value.titleText);
+  const hintText = useUiText("spectrum.controls_hint", props.header.value.hintText);
   const {
     disabled: bandToggleDisabled,
     hidden: bandToggleHidden,
