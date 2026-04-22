@@ -205,12 +205,16 @@ class TestWorkerPool:
 # ---------------------------------------------------------------------------
 
 
-def _make_processor(pool: WorkerPool | None = None) -> SignalProcessor:
+def _make_processor(
+    pool: WorkerPool | None = None,
+    *,
+    fft_n: int = 512,
+) -> SignalProcessor:
     return SignalProcessor(
         sample_rate_hz=800,
         waveform_seconds=4,
         waveform_display_hz=100,
-        fft_n=512,
+        fft_n=fft_n,
         spectrum_max_hz=200,
         accel_scale_g_per_lsb=1.0 / 256.0,
         worker_pool=pool,
@@ -247,11 +251,11 @@ class TestParallelComputeAll:
     def test_multi_client_parallel(self, make_pool) -> None:
         """Multiple clients computed in parallel should produce valid results."""
         pool = make_pool(max_workers=4)
-        proc = _make_processor(pool=pool)
+        proc = _make_processor(pool=pool, fft_n=2048)
         client_ids = [f"c{i}" for i in range(4)]
         freqs = [20.0, 30.0, 40.0, 50.0]
         for cid, freq in zip(client_ids, freqs, strict=True):
-            _inject_test_signal(proc, cid, freq_hz=freq)
+            _inject_test_signal(proc, cid, freq_hz=freq, n_samples=2048)
 
         results = proc.compute_all(client_ids)
         assert len(results) == 4
@@ -262,13 +266,13 @@ class TestParallelComputeAll:
     def test_parallel_matches_sequential(self, make_pool) -> None:
         """Parallel and sequential compute_all must produce identical results."""
         pool = make_pool(max_workers=4)
-        proc_seq = _make_processor(pool=None)
-        proc_par = _make_processor(pool=pool)
+        proc_seq = _make_processor(pool=None, fft_n=2048)
+        proc_par = _make_processor(pool=pool, fft_n=2048)
         client_ids = [f"c{i}" for i in range(4)]
         rng = np.random.default_rng(42)
         for cid in client_ids:
             freq = 15.0 + rng.uniform(0, 50)
-            n = 512
+            n = 2048
             t = np.arange(n, dtype=np.float64) / 800
             x_lsb = (0.05 * np.sin(2.0 * pi * freq * t) * 256.0).astype(np.int16)
             y_lsb = (0.02 * np.sin(2.0 * pi * (freq + 5) * t) * 256.0).astype(np.int16)
@@ -292,12 +296,12 @@ class TestParallelComputeAll:
     def test_concurrent_ingest_and_compute(self, make_pool) -> None:
         """Ingest and compute can run concurrently without data races."""
         pool = make_pool(max_workers=4)
-        proc = _make_processor(pool=pool)
+        proc = _make_processor(pool=pool, fft_n=2048)
         client_ids = [f"c{i}" for i in range(4)]
 
         # Pre-fill buffers
         for cid in client_ids:
-            _inject_test_signal(proc, cid)
+            _inject_test_signal(proc, cid, n_samples=2048)
 
         errors: list[Exception] = []
 
@@ -331,9 +335,9 @@ class TestParallelComputeAll:
     def test_compute_all_timing_counter(self, make_pool) -> None:
         """compute_all should update the timing counter."""
         pool = make_pool(max_workers=2)
-        proc = _make_processor(pool=pool)
-        _inject_test_signal(proc, "c1")
-        _inject_test_signal(proc, "c2")
+        proc = _make_processor(pool=pool, fft_n=2048)
+        _inject_test_signal(proc, "c1", n_samples=2048)
+        _inject_test_signal(proc, "c2", n_samples=2048)
         proc.compute_all(["c1", "c2"])
         stats = proc.intake_stats()
         assert stats["last_compute_all_duration_s"] > 0

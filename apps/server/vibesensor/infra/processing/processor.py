@@ -48,6 +48,7 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 MAX_CLIENT_SAMPLE_RATE_HZ = _MAX_CLIENT_SAMPLE_RATE_HZ
+_MIN_PARALLEL_COMPUTE_WORK_UNITS = 4096
 
 
 class SignalProcessor:
@@ -130,13 +131,15 @@ class SignalProcessor:
         rates = sample_rates_hz or {}
         t0 = time.monotonic()
 
-        if len(client_ids) <= 1 or self._worker_pool is None:
+        if not self._should_parallelize_compute_all(client_ids):
             result = self._compute_all_serial(client_ids, rates)
             self._store.record_compute_all_duration(time.monotonic() - t0)
             return result
 
+        pool = self._worker_pool
+        assert pool is not None
         try:
-            result = self._worker_pool.map_unordered(
+            result = pool.map_unordered(
                 lambda client_id: self.compute_metrics(
                     client_id,
                     sample_rate_hz=rates.get(client_id),
@@ -151,6 +154,11 @@ class SignalProcessor:
             result = self._compute_all_serial(client_ids, rates, serial_fallback=True)
         self._store.record_compute_all_duration(time.monotonic() - t0)
         return result
+
+    def _should_parallelize_compute_all(self, client_ids: list[str]) -> bool:
+        if len(client_ids) <= 1 or self._worker_pool is None:
+            return False
+        return (len(client_ids) * self._config.fft_n) >= _MIN_PARALLEL_COMPUTE_WORK_UNITS
 
     def spectrum_payload(self, client_id: str) -> SpectrumSeriesPayload:
         with self._store.locked_client_buffer(client_id) as buf:
