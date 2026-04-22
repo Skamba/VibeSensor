@@ -89,6 +89,7 @@ def _make_loop(
     registry: Any = None,
     sample_rate_hz: int = 800,
     fft_n: int = 2048,
+    fft_update_hz: int = 10,
     control_plane: Any = None,
 ) -> tuple[ProcessingLoop, ProcessingLoopState]:
     state = ProcessingLoopState()
@@ -96,7 +97,7 @@ def _make_loop(
     reg = registry if registry is not None else _StubRegistry()
     loop = ProcessingLoop(
         state=state,
-        fft_update_hz=10,
+        fft_update_hz=fft_update_hz,
         sample_rate_hz=sample_rate_hz,
         fft_n=fft_n,
         registry=reg,
@@ -246,6 +247,49 @@ class TestProcessingLoopMismatchDetection:
         await loop._run_tick(sync_clock=True)
 
         assert control_plane.broadcast_calls == 1
+
+
+class TestProcessingLoopCadence:
+    def test_success_delay_uses_low_load_fast_path_with_duty_cap(self) -> None:
+        clients = {f"sensor-{index}": _StubRecord() for index in range(5)}
+        loop, _state = _make_loop(
+            registry=_StubRegistry(clients),
+            fft_update_hz=4,
+        )
+
+        delay_s = loop._success_delay_s(
+            interval_s=0.25,
+            tick_duration_s=0.04,
+            active_client_count=5,
+        )
+
+        assert delay_s == pytest.approx(0.06)
+
+    def test_success_delay_keeps_base_interval_for_larger_active_set(self) -> None:
+        clients = {f"sensor-{index}": _StubRecord() for index in range(12)}
+        loop, _state = _make_loop(
+            registry=_StubRegistry(clients),
+            fft_update_hz=4,
+        )
+
+        delay_s = loop._success_delay_s(
+            interval_s=0.25,
+            tick_duration_s=0.04,
+            active_client_count=12,
+        )
+
+        assert delay_s == pytest.approx(0.25)
+
+    def test_success_delay_keeps_base_interval_when_idle(self) -> None:
+        loop, _state = _make_loop(fft_update_hz=4)
+
+        delay_s = loop._success_delay_s(
+            interval_s=0.25,
+            tick_duration_s=0.01,
+            active_client_count=0,
+        )
+
+        assert delay_s == pytest.approx(0.25)
 
     @pytest.mark.asyncio
     async def test_sync_clock_offloads_broadcast_to_thread(

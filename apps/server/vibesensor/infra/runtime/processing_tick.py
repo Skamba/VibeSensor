@@ -59,7 +59,7 @@ class ProcessingTickRunner:
         self._processor = processor
         self._control_plane = control_plane
 
-    async def run(self, *, sync_clock: bool) -> None:
+    async def run(self, *, sync_clock: bool) -> int:
         if sync_clock:
             await self._sync_clock()
         compute_client_ids, sample_rates = self._collect_compute_clients()
@@ -67,6 +67,7 @@ class ProcessingTickRunner:
             compute_client_ids=compute_client_ids,
             sample_rates=sample_rates,
         )
+        return len(compute_client_ids)
 
     async def _sync_clock(self) -> None:
         if self._control_plane is None:
