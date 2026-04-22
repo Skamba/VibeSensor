@@ -26,7 +26,10 @@ import {
   signal,
   type ReadonlySignal,
 } from "../ui_signals";
-import { createObservedServerStateQuery } from "./server_state_query";
+import {
+  createHiddenTabPollingObserverOptions,
+  createObservedServerStateQuery,
+} from "./server_state_query";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 
 export interface EspFlashFeatureWorkflowApi {
@@ -170,12 +173,11 @@ export function createEspFlashFeatureWorkflow(
 
   const statusSnapshotQuery = createObservedServerStateQuery<EspFlashStatusSnapshot>({
     enabled: deps.pollingEnabled,
-    observerOptions: {
-      refetchInterval: (query) => safeEspFlashState(query.state.data?.status.state) === "running"
+    observerOptions: createHiddenTabPollingObserverOptions<EspFlashStatusSnapshot>(
+      (query) => safeEspFlashState(query.state.data?.status.state) === "running"
         ? ESP_FLASH_POLL_ACTIVE_MS
         : ESP_FLASH_POLL_IDLE_MS,
-      refetchIntervalInBackground: true,
-    },
+    ),
     onData: applyStatusSnapshot,
     queryClient: deps.queryClient,
     queryFn: fetchStatusSnapshot,

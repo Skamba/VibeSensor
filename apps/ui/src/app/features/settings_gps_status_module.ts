@@ -16,7 +16,10 @@ import {
   buildSpeedSourceDiagnosticsRenderModel,
   type SettingsSpeedSourcePresenterDeps,
 } from "../views/settings_speed_source_presenter";
-import { createObservedServerStateQuery } from "./server_state_query";
+import {
+  createHiddenTabPollingObserverOptions,
+  createObservedServerStateQuery,
+} from "./server_state_query";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 import { applySpeedSourceStatusToSettings } from "./speed_source_status_state";
 
@@ -71,12 +74,11 @@ export function createSettingsGpsStatusModule(
 
   const gpsStatusQuery = createObservedServerStateQuery<GpsStatusSnapshot>({
     enabled: pollingEnabled,
-    observerOptions: {
-      refetchInterval: (query) => query.state.data?.status.connection_state === "connected"
+    observerOptions: createHiddenTabPollingObserverOptions<GpsStatusSnapshot>(
+      (query) => query.state.data?.status.connection_state === "connected"
         ? GPS_POLL_FAST_MS
         : GPS_POLL_SLOW_MS,
-      refetchIntervalInBackground: true,
-    },
+    ),
     onData: ({ status, obdStatus }) => {
       batch(() => {
         applySpeedSourceStatusToSettings(settings.speed, status);
