@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.strength_bands import bucket_for_strength
@@ -27,6 +27,7 @@ class PostAnalysisRunInput:
     stride: int
     raw_capture_available: bool
     raw_backed_sample_count: int
+    summary_samples: tuple[Sample, ...] = field(default_factory=tuple)
 
     @property
     def run_id(self) -> str:
@@ -61,6 +62,7 @@ def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunI
         stride=loaded.stride,
         raw_capture_available=loaded.raw_capture is not None,
         raw_backed_sample_count=raw_backed_sample_count,
+        summary_samples=tuple(loaded.samples),
     )
 
 

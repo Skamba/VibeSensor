@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 from vibesensor.shared.boundaries.analysis_payloads import analysis_result_to_summary
+from vibesensor.shared.boundaries.summary_serialization._location_intensity import (
+    serialize_location_intensity_rows,
+)
 from vibesensor.shared.json_utils import payload_object_from_json
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.use_cases.diagnostics.run_analysis_projection import build_sensor_analysis
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
 
 _MIN_POST_ANALYSIS_DURATION_S = 1.0
@@ -25,6 +29,20 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         include_samples=False,
     ).summarize()
     summary_payload = analysis_result_to_summary(result)
+    prepared = getattr(result, "prepared", None)
+    if prepared is not None and hasattr(prepared, "per_sample_phases"):
+        source_samples = run.summary_samples if run.summary_samples else run.samples
+        sensor_locations, connected_locations, sensor_intensity = build_sensor_analysis(
+            samples=source_samples,
+            language=run.language,
+            per_sample_phases=list(prepared.per_sample_phases),
+        )
+        summary_payload["sensor_locations"] = sensor_locations
+        summary_payload["sensor_locations_connected_throughout"] = sorted(connected_locations)
+        summary_payload["sensor_count_used"] = len(sensor_locations)
+        summary_payload["sensor_intensity_by_location"] = serialize_location_intensity_rows(
+            sensor_intensity,
+        )
     summary_payload["case_id"] = result.diagnostic_case.case_id
 
     def append_run_suitability_warning(
