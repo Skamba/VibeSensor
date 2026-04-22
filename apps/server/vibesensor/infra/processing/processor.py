@@ -12,6 +12,7 @@ metrics logging while delegating to focused collaborators:
 from __future__ import annotations
 
 import logging
+import math
 import time
 from typing import TYPE_CHECKING
 
@@ -139,13 +140,7 @@ class SignalProcessor:
         pool = self._worker_pool
         assert pool is not None
         try:
-            result = pool.map_unordered(
-                lambda client_id: self.compute_metrics(
-                    client_id,
-                    sample_rate_hz=rates.get(client_id),
-                ),
-                client_ids,
-            )
+            result = self._compute_all_parallel_chunked(client_ids, rates, pool)
         except (RuntimeError, OSError):
             LOGGER.warning(
                 "compute_all: worker pool raised; falling back to serial execution.",
@@ -263,4 +258,26 @@ class SignalProcessor:
                         client_id,
                         exc_info=True,
                     )
+        return result
+
+    def _compute_all_parallel_chunked(
+        self,
+        client_ids: list[str],
+        rates: dict[str, int],
+        pool: WorkerPool,
+    ) -> dict[str, ClientMetrics]:
+        chunk_count = min(pool.max_workers, len(client_ids))
+        chunk_size = max(1, math.ceil(len(client_ids) / chunk_count))
+        chunks = [
+            tuple(client_ids[start : start + chunk_size])
+            for start in range(0, len(client_ids), chunk_size)
+        ]
+
+        chunk_results = pool.map_unordered(
+            lambda chunk: self._compute_all_serial(list(chunk), rates, serial_fallback=True),
+            chunks,
+        )
+        result: dict[str, ClientMetrics] = {}
+        for chunk in chunks:
+            result.update(chunk_results.get(chunk, {}))
         return result
