@@ -10,8 +10,9 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from typing import cast
+from typing import Protocol, cast
 
+import numpy as np
 from opentelemetry.trace import SpanKind
 
 from vibesensor.adapters.udp.protocol import (
@@ -30,6 +31,17 @@ from vibesensor.shared.tracing import mark_span_error, start_span
 LOGGER = logging.getLogger(__name__)
 
 _QUEUE_DROP_LOG_INTERVAL_S: float = 2.0
+
+
+class RawCaptureSink(Protocol):
+    def capture_raw_samples(
+        self,
+        *,
+        client_id: str,
+        sample_rate_hz: int | None,
+        t0_us: int,
+        samples: np.ndarray,
+    ) -> None: ...
 
 
 class DatagramDispatchError(RuntimeError):
@@ -56,11 +68,13 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         self,
         registry: ClientRegistry,
         processor: SignalProcessor,
+        raw_capture_sink: RawCaptureSink | None = None,
         queue_maxsize: int = 1024,
         queue_drop_log_interval_s: float = _QUEUE_DROP_LOG_INTERVAL_S,
     ):
         self.registry = registry
         self.processor = processor
+        self._raw_capture_sink = raw_capture_sink
         self.transport: asyncio.DatagramTransport | None = None
         self._queue: asyncio.Queue[tuple[bytes, tuple[str, int]]] = asyncio.Queue(
             maxsize=max(1, queue_maxsize),
@@ -184,6 +198,13 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                 sample_rate_hz=sample_rate_hz,
                 t0_us=msg.t0_us,
             )
+            if self._raw_capture_sink is not None:
+                self._raw_capture_sink.capture_raw_samples(
+                    client_id=client_id,
+                    sample_rate_hz=sample_rate_hz,
+                    t0_us=msg.t0_us,
+                    samples=msg.samples,
+                )
         self._send_data_ack(msg, addr, client_id=client_id)
         return result
 
@@ -213,6 +234,7 @@ async def start_udp_data_receiver(
     port: int,
     registry: ClientRegistry,
     processor: SignalProcessor,
+    raw_capture_sink: RawCaptureSink | None = None,
     queue_maxsize: int = 1024,
 ) -> tuple[asyncio.DatagramTransport, DataDatagramProtocol]:
     """Bind the UDP data socket and start the background consumer task."""
@@ -220,6 +242,7 @@ async def start_udp_data_receiver(
     protocol = DataDatagramProtocol(
         registry=registry,
         processor=processor,
+        raw_capture_sink=raw_capture_sink,
         queue_maxsize=queue_maxsize,
     )
     transport, _ = await loop.create_datagram_endpoint(

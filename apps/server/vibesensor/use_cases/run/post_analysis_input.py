@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.strength_bands import bucket_for_strength
@@ -14,6 +14,7 @@ from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.vibration_strength import vibration_strength_db_scalar
 
 from .post_analysis_loader import LoadedPostAnalysisRun
+from .raw_capture_replay import build_raw_backed_samples
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +25,9 @@ class PostAnalysisRunInput:
     language: str
     total_sample_count: int
     stride: int
+    raw_capture_available: bool
+    raw_backed_sample_count: int
+    summary_samples: tuple[Sample, ...] = field(default_factory=tuple)
 
     @property
     def run_id(self) -> str:
@@ -41,7 +45,12 @@ class PostAnalysisRunInput:
 def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunInput:
     """Normalize one loaded persisted run into canonical diagnostics input."""
 
-    samples = tuple(_ensure_strength_metrics(sample) for sample in loaded.samples)
+    replayed_samples, raw_backed_sample_count = build_raw_backed_samples(
+        samples=tuple(loaded.samples),
+        metadata=loaded.metadata,
+        raw_capture=loaded.raw_capture,
+    )
+    samples = tuple(_ensure_strength_metrics(sample) for sample in replayed_samples)
     return PostAnalysisRunInput(
         diagnostics_run=build_diagnostics_run_input(
             loaded.metadata,
@@ -51,6 +60,9 @@ def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunI
         language=loaded.language,
         total_sample_count=loaded.total_sample_count,
         stride=loaded.stride,
+        raw_capture_available=loaded.raw_capture is not None,
+        raw_backed_sample_count=raw_backed_sample_count,
+        summary_samples=tuple(loaded.samples),
     )
 
 

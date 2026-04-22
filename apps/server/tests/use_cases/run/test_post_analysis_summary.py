@@ -52,6 +52,7 @@ def _run_input(
             ),
             language=language,
             samples=sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}]),
+            raw_capture=None,
             total_sample_count=total_sample_count,
             stride=stride,
         ),
@@ -97,6 +98,9 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
         "analyzed_sample_count": 1,
         "total_sample_count": 3,
         "sampling_method": "full",
+        "raw_capture_available": False,
+        "raw_backed_sample_count": 0,
+        "raw_capture_mode": "summary_only",
     }
 
 
@@ -216,6 +220,7 @@ def test_build_post_analysis_summary_enriches_missing_strength_db_from_peak_and_
                     }
                 ]
             ),
+            raw_capture=None,
             total_sample_count=1,
             stride=1,
         )
