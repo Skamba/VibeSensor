@@ -51,9 +51,9 @@ report rendering can localize them at read time.
 | Strongest sensor         | `observed.strongest_location`                   | `most_likely_origin.location` or `top_causes[0].strongest_location` | string |
 | Speed band               | `observed.speed_band`                           | `top_causes[0].strongest_speed_band`         | string (e.g. "80–100 km/h") |
 | Strength                 | `observed.strength_label`, `observed.strength_peak_db` | `_top_strength_values()` → `strength_text()` | `"{Label} ({db:.1f} dB)"` |
-| Certainty                | `observed.certainty_label`, `observed.certainty_pct` | `ConfidenceAssessment.assess()` | `"{Label} ({pct}%)"`  |
-| Certainty reason         | `observed.certainty_reason`                     | `ConfidenceAssessment.assess()` reason     | string                       |
-| Tier indicator           | `certainty_tier_key`                            | `ConfidenceAssessment.tier` → `"A"`, `"B"`, `"C"` | single char               |
+| Certainty                | `observed.certainty_label`, `observed.certainty_pct` | `ReportConfidenceFacts.label_key/pct_text` | `"{Label} ({pct}%)"`  |
+| Certainty reason         | `observed.certainty_reason`                     | `ReportConfidenceFacts` signal/caveat text | string                       |
+| Tier indicator           | `certainty_tier_key`                            | `ReportConfidenceFacts.tier` → `"A"`, `"B"`, `"C"` | single char               |
 
 ### Systems with Findings panel
 

@@ -6,6 +6,7 @@ from collections.abc import Callable, Sequence
 
 from vibesensor.domain import Finding, SuitabilityCheck, TestRun
 from vibesensor.report_i18n import human_source
+from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.document import AppendixAData, RankedCandidateRow
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.report_diagnostics import check_state, has_warning_code, nonpass_detail_lines
@@ -128,6 +129,7 @@ def build_recapture_assessment(
     *,
     aggregate: TestRun,
     primary_candidate_facts: PrimaryReportFacts,
+    confidence_facts: ReportConfidenceFacts,
     location_confidence_key: str,
     expected_locations: Sequence[str],
     active_locations: Sequence[str],
@@ -185,7 +187,7 @@ def build_recapture_assessment(
         append_unique_line(issues, detail)
     if not issues:
         note = proof_caveat_text(
-            primary_candidate_facts=primary_candidate_facts,
+            confidence_facts=confidence_facts,
             action_status_key="recapture_before_acting",
             location_confidence_key=location_confidence_key,
             tr=tr,

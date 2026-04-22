@@ -7,6 +7,7 @@ from collections.abc import Callable, Sequence
 
 from vibesensor.domain import Finding, LocationIntensitySummary, TestRun, VibrationSource
 from vibesensor.report_i18n import human_location, human_source, location_candidates
+from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.strength_bands import BANDS
 
@@ -14,7 +15,10 @@ __all__ = [
     "action_status_text",
     "append_unique_line",
     "candidate_signal_text",
+    "confidence_caveat_text",
     "confidence_pct_text",
+    "confidence_reason_text",
+    "confidence_snapshot_text",
     "coverage_label",
     "coverage_notes",
     "display_location",
@@ -233,6 +237,63 @@ def confidence_pct_text(finding: Finding) -> str:
     return finding.confidence_pct_text
 
 
+def confidence_reason_text(
+    confidence_facts: ReportConfidenceFacts,
+    *,
+    tr: Callable[..., str],
+) -> str:
+    if confidence_facts.uses_summary_fallback:
+        return str(confidence_facts.fallback_reason or "").strip() or (
+            tr("REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY")
+            if confidence_facts.data_basis == "summary_only"
+            else ""
+        )
+    strengths = _confidence_signal_texts(confidence_facts, tr=tr)
+    caveats = _confidence_caveat_texts(confidence_facts, tr=tr)
+    strength = strengths[0] if strengths else ""
+    caveat = "; ".join(caveats[:2])
+    if confidence_facts.label_key == "CONFIDENCE_LOW" and caveat and strength:
+        return tr(
+            "REPORT_CONFIDENCE_REASON_LIMITED_SUPPORT",
+            caveat=caveat,
+            strength=strength,
+        )
+    if strength and caveat:
+        return tr(
+            "REPORT_CONFIDENCE_REASON_WITH_CAVEAT",
+            strength=strength,
+            caveat=caveat,
+        )
+    return strength or caveat
+
+
+def confidence_snapshot_text(
+    confidence_facts: ReportConfidenceFacts,
+    *,
+    tr: Callable[..., str],
+) -> str:
+    label = tr(confidence_facts.label_key)
+    reason = confidence_reason_text(confidence_facts, tr=tr)
+    if not reason:
+        return f"{label} ({confidence_facts.pct_text})"
+    return f"{label} ({confidence_facts.pct_text}) — {reason}"
+
+
+def confidence_caveat_text(
+    confidence_facts: ReportConfidenceFacts,
+    *,
+    tr: Callable[..., str],
+) -> str | None:
+    if confidence_facts.uses_summary_fallback:
+        if confidence_facts.data_basis == "summary_only":
+            return tr("REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY")
+        return None
+    caveats = _confidence_caveat_texts(confidence_facts, tr=tr)
+    if not caveats:
+        return None
+    return "; ".join(caveats[:2])
+
+
 def source_with_confidence(finding: Finding, *, tr: Callable[..., str]) -> str:
     return tr(
         "REPORT_SOURCE_WITH_CONFIDENCE",
@@ -261,7 +322,7 @@ def runner_up_corner(
 
 def proof_caveat_text(
     *,
-    primary_candidate_facts: PrimaryReportFacts,
+    confidence_facts: ReportConfidenceFacts,
     action_status_key: str,
     location_confidence_key: str,
     tr: Callable[..., str],
@@ -269,7 +330,7 @@ def proof_caveat_text(
     if action_status_key == "action_ready_caution":
         return None
     reason = (
-        first_confidence_reason_clause(primary_candidate_facts)
+        confidence_caveat_text(confidence_facts, tr=tr)
         if action_status_key != "action_ready"
         else None
     )
@@ -280,6 +341,123 @@ def proof_caveat_text(
     if location_confidence_key == "mixed":
         return tr("REPORT_PROOF_CAVEAT_MIXED")
     return None
+
+
+def _confidence_signal_texts(
+    confidence_facts: ReportConfidenceFacts,
+    *,
+    tr: Callable[..., str],
+) -> tuple[str, ...]:
+    parts: list[str] = []
+    for key in confidence_facts.signal_keys:
+        if key == "raw_backed":
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_SIGNAL_RAW_BACKED",
+                    samples=str(max(0, confidence_facts.raw_backed_sample_count)),
+                )
+            )
+        elif key == "repeated_support":
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_SIGNAL_REPEATED_SUPPORT",
+                    count=str(max(0, confidence_facts.supporting_window_count or 0)),
+                )
+            )
+        elif key == "sustained_support" and confidence_facts.supporting_duration_s is not None:
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_SIGNAL_SUSTAINED_SUPPORT",
+                    duration=f"{confidence_facts.supporting_duration_s:.1f}",
+                )
+            )
+        elif key == "stable_frequency":
+            low = confidence_facts.stable_frequency_min_hz
+            high = confidence_facts.stable_frequency_max_hz
+            if low is None or high is None:
+                continue
+            if abs(high - low) < 0.05:
+                parts.append(
+                    tr(
+                        "REPORT_CONFIDENCE_SIGNAL_STABLE_FREQUENCY_SINGLE",
+                        hz=f"{low:.1f}",
+                    )
+                )
+            else:
+                parts.append(
+                    tr(
+                        "REPORT_CONFIDENCE_SIGNAL_STABLE_FREQUENCY_BAND",
+                        low=f"{low:.1f}",
+                        high=f"{high:.1f}",
+                    )
+                )
+        elif key == "tight_order_lock":
+            parts.append(tr("REPORT_CONFIDENCE_SIGNAL_TIGHT_ORDER_LOCK"))
+        elif key == "localized_support" and confidence_facts.top_support_location is not None:
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_SIGNAL_LOCALIZED_SUPPORT",
+                    location=display_location(confidence_facts.top_support_location, tr=tr),
+                )
+            )
+        elif key == "clean_signal":
+            parts.append(tr("REPORT_CONFIDENCE_SIGNAL_CLEAN_SIGNAL"))
+    return tuple(parts)
+
+
+def _confidence_caveat_texts(
+    confidence_facts: ReportConfidenceFacts,
+    *,
+    tr: Callable[..., str],
+) -> tuple[str, ...]:
+    parts: list[str] = []
+    for key in confidence_facts.caveat_keys:
+        if key == "summary_only":
+            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY"))
+        elif key == "sparse_support":
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_CAVEAT_SPARSE_SUPPORT",
+                    count=str(max(0, confidence_facts.supporting_window_count or 0)),
+                )
+            )
+        elif key == "brief_support" and confidence_facts.supporting_duration_s is not None:
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_CAVEAT_BRIEF_SUPPORT",
+                    duration=f"{confidence_facts.supporting_duration_s:.1f}",
+                )
+            )
+        elif key == "drifting_frequency":
+            low = confidence_facts.stable_frequency_min_hz
+            high = confidence_facts.stable_frequency_max_hz
+            if low is None or high is None:
+                continue
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_CAVEAT_DRIFTING_FREQUENCY",
+                    low=f"{low:.1f}",
+                    high=f"{high:.1f}",
+                )
+            )
+        elif key == "loose_order_lock":
+            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_LOOSE_ORDER_LOCK"))
+        elif key == "mixed_support_locations":
+            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_MIXED_LOCATIONS"))
+        elif key == "weak_spatial":
+            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_WEAK_SPATIAL"))
+        elif key == "close_alternative" and confidence_facts.alternative_source is not None:
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_CAVEAT_CLOSE_ALTERNATIVE",
+                    source=human_source(confidence_facts.alternative_source, tr=tr),
+                )
+            )
+        elif key == "incomplete_reference":
+            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_REFERENCE_GAP"))
+        elif key == "noisy_signal":
+            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_NOISY_SIGNAL"))
+    return tuple(parts)
 
 
 def append_unique_line(lines: list[str], text: object) -> None:

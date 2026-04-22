@@ -75,8 +75,9 @@ Canonical report preparation now lives in
 `NormalizedReportSummary` decoding, domain reconstruction, filename/language
 normalization, and grouped semantic fact assembly:
 
-- `facts.py` builds `PreparedReportFacts(run=..., sensor=..., decision=..., findings=...)`
+- `facts.py` builds `PreparedReportFacts(run=..., sensor=..., decision=..., evidence=..., confidence=..., findings=...)`
 - `evidence_facts.py` builds explicit proof facts (data basis, supporting-window count/duration, stable frequency band, strongest supporting sensors, and caveats) from persisted analysis + reconstructed domain findings
+- `confidence_facts.py` converts persisted evidence quality signals into bounded report confidence (raw-backed vs summary-only basis, support count/duration, frequency stability, order-lock quality, spatial concentration, counterevidence, and reference gaps)
 - `findings.py` owns report-facing finding/top-cause presentation shaping
 - `sensor_facts.py` owns sensor/coverage shaping
 - `decision_facts.py` owns primary-candidate, warning, and action-decision shaping
@@ -104,6 +105,7 @@ needs:
 - **Data trust items**: suitability checks
 - **Pattern evidence**: matched systems, certainty label, interpretation
 - **Evidence snapshots**: concise page-1 proof rows plus Appendix-C proof rows built from prepared evidence facts, not renderer-time DSP
+- **Confidence surfaces**: observed certainty, page-1 confidence row, and proof caveats come from prepared `ReportConfidenceFacts`, not renderer-only heuristics
 - **Appendix-C proof pack**: a diagnosis-focused evidence chain plus retained supporting-window exemplars for the selected diagnosis; the older ranked-measurement table is fallback-only when exemplar windows are unavailable
 - **Location proof surfaces**: page-1 and Appendix-B location diagrams/hotspot summaries should use diagnosis-supporting window location facts when they exist, with explicit summary-only / whole-run fallback notes instead of silently reusing whole-run intensity
 - **Peak rows**: top diagnostic peaks with classification
