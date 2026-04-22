@@ -227,6 +227,86 @@
     "en": "Medium",
     "nl": "Gemiddeld"
   },
+  "REPORT_CONFIDENCE_CAVEAT_BRIEF_SUPPORT": {
+    "en": "support only held for {duration} s",
+    "nl": "de steun hield maar {duration} s aan"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_CLOSE_ALTERNATIVE": {
+    "en": "{source} stayed close as an alternative path",
+    "nl": "{source} bleef dicht in de buurt als alternatief pad"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_DRIFTING_FREQUENCY": {
+    "en": "matched frequency drifted across {low}-{high} Hz",
+    "nl": "de gematchte frequentie verschoof over {low}-{high} Hz"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_LOOSE_ORDER_LOCK": {
+    "en": "order tracking stayed loose around the prediction",
+    "nl": "de ordevolging bleef los rond de voorspelling"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_MIXED_LOCATIONS": {
+    "en": "support stayed split across multiple sensor locations",
+    "nl": "de steun bleef verdeeld over meerdere sensorlocaties"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_NOISY_SIGNAL": {
+    "en": "the signal stayed close to the noise floor",
+    "nl": "het signaal bleef dicht bij de ruisvloer"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_REFERENCE_GAP": {
+    "en": "reference data was incomplete for this path",
+    "nl": "referentiedata was onvolledig voor dit pad"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_SPARSE_SUPPORT": {
+    "en": "only {count} supporting window matched",
+    "nl": "slechts {count} ondersteunend venster matchte"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY": {
+    "en": "only summary-level evidence was available",
+    "nl": "alleen samenvattingsniveau-bewijs was beschikbaar"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_WEAK_SPATIAL": {
+    "en": "support spread too widely across the car",
+    "nl": "de steun verspreidde zich te breed over de auto"
+  },
+  "REPORT_CONFIDENCE_REASON_LIMITED_SUPPORT": {
+    "en": "{caveat}; limited positive signal: {strength}",
+    "nl": "{caveat}; beperkt positief signaal: {strength}"
+  },
+  "REPORT_CONFIDENCE_REASON_WITH_CAVEAT": {
+    "en": "{strength}; caveat: {caveat}",
+    "nl": "{strength}; kanttekening: {caveat}"
+  },
+  "REPORT_CONFIDENCE_SIGNAL_CLEAN_SIGNAL": {
+    "en": "the matched signal stood clear of the noise floor",
+    "nl": "het gematchte signaal stond duidelijk boven de ruisvloer"
+  },
+  "REPORT_CONFIDENCE_SIGNAL_LOCALIZED_SUPPORT": {
+    "en": "support stayed concentrated at {location}",
+    "nl": "de steun bleef geconcentreerd bij {location}"
+  },
+  "REPORT_CONFIDENCE_SIGNAL_RAW_BACKED": {
+    "en": "raw-backed replay confirmed the match from {samples} retained samples",
+    "nl": "raw-backed replay bevestigde de match uit {samples} bewaarde samples"
+  },
+  "REPORT_CONFIDENCE_SIGNAL_REPEATED_SUPPORT": {
+    "en": "{count} supporting windows lined up with the diagnosis",
+    "nl": "{count} ondersteunende vensters vielen samen met de diagnose"
+  },
+  "REPORT_CONFIDENCE_SIGNAL_STABLE_FREQUENCY_BAND": {
+    "en": "the matched band stayed tight at {low}-{high} Hz",
+    "nl": "de gematchte band bleef strak op {low}-{high} Hz"
+  },
+  "REPORT_CONFIDENCE_SIGNAL_STABLE_FREQUENCY_SINGLE": {
+    "en": "the matched band stayed tight around {hz} Hz",
+    "nl": "de gematchte band bleef strak rond {hz} Hz"
+  },
+  "REPORT_CONFIDENCE_SIGNAL_SUSTAINED_SUPPORT": {
+    "en": "support held for {duration} s",
+    "nl": "de steun hield {duration} s aan"
+  },
+  "REPORT_CONFIDENCE_SIGNAL_TIGHT_ORDER_LOCK": {
+    "en": "order tracking stayed locked to the predicted path",
+    "nl": "de ordevolging bleef vergrendeld op het voorspelde pad"
+  },
   "DATA_TRUST_CAVEATS": {
     "en": "Confidence caveats",
     "nl": "Betrouwbaarheidspunten"
@@ -1638,6 +1718,10 @@
   "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION": {
     "en": "This run gives a sensible first inspection, but the source scores stayed close. If the primary path is clean, move to the alternative path rather than treating this as a final call.",
     "nl": "Deze run geeft een zinvolle eerste inspectie, maar de bronscores bleven dicht bij elkaar. Als het primaire pad niets oplevert, ga dan naar het alternatieve pad in plaats van dit als definitieve conclusie te zien."
+  },
+  "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION_WITH_ALTERNATIVE": {
+    "en": "This run gives a sensible first inspection, but {alternative} stayed close to {primary}. Start with the primary path, then move to the alternative if the first check is clean.",
+    "nl": "Deze run geeft een zinvolle eerste inspectie, maar {alternative} bleef dicht bij {primary}. Begin met het primaire pad en ga daarna naar het alternatief als de eerste controle niets oplevert."
   },
   "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION_WITH_SCORES": {
     "en": "This run is a close call: {primary} {primary_confidence} vs {alternative} {alternative_confidence}. Start with the first path, but keep the alternative live if the primary check is clean.",

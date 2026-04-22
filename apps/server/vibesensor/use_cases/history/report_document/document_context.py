@@ -92,7 +92,7 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
         )
     )
     proof_caveat = proof_caveat_text(
-        primary_candidate_facts=decision_facts.primary_candidate,
+        confidence_facts=report_facts.confidence,
         action_status_key=decision_facts.action_status_key,
         location_confidence_key=decision_facts.location_confidence_key,
         tr=tr,
@@ -102,6 +102,7 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
     recapture = build_recapture_assessment(
         aggregate=test_run,
         primary_candidate_facts=decision_facts.primary_candidate,
+        confidence_facts=report_facts.confidence,
         location_confidence_key=decision_facts.location_confidence_key,
         expected_locations=coverage.expected_locations,
         active_locations=coverage.active_locations,
@@ -113,6 +114,7 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
     primary = resolve_primary_report_candidate(
         aggregate=test_run,
         facts=decision_facts.primary_candidate,
+        confidence_facts=report_facts.confidence,
         tr=tr,
         lang=lang,
     )

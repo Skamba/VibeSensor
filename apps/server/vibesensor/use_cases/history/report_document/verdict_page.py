@@ -8,18 +8,15 @@ from typing import TYPE_CHECKING
 
 from vibesensor.domain import SuitabilityCheck, TestRun
 from vibesensor.report_i18n import human_source
+from vibesensor.shared.boundaries.reporting.confidence_facts import ReportConfidenceFacts
 from vibesensor.shared.boundaries.reporting.document import PatternEvidence, VerdictPageData
-from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
 from vibesensor.shared.report_diagnostics import first_nonpass_detail
 from vibesensor.shared.report_presentation import (
     action_status_text,
-    confidence_pct_text,
     display_location,
-    first_confidence_reason_clause,
     location_confidence_text,
     presented_location_confidence_key,
     proof_caveat_text,
-    source_with_confidence,
 )
 from vibesensor.shared.run_context_warning import RunContextWarning
 
@@ -55,7 +52,8 @@ def build_observed_signature(
 def build_verdict_page_data(
     *,
     aggregate: TestRun,
-    primary_candidate_facts: PrimaryReportFacts,
+    primary: PrimaryCandidateContext,
+    report_confidence: ReportConfidenceFacts,
     duration_text: str | None,
     verdict_context: VerdictPageContext,
     suitability_checks: Sequence[SuitabilityCheck],
@@ -67,19 +65,16 @@ def build_verdict_page_data(
     return VerdictPageData(
         speed_window_label=verdict_context.speed_window_label,
         suspected_source=(
-            tr("REPORT_INCONCLUSIVE_SOURCE")
-            if recapture_before_acting
-            else _primary_source_text(primary_candidate_facts, tr=tr)
+            tr("REPORT_INCONCLUSIVE_SOURCE") if recapture_before_acting else primary.primary_system
         ),
         inspect_first=(
-            None
-            if recapture_before_acting
-            else display_location(primary_candidate_facts.primary_location, tr=tr)
+            None if recapture_before_acting else display_location(primary.primary_location, tr=tr)
         ),
         action_status=action_status_text(verdict_context.action_status_key, tr=tr),
         action_status_note=_action_status_note_text(
             aggregate=aggregate,
-            primary_candidate_facts=primary_candidate_facts,
+            primary=primary,
+            report_confidence=report_confidence,
             action_status_key=verdict_context.action_status_key,
             location_confidence_key=verdict_context.location_confidence_key,
             alternative_source_visible=verdict_context.alternative_source_visible,
@@ -92,20 +87,20 @@ def build_verdict_page_data(
             verdict_context.recapture.issues[0]
             if recapture_before_acting and verdict_context.recapture.issues
             else _build_primary_reason_sentence(
-                primary_candidate_facts=primary_candidate_facts,
+                primary=primary,
                 active_locations=verdict_context.active_locations,
                 duration_text=duration_text,
                 tr=tr,
             )
         ),
-        dominant_corner=display_location(primary_candidate_facts.primary_location, tr=tr),
+        dominant_corner=display_location(primary.primary_location, tr=tr),
         runner_up_corner=verdict_context.runner_up_corner,
         location_confidence=_location_confidence_display_text(
-            primary_candidate_facts=primary_candidate_facts,
+            primary=primary,
             action_status_key=verdict_context.action_status_key,
             location_confidence_key=verdict_context.location_confidence_key,
             alternative_source_visible=verdict_context.alternative_source_visible,
-            dominance_ratio=primary_candidate_facts.dominance_ratio,
+            dominance_ratio=primary.dominance_ratio,
             suitability_checks=suitability_checks,
             warnings=warnings,
             lang=lang,
@@ -113,7 +108,7 @@ def build_verdict_page_data(
         ),
         coverage_label=verdict_context.coverage_label,
         also_consider=(
-            source_with_confidence(aggregate.effective_top_causes()[1], tr=tr)
+            human_source(aggregate.effective_top_causes()[1].suspected_source, tr=tr)
             if not recapture_before_acting
             and verdict_context.alternative_source_visible
             and len(aggregate.effective_top_causes()) > 1
@@ -143,7 +138,8 @@ def build_verdict_page(*, context: ReportDocumentContext) -> VerdictPageData:
 
     verdict_page = build_verdict_page_data(
         aggregate=context.test_run,
-        primary_candidate_facts=context.decision_facts.primary_candidate,
+        primary=context.primary,
+        report_confidence=context.report_facts.confidence,
         duration_text=context.run_facts.duration_text,
         verdict_context=context.verdict_page_context,
         suitability_checks=context.decision_facts.suitability_checks,
@@ -175,15 +171,15 @@ def build_verdict_page(*, context: ReportDocumentContext) -> VerdictPageData:
 
 def _build_primary_reason_sentence(
     *,
-    primary_candidate_facts: PrimaryReportFacts,
+    primary: PrimaryCandidateContext,
     active_locations: Sequence[str],
     duration_text: str | None,
     tr: Callable[..., str],
 ) -> str:
-    location = display_location(primary_candidate_facts.primary_location, tr=tr)
+    location = display_location(primary.primary_location, tr=tr)
     duration = str(duration_text or "").strip() or tr("UNKNOWN")
-    sensor_count = len(active_locations) or primary_candidate_facts.sensor_count
-    speed_window = str(primary_candidate_facts.primary_speed or "").strip()
+    sensor_count = len(active_locations) or primary.sensor_count
+    speed_window = str(primary.primary_speed or "").strip()
     if speed_window and speed_window != tr("UNKNOWN"):
         return tr(
             "REPORT_REASON_RUN_SUMMARY",
@@ -202,7 +198,7 @@ def _build_primary_reason_sentence(
 
 def _location_confidence_display_text(
     *,
-    primary_candidate_facts: PrimaryReportFacts,
+    primary: PrimaryCandidateContext,
     action_status_key: str,
     location_confidence_key: str,
     alternative_source_visible: bool,
@@ -219,7 +215,7 @@ def _location_confidence_display_text(
     if action_status_key != "action_ready_caution":
         return location_confidence_text(presented_key, tr=tr)
 
-    reason = first_confidence_reason_clause(primary_candidate_facts)
+    reason = str(primary.certainty_reason or "").strip().split(";")[0].rstrip(".")
     if reason:
         return reason
     if alternative_source_visible:
@@ -240,7 +236,8 @@ def _location_confidence_display_text(
 def _action_status_note_text(
     *,
     aggregate: TestRun,
-    primary_candidate_facts: PrimaryReportFacts,
+    primary: PrimaryCandidateContext,
+    report_confidence: ReportConfidenceFacts,
     action_status_key: str,
     location_confidence_key: str,
     alternative_source_visible: bool,
@@ -262,16 +259,14 @@ def _action_status_note_text(
         ranked_candidates = list(aggregate.effective_top_causes()[:2])
         if len(ranked_candidates) > 1:
             score_note = tr(
-                "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION_WITH_SCORES",
+                "REPORT_ACTION_STATUS_NOTE_GATE_CAUTION_WITH_ALTERNATIVE",
                 primary=human_source(ranked_candidates[0].suspected_source, tr=tr),
-                primary_confidence=confidence_pct_text(ranked_candidates[0]),
                 alternative=human_source(ranked_candidates[1].suspected_source, tr=tr),
-                alternative_confidence=confidence_pct_text(ranked_candidates[1]),
             )
         else:
             score_note = tr("REPORT_ACTION_STATUS_NOTE_GATE_CAUTION")
     reason = score_note or proof_caveat_text(
-        primary_candidate_facts=primary_candidate_facts,
+        confidence_facts=report_confidence,
         action_status_key=action_status_key,
         location_confidence_key=location_confidence_key,
         tr=tr,
@@ -287,13 +282,3 @@ def _action_status_note_text(
             )
         return issue
     return issue or reason
-
-
-def _primary_source_text(
-    primary_candidate_facts: PrimaryReportFacts,
-    *,
-    tr: Callable[..., str],
-) -> str:
-    if primary_candidate_facts.primary_source is None:
-        return tr("UNKNOWN")
-    return human_source(primary_candidate_facts.primary_source, tr=tr)

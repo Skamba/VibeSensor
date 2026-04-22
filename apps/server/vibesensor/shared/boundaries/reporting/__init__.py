@@ -2,6 +2,7 @@
 
 # Summary normalization and projectable-payload gates.
 # Fact projections and prepared fact groups.
+from .confidence_facts import ReportConfidenceFacts, build_report_confidence_facts
 from .decision_facts import ReportDecisionFacts, build_report_decision_facts
 from .facts import (
     ActionStatusKey,
@@ -33,9 +34,11 @@ from .summary import (
 __all__ = [
     "ActionStatusKey",
     "build_report_decision_facts",
+    "build_report_confidence_facts",
     "FindingPresentation",
     "LocationConfidenceKey",
     "NormalizedReportSummary",
+    "ReportConfidenceFacts",
     "PreparedReportFacts",
     "PreparedReportFindings",
     "PreparedReportInput",
