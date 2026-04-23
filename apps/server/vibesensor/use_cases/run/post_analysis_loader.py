@@ -21,6 +21,7 @@ class LoadedPostAnalysisRun:
     samples: list[SensorFrame]
     total_sample_count: int
     stride: int
+    context_samples: list[SensorFrame] | None = None
     raw_capture: RawRunCapture | None = None
     raw_capture_manifest: RawCaptureManifest | None = None
 
@@ -89,6 +90,18 @@ def load_post_analysis_run(
                 run_id=run_id,
                 error_message="No samples collected during run",
             )
+        context_samples: list[SensorFrame] | None = None
+        if raw_capture_manifest is not None:
+            if stride == 1:
+                context_samples = list(samples)
+            else:
+                get_run_samples = getattr(db, "aget_run_samples", None)
+                if callable(get_run_samples):
+                    context_samples = list(await get_run_samples(run_id))
+                else:
+                    context_samples = []
+                    async for batch in db.aiter_run_samples(run_id, batch_size=1024):
+                        context_samples.extend(batch)
         load_raw_capture = getattr(db, "aload_raw_capture", None)
         raw_capture = await load_raw_capture(run_id) if callable(load_raw_capture) else None
 
@@ -97,6 +110,7 @@ def load_post_analysis_run(
             metadata=metadata,
             language=metadata.language or "en",
             samples=samples,
+            context_samples=context_samples,
             total_sample_count=total_sample_count,
             stride=stride,
             raw_capture=raw_capture,

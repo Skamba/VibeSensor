@@ -7,6 +7,7 @@ import pytest
 from test_support.persisted_analysis import make_persisted_analysis
 from test_support.tracing import configured_trace_output, read_trace_output
 
+from vibesensor.domain import DrivingPhase
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.types.raw_capture import RawCaptureManifest
@@ -14,7 +15,13 @@ from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
+    WholeRunContextInterval,
+    WholeRunContextWindowLabel,
     WholeRunWindowPolicy,
+)
+from vibesensor.use_cases.diagnostics.whole_run_context import (
+    WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
+    WholeRunContextArtifactBundle,
 )
 from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
@@ -399,6 +406,7 @@ def test_execute_post_analysis_stores_whole_run_artifacts_and_appends_metadata()
                 "run_suitability": [],
             }
         ),
+        whole_run_context_builder=lambda **_kwargs: None,
     )
 
     assert isinstance(result, PostAnalysisExecutionSuccess)
@@ -408,6 +416,171 @@ def test_execute_post_analysis_stores_whole_run_artifacts_and_appends_metadata()
     assert stored["analysis"]["analysis_metadata"]["whole_run_artifacts_available"] is True
     assert stored["analysis"]["analysis_metadata"]["whole_run_window_count"] == 3
     assert stored["analysis"]["analysis_metadata"]["whole_run_sensor_count"] == 1
+    assert stored["analysis"]["analysis_metadata"]["whole_run_artifact_count"] == 2
+
+
+def test_execute_post_analysis_persists_whole_run_context_summary_and_sidecar() -> None:
+    stored: dict[str, object] = {}
+    raw_capture_manifest = RawCaptureManifest(
+        run_id="run-context",
+        relative_dir="raw-runs/run-context",
+        sensors=(),
+        total_samples=0,
+        total_bytes=0,
+        created_at="2025-01-01T00:00:00Z",
+    )
+    window_policy = WholeRunWindowPolicy(
+        sample_rate_hz=800,
+        window_size_samples=2048,
+        stride_samples=200,
+        overlap_samples=1848,
+        feature_interval_s=0.25,
+    )
+    spectral_manifest = WholeRunArtifactManifest(
+        run_id="run-context",
+        relative_dir="whole-run-artifacts/run-context",
+        window_policy=window_policy,
+        total_window_count=3,
+        artifacts=(
+            WholeRunArtifactFile(
+                artifact_key="spectral-summary:sensor-a",
+                relative_path="spectra/sensor-a/windows.jsonl",
+                file_format="jsonl",
+                record_count=3,
+                sensor_id="sensor-a",
+            ),
+        ),
+        created_at="2025-01-01T00:00:00Z",
+    )
+    context_bundle = WholeRunContextArtifactBundle(
+        manifest=WholeRunArtifactManifest(
+            run_id="run-context",
+            relative_dir="whole-run-artifacts/run-context",
+            window_policy=window_policy,
+            total_window_count=3,
+            artifacts=(
+                WholeRunArtifactFile(
+                    artifact_key=WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
+                    relative_path="context/window-labels.jsonl",
+                    file_format="jsonl",
+                    record_count=3,
+                ),
+            ),
+            created_at="2025-01-01T00:00:00Z",
+        ),
+        artifact_contents={
+            WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY: b'{"window_index":0}\n',
+        },
+        labels=(
+            WholeRunContextWindowLabel(
+                window_index=0,
+                segment_index=0,
+                phase=DrivingPhase.IDLE,
+                context_coverage="full",
+                speed_validity="measured",
+                rpm_validity="measured",
+                load_state="idle",
+                speed_kmh=0.0,
+                speed_source="gps",
+                engine_rpm=800.0,
+                engine_rpm_source="obd2",
+            ),
+        ),
+        intervals=(
+            WholeRunContextInterval(
+                segment_index=0,
+                phase=DrivingPhase.IDLE,
+                load_state="idle",
+                start_window_index=0,
+                end_window_index=2,
+                start_t_s=0.0,
+                end_t_s=0.75,
+                speed_min_kmh=0.0,
+                speed_max_kmh=0.0,
+                speed_band="0-10",
+                full_context_window_count=3,
+                partial_context_window_count=0,
+                missing_context_window_count=0,
+            ),
+        ),
+    )
+
+    class FakeDB:
+        async def astore_whole_run_artifacts(self, run_id, manifest, *, artifact_contents):
+            stored["whole_run_run_id"] = run_id
+            stored["whole_run_manifest"] = manifest
+            stored["whole_run_artifact_contents"] = artifact_contents
+            return manifest
+
+        async def astore_analysis(self, run_id, analysis):
+            stored["analysis_run_id"] = run_id
+            stored["analysis"] = analysis
+
+        async def astore_analysis_error(self, run_id, error):
+            raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
+
+    result = execute_post_analysis(
+        run_id="run-context",
+        db=FakeDB(),
+        load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+            run_id=run_id,
+            metadata=_run_metadata(run_id),
+            language="en",
+            samples=_samples(),
+            total_sample_count=1,
+            stride=1,
+            raw_capture_manifest=raw_capture_manifest,
+        ),
+        whole_run_artifact_builder=lambda **_kwargs: type(
+            "Bundle",
+            (),
+            {
+                "manifest": spectral_manifest,
+                "artifact_contents": {"spectral-summary:sensor-a": b"{}\n"},
+            },
+        )(),
+        whole_run_context_builder=lambda **_kwargs: context_bundle,
+        analysis_runner=lambda _run: make_persisted_analysis(
+            {
+                "analysis_metadata": {
+                    "analyzed_sample_count": 1,
+                    "total_sample_count": 1,
+                    "sampling_method": "full",
+                },
+                "run_suitability": [],
+            }
+        ),
+    )
+
+    assert isinstance(result, PostAnalysisExecutionSuccess)
+    merged_manifest = stored["whole_run_manifest"]
+    assert isinstance(merged_manifest, WholeRunArtifactManifest)
+    assert merged_manifest.artifact(WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY) is not None
+    assert merged_manifest.artifact("spectral-summary:sensor-a") is not None
+    assert stored["analysis"]["whole_run_context_intervals"] == [
+        {
+            "segment_index": 0,
+            "phase": "idle",
+            "load_state": "idle",
+            "start_window_index": 0,
+            "end_window_index": 2,
+            "start_t_s": 0.0,
+            "end_t_s": 0.75,
+            "speed_min_kmh": 0.0,
+            "speed_max_kmh": 0.0,
+            "speed_band": "0-10",
+            "full_context_window_count": 3,
+            "partial_context_window_count": 0,
+            "missing_context_window_count": 0,
+        }
+    ]
+    assert stored["analysis"]["analysis_metadata"]["whole_run_context_available"] is True
+    assert stored["analysis"]["analysis_metadata"]["whole_run_context_window_count"] == 3
+    assert stored["analysis"]["analysis_metadata"]["whole_run_context_interval_count"] == 1
+    assert (
+        stored["analysis"]["analysis_metadata"]["whole_run_context_labels_artifact_key"]
+        == WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY
+    )
     assert stored["analysis"]["analysis_metadata"]["whole_run_artifact_count"] == 2
 
 

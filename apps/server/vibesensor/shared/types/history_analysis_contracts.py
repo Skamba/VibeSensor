@@ -62,6 +62,7 @@ __all__ = [
     "SummaryWarningResponse",
     "SuspectedVibrationOriginPayload",
     "TestPlanStepResponse",
+    "WholeRunContextIntervalResponse",
 ]
 
 type PayloadObject = JsonSchemaObject
@@ -123,6 +124,24 @@ class PhaseSegmentSummaryResponse(TypedDict):
     speed_min_kmh: float | None
     speed_max_kmh: float | None
     sample_count: int
+
+
+class WholeRunContextIntervalResponse(TypedDict):
+    """Persisted whole-run context segment keyed to the canonical window grid."""
+
+    segment_index: int
+    phase: str
+    load_state: str
+    start_window_index: int
+    end_window_index: int
+    start_t_s: float | None
+    end_t_s: float | None
+    speed_min_kmh: float | None
+    speed_max_kmh: float | None
+    speed_band: str | None
+    full_context_window_count: int
+    partial_context_window_count: int
+    missing_context_window_count: int
 
 
 class SpeedStatsResponse(TypedDict):
@@ -236,6 +255,7 @@ class AnalysisSummaryCoreResponse(TypedDict, total=False):
     most_likely_origin: Required[SuspectedVibrationOriginPayload]
     test_plan: Required[list[TestPlanStepResponse]]
     phase_timeline: Required[list[PhaseTimelineEntryResponse]]
+    whole_run_context_intervals: list[WholeRunContextIntervalResponse]
     speed_stats: Required[SpeedStatsResponse]
     speed_stats_by_phase: Required[dict[str, SpeedStatsResponse]]
     phase_info: Required[PhaseInfoResponse]
@@ -271,6 +291,7 @@ for _typed_dict in (
     TestPlanStepResponse,
     PhaseTimelineEntryResponse,
     PhaseSegmentSummaryResponse,
+    WholeRunContextIntervalResponse,
     SpeedStatsResponse,
     PhaseInfoResponse,
     OutlierSummaryResponse,
