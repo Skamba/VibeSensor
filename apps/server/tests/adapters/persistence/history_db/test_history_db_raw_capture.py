@@ -41,6 +41,24 @@ def _load_raw_capture(db, run_id: str):
     return db.run_repository._run_sync(db.run_repository.aload_raw_capture(run_id))
 
 
+def _load_raw_capture_range(
+    db,
+    *,
+    run_id: str,
+    client_id: str,
+    sample_start: int,
+    sample_count: int,
+):
+    return db.run_repository._run_sync(
+        db.run_repository.aload_raw_capture_sensor_range(
+            run_id,
+            client_id,
+            sample_start=sample_start,
+            sample_count=sample_count,
+        )
+    )
+
+
 def test_raw_capture_round_trip_persists_manifest_and_samples(tmp_path: Path) -> None:
     db = build_history_db(tmp_path)
     create_recording_run(db, "run-raw")
@@ -85,6 +103,71 @@ def test_delete_run_removes_raw_capture_artifacts(tmp_path: Path) -> None:
     db.run_repository.delete_run("run-delete")
 
     assert not raw_dir.exists()
+
+
+def test_raw_capture_range_read_spans_chunk_boundaries_without_loading_full_capture(
+    tmp_path: Path,
+) -> None:
+    db = build_history_db(tmp_path)
+    create_recording_run(db, "run-range")
+    first = np.asarray([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
+    second = np.asarray([[7, 8, 9], [10, 11, 12], [13, 14, 15]], dtype=np.int16)
+
+    _append_chunk(db, run_id="run-range", client_id="sensor-a", t0_us=1000, samples=first)
+    _append_chunk(db, run_id="run-range", client_id="sensor-a", t0_us=2000, samples=second)
+    manifest = _finalize_raw_capture(db, "run-range")
+
+    assert manifest is not None
+    loaded = _load_raw_capture_range(
+        db,
+        run_id="run-range",
+        client_id="sensor-a",
+        sample_start=1,
+        sample_count=3,
+    )
+
+    assert loaded is not None
+    assert loaded.coverage_state == "full"
+    assert loaded.returned_sample_start == 1
+    assert loaded.returned_sample_count == 3
+    assert len(loaded.chunks) == 2
+    assert np.array_equal(loaded.samples_i16, np.vstack([first[1:], second[:2]]))
+
+
+def test_raw_capture_range_read_marks_partial_and_missing_coverage(tmp_path: Path) -> None:
+    db = build_history_db(tmp_path)
+    create_recording_run(db, "run-partial")
+    samples = np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.int16)
+
+    _append_chunk(db, run_id="run-partial", client_id="sensor-a", t0_us=1000, samples=samples)
+    manifest = _finalize_raw_capture(db, "run-partial")
+
+    assert manifest is not None
+    partial = _load_raw_capture_range(
+        db,
+        run_id="run-partial",
+        client_id="sensor-a",
+        sample_start=2,
+        sample_count=3,
+    )
+    missing = _load_raw_capture_range(
+        db,
+        run_id="run-partial",
+        client_id="sensor-b",
+        sample_start=0,
+        sample_count=2,
+    )
+
+    assert partial is not None
+    assert partial.coverage_state == "partial"
+    assert partial.returned_sample_start == 2
+    assert partial.returned_sample_count == 1
+    assert np.array_equal(partial.samples_i16, samples[2:])
+
+    assert missing is not None
+    assert missing.coverage_state == "missing"
+    assert missing.returned_sample_start is None
+    assert missing.returned_sample_count == 0
 
 
 def test_prune_terminal_runs_removes_raw_capture_artifacts(tmp_path: Path) -> None:

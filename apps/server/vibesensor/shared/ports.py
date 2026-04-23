@@ -17,6 +17,7 @@ from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureManifest,
+    RawCaptureSensorRange,
     RawRunCapture,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -116,6 +117,15 @@ class RunPersistence(Protocol):
     async def aget_raw_capture_manifest(self, run_id: str) -> RawCaptureManifest | None: ...
 
     async def aload_raw_capture(self, run_id: str) -> RawRunCapture | None: ...
+
+    async def aload_raw_capture_sensor_range(
+        self,
+        run_id: str,
+        client_id: str,
+        *,
+        sample_start: int,
+        sample_count: int,
+    ) -> RawCaptureSensorRange | None: ...
 
     async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]: ...
 

@@ -27,7 +27,11 @@ from vibesensor.shared.types.history_records import (
 )
 from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
+from vibesensor.shared.types.raw_capture import (
+    RawCaptureManifest,
+    RawCaptureSensorRange,
+    RawRunCapture,
+)
 from vibesensor.shared.types.run_schema import RunMetadata
 
 LOGGER = logging.getLogger(__name__)
@@ -253,6 +257,25 @@ class _HistoryDBQueryMixin:
         if manifest is None:
             return None
         return await asyncio.to_thread(self._raw_capture_store.load_capture, manifest)
+
+    async def aload_raw_capture_sensor_range(
+        self,
+        run_id: str,
+        client_id: str,
+        *,
+        sample_start: int,
+        sample_count: int,
+    ) -> RawCaptureSensorRange | None:
+        manifest = await self.aget_raw_capture_manifest(run_id)
+        if manifest is None:
+            return None
+        return await asyncio.to_thread(
+            self._raw_capture_store.load_sensor_range,
+            manifest,
+            client_id=client_id,
+            sample_start=sample_start,
+            sample_count=sample_count,
+        )
 
     def get_run_metadata(self, run_id: str) -> RunMetadata | None:
         return self._run_sync(self.aget_run_metadata(run_id))
