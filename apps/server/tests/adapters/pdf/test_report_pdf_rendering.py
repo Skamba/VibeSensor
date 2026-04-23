@@ -26,7 +26,7 @@ from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.shared.boundaries.reporting import prepare_report_input
-from vibesensor.shared.boundaries.reporting.document import ReportDocument
+from vibesensor.shared.boundaries.reporting.document import AppendixAData, ReportDocument
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.history.report_document import build_report_document
 
@@ -325,7 +325,66 @@ def test_report_pdf_renders_run_timeline_graph_labels() -> None:
 
 def test_report_pdf_rejects_invalid_certainty_tier_key() -> None:
     with pytest.raises(ValueError, match="certainty_tier_key"):
-        build_report_pdf(ReportDocument(certainty_tier_key="Z"))
+        build_report_pdf(
+            ReportDocument(
+                title="VibeSensor Diagnostic Report",
+                run_id="run-invalid-tier",
+                lang="en",
+                certainty_tier_key="Z",
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    ("document", "message"),
+    [
+        pytest.param(
+            ReportDocument(title="", run_id="run-missing-title", lang="en"),
+            "title must be non-empty",
+            id="missing-title",
+        ),
+        pytest.param(
+            ReportDocument(title="VibeSensor Diagnostic Report", run_id=None, lang="en"),
+            "run_id must be non-empty",
+            id="missing-run-id",
+        ),
+        pytest.param(
+            ReportDocument(
+                title="VibeSensor Diagnostic Report",
+                run_id="run-missing-lang",
+                lang=" ",
+            ),
+            "lang must be non-empty",
+            id="missing-lang",
+        ),
+        pytest.param(
+            ReportDocument(
+                title="VibeSensor Diagnostic Report",
+                run_id="run-bad-mode",
+                lang="en",
+                appendix_a=AppendixAData(mode="unexpected"),
+            ),
+            "appendix_a.mode",
+            id="invalid-appendix-mode",
+        ),
+        pytest.param(
+            ReportDocument(
+                title="VibeSensor Diagnostic Report",
+                run_id="run-negative-samples",
+                lang="en",
+                sample_count=-1,
+            ),
+            "sample_count must be non-negative",
+            id="negative-sample-count",
+        ),
+    ],
+)
+def test_report_pdf_rejects_incomplete_report_document(
+    document: ReportDocument,
+    message: str,
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        build_report_pdf(document)
 
 
 def test_car_diagram_omits_sensor_labels() -> None:

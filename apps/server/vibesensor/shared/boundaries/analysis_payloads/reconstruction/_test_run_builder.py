@@ -102,6 +102,14 @@ def _findings_from_payloads(raw_findings: object) -> tuple[Finding, ...]:
     )
 
 
+def _resolve_run_id(payload: Mapping[str, object], meta: Mapping[str, object]) -> str:
+    for candidate in (payload.get("run_id"), meta.get("run_id"), payload.get("file_name")):
+        normalized = str(candidate or "").strip()
+        if normalized:
+            return normalized
+    return "unknown"
+
+
 def _test_run_from_payload(payload: Mapping[str, object]) -> TestRun:
     metadata = payload.get("metadata")
     meta = metadata if isinstance(metadata, Mapping) else {}
@@ -207,7 +215,7 @@ def _test_run_from_payload(payload: Mapping[str, object]) -> TestRun:
     except (TypeError, ValueError):
         row_count = 0
     capture = RunCapture(
-        run_id=str(payload.get("run_id") or "unknown"),
+        run_id=_resolve_run_id(payload, meta),
         setup=setup,
         sample_count=row_count,
     )

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 from test_support.findings import make_finding_payload
 
@@ -33,6 +35,60 @@ def test_prepare_report_input_prefers_connected_sensor_locations() -> None:
     )
     assert prepared.report_facts.sensor.active_locations == ("rear-right",)
     assert not hasattr(prepared, "renderer_payload")
+
+
+def test_prepare_report_input_rejects_blank_filename() -> None:
+    prepared = prepare_report_input(
+        {
+            "run_id": "blank-filename",
+            "lang": "en",
+            "metadata": {"run_id": "blank-filename"},
+            "report_date": "",
+            "record_length": "",
+            "start_time_utc": "",
+            "end_time_utc": "",
+            "findings": [],
+            "top_causes": [],
+            "sensor_locations": [],
+            "sensor_locations_connected_throughout": [],
+            "speed_stats": {},
+            "most_likely_origin": {},
+            "run_suitability": [],
+        },
+    )
+
+    with pytest.raises(ValueError, match="filename must be non-empty"):
+        replace(prepared, filename=" ")
+
+
+def test_prepare_report_input_rejects_run_id_mismatch() -> None:
+    prepared = prepare_report_input(
+        {
+            "run_id": "prepared-run",
+            "lang": "en",
+            "metadata": {"run_id": "prepared-run"},
+            "report_date": "",
+            "record_length": "",
+            "start_time_utc": "",
+            "end_time_utc": "",
+            "findings": [],
+            "top_causes": [],
+            "sensor_locations": [],
+            "sensor_locations_connected_throughout": [],
+            "speed_stats": {},
+            "most_likely_origin": {},
+            "run_suitability": [],
+        },
+    )
+
+    with pytest.raises(ValueError, match="run_id mismatch"):
+        replace(
+            prepared,
+            report_facts=replace(
+                prepared.report_facts,
+                run=replace(prepared.report_facts.run, run_id="other-run"),
+            ),
+        )
 
 
 def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> None:
@@ -174,6 +230,37 @@ def test_prepare_persisted_report_input_uses_persisted_reconstruction_path(
 
     assert prepared.domain_test_run is not None
     assert prepared.domain_test_run.capture.run_id == "persisted-run"
+
+
+def test_prepare_persisted_report_input_falls_back_to_metadata_run_id() -> None:
+    analysis = PersistedAnalysis.from_json_object(
+        {
+            "lang": "en",
+            "metadata": {
+                "run_id": "metadata-run",
+                "active_car_snapshot": {"name": "Track Car", "type": "coupe"},
+            },
+            "report_date": "2026-03-23T07:31:01Z",
+            "record_length": "5m",
+            "rows": 120,
+            "duration_s": 300.0,
+            "sensor_count_used": 2,
+            "sensor_locations": ["front-left", "rear-right"],
+            "sensor_locations_connected_throughout": ["front-left"],
+            "sensor_intensity_by_location": [],
+            "most_likely_origin": {},
+            "run_suitability": [],
+            "test_plan": [],
+            "findings": [],
+            "top_causes": [],
+            "warnings": [],
+        }
+    )
+
+    prepared = prepare_persisted_report_input(analysis)
+
+    assert prepared.report_facts.run.run_id == "metadata-run"
+    assert prepared.domain_test_run.capture.run_id == "metadata-run"
 
 
 def test_prepare_report_input_tolerates_invalid_count_strings() -> None:
