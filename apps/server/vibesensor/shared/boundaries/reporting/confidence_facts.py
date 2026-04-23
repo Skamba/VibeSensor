@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, cast
 
 from vibesensor.domain import Finding
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from vibesensor.shared.boundaries.reporting.facts import ReportContextFacts
 
 __all__ = [
+    "apply_report_confidence_fallback",
     "ReportConfidenceFacts",
     "ReportConfidenceScoringInputs",
     "build_report_confidence_facts",
@@ -231,6 +232,24 @@ def _summary_fallback_confidence(
         fallback_reason=fallback_reason,
         signal_keys=(),
         caveat_keys=caveat_keys,
+    )
+
+
+def apply_report_confidence_fallback(
+    facts: ReportConfidenceFacts,
+    *,
+    fallback_reason: str,
+) -> ReportConfidenceFacts:
+    """Mark report confidence as an explicit fallback without changing its core score."""
+
+    caveat_keys = list(facts.caveat_keys)
+    if facts.data_basis == "summary_only" and "summary_only" not in caveat_keys:
+        caveat_keys.append("summary_only")
+    return replace(
+        facts,
+        uses_summary_fallback=True,
+        fallback_reason=fallback_reason,
+        caveat_keys=tuple(caveat_keys),
     )
 
 
