@@ -151,6 +151,12 @@ class PreparedReportFacts:
     whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...]
     findings: PreparedReportFindings
 
+    @property
+    def primary_diagnosis(self) -> ReportWholeRunDiagnosisSummary | None:
+        if not self.whole_run_diagnosis_summaries:
+            return None
+        return self.whole_run_diagnosis_summaries[0]
+
 
 def prepare_report_facts(
     payload: Mapping[str, object],
