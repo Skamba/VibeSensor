@@ -335,6 +335,7 @@ class AnalysisSummaryCoreResponse(TypedDict, total=False):
     test_plan: Required[list[TestPlanStepResponse]]
     phase_timeline: Required[list[PhaseTimelineEntryResponse]]
     whole_run_context_intervals: list[WholeRunContextIntervalResponse]
+    whole_run_order_summaries: list[OrderTraceSummaryResponse]
     speed_stats: Required[SpeedStatsResponse]
     speed_stats_by_phase: Required[dict[str, SpeedStatsResponse]]
     phase_info: Required[PhaseInfoResponse]
