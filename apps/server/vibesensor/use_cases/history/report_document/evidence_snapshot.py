@@ -137,7 +137,11 @@ def _stable_frequency_text(report_facts: PreparedReportFacts, *, tr: Callable[..
 
 def _supporting_sensors_text(report_facts: PreparedReportFacts, *, tr: Callable[..., str]) -> str:
     diagnosis = report_facts.primary_diagnosis
-    if diagnosis is not None and diagnosis.supporting_sensor_count is not None:
+    if (
+        diagnosis is not None
+        and not diagnosis.uses_summary_fallback
+        and diagnosis.supporting_sensor_count is not None
+    ):
         if diagnosis.dominant_location:
             return tr(
                 "REPORT_SUPPORTING_SENSOR_ENTRY",
