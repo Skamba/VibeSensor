@@ -14,9 +14,13 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
     WholeRunOrderTraceArtifactBundle,
 )
+from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
+    SpatialEvidenceWindow,
+)
 from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
     WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY,
     build_whole_run_spatial_coherence_artifact_bundle,
+    summarize_whole_run_spatial_coherence,
 )
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunWindowSpectralSummary,
@@ -273,3 +277,327 @@ def test_build_whole_run_spatial_coherence_artifact_bundle_is_deterministic() ->
     assert first.artifact_contents == second.artifact_contents
     assert first.windows == second.windows
     assert first.summaries == second.summaries
+
+
+def test_summarize_whole_run_spatial_coherence_builds_clear_hotspot_location_summary() -> None:
+    summary = summarize_whole_run_spatial_coherence(
+        (
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=0,
+                sensor_id="sensor-front-left",
+                location="front-left",
+                supporting=True,
+                coherent=True,
+                peak_intensity_db=32.0,
+                vibration_strength_db=28.0,
+                matched_frequency_hz=10.0,
+                coherence_score=1.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=0,
+                sensor_id="sensor-front-right",
+                location="front-right",
+                supporting=True,
+                coherent=True,
+                peak_intensity_db=29.0,
+                vibration_strength_db=25.0,
+                matched_frequency_hz=10.0,
+                coherence_score=1.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=0,
+                sensor_id="sensor-rear-left",
+                location="rear-left",
+                supporting=False,
+                coherent=False,
+                vibration_strength_db=20.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=1,
+                sensor_id="sensor-front-left",
+                location="front-left",
+                supporting=True,
+                coherent=True,
+                peak_intensity_db=31.0,
+                vibration_strength_db=27.0,
+                matched_frequency_hz=12.0,
+                coherence_score=1.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=1,
+                sensor_id="sensor-front-right",
+                location="front-right",
+                supporting=True,
+                coherent=True,
+                peak_intensity_db=28.0,
+                vibration_strength_db=24.0,
+                matched_frequency_hz=12.0,
+                coherence_score=1.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=1,
+                sensor_id="sensor-rear-left",
+                location="rear-left",
+                supporting=False,
+                coherent=False,
+                vibration_strength_db=20.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=2,
+                sensor_id="sensor-front-left",
+                location="front-left",
+                supporting=True,
+                coherent=True,
+                peak_intensity_db=31.0,
+                vibration_strength_db=27.0,
+                matched_frequency_hz=14.0,
+                coherence_score=1.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=2,
+                sensor_id="sensor-front-right",
+                location="front-right",
+                supporting=False,
+                coherent=False,
+                vibration_strength_db=21.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=2,
+                sensor_id="sensor-rear-left",
+                location="rear-left",
+                supporting=True,
+                coherent=True,
+                peak_intensity_db=26.0,
+                vibration_strength_db=23.0,
+                matched_frequency_hz=14.0,
+                coherence_score=1.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=3,
+                sensor_id="sensor-front-left",
+                location="front-left",
+                supporting=True,
+                coherent=False,
+                peak_intensity_db=30.0,
+                vibration_strength_db=26.0,
+                matched_frequency_hz=16.0,
+                coherence_score=0.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=3,
+                sensor_id="sensor-front-right",
+                location="front-right",
+                supporting=False,
+                coherent=False,
+                vibration_strength_db=21.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=3,
+                sensor_id="sensor-rear-left",
+                location="rear-left",
+                supporting=False,
+                coherent=False,
+                vibration_strength_db=20.0,
+            ),
+        )
+    )[0]
+
+    assert summary.supporting_window_count == 4
+    assert summary.coherent_window_count == 3
+    assert summary.coherence_ratio == 0.75
+    assert summary.dominant_location == "front-left"
+    assert summary.runner_up_location == "front-right"
+    assert summary.dominance_ratio == 2.0
+    assert summary.location_separation_db == 2.5
+    assert summary.ambiguous_location is False
+    assert summary.weak_spatial_separation is False
+    assert [location.location for location in summary.location_summaries] == [
+        "front-left",
+        "front-right",
+        "rear-left",
+    ]
+    assert summary.location_summaries[0].support_ratio == 1.0
+    assert summary.location_summaries[0].coherence_ratio == 0.75
+
+
+def test_summarize_whole_run_spatial_coherence_marks_near_tied_locations_ambiguous() -> None:
+    summary = summarize_whole_run_spatial_coherence(
+        (
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=0,
+                sensor_id="sensor-front-left",
+                location="front-left",
+                supporting=True,
+                coherent=False,
+                peak_intensity_db=30.0,
+                vibration_strength_db=25.0,
+                matched_frequency_hz=10.0,
+                coherence_score=0.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=0,
+                sensor_id="sensor-front-right",
+                location="front-right",
+                supporting=False,
+                coherent=False,
+                vibration_strength_db=22.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=0,
+                sensor_id="sensor-rear-left",
+                location="rear-left",
+                supporting=False,
+                coherent=False,
+                vibration_strength_db=20.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=1,
+                sensor_id="sensor-front-left",
+                location="front-left",
+                supporting=True,
+                coherent=True,
+                peak_intensity_db=30.0,
+                vibration_strength_db=25.0,
+                matched_frequency_hz=12.0,
+                coherence_score=1.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=1,
+                sensor_id="sensor-front-right",
+                location="front-right",
+                supporting=True,
+                coherent=True,
+                peak_intensity_db=29.0,
+                vibration_strength_db=24.0,
+                matched_frequency_hz=12.0,
+                coherence_score=1.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=1,
+                sensor_id="sensor-rear-left",
+                location="rear-left",
+                supporting=False,
+                coherent=False,
+                vibration_strength_db=20.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=2,
+                sensor_id="sensor-front-left",
+                location="front-left",
+                supporting=True,
+                coherent=True,
+                peak_intensity_db=30.0,
+                vibration_strength_db=25.0,
+                matched_frequency_hz=14.0,
+                coherence_score=1.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=2,
+                sensor_id="sensor-front-right",
+                location="front-right",
+                supporting=True,
+                coherent=True,
+                peak_intensity_db=29.0,
+                vibration_strength_db=24.0,
+                matched_frequency_hz=14.0,
+                coherence_score=1.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=2,
+                sensor_id="sensor-rear-left",
+                location="rear-left",
+                supporting=False,
+                coherent=False,
+                vibration_strength_db=20.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=3,
+                sensor_id="sensor-front-left",
+                location="front-left",
+                supporting=False,
+                coherent=False,
+                vibration_strength_db=22.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=3,
+                sensor_id="sensor-front-right",
+                location="front-right",
+                supporting=True,
+                coherent=False,
+                peak_intensity_db=29.0,
+                vibration_strength_db=24.0,
+                matched_frequency_hz=16.0,
+                coherence_score=0.0,
+            ),
+            SpatialEvidenceWindow(
+                candidate_key="wheel_1x",
+                suspected_source="wheel/tire",
+                window_index=3,
+                sensor_id="sensor-rear-left",
+                location="rear-left",
+                supporting=False,
+                coherent=False,
+                vibration_strength_db=20.0,
+            ),
+        )
+    )[0]
+
+    assert summary.supporting_window_count == 4
+    assert summary.coherent_window_count == 2
+    assert summary.coherence_ratio == 0.5
+    assert summary.dominant_location == "front-left"
+    assert summary.runner_up_location == "front-right"
+    assert summary.dominance_ratio == 1.0
+    assert summary.location_separation_db == 1.0
+    assert summary.ambiguous_location is True
+    assert summary.weak_spatial_separation is True
+    assert [location.supporting_window_count for location in summary.location_summaries[:2]] == [
+        3,
+        3,
+    ]
