@@ -369,6 +369,16 @@ That layer should settle:
   thresholds and score deltas already used by `ReportConfidenceFacts`, so the
   fused whole-run path does not drift from current report confidence semantics
 
+The actual ranker should live alongside that contract in
+`apps/server/vibesensor/use_cases/diagnostics/whole_run_diagnosis_ranking.py`.
+Its first job is to join persisted `OrderTraceSummary`,
+`SpatialEvidenceSummary`, and `WholeRunContextInterval` rows by candidate key
+and segment context, then feed normalized signal inputs through the shared
+non-fallback scorer in
+`apps/server/vibesensor/shared/boundaries/reporting/confidence_facts.py`. That
+keeps whole-run ranking and the current report-confidence caveat language on one
+scoring path instead of creating a second threshold table.
+
 ## Shared contracts to settle early
 
 | Contract | Suggested owner | Notes |
