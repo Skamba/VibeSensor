@@ -16,12 +16,18 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
-from vibesensor.domain import DrivingPhase
+from vibesensor.domain import DrivingPhase, speed_band_sort_key
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhaseSegment
+from vibesensor.shared.types.whole_run_analysis import (
+    WholeRunContextInterval,
+    WholeRunContextLoadState,
+    WholeRunContextWindowLabel,
+)
 from vibesensor.use_cases.diagnostics._types import Sample
+from vibesensor.use_cases.diagnostics.whole_run_windows import WholeRunWindowPlan
 
 # Thresholds (tuneable)
 _IDLE_SPEED_KMH = 3.0  # below this → IDLE
@@ -42,6 +48,14 @@ class PhaseSegment:
     speed_min_kmh: float | None = None
     speed_max_kmh: float | None = None
     sample_count: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class WholeRunPhaseSegmentation:
+    """Whole-run phase segmentation result over normalized window context."""
+
+    labels: tuple[WholeRunContextWindowLabel, ...]
+    intervals: tuple[WholeRunContextInterval, ...]
 
 
 def _find_nearest_valid(
@@ -272,6 +286,138 @@ def segment_run_phases(
         seg_start = i
 
     return per_sample, segments
+
+
+def segment_whole_run_context(
+    *,
+    labels: Sequence[WholeRunContextWindowLabel],
+    window_plan: WholeRunWindowPlan,
+) -> WholeRunPhaseSegmentation:
+    """Segment normalized whole-run labels into deterministic phase intervals."""
+
+    if not labels:
+        return WholeRunPhaseSegmentation(labels=(), intervals=())
+    windows = window_plan.windows
+    if len(labels) != len(windows):
+        raise ValueError("whole-run phase segmentation requires one label per planned window")
+    for label, window in zip(labels, windows, strict=True):
+        if label.window_index != window.window_index:
+            raise ValueError("whole-run phase segmentation requires labels ordered by window_index")
+
+    speeds: list[float | None] = [
+        label.speed_kmh
+        if (
+            label.speed_kmh is not None
+            and not label.speed_is_stale
+            and label.speed_validity != "missing"
+        )
+        else None
+        for label in labels
+    ]
+    times: list[float | None] = [window.center_t_s for window in windows]
+    per_window_phases: list[DrivingPhase] = []
+    for index in range(len(labels)):
+        deriv = _estimate_speed_derivative(speeds, times, index)
+        per_window_phases.append(classify_sample_phase(speeds[index], deriv))
+    _interpolate_speed_unknown(per_window_phases)
+
+    intervals: list[WholeRunContextInterval] = []
+    updated_labels: list[WholeRunContextWindowLabel] = []
+    segment_start = 0
+    for index in range(1, len(per_window_phases) + 1):
+        if (
+            index < len(per_window_phases)
+            and per_window_phases[index] == per_window_phases[segment_start]
+        ):
+            continue
+        segment_end = index - 1
+        phase = per_window_phases[segment_start]
+        interval = _build_whole_run_context_interval(
+            segment_index=len(intervals),
+            phase=phase,
+            labels=labels[segment_start : segment_end + 1],
+            windows=windows[segment_start : segment_end + 1],
+        )
+        intervals.append(interval)
+        load_state = _load_state_from_phase(phase)
+        for label_index in range(segment_start, segment_end + 1):
+            updated_labels.append(
+                replace(
+                    labels[label_index],
+                    phase=phase,
+                    load_state=load_state,
+                    segment_index=interval.segment_index,
+                )
+            )
+        segment_start = index
+
+    return WholeRunPhaseSegmentation(labels=tuple(updated_labels), intervals=tuple(intervals))
+
+
+def _build_whole_run_context_interval(
+    *,
+    segment_index: int,
+    phase: DrivingPhase,
+    labels: Sequence[WholeRunContextWindowLabel],
+    windows: Sequence,
+) -> WholeRunContextInterval:
+    fresh_speeds = [
+        label.speed_kmh
+        for label in labels
+        if (
+            label.speed_kmh is not None
+            and not label.speed_is_stale
+            and label.speed_validity != "missing"
+        )
+    ]
+    coverage_counts = {
+        "full": sum(1 for label in labels if label.context_coverage == "full"),
+        "partial": sum(1 for label in labels if label.context_coverage == "partial"),
+        "missing": sum(1 for label in labels if label.context_coverage == "missing"),
+    }
+    return WholeRunContextInterval(
+        segment_index=segment_index,
+        phase=phase,
+        load_state=_load_state_from_phase(phase),
+        start_window_index=windows[0].window_index,
+        end_window_index=windows[-1].window_index,
+        start_t_s=windows[0].start_t_s,
+        end_t_s=windows[-1].end_t_s,
+        speed_min_kmh=min(fresh_speeds) if fresh_speeds else None,
+        speed_max_kmh=max(fresh_speeds) if fresh_speeds else None,
+        speed_band=_dominant_speed_band(labels),
+        full_context_window_count=coverage_counts["full"],
+        partial_context_window_count=coverage_counts["partial"],
+        missing_context_window_count=coverage_counts["missing"],
+    )
+
+
+def _dominant_speed_band(labels: Sequence[WholeRunContextWindowLabel]) -> str | None:
+    band_counts: dict[str, int] = {}
+    for label in labels:
+        if label.speed_band is None or label.speed_is_stale:
+            continue
+        band_counts[label.speed_band] = band_counts.get(label.speed_band, 0) + 1
+    if not band_counts:
+        return None
+    return max(
+        band_counts.items(),
+        key=lambda item: (item[1], speed_band_sort_key(item[0])),
+    )[0]
+
+
+def _load_state_from_phase(phase: DrivingPhase) -> WholeRunContextLoadState:
+    if phase is DrivingPhase.IDLE:
+        return "idle"
+    if phase in {
+        DrivingPhase.ACCELERATION,
+        DrivingPhase.DECELERATION,
+        DrivingPhase.COAST_DOWN,
+    }:
+        return "transient"
+    if phase is DrivingPhase.CRUISE:
+        return "steady"
+    return "unknown"
 
 
 def phase_summary(segments: list[PhaseSegment]) -> DrivingPhaseSummary:
