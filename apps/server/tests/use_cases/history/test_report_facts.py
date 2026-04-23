@@ -242,6 +242,67 @@ def test_prepare_report_facts_keeps_phase_timeline_intervals() -> None:
     assert facts.run.timeline_intervals[1].has_fault_evidence is True
 
 
+def test_prepare_report_facts_projects_whole_run_context_facts_from_persisted_analysis() -> None:
+    summary = _summary()
+    summary["analysis_metadata"] = {
+        "raw_backed_sample_count": 24,
+        "raw_capture_mode": "raw_backed",
+        "whole_run_context_available": True,
+        "whole_run_context_window_count": 6,
+        "whole_run_context_interval_count": 2,
+        "whole_run_context_full_window_count": 4,
+        "whole_run_context_partial_window_count": 1,
+        "whole_run_context_missing_window_count": 1,
+        "whole_run_context_missing_speed_window_count": 1,
+        "whole_run_context_missing_rpm_window_count": 0,
+        "whole_run_context_stale_speed_window_count": 0,
+        "whole_run_context_stale_rpm_window_count": 1,
+    }
+    summary["whole_run_context_intervals"] = [
+        {
+            "segment_index": 0,
+            "phase": "cruise",
+            "load_state": "light",
+            "start_window_index": 0,
+            "end_window_index": 2,
+            "start_t_s": 0.0,
+            "end_t_s": 1.5,
+            "speed_min_kmh": 58.0,
+            "speed_max_kmh": 62.0,
+            "speed_band": "50-70",
+            "full_context_window_count": 3,
+            "partial_context_window_count": 0,
+            "missing_context_window_count": 0,
+        },
+        {
+            "segment_index": 1,
+            "phase": "accel",
+            "load_state": "pulling",
+            "start_window_index": 3,
+            "end_window_index": 5,
+            "start_t_s": 1.5,
+            "end_t_s": 3.0,
+            "full_context_window_count": 1,
+            "partial_context_window_count": 1,
+            "missing_context_window_count": 1,
+        },
+    ]
+
+    facts = _prepare_facts(summary)
+
+    assert facts.context.traceable is True
+    assert facts.context.source == "whole_run"
+    assert facts.context.interval_count == 2
+    assert facts.context.window_count == 6
+    assert facts.context.has_incomplete_context is True
+    assert facts.context.has_speed_gaps is True
+    assert facts.context.has_rpm_gaps is True
+    assert len(facts.context.intervals) == 2
+    assert facts.context.intervals[0].phase == "cruise"
+    assert facts.context.intervals[1].missing_context_window_count == 1
+    assert [warning.code for warning in facts.decision.warnings] == ["whole_run_context_incomplete"]
+
+
 def test_build_report_document_builds_workflow_document_sections() -> None:
     summary = _summary()
     document = _prepare_document(summary)

@@ -21,6 +21,7 @@ from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [
     "NormalizedReportSummary",
+    "ReportWholeRunContextInterval",
     "ReportSummaryNormalizer",
     "ReportTimelineInterval",
     "has_projectable_report_payload",
@@ -42,6 +43,29 @@ class ReportTimelineInterval:
 
 
 @dataclass(frozen=True, slots=True)
+class ReportWholeRunContextInterval:
+    """Typed whole-run context interval normalized for report/history preparation."""
+
+    segment_index: int
+    phase: str
+    load_state: str
+    start_window_index: int
+    end_window_index: int
+    start_t_s: float | None
+    end_t_s: float | None
+    speed_min_kmh: float | None
+    speed_max_kmh: float | None
+    speed_band: str | None
+    full_context_window_count: int
+    partial_context_window_count: int
+    missing_context_window_count: int
+
+    @property
+    def window_count(self) -> int:
+        return (self.end_window_index - self.start_window_index) + 1
+
+
+@dataclass(frozen=True, slots=True)
 class NormalizedReportSummary:
     """Typed report boundary object shared by report facts and renderer mapping."""
 
@@ -58,6 +82,7 @@ class NormalizedReportSummary:
     sensor_intensity_rows: tuple[LocationIntensitySummary, ...]
     peak_table_rows: tuple[PeakTableRow, ...]
     timeline_intervals: tuple[ReportTimelineInterval, ...]
+    whole_run_context_intervals: tuple[ReportWholeRunContextInterval, ...]
 
 
 class ReportSummaryNormalizer:
@@ -84,6 +109,7 @@ class ReportSummaryNormalizer:
             sensor_intensity_rows=self._sensor_intensity_rows(),
             peak_table_rows=self._peak_table_rows(),
             timeline_intervals=self._timeline_intervals(),
+            whole_run_context_intervals=self._whole_run_context_intervals(),
         )
 
     def _summary_run_metadata(self) -> RunMetadata | None:
@@ -151,6 +177,41 @@ class ReportSummaryNormalizer:
                     speed_min_kmh=optional_float(row.get("speed_min_kmh")),
                     speed_max_kmh=optional_float(row.get("speed_max_kmh")),
                     has_fault_evidence=bool(row.get("has_fault_evidence")),
+                )
+            )
+        return tuple(intervals)
+
+    def _whole_run_context_intervals(self) -> tuple[ReportWholeRunContextInterval, ...]:
+        raw_intervals = self._payload.get("whole_run_context_intervals")
+        if not isinstance(raw_intervals, list):
+            return ()
+        intervals: list[ReportWholeRunContextInterval] = []
+        for row in raw_intervals:
+            if not isinstance(row, Mapping):
+                continue
+            phase = text_or_none(row.get("phase"))
+            load_state = text_or_none(row.get("load_state"))
+            if phase is None or load_state is None:
+                continue
+            intervals.append(
+                ReportWholeRunContextInterval(
+                    segment_index=coerce_count(row.get("segment_index")),
+                    phase=phase,
+                    load_state=load_state,
+                    start_window_index=coerce_count(row.get("start_window_index")),
+                    end_window_index=coerce_count(row.get("end_window_index")),
+                    start_t_s=optional_float(row.get("start_t_s")),
+                    end_t_s=optional_float(row.get("end_t_s")),
+                    speed_min_kmh=optional_float(row.get("speed_min_kmh")),
+                    speed_max_kmh=optional_float(row.get("speed_max_kmh")),
+                    speed_band=text_or_none(row.get("speed_band")),
+                    full_context_window_count=coerce_count(row.get("full_context_window_count")),
+                    partial_context_window_count=coerce_count(
+                        row.get("partial_context_window_count")
+                    ),
+                    missing_context_window_count=coerce_count(
+                        row.get("missing_context_window_count")
+                    ),
                 )
             )
         return tuple(intervals)
