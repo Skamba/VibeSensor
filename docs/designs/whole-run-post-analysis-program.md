@@ -330,6 +330,23 @@ not just renderer-time prose. Good initial keys fit the current
 Whole-run fusion can add new stable keys, but should continue producing compact,
 explainable factors that reporting can consume directly.
 
+The contract owner for the fused output should now live in
+`apps/server/vibesensor/use_cases/diagnostics/whole_run_diagnosis_contracts.py`.
+That layer should settle:
+
+- compact `WholeRunDiagnosisSummary` rows persisted as
+  `whole_run_diagnosis_summaries`
+- structured `DiagnosisExemplarReference` links back to compact order support
+  intervals, spatial hotspot rows, and context intervals already persisted
+  elsewhere
+- explicit top-level ambiguity, suspicious-case, and fallback markers that later
+  report/history consumers can project without inventing a second diagnosis
+  wrapper
+
+Stable support-factor and counterevidence-factor vocabularies still belong to
+the follow-on factor issue; this contract stage should define the diagnosis shell
+without burying those semantics in renderer-only prose.
+
 ## Shared contracts to settle early
 
 | Contract | Suggested owner | Notes |
@@ -342,7 +359,7 @@ explainable factors that reporting can consume directly.
 | `OrderTracePoint` / `OrderTraceSummary` | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Dense trace vs compact report/history summary split |
 | `SpatialEvidenceSummary` | `apps/server/vibesensor/use_cases/diagnostics/spatial_evidence_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Candidate-level coherence, location separation, ambiguity flags, and proof basis |
 | `WholeRunSpatialAlignmentMatrix` / `AlignedSpatialWindow` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_spatial_alignment.py` | Deterministic per-window sensor joins with explicit coverage-state semantics for later spatial scoring |
-| `DiagnosisFactor` / `DiagnosisSummary` | diagnostics domain/use-case layer plus persisted projection | Explainable support and counterevidence for final ranking |
+| `DiagnosisExemplarReference` / `WholeRunDiagnosisSummary` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_diagnosis_contracts.py` with persisted projection in `shared/types/history_analysis_contracts.py` | Fused diagnosis shell, exemplar links to compact order/spatial/context summaries, and explicit ambiguity/fallback markers for later ranking/report wiring |
 
 For the context track:
 
