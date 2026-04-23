@@ -147,7 +147,7 @@ def build_verdict_page(*, context: ReportDocumentContext) -> VerdictPageData:
         aggregate=context.test_run,
         primary=context.primary,
         report_confidence=context.report_facts.confidence,
-        diagnosis_summaries=context.report_facts.whole_run_diagnosis_summaries,
+        diagnosis_summaries=context.report_facts.report_surface_diagnosis_summaries,
         duration_text=context.run_facts.duration_text,
         verdict_context=context.verdict_page_context,
         suitability_checks=context.decision_facts.suitability_checks,
