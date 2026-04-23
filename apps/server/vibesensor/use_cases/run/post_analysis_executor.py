@@ -522,6 +522,27 @@ def _append_whole_run_context(
     analysis_metadata["whole_run_context_available"] = True
     analysis_metadata["whole_run_context_window_count"] = int(bundle.manifest.total_window_count)
     analysis_metadata["whole_run_context_interval_count"] = len(bundle.intervals)
+    analysis_metadata["whole_run_context_full_window_count"] = sum(
+        1 for label in bundle.labels if label.context_coverage == "full"
+    )
+    analysis_metadata["whole_run_context_partial_window_count"] = sum(
+        1 for label in bundle.labels if label.context_coverage == "partial"
+    )
+    analysis_metadata["whole_run_context_missing_window_count"] = sum(
+        1 for label in bundle.labels if label.context_coverage == "missing"
+    )
+    analysis_metadata["whole_run_context_missing_speed_window_count"] = sum(
+        1 for label in bundle.labels if label.speed_validity == "missing"
+    )
+    analysis_metadata["whole_run_context_missing_rpm_window_count"] = sum(
+        1 for label in bundle.labels if label.rpm_validity == "missing"
+    )
+    analysis_metadata["whole_run_context_stale_speed_window_count"] = sum(
+        1 for label in bundle.labels if label.speed_is_stale
+    )
+    analysis_metadata["whole_run_context_stale_rpm_window_count"] = sum(
+        1 for label in bundle.labels if label.rpm_is_stale
+    )
     analysis_metadata["whole_run_context_labels_artifact_key"] = (
         WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY
     )

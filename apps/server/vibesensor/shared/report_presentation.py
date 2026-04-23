@@ -414,6 +414,8 @@ def _confidence_caveat_texts(
     for key in confidence_facts.caveat_keys:
         if key == "summary_only":
             parts.append(tr("REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY"))
+        elif key == "legacy_context":
+            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT"))
         elif key == "sparse_support":
             parts.append(
                 tr(
@@ -421,6 +423,10 @@ def _confidence_caveat_texts(
                     count=str(max(0, confidence_facts.supporting_window_count or 0)),
                 )
             )
+        elif key == "speed_context_gaps":
+            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_SPEED_CONTEXT_GAPS"))
+        elif key == "rpm_context_gaps":
+            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_RPM_CONTEXT_GAPS"))
         elif key == "brief_support" and confidence_facts.supporting_duration_s is not None:
             parts.append(
                 tr(

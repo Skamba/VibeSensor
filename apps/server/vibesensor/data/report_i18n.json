@@ -263,6 +263,18 @@
     "en": "only summary-level evidence was available",
     "nl": "alleen samenvattingsniveau-bewijs was beschikbaar"
   },
+  "REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT": {
+    "en": "this run predates whole-run context coverage tracking",
+    "nl": "deze run is ouder dan de whole-run contextdekkingsregistratie"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_SPEED_CONTEXT_GAPS": {
+    "en": "speed context was missing or stale for part of the run",
+    "nl": "snelheidscontext ontbrak of was verouderd voor een deel van de run"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_RPM_CONTEXT_GAPS": {
+    "en": "RPM context was missing or stale for part of the run",
+    "nl": "toerentalcontext ontbrak of was verouderd voor een deel van de run"
+  },
   "REPORT_CONFIDENCE_CAVEAT_WEAK_SPATIAL": {
     "en": "support spread too widely across the car",
     "nl": "de steun verspreidde zich te breed over de auto"
@@ -1654,6 +1666,22 @@
   "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE": {
     "en": "Order-analysis reference context was incomplete for this run",
     "nl": "De referentiecontext voor ordeanalyse was onvolledig voor deze run"
+  },
+  "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_INCOMPLETE_DETAIL": {
+    "en": "Whole-run context was persisted for this run, but {partial_windows} windows had partial context and {missing_windows} windows had none. Speed context gaps affected {speed_gap_windows} windows and RPM context gaps affected {rpm_gap_windows} windows.",
+    "nl": "Whole-run context is voor deze run bewaard, maar {partial_windows} vensters hadden slechts gedeeltelijke context en {missing_windows} vensters helemaal geen. Snelheidscontext-hiaten raakten {speed_gap_windows} vensters en toerentalcontext-hiaten raakten {rpm_gap_windows} vensters."
+  },
+  "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_INCOMPLETE_TITLE": {
+    "en": "Whole-run context coverage was incomplete for this run",
+    "nl": "De whole-run contextdekking was onvolledig voor deze run"
+  },
+  "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_LEGACY_DETAIL": {
+    "en": "This persisted run predates whole-run context coverage tracking, so report caveats fall back to older summary-era context signals.",
+    "nl": "Deze bewaarde run dateert van voor de whole-run contextdekkingsregistratie, dus rapportkanttekeningen vallen terug op oudere signalen uit het samenvattingstijdperk."
+  },
+  "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_LEGACY_TITLE": {
+    "en": "Whole-run context coverage was not captured for this persisted run",
+    "nl": "Whole-run contextdekking is niet vastgelegd voor deze bewaarde run"
   },
   "WORKSHOP_SUMMARY": {
     "en": "Workshop Summary",
