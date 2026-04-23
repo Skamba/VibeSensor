@@ -121,6 +121,46 @@ class OrderMatchAccumulator:
         return max(longest, current)
 
 
+@dataclass(frozen=True)
+class OrderPeakMatch:
+    """Best matching spectral peak for one predicted order frequency."""
+
+    peak_index: int
+    matched_hz: float
+    amplitude_g: float
+    relative_error: float
+
+
+def best_order_peak_match(
+    peaks: Sequence[tuple[float, float]],
+    *,
+    predicted_hz: float,
+    path_compliance: float,
+) -> OrderPeakMatch | None:
+    """Return the closest peak within the hypothesis tolerance window."""
+
+    if predicted_hz <= 0 or not peaks:
+        return None
+    compliance_scale = path_compliance**0.5
+    tolerance_hz = max(
+        ORDER_TOLERANCE_MIN_HZ,
+        predicted_hz * ORDER_TOLERANCE_REL * compliance_scale,
+    )
+    peak_index, (best_hz, best_amp) = min(
+        enumerate(peaks),
+        key=lambda item: abs(item[1][0] - predicted_hz),
+    )
+    delta_hz = abs(best_hz - predicted_hz)
+    if delta_hz > tolerance_hz:
+        return None
+    return OrderPeakMatch(
+        peak_index=peak_index,
+        matched_hz=best_hz,
+        amplitude_g=best_amp,
+        relative_error=delta_hz / max(1e-9, predicted_hz),
+    )
+
+
 def match_samples_for_hypothesis(
     samples: Sequence[Sample],
     cached_peaks: list[list[tuple[float, float]]],
@@ -149,7 +189,6 @@ def match_samples_for_hypothesis(
     matched_by_location: dict[str, int] = defaultdict(int)
     has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
     compliance = getattr(hypothesis, "path_compliance", 1.0)
-    compliance_scale = compliance**0.5
 
     for sample_idx, sample in enumerate(samples):
         peaks = cached_peaks[sample_idx]
@@ -180,13 +219,12 @@ def match_samples_for_hypothesis(
             phase_key = str(phase.value if hasattr(phase, "value") else phase)
             possible_by_phase[phase_key] += 1
 
-        tolerance_hz = max(
-            ORDER_TOLERANCE_MIN_HZ,
-            predicted_hz * ORDER_TOLERANCE_REL * compliance_scale,
+        peak_match = best_order_peak_match(
+            peaks,
+            predicted_hz=predicted_hz,
+            path_compliance=compliance,
         )
-        best_hz, best_amp = min(peaks, key=lambda item: abs(item[0] - predicted_hz))
-        delta_hz = abs(best_hz - predicted_hz)
-        if delta_hz > tolerance_hz:
+        if peak_match is None:
             continue
 
         matched += 1
@@ -198,20 +236,20 @@ def match_samples_for_hypothesis(
         if has_phases and phase_key is not None:
             matched_by_phase[phase_key] += 1
 
-        rel_errors.append(delta_hz / max(1e-9, predicted_hz))
-        matched_amp.append(best_amp)
+        rel_errors.append(peak_match.relative_error)
+        matched_amp.append(peak_match.amplitude_g)
         floor_amp = _estimate_strength_floor_amp_g(sample)
         matched_floor.append(max(0.0, floor_amp if floor_amp is not None else 0.0))
         predicted_vals.append(predicted_hz)
-        measured_vals.append(best_hz)
+        measured_vals.append(peak_match.matched_hz)
         matched_points.append(
             OrderMatchObservation(
                 t_s=sample.t_s,
                 speed_kmh=sample.speed_kmh,
                 predicted_hz=predicted_hz,
-                matched_hz=best_hz,
-                rel_error=delta_hz / max(1e-9, predicted_hz),
-                amp=best_amp,
+                matched_hz=peak_match.matched_hz,
+                rel_error=peak_match.relative_error,
+                amp=peak_match.amplitude_g,
                 location=sample_location,
                 phase=(
                     _phase_to_str(per_sample_phases[sample_idx])

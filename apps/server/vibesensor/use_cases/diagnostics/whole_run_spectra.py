@@ -7,15 +7,15 @@ from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Protocol
+from typing import Protocol, cast
 
 import numpy as np
 
 from vibesensor.shared.constants.dsp import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, float_list, medfilt3
-from vibesensor.shared.json_utils import safe_json_dumps
+from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.time_utils import utc_now_iso
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.shared.types.raw_capture import (
     RawCaptureCoverageState,
     RawCaptureManifest,
@@ -42,6 +42,8 @@ __all__ = [
     "WholeRunSpectralArtifactBundle",
     "WholeRunWindowSpectralSummary",
     "build_whole_run_spectral_artifact_bundle",
+    "whole_run_window_spectral_summaries_from_jsonl_bytes",
+    "whole_run_window_spectral_summaries_to_jsonl_bytes",
 ]
 
 
@@ -100,6 +102,40 @@ class WholeRunWindowSpectralSummary:
         if self.strength_bucket is not None:
             payload["strength_bucket"] = self.strength_bucket
         return payload
+
+    @classmethod
+    def from_mapping(cls, data: JsonObject) -> WholeRunWindowSpectralSummary:
+        top_peaks_raw = data.get("top_peaks")
+        top_peaks: list[StrengthPeak] = []
+        if isinstance(top_peaks_raw, list):
+            for item in top_peaks_raw:
+                if not is_json_object(item):
+                    continue
+                hz = _float_or_none(item.get("hz"))
+                amp = _float_or_none(item.get("amp"))
+                vibration_strength_db = _float_or_none(item.get("vibration_strength_db"))
+                if hz is None or amp is None or vibration_strength_db is None:
+                    continue
+                top_peaks.append(
+                    {
+                        "hz": hz,
+                        "amp": amp,
+                        "vibration_strength_db": vibration_strength_db,
+                        "strength_bucket": _text_or_none(item.get("strength_bucket")),
+                    }
+                )
+        return cls(
+            window_index=_int_or_default(data.get("window_index"), default=0),
+            coverage_state=_coverage_state(data.get("coverage_state")),
+            returned_sample_start=_int_or_none(data.get("returned_sample_start")),
+            returned_sample_count=_int_or_default(data.get("returned_sample_count"), default=0),
+            dominant_freq_hz=_float_or_none(data.get("dominant_freq_hz")),
+            vibration_strength_db=_float_or_none(data.get("vibration_strength_db")),
+            strength_peak_amp_g=_float_or_none(data.get("strength_peak_amp_g")),
+            strength_floor_amp_g=_float_or_none(data.get("strength_floor_amp_g")),
+            strength_bucket=_text_or_none(data.get("strength_bucket")),
+            top_peaks=tuple(top_peaks),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -447,7 +483,9 @@ def _build_artifact_bundle(
         )
         artifact_contents[freq_artifact_key] = _npy_bytes(freq_hz)
         artifact_contents[matrix_artifact_key] = _npy_bytes(spectrum_rows)
-        artifact_contents[summary_artifact_key] = _summary_jsonl_bytes(summaries)
+        artifact_contents[summary_artifact_key] = (
+            whole_run_window_spectral_summaries_to_jsonl_bytes(summaries)
+        )
     manifest = WholeRunArtifactManifest(
         run_id=run_id,
         relative_dir=f"{WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME}/{run_id}",
@@ -516,17 +554,64 @@ def _npy_bytes(array: np.ndarray) -> bytes:
     return buffer.getvalue()
 
 
-def _summary_jsonl_bytes(summaries: Sequence[WholeRunWindowSpectralSummary]) -> bytes:
+def whole_run_window_spectral_summaries_to_jsonl_bytes(
+    summaries: Sequence[WholeRunWindowSpectralSummary],
+) -> bytes:
     if not summaries:
         return b""
     lines = [safe_json_dumps(summary.to_json_object()).encode("utf-8") for summary in summaries]
     return b"\n".join(lines) + b"\n"
 
 
+def whole_run_window_spectral_summaries_from_jsonl_bytes(
+    payload: bytes,
+) -> tuple[WholeRunWindowSpectralSummary, ...]:
+    """Reconstruct persisted whole-run spectral summaries from sidecar JSONL bytes."""
+
+    if not payload:
+        return ()
+    summaries: list[WholeRunWindowSpectralSummary] = []
+    text = payload.decode("utf-8")
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        parsed = safe_json_loads(line, context="whole-run spectral summaries")
+        if not is_json_object(parsed):
+            raise ValueError("whole-run spectral summary line must decode to a JSON object")
+        summaries.append(WholeRunWindowSpectralSummary.from_mapping(parsed))
+    return tuple(summaries)
+
+
 def _float_or_none(value: object) -> float | None:
     if isinstance(value, (int, float)):
         return float(value)
     return None
+
+
+def _int_or_none(value: object) -> int | None:
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    return None
+
+
+def _int_or_default(value: object, *, default: int) -> int:
+    parsed = _int_or_none(value)
+    return parsed if parsed is not None else default
+
+
+def _text_or_none(value: object) -> str | None:
+    return value if isinstance(value, str) else None
+
+
+def _coverage_state(value: object) -> RawCaptureCoverageState:
+    if value in {"missing", "empty", "partial", "full"}:
+        return cast(RawCaptureCoverageState, value)
+    return "missing"
 
 
 def _default_frequency_grid(*, sample_rate_hz: int, fft_n: int) -> np.ndarray:
