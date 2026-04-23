@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from math import ceil
 
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.raw_capture import RawRunCapture
+from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -22,6 +22,7 @@ class LoadedPostAnalysisRun:
     total_sample_count: int
     stride: int
     raw_capture: RawRunCapture | None = None
+    raw_capture_manifest: RawCaptureManifest | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,9 +57,11 @@ def load_post_analysis_run(
     async def _aload() -> PostAnalysisLoadResult:
         aget_run = getattr(db, "aget_run", None)
         stored_run = await aget_run(run_id) if callable(aget_run) else None
+        raw_capture_manifest: RawCaptureManifest | None = None
         if stored_run is not None:
             metadata = stored_run.metadata
             total_sample_count = max(0, int(stored_run.sample_count))
+            raw_capture_manifest = getattr(stored_run, "raw_capture_manifest", None)
         else:
             metadata = await db.aget_run_metadata(run_id)
             if metadata is None:
@@ -67,6 +70,9 @@ def load_post_analysis_run(
                     error_message="Metadata not found or corrupt; cannot analyse",
                 )
             total_sample_count = 0
+            get_raw_capture_manifest = getattr(db, "aget_raw_capture_manifest", None)
+            if callable(get_raw_capture_manifest):
+                raw_capture_manifest = await get_raw_capture_manifest(run_id)
 
         stride = _sample_stride(total_sample_count)
         samples: list[SensorFrame] = []
@@ -94,6 +100,7 @@ def load_post_analysis_run(
             total_sample_count=total_sample_count,
             stride=stride,
             raw_capture=raw_capture,
+            raw_capture_manifest=raw_capture_manifest,
         )
 
     runner = getattr(db, "_run_on_engine_loop", None)

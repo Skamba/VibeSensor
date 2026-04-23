@@ -254,7 +254,7 @@ for example via:
 points that sit before persisted diagnostics:
 
 - `strength`: canonical vibration-strength math in `vibesensor.vibration_strength`
-- `fft`: pure FFT spectrum assembly in `vibesensor.infra.processing.fft`
+- `fft`: pure FFT spectrum assembly in `vibesensor.shared.fft_analysis`
 - `processor`: live ingest / compute / debug payload paths in `SignalProcessor`
 
 Both fuzzers default to 16 concurrent worker processes. Use `--processes` to

@@ -9,7 +9,13 @@ from test_support.tracing import configured_trace_output, read_trace_output
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.whole_run_analysis import (
+    WholeRunArtifactFile,
+    WholeRunArtifactManifest,
+    WholeRunWindowPolicy,
+)
 from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
 from vibesensor.use_cases.run.post_analysis_loader import (
@@ -307,6 +313,102 @@ def test_execute_post_analysis_passes_canonical_typed_input_to_runner() -> None:
     assert captured["run_input_type"] is PostAnalysisRunInput
     assert captured["context_run_id"] == "run-input"
     assert captured["sample_type"] == "SensorFrame"
+
+
+def test_execute_post_analysis_stores_whole_run_artifacts_and_appends_metadata() -> None:
+    stored: dict[str, object] = {}
+    raw_capture_manifest = RawCaptureManifest(
+        run_id="run-whole-run",
+        relative_dir="raw-runs/run-whole-run",
+        sensors=(),
+        total_samples=0,
+        total_bytes=0,
+        created_at="2025-01-01T00:00:00Z",
+    )
+    whole_run_manifest = WholeRunArtifactManifest(
+        run_id="run-whole-run",
+        relative_dir="whole-run-artifacts/run-whole-run",
+        window_policy=WholeRunWindowPolicy(
+            sample_rate_hz=800,
+            window_size_samples=2048,
+            stride_samples=200,
+            overlap_samples=1848,
+            feature_interval_s=0.25,
+        ),
+        total_window_count=3,
+        artifacts=(
+            WholeRunArtifactFile(
+                artifact_key="spectral-grid:sensor-a",
+                relative_path="spectra/sensor-a/freq.f32.npy",
+                file_format="npy-f32-vector",
+                record_count=10,
+                sensor_id="sensor-a",
+            ),
+            WholeRunArtifactFile(
+                artifact_key="spectral-summary:sensor-a",
+                relative_path="spectra/sensor-a/windows.jsonl",
+                file_format="jsonl",
+                record_count=3,
+                sensor_id="sensor-a",
+            ),
+        ),
+        created_at="2025-01-01T00:00:00Z",
+    )
+
+    class FakeDB:
+        async def astore_whole_run_artifacts(self, run_id, manifest, *, artifact_contents):
+            stored["whole_run_run_id"] = run_id
+            stored["whole_run_manifest"] = manifest
+            stored["whole_run_artifact_contents"] = artifact_contents
+            return manifest
+
+        async def astore_analysis(self, run_id, analysis):
+            stored["analysis_run_id"] = run_id
+            stored["analysis"] = analysis
+
+        async def astore_analysis_error(self, run_id, error):
+            raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
+
+    result = execute_post_analysis(
+        run_id="run-whole-run",
+        db=FakeDB(),
+        load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+            run_id=run_id,
+            metadata=_run_metadata(run_id),
+            language="en",
+            samples=_samples(),
+            total_sample_count=1,
+            stride=1,
+            raw_capture_manifest=raw_capture_manifest,
+        ),
+        whole_run_artifact_builder=lambda **_kwargs: type(
+            "Bundle",
+            (),
+            {
+                "manifest": whole_run_manifest,
+                "artifact_contents": {"spectral-summary:sensor-a": b"{}\n"},
+            },
+        )(),
+        analysis_runner=lambda _run: make_persisted_analysis(
+            {
+                "analysis_metadata": {
+                    "analyzed_sample_count": 1,
+                    "total_sample_count": 1,
+                    "sampling_method": "full",
+                },
+                "run_suitability": [],
+            }
+        ),
+    )
+
+    assert isinstance(result, PostAnalysisExecutionSuccess)
+    assert stored["whole_run_run_id"] == "run-whole-run"
+    assert stored["whole_run_manifest"] == whole_run_manifest
+    assert stored["analysis_run_id"] == "run-whole-run"
+    assert stored["analysis"]["analysis_metadata"]["whole_run_artifacts_available"] is True
+    assert stored["analysis"]["analysis_metadata"]["whole_run_window_count"] == 3
+    assert stored["analysis"]["analysis_metadata"]["whole_run_sensor_count"] == 1
+    assert stored["analysis"]["analysis_metadata"]["whole_run_artifact_count"] == 2
 
 
 def _capture_run_input(captured: dict[str, object], run: PostAnalysisRunInput):
