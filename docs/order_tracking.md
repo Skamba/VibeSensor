@@ -147,6 +147,7 @@ That shared ownership is why `shared/order_bands.py` exists outside
 | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_traces.py` | Build deterministic dense whole-run order traces from spectral summaries plus context labels. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_scoring.py` | Collapse dense whole-run traces into deterministic lock/stability summaries for later persistence. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_family_summaries.py` | Collapse scored harmonic traces into family-level support intervals and phase summaries. |
+| `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` | Persist ranked compact whole-run order summaries into `analysis_json` while keeping dense traces sidecar-only. |
 
 ## Whole-run order trace contract split
 
@@ -169,8 +170,13 @@ Whole-run order work keeps one order model and changes only the sampling grid:
   per-candidate summaries up into source-family summaries with deterministic
   `support_intervals`, `phase_support`, `stable_frequency_*_hz`, and
   `exemplar_interval_index` fields while keeping the dense traces sidecar-only
-- compact persisted/report-facing projections use the future summary shapes in
-  `shared/types/history_analysis_contracts.py`
+- `use_cases/run/post_analysis_executor.py` now projects those family summaries
+  into a ranked persisted `whole_run_order_summaries` payload so history/report
+  reload paths can consume compact whole-run order evidence without reading the
+  dense sidecars back in
+- compact persisted/report-facing projections use the summary shapes in
+  `shared/types/history_analysis_contracts.py` and the report-side normalizer in
+  `shared/boundaries/reporting/summary.py`
 - the compact summary contract carries support intervals, phase support, and
   harmonic evidence rows, while the dense point contract keeps per-window
   predicted/matched frequency evidence

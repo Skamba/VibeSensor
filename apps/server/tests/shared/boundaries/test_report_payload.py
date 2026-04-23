@@ -48,6 +48,7 @@ def test_report_summary_from_mapping_defaults_without_nested_metadata() -> None:
     assert summary.sensor_intensity_rows == ()
     assert summary.peak_table_rows == ()
     assert summary.timeline_intervals == ()
+    assert summary.whole_run_order_summaries == ()
 
 
 def test_report_summary_from_mapping_projects_canonical_metadata_and_rows() -> None:
@@ -99,6 +100,84 @@ def test_report_summary_from_mapping_projects_canonical_metadata_and_rows() -> N
     assert len(summary.timeline_intervals) == 1
     assert summary.timeline_intervals[0].phase == "cruise"
     assert summary.timeline_intervals[0].speed_min_kmh == 58.0
+
+
+def test_report_summary_from_mapping_normalizes_whole_run_order_summaries() -> None:
+    summary = report_summary_from_mapping(
+        {
+            "run_id": "run-123",
+            "metadata": {"run_id": "run-123"},
+            "whole_run_order_summaries": [
+                {
+                    "hypothesis_key": "wheel",
+                    "suspected_source": "wheel/tire",
+                    "order_family": "wheel",
+                    "order_label": "wheel family",
+                    "total_window_count": 12,
+                    "eligible_window_count": 10,
+                    "matched_window_count": 8,
+                    "support_ratio": 0.8,
+                    "reference_coverage_ratio": 0.83,
+                    "longest_contiguous_support_window_count": 4,
+                    "contiguous_support_ratio": 0.4,
+                    "support_intervals": [
+                        {
+                            "interval_index": 0,
+                            "start_window_index": 2,
+                            "end_window_index": 5,
+                            "matched_window_count": 4,
+                            "support_ratio": 1.0,
+                            "phase": "cruise",
+                        }
+                    ],
+                    "phase_support": [
+                        {
+                            "phase": "cruise",
+                            "eligible_window_count": 10,
+                            "matched_window_count": 8,
+                            "support_ratio": 0.8,
+                        }
+                    ],
+                    "harmonic_summaries": [
+                        {
+                            "harmonic": 1,
+                            "order_label": "1x wheel",
+                            "eligible_window_count": 10,
+                            "matched_window_count": 8,
+                            "support_ratio": 0.8,
+                            "reference_coverage_ratio": 0.83,
+                            "contiguous_support_ratio": 0.4,
+                            "lock_score": 0.76,
+                            "drift_score": 0.91,
+                        }
+                    ],
+                    "stable_frequency_min_hz": 13.1,
+                    "stable_frequency_max_hz": 13.7,
+                    "exemplar_interval_index": 0,
+                    "dominant_phase": "cruise",
+                    "dominant_speed_band": "60-80 km/h",
+                    "strongest_location": "front-left",
+                    "mean_relative_error": 0.02,
+                    "relative_error_stddev": 0.01,
+                    "drift_score": 0.91,
+                    "lock_score": 0.76,
+                    "peak_intensity_db": 18.0,
+                    "mean_vibration_strength_db": 11.5,
+                    "ref_sources": ["speed+tire"],
+                }
+            ],
+        }
+    )
+
+    assert len(summary.whole_run_order_summaries) == 1
+    order_summary = summary.whole_run_order_summaries[0]
+    assert order_summary.hypothesis_key == "wheel"
+    assert order_summary.matched_window_count == 8
+    assert order_summary.support_intervals[0].phase == "cruise"
+    assert order_summary.phase_support[0].support_ratio == 0.8
+    assert order_summary.harmonic_summaries[0].harmonic == 1
+    assert order_summary.stable_frequency_min_hz == 13.1
+    assert order_summary.ref_sources == ("speed+tire",)
 
 
 def test_report_summary_requires_connected_active_locations() -> None:

@@ -768,6 +768,13 @@
             },
             "title": "Whole Run Context Intervals",
             "type": "array"
+          },
+          "whole_run_order_summaries": {
+            "items": {
+              "$ref": "#/components/schemas/OrderTraceSummaryResponse"
+            },
+            "title": "Whole Run Order Summaries",
+            "type": "array"
           }
         },
         "required": [
@@ -3432,6 +3439,13 @@
             },
             "title": "Whole Run Context Intervals",
             "type": "array"
+          },
+          "whole_run_order_summaries": {
+            "items": {
+              "$ref": "#/components/schemas/OrderTraceSummaryResponse"
+            },
+            "title": "Whole Run Order Summaries",
+            "type": "array"
           }
         },
         "required": [
@@ -4477,6 +4491,449 @@
           "debug_hint"
         ],
         "title": "ObdStatusResponse",
+        "type": "object"
+      },
+      "OrderHarmonicEvidenceSummaryResponse": {
+        "description": "Compact harmonic-specific evidence row for a whole-run order-trace summary.",
+        "properties": {
+          "contiguous_support_ratio": {
+            "title": "Contiguous Support Ratio",
+            "type": "number"
+          },
+          "drift_score": {
+            "title": "Drift Score",
+            "type": "number"
+          },
+          "eligible_window_count": {
+            "title": "Eligible Window Count",
+            "type": "integer"
+          },
+          "harmonic": {
+            "title": "Harmonic",
+            "type": "integer"
+          },
+          "lock_score": {
+            "title": "Lock Score",
+            "type": "number"
+          },
+          "matched_window_count": {
+            "title": "Matched Window Count",
+            "type": "integer"
+          },
+          "mean_relative_error": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Relative Error"
+          },
+          "mean_vibration_strength_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Vibration Strength Db"
+          },
+          "order_label": {
+            "title": "Order Label",
+            "type": "string"
+          },
+          "peak_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Intensity Db"
+          },
+          "reference_coverage_ratio": {
+            "title": "Reference Coverage Ratio",
+            "type": "number"
+          },
+          "relative_error_stddev": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Error Stddev"
+          },
+          "support_ratio": {
+            "title": "Support Ratio",
+            "type": "number"
+          }
+        },
+        "required": [
+          "harmonic",
+          "order_label",
+          "eligible_window_count",
+          "matched_window_count",
+          "support_ratio",
+          "reference_coverage_ratio",
+          "contiguous_support_ratio",
+          "lock_score",
+          "drift_score"
+        ],
+        "title": "OrderHarmonicEvidenceSummaryResponse",
+        "type": "object"
+      },
+      "OrderTracePhaseSupportResponse": {
+        "description": "Phase-aware support row for a compact whole-run order-trace summary.",
+        "properties": {
+          "eligible_window_count": {
+            "title": "Eligible Window Count",
+            "type": "integer"
+          },
+          "matched_window_count": {
+            "title": "Matched Window Count",
+            "type": "integer"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "support_ratio": {
+            "title": "Support Ratio",
+            "type": "number"
+          }
+        },
+        "required": [
+          "phase",
+          "eligible_window_count",
+          "matched_window_count",
+          "support_ratio"
+        ],
+        "title": "OrderTracePhaseSupportResponse",
+        "type": "object"
+      },
+      "OrderTraceSummaryResponse": {
+        "description": "Future persisted/report-facing summary shape for whole-run order traces.",
+        "properties": {
+          "contiguous_support_ratio": {
+            "title": "Contiguous Support Ratio",
+            "type": "number"
+          },
+          "dominant_phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominant Phase"
+          },
+          "dominant_speed_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominant Speed Band"
+          },
+          "drift_score": {
+            "title": "Drift Score",
+            "type": "number"
+          },
+          "eligible_window_count": {
+            "title": "Eligible Window Count",
+            "type": "integer"
+          },
+          "exemplar_interval_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exemplar Interval Index"
+          },
+          "harmonic_summaries": {
+            "items": {
+              "$ref": "#/components/schemas/OrderHarmonicEvidenceSummaryResponse"
+            },
+            "title": "Harmonic Summaries",
+            "type": "array"
+          },
+          "hypothesis_key": {
+            "title": "Hypothesis Key",
+            "type": "string"
+          },
+          "lock_score": {
+            "title": "Lock Score",
+            "type": "number"
+          },
+          "longest_contiguous_support_window_count": {
+            "title": "Longest Contiguous Support Window Count",
+            "type": "integer"
+          },
+          "matched_window_count": {
+            "title": "Matched Window Count",
+            "type": "integer"
+          },
+          "mean_relative_error": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Relative Error"
+          },
+          "mean_vibration_strength_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Vibration Strength Db"
+          },
+          "order_family": {
+            "title": "Order Family",
+            "type": "string"
+          },
+          "order_label": {
+            "title": "Order Label",
+            "type": "string"
+          },
+          "peak_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Intensity Db"
+          },
+          "phase_support": {
+            "items": {
+              "$ref": "#/components/schemas/OrderTracePhaseSupportResponse"
+            },
+            "title": "Phase Support",
+            "type": "array"
+          },
+          "ref_sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ref Sources",
+            "type": "array"
+          },
+          "reference_coverage_ratio": {
+            "title": "Reference Coverage Ratio",
+            "type": "number"
+          },
+          "relative_error_stddev": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Error Stddev"
+          },
+          "stable_frequency_max_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stable Frequency Max Hz"
+          },
+          "stable_frequency_min_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stable Frequency Min Hz"
+          },
+          "strongest_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strongest Location"
+          },
+          "support_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/OrderTraceSupportIntervalResponse"
+            },
+            "title": "Support Intervals",
+            "type": "array"
+          },
+          "support_ratio": {
+            "title": "Support Ratio",
+            "type": "number"
+          },
+          "suspected_source": {
+            "title": "Suspected Source",
+            "type": "string"
+          },
+          "total_window_count": {
+            "title": "Total Window Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "hypothesis_key",
+          "suspected_source",
+          "order_family",
+          "order_label",
+          "total_window_count",
+          "eligible_window_count",
+          "matched_window_count",
+          "support_ratio",
+          "reference_coverage_ratio",
+          "longest_contiguous_support_window_count",
+          "contiguous_support_ratio",
+          "support_intervals",
+          "phase_support",
+          "harmonic_summaries",
+          "drift_score",
+          "lock_score",
+          "ref_sources"
+        ],
+        "title": "OrderTraceSummaryResponse",
+        "type": "object"
+      },
+      "OrderTraceSupportIntervalResponse": {
+        "description": "Compact persisted support interval derived from dense whole-run order traces.",
+        "properties": {
+          "end_t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End T S"
+          },
+          "end_window_index": {
+            "title": "End Window Index",
+            "type": "integer"
+          },
+          "interval_index": {
+            "title": "Interval Index",
+            "type": "integer"
+          },
+          "load_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Load State"
+          },
+          "matched_window_count": {
+            "title": "Matched Window Count",
+            "type": "integer"
+          },
+          "mean_relative_error": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Relative Error"
+          },
+          "phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase"
+          },
+          "speed_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Band"
+          },
+          "start_t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start T S"
+          },
+          "start_window_index": {
+            "title": "Start Window Index",
+            "type": "integer"
+          },
+          "support_ratio": {
+            "title": "Support Ratio",
+            "type": "number"
+          }
+        },
+        "required": [
+          "interval_index",
+          "start_window_index",
+          "end_window_index",
+          "matched_window_count",
+          "support_ratio"
+        ],
+        "title": "OrderTraceSupportIntervalResponse",
         "type": "object"
       },
       "OutlierSummaryResponse": {
