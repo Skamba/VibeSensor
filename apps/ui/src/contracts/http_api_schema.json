@@ -761,6 +761,13 @@
             },
             "title": "Warnings",
             "type": "array"
+          },
+          "whole_run_context_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/WholeRunContextIntervalResponse"
+            },
+            "title": "Whole Run Context Intervals",
+            "type": "array"
           }
         },
         "required": [
@@ -3417,6 +3424,13 @@
               "$ref": "#/components/schemas/HistoryInsightWarningResponse"
             },
             "title": "Warnings",
+            "type": "array"
+          },
+          "whole_run_context_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/WholeRunContextIntervalResponse"
+            },
+            "title": "Whole Run Context Intervals",
             "type": "array"
           }
         },
@@ -6790,6 +6804,110 @@
           "top_peaks"
         ],
         "title": "VibrationStrengthMetrics",
+        "type": "object"
+      },
+      "WholeRunContextIntervalResponse": {
+        "description": "Persisted whole-run context segment keyed to the canonical window grid.",
+        "properties": {
+          "end_t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End T S"
+          },
+          "end_window_index": {
+            "title": "End Window Index",
+            "type": "integer"
+          },
+          "full_context_window_count": {
+            "title": "Full Context Window Count",
+            "type": "integer"
+          },
+          "load_state": {
+            "title": "Load State",
+            "type": "string"
+          },
+          "missing_context_window_count": {
+            "title": "Missing Context Window Count",
+            "type": "integer"
+          },
+          "partial_context_window_count": {
+            "title": "Partial Context Window Count",
+            "type": "integer"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "segment_index": {
+            "title": "Segment Index",
+            "type": "integer"
+          },
+          "speed_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Band"
+          },
+          "speed_max_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Max Kmh"
+          },
+          "speed_min_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Min Kmh"
+          },
+          "start_t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start T S"
+          },
+          "start_window_index": {
+            "title": "Start Window Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "segment_index",
+          "phase",
+          "load_state",
+          "start_window_index",
+          "end_window_index",
+          "full_context_window_count",
+          "partial_context_window_count",
+          "missing_context_window_count"
+        ],
+        "title": "WholeRunContextIntervalResponse",
         "type": "object"
       }
     }

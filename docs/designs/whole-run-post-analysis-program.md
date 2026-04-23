@@ -301,6 +301,11 @@ Recommended follow-on behavior:
 2. Store only compact summaries and exemplars in `PersistedAnalysis`.
 3. Use the whole-run sidecar only for dense artifacts such as spectra, traces,
    matrices, and debug payloads.
+4. For the context track specifically, persist
+   `whole_run_context_intervals` in `analysis_json`, keep
+   `analysis_metadata.whole_run_context_*` as cheap presence/count pointers, and
+   store dense `WholeRunContextWindowLabel` rows as the canonical
+   `context-window-labels` JSONL sidecar artifact.
 
 This keeps legacy report loading cheap and avoids turning the history DB blob
 into a large binary transport.

@@ -28,6 +28,7 @@ class PostAnalysisRunInput:
     raw_capture_available: bool
     raw_backed_sample_count: int
     summary_samples: tuple[Sample, ...] = field(default_factory=tuple)
+    context_samples: tuple[Sample, ...] = field(default_factory=tuple)
 
     @property
     def run_id(self) -> str:
@@ -63,6 +64,9 @@ def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunI
         raw_capture_available=loaded.raw_capture is not None,
         raw_backed_sample_count=raw_backed_sample_count,
         summary_samples=tuple(loaded.samples),
+        context_samples=(
+            tuple(loaded.context_samples) if loaded.context_samples is not None else tuple()
+        ),
     )
 
 

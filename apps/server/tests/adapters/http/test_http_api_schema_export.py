@@ -175,6 +175,9 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
     assert analysis_summary["properties"]["phase_timeline"]["items"] == {
         "$ref": "#/components/schemas/PhaseTimelineEntryResponse",
     }
+    assert analysis_summary["properties"]["whole_run_context_intervals"]["items"] == {
+        "$ref": "#/components/schemas/WholeRunContextIntervalResponse",
+    }
     assert analysis_summary["properties"]["speed_stats"] == {
         "$ref": "#/components/schemas/SpeedStatsResponse",
     }

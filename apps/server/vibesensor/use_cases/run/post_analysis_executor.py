@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from dataclasses import dataclass
 from typing import Any, Protocol, cast
 
 import aiosqlite
@@ -17,6 +18,11 @@ from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawCaptureSensorRange
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.use_cases.diagnostics.whole_run_context import (
+    WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
+    WholeRunContextArtifactBundle,
+    build_whole_run_context_artifact_bundle,
+)
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralArtifactBundle,
     build_whole_run_spectral_artifact_bundle,
@@ -93,6 +99,25 @@ class WholeRunArtifactBuilder(Protocol):
     ) -> WholeRunSpectralArtifactBundle | None: ...
 
 
+class WholeRunContextBuilder(Protocol):
+    """Injected boundary for building dense whole-run context sidecars."""
+
+    def __call__(
+        self,
+        *,
+        run: PostAnalysisRunInput,
+        total_sample_count: int,
+    ) -> WholeRunContextArtifactBundle | None: ...
+
+
+@dataclass(frozen=True, slots=True)
+class _StoredWholeRunArtifactBundle:
+    """Generic sidecar bundle shape for final manifest persistence."""
+
+    manifest: WholeRunArtifactManifest
+    artifact_contents: dict[str, bytes]
+
+
 def execute_post_analysis(
     *,
     run_id: str,
@@ -100,6 +125,7 @@ def execute_post_analysis(
     analysis_runner: PostAnalysisRunner,
     load_run: PostAnalysisLoader = load_post_analysis_run,
     whole_run_artifact_builder: WholeRunArtifactBuilder | None = None,
+    whole_run_context_builder: WholeRunContextBuilder | None = None,
     defer_retryable_error_storage: bool = False,
 ) -> PostAnalysisAttemptResult:
     analysis_start = time.monotonic()
@@ -107,6 +133,11 @@ def execute_post_analysis(
         _build_whole_run_artifacts
         if whole_run_artifact_builder is None
         else whole_run_artifact_builder
+    )
+    resolved_whole_run_context_builder = (
+        _build_whole_run_context_artifacts
+        if whole_run_context_builder is None
+        else whole_run_context_builder
     )
     with start_span(
         __name__,
@@ -174,29 +205,40 @@ def execute_post_analysis(
 
         loaded = load_result
         try:
+            run_input = build_post_analysis_input(loaded)
             stored_artifact_manifest: WholeRunArtifactManifest | None = None
+            context_bundle: WholeRunContextArtifactBundle | None = None
             if loaded.raw_capture_manifest is not None:
-                artifact_bundle = resolved_whole_run_artifact_builder(
+                spectral_bundle = resolved_whole_run_artifact_builder(
                     run_id=loaded.run_id,
                     metadata=loaded.metadata,
                     raw_capture_manifest=loaded.raw_capture_manifest,
                     db=db,
                 )
-                if artifact_bundle is not None:
+                context_bundle = resolved_whole_run_context_builder(
+                    run=run_input,
+                    total_sample_count=_whole_run_total_sample_count(loaded.raw_capture_manifest),
+                )
+                merged_bundle = _merge_whole_run_artifact_bundles(
+                    spectral_bundle,
+                    context_bundle,
+                )
+                if merged_bundle is not None:
                     stored_artifact_manifest = _sync_call(
                         db,
                         "astore_whole_run_artifacts",
                         loaded.run_id,
-                        artifact_bundle.manifest,
-                        artifact_contents=artifact_bundle.artifact_contents,
+                        merged_bundle.manifest,
+                        artifact_contents=merged_bundle.artifact_contents,
                     )
                     if stored_artifact_manifest is None:
                         raise OSError(
                             f"Failed to persist whole-run artifacts for run {loaded.run_id}"
                         )
-            run_input = build_post_analysis_input(loaded)
             span.set_attribute("vibesensor.sample_count", len(run_input.samples))
             summary = analysis_runner(run_input)
+            if context_bundle is not None:
+                summary = _append_whole_run_context(summary, context_bundle)
             if stored_artifact_manifest is not None:
                 summary = _append_whole_run_analysis_metadata(summary, stored_artifact_manifest)
             _sync_call(db, "astore_analysis", loaded.run_id, summary)
@@ -379,6 +421,73 @@ def _build_whole_run_artifacts(
     )
 
 
+def _build_whole_run_context_artifacts(
+    *,
+    run: PostAnalysisRunInput,
+    total_sample_count: int,
+) -> WholeRunContextArtifactBundle | None:
+    if total_sample_count < 0:
+        raise ValueError("whole-run context builder requires total_sample_count >= 0")
+    return build_whole_run_context_artifact_bundle(
+        run_id=run.run_id,
+        metadata=run.context,
+        samples=run.context_samples,
+        total_sample_count=total_sample_count,
+    )
+
+
+def _whole_run_total_sample_count(manifest: RawCaptureManifest) -> int:
+    if manifest.sensors:
+        return max(int(sensor.sample_count) for sensor in manifest.sensors)
+    return max(0, int(manifest.total_samples))
+
+
+def _merge_whole_run_artifact_bundles(
+    spectral_bundle: WholeRunSpectralArtifactBundle | None,
+    context_bundle: WholeRunContextArtifactBundle | None,
+) -> _StoredWholeRunArtifactBundle | None:
+    active_bundles = [bundle for bundle in (spectral_bundle, context_bundle) if bundle is not None]
+    if not active_bundles:
+        return None
+    base_manifest = active_bundles[0].manifest
+    merged_artifacts = list(base_manifest.artifacts)
+    merged_contents = dict(active_bundles[0].artifact_contents)
+    for bundle in active_bundles[1:]:
+        manifest = bundle.manifest
+        if (
+            manifest.run_id != base_manifest.run_id
+            or manifest.relative_dir != base_manifest.relative_dir
+            or manifest.window_policy != base_manifest.window_policy
+            or manifest.total_window_count != base_manifest.total_window_count
+        ):
+            raise ValueError("whole-run artifact bundles must share the same run/window plan")
+        for artifact in manifest.artifacts:
+            if artifact.artifact_key in merged_contents:
+                raise ValueError(
+                    "whole-run artifact bundles must not reuse artifact keys: "
+                    f"{artifact.artifact_key}"
+                )
+            if artifact.artifact_key not in bundle.artifact_contents:
+                raise ValueError(
+                    f"whole-run artifact bundle missing bytes for {artifact.artifact_key}"
+                )
+            merged_artifacts.append(artifact)
+        merged_contents.update(bundle.artifact_contents)
+    return _StoredWholeRunArtifactBundle(
+        manifest=WholeRunArtifactManifest(
+            run_id=base_manifest.run_id,
+            relative_dir=base_manifest.relative_dir,
+            window_policy=base_manifest.window_policy,
+            total_window_count=base_manifest.total_window_count,
+            artifacts=tuple(merged_artifacts),
+            created_at=base_manifest.created_at,
+            schema_version=base_manifest.schema_version,
+            storage_type=base_manifest.storage_type,
+        ),
+        artifact_contents=merged_contents,
+    )
+
+
 def _append_whole_run_analysis_metadata(
     summary: PersistedAnalysis,
     manifest: WholeRunArtifactManifest,
@@ -395,4 +504,25 @@ def _append_whole_run_analysis_metadata(
     analysis_metadata["whole_run_window_count"] = int(manifest.total_window_count)
     analysis_metadata["whole_run_sensor_count"] = len(sensor_ids)
     analysis_metadata["whole_run_artifact_count"] = len(manifest.artifacts)
+    return PersistedAnalysis.from_json_object(payload)
+
+
+def _append_whole_run_context(
+    summary: PersistedAnalysis,
+    bundle: WholeRunContextArtifactBundle,
+) -> PersistedAnalysis:
+    payload = summary.to_json_object()
+    payload["whole_run_context_intervals"] = [
+        interval.to_json_object() for interval in bundle.intervals
+    ]
+    analysis_metadata = payload.get("analysis_metadata")
+    if not isinstance(analysis_metadata, dict):
+        analysis_metadata = {}
+        payload["analysis_metadata"] = analysis_metadata
+    analysis_metadata["whole_run_context_available"] = True
+    analysis_metadata["whole_run_context_window_count"] = int(bundle.manifest.total_window_count)
+    analysis_metadata["whole_run_context_interval_count"] = len(bundle.intervals)
+    analysis_metadata["whole_run_context_labels_artifact_key"] = (
+        WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY
+    )
     return PersistedAnalysis.from_json_object(payload)
