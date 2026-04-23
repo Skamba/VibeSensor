@@ -14,6 +14,7 @@ from vibesensor.shared.boundaries.reporting.findings import FindingPresentation
 from vibesensor.shared.report_presentation import (
     coverage_label,
     coverage_notes,
+    display_location,
     proof_caveat_text,
     runner_up_corner,
 )
@@ -97,8 +98,17 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
         location_confidence_key=decision_facts.location_confidence_key,
         tr=tr,
     )
-    runner_up = runner_up_corner(sensor_facts.proof_intensity, tr=tr)
-    speed_window_label = str(decision_facts.primary_candidate.primary_speed or "").strip() or None
+    primary_diagnosis = report_facts.primary_diagnosis
+    runner_up = (
+        display_location(primary_diagnosis.runner_up_location, tr=tr)
+        if primary_diagnosis is not None and primary_diagnosis.runner_up_location
+        else runner_up_corner(sensor_facts.proof_intensity, tr=tr)
+    )
+    speed_window_label = (
+        str(primary_diagnosis.dominant_speed_band or "").strip()
+        if primary_diagnosis is not None
+        else str(decision_facts.primary_candidate.primary_speed or "").strip()
+    ) or None
     recapture = build_recapture_assessment(
         aggregate=test_run,
         primary_candidate_facts=decision_facts.primary_candidate,
@@ -115,6 +125,7 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
         aggregate=test_run,
         facts=decision_facts.primary_candidate,
         confidence_facts=report_facts.confidence,
+        diagnosis_summary=primary_diagnosis,
         tr=tr,
         lang=lang,
     )
@@ -144,7 +155,11 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
         appendix_a_context=AppendixAContext(
             action_status_key=decision_facts.action_status_key,
             alternative_source_visible=decision_facts.alternative_source_visible,
-            ranked_candidates=build_ranked_candidates(test_run, tr=tr),
+            ranked_candidates=build_ranked_candidates(
+                test_run,
+                diagnosis_summaries=report_facts.report_surface_diagnosis_summaries,
+                tr=tr,
+            ),
             recapture=recapture,
         ),
         appendix_b_context=AppendixBContext(

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING
 
 from vibesensor.domain import Finding, SuitabilityCheck, TestRun
 from vibesensor.report_i18n import human_source
@@ -23,6 +24,9 @@ from vibesensor.shared.report_presentation import (
 from vibesensor.shared.run_context_warning import RunContextWarning
 
 from .section_context import AppendixAContext, RecaptureAssessment
+
+if TYPE_CHECKING:
+    from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
 
 __all__ = [
     "build_appendix_a_data",
@@ -98,8 +102,19 @@ def build_appendix_a_data(
 def build_ranked_candidates(
     aggregate: TestRun,
     *,
+    diagnosis_summaries: Sequence[ReportWholeRunDiagnosisSummary] = (),
     tr: Callable[..., str],
 ) -> tuple[RankedCandidateRow, ...]:
+    if diagnosis_summaries and not diagnosis_summaries[0].uses_summary_fallback:
+        return tuple(
+            _ranked_candidate_row_from_diagnosis_summary(
+                aggregate,
+                summary=summary,
+                index=index,
+                tr=tr,
+            )
+            for index, summary in enumerate(diagnosis_summaries[:3])
+        )
     candidates = list(aggregate.effective_top_causes()[:3])
     rows: list[RankedCandidateRow] = []
     primary_finding = candidates[0] if candidates else None
@@ -123,6 +138,36 @@ def build_ranked_candidates(
             ),
         )
     return tuple(rows)
+
+
+def _ranked_candidate_row_from_diagnosis_summary(
+    aggregate: TestRun,
+    *,
+    summary: ReportWholeRunDiagnosisSummary,
+    index: int,
+    tr: Callable[..., str],
+) -> RankedCandidateRow:
+    matched_finding = _finding_for_diagnosis_summary(aggregate, summary=summary)
+    inspect_first = (
+        display_location(summary.dominant_location, tr=tr)
+        if summary.dominant_location
+        else (
+            display_location(matched_finding.strongest_location, tr=tr)
+            if matched_finding is not None
+            else tr("UNKNOWN")
+        )
+    )
+    return RankedCandidateRow(
+        source_name=human_source(summary.suspected_source, tr=tr),
+        confidence_pct=(
+            f"{max(0.0, summary.total_score or 0.0) * 100:.0f}%"
+            if summary.total_score is not None
+            else ""
+        ),
+        inspect_first=inspect_first,
+        path_role=f"{index + 1}. {_path_role_text(index, tr=tr)}",
+        reason=_diagnosis_summary_reason_text(summary, matched_finding=matched_finding, tr=tr),
+    )
 
 
 def build_recapture_assessment(
@@ -292,6 +337,42 @@ def _candidate_reason_text(
         location=location,
         speed=speed_window or tr("UNKNOWN"),
     )
+
+
+def _finding_for_diagnosis_summary(
+    aggregate: TestRun,
+    *,
+    summary: ReportWholeRunDiagnosisSummary,
+) -> Finding | None:
+    for finding in aggregate.effective_top_causes():
+        if str(finding.suspected_source) == summary.suspected_source:
+            return finding
+    for finding in aggregate.findings:
+        if str(finding.suspected_source) == summary.suspected_source:
+            return finding
+    return None
+
+
+def _diagnosis_summary_reason_text(
+    summary: ReportWholeRunDiagnosisSummary,
+    *,
+    matched_finding: Finding | None,
+    tr: Callable[..., str],
+) -> str:
+    if summary.supporting_duration_s is not None and summary.supporting_window_count is not None:
+        return tr(
+            "REPORT_SUPPORT_WINDOW_SUMMARY_FULL",
+            count=str(summary.supporting_window_count),
+            duration=f"{summary.supporting_duration_s:.1f}",
+        )
+    if summary.supporting_window_count is not None and summary.supporting_window_count > 0:
+        return tr(
+            "REPORT_SUPPORT_WINDOW_SUMMARY_COUNT_ONLY",
+            count=str(summary.supporting_window_count),
+        )
+    if matched_finding is not None:
+        return _candidate_reason_text(matched_finding, tr=tr)
+    return tr("REPORT_SIGNAL_FALLBACK")
 
 
 def _path_role_text(index: int, *, tr: Callable[..., str]) -> str:

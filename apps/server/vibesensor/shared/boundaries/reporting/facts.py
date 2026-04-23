@@ -151,6 +151,42 @@ class PreparedReportFacts:
     whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...]
     findings: PreparedReportFindings
 
+    @property
+    def report_surface_diagnosis_summaries(
+        self,
+    ) -> tuple[ReportWholeRunDiagnosisSummary, ...]:
+        if not self.whole_run_diagnosis_summaries:
+            return ()
+        primary = self.whole_run_diagnosis_summaries[0]
+        if primary.uses_summary_fallback or (
+            not primary.ambiguous_diagnosis and not primary.suspicious
+        ):
+            return self.whole_run_diagnosis_summaries
+        summary_primary_source = str(self.decision.primary_candidate.primary_source or "").strip()
+        if not summary_primary_source:
+            return ()
+        for index, diagnosis in enumerate(self.whole_run_diagnosis_summaries):
+            if diagnosis.suspected_source != summary_primary_source:
+                continue
+            if index == 0:
+                return self.whole_run_diagnosis_summaries
+            return (
+                diagnosis,
+                *(
+                    row
+                    for row_index, row in enumerate(self.whole_run_diagnosis_summaries)
+                    if row_index != index
+                ),
+            )
+        return ()
+
+    @property
+    def primary_diagnosis(self) -> ReportWholeRunDiagnosisSummary | None:
+        report_surface = self.report_surface_diagnosis_summaries
+        if not report_surface:
+            return None
+        return report_surface[0]
+
 
 def prepare_report_facts(
     payload: Mapping[str, object],
