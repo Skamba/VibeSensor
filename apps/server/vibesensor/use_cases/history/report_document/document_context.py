@@ -157,7 +157,7 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
             alternative_source_visible=decision_facts.alternative_source_visible,
             ranked_candidates=build_ranked_candidates(
                 test_run,
-                diagnosis_summaries=report_facts.whole_run_diagnosis_summaries,
+                diagnosis_summaries=report_facts.report_surface_diagnosis_summaries,
                 tr=tr,
             ),
             recapture=recapture,
