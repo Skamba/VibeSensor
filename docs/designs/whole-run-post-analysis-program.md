@@ -271,8 +271,9 @@ For the context track:
 
 1. `WholeRunContextWindowLabel` is the dense internal join surface for later
    order, spatial, and fusion work. It carries explicit `context_coverage`,
-   `speed_validity`, `rpm_validity`, `load_state`, and optional raw context
-   values/source labels keyed by `window_index`.
+   `speed_validity`, `rpm_validity`, `speed_is_stale`, `rpm_is_stale`,
+   `load_state`, and optional raw context values/source labels keyed by
+   `window_index`.
 2. `WholeRunContextInterval` is the compact segment summary surface. It uses
    `start_window_index` / `end_window_index` as the canonical range identity and
    can be projected later into persisted analysis/report payloads without
