@@ -170,3 +170,39 @@ async def test_representative_analysis_contract_survives_persistence_and_http_la
         == restored_analysis["findings"][0]["finding_id"]
     )
     assert run_top == insights_top
+
+
+@pytest.mark.asyncio
+async def test_whole_run_context_intervals_survive_persistence_and_http_layers() -> None:
+    summary = _representative_summary()
+    summary["whole_run_context_intervals"] = [
+        {
+            "segment_index": 0,
+            "phase": "cruise",
+            "load_state": "steady",
+            "start_window_index": 0,
+            "end_window_index": 4,
+            "start_t_s": 0.0,
+            "end_t_s": 1.0,
+            "full_context_window_count": 5,
+            "partial_context_window_count": 0,
+            "missing_context_window_count": 0,
+        }
+    ]
+    stored_run, restored_summary = _stored_run_from_summary(summary)
+
+    service = ProjectedHistoryRunService(HistoryRunService(_RunPersistenceStub(stored_run)))
+
+    run_response = await service.get_run(stored_run.run_id)
+    insights_response = await service.get_insights(stored_run.run_id, requested_lang="en")
+
+    assert run_response.analysis is not None
+    assert insights_response is not None
+    assert (
+        run_response.analysis["whole_run_context_intervals"]
+        == restored_summary["whole_run_context_intervals"]
+    )
+    assert (
+        insights_response["whole_run_context_intervals"]
+        == restored_summary["whole_run_context_intervals"]
+    )
