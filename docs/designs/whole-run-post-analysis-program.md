@@ -253,9 +253,11 @@ It consumes the dense trace points plus the per-candidate scored summaries from
 - `stable_frequency_min_hz` / `stable_frequency_max_hz`
 - `exemplar_interval_index`
 
-Those family summaries still live in sidecar storage for now (`order-family-summaries`);
-the later persistence issue should project them into `PersistedAnalysis` without
-requiring dense trace loads.
+Those family summaries now feed a ranked persisted
+`whole_run_order_summaries` payload in `PersistedAnalysis`, while the dense
+trace and intermediate summary layers stay sidecar-only. History/report reload
+paths should consume that compact persisted payload without requiring dense trace
+loads.
 
 ### Spatial/coherence contract
 

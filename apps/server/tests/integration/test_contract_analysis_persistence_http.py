@@ -206,3 +206,83 @@ async def test_whole_run_context_intervals_survive_persistence_and_http_layers()
         insights_response["whole_run_context_intervals"]
         == restored_summary["whole_run_context_intervals"]
     )
+
+
+@pytest.mark.asyncio
+async def test_whole_run_order_summaries_survive_persistence_and_http_layers() -> None:
+    summary = _representative_summary()
+    summary["whole_run_order_summaries"] = [
+        {
+            "hypothesis_key": "wheel",
+            "suspected_source": "wheel/tire",
+            "order_family": "wheel",
+            "order_label": "wheel family",
+            "total_window_count": 10,
+            "eligible_window_count": 8,
+            "matched_window_count": 6,
+            "support_ratio": 0.75,
+            "reference_coverage_ratio": 0.8,
+            "longest_contiguous_support_window_count": 3,
+            "contiguous_support_ratio": 0.375,
+            "support_intervals": [
+                {
+                    "interval_index": 0,
+                    "start_window_index": 1,
+                    "end_window_index": 3,
+                    "matched_window_count": 3,
+                    "support_ratio": 1.0,
+                }
+            ],
+            "phase_support": [
+                {
+                    "phase": "cruise",
+                    "eligible_window_count": 8,
+                    "matched_window_count": 6,
+                    "support_ratio": 0.75,
+                }
+            ],
+            "harmonic_summaries": [
+                {
+                    "harmonic": 1,
+                    "order_label": "1x wheel",
+                    "eligible_window_count": 8,
+                    "matched_window_count": 6,
+                    "support_ratio": 0.75,
+                    "reference_coverage_ratio": 0.8,
+                    "contiguous_support_ratio": 0.375,
+                    "lock_score": 0.7,
+                    "drift_score": 0.9,
+                }
+            ],
+            "stable_frequency_min_hz": 12.4,
+            "stable_frequency_max_hz": 12.9,
+            "exemplar_interval_index": 0,
+            "dominant_phase": "cruise",
+            "dominant_speed_band": "50-70 km/h",
+            "strongest_location": "front-left",
+            "mean_relative_error": 0.02,
+            "relative_error_stddev": 0.01,
+            "drift_score": 0.9,
+            "lock_score": 0.7,
+            "peak_intensity_db": 18.5,
+            "mean_vibration_strength_db": 11.2,
+            "ref_sources": ["speed+tire"],
+        }
+    ]
+    stored_run, restored_summary = _stored_run_from_summary(summary)
+
+    service = ProjectedHistoryRunService(HistoryRunService(_RunPersistenceStub(stored_run)))
+
+    run_response = await service.get_run(stored_run.run_id)
+    insights_response = await service.get_insights(stored_run.run_id, requested_lang="en")
+
+    assert run_response.analysis is not None
+    assert insights_response is not None
+    assert (
+        run_response.analysis["whole_run_order_summaries"]
+        == restored_summary["whole_run_order_summaries"]
+    )
+    assert (
+        insights_response["whole_run_order_summaries"]
+        == restored_summary["whole_run_order_summaries"]
+    )
