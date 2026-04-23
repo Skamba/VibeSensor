@@ -19,6 +19,9 @@ from vibesensor.shared.boundaries.summary_fields.hotspot import (
 from vibesensor.shared.types.analysis_views import PeakTableRow
 from vibesensor.shared.types.history_analysis_contracts import (
     DiagnosisExemplarKind,
+    DiagnosisFactorKey,
+    DiagnosisFactorPolarity,
+    DiagnosisFactorSeverity,
     LocationProofBasis,
     WholeRunDiagnosisDataBasis,
 )
@@ -27,6 +30,8 @@ from vibesensor.shared.types.run_schema import RunMetadata
 __all__ = [
     "NormalizedReportSummary",
     "ReportDiagnosisExemplarReference",
+    "ReportDiagnosisFactor",
+    "ReportDiagnosisFactorDetails",
     "ReportOrderHarmonicEvidenceSummary",
     "ReportOrderTracePhaseSupport",
     "ReportOrderTraceSupportInterval",
@@ -172,6 +177,38 @@ class ReportDiagnosisExemplarReference:
 
 
 @dataclass(frozen=True, slots=True)
+class ReportDiagnosisFactorDetails:
+    """Typed structured details for one persisted diagnosis factor row."""
+
+    raw_backed_sample_count: int | None
+    supporting_window_count: int | None
+    supporting_duration_s: float | None
+    stable_frequency_min_hz: float | None
+    stable_frequency_max_hz: float | None
+    frequency_span_hz: float | None
+    supporting_location_count: int | None
+    top_support_location: str | None
+    top_support_share: float | None
+    mean_relative_error: float | None
+    snr_db: float | None
+    alternative_source: str | None
+    speed_gap_window_count: int | None
+    rpm_gap_window_count: int | None
+    fallback_reason: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class ReportDiagnosisFactor:
+    """Typed support or counterevidence factor for one fused diagnosis."""
+
+    factor_key: DiagnosisFactorKey
+    polarity: DiagnosisFactorPolarity
+    severity: DiagnosisFactorSeverity
+    weight: float
+    details: ReportDiagnosisFactorDetails
+
+
+@dataclass(frozen=True, slots=True)
 class ReportSpatialLocationSummary:
     """Typed persisted per-location spatial evidence row for report/history reload."""
 
@@ -241,6 +278,8 @@ class ReportWholeRunDiagnosisSummary:
     uses_summary_fallback: bool
     fallback_reason: str | None
     exemplar_references: tuple[ReportDiagnosisExemplarReference, ...]
+    support_factors: tuple[ReportDiagnosisFactor, ...]
+    counterevidence_factors: tuple[ReportDiagnosisFactor, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -552,6 +591,10 @@ class ReportSummaryNormalizer:
                     exemplar_references=self._diagnosis_exemplar_references(
                         row.get("exemplar_references")
                     ),
+                    support_factors=self._diagnosis_factors(row.get("support_factors")),
+                    counterevidence_factors=self._diagnosis_factors(
+                        row.get("counterevidence_factors")
+                    ),
                 )
             )
         return tuple(summaries)
@@ -715,6 +758,66 @@ class ReportSummaryNormalizer:
             )
         return tuple(exemplars)
 
+    def _diagnosis_factors(
+        self,
+        raw_factors: object,
+    ) -> tuple[ReportDiagnosisFactor, ...]:
+        if not isinstance(raw_factors, list):
+            return ()
+        factors: list[ReportDiagnosisFactor] = []
+        for row in raw_factors:
+            if not isinstance(row, Mapping):
+                continue
+            factor_key = self._diagnosis_factor_key(row.get("factor_key"))
+            polarity = self._diagnosis_factor_polarity(row.get("polarity"))
+            severity = self._diagnosis_factor_severity(row.get("severity"))
+            if factor_key is None or polarity is None or severity is None:
+                continue
+            raw_details = row.get("details")
+            details_row = raw_details if isinstance(raw_details, Mapping) else {}
+            factors.append(
+                ReportDiagnosisFactor(
+                    factor_key=factor_key,
+                    polarity=polarity,
+                    severity=severity,
+                    weight=optional_float(row.get("weight")) or 0.0,
+                    details=ReportDiagnosisFactorDetails(
+                        raw_backed_sample_count=self._optional_count(
+                            details_row.get("raw_backed_sample_count")
+                        ),
+                        supporting_window_count=self._optional_count(
+                            details_row.get("supporting_window_count")
+                        ),
+                        supporting_duration_s=optional_float(
+                            details_row.get("supporting_duration_s")
+                        ),
+                        stable_frequency_min_hz=optional_float(
+                            details_row.get("stable_frequency_min_hz")
+                        ),
+                        stable_frequency_max_hz=optional_float(
+                            details_row.get("stable_frequency_max_hz")
+                        ),
+                        frequency_span_hz=optional_float(details_row.get("frequency_span_hz")),
+                        supporting_location_count=self._optional_count(
+                            details_row.get("supporting_location_count")
+                        ),
+                        top_support_location=text_or_none(details_row.get("top_support_location")),
+                        top_support_share=optional_float(details_row.get("top_support_share")),
+                        mean_relative_error=optional_float(details_row.get("mean_relative_error")),
+                        snr_db=optional_float(details_row.get("snr_db")),
+                        alternative_source=text_or_none(details_row.get("alternative_source")),
+                        speed_gap_window_count=self._optional_count(
+                            details_row.get("speed_gap_window_count")
+                        ),
+                        rpm_gap_window_count=self._optional_count(
+                            details_row.get("rpm_gap_window_count")
+                        ),
+                        fallback_reason=text_or_none(details_row.get("fallback_reason")),
+                    ),
+                )
+            )
+        return tuple(factors)
+
     def _text_tuple(self, raw_values: object) -> tuple[str, ...]:
         if not isinstance(raw_values, list):
             return ()
@@ -749,6 +852,45 @@ class ReportSummaryNormalizer:
         if value not in {"raw_backed", "summary_only"}:
             return None
         return cast(WholeRunDiagnosisDataBasis, value)
+
+    def _diagnosis_factor_key(self, raw_value: object) -> DiagnosisFactorKey | None:
+        value = text_or_none(raw_value)
+        if value not in {
+            "raw_backed",
+            "repeated_support",
+            "sustained_support",
+            "stable_frequency",
+            "tight_order_lock",
+            "localized_support",
+            "clean_signal",
+            "summary_only",
+            "legacy_context",
+            "speed_context_gaps",
+            "rpm_context_gaps",
+            "sparse_support",
+            "brief_support",
+            "drifting_frequency",
+            "loose_order_lock",
+            "mixed_support_locations",
+            "noisy_signal",
+            "weak_spatial",
+            "close_alternative",
+            "incomplete_reference",
+        }:
+            return None
+        return cast(DiagnosisFactorKey, value)
+
+    def _diagnosis_factor_polarity(self, raw_value: object) -> DiagnosisFactorPolarity | None:
+        value = text_or_none(raw_value)
+        if value not in {"support", "counterevidence"}:
+            return None
+        return cast(DiagnosisFactorPolarity, value)
+
+    def _diagnosis_factor_severity(self, raw_value: object) -> DiagnosisFactorSeverity | None:
+        value = text_or_none(raw_value)
+        if value not in {"low", "medium", "high"}:
+            return None
+        return cast(DiagnosisFactorSeverity, value)
 
 
 def has_projectable_report_payload(payload: Mapping[str, object]) -> bool:

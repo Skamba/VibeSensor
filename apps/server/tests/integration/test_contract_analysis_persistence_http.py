@@ -374,6 +374,24 @@ async def test_whole_run_diagnosis_summaries_survive_persistence_and_http_layers
             "weak_spatial_separation": False,
             "has_reference_gap": True,
             "uses_summary_fallback": False,
+            "support_factors": [
+                {
+                    "factor_key": "raw_backed",
+                    "polarity": "support",
+                    "severity": "high",
+                    "weight": 0.1,
+                    "details": {"raw_backed_sample_count": 48},
+                }
+            ],
+            "counterevidence_factors": [
+                {
+                    "factor_key": "incomplete_reference",
+                    "polarity": "counterevidence",
+                    "severity": "low",
+                    "weight": 0.06,
+                    "details": {},
+                }
+            ],
             "exemplar_references": [
                 {
                     "kind": "order_support_interval",
@@ -402,3 +420,6 @@ async def test_whole_run_diagnosis_summaries_survive_persistence_and_http_layers
         insights_response["whole_run_diagnosis_summaries"]
         == restored_summary["whole_run_diagnosis_summaries"]
     )
+    diagnosis_summary = insights_response["whole_run_diagnosis_summaries"][0]
+    assert diagnosis_summary["support_factors"][0]["factor_key"] == "raw_backed"
+    assert diagnosis_summary["counterevidence_factors"][0]["factor_key"] == "incomplete_reference"

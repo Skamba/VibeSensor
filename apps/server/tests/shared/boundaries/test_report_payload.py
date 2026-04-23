@@ -264,6 +264,24 @@ def test_report_summary_from_mapping_normalizes_whole_run_diagnosis_summaries() 
                     "weak_spatial_separation": False,
                     "has_reference_gap": True,
                     "uses_summary_fallback": False,
+                    "support_factors": [
+                        {
+                            "factor_key": "raw_backed",
+                            "polarity": "support",
+                            "severity": "high",
+                            "weight": 0.1,
+                            "details": {"raw_backed_sample_count": 48},
+                        }
+                    ],
+                    "counterevidence_factors": [
+                        {
+                            "factor_key": "incomplete_reference",
+                            "polarity": "counterevidence",
+                            "severity": "low",
+                            "weight": 0.06,
+                            "details": {},
+                        }
+                    ],
                     "exemplar_references": [
                         {
                             "kind": "order_support_interval",
@@ -283,6 +301,8 @@ def test_report_summary_from_mapping_normalizes_whole_run_diagnosis_summaries() 
     assert diagnosis_summary.diagnosis_key == "wheel_1x"
     assert diagnosis_summary.data_basis == "raw_backed"
     assert diagnosis_summary.location_proof_basis == "supporting_windows_raw_backed"
+    assert diagnosis_summary.support_factors[0].factor_key == "raw_backed"
+    assert diagnosis_summary.counterevidence_factors[0].factor_key == "incomplete_reference"
     assert diagnosis_summary.exemplar_references[0].kind == "order_support_interval"
 
 
