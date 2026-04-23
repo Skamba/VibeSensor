@@ -139,7 +139,7 @@ def test_buffer_store_warns_and_truncates_oversized_ingest(caplog) -> None:
 
 
 def test_fft_params_uses_lru_eviction(monkeypatch) -> None:
-    monkeypatch.setattr("vibesensor.infra.processing.compute._FFT_CACHE_MAXSIZE", 2)
+    monkeypatch.setattr("vibesensor.shared.fft_analysis._FFT_CACHE_MAXSIZE", 2)
     computer = SignalMetricsComputer(_config(fft_n=8, sample_rate_hz=200, spectrum_max_hz=90.0))
 
     computer.fft_params(200)
