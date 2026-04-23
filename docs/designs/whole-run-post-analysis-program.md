@@ -536,6 +536,14 @@ Current #3085 baseline:
 - Legacy persisted analyses must remain readable by history/report code.
 - New whole-run report facts should degrade to existing summary-only language and
   confidence caveats where necessary.
+- When persisted `whole_run_diagnosis_summaries` are absent, the report-prep
+  boundary should synthesize exactly one fallback diagnosis row from the current
+  summary-era primary candidate plus report confidence/evidence facts instead of
+  pretending full whole-run fusion ran. The owner for that synthesis should stay
+  in `apps/server/vibesensor/shared/boundaries/reporting/facts.py`, reusing
+  `confidence_facts.py` and carrying an explicit `fallback_reason` that
+  distinguishes summary-only legacy replay from raw-backed partial-artifact
+  replay.
 - Persisted `analysis_metadata` should carry whole-run context completeness counts
   (full/partial/missing plus speed/RPM gap counts) so history/report preparation
   can project caveats without loading dense sidecar labels during report render.
