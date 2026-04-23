@@ -263,6 +263,7 @@ def test_build_report_pdf_renders_action_ready_status_on_page_one() -> None:
     pdf = build_report_pdf(
         ReportDocument(
             title="VibeSensor Diagnostic Report",
+            run_id="action-ready-page-one",
             verdict_page=VerdictPageData(
                 suspected_source="Wheel / Tire",
                 inspect_first="Front-Left",
