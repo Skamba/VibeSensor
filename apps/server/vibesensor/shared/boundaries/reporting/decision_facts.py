@@ -21,6 +21,7 @@ from vibesensor.shared.report_diagnostics import report_suitability_checks, repo
 
 if TYPE_CHECKING:
     from vibesensor.domain import RecommendedAction, SuitabilityCheck, TestRun
+    from vibesensor.shared.boundaries.reporting.facts import ReportContextFacts
     from vibesensor.shared.boundaries.reporting.sensor_facts import ReportSensorFacts
     from vibesensor.shared.run_context_warning import RunContextWarning, RunContextWarningsInput
 
@@ -53,6 +54,7 @@ def build_report_decision_facts(
     test_run: TestRun,
     origin_location: str,
     sensor_facts: ReportSensorFacts,
+    context_facts: ReportContextFacts,
     warnings: RunContextWarningsInput = None,
 ) -> ReportDecisionFacts:
     """Build decision-facing report facts from canonical run and sensor facts."""
@@ -64,7 +66,10 @@ def build_report_decision_facts(
         sensor_intensity=sensor_facts.active_intensity,
     )
     suitability_checks = report_suitability_checks(test_run.suitability)
-    warning_models = report_warnings(payload, warnings=warnings)
+    warning_models = _merge_warnings(
+        report_warnings(payload, warnings=warnings),
+        context_facts.warnings,
+    )
     location_confidence_key = resolve_location_confidence_key(
         primary_candidate_facts=primary_candidate,
         coverage_summary=sensor_facts.coverage,
@@ -93,3 +98,18 @@ def build_report_decision_facts(
         alternative_source_visible=alternative_source_visible,
         confidence_gap_to_alternative=confidence_gap_to_alternative,
     )
+
+
+def _merge_warnings(
+    primary: tuple[RunContextWarning, ...],
+    extra: tuple[RunContextWarning, ...],
+) -> tuple[RunContextWarning, ...]:
+    merged: list[RunContextWarning] = []
+    seen_codes: set[str] = set()
+    for warning in (*primary, *extra):
+        normalized_code = warning.code.strip().lower()
+        if normalized_code in seen_codes:
+            continue
+        seen_codes.add(normalized_code)
+        merged.append(warning)
+    return tuple(merged)

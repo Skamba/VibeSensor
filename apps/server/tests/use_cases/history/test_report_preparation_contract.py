@@ -202,6 +202,45 @@ def test_prepare_report_input_tolerates_invalid_count_strings() -> None:
     assert prepared.report_facts.run.sensor_count == 0
 
 
+def test_prepare_report_input_does_not_invent_traceable_whole_run_context() -> None:
+    prepared = prepare_report_input(
+        {
+            "run_id": "implicit-context",
+            "rows": 24,
+            "sensor_count_used": 2,
+            "lang": "en",
+            "metadata": {"run_id": "implicit-context"},
+            "report_date": "",
+            "record_length": "",
+            "start_time_utc": "",
+            "end_time_utc": "",
+            "findings": [],
+            "top_causes": [],
+            "sensor_locations": ["front-left", "rear-right"],
+            "sensor_locations_connected_throughout": ["front-left", "rear-right"],
+            "most_likely_origin": {},
+            "run_suitability": [],
+            "whole_run_context_intervals": [
+                {
+                    "segment_index": 0,
+                    "phase": "cruise",
+                    "load_state": "light",
+                    "start_window_index": 0,
+                    "end_window_index": 3,
+                    "full_context_window_count": 4,
+                    "partial_context_window_count": 0,
+                    "missing_context_window_count": 0,
+                }
+            ],
+        }
+    )
+
+    assert prepared.report_facts.context.traceable is False
+    assert prepared.report_facts.context.source == "implicit"
+    assert prepared.report_facts.context.intervals == ()
+    assert prepared.report_facts.decision.warnings == ()
+
+
 def test_prepare_persisted_report_input_builds_evidence_facts_from_raw_backed_summary() -> None:
     primary = make_finding_payload(
         finding_id="F_PRIMARY",

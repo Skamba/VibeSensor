@@ -410,6 +410,9 @@ Current #3085 baseline:
 - Legacy persisted analyses must remain readable by history/report code.
 - New whole-run report facts should degrade to existing summary-only language and
   confidence caveats where necessary.
+- Persisted `analysis_metadata` should carry whole-run context completeness counts
+  (full/partial/missing plus speed/RPM gap counts) so history/report preparation
+  can project caveats without loading dense sidecar labels during report render.
 
 ## Recommended implementation order
 
