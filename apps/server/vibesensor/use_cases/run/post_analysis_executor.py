@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol, cast
 
@@ -41,6 +42,12 @@ from vibesensor.use_cases.diagnostics.whole_run_context import (
     WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
     WholeRunContextArtifactBundle,
     build_whole_run_context_artifact_bundle,
+)
+from vibesensor.use_cases.diagnostics.whole_run_diagnosis_contracts import (
+    WholeRunDiagnosisSummary,
+)
+from vibesensor.use_cases.diagnostics.whole_run_diagnosis_ranking import (
+    build_whole_run_diagnosis_summaries,
 )
 from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
     WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY,
@@ -93,10 +100,18 @@ def _sync_call(db: Any, method_name: str, *args: Any, **kwargs: Any) -> Any:
     return result
 
 
+def _coerce_persisted_analysis(
+    summary: PersistedAnalysis | Mapping[str, object],
+) -> PersistedAnalysis:
+    if isinstance(summary, PersistedAnalysis):
+        return summary
+    return PersistedAnalysis.from_json_object(summary)
+
+
 class PostAnalysisRunner(Protocol):
     """Injected boundary for building the stored post-stop analysis summary."""
 
-    def __call__(self, run: PostAnalysisRunInput) -> PersistedAnalysis: ...
+    def __call__(self, run: PostAnalysisRunInput) -> PersistedAnalysis | Mapping[str, object]: ...
 
 
 class PostAnalysisLoader(Protocol):
@@ -182,6 +197,19 @@ class WholeRunSpatialCoherenceBuilder(Protocol):
     ) -> WholeRunSpatialCoherenceArtifactBundle | None: ...
 
 
+class WholeRunDiagnosisSummaryBuilder(Protocol):
+    """Injected boundary for building compact fused whole-run diagnosis summaries."""
+
+    def __call__(
+        self,
+        *,
+        analysis_metadata: Mapping[str, object],
+        context_bundle: WholeRunContextArtifactBundle,
+        order_summaries: tuple[OrderTraceSummary, ...],
+        spatial_summaries: tuple[SpatialEvidenceSummary, ...],
+    ) -> tuple[WholeRunDiagnosisSummary, ...]: ...
+
+
 @dataclass(frozen=True, slots=True)
 class _StoredWholeRunArtifactBundle:
     """Generic sidecar bundle shape for final manifest persistence."""
@@ -202,6 +230,7 @@ def execute_post_analysis(
     whole_run_order_trace_summary_builder: WholeRunOrderTraceSummaryBuilder | None = None,
     whole_run_order_family_summary_builder: WholeRunOrderFamilySummaryBuilder | None = None,
     whole_run_spatial_coherence_builder: WholeRunSpatialCoherenceBuilder | None = None,
+    whole_run_diagnosis_summary_builder: WholeRunDiagnosisSummaryBuilder | None = None,
     defer_retryable_error_storage: bool = False,
 ) -> PostAnalysisAttemptResult:
     analysis_start = time.monotonic()
@@ -234,6 +263,11 @@ def execute_post_analysis(
         _build_whole_run_spatial_coherence_artifacts
         if whole_run_spatial_coherence_builder is None
         else whole_run_spatial_coherence_builder
+    )
+    resolved_whole_run_diagnosis_summary_builder = (
+        _build_whole_run_diagnosis_summaries
+        if whole_run_diagnosis_summary_builder is None
+        else whole_run_diagnosis_summary_builder
     )
     with start_span(
         __name__,
@@ -372,9 +406,16 @@ def execute_post_analysis(
                             f"Failed to persist whole-run artifacts for run {loaded.run_id}"
                         )
             span.set_attribute("vibesensor.sample_count", len(run_input.samples))
-            summary = analysis_runner(run_input)
+            summary = _coerce_persisted_analysis(analysis_runner(run_input))
             if context_bundle is not None:
                 summary = _append_whole_run_context(summary, context_bundle)
+            analysis_payload = summary.to_json_object()
+            analysis_metadata_payload = analysis_payload.get("analysis_metadata")
+            analysis_metadata = (
+                dict(analysis_metadata_payload)
+                if isinstance(analysis_metadata_payload, dict)
+                else {}
+            )
             if order_trace_bundle is not None:
                 summary = _append_whole_run_order_trace_metadata(summary, order_trace_bundle)
             if order_trace_summary_bundle is not None:
@@ -399,6 +440,25 @@ def execute_post_analysis(
                     summary,
                     spatial_coherence_bundle,
                 )
+            if context_bundle is not None and order_family_summary_bundle is not None:
+                diagnosis_summaries = resolved_whole_run_diagnosis_summary_builder(
+                    analysis_metadata=analysis_metadata,
+                    context_bundle=context_bundle,
+                    order_summaries=_ranked_whole_run_order_summaries(
+                        order_family_summary_bundle.summaries
+                    ),
+                    spatial_summaries=(
+                        _ranked_whole_run_spatial_summaries(spatial_coherence_bundle.summaries)
+                        if spatial_coherence_bundle is not None
+                        else ()
+                    ),
+                )
+                if diagnosis_summaries:
+                    summary = _append_whole_run_diagnosis_summaries(summary, diagnosis_summaries)
+                    summary = _append_whole_run_diagnosis_summary_metadata(
+                        summary,
+                        diagnosis_summaries,
+                    )
             if stored_artifact_manifest is not None:
                 summary = _append_whole_run_analysis_metadata(summary, stored_artifact_manifest)
             _sync_call(db, "astore_analysis", loaded.run_id, summary)
@@ -869,6 +929,44 @@ def _append_whole_run_spatial_summaries(
         row.to_json_object() for row in _ranked_whole_run_spatial_summaries(bundle.summaries)
     ]
     return PersistedAnalysis.from_json_object(payload)
+
+
+def _append_whole_run_diagnosis_summaries(
+    summary: PersistedAnalysis,
+    diagnosis_summaries: tuple[WholeRunDiagnosisSummary, ...],
+) -> PersistedAnalysis:
+    payload = summary.to_json_object()
+    payload["whole_run_diagnosis_summaries"] = [row.to_json_object() for row in diagnosis_summaries]
+    return PersistedAnalysis.from_json_object(payload)
+
+
+def _append_whole_run_diagnosis_summary_metadata(
+    summary: PersistedAnalysis,
+    diagnosis_summaries: tuple[WholeRunDiagnosisSummary, ...],
+) -> PersistedAnalysis:
+    payload = summary.to_json_object()
+    analysis_metadata = payload.get("analysis_metadata")
+    if not isinstance(analysis_metadata, dict):
+        analysis_metadata = {}
+        payload["analysis_metadata"] = analysis_metadata
+    analysis_metadata["whole_run_diagnosis_summaries_available"] = True
+    analysis_metadata["whole_run_diagnosis_summary_count"] = len(diagnosis_summaries)
+    return PersistedAnalysis.from_json_object(payload)
+
+
+def _build_whole_run_diagnosis_summaries(
+    *,
+    analysis_metadata: Mapping[str, object],
+    context_bundle: WholeRunContextArtifactBundle,
+    order_summaries: tuple[OrderTraceSummary, ...],
+    spatial_summaries: tuple[SpatialEvidenceSummary, ...],
+) -> tuple[WholeRunDiagnosisSummary, ...]:
+    return build_whole_run_diagnosis_summaries(
+        analysis_metadata=analysis_metadata,
+        context_intervals=context_bundle.intervals,
+        order_summaries=order_summaries,
+        spatial_summaries=spatial_summaries,
+    )
 
 
 def _ranked_whole_run_order_summaries(

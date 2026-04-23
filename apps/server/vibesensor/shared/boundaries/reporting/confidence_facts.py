@@ -23,8 +23,10 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ReportConfidenceFacts",
+    "ReportConfidenceScoringInputs",
     "build_report_confidence_facts",
     "project_whole_run_diagnosis_factors",
+    "score_report_confidence_inputs",
 ]
 
 
@@ -57,6 +59,31 @@ class ReportConfidenceFacts:
     caveat_keys: tuple[str, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class ReportConfidenceScoringInputs:
+    """Normalized inputs for deterministic non-fallback confidence scoring."""
+
+    base_confidence: float
+    data_basis: str
+    raw_backed_sample_count: int
+    supporting_window_count: int | None
+    supporting_duration_s: float | None
+    stable_frequency_min_hz: float | None
+    stable_frequency_max_hz: float | None
+    supporting_location_count: int
+    top_support_location: str | None
+    top_support_share: float | None
+    mean_relative_error: float | None
+    snr_db: float | None
+    alternative_source: str | None
+    has_reference_gap: bool
+    weak_spatial: bool
+    context_traceable: bool
+    context_source: str
+    speed_gap_window_count: int
+    rpm_gap_window_count: int
+
+
 def build_report_confidence_facts(
     *,
     has_explicit_analysis_metadata: bool,
@@ -76,10 +103,6 @@ def build_report_confidence_facts(
     supporting_duration_s = evidence_facts.supporting_duration_s
     stable_frequency_min_hz = evidence_facts.stable_frequency_min_hz
     stable_frequency_max_hz = evidence_facts.stable_frequency_max_hz
-    frequency_span_hz = _frequency_span_hz(
-        stable_frequency_min_hz=stable_frequency_min_hz,
-        stable_frequency_max_hz=stable_frequency_max_hz,
-    )
     supporting_location_count, top_support_location, top_support_share = _support_location_summary(
         evidence_facts=evidence_facts,
     )
@@ -108,149 +131,30 @@ def build_report_confidence_facts(
             top_support_share=top_support_share,
         )
 
-    score = (
-        max(0.0, min(0.70, 0.25 + (primary_candidate.confidence * 0.40)))
-        if primary_candidate.domain_primary is not None
-        else 0.0
-    )
-    signal_keys: list[str] = []
-    caveat_keys: list[str] = []
-
-    if evidence_facts.data_basis == "raw_backed":
-        score += 0.10
-        signal_keys.append("raw_backed")
-    else:
-        score -= 0.05
-        caveat_keys.append("summary_only")
-
-    if context_facts.traceable:
-        if context_facts.source == "legacy":
-            score -= 0.05
-            caveat_keys.append("legacy_context")
-        else:
-            if context_facts.has_speed_gaps:
-                score -= 0.04
-                caveat_keys.append("speed_context_gaps")
-            if context_facts.has_rpm_gaps:
-                score -= 0.04
-                caveat_keys.append("rpm_context_gaps")
-
-    if supporting_window_count is not None:
-        if supporting_window_count >= 4:
-            score += 0.10
-            signal_keys.append("repeated_support")
-        elif supporting_window_count >= 2:
-            score += 0.05
-            signal_keys.append("repeated_support")
-        elif supporting_window_count <= 1:
-            score -= 0.10
-            caveat_keys.append("sparse_support")
-
-    if supporting_duration_s is not None:
-        if supporting_duration_s >= 1.0:
-            score += 0.08
-            signal_keys.append("sustained_support")
-        elif supporting_duration_s >= 0.5:
-            score += 0.04
-            signal_keys.append("sustained_support")
-        elif supporting_duration_s > 0:
-            score -= 0.06
-            caveat_keys.append("brief_support")
-
-    if frequency_span_hz is not None:
-        if frequency_span_hz <= 0.5:
-            score += 0.08
-            signal_keys.append("stable_frequency")
-        elif frequency_span_hz <= 1.0:
-            score += 0.04
-            signal_keys.append("stable_frequency")
-        elif frequency_span_hz > 1.5:
-            score -= 0.06
-            caveat_keys.append("drifting_frequency")
-
-    if mean_relative_error is not None:
-        if mean_relative_error <= 0.05:
-            score += 0.08
-            signal_keys.append("tight_order_lock")
-        elif mean_relative_error >= 0.15:
-            score -= 0.08
-            caveat_keys.append("loose_order_lock")
-
-    if top_support_share is not None:
-        if top_support_share >= 0.67:
-            score += 0.08
-            signal_keys.append("localized_support")
-        elif supporting_location_count > 1 and top_support_share < 0.55:
-            score -= 0.10
-            caveat_keys.append("mixed_support_locations")
-
-    if snr_db is not None:
-        if snr_db >= 6.0:
-            score += 0.05
-            signal_keys.append("clean_signal")
-        elif snr_db < 3.0:
-            score -= 0.06
-            caveat_keys.append("noisy_signal")
-
-    if primary_candidate.weak_spatial:
-        score -= 0.10
-        caveat_keys.append("weak_spatial")
-
-    if alternative_source is not None:
-        score -= 0.10
-        caveat_keys.append("close_alternative")
-
-    if evidence_facts.has_reference_gap:
-        score -= 0.06
-        caveat_keys.append("incomplete_reference")
-
-    rounded_score = _rounded_score(score)
-    label_key = _label_key_for_score(rounded_score)
-    caveat_key_set = set(caveat_keys)
-    tier = (
-        "C"
-        if label_key == "CONFIDENCE_HIGH"
-        and not caveat_key_set.intersection(
-            {
-                "summary_only",
-                "drifting_frequency",
-                "loose_order_lock",
-                "mixed_support_locations",
-                "weak_spatial",
-                "close_alternative",
-                "incomplete_reference",
-                "legacy_context",
-                "speed_context_gaps",
-                "rpm_context_gaps",
-                "noisy_signal",
-            }
+    return score_report_confidence_inputs(
+        ReportConfidenceScoringInputs(
+            base_confidence=primary_candidate.confidence
+            if primary_candidate.domain_primary
+            else 0.0,
+            data_basis=evidence_facts.data_basis,
+            raw_backed_sample_count=evidence_facts.raw_backed_sample_count,
+            supporting_window_count=supporting_window_count,
+            supporting_duration_s=supporting_duration_s,
+            stable_frequency_min_hz=stable_frequency_min_hz,
+            stable_frequency_max_hz=stable_frequency_max_hz,
+            supporting_location_count=supporting_location_count,
+            top_support_location=top_support_location,
+            top_support_share=top_support_share,
+            mean_relative_error=mean_relative_error,
+            snr_db=snr_db,
+            alternative_source=alternative_source,
+            has_reference_gap=evidence_facts.has_reference_gap,
+            weak_spatial=primary_candidate.weak_spatial,
+            context_traceable=context_facts.traceable,
+            context_source=context_facts.source,
+            speed_gap_window_count=context_facts.speed_gap_window_count,
+            rpm_gap_window_count=context_facts.rpm_gap_window_count,
         )
-        else ("B" if label_key != "CONFIDENCE_LOW" else "A")
-    )
-    return ReportConfidenceFacts(
-        score_0_to_1=rounded_score,
-        label_key=label_key,
-        pct_text=f"{rounded_score * 100:.0f}%",
-        tier=tier,
-        data_basis=evidence_facts.data_basis,
-        raw_backed_sample_count=evidence_facts.raw_backed_sample_count,
-        supporting_window_count=supporting_window_count,
-        supporting_duration_s=supporting_duration_s,
-        stable_frequency_min_hz=stable_frequency_min_hz,
-        stable_frequency_max_hz=stable_frequency_max_hz,
-        supporting_location_count=supporting_location_count,
-        top_support_location=top_support_location,
-        top_support_share=top_support_share,
-        mean_relative_error=mean_relative_error,
-        snr_db=snr_db,
-        alternative_source=alternative_source,
-        has_reference_gap=evidence_facts.has_reference_gap,
-        speed_gap_window_count=context_facts.speed_gap_window_count,
-        rpm_gap_window_count=context_facts.rpm_gap_window_count,
-        uses_summary_fallback=False,
-        fallback_reason=None,
-        signal_keys=tuple(dict.fromkeys(signal_keys)),
-        caveat_keys=tuple(dict.fromkeys(caveat_keys)),
     )
 
 
@@ -387,6 +291,159 @@ def project_whole_run_diagnosis_factors(
         )
 
     return (tuple(support_factors), tuple(counter_factors))
+
+
+def score_report_confidence_inputs(
+    inputs: ReportConfidenceScoringInputs,
+) -> ReportConfidenceFacts:
+    """Apply canonical non-fallback confidence scoring to normalized signal inputs."""
+
+    score = max(0.0, min(0.70, 0.25 + (inputs.base_confidence * 0.40)))
+    signal_keys: list[str] = []
+    caveat_keys: list[str] = []
+    frequency_span_hz = _frequency_span_hz(
+        stable_frequency_min_hz=inputs.stable_frequency_min_hz,
+        stable_frequency_max_hz=inputs.stable_frequency_max_hz,
+    )
+
+    if inputs.data_basis == "raw_backed":
+        score += 0.10
+        signal_keys.append("raw_backed")
+    else:
+        score -= 0.05
+        caveat_keys.append("summary_only")
+
+    if inputs.context_traceable:
+        if inputs.context_source == "legacy":
+            score -= 0.05
+            caveat_keys.append("legacy_context")
+        else:
+            if inputs.speed_gap_window_count > 0:
+                score -= 0.04
+                caveat_keys.append("speed_context_gaps")
+            if inputs.rpm_gap_window_count > 0:
+                score -= 0.04
+                caveat_keys.append("rpm_context_gaps")
+
+    supporting_window_count = inputs.supporting_window_count
+    if supporting_window_count is not None:
+        if supporting_window_count >= 4:
+            score += 0.10
+            signal_keys.append("repeated_support")
+        elif supporting_window_count >= 2:
+            score += 0.05
+            signal_keys.append("repeated_support")
+        elif supporting_window_count <= 1:
+            score -= 0.10
+            caveat_keys.append("sparse_support")
+
+    supporting_duration_s = inputs.supporting_duration_s
+    if supporting_duration_s is not None:
+        if supporting_duration_s >= 1.0:
+            score += 0.08
+            signal_keys.append("sustained_support")
+        elif supporting_duration_s >= 0.5:
+            score += 0.04
+            signal_keys.append("sustained_support")
+        elif supporting_duration_s > 0:
+            score -= 0.06
+            caveat_keys.append("brief_support")
+
+    if frequency_span_hz is not None:
+        if frequency_span_hz <= 0.5:
+            score += 0.08
+            signal_keys.append("stable_frequency")
+        elif frequency_span_hz <= 1.0:
+            score += 0.04
+            signal_keys.append("stable_frequency")
+        elif frequency_span_hz > 1.5:
+            score -= 0.06
+            caveat_keys.append("drifting_frequency")
+
+    if inputs.mean_relative_error is not None:
+        if inputs.mean_relative_error <= 0.05:
+            score += 0.08
+            signal_keys.append("tight_order_lock")
+        elif inputs.mean_relative_error >= 0.15:
+            score -= 0.08
+            caveat_keys.append("loose_order_lock")
+
+    if inputs.top_support_share is not None:
+        if inputs.top_support_share >= 0.67:
+            score += 0.08
+            signal_keys.append("localized_support")
+        elif inputs.supporting_location_count > 1 and inputs.top_support_share < 0.55:
+            score -= 0.10
+            caveat_keys.append("mixed_support_locations")
+
+    if inputs.snr_db is not None:
+        if inputs.snr_db >= 6.0:
+            score += 0.05
+            signal_keys.append("clean_signal")
+        elif inputs.snr_db < 3.0:
+            score -= 0.06
+            caveat_keys.append("noisy_signal")
+
+    if inputs.weak_spatial:
+        score -= 0.10
+        caveat_keys.append("weak_spatial")
+
+    if inputs.alternative_source is not None:
+        score -= 0.10
+        caveat_keys.append("close_alternative")
+
+    if inputs.has_reference_gap:
+        score -= 0.06
+        caveat_keys.append("incomplete_reference")
+
+    rounded_score = _rounded_score(score)
+    label_key = _label_key_for_score(rounded_score)
+    caveat_key_set = set(caveat_keys)
+    tier = (
+        "C"
+        if label_key == "CONFIDENCE_HIGH"
+        and not caveat_key_set.intersection(
+            {
+                "summary_only",
+                "drifting_frequency",
+                "loose_order_lock",
+                "mixed_support_locations",
+                "weak_spatial",
+                "close_alternative",
+                "incomplete_reference",
+                "legacy_context",
+                "speed_context_gaps",
+                "rpm_context_gaps",
+                "noisy_signal",
+            }
+        )
+        else ("B" if label_key != "CONFIDENCE_LOW" else "A")
+    )
+    return ReportConfidenceFacts(
+        score_0_to_1=rounded_score,
+        label_key=label_key,
+        pct_text=f"{rounded_score * 100:.0f}%",
+        tier=tier,
+        data_basis=inputs.data_basis,
+        raw_backed_sample_count=inputs.raw_backed_sample_count,
+        supporting_window_count=inputs.supporting_window_count,
+        supporting_duration_s=inputs.supporting_duration_s,
+        stable_frequency_min_hz=inputs.stable_frequency_min_hz,
+        stable_frequency_max_hz=inputs.stable_frequency_max_hz,
+        supporting_location_count=inputs.supporting_location_count,
+        top_support_location=inputs.top_support_location,
+        top_support_share=inputs.top_support_share,
+        mean_relative_error=inputs.mean_relative_error,
+        snr_db=inputs.snr_db,
+        alternative_source=inputs.alternative_source,
+        has_reference_gap=inputs.has_reference_gap,
+        speed_gap_window_count=inputs.speed_gap_window_count,
+        rpm_gap_window_count=inputs.rpm_gap_window_count,
+        uses_summary_fallback=False,
+        fallback_reason=None,
+        signal_keys=tuple(dict.fromkeys(signal_keys)),
+        caveat_keys=tuple(dict.fromkeys(caveat_keys)),
+    )
 
 
 def _frequency_span_hz(
