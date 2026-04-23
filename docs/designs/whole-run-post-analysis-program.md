@@ -215,6 +215,9 @@ summaries.
   - `strongest_location`
 - **Persisted summary**
   - support ratio
+  - reference coverage ratio
+  - contiguous support ratio
+  - drift score and lock score
   - contiguous support intervals
   - harmonic support counts
   - phase-specific support
@@ -226,6 +229,19 @@ The dense generation owner now lives in
 reuses `OrderHypothesis.predicted_hz(...)` from `orders/physics.py` and the
 shared `best_order_peak_match()` tolerance logic from `orders/matching.py`, so
 whole-run traces stay aligned with the current live/sample order model.
+
+The current scoring owner is
+`apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_scoring.py`. It
+derives deterministic per-candidate `OrderTraceSummary` rows from the dense
+trace points, keeps `support_intervals` and `phase_support` empty until the
+later summarization issue lands, and already projects the compact stability
+fields that later ranking and persistence work need:
+
+- `reference_coverage_ratio`
+- `contiguous_support_ratio`
+- `relative_error_stddev`
+- `drift_score`
+- `lock_score`
 
 ### Spatial/coherence contract
 
