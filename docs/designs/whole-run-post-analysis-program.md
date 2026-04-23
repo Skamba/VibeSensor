@@ -243,6 +243,20 @@ fields that later ranking and persistence work need:
 - `drift_score`
 - `lock_score`
 
+The current family-summary owner is
+`apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_family_summaries.py`.
+It consumes the dense trace points plus the per-candidate scored summaries from
+`whole_run_scoring.py`, then emits compact source-family summaries with:
+
+- deterministic `support_intervals`
+- per-phase `phase_support`
+- `stable_frequency_min_hz` / `stable_frequency_max_hz`
+- `exemplar_interval_index`
+
+Those family summaries still live in sidecar storage for now (`order-family-summaries`);
+the later persistence issue should project them into `PersistedAnalysis` without
+requiring dense trace loads.
+
 ### Spatial/coherence contract
 
 Spatial evidence should not be just a whole-run `p95` intensity table. It

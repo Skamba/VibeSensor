@@ -208,6 +208,9 @@ class OrderTraceSummaryResponse(TypedDict, total=False):
     support_intervals: Required[list[OrderTraceSupportIntervalResponse]]
     phase_support: Required[list[OrderTracePhaseSupportResponse]]
     harmonic_summaries: Required[list[OrderHarmonicEvidenceSummaryResponse]]
+    stable_frequency_min_hz: float | None
+    stable_frequency_max_hz: float | None
+    exemplar_interval_index: int | None
     dominant_phase: str | None
     dominant_speed_band: str | None
     strongest_location: str | None
