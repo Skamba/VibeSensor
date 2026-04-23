@@ -47,6 +47,11 @@ __all__ = [
     "DataQualityRequiredMissingPctResponse",
     "DataQualityResponse",
     "DataQualitySpeedCoverageResponse",
+    "DiagnosisFactorDetailsResponse",
+    "DiagnosisFactorKey",
+    "DiagnosisFactorPolarity",
+    "DiagnosisFactorResponse",
+    "DiagnosisFactorSeverity",
     "FindingPayload",
     "DiagnosisExemplarKind",
     "DiagnosisExemplarReferenceResponse",
@@ -83,6 +88,30 @@ type DiagnosisExemplarKind = Literal[
     "whole_run_context_interval",
     "spatial_location",
 ]
+type DiagnosisFactorKey = Literal[
+    "raw_backed",
+    "repeated_support",
+    "sustained_support",
+    "stable_frequency",
+    "tight_order_lock",
+    "localized_support",
+    "clean_signal",
+    "summary_only",
+    "legacy_context",
+    "speed_context_gaps",
+    "rpm_context_gaps",
+    "sparse_support",
+    "brief_support",
+    "drifting_frequency",
+    "loose_order_lock",
+    "mixed_support_locations",
+    "noisy_signal",
+    "weak_spatial",
+    "close_alternative",
+    "incomplete_reference",
+]
+type DiagnosisFactorPolarity = Literal["support", "counterevidence"]
+type DiagnosisFactorSeverity = Literal["low", "medium", "high"]
 type WholeRunDiagnosisDataBasis = Literal["raw_backed", "summary_only"]
 type LocationProofBasis = Literal[
     "whole_run_summary",
@@ -287,6 +316,36 @@ class DiagnosisExemplarReferenceResponse(TypedDict, total=False):
     speed_band: str | None
 
 
+class DiagnosisFactorDetailsResponse(TypedDict, total=False):
+    """Structured details carried by one persisted diagnosis factor row."""
+
+    raw_backed_sample_count: int | None
+    supporting_window_count: int | None
+    supporting_duration_s: float | None
+    stable_frequency_min_hz: float | None
+    stable_frequency_max_hz: float | None
+    frequency_span_hz: float | None
+    supporting_location_count: int | None
+    top_support_location: str | None
+    top_support_share: float | None
+    mean_relative_error: float | None
+    snr_db: float | None
+    alternative_source: str | None
+    speed_gap_window_count: int | None
+    rpm_gap_window_count: int | None
+    fallback_reason: str | None
+
+
+class DiagnosisFactorResponse(TypedDict, total=False):
+    """One stable support or counterevidence factor for a fused diagnosis."""
+
+    factor_key: Required[DiagnosisFactorKey]
+    polarity: Required[DiagnosisFactorPolarity]
+    severity: Required[DiagnosisFactorSeverity]
+    weight: Required[float]
+    details: Required[DiagnosisFactorDetailsResponse]
+
+
 class WholeRunDiagnosisSummaryResponse(TypedDict, total=False):
     """Future persisted/report-facing summary shape for fused whole-run diagnoses."""
 
@@ -321,6 +380,8 @@ class WholeRunDiagnosisSummaryResponse(TypedDict, total=False):
     uses_summary_fallback: Required[bool]
     fallback_reason: str | None
     exemplar_references: Required[list[DiagnosisExemplarReferenceResponse]]
+    support_factors: Required[list[DiagnosisFactorResponse]]
+    counterevidence_factors: Required[list[DiagnosisFactorResponse]]
 
 
 class SpeedStatsResponse(TypedDict):
@@ -481,6 +542,8 @@ for _typed_dict in (
     SpatialLocationSummaryResponse,
     SpatialEvidenceSummaryResponse,
     DiagnosisExemplarReferenceResponse,
+    DiagnosisFactorDetailsResponse,
+    DiagnosisFactorResponse,
     WholeRunDiagnosisSummaryResponse,
     SpeedStatsResponse,
     PhaseInfoResponse,
