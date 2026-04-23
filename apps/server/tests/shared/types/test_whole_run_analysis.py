@@ -126,8 +126,10 @@ def test_context_window_label_round_trips_with_explicit_quality_states() -> None
         speed_kmh=63.5,
         speed_band="60-70 km/h",
         speed_source="manual",
+        speed_is_stale=True,
         engine_rpm=1825.0,
         engine_rpm_source="estimated_from_speed_and_ratios",
+        rpm_is_stale=False,
     )
 
     restored = WholeRunContextWindowLabel.from_mapping(label.to_json_object())
