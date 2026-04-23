@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from vibesensor.domain import OrderMatchObservation, speed_bin_label
 from vibesensor.shared.constants.analysis import (
+    MIN_ANALYSIS_FREQ_HZ,
     ORDER_MIN_CONTIGUOUS_MATCH_DURATION_S,
     ORDER_MIN_COVERAGE_DURATION_S,
     ORDER_MIN_COVERAGE_POINTS,
@@ -141,10 +142,9 @@ def best_order_peak_match(
 
     if predicted_hz <= 0 or not peaks:
         return None
-    compliance_scale = path_compliance**0.5
-    tolerance_hz = max(
-        ORDER_TOLERANCE_MIN_HZ,
-        predicted_hz * ORDER_TOLERANCE_REL * compliance_scale,
+    tolerance_hz = order_peak_tolerance_hz(
+        predicted_hz=predicted_hz,
+        path_compliance=path_compliance,
     )
     peak_index, (best_hz, best_amp) = min(
         enumerate(peaks),
@@ -159,6 +159,37 @@ def best_order_peak_match(
         amplitude_g=best_amp,
         relative_error=delta_hz / max(1e-9, predicted_hz),
     )
+
+
+def order_peak_tolerance_hz(*, predicted_hz: float, path_compliance: float) -> float:
+    """Return the match tolerance for one predicted order frequency."""
+
+    compliance_scale = path_compliance**0.5
+    return float(
+        max(
+            ORDER_TOLERANCE_MIN_HZ,
+            predicted_hz * ORDER_TOLERANCE_REL * compliance_scale,
+        )
+    )
+
+
+def filtered_peak_pairs(
+    peaks: Sequence[Mapping[str, object]],
+) -> tuple[tuple[int, ...], tuple[tuple[float, float], ...]]:
+    """Return valid ``(hz, amp)`` peak pairs plus their source indexes."""
+
+    indexes: list[int] = []
+    filtered: list[tuple[float, float]] = []
+    for peak_index, peak in enumerate(peaks):
+        hz = peak.get("hz")
+        amp = peak.get("amp")
+        if not isinstance(hz, (int, float)) or not isinstance(amp, (int, float)):
+            continue
+        if hz <= 0 or amp <= 0 or hz < MIN_ANALYSIS_FREQ_HZ:
+            continue
+        indexes.append(peak_index)
+        filtered.append((float(hz), float(amp)))
+    return tuple(indexes), tuple(filtered)
 
 
 def match_samples_for_hypothesis(

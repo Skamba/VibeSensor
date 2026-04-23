@@ -299,6 +299,15 @@ sensor ordering canonical by `sensor_id`, and exposes explicit
 coherence and hotspot scoring stages do not have to infer missing-data rules
 ad hoc.
 
+Candidate-level coherence now builds on that aligned matrix plus the existing
+whole-run order trace catalog in
+`apps/server/vibesensor/use_cases/diagnostics/whole_run_spatial_coherence.py`.
+That stage reuses `OrderTracePoint.hypothesis_key` as the candidate identity,
+scores cross-sensor agreement with the same order tolerance logic already used
+by `orders/matching.py`, emits dense `SpatialEvidenceWindow` rows to a
+`spatial-coherence-windows` sidecar, and leaves dominant-location /
+runner-up-location summarization for the later hotspot-specific issue.
+
 ### Counterevidence model
 
 Counterevidence should become a first-class persisted concept with stable keys,
