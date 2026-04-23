@@ -13,7 +13,7 @@ from .facts import (
     prepare_report_facts,
 )
 from .findings import FindingPresentation, PreparedReportFindings
-from .input import PreparedReportInput
+from .input import PreparedReportInput, validate_prepared_report_input
 
 # Reconstructed prepared-input entrypoints.
 from .preparation import prepare_persisted_report_input, prepare_report_input
@@ -70,4 +70,5 @@ __all__ = [
     "resolve_primary_report_facts",
     "resolve_report_origin",
     "sensor_fallback_strength_db",
+    "validate_prepared_report_input",
 ]

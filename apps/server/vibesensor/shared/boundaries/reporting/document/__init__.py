@@ -21,6 +21,7 @@ from .sections import (
     TimelineGraphInterval,
     VerdictPageData,
 )
+from .validation import validate_report_document
 
 __all__ = [
     "AppendixAData",
@@ -44,5 +45,6 @@ __all__ = [
     "TimelineGraphData",
     "TimelineGraphInterval",
     "TopologyIntensityRow",
+    "validate_report_document",
     "VerdictPageData",
 ]

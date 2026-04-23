@@ -110,6 +110,7 @@ def test_build_report_pdf_accepts_report_template_data() -> None:
     """build_report_pdf must accept a ReportDocument directly."""
     data = ReportDocument(
         title="Test Report",
+        run_id="report-template",
         pattern_evidence=PatternEvidence(),
         lang="en",
     )
@@ -126,6 +127,7 @@ def test_report_output_matches_template_data() -> None:
     """Key facts from ReportDocument appear in the rendered PDF text."""
     data = ReportDocument(
         title="VibeSensor Diagnostic Report",
+        run_id="report-output-match",
         run_datetime="2026-01-15 10:30:00",
         sensor_count=4,
         verdict_page=VerdictPageData(
@@ -187,6 +189,7 @@ def test_report_keeps_strongest_sensor_on_page_one_when_no_system_cards() -> Non
     """Page one keeps the dominant corner visible even without worksheet rows."""
     data = ReportDocument(
         title="VibeSensor Diagnostic Report",
+        run_id="strongest-sensor-page-one",
         verdict_page=VerdictPageData(
             suspected_source="Unknown resonance",
             inspect_first="Rear-Right",
@@ -224,6 +227,7 @@ def test_report_cards_switch_to_check_first_summary_when_parts_exist() -> None:
     """Workflow appendix surfaces primary path context and concrete action rows."""
     data = ReportDocument(
         title="VibeSensor Diagnostic Report",
+        run_id="cards-check-first-summary",
         verdict_page=VerdictPageData(
             suspected_source="Wheel / Tire",
             inspect_first="Front-Left",
