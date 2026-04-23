@@ -9,9 +9,16 @@ from dataclasses import dataclass
 from math import isfinite
 
 from vibesensor.domain import DrivingPhase, speed_bin_label
+from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
+from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (
+    WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME,
+    WholeRunArtifactFile,
+    WholeRunArtifactManifest,
     WholeRunContextCoverage,
+    WholeRunContextInterval,
     WholeRunContextLoadState,
     WholeRunContextWindowLabel,
     WholeRunRpmValidity,
@@ -20,9 +27,20 @@ from vibesensor.shared.types.whole_run_analysis import (
 
 from ._reference_resolution import _effective_engine_rpm, _tire_reference_from_context
 from ._types import Sample
-from .whole_run_windows import WholeRunWindowPlan
+from .phase_segmentation import segment_whole_run_context
+from .whole_run_windows import WholeRunWindowPlan, plan_whole_run_windows
 
-__all__ = ["normalize_whole_run_context_labels"]
+__all__ = [
+    "WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY",
+    "WholeRunContextArtifactBundle",
+    "build_whole_run_context_artifact_bundle",
+    "normalize_whole_run_context_labels",
+    "whole_run_context_labels_from_jsonl_bytes",
+    "whole_run_context_labels_to_jsonl_bytes",
+]
+
+WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY = "context-window-labels"
+_WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_PATH = "context/window-labels.jsonl"
 
 _SPEED_VALIDITY_RANK: dict[WholeRunSpeedValidity, int] = {
     "missing": 0,
@@ -50,6 +68,93 @@ class _RpmObservation:
     engine_rpm: float
     engine_rpm_source: str
     rpm_validity: WholeRunRpmValidity
+
+
+@dataclass(frozen=True, slots=True)
+class WholeRunContextArtifactBundle:
+    """Whole-run context sidecar payload plus compact persisted intervals."""
+
+    manifest: WholeRunArtifactManifest
+    artifact_contents: dict[str, bytes]
+    labels: tuple[WholeRunContextWindowLabel, ...]
+    intervals: tuple[WholeRunContextInterval, ...]
+
+
+def build_whole_run_context_artifact_bundle(
+    *,
+    run_id: str,
+    metadata: RunMetadata,
+    samples: Sequence[Sample],
+    total_sample_count: int,
+    created_at: str | None = None,
+) -> WholeRunContextArtifactBundle:
+    """Build whole-run context labels and compact segments for persistence."""
+
+    plan = plan_whole_run_windows(
+        metadata=metadata,
+        total_sample_count=total_sample_count,
+    )
+    labels = normalize_whole_run_context_labels(
+        metadata=metadata,
+        samples=samples,
+        window_plan=plan,
+    )
+    segmentation = segment_whole_run_context(labels=labels, window_plan=plan)
+    artifact_file = WholeRunArtifactFile(
+        artifact_key=WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
+        relative_path=_WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_PATH,
+        file_format="jsonl",
+        record_count=len(segmentation.labels),
+    )
+    manifest = WholeRunArtifactManifest(
+        run_id=run_id,
+        relative_dir=f"{WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME}/{run_id}",
+        window_policy=plan.policy,
+        total_window_count=plan.total_window_count,
+        artifacts=(artifact_file,),
+        created_at=created_at or utc_now_iso(),
+    )
+    return WholeRunContextArtifactBundle(
+        manifest=manifest,
+        artifact_contents={
+            WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY: whole_run_context_labels_to_jsonl_bytes(
+                segmentation.labels
+            )
+        },
+        labels=segmentation.labels,
+        intervals=segmentation.intervals,
+    )
+
+
+def whole_run_context_labels_to_jsonl_bytes(
+    labels: Sequence[WholeRunContextWindowLabel],
+) -> bytes:
+    """Serialize whole-run context labels into the sidecar JSONL format."""
+
+    if not labels:
+        return b""
+    lines = [safe_json_dumps(label.to_json_object()).encode("utf-8") for label in labels]
+    return b"\n".join(lines) + b"\n"
+
+
+def whole_run_context_labels_from_jsonl_bytes(
+    payload: bytes,
+) -> tuple[WholeRunContextWindowLabel, ...]:
+    """Reconstruct persisted whole-run context labels from sidecar JSONL bytes."""
+
+    if not payload:
+        return ()
+    labels: list[WholeRunContextWindowLabel] = []
+    text = payload.decode("utf-8")
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        parsed = safe_json_loads(line, context="whole-run context labels")
+        if not is_json_object(parsed):
+            raise ValueError("whole-run context label line must decode to a JSON object")
+        labels.append(WholeRunContextWindowLabel.from_mapping(parsed))
+    return tuple(labels)
 
 
 def normalize_whole_run_context_labels(

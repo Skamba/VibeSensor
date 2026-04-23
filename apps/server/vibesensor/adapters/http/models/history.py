@@ -52,6 +52,7 @@ from vibesensor.shared.types.history_analysis_contracts import (
     SummaryWarningResponse,
     SuspectedVibrationOriginPayload,
     TestPlanStepResponse,
+    WholeRunContextIntervalResponse,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummaryResponse as _SharedAnalysisSummaryResponse,
@@ -182,6 +183,7 @@ class _HistoryInsightsCoreResponse(TypedDict, total=False):
     most_likely_origin: Required[SuspectedVibrationOriginPayload]
     test_plan: Required[list[TestPlanStepResponse]]
     phase_timeline: Required[list[PhaseTimelineEntryResponse]]
+    whole_run_context_intervals: list[WholeRunContextIntervalResponse]
     speed_stats: Required[SpeedStatsResponse]
     speed_stats_by_phase: Required[dict[str, SpeedStatsResponse]]
     phase_info: Required[PhaseInfoResponse]
