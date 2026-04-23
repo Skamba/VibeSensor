@@ -143,3 +143,22 @@ That shared ownership is why `shared/order_bands.py` exists outside
 | `apps/server/vibesensor/use_cases/diagnostics/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/finding_builder.py` | Project scored evidence into domain `Finding` objects. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/pipeline.py` | Coordinate the full order-analysis pass. |
+| `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_contracts.py` | Dense whole-run order-trace points plus compact summary/support contracts for later full-run work. |
+
+## Whole-run order trace contract split
+
+Whole-run order work keeps one order model and changes only the sampling grid:
+
+- dense sidecars use `OrderTracePoint` in
+  `use_cases/diagnostics/orders/whole_run_contracts.py`, keyed by
+  `(hypothesis_key, harmonic, window_index)` so later execution can join
+  directly against the canonical whole-run window grid
+- compact persisted/report-facing projections use the future summary shapes in
+  `shared/types/history_analysis_contracts.py`
+- the compact summary contract carries support intervals, phase support, and
+  harmonic evidence rows, while the dense point contract keeps per-window
+  predicted/matched frequency evidence
+
+This keeps whole-run traces aligned with the existing `OrderHypothesis`,
+`OrderMatchObservation`, and `FindingEvidence` concepts instead of creating a
+second order-analysis vocabulary.
