@@ -189,6 +189,11 @@ Each `window_index` should also carry:
 Context segments then refer to window index ranges, and order/spatial/fusion
 layers join against the same key instead of ad hoc timestamp matching.
 
+The canonical planner now lives in
+`apps/server/vibesensor/use_cases/diagnostics/whole_run_windows.py` and uses an
+explicit **drop incomplete trailing windows** policy. Runs shorter than one FFT
+window produce an empty grid instead of padded or synthetic windows.
+
 ### Order-trace contract
 
 Whole-run order tracking should separate dense trace points from persisted
@@ -252,6 +257,7 @@ explainable factors that reporting can consume directly.
 | Contract | Suggested owner | Notes |
 |---|---|---|
 | `WholeRunWindowPolicy` / `WholeRunWindowDescriptor` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` | Canonical sample-space policy and deterministic window identity for every later whole-run stage |
+| `WholeRunWindowPlan` / `plan_whole_run_windows(...)` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_windows.py` | Deterministic window grid planner with explicit trailing-window policy |
 | `WholeRunWindowSpectralSummary` | `use_cases/diagnostics/` with compact persisted projection | Per-window FFT/strength/top-peak outputs |
 | `WholeRunArtifactManifest` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` + later persistence store under `adapters/persistence/history_db/` | Sidecar manifest for dense whole-run artifacts; mirror the raw-capture pattern |
 | `RunContextInterval` / `WindowContextLabel` | `use_cases/diagnostics/` with report-facing projection in `shared/types/history_analysis_contracts.py` | Whole-run segments and per-window labels |
