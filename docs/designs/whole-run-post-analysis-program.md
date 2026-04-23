@@ -305,8 +305,10 @@ whole-run order trace catalog in
 That stage reuses `OrderTracePoint.hypothesis_key` as the candidate identity,
 scores cross-sensor agreement with the same order tolerance logic already used
 by `orders/matching.py`, emits dense `SpatialEvidenceWindow` rows to a
-`spatial-coherence-windows` sidecar, and leaves dominant-location /
-runner-up-location summarization for the later hotspot-specific issue.
+`spatial-coherence-windows` sidecar, and now also builds compact
+`SpatialLocationSummary` / `SpatialEvidenceSummary` hotspot outputs with
+dominant location, runner-up, location separation, and weak/ambiguous flags
+derived from supporting-window evidence.
 
 ### Counterevidence model
 

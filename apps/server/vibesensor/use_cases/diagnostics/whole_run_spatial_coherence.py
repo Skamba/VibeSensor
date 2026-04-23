@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from statistics import mean as _mean
 
+from vibesensor.domain import LocationHotspot
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import is_json_object
@@ -15,6 +17,9 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunContextWindowLabel,
 )
 from vibesensor.use_cases.diagnostics._types import Sample
+from vibesensor.use_cases.diagnostics.location_scoring import (
+    NEAR_TIE_DOMINANCE_THRESHOLD,
+)
 from vibesensor.use_cases.diagnostics.orders.matching import (
     best_order_peak_match,
     filtered_peak_pairs,
@@ -28,6 +33,7 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
 from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
     SpatialEvidenceSummary,
     SpatialEvidenceWindow,
+    SpatialLocationSummary,
 )
 from vibesensor.use_cases.diagnostics.whole_run_spatial_alignment import (
     AlignedSpatialWindow,
@@ -178,25 +184,53 @@ def summarize_whole_run_spatial_coherence(
         windows_by_index: dict[int, list[SpatialEvidenceWindow]] = defaultdict(list)
         for row in candidate_rows:
             windows_by_index[row.window_index].append(row)
-        coherence_scores = [
-            max((row.coherence_score or 0.0) for row in window_rows if row.supporting)
+        supporting_window_count = sum(
+            1
             for window_rows in windows_by_index.values()
             if any(row.supporting for row in window_rows)
-        ]
+        )
+        coherent_window_count = sum(
+            1
+            for window_rows in windows_by_index.values()
+            if any(row.coherent for row in window_rows)
+        )
+        location_summaries = _summarize_location_support(
+            candidate_rows,
+            supporting_window_count=supporting_window_count,
+        )
+        dominant_location = location_summaries[0].location if location_summaries else None
+        runner_up_location = location_summaries[1].location if len(location_summaries) > 1 else None
+        dominance_ratio = _location_dominance_ratio(location_summaries)
+        weak_spatial_separation = _weak_spatial_separation(
+            location_summaries,
+            dominance_ratio=dominance_ratio,
+        )
         summaries.append(
             SpatialEvidenceSummary(
                 candidate_key=candidate_key,
                 suspected_source=source_by_candidate[candidate_key],
                 proof_basis="supporting_windows_raw_backed",
                 total_window_count=len(windows_by_index),
-                supporting_window_count=len(coherence_scores),
+                supporting_window_count=supporting_window_count,
                 supporting_sensor_count=len(
                     {row.sensor_id for row in candidate_rows if row.supporting}
                 ),
-                coherent_window_count=sum(1 for score in coherence_scores if score > 0.0),
+                coherent_window_count=coherent_window_count,
                 coherence_ratio=(
-                    sum(coherence_scores) / len(coherence_scores) if coherence_scores else 0.0
+                    coherent_window_count / supporting_window_count
+                    if supporting_window_count > 0
+                    else 0.0
                 ),
+                dominant_location=dominant_location,
+                runner_up_location=runner_up_location,
+                location_separation_db=_location_separation_db(location_summaries),
+                dominance_ratio=dominance_ratio,
+                ambiguous_location=_ambiguous_location(
+                    location_summaries,
+                    dominance_ratio=dominance_ratio,
+                ),
+                weak_spatial_separation=weak_spatial_separation,
+                location_summaries=location_summaries,
             )
         )
     return tuple(summaries)
@@ -337,3 +371,120 @@ def _ordered_candidate_keys(rows_by_candidate: Mapping[str, object]) -> tuple[st
 def _peak_intensity_db(peak: Mapping[str, object]) -> float | None:
     value = peak.get("vibration_strength_db")
     return float(value) if isinstance(value, (int, float)) else None
+
+
+def _summarize_location_support(
+    candidate_rows: Sequence[SpatialEvidenceWindow],
+    *,
+    supporting_window_count: int,
+) -> tuple[SpatialLocationSummary, ...]:
+    rows_by_location: dict[str, list[SpatialEvidenceWindow]] = defaultdict(list)
+    for row in candidate_rows:
+        if row.supporting:
+            rows_by_location[row.location].append(row)
+    summaries = [
+        _build_location_summary(
+            location,
+            rows,
+            supporting_window_count=supporting_window_count,
+        )
+        for location, rows in rows_by_location.items()
+    ]
+    return tuple(
+        sorted(
+            summaries,
+            key=lambda summary: (
+                -summary.support_ratio,
+                -summary.coherent_window_count,
+                -(summary.coherence_ratio or 0.0),
+                -_sortable_metric(summary.mean_vibration_strength_db),
+                -_sortable_metric(summary.peak_intensity_db),
+                summary.location.lower(),
+            ),
+        )
+    )
+
+
+def _build_location_summary(
+    location: str,
+    rows: Sequence[SpatialEvidenceWindow],
+    *,
+    supporting_window_count: int,
+) -> SpatialLocationSummary:
+    support_windows = {row.window_index for row in rows}
+    coherent_windows = {row.window_index for row in rows if row.coherent}
+    vibration_strengths = [
+        row.vibration_strength_db for row in rows if row.vibration_strength_db is not None
+    ]
+    peak_intensities = [row.peak_intensity_db for row in rows if row.peak_intensity_db is not None]
+    return SpatialLocationSummary(
+        location=location,
+        sensor_ids=tuple(sorted({row.sensor_id for row in rows})),
+        supporting_window_count=len(support_windows),
+        support_ratio=(
+            len(support_windows) / supporting_window_count if supporting_window_count > 0 else 0.0
+        ),
+        coherent_window_count=len(coherent_windows),
+        coherence_ratio=(len(coherent_windows) / len(support_windows) if support_windows else 0.0),
+        peak_intensity_db=max(peak_intensities) if peak_intensities else None,
+        mean_vibration_strength_db=(_mean(vibration_strengths) if vibration_strengths else None),
+    )
+
+
+def _location_dominance_ratio(
+    location_summaries: Sequence[SpatialLocationSummary],
+) -> float | None:
+    if len(location_summaries) < 2:
+        return None
+    top_support = location_summaries[0].support_ratio
+    runner_up_support = location_summaries[1].support_ratio
+    if runner_up_support <= 0.0:
+        return None
+    return top_support / runner_up_support
+
+
+def _location_separation_db(
+    location_summaries: Sequence[SpatialLocationSummary],
+) -> float | None:
+    if len(location_summaries) < 2:
+        return None
+    top = _location_reference_db(location_summaries[0])
+    runner_up = _location_reference_db(location_summaries[1])
+    if top is None or runner_up is None:
+        return None
+    return top - runner_up
+
+
+def _location_reference_db(summary: SpatialLocationSummary) -> float | None:
+    if summary.mean_vibration_strength_db is not None:
+        return summary.mean_vibration_strength_db
+    return summary.peak_intensity_db
+
+
+def _ambiguous_location(
+    location_summaries: Sequence[SpatialLocationSummary],
+    *,
+    dominance_ratio: float | None,
+) -> bool:
+    return (
+        len(location_summaries) > 1
+        and dominance_ratio is not None
+        and dominance_ratio < NEAR_TIE_DOMINANCE_THRESHOLD
+    )
+
+
+def _weak_spatial_separation(
+    location_summaries: Sequence[SpatialLocationSummary],
+    *,
+    dominance_ratio: float | None,
+) -> bool:
+    if not location_summaries:
+        return True
+    if len(location_summaries) < 2 or dominance_ratio is None:
+        return False
+    threshold = LocationHotspot.weak_spatial_threshold(len(location_summaries))
+    return dominance_ratio < threshold
+
+
+def _sortable_metric(value: float | None) -> float:
+    return value if value is not None else float("-inf")
