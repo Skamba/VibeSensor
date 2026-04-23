@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 import aiosqlite
 from opentelemetry.trace import SpanKind
@@ -14,6 +14,13 @@ from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawCaptureSensorRange
+from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.use_cases.diagnostics.whole_run_spectra import (
+    WholeRunSpectralArtifactBundle,
+    build_whole_run_spectral_artifact_bundle,
+)
 from vibesensor.use_cases.run.post_analysis_input import (
     PostAnalysisRunInput,
     build_post_analysis_input,
@@ -73,15 +80,34 @@ class PostAnalysisLoader(Protocol):
     ) -> PostAnalysisLoadResult: ...
 
 
+class WholeRunArtifactBuilder(Protocol):
+    """Injected boundary for building dense whole-run sidecar artifacts."""
+
+    def __call__(
+        self,
+        *,
+        run_id: str,
+        metadata: RunMetadata,
+        raw_capture_manifest: RawCaptureManifest,
+        db: RunPersistence,
+    ) -> WholeRunSpectralArtifactBundle | None: ...
+
+
 def execute_post_analysis(
     *,
     run_id: str,
     db: RunPersistence,
     analysis_runner: PostAnalysisRunner,
     load_run: PostAnalysisLoader = load_post_analysis_run,
+    whole_run_artifact_builder: WholeRunArtifactBuilder | None = None,
     defer_retryable_error_storage: bool = False,
 ) -> PostAnalysisAttemptResult:
     analysis_start = time.monotonic()
+    resolved_whole_run_artifact_builder = (
+        _build_whole_run_artifacts
+        if whole_run_artifact_builder is None
+        else whole_run_artifact_builder
+    )
     with start_span(
         __name__,
         "run.post_analysis.execute",
@@ -147,10 +173,32 @@ def execute_post_analysis(
             )
 
         loaded = load_result
-        run_input = build_post_analysis_input(loaded)
-        span.set_attribute("vibesensor.sample_count", len(run_input.samples))
         try:
+            stored_artifact_manifest: WholeRunArtifactManifest | None = None
+            if loaded.raw_capture_manifest is not None:
+                artifact_bundle = resolved_whole_run_artifact_builder(
+                    run_id=loaded.run_id,
+                    metadata=loaded.metadata,
+                    raw_capture_manifest=loaded.raw_capture_manifest,
+                    db=db,
+                )
+                if artifact_bundle is not None:
+                    stored_artifact_manifest = _sync_call(
+                        db,
+                        "astore_whole_run_artifacts",
+                        loaded.run_id,
+                        artifact_bundle.manifest,
+                        artifact_contents=artifact_bundle.artifact_contents,
+                    )
+                    if stored_artifact_manifest is None:
+                        raise OSError(
+                            f"Failed to persist whole-run artifacts for run {loaded.run_id}"
+                        )
+            run_input = build_post_analysis_input(loaded)
+            span.set_attribute("vibesensor.sample_count", len(run_input.samples))
             summary = analysis_runner(run_input)
+            if stored_artifact_manifest is not None:
+                summary = _append_whole_run_analysis_metadata(summary, stored_artifact_manifest)
             _sync_call(db, "astore_analysis", loaded.run_id, summary)
         except (aiosqlite.Error, OSError, MemoryError) as exc:
             mark_span_error(span, exc)
@@ -296,3 +344,55 @@ def _persistence_failure_result(
         completed_error=completed_error,
         callback_errors=callback_errors,
     )
+
+
+def _build_whole_run_artifacts(
+    *,
+    run_id: str,
+    metadata: RunMetadata,
+    raw_capture_manifest: RawCaptureManifest,
+    db: RunPersistence,
+) -> WholeRunSpectralArtifactBundle | None:
+    def load_sensor_range(
+        *,
+        client_id: str,
+        sample_start: int,
+        sample_count: int,
+    ) -> RawCaptureSensorRange | None:
+        return cast(
+            RawCaptureSensorRange | None,
+            _sync_call(
+                db,
+                "aload_raw_capture_sensor_range",
+                run_id,
+                client_id,
+                sample_start=sample_start,
+                sample_count=sample_count,
+            ),
+        )
+
+    return build_whole_run_spectral_artifact_bundle(
+        run_id=run_id,
+        metadata=metadata,
+        raw_capture_manifest=raw_capture_manifest,
+        load_sensor_range=load_sensor_range,
+    )
+
+
+def _append_whole_run_analysis_metadata(
+    summary: PersistedAnalysis,
+    manifest: WholeRunArtifactManifest,
+) -> PersistedAnalysis:
+    payload = summary.to_json_object()
+    analysis_metadata = payload.get("analysis_metadata")
+    if not isinstance(analysis_metadata, dict):
+        analysis_metadata = {}
+        payload["analysis_metadata"] = analysis_metadata
+    sensor_ids = sorted(
+        {artifact.sensor_id for artifact in manifest.artifacts if artifact.sensor_id is not None}
+    )
+    analysis_metadata["whole_run_artifacts_available"] = True
+    analysis_metadata["whole_run_window_count"] = int(manifest.total_window_count)
+    analysis_metadata["whole_run_sensor_count"] = len(sensor_ids)
+    analysis_metadata["whole_run_artifact_count"] = len(manifest.artifacts)
+    return PersistedAnalysis.from_json_object(payload)

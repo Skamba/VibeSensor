@@ -58,7 +58,7 @@ def test_compute_reuses_filtered_time_window_for_fft(monkeypatch) -> None:
 
     monkeypatch.setattr("vibesensor.infra.processing.compute.medfilt3", _fake_medfilt3)
     monkeypatch.setattr(
-        "vibesensor.infra.processing.compute.compute_fft_spectrum",
+        "vibesensor.shared.fft_analysis.compute_fft_spectrum",
         _fake_compute_fft_spectrum,
     )
 
@@ -103,7 +103,7 @@ def test_compute_filters_short_fft_block_only_once(monkeypatch) -> None:
 
     monkeypatch.setattr("vibesensor.infra.processing.compute.medfilt3", _fake_medfilt3)
     monkeypatch.setattr(
-        "vibesensor.infra.processing.compute.compute_fft_spectrum",
+        "vibesensor.shared.fft_analysis.compute_fft_spectrum",
         _fake_compute_fft_spectrum,
     )
 
@@ -167,7 +167,7 @@ def test_compute_fft_spectrum_reuses_cached_strength_range_mask(monkeypatch) -> 
         return _empty_fft_result()
 
     monkeypatch.setattr(
-        "vibesensor.infra.processing.compute.compute_fft_spectrum",
+        "vibesensor.shared.fft_analysis.compute_fft_spectrum",
         _fake_compute_fft_spectrum,
     )
 

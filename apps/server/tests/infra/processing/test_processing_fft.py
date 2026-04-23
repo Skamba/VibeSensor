@@ -12,8 +12,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-import vibesensor.infra.processing.fft as fft_module
-from vibesensor.infra.processing.fft import (
+import vibesensor.shared.fft_analysis as fft_module
+from vibesensor.shared.fft_analysis import (
     compute_fft_spectrum,
     float_list,
     medfilt3,
