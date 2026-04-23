@@ -22,7 +22,11 @@ from vibesensor.shared.types.persisted_analysis import (
     PERSISTED_ANALYSIS_SCHEMA_VERSION,
     PersistedAnalysis,
 )
-from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
+from vibesensor.shared.types.raw_capture import (
+    RawCaptureManifest,
+    RawCaptureSensorRange,
+    RawRunCapture,
+)
 from vibesensor.use_cases.history.runs import HistoryRunService
 
 pytestmark = pytest.mark.smoke
@@ -42,6 +46,20 @@ class _RunPersistenceStub:
 
     async def aload_raw_capture(self, _run_id: str) -> RawRunCapture | None:
         return None
+
+    async def aload_raw_capture_sensor_range(
+        self,
+        _run_id: str,
+        client_id: str,
+        *,
+        sample_start: int,
+        sample_count: int,
+    ) -> RawCaptureSensorRange | None:
+        return RawCaptureSensorRange.missing(
+            client_id=client_id,
+            requested_sample_start=sample_start,
+            requested_sample_count=sample_count,
+        )
 
 
 def _representative_summary() -> AnalysisSummary:

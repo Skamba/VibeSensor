@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -15,10 +16,12 @@ __all__ = [
     "RawCaptureManifest",
     "RawCaptureSensorData",
     "RawCaptureSensorManifest",
+    "RawCaptureSensorRange",
     "RawRunCapture",
 ]
 
 type Int16Array = npt.NDArray[np.int16]
+type RawCaptureCoverageState = Literal["missing", "empty", "partial", "full"]
 
 _RAW_CAPTURE_SCHEMA_VERSION = 1
 _RAW_CAPTURE_STORAGE_TYPE = "run-directory-v1"
@@ -172,6 +175,56 @@ class RawCaptureSensorData:
 
 
 @dataclass(frozen=True, slots=True)
+class RawCaptureSensorRange:
+    """One manifest-aware raw-capture range read with explicit coverage state."""
+
+    client_id: str
+    requested_sample_start: int
+    requested_sample_count: int
+    coverage_state: RawCaptureCoverageState
+    samples_i16: Int16Array
+    manifest: RawCaptureSensorManifest | None = None
+    returned_sample_start: int | None = None
+    chunks: tuple[RawCaptureChunkIndex, ...] = ()
+
+    @classmethod
+    def missing(
+        cls,
+        *,
+        client_id: str,
+        requested_sample_start: int,
+        requested_sample_count: int,
+    ) -> RawCaptureSensorRange:
+        return cls(
+            client_id=client_id,
+            requested_sample_start=requested_sample_start,
+            requested_sample_count=requested_sample_count,
+            coverage_state="missing",
+            samples_i16=_empty_i16_samples(),
+        )
+
+    @property
+    def returned_sample_count(self) -> int:
+        if self.samples_i16.ndim <= 0:
+            return 0
+        return int(self.samples_i16.shape[0])
+
+    @property
+    def requested_sample_end(self) -> int:
+        return self.requested_sample_start + self.requested_sample_count
+
+    @property
+    def returned_sample_end(self) -> int | None:
+        if self.returned_sample_start is None:
+            return None
+        return self.returned_sample_start + self.returned_sample_count
+
+    @property
+    def has_full_coverage(self) -> bool:
+        return self.coverage_state == "full"
+
+
+@dataclass(frozen=True, slots=True)
 class RawRunCapture:
     """Fully loaded raw capture bundle for one run."""
 
@@ -203,3 +256,7 @@ def _int_from_json(value: JsonValue | object, default: int = 0) -> int:
 
 def _str_from_json(value: JsonValue | object, default: str = "") -> str:
     return value if isinstance(value, str) else default
+
+
+def _empty_i16_samples() -> Int16Array:
+    return np.empty((0, 3), dtype=np.int16)

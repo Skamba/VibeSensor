@@ -16,12 +16,17 @@ from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureChunkIndex,
+    RawCaptureCoverageState,
     RawCaptureManifest,
     RawCaptureSensorData,
     RawCaptureSensorManifest,
+    RawCaptureSensorRange,
     RawRunCapture,
 )
 
+_AXIS_COUNT = 3
+_BYTES_PER_AXIS = 2
+_BYTES_PER_SAMPLE = _AXIS_COUNT * _BYTES_PER_AXIS
 _MANIFEST_FILE_NAME = "manifest.json"
 _RAW_CAPTURE_DIR_NAME = "raw-runs"
 
@@ -127,20 +132,9 @@ class HistoryRawCaptureStore:
         sensors: list[RawCaptureSensorData] = []
         for sensor_manifest in manifest.sensors:
             data_path = run_dir / sensor_manifest.data_file
-            raw_bytes = data_path.read_bytes()
-            samples_i16 = np.frombuffer(raw_bytes, dtype=np.dtype("<i2")).copy()
-            if samples_i16.size % 3 != 0:
-                raise ValueError(
-                    f"raw capture {data_path} length {samples_i16.size} is not divisible by 3 axes"
-                )
-            reshaped = samples_i16.reshape(-1, 3)
             index_path = run_dir / sensor_manifest.index_file
-            chunk_indexes: list[RawCaptureChunkIndex] = []
-            if index_path.exists():
-                for line in index_path.read_text(encoding="utf-8").splitlines():
-                    parsed = safe_json_loads(line, context=f"raw capture index {index_path}")
-                    if is_json_object(parsed):
-                        chunk_indexes.append(RawCaptureChunkIndex.from_mapping(parsed))
+            reshaped = self._read_all_sensor_samples(data_path)
+            chunk_indexes = self._load_chunk_indexes(index_path)
             sensors.append(
                 RawCaptureSensorData(
                     manifest=sensor_manifest,
@@ -149,6 +143,88 @@ class HistoryRawCaptureStore:
                 )
             )
         return RawRunCapture(manifest=manifest, sensors=tuple(sensors))
+
+    def load_sensor_range(
+        self,
+        manifest: RawCaptureManifest,
+        *,
+        client_id: str,
+        sample_start: int,
+        sample_count: int,
+    ) -> RawCaptureSensorRange:
+        if sample_start < 0:
+            raise ValueError("raw capture range requires sample_start >= 0")
+        if sample_count <= 0:
+            raise ValueError("raw capture range requires sample_count > 0")
+        sensor_manifest = manifest.sensor_manifest(client_id)
+        if sensor_manifest is None:
+            return RawCaptureSensorRange.missing(
+                client_id=client_id,
+                requested_sample_start=sample_start,
+                requested_sample_count=sample_count,
+            )
+        available_count = max(0, int(sensor_manifest.sample_count))
+        if sample_start >= available_count:
+            return RawCaptureSensorRange(
+                client_id=client_id,
+                requested_sample_start=sample_start,
+                requested_sample_count=sample_count,
+                coverage_state="empty",
+                samples_i16=np.empty((0, _AXIS_COUNT), dtype=np.int16),
+                manifest=sensor_manifest,
+                returned_sample_start=sample_start,
+            )
+        actual_start = sample_start
+        actual_end = min(sample_start + sample_count, available_count)
+        actual_count = max(0, actual_end - actual_start)
+        if actual_count <= 0:
+            return RawCaptureSensorRange(
+                client_id=client_id,
+                requested_sample_start=sample_start,
+                requested_sample_count=sample_count,
+                coverage_state="empty",
+                samples_i16=np.empty((0, _AXIS_COUNT), dtype=np.int16),
+                manifest=sensor_manifest,
+                returned_sample_start=sample_start,
+            )
+        run_dir = self._data_dir / manifest.relative_dir
+        index_path = run_dir / sensor_manifest.index_file
+        chunk_indexes = tuple(self._load_chunk_indexes(index_path))
+        overlapping_chunks = _overlapping_chunks(
+            chunk_indexes,
+            sample_start=actual_start,
+            sample_end=actual_end,
+        )
+        if not overlapping_chunks:
+            raise ValueError(
+                f"raw capture index {index_path} has no chunk coverage for "
+                f"{client_id} samples [{actual_start}, {actual_end})"
+            )
+        first_chunk = overlapping_chunks[0]
+        byte_offset = first_chunk.byte_offset + (
+            (actual_start - first_chunk.sample_start) * _BYTES_PER_SAMPLE
+        )
+        samples_i16 = self._read_sensor_range_samples(
+            run_dir / sensor_manifest.data_file,
+            byte_offset=byte_offset,
+            sample_count=actual_count,
+        )
+        returned_count = int(samples_i16.shape[0])
+        coverage_state: RawCaptureCoverageState = (
+            "full" if returned_count == sample_count else "partial"
+        )
+        if returned_count <= 0:
+            coverage_state = "empty"
+        return RawCaptureSensorRange(
+            client_id=client_id,
+            requested_sample_start=sample_start,
+            requested_sample_count=sample_count,
+            coverage_state=coverage_state,
+            samples_i16=samples_i16,
+            manifest=sensor_manifest,
+            returned_sample_start=actual_start,
+            chunks=overlapping_chunks,
+        )
 
     def delete_run_artifacts(self, run_id: str) -> None:
         with self._lock:
@@ -161,6 +237,39 @@ class HistoryRawCaptureStore:
 
     def run_dir(self, run_id: str) -> Path:
         return self._base_dir / run_id
+
+    def _load_chunk_indexes(self, index_path: Path) -> list[RawCaptureChunkIndex]:
+        chunk_indexes: list[RawCaptureChunkIndex] = []
+        if not index_path.exists():
+            return chunk_indexes
+        for line in index_path.read_text(encoding="utf-8").splitlines():
+            parsed = safe_json_loads(line, context=f"raw capture index {index_path}")
+            if is_json_object(parsed):
+                chunk_indexes.append(RawCaptureChunkIndex.from_mapping(parsed))
+        return chunk_indexes
+
+    def _read_all_sensor_samples(self, data_path: Path) -> np.ndarray:
+        return self._reshape_samples(raw_bytes=data_path.read_bytes(), data_path=data_path)
+
+    def _read_sensor_range_samples(
+        self,
+        data_path: Path,
+        *,
+        byte_offset: int,
+        sample_count: int,
+    ) -> np.ndarray:
+        with data_path.open("rb") as handle:
+            handle.seek(byte_offset)
+            raw_bytes = handle.read(sample_count * _BYTES_PER_SAMPLE)
+        return self._reshape_samples(raw_bytes=raw_bytes, data_path=data_path)
+
+    def _reshape_samples(self, *, raw_bytes: bytes, data_path: Path) -> np.ndarray:
+        samples_i16 = np.frombuffer(raw_bytes, dtype=np.dtype("<i2")).copy()
+        if samples_i16.size % _AXIS_COUNT != 0:
+            raise ValueError(
+                f"raw capture {data_path} length {samples_i16.size} is not divisible by 3 axes"
+            )
+        return samples_i16.reshape(-1, _AXIS_COUNT)
 
     def _ensure_stream(
         self,
@@ -186,3 +295,17 @@ class HistoryRawCaptureStore:
         )
         run_streams[client_id] = stream
         return stream
+
+
+def _overlapping_chunks(
+    chunks: tuple[RawCaptureChunkIndex, ...],
+    *,
+    sample_start: int,
+    sample_end: int,
+) -> tuple[RawCaptureChunkIndex, ...]:
+    return tuple(
+        chunk
+        for chunk in chunks
+        if chunk.sample_start < sample_end
+        and (chunk.sample_start + chunk.sample_count) > sample_start
+    )

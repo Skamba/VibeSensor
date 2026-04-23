@@ -6,6 +6,7 @@ import pytest
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.types.raw_capture import RawCaptureSensorRange
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run.post_analysis_loader import (
     EmptyPostAnalysisSamples,
@@ -57,6 +58,20 @@ def test_load_post_analysis_run_returns_loaded_run() -> None:
         async def aload_raw_capture(self, _run_id):
             return None
 
+        async def aload_raw_capture_sensor_range(
+            self,
+            _run_id,
+            client_id,
+            *,
+            sample_start,
+            sample_count,
+        ):
+            return RawCaptureSensorRange.missing(
+                client_id=client_id,
+                requested_sample_start=sample_start,
+                requested_sample_count=sample_count,
+            )
+
     result = load_post_analysis_run(run_id="run-ok", db=FakeDB())
 
     assert isinstance(result, LoadedPostAnalysisRun)
@@ -78,6 +93,20 @@ def test_load_post_analysis_run_handles_missing_metadata() -> None:
         async def aload_raw_capture(self, _run_id):
             return None
 
+        async def aload_raw_capture_sensor_range(
+            self,
+            _run_id,
+            client_id,
+            *,
+            sample_start,
+            sample_count,
+        ):
+            return RawCaptureSensorRange.missing(
+                client_id=client_id,
+                requested_sample_start=sample_start,
+                requested_sample_count=sample_count,
+            )
+
     result = load_post_analysis_run(run_id="run-missing", db=FakeDB())
 
     assert isinstance(result, MissingPostAnalysisMetadata)
@@ -97,6 +126,20 @@ def test_load_post_analysis_run_handles_no_samples() -> None:
 
         async def aload_raw_capture(self, _run_id):
             return None
+
+        async def aload_raw_capture_sensor_range(
+            self,
+            _run_id,
+            client_id,
+            *,
+            sample_start,
+            sample_count,
+        ):
+            return RawCaptureSensorRange.missing(
+                client_id=client_id,
+                requested_sample_start=sample_start,
+                requested_sample_count=sample_count,
+            )
 
     result = load_post_analysis_run(run_id="run-empty", db=FakeDB())
 
@@ -130,6 +173,20 @@ def test_load_post_analysis_run_applies_upfront_stride(
         async def aload_raw_capture(self, _run_id):
             return None
 
+        async def aload_raw_capture_sensor_range(
+            self,
+            _run_id,
+            client_id,
+            *,
+            sample_start,
+            sample_count,
+        ):
+            return RawCaptureSensorRange.missing(
+                client_id=client_id,
+                requested_sample_start=sample_start,
+                requested_sample_count=sample_count,
+            )
+
     result = load_post_analysis_run(run_id="run-capped", db=FakeDB())
 
     assert isinstance(result, LoadedPostAnalysisRun)
@@ -153,6 +210,20 @@ def test_load_post_analysis_run_defaults_language_to_en() -> None:
 
         async def aload_raw_capture(self, _run_id):
             return None
+
+        async def aload_raw_capture_sensor_range(
+            self,
+            _run_id,
+            client_id,
+            *,
+            sample_start,
+            sample_count,
+        ):
+            return RawCaptureSensorRange.missing(
+                client_id=client_id,
+                requested_sample_start=sample_start,
+                requested_sample_count=sample_count,
+            )
 
     result = load_post_analysis_run(run_id="run-lang", db=FakeDB())
 
