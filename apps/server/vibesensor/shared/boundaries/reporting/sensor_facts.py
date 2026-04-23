@@ -10,6 +10,7 @@ from statistics import mean as _mean
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary, TestRun
+from vibesensor.shared.types.history_analysis_contracts import LocationProofBasis
 from vibesensor.vibration_strength import compute_db, percentile
 
 if TYPE_CHECKING:
@@ -45,7 +46,7 @@ class ReportSensorFacts:
     coverage: ReportCoverageSummary
     proof_intensity: tuple[LocationIntensitySummary, ...]
     proof_location_hotspot_rows: tuple[LocationHotspotRow, ...]
-    proof_basis: str
+    proof_basis: LocationProofBasis
 
 
 def build_report_sensor_facts(
@@ -86,7 +87,7 @@ def enrich_location_proof_sensor_facts(
     proof_intensity = tuple(_supporting_window_location_intensity(primary_candidate))
     if not proof_intensity:
         return sensor_facts
-    proof_basis = (
+    proof_basis: LocationProofBasis = (
         "supporting_windows_raw_backed"
         if evidence_data_basis == "raw_backed"
         else "supporting_windows_summary_only"
