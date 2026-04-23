@@ -10,6 +10,7 @@ from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [
     "WHOLE_RUN_ARTIFACT_SCHEMA_VERSION",
+    "WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME",
     "WholeRunArtifactFile",
     "WholeRunArtifactManifest",
     "WholeRunWindowDescriptor",
@@ -17,6 +18,7 @@ __all__ = [
 ]
 
 WHOLE_RUN_ARTIFACT_SCHEMA_VERSION = 1
+WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME = "whole-run-artifacts"
 _WHOLE_RUN_ARTIFACT_STORAGE_TYPE = "run-directory-v1"
 
 

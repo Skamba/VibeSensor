@@ -10,6 +10,7 @@ from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 
 __all__ = [
     "AnalyzingRunHealth",
@@ -62,6 +63,7 @@ class StoredHistoryRun:
     case_id: str | None = None
     analysis: PersistedAnalysis | None = None
     raw_capture_manifest: RawCaptureManifest | None = None
+    whole_run_artifact_manifest: WholeRunArtifactManifest | None = None
     analysis_corrupt: bool = False
     error_message: str | None = None
     analysis_started_at: str | None = None
@@ -84,6 +86,10 @@ class StoredHistoryRun:
             payload["analysis"] = self.analysis.to_json_object()
         if self.raw_capture_manifest is not None:
             payload["raw_capture_manifest"] = self.raw_capture_manifest.to_json_object()
+        if self.whole_run_artifact_manifest is not None:
+            payload["whole_run_artifact_manifest"] = (
+                self.whole_run_artifact_manifest.to_json_object()
+            )
         if self.analysis_corrupt:
             payload["analysis_corrupt"] = True
         if self.error_message is not None:
