@@ -146,6 +146,7 @@ That shared ownership is why `shared/order_bands.py` exists outside
 | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_contracts.py` | Dense whole-run order-trace points plus compact summary/support contracts for later full-run work. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_traces.py` | Build deterministic dense whole-run order traces from spectral summaries plus context labels. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_scoring.py` | Collapse dense whole-run traces into deterministic lock/stability summaries for later persistence. |
+| `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_family_summaries.py` | Collapse scored harmonic traces into family-level support intervals and phase summaries. |
 
 ## Whole-run order trace contract split
 
@@ -164,6 +165,10 @@ Whole-run order work keeps one order model and changes only the sampling grid:
   explicitly carrying `reference_coverage_ratio`, `contiguous_support_ratio`,
   `drift_score`, and `lock_score` so partial context/RPM coverage degrades the
   result instead of silently inflating it
+- `use_cases/diagnostics/orders/whole_run_family_summaries.py` now rolls those
+  per-candidate summaries up into source-family summaries with deterministic
+  `support_intervals`, `phase_support`, `stable_frequency_*_hz`, and
+  `exemplar_interval_index` fields while keeping the dense traces sidecar-only
 - compact persisted/report-facing projections use the future summary shapes in
   `shared/types/history_analysis_contracts.py`
 - the compact summary contract carries support intervals, phase support, and

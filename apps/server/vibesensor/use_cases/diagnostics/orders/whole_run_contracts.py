@@ -269,6 +269,9 @@ class OrderTraceSummary:
     support_intervals: tuple[OrderTraceSupportInterval, ...] = ()
     phase_support: tuple[OrderTracePhaseSupport, ...] = ()
     harmonic_summaries: tuple[OrderHarmonicEvidenceSummary, ...] = ()
+    stable_frequency_min_hz: float | None = None
+    stable_frequency_max_hz: float | None = None
+    exemplar_interval_index: int | None = None
     dominant_phase: str | None = None
     dominant_speed_band: str | None = None
     strongest_location: str | None = None
@@ -296,6 +299,8 @@ class OrderTraceSummary:
         _require_ratio(self.contiguous_support_ratio, field_name="contiguous_support_ratio")
         _require_ratio(self.drift_score, field_name="drift_score")
         _require_ratio(self.lock_score, field_name="lock_score")
+        if self.exemplar_interval_index is not None:
+            _require_nonnegative(self.exemplar_interval_index, field_name="exemplar_interval_index")
 
     def to_json_object(self) -> JsonObject:
         payload: JsonObject = {
@@ -317,6 +322,10 @@ class OrderTraceSummary:
             "lock_score": self.lock_score,
             "ref_sources": list(self.ref_sources),
         }
+        _set_optional(payload, "stable_frequency_min_hz", self.stable_frequency_min_hz)
+        _set_optional(payload, "stable_frequency_max_hz", self.stable_frequency_max_hz)
+        if self.exemplar_interval_index is not None:
+            payload["exemplar_interval_index"] = self.exemplar_interval_index
         _set_optional(payload, "dominant_phase", self.dominant_phase)
         _set_optional(payload, "dominant_speed_band", self.dominant_speed_band)
         _set_optional(payload, "strongest_location", self.strongest_location)
@@ -346,6 +355,9 @@ class OrderTraceSummary:
             support_intervals=_support_intervals(data.get("support_intervals")),
             phase_support=_phase_support_rows(data.get("phase_support")),
             harmonic_summaries=_harmonic_summaries(data.get("harmonic_summaries")),
+            stable_frequency_min_hz=_optional_float(data.get("stable_frequency_min_hz")),
+            stable_frequency_max_hz=_optional_float(data.get("stable_frequency_max_hz")),
+            exemplar_interval_index=_optional_int(data.get("exemplar_interval_index")),
             dominant_phase=_optional_text(data.get("dominant_phase")),
             dominant_speed_band=_optional_text(data.get("dominant_speed_band")),
             strongest_location=_optional_text(data.get("strongest_location")),
@@ -421,6 +433,12 @@ def _required_float(data: JsonObject, field: str) -> float:
     value = _optional_float(data.get(field))
     if value is None:
         raise ValueError(f"{field} requires a numeric value")
+    return value
+
+
+def _optional_int(value: object) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int):
+        return None
     return value
 
 

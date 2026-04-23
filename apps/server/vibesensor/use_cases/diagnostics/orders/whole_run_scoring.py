@@ -206,6 +206,12 @@ def _summarize_hypothesis_trace(
     peak_intensity_db = _max_or_none(
         point.peak_intensity_db for point in matched_points if point.peak_intensity_db is not None
     )
+    stable_frequency_min_hz = _min_or_none(
+        point.matched_hz for point in matched_points if point.matched_hz is not None
+    )
+    stable_frequency_max_hz = _max_or_none(
+        point.matched_hz for point in matched_points if point.matched_hz is not None
+    )
     mean_vibration_strength_db = _mean(
         point.vibration_strength_db
         for point in matched_points
@@ -264,6 +270,9 @@ def _summarize_hypothesis_trace(
         support_intervals=(),
         phase_support=(),
         harmonic_summaries=(harmonic_summary,),
+        stable_frequency_min_hz=stable_frequency_min_hz,
+        stable_frequency_max_hz=stable_frequency_max_hz,
+        exemplar_interval_index=None,
         dominant_phase=dominant_phase,
         dominant_speed_band=dominant_speed_band,
         strongest_location=strongest_location,
@@ -378,6 +387,13 @@ def _max_or_none(values: Iterable[float]) -> float | None:
     if not items:
         return None
     return max(float(value) for value in items)
+
+
+def _min_or_none(values: Iterable[float]) -> float | None:
+    items = tuple(values)
+    if not items:
+        return None
+    return min(float(value) for value in items)
 
 
 def _stddev(values: Iterable[float]) -> float | None:

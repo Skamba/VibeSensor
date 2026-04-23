@@ -18,6 +18,11 @@ from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawCaptureSensorRange
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (
+    WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY,
+    WholeRunOrderFamilySummaryArtifactBundle,
+    build_whole_run_order_family_summary_artifact_bundle,
+)
 from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY,
     WholeRunOrderTraceSummaryArtifactBundle,
@@ -143,6 +148,18 @@ class WholeRunOrderTraceSummaryBuilder(Protocol):
     ) -> WholeRunOrderTraceSummaryArtifactBundle | None: ...
 
 
+class WholeRunOrderFamilySummaryBuilder(Protocol):
+    """Injected boundary for building family-level whole-run order summaries."""
+
+    def __call__(
+        self,
+        *,
+        order_trace_bundle: WholeRunOrderTraceArtifactBundle,
+        order_trace_summary_bundle: WholeRunOrderTraceSummaryArtifactBundle,
+        context_bundle: WholeRunContextArtifactBundle,
+    ) -> WholeRunOrderFamilySummaryArtifactBundle | None: ...
+
+
 @dataclass(frozen=True, slots=True)
 class _StoredWholeRunArtifactBundle:
     """Generic sidecar bundle shape for final manifest persistence."""
@@ -161,6 +178,7 @@ def execute_post_analysis(
     whole_run_context_builder: WholeRunContextBuilder | None = None,
     whole_run_order_trace_builder: WholeRunOrderTraceBuilder | None = None,
     whole_run_order_trace_summary_builder: WholeRunOrderTraceSummaryBuilder | None = None,
+    whole_run_order_family_summary_builder: WholeRunOrderFamilySummaryBuilder | None = None,
     defer_retryable_error_storage: bool = False,
 ) -> PostAnalysisAttemptResult:
     analysis_start = time.monotonic()
@@ -183,6 +201,11 @@ def execute_post_analysis(
         _build_whole_run_order_trace_summary_artifacts
         if whole_run_order_trace_summary_builder is None
         else whole_run_order_trace_summary_builder
+    )
+    resolved_whole_run_order_family_summary_builder = (
+        _build_whole_run_order_family_summary_artifacts
+        if whole_run_order_family_summary_builder is None
+        else whole_run_order_family_summary_builder
     )
     with start_span(
         __name__,
@@ -255,6 +278,7 @@ def execute_post_analysis(
             context_bundle: WholeRunContextArtifactBundle | None = None
             order_trace_bundle: WholeRunOrderTraceArtifactBundle | None = None
             order_trace_summary_bundle: WholeRunOrderTraceSummaryArtifactBundle | None = None
+            order_family_summary_bundle: WholeRunOrderFamilySummaryArtifactBundle | None = None
             if loaded.raw_capture_manifest is not None:
                 spectral_bundle = resolved_whole_run_artifact_builder(
                     run_id=loaded.run_id,
@@ -277,11 +301,22 @@ def execute_post_analysis(
                         order_trace_bundle=order_trace_bundle,
                         context_bundle=context_bundle,
                     )
+                if (
+                    order_trace_bundle is not None
+                    and order_trace_summary_bundle is not None
+                    and context_bundle is not None
+                ):
+                    order_family_summary_bundle = resolved_whole_run_order_family_summary_builder(
+                        order_trace_bundle=order_trace_bundle,
+                        order_trace_summary_bundle=order_trace_summary_bundle,
+                        context_bundle=context_bundle,
+                    )
                 merged_bundle = _merge_whole_run_artifact_bundles(
                     spectral_bundle,
                     context_bundle,
                     order_trace_bundle,
                     order_trace_summary_bundle,
+                    order_family_summary_bundle,
                 )
                 if merged_bundle is not None:
                     stored_artifact_manifest = _sync_call(
@@ -305,6 +340,11 @@ def execute_post_analysis(
                 summary = _append_whole_run_order_trace_summary_metadata(
                     summary,
                     order_trace_summary_bundle,
+                )
+            if order_family_summary_bundle is not None:
+                summary = _append_whole_run_order_family_summary_metadata(
+                    summary,
+                    order_family_summary_bundle,
                 )
             if stored_artifact_manifest is not None:
                 summary = _append_whole_run_analysis_metadata(summary, stored_artifact_manifest)
@@ -537,12 +577,26 @@ def _build_whole_run_order_trace_summary_artifacts(
     )
 
 
+def _build_whole_run_order_family_summary_artifacts(
+    *,
+    order_trace_bundle: WholeRunOrderTraceArtifactBundle,
+    order_trace_summary_bundle: WholeRunOrderTraceSummaryArtifactBundle,
+    context_bundle: WholeRunContextArtifactBundle,
+) -> WholeRunOrderFamilySummaryArtifactBundle | None:
+    return build_whole_run_order_family_summary_artifact_bundle(
+        order_trace_bundle=order_trace_bundle,
+        order_trace_summary_bundle=order_trace_summary_bundle,
+        context_labels=context_bundle.labels,
+    )
+
+
 def _merge_whole_run_artifact_bundles(
     *bundles: (
         WholeRunSpectralArtifactBundle
         | WholeRunContextArtifactBundle
         | WholeRunOrderTraceArtifactBundle
         | WholeRunOrderTraceSummaryArtifactBundle
+        | WholeRunOrderFamilySummaryArtifactBundle
         | None
     ),
 ) -> _StoredWholeRunArtifactBundle | None:
@@ -680,5 +734,22 @@ def _append_whole_run_order_trace_summary_metadata(
     analysis_metadata["whole_run_order_trace_summary_count"] = len(bundle.summaries)
     analysis_metadata["whole_run_order_trace_summary_artifact_key"] = (
         WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY
+    )
+    return PersistedAnalysis.from_json_object(payload)
+
+
+def _append_whole_run_order_family_summary_metadata(
+    summary: PersistedAnalysis,
+    bundle: WholeRunOrderFamilySummaryArtifactBundle,
+) -> PersistedAnalysis:
+    payload = summary.to_json_object()
+    analysis_metadata = payload.get("analysis_metadata")
+    if not isinstance(analysis_metadata, dict):
+        analysis_metadata = {}
+        payload["analysis_metadata"] = analysis_metadata
+    analysis_metadata["whole_run_order_family_summaries_available"] = True
+    analysis_metadata["whole_run_order_family_summary_count"] = len(bundle.summaries)
+    analysis_metadata["whole_run_order_family_summary_artifact_key"] = (
+        WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY
     )
     return PersistedAnalysis.from_json_object(payload)
