@@ -544,6 +544,12 @@ Current #3085 baseline:
   `confidence_facts.py` and carrying an explicit `fallback_reason` that
   distinguishes summary-only legacy replay from raw-backed partial-artifact
   replay.
+- When persisted `whole_run_diagnosis_summaries` are present, report/history/PDF
+  consumers should treat them as the canonical fused proof surface for primary
+  source ordering, dominant/runner-up location, proof basis, support-window
+  counts, stable-frequency text, and counterevidence rows. Legacy domain
+  `Finding` objects remain the fallback narrative source only when fused rows are
+  absent or when a surface still needs text that the fused row does not carry.
 - Persisted `analysis_metadata` should carry whole-run context completeness counts
   (full/partial/missing plus speed/RPM gap counts) so history/report preparation
   can project caveats without loading dense sidecar labels during report render.
