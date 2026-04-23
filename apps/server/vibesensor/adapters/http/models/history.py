@@ -48,6 +48,7 @@ from vibesensor.shared.types.history_analysis_contracts import (
     PhaseSegmentSummaryResponse,
     PhaseTimelineEntryResponse,
     RunSuitabilityCheck,
+    SpatialEvidenceSummaryResponse,
     SpeedStatsResponse,
     StrengthBucketDistributionResponse,
     SummaryWarningResponse,
@@ -186,6 +187,7 @@ class _HistoryInsightsCoreResponse(TypedDict, total=False):
     phase_timeline: Required[list[PhaseTimelineEntryResponse]]
     whole_run_context_intervals: list[WholeRunContextIntervalResponse]
     whole_run_order_summaries: list[OrderTraceSummaryResponse]
+    whole_run_spatial_summaries: list[SpatialEvidenceSummaryResponse]
     speed_stats: Required[SpeedStatsResponse]
     speed_stats_by_phase: Required[dict[str, SpeedStatsResponse]]
     phase_info: Required[PhaseInfoResponse]

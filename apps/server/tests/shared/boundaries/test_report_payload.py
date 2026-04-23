@@ -49,6 +49,7 @@ def test_report_summary_from_mapping_defaults_without_nested_metadata() -> None:
     assert summary.peak_table_rows == ()
     assert summary.timeline_intervals == ()
     assert summary.whole_run_order_summaries == ()
+    assert summary.whole_run_spatial_summaries == ()
 
 
 def test_report_summary_from_mapping_projects_canonical_metadata_and_rows() -> None:
@@ -178,6 +179,52 @@ def test_report_summary_from_mapping_normalizes_whole_run_order_summaries() -> N
     assert order_summary.harmonic_summaries[0].harmonic == 1
     assert order_summary.stable_frequency_min_hz == 13.1
     assert order_summary.ref_sources == ("speed+tire",)
+
+
+def test_report_summary_from_mapping_normalizes_whole_run_spatial_summaries() -> None:
+    summary = report_summary_from_mapping(
+        {
+            "run_id": "run-123",
+            "metadata": {"run_id": "run-123"},
+            "whole_run_spatial_summaries": [
+                {
+                    "candidate_key": "wheel_1x",
+                    "suspected_source": "wheel/tire",
+                    "proof_basis": "supporting_windows_raw_backed",
+                    "total_window_count": 8,
+                    "supporting_window_count": 6,
+                    "supporting_sensor_count": 2,
+                    "coherent_window_count": 4,
+                    "coherence_ratio": 0.67,
+                    "dominant_location": "front-left",
+                    "runner_up_location": "front-right",
+                    "location_separation_db": 2.5,
+                    "dominance_ratio": 1.5,
+                    "ambiguous_location": False,
+                    "weak_spatial_separation": False,
+                    "location_summaries": [
+                        {
+                            "location": "front-left",
+                            "sensor_ids": ["sensor-front"],
+                            "supporting_window_count": 6,
+                            "support_ratio": 1.0,
+                            "coherent_window_count": 4,
+                            "coherence_ratio": 0.67,
+                            "peak_intensity_db": 18.0,
+                            "mean_vibration_strength_db": 11.5,
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+
+    assert len(summary.whole_run_spatial_summaries) == 1
+    spatial_summary = summary.whole_run_spatial_summaries[0]
+    assert spatial_summary.candidate_key == "wheel_1x"
+    assert spatial_summary.proof_basis == "supporting_windows_raw_backed"
+    assert spatial_summary.dominant_location == "front-left"
+    assert spatial_summary.location_summaries[0].sensor_ids == ("sensor-front",)
 
 
 def test_report_summary_requires_connected_active_locations() -> None:

@@ -34,6 +34,9 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WholeRunOrderTraceArtifactBundle,
     build_whole_run_order_trace_artifact_bundle,
 )
+from vibesensor.use_cases.diagnostics.spatial_evidence_contracts import (
+    SpatialEvidenceSummary,
+)
 from vibesensor.use_cases.diagnostics.whole_run_context import (
     WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
     WholeRunContextArtifactBundle,
@@ -385,6 +388,11 @@ def execute_post_analysis(
                 summary = _append_whole_run_order_family_summary_metadata(
                     summary,
                     order_family_summary_bundle,
+                )
+            if spatial_coherence_bundle is not None:
+                summary = _append_whole_run_spatial_summaries(
+                    summary,
+                    spatial_coherence_bundle,
                 )
             if spatial_coherence_bundle is not None:
                 summary = _append_whole_run_spatial_coherence_metadata(
@@ -852,6 +860,17 @@ def _append_whole_run_order_summaries(
     return PersistedAnalysis.from_json_object(payload)
 
 
+def _append_whole_run_spatial_summaries(
+    summary: PersistedAnalysis,
+    bundle: WholeRunSpatialCoherenceArtifactBundle,
+) -> PersistedAnalysis:
+    payload = summary.to_json_object()
+    payload["whole_run_spatial_summaries"] = [
+        row.to_json_object() for row in _ranked_whole_run_spatial_summaries(bundle.summaries)
+    ]
+    return PersistedAnalysis.from_json_object(payload)
+
+
 def _ranked_whole_run_order_summaries(
     summaries: tuple[OrderTraceSummary, ...],
 ) -> tuple[OrderTraceSummary, ...]:
@@ -865,6 +884,28 @@ def _ranked_whole_run_order_summaries(
                 -(summary.peak_intensity_db if summary.peak_intensity_db is not None else -1.0),
                 -summary.reference_coverage_ratio,
                 summary.hypothesis_key,
+            ),
+        )
+    )
+
+
+def _ranked_whole_run_spatial_summaries(
+    summaries: tuple[SpatialEvidenceSummary, ...],
+) -> tuple[SpatialEvidenceSummary, ...]:
+    return tuple(
+        sorted(
+            summaries,
+            key=lambda summary: (
+                -summary.coherent_window_count,
+                -summary.supporting_window_count,
+                -(summary.coherence_ratio if summary.coherence_ratio is not None else -1.0),
+                -(
+                    summary.location_separation_db
+                    if summary.location_separation_db is not None
+                    else -1.0
+                ),
+                -(summary.dominance_ratio if summary.dominance_ratio is not None else -1.0),
+                summary.candidate_key,
             ),
         )
     )
