@@ -6,7 +6,6 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
 
-from vibesensor.shared.constants.analysis import MIN_ANALYSIS_FREQ_HZ
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.run_schema import RunMetadata
@@ -20,7 +19,10 @@ from vibesensor.use_cases.diagnostics._sensor_locations import (
     client_locations_by_sensor,
     fallback_location_label,
 )
-from vibesensor.use_cases.diagnostics.orders.matching import best_order_peak_match
+from vibesensor.use_cases.diagnostics.orders.matching import (
+    best_order_peak_match,
+    filtered_peak_pairs,
+)
 from vibesensor.use_cases.diagnostics.orders.physics import (
     OrderHypothesis,
     _order_hypotheses,
@@ -217,7 +219,7 @@ def _best_sensor_peak_match(
         summary = summaries[window_index]
         if summary.coverage_state != "full":
             continue
-        peak_index, peak_pairs = _filtered_peak_pairs(summary.top_peaks)
+        peak_index, peak_pairs = filtered_peak_pairs(summary.top_peaks)
         peak_match = best_order_peak_match(
             peak_pairs,
             predicted_hz=predicted_hz,
@@ -289,23 +291,6 @@ def _window_context_sample(
         frames_dropped_total=0,
         queue_overflow_drops=0,
     )
-
-
-def _filtered_peak_pairs(
-    peaks: Sequence[Mapping[str, object]],
-) -> tuple[tuple[int, ...], tuple[tuple[float, float], ...]]:
-    indexes: list[int] = []
-    filtered: list[tuple[float, float]] = []
-    for peak_index, peak in enumerate(peaks):
-        hz = peak.get("hz")
-        amp = peak.get("amp")
-        if not isinstance(hz, (int, float)) or not isinstance(amp, (int, float)):
-            continue
-        if hz <= 0 or amp <= 0 or hz < MIN_ANALYSIS_FREQ_HZ:
-            continue
-        indexes.append(peak_index)
-        filtered.append((float(hz), float(amp)))
-    return tuple(indexes), tuple(filtered)
 
 
 def _sensor_match_rank(match: _SensorPeakMatch) -> tuple[float, float, str]:
