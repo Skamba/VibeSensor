@@ -277,8 +277,10 @@ class WholeRunContextWindowLabel:
     speed_kmh: float | None = None
     speed_band: str | None = None
     speed_source: str | None = None
+    speed_is_stale: bool = False
     engine_rpm: float | None = None
     engine_rpm_source: str | None = None
+    rpm_is_stale: bool = False
 
     def __post_init__(self) -> None:
         if self.window_index < 0:
@@ -294,6 +296,8 @@ class WholeRunContextWindowLabel:
             "speed_validity": self.speed_validity,
             "rpm_validity": self.rpm_validity,
             "load_state": self.load_state,
+            "speed_is_stale": self.speed_is_stale,
+            "rpm_is_stale": self.rpm_is_stale,
         }
         if self.segment_index is not None:
             payload["segment_index"] = self.segment_index
@@ -322,8 +326,10 @@ class WholeRunContextWindowLabel:
             speed_kmh=_float_or_none(data.get("speed_kmh")),
             speed_band=_str_or_none(data.get("speed_band")),
             speed_source=_str_or_none(data.get("speed_source")),
+            speed_is_stale=_bool_from_json(data.get("speed_is_stale")),
             engine_rpm=_float_or_none(data.get("engine_rpm")),
             engine_rpm_source=_str_or_none(data.get("engine_rpm_source")),
+            rpm_is_stale=_bool_from_json(data.get("rpm_is_stale")),
         )
 
 
@@ -468,6 +474,10 @@ def _driving_phase_from_json(value: JsonValue | object) -> DrivingPhase:
         return DrivingPhase(raw)
     except ValueError:
         return DrivingPhase.SPEED_UNKNOWN
+
+
+def _bool_from_json(value: JsonValue | object) -> bool:
+    return value is True
 
 
 def _context_coverage_from_json(value: JsonValue | object) -> WholeRunContextCoverage:
