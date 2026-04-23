@@ -13,6 +13,9 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunWindowPolicy,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTracePoint
+from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (
+    WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY,
+)
 from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
     WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY,
 )
@@ -236,6 +239,7 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
     assert isinstance(merged_manifest, WholeRunArtifactManifest)
     assert merged_manifest.artifact(WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY) is not None
     assert merged_manifest.artifact(WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY) is not None
+    assert merged_manifest.artifact(WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY) is not None
     assert stored["analysis"]["analysis_metadata"]["whole_run_order_traces_available"] is True
     assert stored["analysis"]["analysis_metadata"]["whole_run_order_trace_point_count"] == 2
     assert stored["analysis"]["analysis_metadata"]["whole_run_order_trace_candidate_count"] == 1
@@ -251,4 +255,13 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
         stored["analysis"]["analysis_metadata"]["whole_run_order_trace_summary_artifact_key"]
         == WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY
     )
-    assert stored["analysis"]["analysis_metadata"]["whole_run_artifact_count"] == 4
+    assert (
+        stored["analysis"]["analysis_metadata"]["whole_run_order_family_summaries_available"]
+        is True
+    )
+    assert stored["analysis"]["analysis_metadata"]["whole_run_order_family_summary_count"] == 1
+    assert (
+        stored["analysis"]["analysis_metadata"]["whole_run_order_family_summary_artifact_key"]
+        == WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY
+    )
+    assert stored["analysis"]["analysis_metadata"]["whole_run_artifact_count"] == 5

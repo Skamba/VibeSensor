@@ -121,6 +121,9 @@ def test_summarize_whole_run_order_traces_distinguishes_strong_and_weak_lock() -
     assert strong.longest_contiguous_support_window_count == 6
     assert strong.contiguous_support_ratio == 0.75
     assert strong.reference_coverage_ratio == 1.0
+    assert strong.stable_frequency_min_hz == 12.0
+    assert strong.stable_frequency_max_hz == 12.0
+    assert strong.exemplar_interval_index is None
     assert strong.dominant_phase == DrivingPhase.CRUISE.value
     assert strong.dominant_speed_band == "50-60 km/h"
     assert strong.strongest_location == "Front Left"
