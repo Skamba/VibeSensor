@@ -35,7 +35,7 @@ from vibesensor.use_cases.diagnostics.whole_run_windows import (
 )
 from vibesensor.vibration_strength import StrengthPeak
 
-DEFAULT_WHOLE_RUN_MAX_WORKERS = 4
+DEFAULT_WHOLE_RUN_MAX_WORKERS = 1
 _DEFAULT_CHUNK_WINDOW_COUNT = 32
 
 __all__ = [
