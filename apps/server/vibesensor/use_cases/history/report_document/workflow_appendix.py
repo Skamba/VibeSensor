@@ -105,7 +105,7 @@ def build_ranked_candidates(
     diagnosis_summaries: Sequence[ReportWholeRunDiagnosisSummary] = (),
     tr: Callable[..., str],
 ) -> tuple[RankedCandidateRow, ...]:
-    if diagnosis_summaries:
+    if diagnosis_summaries and not diagnosis_summaries[0].uses_summary_fallback:
         return tuple(
             _ranked_candidate_row_from_diagnosis_summary(
                 aggregate,
