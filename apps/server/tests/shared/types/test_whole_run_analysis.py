@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.domain import DrivingPhase
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (
     WHOLE_RUN_ARTIFACT_SCHEMA_VERSION,
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
+    WholeRunContextInterval,
+    WholeRunContextWindowLabel,
     WholeRunWindowDescriptor,
     WholeRunWindowPolicy,
 )
@@ -109,3 +112,73 @@ def test_whole_run_artifact_manifest_round_trips_with_window_policy() -> None:
     assert restored == manifest
     assert restored.schema_version == WHOLE_RUN_ARTIFACT_SCHEMA_VERSION
     assert restored.artifact("window_spectra_sensor-a") == manifest.artifacts[1]
+
+
+def test_context_window_label_round_trips_with_explicit_quality_states() -> None:
+    label = WholeRunContextWindowLabel(
+        window_index=12,
+        segment_index=3,
+        phase=DrivingPhase.CRUISE,
+        context_coverage="partial",
+        speed_validity="assumed",
+        rpm_validity="estimated",
+        load_state="steady",
+        speed_kmh=63.5,
+        speed_band="60-70 km/h",
+        speed_source="manual",
+        engine_rpm=1825.0,
+        engine_rpm_source="estimated_from_speed_and_ratios",
+    )
+
+    restored = WholeRunContextWindowLabel.from_mapping(label.to_json_object())
+
+    assert restored == label
+
+
+def test_context_window_label_rejects_negative_indices() -> None:
+    with pytest.raises(ValueError, match="window_index >= 0"):
+        WholeRunContextWindowLabel(
+            window_index=-1,
+            segment_index=None,
+            phase=DrivingPhase.SPEED_UNKNOWN,
+            context_coverage="missing",
+            speed_validity="missing",
+            rpm_validity="missing",
+            load_state="unknown",
+        )
+
+
+def test_context_interval_round_trips_with_window_range_summary() -> None:
+    interval = WholeRunContextInterval(
+        segment_index=2,
+        phase=DrivingPhase.ACCELERATION,
+        load_state="transient",
+        start_window_index=8,
+        end_window_index=14,
+        start_t_s=2.0,
+        end_t_s=5.5,
+        speed_min_kmh=18.0,
+        speed_max_kmh=46.0,
+        speed_band="10-50 km/h",
+        full_context_window_count=4,
+        partial_context_window_count=2,
+        missing_context_window_count=1,
+    )
+
+    restored = WholeRunContextInterval.from_mapping(interval.to_json_object())
+
+    assert restored == interval
+    assert restored.window_count == 7
+
+
+def test_context_interval_rejects_inverted_window_ranges() -> None:
+    with pytest.raises(ValueError, match="end_window_index >= start_window_index"):
+        WholeRunContextInterval(
+            segment_index=0,
+            phase=DrivingPhase.CRUISE,
+            load_state="steady",
+            start_window_index=4,
+            end_window_index=3,
+            start_t_s=1.0,
+            end_t_s=1.5,
+        )
