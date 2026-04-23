@@ -286,3 +286,55 @@ async def test_whole_run_order_summaries_survive_persistence_and_http_layers() -
         insights_response["whole_run_order_summaries"]
         == restored_summary["whole_run_order_summaries"]
     )
+
+
+@pytest.mark.asyncio
+async def test_whole_run_spatial_summaries_survive_persistence_and_http_layers() -> None:
+    summary = _representative_summary()
+    summary["whole_run_spatial_summaries"] = [
+        {
+            "candidate_key": "wheel_1x",
+            "suspected_source": "wheel/tire",
+            "proof_basis": "supporting_windows_raw_backed",
+            "total_window_count": 8,
+            "supporting_window_count": 6,
+            "supporting_sensor_count": 2,
+            "coherent_window_count": 4,
+            "coherence_ratio": 0.67,
+            "dominant_location": "front-left",
+            "runner_up_location": "front-right",
+            "location_separation_db": 2.5,
+            "dominance_ratio": 1.5,
+            "ambiguous_location": False,
+            "weak_spatial_separation": False,
+            "location_summaries": [
+                {
+                    "location": "front-left",
+                    "sensor_ids": ["sensor-front"],
+                    "supporting_window_count": 6,
+                    "support_ratio": 1.0,
+                    "coherent_window_count": 4,
+                    "coherence_ratio": 0.67,
+                    "peak_intensity_db": 18.0,
+                    "mean_vibration_strength_db": 11.5,
+                }
+            ],
+        }
+    ]
+    stored_run, restored_summary = _stored_run_from_summary(summary)
+
+    service = ProjectedHistoryRunService(HistoryRunService(_RunPersistenceStub(stored_run)))
+
+    run_response = await service.get_run(stored_run.run_id)
+    insights_response = await service.get_insights(stored_run.run_id, requested_lang="en")
+
+    assert run_response.analysis is not None
+    assert insights_response is not None
+    assert (
+        run_response.analysis["whole_run_spatial_summaries"]
+        == restored_summary["whole_run_spatial_summaries"]
+    )
+    assert (
+        insights_response["whole_run_spatial_summaries"]
+        == restored_summary["whole_run_spatial_summaries"]
+    )

@@ -775,6 +775,13 @@
             },
             "title": "Whole Run Order Summaries",
             "type": "array"
+          },
+          "whole_run_spatial_summaries": {
+            "items": {
+              "$ref": "#/components/schemas/SpatialEvidenceSummaryResponse"
+            },
+            "title": "Whole Run Spatial Summaries",
+            "type": "array"
           }
         },
         "required": [
@@ -3446,6 +3453,13 @@
             },
             "title": "Whole Run Order Summaries",
             "type": "array"
+          },
+          "whole_run_spatial_summaries": {
+            "items": {
+              "$ref": "#/components/schemas/SpatialEvidenceSummaryResponse"
+            },
+            "title": "Whole Run Spatial Summaries",
+            "type": "array"
           }
         },
         "required": [
@@ -3978,6 +3992,14 @@
         ],
         "title": "LocationOptionResponse",
         "type": "object"
+      },
+      "LocationProofBasis": {
+        "enum": [
+          "whole_run_summary",
+          "supporting_windows_raw_backed",
+          "supporting_windows_summary_only"
+        ],
+        "type": "string"
       },
       "MatchedAmpVsSpeedSeries": {
         "description": "Typed HTTP contract for one finding's amp-vs-speed series.",
@@ -5993,6 +6015,192 @@
           "location_code"
         ],
         "title": "SetLocationRequest",
+        "type": "object"
+      },
+      "SpatialEvidenceSummaryResponse": {
+        "description": "Future persisted/report-facing summary shape for whole-run spatial evidence.",
+        "properties": {
+          "ambiguous_location": {
+            "title": "Ambiguous Location",
+            "type": "boolean"
+          },
+          "candidate_key": {
+            "title": "Candidate Key",
+            "type": "string"
+          },
+          "coherence_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coherence Ratio"
+          },
+          "coherent_window_count": {
+            "title": "Coherent Window Count",
+            "type": "integer"
+          },
+          "dominance_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominance Ratio"
+          },
+          "dominant_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominant Location"
+          },
+          "location_separation_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Separation Db"
+          },
+          "location_summaries": {
+            "items": {
+              "$ref": "#/components/schemas/SpatialLocationSummaryResponse"
+            },
+            "title": "Location Summaries",
+            "type": "array"
+          },
+          "proof_basis": {
+            "$ref": "#/components/schemas/LocationProofBasis"
+          },
+          "runner_up_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up Location"
+          },
+          "supporting_sensor_count": {
+            "title": "Supporting Sensor Count",
+            "type": "integer"
+          },
+          "supporting_window_count": {
+            "title": "Supporting Window Count",
+            "type": "integer"
+          },
+          "suspected_source": {
+            "title": "Suspected Source",
+            "type": "string"
+          },
+          "total_window_count": {
+            "title": "Total Window Count",
+            "type": "integer"
+          },
+          "weak_spatial_separation": {
+            "title": "Weak Spatial Separation",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "candidate_key",
+          "suspected_source",
+          "proof_basis",
+          "total_window_count",
+          "supporting_window_count",
+          "supporting_sensor_count",
+          "coherent_window_count",
+          "ambiguous_location",
+          "weak_spatial_separation",
+          "location_summaries"
+        ],
+        "title": "SpatialEvidenceSummaryResponse",
+        "type": "object"
+      },
+      "SpatialLocationSummaryResponse": {
+        "description": "Compact per-location support row for persisted spatial evidence.",
+        "properties": {
+          "coherence_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coherence Ratio"
+          },
+          "coherent_window_count": {
+            "title": "Coherent Window Count",
+            "type": "integer"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "mean_vibration_strength_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Vibration Strength Db"
+          },
+          "peak_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Intensity Db"
+          },
+          "sensor_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sensor Ids",
+            "type": "array"
+          },
+          "support_ratio": {
+            "title": "Support Ratio",
+            "type": "number"
+          },
+          "supporting_window_count": {
+            "title": "Supporting Window Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "location",
+          "sensor_ids",
+          "supporting_window_count",
+          "support_ratio",
+          "coherent_window_count"
+        ],
+        "title": "SpatialLocationSummaryResponse",
         "type": "object"
       },
       "SpectrogramResult": {
