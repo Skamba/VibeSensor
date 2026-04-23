@@ -566,6 +566,7 @@ def test_execute_post_analysis_persists_whole_run_context_summary_and_sidecar() 
             },
         )(),
         whole_run_context_builder=lambda **_kwargs: context_bundle,
+        whole_run_order_trace_builder=lambda **_kwargs: None,
         analysis_runner=lambda _run: make_persisted_analysis(
             {
                 "analysis_metadata": {

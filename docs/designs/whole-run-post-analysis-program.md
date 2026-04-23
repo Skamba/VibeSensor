@@ -202,16 +202,17 @@ Whole-run order tracking should separate dense trace points from persisted
 summaries.
 
 - **Dense trace point**
-  - `candidate_key`
+  - `hypothesis_key`
+  - `harmonic`
   - `window_index`
-  - `sensor_id`
+  - `eligible` / `matched`
   - `predicted_hz`
-  - `observed_hz`
+  - `matched_hz`
   - `relative_error`
-  - `amplitude_g` or derived dB
-  - `snr_db`
-  - `support_state`
-  - `phase_key`
+  - `peak_intensity_db`
+  - `vibration_strength_db`
+  - `ref_source`
+  - `strongest_location`
 - **Persisted summary**
   - support ratio
   - contiguous support intervals
@@ -219,6 +220,12 @@ summaries.
   - phase-specific support
   - stable frequency/order bounds
   - top supporting locations
+
+The dense generation owner now lives in
+`apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_traces.py`. It
+reuses `OrderHypothesis.predicted_hz(...)` from `orders/physics.py` and the
+shared `best_order_peak_match()` tolerance logic from `orders/matching.py`, so
+whole-run traces stay aligned with the current live/sample order model.
 
 ### Spatial/coherence contract
 
