@@ -23,8 +23,31 @@ def _location_label(sample: Sample, *, lang: str = "en") -> str:
         return client_name_raw
     client_id_raw = sample.client_id.strip()
     if client_id_raw:
-        return f"Sensor …{client_id_raw[-4:]}"
+        return fallback_location_label(client_id_raw)
     return "Unknown sensor"
+
+
+def client_locations_by_sensor(
+    samples: Sequence[Sample],
+    *,
+    lang: str = "en",
+) -> dict[str, str]:
+    """Return deterministic location labels keyed by client id."""
+
+    locations: dict[str, str] = {}
+    for sample in samples:
+        client_id = sample.client_id.strip()
+        if not client_id or client_id in locations:
+            continue
+        locations[client_id] = _location_label(sample, lang=lang)
+    return locations
+
+
+def fallback_location_label(client_id: str) -> str:
+    """Return a stable fallback label when no explicit location is available."""
+
+    suffix = client_id[-4:] if len(client_id) >= 4 else client_id
+    return f"Sensor …{suffix}" if suffix else "Unknown sensor"
 
 
 def _locations_connected_throughout_run(

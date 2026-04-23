@@ -290,6 +290,15 @@ response shapes for those compact summaries, and
 `LocationProofBasis` literal set so later report wiring does not invent a
 second proof-basis vocabulary.
 
+The aligned multi-sensor join owner now lives in
+`apps/server/vibesensor/use_cases/diagnostics/whole_run_spatial_alignment.py`.
+It builds deterministic `window_index`-ordered joins from persisted
+`spectral-summary:*` sidecars plus `WholeRunContextWindowLabel` rows, keeps
+sensor ordering canonical by `sensor_id`, and exposes explicit
+`full` / `partial` / `empty` / `missing` coverage counts per window so later
+coherence and hotspot scoring stages do not have to infer missing-data rules
+ad hoc.
+
 ### Counterevidence model
 
 Counterevidence should become a first-class persisted concept with stable keys,
@@ -321,6 +330,7 @@ explainable factors that reporting can consume directly.
 | `WholeRunContextInterval` / `WholeRunContextWindowLabel` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` with compact report-facing projection in `shared/types/history_analysis_contracts.py` | Whole-run segments and per-window labels keyed to the canonical `window_index` grid |
 | `OrderTracePoint` / `OrderTraceSummary` | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Dense trace vs compact report/history summary split |
 | `SpatialEvidenceSummary` | `apps/server/vibesensor/use_cases/diagnostics/spatial_evidence_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Candidate-level coherence, location separation, ambiguity flags, and proof basis |
+| `WholeRunSpatialAlignmentMatrix` / `AlignedSpatialWindow` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_spatial_alignment.py` | Deterministic per-window sensor joins with explicit coverage-state semantics for later spatial scoring |
 | `DiagnosisFactor` / `DiagnosisSummary` | diagnostics domain/use-case layer plus persisted projection | Explainable support and counterevidence for final ranking |
 
 For the context track:
