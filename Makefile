@@ -11,7 +11,7 @@ PYTHON_MAJOR_MINOR := $(PYTHON_MAJOR).$(PYTHON_MINOR)
 PYTHON_BOOTSTRAP := python$(PYTHON_MAJOR_MINOR)
 VENV_DIR := $(CURDIR)/.venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
-BACKEND_BENCHMARK_TARGETS ?= tests/infra/workers/benchmark_compute_all.py tests/use_cases/updates/benchmark_update_status_codec.py
+BACKEND_BENCHMARK_TARGETS ?= tests/infra/workers/benchmark_compute_all.py tests/use_cases/diagnostics/benchmark_whole_run_spectra.py tests/use_cases/updates/benchmark_update_status_codec.py
 
 # Prefer the repo venv after setup, but still allow bootstrap targets to run
 # against the pinned host interpreter before `.venv` exists.
