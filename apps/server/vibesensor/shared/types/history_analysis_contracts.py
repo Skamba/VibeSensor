@@ -181,7 +181,12 @@ class OrderHarmonicEvidenceSummaryResponse(TypedDict, total=False):
     eligible_window_count: Required[int]
     matched_window_count: Required[int]
     support_ratio: Required[float]
+    reference_coverage_ratio: Required[float]
+    contiguous_support_ratio: Required[float]
+    lock_score: Required[float]
     mean_relative_error: float | None
+    relative_error_stddev: float | None
+    drift_score: Required[float]
     peak_intensity_db: float | None
     mean_vibration_strength_db: float | None
 
@@ -197,7 +202,9 @@ class OrderTraceSummaryResponse(TypedDict, total=False):
     eligible_window_count: Required[int]
     matched_window_count: Required[int]
     support_ratio: Required[float]
+    reference_coverage_ratio: Required[float]
     longest_contiguous_support_window_count: Required[int]
+    contiguous_support_ratio: Required[float]
     support_intervals: Required[list[OrderTraceSupportIntervalResponse]]
     phase_support: Required[list[OrderTracePhaseSupportResponse]]
     harmonic_summaries: Required[list[OrderHarmonicEvidenceSummaryResponse]]
@@ -205,6 +212,9 @@ class OrderTraceSummaryResponse(TypedDict, total=False):
     dominant_speed_band: str | None
     strongest_location: str | None
     mean_relative_error: float | None
+    relative_error_stddev: float | None
+    drift_score: Required[float]
+    lock_score: Required[float]
     peak_intensity_db: float | None
     mean_vibration_strength_db: float | None
     ref_sources: Required[list[str]]
