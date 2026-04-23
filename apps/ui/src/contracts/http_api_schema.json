@@ -1827,6 +1827,248 @@
         "title": "DiagnosisExemplarReferenceResponse",
         "type": "object"
       },
+      "DiagnosisFactorDetailsResponse": {
+        "description": "Structured details carried by one persisted diagnosis factor row.",
+        "properties": {
+          "alternative_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alternative Source"
+          },
+          "fallback_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Reason"
+          },
+          "frequency_span_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency Span Hz"
+          },
+          "mean_relative_error": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Relative Error"
+          },
+          "raw_backed_sample_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Backed Sample Count"
+          },
+          "rpm_gap_window_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rpm Gap Window Count"
+          },
+          "snr_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snr Db"
+          },
+          "speed_gap_window_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Gap Window Count"
+          },
+          "stable_frequency_max_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stable Frequency Max Hz"
+          },
+          "stable_frequency_min_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stable Frequency Min Hz"
+          },
+          "supporting_duration_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supporting Duration S"
+          },
+          "supporting_location_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supporting Location Count"
+          },
+          "supporting_window_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supporting Window Count"
+          },
+          "top_support_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Support Location"
+          },
+          "top_support_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Support Share"
+          }
+        },
+        "title": "DiagnosisFactorDetailsResponse",
+        "type": "object"
+      },
+      "DiagnosisFactorKey": {
+        "enum": [
+          "raw_backed",
+          "repeated_support",
+          "sustained_support",
+          "stable_frequency",
+          "tight_order_lock",
+          "localized_support",
+          "clean_signal",
+          "summary_only",
+          "legacy_context",
+          "speed_context_gaps",
+          "rpm_context_gaps",
+          "sparse_support",
+          "brief_support",
+          "drifting_frequency",
+          "loose_order_lock",
+          "mixed_support_locations",
+          "noisy_signal",
+          "weak_spatial",
+          "close_alternative",
+          "incomplete_reference"
+        ],
+        "type": "string"
+      },
+      "DiagnosisFactorPolarity": {
+        "enum": [
+          "support",
+          "counterevidence"
+        ],
+        "type": "string"
+      },
+      "DiagnosisFactorResponse": {
+        "description": "One stable support or counterevidence factor for a fused diagnosis.",
+        "properties": {
+          "details": {
+            "$ref": "#/components/schemas/DiagnosisFactorDetailsResponse"
+          },
+          "factor_key": {
+            "$ref": "#/components/schemas/DiagnosisFactorKey"
+          },
+          "polarity": {
+            "$ref": "#/components/schemas/DiagnosisFactorPolarity"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/DiagnosisFactorSeverity"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "factor_key",
+          "polarity",
+          "severity",
+          "weight",
+          "details"
+        ],
+        "title": "DiagnosisFactorResponse",
+        "type": "object"
+      },
+      "DiagnosisFactorSeverity": {
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "type": "string"
+      },
       "EspFlashCancelResponse": {
         "description": "Response body confirming whether an ESP32 flash job was cancelled.",
         "properties": {
@@ -7727,6 +7969,13 @@
             ],
             "title": "Confidence Gap To Alternative"
           },
+          "counterevidence_factors": {
+            "items": {
+              "$ref": "#/components/schemas/DiagnosisFactorResponse"
+            },
+            "title": "Counterevidence Factors",
+            "type": "array"
+          },
           "counterevidence_score": {
             "anyOf": [
               {
@@ -7891,6 +8140,13 @@
             ],
             "title": "Stable Frequency Min Hz"
           },
+          "support_factors": {
+            "items": {
+              "$ref": "#/components/schemas/DiagnosisFactorResponse"
+            },
+            "title": "Support Factors",
+            "type": "array"
+          },
           "support_score": {
             "anyOf": [
               {
@@ -7974,7 +8230,9 @@
           "weak_spatial_separation",
           "has_reference_gap",
           "uses_summary_fallback",
-          "exemplar_references"
+          "exemplar_references",
+          "support_factors",
+          "counterevidence_factors"
         ],
         "title": "WholeRunDiagnosisSummaryResponse",
         "type": "object"

@@ -310,25 +310,48 @@ by `orders/matching.py`, emits dense `SpatialEvidenceWindow` rows to a
 dominant location, runner-up, location separation, and weak/ambiguous flags
 derived from supporting-window evidence.
 
-### Counterevidence model
+### Counterevidence and support factor model
 
-Counterevidence should become a first-class persisted concept with stable keys,
-not just renderer-time prose. Good initial keys fit the current
-`confidence_facts.py` vocabulary:
+Support and counterevidence now use one shared persisted vocabulary instead of
+renderer-only prose. The canonical owner is the combination of:
+
+- `apps/server/vibesensor/use_cases/diagnostics/whole_run_diagnosis_contracts.py`
+  for compact persisted diagnosis rows
+- `apps/server/vibesensor/shared/types/history_analysis_contracts.py` for the
+  outward history/report/schema contract
+- `apps/server/vibesensor/shared/boundaries/reporting/confidence_facts.py` for
+  the projection from the existing report-confidence thresholds and score deltas
+  into stable factor rows
+
+The current stable support keys are:
+
+- `raw_backed`
+- `repeated_support`
+- `sustained_support`
+- `stable_frequency`
+- `tight_order_lock`
+- `localized_support`
+- `clean_signal`
+
+The current stable counterevidence keys are:
 
 - `summary_only`
+- `legacy_context`
+- `speed_context_gaps`
+- `rpm_context_gaps`
 - `sparse_support`
 - `brief_support`
 - `drifting_frequency`
 - `loose_order_lock`
 - `mixed_support_locations`
+- `noisy_signal`
 - `weak_spatial`
 - `close_alternative`
 - `incomplete_reference`
-- `noisy_signal`
 
-Whole-run fusion can add new stable keys, but should continue producing compact,
-explainable factors that reporting can consume directly.
+Each factor row carries stable key, polarity, severity, numeric weight, and a
+typed details payload so later fusion/report work can explain why a diagnosis
+ranked where it did without reparsing report prose.
 
 The contract owner for the fused output should now live in
 `apps/server/vibesensor/use_cases/diagnostics/whole_run_diagnosis_contracts.py`.
@@ -342,10 +365,9 @@ That layer should settle:
 - explicit top-level ambiguity, suspicious-case, and fallback markers that later
   report/history consumers can project without inventing a second diagnosis
   wrapper
-
-Stable support-factor and counterevidence-factor vocabularies still belong to
-the follow-on factor issue; this contract stage should define the diagnosis shell
-without burying those semantics in renderer-only prose.
+- typed `support_factors` and `counterevidence_factors` rows built from the same
+  thresholds and score deltas already used by `ReportConfidenceFacts`, so the
+  fused whole-run path does not drift from current report confidence semantics
 
 ## Shared contracts to settle early
 

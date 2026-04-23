@@ -2,10 +2,14 @@ from __future__ import annotations
 
 from vibesensor.shared.types.history_analysis_contracts import (
     DiagnosisExemplarReferenceResponse,
+    DiagnosisFactorDetailsResponse,
+    DiagnosisFactorResponse,
     WholeRunDiagnosisSummaryResponse,
 )
 from vibesensor.use_cases.diagnostics.whole_run_diagnosis_contracts import (
     DiagnosisExemplarReference,
+    DiagnosisFactor,
+    DiagnosisFactorDetails,
     WholeRunDiagnosisSummary,
 )
 
@@ -73,6 +77,24 @@ def test_whole_run_diagnosis_summary_round_trips_nested_compact_contracts() -> N
                 speed_band="60-80 km/h",
             ),
         ),
+        support_factors=(
+            DiagnosisFactor(
+                factor_key="raw_backed",
+                polarity="support",
+                severity="high",
+                weight=0.10,
+                details=DiagnosisFactorDetails(raw_backed_sample_count=48),
+            ),
+        ),
+        counterevidence_factors=(
+            DiagnosisFactor(
+                factor_key="incomplete_reference",
+                polarity="counterevidence",
+                severity="low",
+                weight=0.06,
+                details=DiagnosisFactorDetails(),
+            ),
+        ),
     )
 
     assert WholeRunDiagnosisSummary.from_mapping(summary.to_json_object()) == summary
@@ -88,6 +110,30 @@ def test_history_diagnosis_response_contracts_expose_named_summary_fields() -> N
         "location",
         "phase",
         "speed_band",
+    }
+    assert set(DiagnosisFactorDetailsResponse.__annotations__) == {
+        "raw_backed_sample_count",
+        "supporting_window_count",
+        "supporting_duration_s",
+        "stable_frequency_min_hz",
+        "stable_frequency_max_hz",
+        "frequency_span_hz",
+        "supporting_location_count",
+        "top_support_location",
+        "top_support_share",
+        "mean_relative_error",
+        "snr_db",
+        "alternative_source",
+        "speed_gap_window_count",
+        "rpm_gap_window_count",
+        "fallback_reason",
+    }
+    assert set(DiagnosisFactorResponse.__annotations__) == {
+        "factor_key",
+        "polarity",
+        "severity",
+        "weight",
+        "details",
     }
     assert set(WholeRunDiagnosisSummaryResponse.__annotations__) == {
         "diagnosis_key",
@@ -121,4 +167,6 @@ def test_history_diagnosis_response_contracts_expose_named_summary_fields() -> N
         "uses_summary_fallback",
         "fallback_reason",
         "exemplar_references",
+        "support_factors",
+        "counterevidence_factors",
     }

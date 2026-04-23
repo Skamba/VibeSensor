@@ -13,6 +13,9 @@ from typing import cast
 
 from vibesensor.shared.types.history_analysis_contracts import (
     DiagnosisExemplarKind,
+    DiagnosisFactorKey,
+    DiagnosisFactorPolarity,
+    DiagnosisFactorSeverity,
     LocationProofBasis,
     WholeRunDiagnosisDataBasis,
 )
@@ -20,6 +23,8 @@ from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 __all__ = [
     "DiagnosisExemplarReference",
+    "DiagnosisFactor",
+    "DiagnosisFactorDetails",
     "WholeRunDiagnosisSummary",
 ]
 
@@ -77,6 +82,124 @@ class DiagnosisExemplarReference:
 
 
 @dataclass(frozen=True, slots=True)
+class DiagnosisFactorDetails:
+    """Structured details carried by one persisted diagnosis factor row."""
+
+    raw_backed_sample_count: int | None = None
+    supporting_window_count: int | None = None
+    supporting_duration_s: float | None = None
+    stable_frequency_min_hz: float | None = None
+    stable_frequency_max_hz: float | None = None
+    frequency_span_hz: float | None = None
+    supporting_location_count: int | None = None
+    top_support_location: str | None = None
+    top_support_share: float | None = None
+    mean_relative_error: float | None = None
+    snr_db: float | None = None
+    alternative_source: str | None = None
+    speed_gap_window_count: int | None = None
+    rpm_gap_window_count: int | None = None
+    fallback_reason: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.raw_backed_sample_count is not None:
+            _require_nonnegative(self.raw_backed_sample_count, field_name="raw_backed_sample_count")
+        if self.supporting_window_count is not None:
+            _require_nonnegative(self.supporting_window_count, field_name="supporting_window_count")
+        if self.supporting_location_count is not None:
+            _require_nonnegative(
+                self.supporting_location_count,
+                field_name="supporting_location_count",
+            )
+        if self.speed_gap_window_count is not None:
+            _require_nonnegative(self.speed_gap_window_count, field_name="speed_gap_window_count")
+        if self.rpm_gap_window_count is not None:
+            _require_nonnegative(self.rpm_gap_window_count, field_name="rpm_gap_window_count")
+
+    def to_json_object(self) -> JsonObject:
+        payload: JsonObject = {}
+        _set_optional(payload, "raw_backed_sample_count", self.raw_backed_sample_count)
+        _set_optional(payload, "supporting_window_count", self.supporting_window_count)
+        _set_optional(payload, "supporting_duration_s", self.supporting_duration_s)
+        _set_optional(payload, "stable_frequency_min_hz", self.stable_frequency_min_hz)
+        _set_optional(payload, "stable_frequency_max_hz", self.stable_frequency_max_hz)
+        _set_optional(payload, "frequency_span_hz", self.frequency_span_hz)
+        _set_optional(payload, "supporting_location_count", self.supporting_location_count)
+        _set_optional(payload, "top_support_location", self.top_support_location)
+        _set_optional(payload, "top_support_share", self.top_support_share)
+        _set_optional(payload, "mean_relative_error", self.mean_relative_error)
+        _set_optional(payload, "snr_db", self.snr_db)
+        _set_optional(payload, "alternative_source", self.alternative_source)
+        _set_optional(payload, "speed_gap_window_count", self.speed_gap_window_count)
+        _set_optional(payload, "rpm_gap_window_count", self.rpm_gap_window_count)
+        _set_optional(payload, "fallback_reason", self.fallback_reason)
+        return payload
+
+    @classmethod
+    def from_mapping(cls, data: JsonObject) -> DiagnosisFactorDetails:
+        return cls(
+            raw_backed_sample_count=_optional_int(data.get("raw_backed_sample_count")),
+            supporting_window_count=_optional_int(data.get("supporting_window_count")),
+            supporting_duration_s=_optional_float(data.get("supporting_duration_s")),
+            stable_frequency_min_hz=_optional_float(data.get("stable_frequency_min_hz")),
+            stable_frequency_max_hz=_optional_float(data.get("stable_frequency_max_hz")),
+            frequency_span_hz=_optional_float(data.get("frequency_span_hz")),
+            supporting_location_count=_optional_int(data.get("supporting_location_count")),
+            top_support_location=_optional_text(data.get("top_support_location")),
+            top_support_share=_optional_float(data.get("top_support_share")),
+            mean_relative_error=_optional_float(data.get("mean_relative_error")),
+            snr_db=_optional_float(data.get("snr_db")),
+            alternative_source=_optional_text(data.get("alternative_source")),
+            speed_gap_window_count=_optional_int(data.get("speed_gap_window_count")),
+            rpm_gap_window_count=_optional_int(data.get("rpm_gap_window_count")),
+            fallback_reason=_optional_text(data.get("fallback_reason")),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class DiagnosisFactor:
+    """One stable support or counterevidence factor for a fused diagnosis."""
+
+    factor_key: DiagnosisFactorKey
+    polarity: DiagnosisFactorPolarity
+    severity: DiagnosisFactorSeverity
+    weight: float
+    details: DiagnosisFactorDetails = DiagnosisFactorDetails()
+
+    def __post_init__(self) -> None:
+        _require_factor_key(self.factor_key)
+        _require_factor_polarity(self.polarity)
+        _require_factor_severity(self.severity)
+        if self.weight < 0:
+            raise ValueError("weight must be >= 0")
+
+    def to_json_object(self) -> JsonObject:
+        return {
+            "factor_key": self.factor_key,
+            "polarity": self.polarity,
+            "severity": self.severity,
+            "weight": self.weight,
+            "details": self.details.to_json_object(),
+        }
+
+    @classmethod
+    def from_mapping(cls, data: JsonObject) -> DiagnosisFactor:
+        raw_details = data.get("details")
+        details = (
+            DiagnosisFactorDetails.from_mapping(raw_details)
+            if isinstance(raw_details, dict)
+            else DiagnosisFactorDetails()
+        )
+        return cls(
+            factor_key=_required_factor_key(data.get("factor_key")),
+            polarity=_required_factor_polarity(data.get("polarity")),
+            severity=_required_factor_severity(data.get("severity")),
+            weight=_required_numeric(data, "weight"),
+            details=details,
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class WholeRunDiagnosisSummary:
     """Compact persisted/report-facing summary for one fused whole-run diagnosis."""
 
@@ -111,6 +234,8 @@ class WholeRunDiagnosisSummary:
     uses_summary_fallback: bool = False
     fallback_reason: str | None = None
     exemplar_references: tuple[DiagnosisExemplarReference, ...] = ()
+    support_factors: tuple[DiagnosisFactor, ...] = ()
+    counterevidence_factors: tuple[DiagnosisFactor, ...] = ()
 
     def __post_init__(self) -> None:
         _require_text(self.diagnosis_key, field_name="diagnosis_key")
@@ -135,6 +260,10 @@ class WholeRunDiagnosisSummary:
             "uses_summary_fallback": self.uses_summary_fallback,
             "exemplar_references": [
                 exemplar.to_json_object() for exemplar in self.exemplar_references
+            ],
+            "support_factors": [factor.to_json_object() for factor in self.support_factors],
+            "counterevidence_factors": [
+                factor.to_json_object() for factor in self.counterevidence_factors
             ],
         }
         _set_optional(payload, "support_score", self.support_score)
@@ -171,6 +300,26 @@ class WholeRunDiagnosisSummary:
             if isinstance(raw_exemplars, list)
             else ()
         )
+        raw_support_factors = data.get("support_factors")
+        support_factors = (
+            tuple(
+                DiagnosisFactor.from_mapping(row)
+                for row in raw_support_factors
+                if isinstance(row, dict)
+            )
+            if isinstance(raw_support_factors, list)
+            else ()
+        )
+        raw_counter_factors = data.get("counterevidence_factors")
+        counter_factors = (
+            tuple(
+                DiagnosisFactor.from_mapping(row)
+                for row in raw_counter_factors
+                if isinstance(row, dict)
+            )
+            if isinstance(raw_counter_factors, list)
+            else ()
+        )
         return cls(
             diagnosis_key=_required_text(data, "diagnosis_key"),
             suspected_source=_required_text(data, "suspected_source"),
@@ -205,6 +354,8 @@ class WholeRunDiagnosisSummary:
             uses_summary_fallback=_required_bool(data, "uses_summary_fallback"),
             fallback_reason=_optional_text(data.get("fallback_reason")),
             exemplar_references=exemplars,
+            support_factors=support_factors,
+            counterevidence_factors=counter_factors,
         )
 
 
@@ -237,6 +388,13 @@ def _required_bool(data: JsonObject, field_name: str) -> bool:
     return value
 
 
+def _required_numeric(data: JsonObject, field_name: str) -> float:
+    value = data.get(field_name)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{field_name} must be a number")
+    return float(value)
+
+
 def _required_exemplar_kind(value: object) -> DiagnosisExemplarKind:
     if value not in {
         "order_support_interval",
@@ -245,6 +403,57 @@ def _required_exemplar_kind(value: object) -> DiagnosisExemplarKind:
     }:
         raise ValueError("kind must be a supported diagnosis exemplar kind")
     return cast(DiagnosisExemplarKind, value)
+
+
+def _require_factor_key(value: DiagnosisFactorKey) -> None:
+    _required_factor_key(value)
+
+
+def _required_factor_key(value: object) -> DiagnosisFactorKey:
+    if value not in {
+        "raw_backed",
+        "repeated_support",
+        "sustained_support",
+        "stable_frequency",
+        "tight_order_lock",
+        "localized_support",
+        "clean_signal",
+        "summary_only",
+        "legacy_context",
+        "speed_context_gaps",
+        "rpm_context_gaps",
+        "sparse_support",
+        "brief_support",
+        "drifting_frequency",
+        "loose_order_lock",
+        "mixed_support_locations",
+        "noisy_signal",
+        "weak_spatial",
+        "close_alternative",
+        "incomplete_reference",
+    }:
+        raise ValueError("factor_key must be a supported diagnosis factor key")
+    return cast(DiagnosisFactorKey, value)
+
+
+def _require_factor_polarity(value: DiagnosisFactorPolarity) -> None:
+    _required_factor_polarity(value)
+
+
+def _required_factor_polarity(value: object) -> DiagnosisFactorPolarity:
+    if value not in {"support", "counterevidence"}:
+        raise ValueError("polarity must be a supported diagnosis factor polarity")
+    return cast(DiagnosisFactorPolarity, value)
+
+
+def _require_factor_severity(value: DiagnosisFactorSeverity) -> None:
+    _required_factor_severity(value)
+
+
+def _required_factor_severity(value: object) -> DiagnosisFactorSeverity:
+    if value not in {"low", "medium", "high"}:
+        raise ValueError("severity must be a supported diagnosis factor severity")
+    return cast(DiagnosisFactorSeverity, value)
 
 
 def _required_data_basis(value: object) -> WholeRunDiagnosisDataBasis:
