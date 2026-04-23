@@ -8,6 +8,7 @@ from .facts import (
     ActionStatusKey,
     LocationConfidenceKey,
     PreparedReportFacts,
+    ReportContextFacts,
     ReportRunFacts,
     prepare_report_facts,
 )
@@ -26,6 +27,7 @@ from .sensor_facts import ReportCoverageSummary, ReportSensorFacts, sensor_fallb
 from .summary import (
     NormalizedReportSummary,
     ReportTimelineInterval,
+    ReportWholeRunContextInterval,
     has_projectable_report_payload,
     report_summary_from_mapping,
     require_projectable_report_payload,
@@ -40,6 +42,7 @@ __all__ = [
     "NormalizedReportSummary",
     "ReportConfidenceFacts",
     "PreparedReportFacts",
+    "ReportContextFacts",
     "PreparedReportFindings",
     "PreparedReportInput",
     "PrimaryReportFacts",
@@ -47,6 +50,7 @@ __all__ = [
     "ReportCoverageSummary",
     "ReportRunFacts",
     "ReportSensorFacts",
+    "ReportWholeRunContextInterval",
     "ReportTimelineInterval",
     "has_projectable_report_payload",
     "normalize_origin_location",

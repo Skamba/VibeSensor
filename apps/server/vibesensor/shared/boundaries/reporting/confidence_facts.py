@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from vibesensor.domain import Finding
 from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
 from vibesensor.shared.boundaries.reporting.evidence_facts import ReportEvidenceFacts
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
+
+if TYPE_CHECKING:
+    from vibesensor.shared.boundaries.reporting.facts import ReportContextFacts
 
 __all__ = [
     "ReportConfidenceFacts",
@@ -49,6 +53,7 @@ def build_report_confidence_facts(
     primary_candidate: PrimaryReportFacts,
     evidence_facts: ReportEvidenceFacts,
     decision_facts: ReportDecisionFacts,
+    context_facts: ReportContextFacts,
 ) -> ReportConfidenceFacts:
     """Build bounded report confidence from explicit persisted evidence signals."""
 
@@ -107,6 +112,18 @@ def build_report_confidence_facts(
     else:
         score -= 0.05
         caveat_keys.append("summary_only")
+
+    if context_facts.traceable:
+        if context_facts.source == "legacy":
+            score -= 0.05
+            caveat_keys.append("legacy_context")
+        else:
+            if context_facts.has_speed_gaps:
+                score -= 0.04
+                caveat_keys.append("speed_context_gaps")
+            if context_facts.has_rpm_gaps:
+                score -= 0.04
+                caveat_keys.append("rpm_context_gaps")
 
     if supporting_window_count is not None:
         if supporting_window_count >= 4:
@@ -192,6 +209,9 @@ def build_report_confidence_facts(
                 "weak_spatial",
                 "close_alternative",
                 "incomplete_reference",
+                "legacy_context",
+                "speed_context_gaps",
+                "rpm_context_gaps",
                 "noisy_signal",
             }
         )

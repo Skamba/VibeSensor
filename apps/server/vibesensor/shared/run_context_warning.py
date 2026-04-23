@@ -11,6 +11,8 @@ from vibesensor.shared.types.json_types import JsonValue, is_json_object
 
 WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE = "reference_context_incomplete"
 WARNING_CODE_CAR_SETTINGS_CHANGED = "car_settings_changed"
+WARNING_CODE_WHOLE_RUN_CONTEXT_INCOMPLETE = "whole_run_context_incomplete"
+WARNING_CODE_WHOLE_RUN_CONTEXT_LEGACY_FALLBACK = "whole_run_context_legacy_fallback"
 WarningSeverity = Literal["warn", "error"]
 
 

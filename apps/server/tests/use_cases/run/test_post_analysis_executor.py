@@ -485,6 +485,32 @@ def test_execute_post_analysis_persists_whole_run_context_summary_and_sidecar() 
                 engine_rpm=800.0,
                 engine_rpm_source="obd2",
             ),
+            WholeRunContextWindowLabel(
+                window_index=1,
+                segment_index=0,
+                phase=DrivingPhase.IDLE,
+                context_coverage="full",
+                speed_validity="measured",
+                rpm_validity="measured",
+                load_state="idle",
+                speed_kmh=0.0,
+                speed_source="gps",
+                engine_rpm=800.0,
+                engine_rpm_source="obd2",
+            ),
+            WholeRunContextWindowLabel(
+                window_index=2,
+                segment_index=0,
+                phase=DrivingPhase.IDLE,
+                context_coverage="full",
+                speed_validity="measured",
+                rpm_validity="measured",
+                load_state="idle",
+                speed_kmh=0.0,
+                speed_source="gps",
+                engine_rpm=800.0,
+                engine_rpm_source="obd2",
+            ),
         ),
         intervals=(
             WholeRunContextInterval(
@@ -577,6 +603,19 @@ def test_execute_post_analysis_persists_whole_run_context_summary_and_sidecar() 
     assert stored["analysis"]["analysis_metadata"]["whole_run_context_available"] is True
     assert stored["analysis"]["analysis_metadata"]["whole_run_context_window_count"] == 3
     assert stored["analysis"]["analysis_metadata"]["whole_run_context_interval_count"] == 1
+    assert stored["analysis"]["analysis_metadata"]["whole_run_context_full_window_count"] == 3
+    assert stored["analysis"]["analysis_metadata"]["whole_run_context_partial_window_count"] == 0
+    assert stored["analysis"]["analysis_metadata"]["whole_run_context_missing_window_count"] == 0
+    assert (
+        stored["analysis"]["analysis_metadata"]["whole_run_context_missing_speed_window_count"] == 0
+    )
+    assert (
+        stored["analysis"]["analysis_metadata"]["whole_run_context_missing_rpm_window_count"] == 0
+    )
+    assert (
+        stored["analysis"]["analysis_metadata"]["whole_run_context_stale_speed_window_count"] == 0
+    )
+    assert stored["analysis"]["analysis_metadata"]["whole_run_context_stale_rpm_window_count"] == 0
     assert (
         stored["analysis"]["analysis_metadata"]["whole_run_context_labels_artifact_key"]
         == WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY
