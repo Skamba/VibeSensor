@@ -49,6 +49,7 @@ __all__ = [
     "DataQualitySpeedCoverageResponse",
     "FindingPayload",
     "LocationIntensitySummaryResponse",
+    "LocationProofBasis",
     "OutlierSummaryResponse",
     "OrderHarmonicEvidenceSummaryResponse",
     "OrderTracePhaseSupportResponse",
@@ -65,12 +66,19 @@ __all__ = [
     "StrengthBucketDistributionResponse",
     "SummaryWarningResponse",
     "SuspectedVibrationOriginPayload",
+    "SpatialEvidenceSummaryResponse",
+    "SpatialLocationSummaryResponse",
     "TestPlanStepResponse",
     "WholeRunContextIntervalResponse",
 ]
 
 type PayloadObject = JsonSchemaObject
 type PayloadValue = JsonSchemaValue
+type LocationProofBasis = Literal[
+    "whole_run_summary",
+    "supporting_windows_raw_backed",
+    "supporting_windows_summary_only",
+]
 
 
 _FORBID_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")
@@ -221,6 +229,39 @@ class OrderTraceSummaryResponse(TypedDict, total=False):
     peak_intensity_db: float | None
     mean_vibration_strength_db: float | None
     ref_sources: Required[list[str]]
+
+
+class SpatialLocationSummaryResponse(TypedDict, total=False):
+    """Compact per-location support row for persisted spatial evidence."""
+
+    location: Required[str]
+    sensor_ids: Required[list[str]]
+    supporting_window_count: Required[int]
+    support_ratio: Required[float]
+    coherent_window_count: Required[int]
+    coherence_ratio: float | None
+    peak_intensity_db: float | None
+    mean_vibration_strength_db: float | None
+
+
+class SpatialEvidenceSummaryResponse(TypedDict, total=False):
+    """Future persisted/report-facing summary shape for whole-run spatial evidence."""
+
+    candidate_key: Required[str]
+    suspected_source: Required[str]
+    proof_basis: Required[LocationProofBasis]
+    total_window_count: Required[int]
+    supporting_window_count: Required[int]
+    supporting_sensor_count: Required[int]
+    coherent_window_count: Required[int]
+    coherence_ratio: float | None
+    dominant_location: str | None
+    runner_up_location: str | None
+    location_separation_db: float | None
+    dominance_ratio: float | None
+    ambiguous_location: Required[bool]
+    weak_spatial_separation: Required[bool]
+    location_summaries: Required[list[SpatialLocationSummaryResponse]]
 
 
 class SpeedStatsResponse(TypedDict):
@@ -376,6 +417,8 @@ for _typed_dict in (
     OrderTracePhaseSupportResponse,
     OrderHarmonicEvidenceSummaryResponse,
     OrderTraceSummaryResponse,
+    SpatialLocationSummaryResponse,
+    SpatialEvidenceSummaryResponse,
     SpeedStatsResponse,
     PhaseInfoResponse,
     OutlierSummaryResponse,
