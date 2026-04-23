@@ -262,10 +262,24 @@ explainable factors that reporting can consume directly.
 | `WholeRunWindowPlan` / `plan_whole_run_windows(...)` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_windows.py` | Deterministic window grid planner with explicit trailing-window policy |
 | `WholeRunWindowSpectralSummary` | `use_cases/diagnostics/` with compact persisted projection | Per-window FFT/strength/top-peak outputs |
 | `WholeRunArtifactManifest` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` + `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py` | Sidecar manifest for dense whole-run artifacts; mirror the raw-capture pattern |
-| `RunContextInterval` / `WindowContextLabel` | `use_cases/diagnostics/` with report-facing projection in `shared/types/history_analysis_contracts.py` | Whole-run segments and per-window labels |
+| `WholeRunContextInterval` / `WholeRunContextWindowLabel` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` with compact report-facing projection in `shared/types/history_analysis_contracts.py` | Whole-run segments and per-window labels keyed to the canonical `window_index` grid |
 | `OrderTracePoint` / `OrderTraceSummary` | `use_cases/diagnostics/orders/` with persisted summary projection | Dense trace vs compact report/history summary split |
 | `SpatialEvidenceSummary` | `use_cases/diagnostics/` with persisted summary projection | Candidate-level coherence and location separation |
 | `DiagnosisFactor` / `DiagnosisSummary` | diagnostics domain/use-case layer plus persisted projection | Explainable support and counterevidence for final ranking |
+
+For the context track:
+
+1. `WholeRunContextWindowLabel` is the dense internal join surface for later
+   order, spatial, and fusion work. It carries explicit `context_coverage`,
+   `speed_validity`, `rpm_validity`, `load_state`, and optional raw context
+   values/source labels keyed by `window_index`.
+2. `WholeRunContextInterval` is the compact segment summary surface. It uses
+   `start_window_index` / `end_window_index` as the canonical range identity and
+   can be projected later into persisted analysis/report payloads without
+   forcing report consumers to load every window label.
+3. Report-facing persisted summaries should keep only compact segment fields and
+   coarse completeness signals. Dense per-window labels remain sidecar/internal
+   artifacts unless a future consumer proves otherwise.
 
 ## Persistence strategy
 

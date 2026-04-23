@@ -1,10 +1,12 @@
-"""Shared whole-run post-analysis contracts for window identity and sidecar artifacts."""
+"""Shared whole-run post-analysis contracts for window identity, context, and sidecars."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isclose
+from typing import Literal
 
+from vibesensor.domain import DrivingPhase
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.shared.types.run_schema import RunMetadata
 
@@ -13,6 +15,12 @@ __all__ = [
     "WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME",
     "WholeRunArtifactFile",
     "WholeRunArtifactManifest",
+    "WholeRunContextCoverage",
+    "WholeRunContextInterval",
+    "WholeRunContextLoadState",
+    "WholeRunContextWindowLabel",
+    "WholeRunRpmValidity",
+    "WholeRunSpeedValidity",
     "WholeRunWindowDescriptor",
     "WholeRunWindowPolicy",
 ]
@@ -20,6 +28,11 @@ __all__ = [
 WHOLE_RUN_ARTIFACT_SCHEMA_VERSION = 1
 WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME = "whole-run-artifacts"
 _WHOLE_RUN_ARTIFACT_STORAGE_TYPE = "run-directory-v1"
+
+type WholeRunContextCoverage = Literal["full", "partial", "missing"]
+type WholeRunSpeedValidity = Literal["measured", "assumed", "missing"]
+type WholeRunRpmValidity = Literal["measured", "estimated", "missing"]
+type WholeRunContextLoadState = Literal["idle", "steady", "transient", "unknown"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -250,6 +263,157 @@ class WholeRunArtifactManifest:
         return None
 
 
+@dataclass(frozen=True, slots=True)
+class WholeRunContextWindowLabel:
+    """Per-window context keyed to the canonical whole-run ``window_index``."""
+
+    window_index: int
+    segment_index: int | None
+    phase: DrivingPhase
+    context_coverage: WholeRunContextCoverage
+    speed_validity: WholeRunSpeedValidity
+    rpm_validity: WholeRunRpmValidity
+    load_state: WholeRunContextLoadState
+    speed_kmh: float | None = None
+    speed_band: str | None = None
+    speed_source: str | None = None
+    engine_rpm: float | None = None
+    engine_rpm_source: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.window_index < 0:
+            raise ValueError("whole-run context window label requires window_index >= 0")
+        if self.segment_index is not None and self.segment_index < 0:
+            raise ValueError("whole-run context window label requires segment_index >= 0")
+
+    def to_json_object(self) -> JsonObject:
+        payload: JsonObject = {
+            "window_index": self.window_index,
+            "phase": self.phase.value,
+            "context_coverage": self.context_coverage,
+            "speed_validity": self.speed_validity,
+            "rpm_validity": self.rpm_validity,
+            "load_state": self.load_state,
+        }
+        if self.segment_index is not None:
+            payload["segment_index"] = self.segment_index
+        if self.speed_kmh is not None:
+            payload["speed_kmh"] = self.speed_kmh
+        if self.speed_band is not None:
+            payload["speed_band"] = self.speed_band
+        if self.speed_source is not None:
+            payload["speed_source"] = self.speed_source
+        if self.engine_rpm is not None:
+            payload["engine_rpm"] = self.engine_rpm
+        if self.engine_rpm_source is not None:
+            payload["engine_rpm_source"] = self.engine_rpm_source
+        return payload
+
+    @classmethod
+    def from_mapping(cls, data: JsonObject) -> WholeRunContextWindowLabel:
+        return cls(
+            window_index=_int_from_json(data.get("window_index")),
+            segment_index=_int_or_none(data.get("segment_index")),
+            phase=_driving_phase_from_json(data.get("phase")),
+            context_coverage=_context_coverage_from_json(data.get("context_coverage")),
+            speed_validity=_speed_validity_from_json(data.get("speed_validity")),
+            rpm_validity=_rpm_validity_from_json(data.get("rpm_validity")),
+            load_state=_load_state_from_json(data.get("load_state")),
+            speed_kmh=_float_or_none(data.get("speed_kmh")),
+            speed_band=_str_or_none(data.get("speed_band")),
+            speed_source=_str_or_none(data.get("speed_source")),
+            engine_rpm=_float_or_none(data.get("engine_rpm")),
+            engine_rpm_source=_str_or_none(data.get("engine_rpm_source")),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class WholeRunContextInterval:
+    """Compact segment summary aligned to a contiguous range of whole-run windows."""
+
+    segment_index: int
+    phase: DrivingPhase
+    load_state: WholeRunContextLoadState
+    start_window_index: int
+    end_window_index: int
+    start_t_s: float | None
+    end_t_s: float | None
+    speed_min_kmh: float | None = None
+    speed_max_kmh: float | None = None
+    speed_band: str | None = None
+    full_context_window_count: int = 0
+    partial_context_window_count: int = 0
+    missing_context_window_count: int = 0
+
+    def __post_init__(self) -> None:
+        if self.segment_index < 0:
+            raise ValueError("whole-run context interval requires segment_index >= 0")
+        if self.start_window_index < 0:
+            raise ValueError("whole-run context interval requires start_window_index >= 0")
+        if self.end_window_index < self.start_window_index:
+            raise ValueError(
+                "whole-run context interval requires end_window_index >= start_window_index"
+            )
+        for field_name in (
+            "full_context_window_count",
+            "partial_context_window_count",
+            "missing_context_window_count",
+        ):
+            if getattr(self, field_name) < 0:
+                raise ValueError(f"whole-run context interval requires {field_name} >= 0")
+        if (
+            self.start_t_s is not None
+            and self.end_t_s is not None
+            and self.start_t_s > self.end_t_s
+        ):
+            raise ValueError("whole-run context interval requires start_t_s <= end_t_s")
+
+    @property
+    def window_count(self) -> int:
+        return (self.end_window_index - self.start_window_index) + 1
+
+    def to_json_object(self) -> JsonObject:
+        payload: JsonObject = {
+            "segment_index": self.segment_index,
+            "phase": self.phase.value,
+            "load_state": self.load_state,
+            "start_window_index": self.start_window_index,
+            "end_window_index": self.end_window_index,
+            "full_context_window_count": self.full_context_window_count,
+            "partial_context_window_count": self.partial_context_window_count,
+            "missing_context_window_count": self.missing_context_window_count,
+        }
+        if self.start_t_s is not None:
+            payload["start_t_s"] = self.start_t_s
+        if self.end_t_s is not None:
+            payload["end_t_s"] = self.end_t_s
+        if self.speed_min_kmh is not None:
+            payload["speed_min_kmh"] = self.speed_min_kmh
+        if self.speed_max_kmh is not None:
+            payload["speed_max_kmh"] = self.speed_max_kmh
+        if self.speed_band is not None:
+            payload["speed_band"] = self.speed_band
+        return payload
+
+    @classmethod
+    def from_mapping(cls, data: JsonObject) -> WholeRunContextInterval:
+        return cls(
+            segment_index=_int_from_json(data.get("segment_index")),
+            phase=_driving_phase_from_json(data.get("phase")),
+            load_state=_load_state_from_json(data.get("load_state")),
+            start_window_index=_int_from_json(data.get("start_window_index")),
+            end_window_index=_int_from_json(data.get("end_window_index")),
+            start_t_s=_float_or_none(data.get("start_t_s")),
+            end_t_s=_float_or_none(data.get("end_t_s")),
+            speed_min_kmh=_float_or_none(data.get("speed_min_kmh")),
+            speed_max_kmh=_float_or_none(data.get("speed_max_kmh")),
+            speed_band=_str_or_none(data.get("speed_band")),
+            full_context_window_count=_int_from_json(data.get("full_context_window_count")),
+            partial_context_window_count=_int_from_json(data.get("partial_context_window_count")),
+            missing_context_window_count=_int_from_json(data.get("missing_context_window_count")),
+        )
+
+
 def _int_or_none(value: JsonValue | object) -> int | None:
     if isinstance(value, bool) or value is None:
         return None
@@ -277,9 +441,68 @@ def _float_from_json(value: JsonValue | object, default: float = 0.0) -> float:
     return default
 
 
+def _float_or_none(value: JsonValue | object) -> float | None:
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, (int, float, str)):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
 def _str_from_json(value: JsonValue | object, default: str = "") -> str:
     return value if isinstance(value, str) else default
 
 
 def _str_or_none(value: JsonValue | object) -> str | None:
     return value if isinstance(value, str) else None
+
+
+def _driving_phase_from_json(value: JsonValue | object) -> DrivingPhase:
+    raw = _str_or_none(value)
+    if raw is None:
+        return DrivingPhase.SPEED_UNKNOWN
+    try:
+        return DrivingPhase(raw)
+    except ValueError:
+        return DrivingPhase.SPEED_UNKNOWN
+
+
+def _context_coverage_from_json(value: JsonValue | object) -> WholeRunContextCoverage:
+    raw = _str_or_none(value)
+    if raw == "full":
+        return "full"
+    if raw == "partial":
+        return "partial"
+    return "missing"
+
+
+def _speed_validity_from_json(value: JsonValue | object) -> WholeRunSpeedValidity:
+    raw = _str_or_none(value)
+    if raw == "measured":
+        return "measured"
+    if raw == "assumed":
+        return "assumed"
+    return "missing"
+
+
+def _rpm_validity_from_json(value: JsonValue | object) -> WholeRunRpmValidity:
+    raw = _str_or_none(value)
+    if raw == "measured":
+        return "measured"
+    if raw == "estimated":
+        return "estimated"
+    return "missing"
+
+
+def _load_state_from_json(value: JsonValue | object) -> WholeRunContextLoadState:
+    raw = _str_or_none(value)
+    if raw == "idle":
+        return "idle"
+    if raw == "steady":
+        return "steady"
+    if raw == "transient":
+        return "transient"
+    return "unknown"
