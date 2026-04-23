@@ -17,6 +17,7 @@ from vibesensor.shared.report_presentation import (
 
 if TYPE_CHECKING:
     from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
+    from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
 
 __all__ = [
     "PrimaryCandidateContext",
@@ -53,16 +54,26 @@ def resolve_primary_report_candidate(
     aggregate: TestRun,
     facts: PrimaryReportFacts,
     confidence_facts: ReportConfidenceFacts | None = None,
+    diagnosis_summary: ReportWholeRunDiagnosisSummary | None = None,
     tr: Callable[..., str],
     lang: str,
 ) -> PrimaryCandidateContext:
     """Resolve the primary candidate and all derived certainty fields."""
     primary_candidate = facts.domain_primary or _top_report_candidate(aggregate)
-    primary_system = (
-        human_source(facts.primary_source, tr=tr) if facts.primary_source else tr("UNKNOWN")
+    primary_source = (
+        diagnosis_summary.suspected_source if diagnosis_summary else facts.primary_source
     )
-    primary_location = facts.primary_location or tr("UNKNOWN")
-    primary_speed = str(facts.primary_speed or tr("UNKNOWN"))
+    primary_system = human_source(primary_source, tr=tr) if primary_source else tr("UNKNOWN")
+    primary_location = (
+        diagnosis_summary.dominant_location
+        if diagnosis_summary and diagnosis_summary.dominant_location
+        else facts.primary_location or tr("UNKNOWN")
+    )
+    primary_speed = str(
+        diagnosis_summary.dominant_speed_band
+        if diagnosis_summary and diagnosis_summary.dominant_speed_band
+        else facts.primary_speed or tr("UNKNOWN")
+    )
     strength_text_value = strength_text(facts.strength_db, lang=lang)
     strength_band_key = (
         strength_label(facts.strength_db)[0] if facts.strength_db is not None else None
@@ -89,18 +100,26 @@ def resolve_primary_report_candidate(
         tier = "A"
     return PrimaryCandidateContext(
         primary_candidate=primary_candidate,
-        primary_source=facts.primary_source,
+        primary_source=primary_source,
         primary_system=primary_system,
         primary_location=primary_location,
         primary_speed=primary_speed,
-        confidence=facts.confidence,
+        confidence=(
+            diagnosis_summary.total_score
+            if diagnosis_summary and diagnosis_summary.total_score is not None
+            else facts.confidence
+        ),
         sensor_count=facts.sensor_count,
         weak_spatial=facts.weak_spatial,
         has_reference_gaps=facts.has_reference_gaps,
         strength_db=facts.strength_db,
         strength_text=strength_text_value,
         strength_band_key=strength_band_key,
-        dominance_ratio=facts.dominance_ratio,
+        dominance_ratio=(
+            diagnosis_summary.dominance_ratio
+            if diagnosis_summary and diagnosis_summary.dominance_ratio is not None
+            else facts.dominance_ratio
+        ),
         certainty_key=certainty_key,
         certainty_label_text=certainty_label_text,
         certainty_pct=certainty_pct,

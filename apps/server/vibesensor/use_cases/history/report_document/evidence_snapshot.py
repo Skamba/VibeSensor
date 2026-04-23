@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from vibesensor.report_i18n import human_source
 from vibesensor.shared.boundaries.reporting import PreparedReportFacts
@@ -13,6 +14,9 @@ from vibesensor.shared.report_presentation import (
 )
 
 __all__ = ["build_evidence_snapshot_rows"]
+
+if TYPE_CHECKING:
+    from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
 
 
 def build_evidence_snapshot_rows(
@@ -58,6 +62,22 @@ def build_evidence_snapshot_rows(
 
 
 def _data_basis_text(report_facts: PreparedReportFacts, *, tr: Callable[..., str]) -> str:
+    diagnosis = report_facts.primary_diagnosis
+    if diagnosis is not None and diagnosis.data_basis == "raw_backed":
+        raw_backed_samples = 0
+        for factor in diagnosis.support_factors:
+            if (
+                factor.factor_key == "raw_backed"
+                and factor.details.raw_backed_sample_count is not None
+            ):
+                raw_backed_samples = factor.details.raw_backed_sample_count
+                break
+        return tr(
+            "REPORT_EVIDENCE_BASIS_RAW",
+            samples=str(max(0, raw_backed_samples)),
+        )
+    if diagnosis is not None and diagnosis.data_basis == "summary_only":
+        return tr("REPORT_EVIDENCE_BASIS_SUMMARY")
     evidence = report_facts.evidence
     if evidence.data_basis == "raw_backed":
         return tr(
@@ -68,6 +88,19 @@ def _data_basis_text(report_facts: PreparedReportFacts, *, tr: Callable[..., str
 
 
 def _support_window_text(report_facts: PreparedReportFacts, *, tr: Callable[..., str]) -> str:
+    diagnosis = report_facts.primary_diagnosis
+    if diagnosis is not None:
+        count = diagnosis.supporting_window_count
+        duration_s = diagnosis.supporting_duration_s
+        if count is None or count <= 0:
+            return tr("REPORT_SUPPORT_WINDOW_SUMMARY_NONE")
+        if duration_s is not None and duration_s > 0:
+            return tr(
+                "REPORT_SUPPORT_WINDOW_SUMMARY_FULL",
+                count=str(count),
+                duration=f"{duration_s:.1f}",
+            )
+        return tr("REPORT_SUPPORT_WINDOW_SUMMARY_COUNT_ONLY", count=str(count))
     evidence = report_facts.evidence
     count = evidence.supporting_window_count
     duration_s = evidence.supporting_duration_s
@@ -83,6 +116,15 @@ def _support_window_text(report_facts: PreparedReportFacts, *, tr: Callable[...,
 
 
 def _stable_frequency_text(report_facts: PreparedReportFacts, *, tr: Callable[..., str]) -> str:
+    diagnosis = report_facts.primary_diagnosis
+    if diagnosis is not None:
+        low = diagnosis.stable_frequency_min_hz
+        high = diagnosis.stable_frequency_max_hz
+        if low is None or high is None:
+            return tr("REPORT_STABLE_FREQUENCY_UNKNOWN")
+        if abs(high - low) < 0.05:
+            return tr("REPORT_STABLE_FREQUENCY_SINGLE", hz=f"{low:.1f}")
+        return tr("REPORT_STABLE_FREQUENCY_BAND", low=f"{low:.1f}", high=f"{high:.1f}")
     evidence = report_facts.evidence
     low = evidence.stable_frequency_min_hz
     high = evidence.stable_frequency_max_hz
@@ -94,6 +136,16 @@ def _stable_frequency_text(report_facts: PreparedReportFacts, *, tr: Callable[..
 
 
 def _supporting_sensors_text(report_facts: PreparedReportFacts, *, tr: Callable[..., str]) -> str:
+    diagnosis = report_facts.primary_diagnosis
+    if diagnosis is not None and diagnosis.supporting_sensor_count is not None:
+        if diagnosis.dominant_location:
+            return tr(
+                "REPORT_SUPPORTING_SENSOR_ENTRY",
+                location=display_location(diagnosis.dominant_location, tr=tr),
+                count=str(diagnosis.supporting_sensor_count),
+            )
+        if diagnosis.supporting_sensor_count <= 0:
+            return tr("REPORT_SUPPORTING_SENSORS_NONE")
     evidence = report_facts.evidence
     if not evidence.supporting_location_counts:
         return tr("REPORT_SUPPORTING_SENSORS_NONE")
@@ -109,6 +161,11 @@ def _supporting_sensors_text(report_facts: PreparedReportFacts, *, tr: Callable[
 
 
 def _counterevidence_text(report_facts: PreparedReportFacts, *, tr: Callable[..., str]) -> str:
+    diagnosis = report_facts.primary_diagnosis
+    if diagnosis is not None:
+        diagnosis_notes = _diagnosis_counterevidence_texts(diagnosis=diagnosis, tr=tr)
+        if diagnosis_notes:
+            return "; ".join(diagnosis_notes[:2])
     evidence = report_facts.evidence
     notes: list[str] = []
     if evidence.alternative_source is not None:
@@ -125,3 +182,32 @@ def _counterevidence_text(report_facts: PreparedReportFacts, *, tr: Callable[...
     if not notes:
         return tr("REPORT_COUNTEREVIDENCE_NONE")
     return "; ".join(notes)
+
+
+def _diagnosis_counterevidence_texts(
+    *,
+    diagnosis: ReportWholeRunDiagnosisSummary,
+    tr: Callable[..., str],
+) -> tuple[str, ...]:
+    notes: list[str] = []
+    counter_keys = {factor.factor_key for factor in diagnosis.counterevidence_factors}
+    if "close_alternative" in counter_keys and diagnosis.alternative_source is not None:
+        notes.append(
+            tr(
+                "REPORT_COUNTEREVIDENCE_ALT_SOURCE",
+                source=human_source(diagnosis.alternative_source, tr=tr),
+            )
+        )
+    if "weak_spatial" in counter_keys or diagnosis.weak_spatial_separation:
+        notes.append(tr("REPORT_COUNTEREVIDENCE_WEAK_SPATIAL"))
+    if "incomplete_reference" in counter_keys or diagnosis.has_reference_gap:
+        notes.append(tr("REPORT_COUNTEREVIDENCE_REFERENCE_GAP"))
+    if "summary_only" in counter_keys:
+        notes.append(tr("REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY"))
+    if "legacy_context" in counter_keys:
+        notes.append(tr("REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT"))
+    if "speed_context_gaps" in counter_keys:
+        notes.append(tr("REPORT_CONFIDENCE_CAVEAT_SPEED_CONTEXT_GAPS"))
+    if "rpm_context_gaps" in counter_keys:
+        notes.append(tr("REPORT_CONFIDENCE_CAVEAT_RPM_CONTEXT_GAPS"))
+    return tuple(notes)

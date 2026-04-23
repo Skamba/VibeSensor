@@ -27,6 +27,8 @@ from .section_context import VerdictPageContext
 from .timeline_graph import build_timeline_graph_data
 
 if TYPE_CHECKING:
+    from vibesensor.shared.boundaries.reporting.summary import ReportWholeRunDiagnosisSummary
+
     from .document_context import ReportDocumentContext
 
 __all__ = ["build_observed_signature", "build_verdict_page", "build_verdict_page_data"]
@@ -54,6 +56,7 @@ def build_verdict_page_data(
     aggregate: TestRun,
     primary: PrimaryCandidateContext,
     report_confidence: ReportConfidenceFacts,
+    diagnosis_summaries: Sequence[ReportWholeRunDiagnosisSummary],
     duration_text: str | None,
     verdict_context: VerdictPageContext,
     suitability_checks: Sequence[SuitabilityCheck],
@@ -108,10 +111,14 @@ def build_verdict_page_data(
         ),
         coverage_label=verdict_context.coverage_label,
         also_consider=(
-            human_source(aggregate.effective_top_causes()[1].suspected_source, tr=tr)
-            if not recapture_before_acting
-            and verdict_context.alternative_source_visible
-            and len(aggregate.effective_top_causes()) > 1
+            (
+                human_source(diagnosis_summaries[1].suspected_source, tr=tr)
+                if len(diagnosis_summaries) > 1
+                else human_source(aggregate.effective_top_causes()[1].suspected_source, tr=tr)
+                if len(aggregate.effective_top_causes()) > 1
+                else None
+            )
+            if not recapture_before_acting and verdict_context.alternative_source_visible
             else None
         ),
         proof_caveat=verdict_context.proof_caveat,
@@ -140,6 +147,7 @@ def build_verdict_page(*, context: ReportDocumentContext) -> VerdictPageData:
         aggregate=context.test_run,
         primary=context.primary,
         report_confidence=context.report_facts.confidence,
+        diagnosis_summaries=context.report_facts.whole_run_diagnosis_summaries,
         duration_text=context.run_facts.duration_text,
         verdict_context=context.verdict_page_context,
         suitability_checks=context.decision_facts.suitability_checks,
