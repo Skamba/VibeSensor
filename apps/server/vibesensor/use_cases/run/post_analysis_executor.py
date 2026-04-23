@@ -18,6 +18,7 @@ from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawCaptureSensorRange
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTraceSummary
 from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (
     WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY,
     WholeRunOrderFamilySummaryArtifactBundle,
@@ -341,6 +342,8 @@ def execute_post_analysis(
                     summary,
                     order_trace_summary_bundle,
                 )
+            if order_family_summary_bundle is not None:
+                summary = _append_whole_run_order_summaries(summary, order_family_summary_bundle)
             if order_family_summary_bundle is not None:
                 summary = _append_whole_run_order_family_summary_metadata(
                     summary,
@@ -753,3 +756,32 @@ def _append_whole_run_order_family_summary_metadata(
         WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY
     )
     return PersistedAnalysis.from_json_object(payload)
+
+
+def _append_whole_run_order_summaries(
+    summary: PersistedAnalysis,
+    bundle: WholeRunOrderFamilySummaryArtifactBundle,
+) -> PersistedAnalysis:
+    payload = summary.to_json_object()
+    payload["whole_run_order_summaries"] = [
+        row.to_json_object() for row in _ranked_whole_run_order_summaries(bundle.summaries)
+    ]
+    return PersistedAnalysis.from_json_object(payload)
+
+
+def _ranked_whole_run_order_summaries(
+    summaries: tuple[OrderTraceSummary, ...],
+) -> tuple[OrderTraceSummary, ...]:
+    return tuple(
+        sorted(
+            summaries,
+            key=lambda summary: (
+                -summary.lock_score,
+                -summary.matched_window_count,
+                -summary.support_ratio,
+                -(summary.peak_intensity_db if summary.peak_intensity_db is not None else -1.0),
+                -summary.reference_coverage_ratio,
+                summary.hypothesis_key,
+            ),
+        )
+    )

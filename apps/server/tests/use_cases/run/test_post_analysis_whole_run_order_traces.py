@@ -264,4 +264,15 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
         stored["analysis"]["analysis_metadata"]["whole_run_order_family_summary_artifact_key"]
         == WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY
     )
+    assert len(stored["analysis"]["whole_run_order_summaries"]) == 1
+    order_summary = stored["analysis"]["whole_run_order_summaries"][0]
+    assert order_summary["hypothesis_key"] == "wheel"
+    assert order_summary["suspected_source"] == "wheel/tire"
+    assert order_summary["matched_window_count"] == 1
+    assert order_summary["support_intervals"][0]["phase"] == "cruise"
+    assert order_summary["phase_support"][0]["matched_window_count"] == 1
+    assert order_summary["harmonic_summaries"][0]["harmonic"] == 1
+    assert order_summary["stable_frequency_min_hz"] == 5.1
+    assert order_summary["exemplar_interval_index"] == 0
+    assert order_summary["ref_sources"] == ["speed+tire"]
     assert stored["analysis"]["analysis_metadata"]["whole_run_artifact_count"] == 5

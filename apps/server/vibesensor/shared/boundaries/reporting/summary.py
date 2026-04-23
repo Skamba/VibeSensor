@@ -21,7 +21,11 @@ from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [
     "NormalizedReportSummary",
+    "ReportOrderHarmonicEvidenceSummary",
+    "ReportOrderTracePhaseSupport",
+    "ReportOrderTraceSupportInterval",
     "ReportWholeRunContextInterval",
+    "ReportWholeRunOrderSummary",
     "ReportSummaryNormalizer",
     "ReportTimelineInterval",
     "has_projectable_report_payload",
@@ -66,6 +70,85 @@ class ReportWholeRunContextInterval:
 
 
 @dataclass(frozen=True, slots=True)
+class ReportOrderTraceSupportInterval:
+    """Typed persisted support interval normalized for report/history consumers."""
+
+    interval_index: int
+    start_window_index: int
+    end_window_index: int
+    matched_window_count: int
+    support_ratio: float
+    start_t_s: float | None
+    end_t_s: float | None
+    phase: str | None
+    load_state: str | None
+    speed_band: str | None
+    mean_relative_error: float | None
+
+
+@dataclass(frozen=True, slots=True)
+class ReportOrderTracePhaseSupport:
+    """Typed persisted phase-support row for one whole-run order summary."""
+
+    phase: str
+    eligible_window_count: int
+    matched_window_count: int
+    support_ratio: float
+
+
+@dataclass(frozen=True, slots=True)
+class ReportOrderHarmonicEvidenceSummary:
+    """Typed persisted harmonic evidence row for one whole-run order summary."""
+
+    harmonic: int
+    order_label: str
+    eligible_window_count: int
+    matched_window_count: int
+    support_ratio: float
+    reference_coverage_ratio: float
+    contiguous_support_ratio: float
+    lock_score: float
+    mean_relative_error: float | None
+    relative_error_stddev: float | None
+    drift_score: float
+    peak_intensity_db: float | None
+    mean_vibration_strength_db: float | None
+
+
+@dataclass(frozen=True, slots=True)
+class ReportWholeRunOrderSummary:
+    """Typed persisted whole-run order summary for report/history reload paths."""
+
+    hypothesis_key: str
+    suspected_source: str
+    order_family: str
+    order_label: str
+    total_window_count: int
+    eligible_window_count: int
+    matched_window_count: int
+    support_ratio: float
+    reference_coverage_ratio: float
+    longest_contiguous_support_window_count: int
+    contiguous_support_ratio: float
+    support_intervals: tuple[ReportOrderTraceSupportInterval, ...]
+    phase_support: tuple[ReportOrderTracePhaseSupport, ...]
+    harmonic_summaries: tuple[ReportOrderHarmonicEvidenceSummary, ...]
+    stable_frequency_min_hz: float | None
+    stable_frequency_max_hz: float | None
+    exemplar_interval_index: int | None
+    dominant_phase: str | None
+    dominant_speed_band: str | None
+    strongest_location: str | None
+    mean_relative_error: float | None
+    relative_error_stddev: float | None
+    drift_score: float
+    lock_score: float
+    peak_intensity_db: float | None
+    mean_vibration_strength_db: float | None
+    ref_sources: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class NormalizedReportSummary:
     """Typed report boundary object shared by report facts and renderer mapping."""
 
@@ -83,6 +166,7 @@ class NormalizedReportSummary:
     peak_table_rows: tuple[PeakTableRow, ...]
     timeline_intervals: tuple[ReportTimelineInterval, ...]
     whole_run_context_intervals: tuple[ReportWholeRunContextInterval, ...]
+    whole_run_order_summaries: tuple[ReportWholeRunOrderSummary, ...]
 
 
 class ReportSummaryNormalizer:
@@ -110,6 +194,7 @@ class ReportSummaryNormalizer:
             peak_table_rows=self._peak_table_rows(),
             timeline_intervals=self._timeline_intervals(),
             whole_run_context_intervals=self._whole_run_context_intervals(),
+            whole_run_order_summaries=self._whole_run_order_summaries(),
         )
 
     def _summary_run_metadata(self) -> RunMetadata | None:
@@ -215,6 +300,171 @@ class ReportSummaryNormalizer:
                 )
             )
         return tuple(intervals)
+
+    def _whole_run_order_summaries(self) -> tuple[ReportWholeRunOrderSummary, ...]:
+        raw_summaries = self._payload.get("whole_run_order_summaries")
+        if not isinstance(raw_summaries, list):
+            return ()
+        summaries: list[ReportWholeRunOrderSummary] = []
+        for row in raw_summaries:
+            if not isinstance(row, Mapping):
+                continue
+            hypothesis_key = text_or_none(row.get("hypothesis_key"))
+            suspected_source = text_or_none(row.get("suspected_source"))
+            order_family = text_or_none(row.get("order_family"))
+            order_label = text_or_none(row.get("order_label"))
+            if (
+                hypothesis_key is None
+                or suspected_source is None
+                or order_family is None
+                or order_label is None
+            ):
+                continue
+            summaries.append(
+                ReportWholeRunOrderSummary(
+                    hypothesis_key=hypothesis_key,
+                    suspected_source=suspected_source,
+                    order_family=order_family,
+                    order_label=order_label,
+                    total_window_count=coerce_count(row.get("total_window_count")),
+                    eligible_window_count=coerce_count(row.get("eligible_window_count")),
+                    matched_window_count=coerce_count(row.get("matched_window_count")),
+                    support_ratio=optional_float(row.get("support_ratio")) or 0.0,
+                    reference_coverage_ratio=optional_float(row.get("reference_coverage_ratio"))
+                    or 0.0,
+                    longest_contiguous_support_window_count=coerce_count(
+                        row.get("longest_contiguous_support_window_count")
+                    ),
+                    contiguous_support_ratio=optional_float(row.get("contiguous_support_ratio"))
+                    or 0.0,
+                    support_intervals=self._order_support_intervals(row.get("support_intervals")),
+                    phase_support=self._order_phase_support_rows(row.get("phase_support")),
+                    harmonic_summaries=self._order_harmonic_summaries(
+                        row.get("harmonic_summaries")
+                    ),
+                    stable_frequency_min_hz=optional_float(row.get("stable_frequency_min_hz")),
+                    stable_frequency_max_hz=optional_float(row.get("stable_frequency_max_hz")),
+                    exemplar_interval_index=self._optional_count(
+                        row.get("exemplar_interval_index")
+                    ),
+                    dominant_phase=text_or_none(row.get("dominant_phase")),
+                    dominant_speed_band=text_or_none(row.get("dominant_speed_band")),
+                    strongest_location=text_or_none(row.get("strongest_location")),
+                    mean_relative_error=optional_float(row.get("mean_relative_error")),
+                    relative_error_stddev=optional_float(row.get("relative_error_stddev")),
+                    drift_score=optional_float(row.get("drift_score")) or 0.0,
+                    lock_score=optional_float(row.get("lock_score")) or 0.0,
+                    peak_intensity_db=optional_float(row.get("peak_intensity_db")),
+                    mean_vibration_strength_db=optional_float(
+                        row.get("mean_vibration_strength_db")
+                    ),
+                    ref_sources=self._order_ref_sources(row.get("ref_sources")),
+                )
+            )
+        return tuple(summaries)
+
+    def _order_support_intervals(
+        self,
+        raw_intervals: object,
+    ) -> tuple[ReportOrderTraceSupportInterval, ...]:
+        if not isinstance(raw_intervals, list):
+            return ()
+        intervals: list[ReportOrderTraceSupportInterval] = []
+        for row in raw_intervals:
+            if not isinstance(row, Mapping):
+                continue
+            intervals.append(
+                ReportOrderTraceSupportInterval(
+                    interval_index=coerce_count(row.get("interval_index")),
+                    start_window_index=coerce_count(row.get("start_window_index")),
+                    end_window_index=coerce_count(row.get("end_window_index")),
+                    matched_window_count=coerce_count(row.get("matched_window_count")),
+                    support_ratio=optional_float(row.get("support_ratio")) or 0.0,
+                    start_t_s=optional_float(row.get("start_t_s")),
+                    end_t_s=optional_float(row.get("end_t_s")),
+                    phase=text_or_none(row.get("phase")),
+                    load_state=text_or_none(row.get("load_state")),
+                    speed_band=text_or_none(row.get("speed_band")),
+                    mean_relative_error=optional_float(row.get("mean_relative_error")),
+                )
+            )
+        return tuple(intervals)
+
+    def _order_phase_support_rows(
+        self,
+        raw_phase_rows: object,
+    ) -> tuple[ReportOrderTracePhaseSupport, ...]:
+        if not isinstance(raw_phase_rows, list):
+            return ()
+        rows: list[ReportOrderTracePhaseSupport] = []
+        for row in raw_phase_rows:
+            if not isinstance(row, Mapping):
+                continue
+            phase = text_or_none(row.get("phase"))
+            if phase is None:
+                continue
+            rows.append(
+                ReportOrderTracePhaseSupport(
+                    phase=phase,
+                    eligible_window_count=coerce_count(row.get("eligible_window_count")),
+                    matched_window_count=coerce_count(row.get("matched_window_count")),
+                    support_ratio=optional_float(row.get("support_ratio")) or 0.0,
+                )
+            )
+        return tuple(rows)
+
+    def _order_harmonic_summaries(
+        self,
+        raw_summaries: object,
+    ) -> tuple[ReportOrderHarmonicEvidenceSummary, ...]:
+        if not isinstance(raw_summaries, list):
+            return ()
+        summaries: list[ReportOrderHarmonicEvidenceSummary] = []
+        for row in raw_summaries:
+            if not isinstance(row, Mapping):
+                continue
+            order_label = text_or_none(row.get("order_label"))
+            if order_label is None:
+                continue
+            summaries.append(
+                ReportOrderHarmonicEvidenceSummary(
+                    harmonic=coerce_count(row.get("harmonic")),
+                    order_label=order_label,
+                    eligible_window_count=coerce_count(row.get("eligible_window_count")),
+                    matched_window_count=coerce_count(row.get("matched_window_count")),
+                    support_ratio=optional_float(row.get("support_ratio")) or 0.0,
+                    reference_coverage_ratio=optional_float(row.get("reference_coverage_ratio"))
+                    or 0.0,
+                    contiguous_support_ratio=optional_float(row.get("contiguous_support_ratio"))
+                    or 0.0,
+                    lock_score=optional_float(row.get("lock_score")) or 0.0,
+                    mean_relative_error=optional_float(row.get("mean_relative_error")),
+                    relative_error_stddev=optional_float(row.get("relative_error_stddev")),
+                    drift_score=optional_float(row.get("drift_score")) or 0.0,
+                    peak_intensity_db=optional_float(row.get("peak_intensity_db")),
+                    mean_vibration_strength_db=optional_float(
+                        row.get("mean_vibration_strength_db")
+                    ),
+                )
+            )
+        return tuple(summaries)
+
+    def _order_ref_sources(self, raw_sources: object) -> tuple[str, ...]:
+        if not isinstance(raw_sources, list):
+            return ()
+        return tuple(
+            source
+            for source in (text_or_none(raw_source) for raw_source in raw_sources)
+            if source is not None
+        )
+
+    def _optional_count(self, raw_value: object) -> int | None:
+        if raw_value is None or isinstance(raw_value, bool):
+            return None
+        try:
+            return coerce_count(raw_value)
+        except (TypeError, ValueError):
+            return None
 
 
 def has_projectable_report_payload(payload: Mapping[str, object]) -> bool:
