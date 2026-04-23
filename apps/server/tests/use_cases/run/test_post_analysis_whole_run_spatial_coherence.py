@@ -268,6 +268,7 @@ def test_execute_post_analysis_persists_whole_run_spatial_coherence_sidecar_and_
     artifact_contents = stored["whole_run_artifact_contents"]
     assert WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY in artifact_contents
     analysis_metadata = stored["analysis"]["analysis_metadata"]
+    spatial_summaries = stored["analysis"]["whole_run_spatial_summaries"]
     assert analysis_metadata["whole_run_spatial_coherence_available"] is True
     assert analysis_metadata["whole_run_spatial_coherence_window_count"] == 4
     assert analysis_metadata["whole_run_spatial_coherence_candidate_count"] == 1
@@ -276,3 +277,10 @@ def test_execute_post_analysis_persists_whole_run_spatial_coherence_sidecar_and_
         analysis_metadata["whole_run_spatial_coherence_artifact_key"]
         == WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY
     )
+    assert len(spatial_summaries) == 1
+    assert spatial_summaries[0]["candidate_key"] == "wheel_1x"
+    assert spatial_summaries[0]["proof_basis"] == "supporting_windows_raw_backed"
+    assert spatial_summaries[0]["dominant_location"] == "front-left"
+    assert spatial_summaries[0]["supporting_window_count"] == 2
+    assert spatial_summaries[0]["coherent_window_count"] == 2
+    assert len(spatial_summaries[0]["location_summaries"]) == 2

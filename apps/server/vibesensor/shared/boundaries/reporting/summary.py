@@ -17,6 +17,7 @@ from vibesensor.shared.boundaries.summary_fields.hotspot import (
     location_intensity_summaries_from_rows,
 )
 from vibesensor.shared.types.analysis_views import PeakTableRow
+from vibesensor.shared.types.history_analysis_contracts import LocationProofBasis
 from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [
@@ -24,8 +25,10 @@ __all__ = [
     "ReportOrderHarmonicEvidenceSummary",
     "ReportOrderTracePhaseSupport",
     "ReportOrderTraceSupportInterval",
+    "ReportSpatialLocationSummary",
     "ReportWholeRunContextInterval",
     "ReportWholeRunOrderSummary",
+    "ReportWholeRunSpatialSummary",
     "ReportSummaryNormalizer",
     "ReportTimelineInterval",
     "has_projectable_report_payload",
@@ -149,6 +152,41 @@ class ReportWholeRunOrderSummary:
 
 
 @dataclass(frozen=True, slots=True)
+class ReportSpatialLocationSummary:
+    """Typed persisted per-location spatial evidence row for report/history reload."""
+
+    location: str
+    sensor_ids: tuple[str, ...]
+    supporting_window_count: int
+    support_ratio: float
+    coherent_window_count: int
+    coherence_ratio: float | None
+    peak_intensity_db: float | None
+    mean_vibration_strength_db: float | None
+
+
+@dataclass(frozen=True, slots=True)
+class ReportWholeRunSpatialSummary:
+    """Typed persisted whole-run spatial summary for report/history reload paths."""
+
+    candidate_key: str
+    suspected_source: str
+    proof_basis: LocationProofBasis
+    total_window_count: int
+    supporting_window_count: int
+    supporting_sensor_count: int
+    coherent_window_count: int
+    coherence_ratio: float | None
+    dominant_location: str | None
+    runner_up_location: str | None
+    location_separation_db: float | None
+    dominance_ratio: float | None
+    ambiguous_location: bool
+    weak_spatial_separation: bool
+    location_summaries: tuple[ReportSpatialLocationSummary, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class NormalizedReportSummary:
     """Typed report boundary object shared by report facts and renderer mapping."""
 
@@ -167,6 +205,7 @@ class NormalizedReportSummary:
     timeline_intervals: tuple[ReportTimelineInterval, ...]
     whole_run_context_intervals: tuple[ReportWholeRunContextInterval, ...]
     whole_run_order_summaries: tuple[ReportWholeRunOrderSummary, ...]
+    whole_run_spatial_summaries: tuple[ReportWholeRunSpatialSummary, ...]
 
 
 class ReportSummaryNormalizer:
@@ -195,6 +234,7 @@ class ReportSummaryNormalizer:
             timeline_intervals=self._timeline_intervals(),
             whole_run_context_intervals=self._whole_run_context_intervals(),
             whole_run_order_summaries=self._whole_run_order_summaries(),
+            whole_run_spatial_summaries=self._whole_run_spatial_summaries(),
         )
 
     def _summary_run_metadata(self) -> RunMetadata | None:
@@ -363,6 +403,42 @@ class ReportSummaryNormalizer:
             )
         return tuple(summaries)
 
+    def _whole_run_spatial_summaries(self) -> tuple[ReportWholeRunSpatialSummary, ...]:
+        raw_summaries = self._payload.get("whole_run_spatial_summaries")
+        if not isinstance(raw_summaries, list):
+            return ()
+        summaries: list[ReportWholeRunSpatialSummary] = []
+        for row in raw_summaries:
+            if not isinstance(row, Mapping):
+                continue
+            candidate_key = text_or_none(row.get("candidate_key"))
+            suspected_source = text_or_none(row.get("suspected_source"))
+            proof_basis = self._proof_basis(row.get("proof_basis"))
+            if candidate_key is None or suspected_source is None or proof_basis is None:
+                continue
+            summaries.append(
+                ReportWholeRunSpatialSummary(
+                    candidate_key=candidate_key,
+                    suspected_source=suspected_source,
+                    proof_basis=proof_basis,
+                    total_window_count=coerce_count(row.get("total_window_count")),
+                    supporting_window_count=coerce_count(row.get("supporting_window_count")),
+                    supporting_sensor_count=coerce_count(row.get("supporting_sensor_count")),
+                    coherent_window_count=coerce_count(row.get("coherent_window_count")),
+                    coherence_ratio=optional_float(row.get("coherence_ratio")),
+                    dominant_location=text_or_none(row.get("dominant_location")),
+                    runner_up_location=text_or_none(row.get("runner_up_location")),
+                    location_separation_db=optional_float(row.get("location_separation_db")),
+                    dominance_ratio=optional_float(row.get("dominance_ratio")),
+                    ambiguous_location=bool(row.get("ambiguous_location")),
+                    weak_spatial_separation=bool(row.get("weak_spatial_separation")),
+                    location_summaries=self._spatial_location_summaries(
+                        row.get("location_summaries")
+                    ),
+                )
+            )
+        return tuple(summaries)
+
     def _order_support_intervals(
         self,
         raw_intervals: object,
@@ -465,6 +541,54 @@ class ReportSummaryNormalizer:
             return coerce_count(raw_value)
         except (TypeError, ValueError):
             return None
+
+    def _spatial_location_summaries(
+        self,
+        raw_summaries: object,
+    ) -> tuple[ReportSpatialLocationSummary, ...]:
+        if not isinstance(raw_summaries, list):
+            return ()
+        summaries: list[ReportSpatialLocationSummary] = []
+        for row in raw_summaries:
+            if not isinstance(row, Mapping):
+                continue
+            location = text_or_none(row.get("location"))
+            if location is None:
+                continue
+            summaries.append(
+                ReportSpatialLocationSummary(
+                    location=location,
+                    sensor_ids=self._text_tuple(row.get("sensor_ids")),
+                    supporting_window_count=coerce_count(row.get("supporting_window_count")),
+                    support_ratio=optional_float(row.get("support_ratio")) or 0.0,
+                    coherent_window_count=coerce_count(row.get("coherent_window_count")),
+                    coherence_ratio=optional_float(row.get("coherence_ratio")),
+                    peak_intensity_db=optional_float(row.get("peak_intensity_db")),
+                    mean_vibration_strength_db=optional_float(
+                        row.get("mean_vibration_strength_db")
+                    ),
+                )
+            )
+        return tuple(summaries)
+
+    def _text_tuple(self, raw_values: object) -> tuple[str, ...]:
+        if not isinstance(raw_values, list):
+            return ()
+        return tuple(
+            value
+            for value in (text_or_none(raw_value) for raw_value in raw_values)
+            if value is not None
+        )
+
+    def _proof_basis(self, raw_value: object) -> LocationProofBasis | None:
+        value = text_or_none(raw_value)
+        if value not in {
+            "whole_run_summary",
+            "supporting_windows_raw_backed",
+            "supporting_windows_summary_only",
+        }:
+            return None
+        return cast(LocationProofBasis, value)
 
 
 def has_projectable_report_payload(payload: Mapping[str, object]) -> bool:

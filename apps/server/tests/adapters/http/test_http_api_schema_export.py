@@ -181,6 +181,9 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
     assert analysis_summary["properties"]["whole_run_order_summaries"]["items"] == {
         "$ref": "#/components/schemas/OrderTraceSummaryResponse",
     }
+    assert analysis_summary["properties"]["whole_run_spatial_summaries"]["items"] == {
+        "$ref": "#/components/schemas/SpatialEvidenceSummaryResponse",
+    }
     assert analysis_summary["properties"]["speed_stats"] == {
         "$ref": "#/components/schemas/SpeedStatsResponse",
     }
