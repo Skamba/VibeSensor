@@ -273,6 +273,23 @@ should explicitly separate:
 The report path can still project compact location proof from these summaries,
 but the source artifact should be candidate-aware and whole-run aware.
 
+The current contract owner is
+`apps/server/vibesensor/use_cases/diagnostics/spatial_evidence_contracts.py`.
+It now settles:
+
+- dense `SpatialEvidenceWindow` rows keyed by
+  `(candidate_key, window_index, sensor_id)` for later aligned sensor joins
+- compact `SpatialLocationSummary` rows for dominant / runner-up location proof
+- compact `SpatialEvidenceSummary` rows for persisted/report-facing proof with
+  `proof_basis`, `location_separation_db`, `dominance_ratio`,
+  `ambiguous_location`, and `weak_spatial_separation`
+
+`shared/types/history_analysis_contracts.py` now owns the future persisted
+response shapes for those compact summaries, and
+`shared/boundaries/reporting/sensor_facts.py` uses the same
+`LocationProofBasis` literal set so later report wiring does not invent a
+second proof-basis vocabulary.
+
 ### Counterevidence model
 
 Counterevidence should become a first-class persisted concept with stable keys,
@@ -303,7 +320,7 @@ explainable factors that reporting can consume directly.
 | `WholeRunArtifactManifest` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` + `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py` | Sidecar manifest for dense whole-run artifacts; mirror the raw-capture pattern |
 | `WholeRunContextInterval` / `WholeRunContextWindowLabel` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` with compact report-facing projection in `shared/types/history_analysis_contracts.py` | Whole-run segments and per-window labels keyed to the canonical `window_index` grid |
 | `OrderTracePoint` / `OrderTraceSummary` | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Dense trace vs compact report/history summary split |
-| `SpatialEvidenceSummary` | `use_cases/diagnostics/` with persisted summary projection | Candidate-level coherence and location separation |
+| `SpatialEvidenceSummary` | `apps/server/vibesensor/use_cases/diagnostics/spatial_evidence_contracts.py` with persisted summary projection in `shared/types/history_analysis_contracts.py` | Candidate-level coherence, location separation, ambiguity flags, and proof basis |
 | `DiagnosisFactor` / `DiagnosisSummary` | diagnostics domain/use-case layer plus persisted projection | Explainable support and counterevidence for final ranking |
 
 For the context track:
