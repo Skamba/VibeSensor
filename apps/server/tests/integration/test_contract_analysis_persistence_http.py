@@ -338,3 +338,67 @@ async def test_whole_run_spatial_summaries_survive_persistence_and_http_layers()
         insights_response["whole_run_spatial_summaries"]
         == restored_summary["whole_run_spatial_summaries"]
     )
+
+
+@pytest.mark.asyncio
+async def test_whole_run_diagnosis_summaries_survive_persistence_and_http_layers() -> None:
+    summary = _representative_summary()
+    summary["whole_run_diagnosis_summaries"] = [
+        {
+            "diagnosis_key": "wheel_1x",
+            "suspected_source": "wheel/tire",
+            "rank": 1,
+            "data_basis": "raw_backed",
+            "support_score": 0.78,
+            "counterevidence_score": 0.16,
+            "total_score": 0.62,
+            "order_hypothesis_key": "wheel_1x",
+            "spatial_candidate_key": "wheel_1x",
+            "location_proof_basis": "supporting_windows_raw_backed",
+            "supporting_window_count": 8,
+            "supporting_duration_s": 4.0,
+            "supporting_sensor_count": 2,
+            "stable_frequency_min_hz": 13.1,
+            "stable_frequency_max_hz": 13.6,
+            "dominant_location": "front-left",
+            "runner_up_location": "front-right",
+            "dominant_phase": "cruise",
+            "dominant_speed_band": "60-80 km/h",
+            "location_separation_db": 3.2,
+            "dominance_ratio": 1.4,
+            "alternative_source": "driveshaft",
+            "confidence_gap_to_alternative": 0.18,
+            "ambiguous_diagnosis": False,
+            "ambiguous_location": False,
+            "suspicious": False,
+            "weak_spatial_separation": False,
+            "has_reference_gap": True,
+            "uses_summary_fallback": False,
+            "exemplar_references": [
+                {
+                    "kind": "order_support_interval",
+                    "order_hypothesis_key": "wheel_1x",
+                    "support_interval_index": 0,
+                    "phase": "cruise",
+                    "speed_band": "60-80 km/h",
+                }
+            ],
+        }
+    ]
+    stored_run, restored_summary = _stored_run_from_summary(summary)
+
+    service = ProjectedHistoryRunService(HistoryRunService(_RunPersistenceStub(stored_run)))
+
+    run_response = await service.get_run(stored_run.run_id)
+    insights_response = await service.get_insights(stored_run.run_id, requested_lang="en")
+
+    assert run_response.analysis is not None
+    assert insights_response is not None
+    assert (
+        run_response.analysis["whole_run_diagnosis_summaries"]
+        == restored_summary["whole_run_diagnosis_summaries"]
+    )
+    assert (
+        insights_response["whole_run_diagnosis_summaries"]
+        == restored_summary["whole_run_diagnosis_summaries"]
+    )
