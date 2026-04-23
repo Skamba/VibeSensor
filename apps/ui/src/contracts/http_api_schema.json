@@ -769,6 +769,13 @@
             "title": "Whole Run Context Intervals",
             "type": "array"
           },
+          "whole_run_diagnosis_summaries": {
+            "items": {
+              "$ref": "#/components/schemas/WholeRunDiagnosisSummaryResponse"
+            },
+            "title": "Whole Run Diagnosis Summaries",
+            "type": "array"
+          },
           "whole_run_order_summaries": {
             "items": {
               "$ref": "#/components/schemas/OrderTraceSummaryResponse"
@@ -1720,6 +1727,104 @@
           "status"
         ],
         "title": "DeleteHistoryRunResponse",
+        "type": "object"
+      },
+      "DiagnosisExemplarKind": {
+        "enum": [
+          "order_support_interval",
+          "whole_run_context_interval",
+          "spatial_location"
+        ],
+        "type": "string"
+      },
+      "DiagnosisExemplarReferenceResponse": {
+        "description": "Compact reference to one persisted exemplar used by a fused diagnosis.",
+        "properties": {
+          "context_segment_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Segment Index"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DiagnosisExemplarKind"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "order_hypothesis_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Hypothesis Key"
+          },
+          "phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase"
+          },
+          "spatial_candidate_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spatial Candidate Key"
+          },
+          "speed_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Band"
+          },
+          "support_interval_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Support Interval Index"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DiagnosisExemplarReferenceResponse",
         "type": "object"
       },
       "EspFlashCancelResponse": {
@@ -3445,6 +3550,13 @@
               "$ref": "#/components/schemas/WholeRunContextIntervalResponse"
             },
             "title": "Whole Run Context Intervals",
+            "type": "array"
+          },
+          "whole_run_diagnosis_summaries": {
+            "items": {
+              "$ref": "#/components/schemas/WholeRunDiagnosisSummaryResponse"
+            },
+            "title": "Whole Run Diagnosis Summaries",
             "type": "array"
           },
           "whole_run_order_summaries": {
@@ -7573,6 +7685,298 @@
           "missing_context_window_count"
         ],
         "title": "WholeRunContextIntervalResponse",
+        "type": "object"
+      },
+      "WholeRunDiagnosisDataBasis": {
+        "enum": [
+          "raw_backed",
+          "summary_only"
+        ],
+        "type": "string"
+      },
+      "WholeRunDiagnosisSummaryResponse": {
+        "description": "Future persisted/report-facing summary shape for fused whole-run diagnoses.",
+        "properties": {
+          "alternative_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alternative Source"
+          },
+          "ambiguous_diagnosis": {
+            "title": "Ambiguous Diagnosis",
+            "type": "boolean"
+          },
+          "ambiguous_location": {
+            "title": "Ambiguous Location",
+            "type": "boolean"
+          },
+          "confidence_gap_to_alternative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Gap To Alternative"
+          },
+          "counterevidence_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counterevidence Score"
+          },
+          "data_basis": {
+            "$ref": "#/components/schemas/WholeRunDiagnosisDataBasis"
+          },
+          "diagnosis_key": {
+            "title": "Diagnosis Key",
+            "type": "string"
+          },
+          "dominance_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominance Ratio"
+          },
+          "dominant_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominant Location"
+          },
+          "dominant_phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominant Phase"
+          },
+          "dominant_speed_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominant Speed Band"
+          },
+          "exemplar_references": {
+            "items": {
+              "$ref": "#/components/schemas/DiagnosisExemplarReferenceResponse"
+            },
+            "title": "Exemplar References",
+            "type": "array"
+          },
+          "fallback_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Reason"
+          },
+          "has_reference_gap": {
+            "title": "Has Reference Gap",
+            "type": "boolean"
+          },
+          "location_proof_basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocationProofBasis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location_separation_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Separation Db"
+          },
+          "order_hypothesis_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Hypothesis Key"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          },
+          "runner_up_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up Location"
+          },
+          "spatial_candidate_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spatial Candidate Key"
+          },
+          "stable_frequency_max_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stable Frequency Max Hz"
+          },
+          "stable_frequency_min_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stable Frequency Min Hz"
+          },
+          "support_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Support Score"
+          },
+          "supporting_duration_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supporting Duration S"
+          },
+          "supporting_sensor_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supporting Sensor Count"
+          },
+          "supporting_window_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supporting Window Count"
+          },
+          "suspected_source": {
+            "title": "Suspected Source",
+            "type": "string"
+          },
+          "suspicious": {
+            "title": "Suspicious",
+            "type": "boolean"
+          },
+          "total_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Score"
+          },
+          "uses_summary_fallback": {
+            "title": "Uses Summary Fallback",
+            "type": "boolean"
+          },
+          "weak_spatial_separation": {
+            "title": "Weak Spatial Separation",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "diagnosis_key",
+          "suspected_source",
+          "rank",
+          "data_basis",
+          "ambiguous_diagnosis",
+          "ambiguous_location",
+          "suspicious",
+          "weak_spatial_separation",
+          "has_reference_gap",
+          "uses_summary_fallback",
+          "exemplar_references"
+        ],
+        "title": "WholeRunDiagnosisSummaryResponse",
         "type": "object"
       }
     }

@@ -17,16 +17,22 @@ from vibesensor.shared.boundaries.summary_fields.hotspot import (
     location_intensity_summaries_from_rows,
 )
 from vibesensor.shared.types.analysis_views import PeakTableRow
-from vibesensor.shared.types.history_analysis_contracts import LocationProofBasis
+from vibesensor.shared.types.history_analysis_contracts import (
+    DiagnosisExemplarKind,
+    LocationProofBasis,
+    WholeRunDiagnosisDataBasis,
+)
 from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [
     "NormalizedReportSummary",
+    "ReportDiagnosisExemplarReference",
     "ReportOrderHarmonicEvidenceSummary",
     "ReportOrderTracePhaseSupport",
     "ReportOrderTraceSupportInterval",
     "ReportSpatialLocationSummary",
     "ReportWholeRunContextInterval",
+    "ReportWholeRunDiagnosisSummary",
     "ReportWholeRunOrderSummary",
     "ReportWholeRunSpatialSummary",
     "ReportSummaryNormalizer",
@@ -152,6 +158,20 @@ class ReportWholeRunOrderSummary:
 
 
 @dataclass(frozen=True, slots=True)
+class ReportDiagnosisExemplarReference:
+    """Typed persisted exemplar reference for one fused whole-run diagnosis."""
+
+    kind: DiagnosisExemplarKind
+    order_hypothesis_key: str | None
+    support_interval_index: int | None
+    spatial_candidate_key: str | None
+    context_segment_index: int | None
+    location: str | None
+    phase: str | None
+    speed_band: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class ReportSpatialLocationSummary:
     """Typed persisted per-location spatial evidence row for report/history reload."""
 
@@ -187,6 +207,43 @@ class ReportWholeRunSpatialSummary:
 
 
 @dataclass(frozen=True, slots=True)
+class ReportWholeRunDiagnosisSummary:
+    """Typed persisted fused diagnosis summary for report/history reload paths."""
+
+    diagnosis_key: str
+    suspected_source: str
+    rank: int
+    data_basis: WholeRunDiagnosisDataBasis
+    support_score: float | None
+    counterevidence_score: float | None
+    total_score: float | None
+    order_hypothesis_key: str | None
+    spatial_candidate_key: str | None
+    location_proof_basis: LocationProofBasis | None
+    supporting_window_count: int | None
+    supporting_duration_s: float | None
+    supporting_sensor_count: int | None
+    stable_frequency_min_hz: float | None
+    stable_frequency_max_hz: float | None
+    dominant_location: str | None
+    runner_up_location: str | None
+    dominant_phase: str | None
+    dominant_speed_band: str | None
+    location_separation_db: float | None
+    dominance_ratio: float | None
+    alternative_source: str | None
+    confidence_gap_to_alternative: float | None
+    ambiguous_diagnosis: bool
+    ambiguous_location: bool
+    suspicious: bool
+    weak_spatial_separation: bool
+    has_reference_gap: bool
+    uses_summary_fallback: bool
+    fallback_reason: str | None
+    exemplar_references: tuple[ReportDiagnosisExemplarReference, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class NormalizedReportSummary:
     """Typed report boundary object shared by report facts and renderer mapping."""
 
@@ -206,6 +263,7 @@ class NormalizedReportSummary:
     whole_run_context_intervals: tuple[ReportWholeRunContextInterval, ...]
     whole_run_order_summaries: tuple[ReportWholeRunOrderSummary, ...]
     whole_run_spatial_summaries: tuple[ReportWholeRunSpatialSummary, ...]
+    whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...]
 
 
 class ReportSummaryNormalizer:
@@ -235,6 +293,7 @@ class ReportSummaryNormalizer:
             whole_run_context_intervals=self._whole_run_context_intervals(),
             whole_run_order_summaries=self._whole_run_order_summaries(),
             whole_run_spatial_summaries=self._whole_run_spatial_summaries(),
+            whole_run_diagnosis_summaries=self._whole_run_diagnosis_summaries(),
         )
 
     def _summary_run_metadata(self) -> RunMetadata | None:
@@ -439,6 +498,64 @@ class ReportSummaryNormalizer:
             )
         return tuple(summaries)
 
+    def _whole_run_diagnosis_summaries(self) -> tuple[ReportWholeRunDiagnosisSummary, ...]:
+        raw_summaries = self._payload.get("whole_run_diagnosis_summaries")
+        if not isinstance(raw_summaries, list):
+            return ()
+        summaries: list[ReportWholeRunDiagnosisSummary] = []
+        for row in raw_summaries:
+            if not isinstance(row, Mapping):
+                continue
+            diagnosis_key = text_or_none(row.get("diagnosis_key"))
+            suspected_source = text_or_none(row.get("suspected_source"))
+            data_basis = self._diagnosis_data_basis(row.get("data_basis"))
+            if diagnosis_key is None or suspected_source is None or data_basis is None:
+                continue
+            summaries.append(
+                ReportWholeRunDiagnosisSummary(
+                    diagnosis_key=diagnosis_key,
+                    suspected_source=suspected_source,
+                    rank=coerce_count(row.get("rank")),
+                    data_basis=data_basis,
+                    support_score=optional_float(row.get("support_score")),
+                    counterevidence_score=optional_float(row.get("counterevidence_score")),
+                    total_score=optional_float(row.get("total_score")),
+                    order_hypothesis_key=text_or_none(row.get("order_hypothesis_key")),
+                    spatial_candidate_key=text_or_none(row.get("spatial_candidate_key")),
+                    location_proof_basis=self._proof_basis(row.get("location_proof_basis")),
+                    supporting_window_count=self._optional_count(
+                        row.get("supporting_window_count")
+                    ),
+                    supporting_duration_s=optional_float(row.get("supporting_duration_s")),
+                    supporting_sensor_count=self._optional_count(
+                        row.get("supporting_sensor_count")
+                    ),
+                    stable_frequency_min_hz=optional_float(row.get("stable_frequency_min_hz")),
+                    stable_frequency_max_hz=optional_float(row.get("stable_frequency_max_hz")),
+                    dominant_location=text_or_none(row.get("dominant_location")),
+                    runner_up_location=text_or_none(row.get("runner_up_location")),
+                    dominant_phase=text_or_none(row.get("dominant_phase")),
+                    dominant_speed_band=text_or_none(row.get("dominant_speed_band")),
+                    location_separation_db=optional_float(row.get("location_separation_db")),
+                    dominance_ratio=optional_float(row.get("dominance_ratio")),
+                    alternative_source=text_or_none(row.get("alternative_source")),
+                    confidence_gap_to_alternative=optional_float(
+                        row.get("confidence_gap_to_alternative")
+                    ),
+                    ambiguous_diagnosis=bool(row.get("ambiguous_diagnosis")),
+                    ambiguous_location=bool(row.get("ambiguous_location")),
+                    suspicious=bool(row.get("suspicious")),
+                    weak_spatial_separation=bool(row.get("weak_spatial_separation")),
+                    has_reference_gap=bool(row.get("has_reference_gap")),
+                    uses_summary_fallback=bool(row.get("uses_summary_fallback")),
+                    fallback_reason=text_or_none(row.get("fallback_reason")),
+                    exemplar_references=self._diagnosis_exemplar_references(
+                        row.get("exemplar_references")
+                    ),
+                )
+            )
+        return tuple(summaries)
+
     def _order_support_intervals(
         self,
         raw_intervals: object,
@@ -571,6 +688,33 @@ class ReportSummaryNormalizer:
             )
         return tuple(summaries)
 
+    def _diagnosis_exemplar_references(
+        self,
+        raw_exemplars: object,
+    ) -> tuple[ReportDiagnosisExemplarReference, ...]:
+        if not isinstance(raw_exemplars, list):
+            return ()
+        exemplars: list[ReportDiagnosisExemplarReference] = []
+        for row in raw_exemplars:
+            if not isinstance(row, Mapping):
+                continue
+            kind = self._diagnosis_exemplar_kind(row.get("kind"))
+            if kind is None:
+                continue
+            exemplars.append(
+                ReportDiagnosisExemplarReference(
+                    kind=kind,
+                    order_hypothesis_key=text_or_none(row.get("order_hypothesis_key")),
+                    support_interval_index=self._optional_count(row.get("support_interval_index")),
+                    spatial_candidate_key=text_or_none(row.get("spatial_candidate_key")),
+                    context_segment_index=self._optional_count(row.get("context_segment_index")),
+                    location=text_or_none(row.get("location")),
+                    phase=text_or_none(row.get("phase")),
+                    speed_band=text_or_none(row.get("speed_band")),
+                )
+            )
+        return tuple(exemplars)
+
     def _text_tuple(self, raw_values: object) -> tuple[str, ...]:
         if not isinstance(raw_values, list):
             return ()
@@ -589,6 +733,22 @@ class ReportSummaryNormalizer:
         }:
             return None
         return cast(LocationProofBasis, value)
+
+    def _diagnosis_exemplar_kind(self, raw_value: object) -> DiagnosisExemplarKind | None:
+        value = text_or_none(raw_value)
+        if value not in {
+            "order_support_interval",
+            "whole_run_context_interval",
+            "spatial_location",
+        }:
+            return None
+        return cast(DiagnosisExemplarKind, value)
+
+    def _diagnosis_data_basis(self, raw_value: object) -> WholeRunDiagnosisDataBasis | None:
+        value = text_or_none(raw_value)
+        if value not in {"raw_backed", "summary_only"}:
+            return None
+        return cast(WholeRunDiagnosisDataBasis, value)
 
 
 def has_projectable_report_payload(payload: Mapping[str, object]) -> bool:

@@ -48,8 +48,12 @@ __all__ = [
     "DataQualityResponse",
     "DataQualitySpeedCoverageResponse",
     "FindingPayload",
+    "DiagnosisExemplarKind",
+    "DiagnosisExemplarReferenceResponse",
     "LocationIntensitySummaryResponse",
     "LocationProofBasis",
+    "WholeRunDiagnosisDataBasis",
+    "WholeRunDiagnosisSummaryResponse",
     "OutlierSummaryResponse",
     "OrderHarmonicEvidenceSummaryResponse",
     "OrderTracePhaseSupportResponse",
@@ -74,6 +78,12 @@ __all__ = [
 
 type PayloadObject = JsonSchemaObject
 type PayloadValue = JsonSchemaValue
+type DiagnosisExemplarKind = Literal[
+    "order_support_interval",
+    "whole_run_context_interval",
+    "spatial_location",
+]
+type WholeRunDiagnosisDataBasis = Literal["raw_backed", "summary_only"]
 type LocationProofBasis = Literal[
     "whole_run_summary",
     "supporting_windows_raw_backed",
@@ -264,6 +274,55 @@ class SpatialEvidenceSummaryResponse(TypedDict, total=False):
     location_summaries: Required[list[SpatialLocationSummaryResponse]]
 
 
+class DiagnosisExemplarReferenceResponse(TypedDict, total=False):
+    """Compact reference to one persisted exemplar used by a fused diagnosis."""
+
+    kind: Required[DiagnosisExemplarKind]
+    order_hypothesis_key: str | None
+    support_interval_index: int | None
+    spatial_candidate_key: str | None
+    context_segment_index: int | None
+    location: str | None
+    phase: str | None
+    speed_band: str | None
+
+
+class WholeRunDiagnosisSummaryResponse(TypedDict, total=False):
+    """Future persisted/report-facing summary shape for fused whole-run diagnoses."""
+
+    diagnosis_key: Required[str]
+    suspected_source: Required[str]
+    rank: Required[int]
+    data_basis: Required[WholeRunDiagnosisDataBasis]
+    support_score: float | None
+    counterevidence_score: float | None
+    total_score: float | None
+    order_hypothesis_key: str | None
+    spatial_candidate_key: str | None
+    location_proof_basis: LocationProofBasis | None
+    supporting_window_count: int | None
+    supporting_duration_s: float | None
+    supporting_sensor_count: int | None
+    stable_frequency_min_hz: float | None
+    stable_frequency_max_hz: float | None
+    dominant_location: str | None
+    runner_up_location: str | None
+    dominant_phase: str | None
+    dominant_speed_band: str | None
+    location_separation_db: float | None
+    dominance_ratio: float | None
+    alternative_source: str | None
+    confidence_gap_to_alternative: float | None
+    ambiguous_diagnosis: Required[bool]
+    ambiguous_location: Required[bool]
+    suspicious: Required[bool]
+    weak_spatial_separation: Required[bool]
+    has_reference_gap: Required[bool]
+    uses_summary_fallback: Required[bool]
+    fallback_reason: str | None
+    exemplar_references: Required[list[DiagnosisExemplarReferenceResponse]]
+
+
 class SpeedStatsResponse(TypedDict):
     """Response body for one summarized speed-profile snapshot."""
 
@@ -378,6 +437,7 @@ class AnalysisSummaryCoreResponse(TypedDict, total=False):
     whole_run_context_intervals: list[WholeRunContextIntervalResponse]
     whole_run_order_summaries: list[OrderTraceSummaryResponse]
     whole_run_spatial_summaries: list[SpatialEvidenceSummaryResponse]
+    whole_run_diagnosis_summaries: list[WholeRunDiagnosisSummaryResponse]
     speed_stats: Required[SpeedStatsResponse]
     speed_stats_by_phase: Required[dict[str, SpeedStatsResponse]]
     phase_info: Required[PhaseInfoResponse]
@@ -420,6 +480,8 @@ for _typed_dict in (
     OrderTraceSummaryResponse,
     SpatialLocationSummaryResponse,
     SpatialEvidenceSummaryResponse,
+    DiagnosisExemplarReferenceResponse,
+    WholeRunDiagnosisSummaryResponse,
     SpeedStatsResponse,
     PhaseInfoResponse,
     OutlierSummaryResponse,
