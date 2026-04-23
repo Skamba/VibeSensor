@@ -45,8 +45,10 @@ shared contracts that must settle early, and the recommended execution order.
 - Persistence uses `data/raw-runs/{run_id}/` with per-sensor
   `.raw.i16le` and `.index.jsonl` files via
   `apps/server/vibesensor/adapters/persistence/history_db/_raw_capture_store.py`.
-- The current read path is all-or-nothing:
-  `aload_raw_capture()` loads the full sensor arrays into memory before replay.
+- Whole-run foundations now include indexed raw range reads via
+  `RunPersistence.aload_raw_capture_sensor_range(...)`, but there is still no
+  canonical offline executor that walks the full run as a deterministic window
+  graph.
 
 ### Persisted analysis and reporting
 
@@ -259,7 +261,7 @@ explainable factors that reporting can consume directly.
 | `WholeRunWindowPolicy` / `WholeRunWindowDescriptor` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` | Canonical sample-space policy and deterministic window identity for every later whole-run stage |
 | `WholeRunWindowPlan` / `plan_whole_run_windows(...)` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_windows.py` | Deterministic window grid planner with explicit trailing-window policy |
 | `WholeRunWindowSpectralSummary` | `use_cases/diagnostics/` with compact persisted projection | Per-window FFT/strength/top-peak outputs |
-| `WholeRunArtifactManifest` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` + later persistence store under `adapters/persistence/history_db/` | Sidecar manifest for dense whole-run artifacts; mirror the raw-capture pattern |
+| `WholeRunArtifactManifest` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` + `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py` | Sidecar manifest for dense whole-run artifacts; mirror the raw-capture pattern |
 | `RunContextInterval` / `WindowContextLabel` | `use_cases/diagnostics/` with report-facing projection in `shared/types/history_analysis_contracts.py` | Whole-run segments and per-window labels |
 | `OrderTracePoint` / `OrderTraceSummary` | `use_cases/diagnostics/orders/` with persisted summary projection | Dense trace vs compact report/history summary split |
 | `SpatialEvidenceSummary` | `use_cases/diagnostics/` with persisted summary projection | Candidate-level coherence and location separation |
@@ -269,14 +271,21 @@ explainable factors that reporting can consume directly.
 
 The current `runs.analysis_json` payload should stay compact and report-facing.
 
-Recommended additions:
+Current foundation:
 
-1. Add a file-backed whole-run artifact store, parallel to
-   `HistoryRawCaptureStore`.
-2. Add a manifest reference on the run record (or another explicit persistence
-   seam) for dense analysis artifacts.
-3. Keep `PersistedAnalysis` as the stable history/report summary boundary.
-4. Store only compact summaries and exemplars in `PersistedAnalysis`.
+1. `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py`
+   mirrors `HistoryRawCaptureStore` with a deterministic
+   `data/whole-run-artifacts/{run_id}/` sidecar layout.
+2. The `runs` row now carries `whole_run_artifact_manifest_json`, and
+   `StoredHistoryRun` exposes that manifest as
+   `whole_run_artifact_manifest`.
+
+Recommended follow-on behavior:
+
+1. Keep `PersistedAnalysis` as the stable history/report summary boundary.
+2. Store only compact summaries and exemplars in `PersistedAnalysis`.
+3. Use the whole-run sidecar only for dense artifacts such as spectra, traces,
+   matrices, and debug payloads.
 
 This keeps legacy report loading cheap and avoids turning the history DB blob
 into a large binary transport.

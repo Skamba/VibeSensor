@@ -15,6 +15,9 @@ from vibesensor.adapters.persistence.history_db._raw_capture_store import (
 )
 from vibesensor.adapters.persistence.history_db._run_lifecycle import _HistoryDBRunLifecycleMixin
 from vibesensor.adapters.persistence.history_db._sample_io import _HistoryDBSampleIOMixin
+from vibesensor.adapters.persistence.history_db._whole_run_artifact_store import (
+    HistoryWholeRunArtifactStore,
+)
 
 __all__ = ["RunHistoryRepository"]
 
@@ -34,6 +37,7 @@ class RunHistoryRepository(
         "_cursor_provider",
         "_engine",
         "_raw_capture_store",
+        "_whole_run_artifact_store",
         "_write_transaction_cursor_provider",
     )
 
@@ -44,11 +48,13 @@ class RunHistoryRepository(
         cursor_provider: CursorProvider,
         write_transaction_cursor_provider: WriteTransactionCursorProvider,
         raw_capture_store: HistoryRawCaptureStore,
+        whole_run_artifact_store: HistoryWholeRunArtifactStore,
     ) -> None:
         self._engine = engine
         self._cursor_provider = cursor_provider
         self._write_transaction_cursor_provider = write_transaction_cursor_provider
         self._raw_capture_store = raw_capture_store
+        self._whole_run_artifact_store = whole_run_artifact_store
 
     def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
         return self._cursor_provider(commit=commit)

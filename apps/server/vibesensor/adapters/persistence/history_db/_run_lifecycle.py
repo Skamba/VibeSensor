@@ -15,6 +15,9 @@ from vibesensor.adapters.persistence.history_db._raw_capture_store import (
     HistoryRawCaptureStore,
 )
 from vibesensor.adapters.persistence.history_db._samples import V2_INSERT_SQL, sample_to_v2_row
+from vibesensor.adapters.persistence.history_db._whole_run_artifact_store import (
+    HistoryWholeRunArtifactStore,
+)
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
 from vibesensor.shared.boundaries.analysis_payloads import (
     persisted_analysis_to_storage_json_object,
@@ -26,6 +29,7 @@ from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import RawCaptureChunk, RawCaptureManifest
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +41,7 @@ _T = TypeVar("_T")
 
 class _HistoryDBRunLifecycleMixin:
     _raw_capture_store: HistoryRawCaptureStore
+    _whole_run_artifact_store: HistoryWholeRunArtifactStore
 
     def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
         raise NotImplementedError
@@ -163,6 +168,36 @@ class _HistoryDBRunLifecycleMixin:
                 return None
         return manifest
 
+    async def astore_whole_run_artifacts(
+        self,
+        run_id: str,
+        manifest: WholeRunArtifactManifest,
+        *,
+        artifact_contents: dict[str, bytes],
+    ) -> WholeRunArtifactManifest | None:
+        if manifest.run_id != run_id:
+            raise ValueError("whole-run artifact manifest run_id does not match persistence target")
+        stored_manifest = cast(
+            WholeRunArtifactManifest,
+            await asyncio.to_thread(
+                self._whole_run_artifact_store.store_run,
+                manifest,
+                artifact_contents=artifact_contents,
+            ),
+        )
+        async with self._cursor() as cur:
+            await cur.execute(
+                "UPDATE runs SET whole_run_artifact_manifest_json = ? WHERE run_id = ?",
+                (safe_json_dumps(stored_manifest.to_json_object()), run_id),
+            )
+            if int(cur.rowcount) <= 0:
+                await asyncio.to_thread(
+                    self._whole_run_artifact_store.delete_run_artifacts,
+                    run_id,
+                )
+                return None
+        return stored_manifest
+
     def finalize_run(
         self,
         run_id: str,
@@ -247,6 +282,7 @@ class _HistoryDBRunLifecycleMixin:
             deleted = bool(int(cur.rowcount) > 0)
         if deleted:
             await asyncio.to_thread(self._raw_capture_store.delete_run_artifacts, run_id)
+            await asyncio.to_thread(self._whole_run_artifact_store.delete_run_artifacts, run_id)
         return deleted, None
 
     def store_analysis(self, run_id: str, analysis: PersistedAnalysis) -> bool:
@@ -335,6 +371,7 @@ class _HistoryDBRunLifecycleMixin:
             deleted = bool(int(cur.rowcount) > 0)
         if deleted:
             await asyncio.to_thread(self._raw_capture_store.delete_run_artifacts, run_id)
+            await asyncio.to_thread(self._whole_run_artifact_store.delete_run_artifacts, run_id)
         return deleted
 
     def recover_stale_recording_runs(self) -> int:
@@ -374,6 +411,7 @@ class _HistoryDBRunLifecycleMixin:
             )
         for run_id in run_ids:
             await asyncio.to_thread(self._raw_capture_store.delete_run_artifacts, run_id)
+            await asyncio.to_thread(self._whole_run_artifact_store.delete_run_artifacts, run_id)
         return len(run_ids)
 
 

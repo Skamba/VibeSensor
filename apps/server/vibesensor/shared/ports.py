@@ -35,6 +35,7 @@ from vibesensor.shared.types.speed_source_config import (
     SpeedSourcePayload,
     SpeedSourceUpdatePayload,
 )
+from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 
 __all__ = [
     "ActiveCarReader",
@@ -126,6 +127,25 @@ class RunPersistence(Protocol):
         sample_start: int,
         sample_count: int,
     ) -> RawCaptureSensorRange | None: ...
+
+    async def astore_whole_run_artifacts(
+        self,
+        run_id: str,
+        manifest: WholeRunArtifactManifest,
+        *,
+        artifact_contents: dict[str, bytes],
+    ) -> WholeRunArtifactManifest | None: ...
+
+    async def aget_whole_run_artifact_manifest(
+        self,
+        run_id: str,
+    ) -> WholeRunArtifactManifest | None: ...
+
+    async def aload_whole_run_artifact(
+        self,
+        run_id: str,
+        artifact_key: str,
+    ) -> bytes | None: ...
 
     async def adelete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]: ...
 
