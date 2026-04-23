@@ -111,6 +111,7 @@ def test_full_report_template_contains_peak_db_column_labels() -> None:
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     data = ReportDocument(
         title="Diagnostic worksheet",
+        run_id="peak-db-columns",
         lang="en",
         verdict_page=VerdictPageData(
             suspected_source="Wheel / Tire",
@@ -168,6 +169,7 @@ def test_full_report_template_contains_peak_db_column_labels() -> None:
 def test_pdf_additional_observations_heading_for_transient_findings() -> None:
     data = ReportDocument(
         title="Diagnostic worksheet",
+        run_id="additional-observations",
         pattern_evidence=PatternEvidence(),
         lang="en",
         appendix_c=AppendixCData(
@@ -452,6 +454,7 @@ def test_pdf_workflow_appendix_a_headings_render(lang: str) -> None:
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     data = ReportDocument(
         title="Diagnostic worksheet",
+        run_id=f"workflow-headings-{lang}",
         lang=lang,
         appendix_a=AppendixAData(
             mode="workflow",
