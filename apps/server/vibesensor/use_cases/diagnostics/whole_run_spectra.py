@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from io import BytesIO
@@ -42,6 +42,7 @@ __all__ = [
     "WholeRunSpectralArtifactBundle",
     "WholeRunWindowSpectralSummary",
     "build_whole_run_spectral_artifact_bundle",
+    "whole_run_spectral_summaries_by_sensor",
     "whole_run_window_spectral_summaries_from_jsonl_bytes",
     "whole_run_window_spectral_summaries_to_jsonl_bytes",
 ]
@@ -581,6 +582,40 @@ def whole_run_window_spectral_summaries_from_jsonl_bytes(
             raise ValueError("whole-run spectral summary line must decode to a JSON object")
         summaries.append(WholeRunWindowSpectralSummary.from_mapping(parsed))
     return tuple(summaries)
+
+
+def whole_run_spectral_summaries_by_sensor(
+    *,
+    manifest: WholeRunArtifactManifest,
+    artifact_contents: Mapping[str, bytes],
+) -> dict[str, tuple[WholeRunWindowSpectralSummary, ...]]:
+    """Load deterministic whole-run spectral summary rows keyed by sensor id."""
+
+    summaries_by_sensor: dict[str, tuple[WholeRunWindowSpectralSummary, ...]] = {}
+    summary_artifacts = sorted(
+        (
+            artifact
+            for artifact in manifest.artifacts
+            if artifact.artifact_key.startswith("spectral-summary:")
+        ),
+        key=lambda artifact: (artifact.sensor_id or "", artifact.artifact_key),
+    )
+    for artifact in summary_artifacts:
+        if artifact.sensor_id is None:
+            raise ValueError("whole-run spectral summary artifacts require sensor_id for loading")
+        payload = artifact_contents.get(artifact.artifact_key)
+        if payload is None:
+            raise ValueError(
+                f"whole-run spectral summaries missing bytes for {artifact.artifact_key}"
+            )
+        summaries = whole_run_window_spectral_summaries_from_jsonl_bytes(payload)
+        if len(summaries) != manifest.total_window_count:
+            raise ValueError(
+                "whole-run spectral summaries require one row per window "
+                f"for {artifact.artifact_key}"
+            )
+        summaries_by_sensor[artifact.sensor_id] = summaries
+    return summaries_by_sensor
 
 
 def _float_or_none(value: object) -> float | None:

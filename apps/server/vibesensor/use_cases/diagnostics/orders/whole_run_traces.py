@@ -16,7 +16,10 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactManifest,
 )
 from vibesensor.use_cases.diagnostics._reference_resolution import _tire_reference_from_context
-from vibesensor.use_cases.diagnostics._sensor_locations import _location_label
+from vibesensor.use_cases.diagnostics._sensor_locations import (
+    client_locations_by_sensor,
+    fallback_location_label,
+)
 from vibesensor.use_cases.diagnostics.orders.matching import best_order_peak_match
 from vibesensor.use_cases.diagnostics.orders.physics import (
     OrderHypothesis,
@@ -30,7 +33,7 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import (
 from vibesensor.use_cases.diagnostics.whole_run_context import WholeRunContextWindowLabel
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunWindowSpectralSummary,
-    whole_run_window_spectral_summaries_from_jsonl_bytes,
+    whole_run_spectral_summaries_by_sensor,
 )
 
 WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY = "order-trace-points"
@@ -87,7 +90,7 @@ def build_whole_run_order_trace_artifact_bundle(
         artifact_contents=spectral_artifact_contents,
     )
     tire_circumference_m, _ = _tire_reference_from_context(metadata)
-    client_locations = _client_locations(samples, lang=lang)
+    client_locations = client_locations_by_sensor(samples, lang=lang)
     window_inputs = tuple(
         _window_context_sample(
             run_id=run_id,
@@ -225,7 +228,7 @@ def _best_sensor_peak_match(
         source_peak = summary.top_peaks[peak_index[peak_match.peak_index]]
         candidate = _SensorPeakMatch(
             client_id=client_id,
-            location=client_locations.get(client_id, _fallback_location(client_id)),
+            location=client_locations.get(client_id, fallback_location_label(client_id)),
             matched_hz=peak_match.matched_hz,
             amplitude_g=peak_match.amplitude_g,
             relative_error=peak_match.relative_error,
@@ -242,30 +245,10 @@ def _spectral_summaries_by_sensor(
     manifest: WholeRunArtifactManifest,
     artifact_contents: Mapping[str, bytes],
 ) -> dict[str, tuple[WholeRunWindowSpectralSummary, ...]]:
-    summaries_by_sensor: dict[str, tuple[WholeRunWindowSpectralSummary, ...]] = {}
-    summary_artifacts = sorted(
-        (
-            artifact
-            for artifact in manifest.artifacts
-            if artifact.artifact_key.startswith("spectral-summary:")
-        ),
-        key=lambda artifact: (artifact.sensor_id or "", artifact.artifact_key),
+    summaries_by_sensor = whole_run_spectral_summaries_by_sensor(
+        manifest=manifest,
+        artifact_contents=artifact_contents,
     )
-    for artifact in summary_artifacts:
-        if artifact.sensor_id is None:
-            raise ValueError(
-                "whole-run order traces require spectral summary artifacts with sensor_id"
-            )
-        payload = artifact_contents.get(artifact.artifact_key)
-        if payload is None:
-            raise ValueError(f"whole-run order traces missing bytes for {artifact.artifact_key}")
-        summaries = whole_run_window_spectral_summaries_from_jsonl_bytes(payload)
-        if len(summaries) != manifest.total_window_count:
-            raise ValueError(
-                "whole-run order traces require one spectral summary row per window "
-                f"for {artifact.artifact_key}"
-            )
-        summaries_by_sensor[artifact.sensor_id] = summaries
     if not summaries_by_sensor:
         raise ValueError("whole-run order traces require at least one spectral summary artifact")
     return summaries_by_sensor
@@ -308,16 +291,6 @@ def _window_context_sample(
     )
 
 
-def _client_locations(samples: Sequence[SensorFrame], *, lang: str) -> dict[str, str]:
-    locations: dict[str, str] = {}
-    for sample in samples:
-        client_id = sample.client_id.strip()
-        if not client_id or client_id in locations:
-            continue
-        locations[client_id] = _location_label(sample, lang=lang)
-    return locations
-
-
 def _filtered_peak_pairs(
     peaks: Sequence[Mapping[str, object]],
 ) -> tuple[tuple[int, ...], tuple[tuple[float, float], ...]]:
@@ -337,8 +310,3 @@ def _filtered_peak_pairs(
 
 def _sensor_match_rank(match: _SensorPeakMatch) -> tuple[float, float, str]:
     return (match.amplitude_g, -match.relative_error, match.client_id)
-
-
-def _fallback_location(client_id: str) -> str:
-    suffix = client_id[-4:] if len(client_id) >= 4 else client_id
-    return f"Sensor …{suffix}" if suffix else "Unknown sensor"
