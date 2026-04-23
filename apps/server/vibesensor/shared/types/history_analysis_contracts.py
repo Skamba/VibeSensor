@@ -126,22 +126,22 @@ class PhaseSegmentSummaryResponse(TypedDict):
     sample_count: int
 
 
-class WholeRunContextIntervalResponse(TypedDict):
+class WholeRunContextIntervalResponse(TypedDict, total=False):
     """Persisted whole-run context segment keyed to the canonical window grid."""
 
-    segment_index: int
-    phase: str
-    load_state: str
-    start_window_index: int
-    end_window_index: int
+    segment_index: Required[int]
+    phase: Required[str]
+    load_state: Required[str]
+    start_window_index: Required[int]
+    end_window_index: Required[int]
     start_t_s: float | None
     end_t_s: float | None
     speed_min_kmh: float | None
     speed_max_kmh: float | None
     speed_band: str | None
-    full_context_window_count: int
-    partial_context_window_count: int
-    missing_context_window_count: int
+    full_context_window_count: Required[int]
+    partial_context_window_count: Required[int]
+    missing_context_window_count: Required[int]
 
 
 class SpeedStatsResponse(TypedDict):

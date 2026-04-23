@@ -6903,11 +6903,6 @@
           "load_state",
           "start_window_index",
           "end_window_index",
-          "start_t_s",
-          "end_t_s",
-          "speed_min_kmh",
-          "speed_max_kmh",
-          "speed_band",
           "full_context_window_count",
           "partial_context_window_count",
           "missing_context_window_count"
