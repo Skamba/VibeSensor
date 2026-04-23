@@ -4,12 +4,19 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from vibesensor.domain import Finding
 from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
 from vibesensor.shared.boundaries.reporting.evidence_facts import ReportEvidenceFacts
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
+from vibesensor.shared.types.history_analysis_contracts import (
+    DiagnosisFactorDetailsResponse,
+    DiagnosisFactorKey,
+    DiagnosisFactorPolarity,
+    DiagnosisFactorResponse,
+    DiagnosisFactorSeverity,
+)
 
 if TYPE_CHECKING:
     from vibesensor.shared.boundaries.reporting.facts import ReportContextFacts
@@ -17,6 +24,7 @@ if TYPE_CHECKING:
 __all__ = [
     "ReportConfidenceFacts",
     "build_report_confidence_facts",
+    "project_whole_run_diagnosis_factors",
 ]
 
 
@@ -41,6 +49,8 @@ class ReportConfidenceFacts:
     snr_db: float | None
     alternative_source: str | None
     has_reference_gap: bool
+    speed_gap_window_count: int
+    rpm_gap_window_count: int
     uses_summary_fallback: bool
     fallback_reason: str | None
     signal_keys: tuple[str, ...]
@@ -235,6 +245,8 @@ def build_report_confidence_facts(
         snr_db=snr_db,
         alternative_source=alternative_source,
         has_reference_gap=evidence_facts.has_reference_gap,
+        speed_gap_window_count=context_facts.speed_gap_window_count,
+        rpm_gap_window_count=context_facts.rpm_gap_window_count,
         uses_summary_fallback=False,
         fallback_reason=None,
         signal_keys=tuple(dict.fromkeys(signal_keys)),
@@ -309,11 +321,72 @@ def _summary_fallback_confidence(
         snr_db=snr_db,
         alternative_source=alternative_source,
         has_reference_gap=evidence_facts.has_reference_gap,
+        speed_gap_window_count=0,
+        rpm_gap_window_count=0,
         uses_summary_fallback=True,
         fallback_reason=fallback_reason,
         signal_keys=(),
         caveat_keys=caveat_keys,
     )
+
+
+def project_whole_run_diagnosis_factors(
+    confidence_facts: ReportConfidenceFacts,
+) -> tuple[tuple[DiagnosisFactorResponse, ...], tuple[DiagnosisFactorResponse, ...]]:
+    """Project stable support and counterevidence factors from current confidence facts."""
+
+    support_factors: list[DiagnosisFactorResponse] = []
+    counter_factors: list[DiagnosisFactorResponse] = []
+    signal_keys = set(confidence_facts.signal_keys)
+    caveat_keys = set(confidence_facts.caveat_keys)
+
+    for factor_key in (
+        "raw_backed",
+        "repeated_support",
+        "sustained_support",
+        "stable_frequency",
+        "tight_order_lock",
+        "localized_support",
+        "clean_signal",
+    ):
+        if factor_key not in signal_keys:
+            continue
+        support_factors.append(
+            _factor_payload(
+                factor_key=cast(DiagnosisFactorKey, factor_key),
+                polarity="support",
+                weight=_support_factor_weight(factor_key, confidence_facts),
+                details=_factor_details(factor_key, confidence_facts),
+            )
+        )
+
+    for factor_key in (
+        "summary_only",
+        "legacy_context",
+        "speed_context_gaps",
+        "rpm_context_gaps",
+        "sparse_support",
+        "brief_support",
+        "drifting_frequency",
+        "loose_order_lock",
+        "mixed_support_locations",
+        "noisy_signal",
+        "weak_spatial",
+        "close_alternative",
+        "incomplete_reference",
+    ):
+        if factor_key not in caveat_keys:
+            continue
+        counter_factors.append(
+            _factor_payload(
+                factor_key=cast(DiagnosisFactorKey, factor_key),
+                polarity="counterevidence",
+                weight=_counter_factor_weight(factor_key, confidence_facts),
+                details=_factor_details(factor_key, confidence_facts),
+            )
+        )
+
+    return (tuple(support_factors), tuple(counter_factors))
 
 
 def _frequency_span_hz(
@@ -359,3 +432,117 @@ def _label_key_for_score(score: float) -> str:
     if score >= Finding.CONFIDENCE_MEDIUM_THRESHOLD:
         return "CONFIDENCE_MEDIUM"
     return "CONFIDENCE_LOW"
+
+
+def _factor_payload(
+    *,
+    factor_key: DiagnosisFactorKey,
+    polarity: DiagnosisFactorPolarity,
+    weight: float,
+    details: DiagnosisFactorDetailsResponse,
+) -> DiagnosisFactorResponse:
+    return {
+        "factor_key": factor_key,
+        "polarity": polarity,
+        "severity": _factor_severity(weight),
+        "weight": weight,
+        "details": details,
+    }
+
+
+def _factor_severity(weight: float) -> DiagnosisFactorSeverity:
+    if weight >= 0.10:
+        return "high"
+    if weight >= 0.07:
+        return "medium"
+    return "low"
+
+
+def _support_factor_weight(factor_key: str, facts: ReportConfidenceFacts) -> float:
+    if factor_key == "raw_backed":
+        return 0.10
+    if factor_key == "repeated_support":
+        if facts.supporting_window_count is not None and facts.supporting_window_count >= 4:
+            return 0.10
+        return 0.05
+    if factor_key == "sustained_support":
+        if facts.supporting_duration_s is not None and facts.supporting_duration_s >= 1.0:
+            return 0.08
+        return 0.04
+    if factor_key == "stable_frequency":
+        frequency_span_hz = _frequency_span_hz(
+            stable_frequency_min_hz=facts.stable_frequency_min_hz,
+            stable_frequency_max_hz=facts.stable_frequency_max_hz,
+        )
+        if frequency_span_hz is not None and frequency_span_hz <= 0.5:
+            return 0.08
+        return 0.04
+    if factor_key == "tight_order_lock":
+        return 0.08
+    if factor_key == "localized_support":
+        return 0.08
+    if factor_key == "clean_signal":
+        return 0.05
+    raise ValueError(f"unsupported support factor key: {factor_key}")
+
+
+def _counter_factor_weight(factor_key: str, facts: ReportConfidenceFacts) -> float:
+    if factor_key in {"summary_only", "legacy_context"}:
+        return 0.05
+    if factor_key in {"speed_context_gaps", "rpm_context_gaps"}:
+        return 0.04
+    if factor_key in {
+        "brief_support",
+        "drifting_frequency",
+        "noisy_signal",
+        "incomplete_reference",
+    }:
+        return 0.06
+    if factor_key in {
+        "sparse_support",
+        "loose_order_lock",
+        "mixed_support_locations",
+        "weak_spatial",
+        "close_alternative",
+    }:
+        return 0.10 if factor_key != "loose_order_lock" else 0.08
+    if factor_key == "summary_only" and facts.uses_summary_fallback:
+        return 0.05
+    raise ValueError(f"unsupported counterevidence factor key: {factor_key}")
+
+
+def _factor_details(
+    factor_key: str,
+    facts: ReportConfidenceFacts,
+) -> DiagnosisFactorDetailsResponse:
+    details: DiagnosisFactorDetailsResponse = {}
+    if factor_key == "raw_backed":
+        details["raw_backed_sample_count"] = facts.raw_backed_sample_count
+    elif factor_key in {"repeated_support", "sparse_support"}:
+        details["supporting_window_count"] = facts.supporting_window_count
+    elif factor_key == "sustained_support" or factor_key == "brief_support":
+        details["supporting_duration_s"] = facts.supporting_duration_s
+    elif factor_key in {"stable_frequency", "drifting_frequency"}:
+        details["stable_frequency_min_hz"] = facts.stable_frequency_min_hz
+        details["stable_frequency_max_hz"] = facts.stable_frequency_max_hz
+        details["frequency_span_hz"] = _frequency_span_hz(
+            stable_frequency_min_hz=facts.stable_frequency_min_hz,
+            stable_frequency_max_hz=facts.stable_frequency_max_hz,
+        )
+    elif factor_key == "tight_order_lock" or factor_key == "loose_order_lock":
+        details["mean_relative_error"] = facts.mean_relative_error
+    elif factor_key == "localized_support" or factor_key == "mixed_support_locations":
+        details["supporting_location_count"] = facts.supporting_location_count
+        details["top_support_location"] = facts.top_support_location
+        details["top_support_share"] = facts.top_support_share
+    elif factor_key == "clean_signal" or factor_key == "noisy_signal":
+        details["snr_db"] = facts.snr_db
+    elif factor_key == "close_alternative":
+        details["alternative_source"] = facts.alternative_source
+    elif factor_key == "speed_context_gaps":
+        details["speed_gap_window_count"] = facts.speed_gap_window_count
+    elif factor_key == "rpm_context_gaps":
+        details["rpm_gap_window_count"] = facts.rpm_gap_window_count
+    elif factor_key == "summary_only" and facts.uses_summary_fallback:
+        details["fallback_reason"] = facts.fallback_reason
+    return details

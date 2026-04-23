@@ -118,6 +118,8 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
 ) -> None:
     history_run = schema_dict["components"]["schemas"]["HistoryRunResponse"]
     analysis_summary = schema_dict["components"]["schemas"]["AnalysisSummaryResponse"]
+    diagnosis_summary = schema_dict["components"]["schemas"]["WholeRunDiagnosisSummaryResponse"]
+    diagnosis_factor = schema_dict["components"]["schemas"]["DiagnosisFactorResponse"]
     finding_payload = schema_dict["components"]["schemas"]["FindingPayload"]
     car_gearbox = schema_dict["components"]["schemas"]["CarLibraryGearboxEntry"]
     plot_data = schema_dict["components"]["schemas"]["PlotDataResult"]
@@ -186,6 +188,15 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
     }
     assert analysis_summary["properties"]["whole_run_diagnosis_summaries"]["items"] == {
         "$ref": "#/components/schemas/WholeRunDiagnosisSummaryResponse",
+    }
+    assert diagnosis_summary["properties"]["support_factors"]["items"] == {
+        "$ref": "#/components/schemas/DiagnosisFactorResponse",
+    }
+    assert diagnosis_summary["properties"]["counterevidence_factors"]["items"] == {
+        "$ref": "#/components/schemas/DiagnosisFactorResponse",
+    }
+    assert diagnosis_factor["properties"]["details"] == {
+        "$ref": "#/components/schemas/DiagnosisFactorDetailsResponse",
     }
     assert analysis_summary["properties"]["speed_stats"] == {
         "$ref": "#/components/schemas/SpeedStatsResponse",
