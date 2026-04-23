@@ -194,7 +194,12 @@ class OrderHarmonicEvidenceSummary:
     eligible_window_count: int
     matched_window_count: int
     support_ratio: float
+    reference_coverage_ratio: float
+    contiguous_support_ratio: float
+    lock_score: float
     mean_relative_error: float | None = None
+    relative_error_stddev: float | None = None
+    drift_score: float = 0.0
     peak_intensity_db: float | None = None
     mean_vibration_strength_db: float | None = None
 
@@ -204,6 +209,10 @@ class OrderHarmonicEvidenceSummary:
         _require_nonnegative(self.eligible_window_count, field_name="eligible_window_count")
         _require_nonnegative(self.matched_window_count, field_name="matched_window_count")
         _require_ratio(self.support_ratio, field_name="support_ratio")
+        _require_ratio(self.reference_coverage_ratio, field_name="reference_coverage_ratio")
+        _require_ratio(self.contiguous_support_ratio, field_name="contiguous_support_ratio")
+        _require_ratio(self.lock_score, field_name="lock_score")
+        _require_ratio(self.drift_score, field_name="drift_score")
 
     def to_json_object(self) -> JsonObject:
         payload: JsonObject = {
@@ -212,8 +221,13 @@ class OrderHarmonicEvidenceSummary:
             "eligible_window_count": self.eligible_window_count,
             "matched_window_count": self.matched_window_count,
             "support_ratio": self.support_ratio,
+            "reference_coverage_ratio": self.reference_coverage_ratio,
+            "contiguous_support_ratio": self.contiguous_support_ratio,
+            "lock_score": self.lock_score,
+            "drift_score": self.drift_score,
         }
         _set_optional(payload, "mean_relative_error", self.mean_relative_error)
+        _set_optional(payload, "relative_error_stddev", self.relative_error_stddev)
         _set_optional(payload, "peak_intensity_db", self.peak_intensity_db)
         _set_optional(payload, "mean_vibration_strength_db", self.mean_vibration_strength_db)
         return payload
@@ -226,7 +240,12 @@ class OrderHarmonicEvidenceSummary:
             eligible_window_count=_required_int(data, "eligible_window_count"),
             matched_window_count=_required_int(data, "matched_window_count"),
             support_ratio=_required_float(data, "support_ratio"),
+            reference_coverage_ratio=_required_float(data, "reference_coverage_ratio"),
+            contiguous_support_ratio=_required_float(data, "contiguous_support_ratio"),
+            lock_score=_required_float(data, "lock_score"),
             mean_relative_error=_optional_float(data.get("mean_relative_error")),
+            relative_error_stddev=_optional_float(data.get("relative_error_stddev")),
+            drift_score=_required_float(data, "drift_score"),
             peak_intensity_db=_optional_float(data.get("peak_intensity_db")),
             mean_vibration_strength_db=_optional_float(data.get("mean_vibration_strength_db")),
         )
@@ -244,7 +263,9 @@ class OrderTraceSummary:
     eligible_window_count: int
     matched_window_count: int
     support_ratio: float
+    reference_coverage_ratio: float
     longest_contiguous_support_window_count: int
+    contiguous_support_ratio: float
     support_intervals: tuple[OrderTraceSupportInterval, ...] = ()
     phase_support: tuple[OrderTracePhaseSupport, ...] = ()
     harmonic_summaries: tuple[OrderHarmonicEvidenceSummary, ...] = ()
@@ -252,6 +273,9 @@ class OrderTraceSummary:
     dominant_speed_band: str | None = None
     strongest_location: str | None = None
     mean_relative_error: float | None = None
+    relative_error_stddev: float | None = None
+    drift_score: float = 0.0
+    lock_score: float = 0.0
     peak_intensity_db: float | None = None
     mean_vibration_strength_db: float | None = None
     ref_sources: tuple[str, ...] = ()
@@ -268,6 +292,10 @@ class OrderTraceSummary:
             field_name="longest_contiguous_support_window_count",
         )
         _require_ratio(self.support_ratio, field_name="support_ratio")
+        _require_ratio(self.reference_coverage_ratio, field_name="reference_coverage_ratio")
+        _require_ratio(self.contiguous_support_ratio, field_name="contiguous_support_ratio")
+        _require_ratio(self.drift_score, field_name="drift_score")
+        _require_ratio(self.lock_score, field_name="lock_score")
 
     def to_json_object(self) -> JsonObject:
         payload: JsonObject = {
@@ -279,16 +307,21 @@ class OrderTraceSummary:
             "eligible_window_count": self.eligible_window_count,
             "matched_window_count": self.matched_window_count,
             "support_ratio": self.support_ratio,
+            "reference_coverage_ratio": self.reference_coverage_ratio,
             "longest_contiguous_support_window_count": self.longest_contiguous_support_window_count,
+            "contiguous_support_ratio": self.contiguous_support_ratio,
             "support_intervals": [interval.to_json_object() for interval in self.support_intervals],
             "phase_support": [row.to_json_object() for row in self.phase_support],
             "harmonic_summaries": [summary.to_json_object() for summary in self.harmonic_summaries],
+            "drift_score": self.drift_score,
+            "lock_score": self.lock_score,
             "ref_sources": list(self.ref_sources),
         }
         _set_optional(payload, "dominant_phase", self.dominant_phase)
         _set_optional(payload, "dominant_speed_band", self.dominant_speed_band)
         _set_optional(payload, "strongest_location", self.strongest_location)
         _set_optional(payload, "mean_relative_error", self.mean_relative_error)
+        _set_optional(payload, "relative_error_stddev", self.relative_error_stddev)
         _set_optional(payload, "peak_intensity_db", self.peak_intensity_db)
         _set_optional(payload, "mean_vibration_strength_db", self.mean_vibration_strength_db)
         return payload
@@ -304,10 +337,12 @@ class OrderTraceSummary:
             eligible_window_count=_required_int(data, "eligible_window_count"),
             matched_window_count=_required_int(data, "matched_window_count"),
             support_ratio=_required_float(data, "support_ratio"),
+            reference_coverage_ratio=_required_float(data, "reference_coverage_ratio"),
             longest_contiguous_support_window_count=_required_int(
                 data,
                 "longest_contiguous_support_window_count",
             ),
+            contiguous_support_ratio=_required_float(data, "contiguous_support_ratio"),
             support_intervals=_support_intervals(data.get("support_intervals")),
             phase_support=_phase_support_rows(data.get("phase_support")),
             harmonic_summaries=_harmonic_summaries(data.get("harmonic_summaries")),
@@ -315,6 +350,9 @@ class OrderTraceSummary:
             dominant_speed_band=_optional_text(data.get("dominant_speed_band")),
             strongest_location=_optional_text(data.get("strongest_location")),
             mean_relative_error=_optional_float(data.get("mean_relative_error")),
+            relative_error_stddev=_optional_float(data.get("relative_error_stddev")),
+            drift_score=_required_float(data, "drift_score"),
+            lock_score=_required_float(data, "lock_score"),
             peak_intensity_db=_optional_float(data.get("peak_intensity_db")),
             mean_vibration_strength_db=_optional_float(data.get("mean_vibration_strength_db")),
             ref_sources=_text_tuple(data.get("ref_sources")),
