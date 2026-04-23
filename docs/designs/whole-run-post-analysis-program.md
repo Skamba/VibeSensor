@@ -363,6 +363,7 @@ Reuse the existing explicit benchmark style:
 
 - `apps/server/tests/infra/workers/benchmark_compute_all.py`
 - `apps/server/tests/infra/processing/benchmark_rfft_backend.py`
+- `apps/server/tests/use_cases/diagnostics/benchmark_whole_run_spectra.py`
 
 Add opt-in benchmarks for:
 
@@ -372,6 +373,13 @@ Add opt-in benchmarks for:
 - order-trace evaluation cost by candidate family count
 - spatial/coherence cost by sensor count
 - end-to-end whole-run analysis memory peak on long runs
+
+Current #3085 baseline:
+
+- `benchmark_whole_run_spectra.py` uses a 5-minute, 4-sensor, 800 Hz raw-capture fixture with `FFT_N=2048` and `feature_interval_s=1.0`.
+- The validated `make benchmark-backend` sweep showed the executor fastest in sequential mode with `max_workers=1` and `chunk_window_count=32` (mean ~547 ms) versus slower 4-worker runs at chunk sizes 64 (~586 ms), 32 (~622 ms), and 16 (~668 ms).
+- The raw range-reader baseline for one full window sweep over one sensor was ~371 ms.
+- Keep the default executor settings at `max_workers=1`, `chunk_window_count=32`, and rerun the explicit benchmark on target hardware before raising worker count.
 
 ## Summary-only and legacy fallback policy
 
