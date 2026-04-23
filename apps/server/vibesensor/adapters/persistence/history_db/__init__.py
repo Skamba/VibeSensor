@@ -18,10 +18,14 @@ from vibesensor.adapters.persistence.history_db._run_repository import RunHistor
 from vibesensor.adapters.persistence.history_db._settings_repository import (
     SettingsSnapshotRepository,
 )
+from vibesensor.adapters.persistence.history_db._whole_run_artifact_store import (
+    HistoryWholeRunArtifactStore,
+)
 
 __all__ = [
     "ClientNameRepository",
     "HistoryPersistenceAdapters",
+    "HistoryWholeRunArtifactStore",
     "RunHistoryRepository",
     "SQLiteHistoryEngine",
     "SettingsSnapshotRepository",
@@ -59,6 +63,7 @@ def _build_history_persistence_adapters(
     )
     cursor_provider = lifecycle._cursor
     raw_capture_store = HistoryRawCaptureStore(data_dir=db_path.parent)
+    whole_run_artifact_store = HistoryWholeRunArtifactStore(data_dir=db_path.parent)
     return HistoryPersistenceAdapters(
         lifecycle=lifecycle,
         run_repository=RunHistoryRepository(
@@ -66,6 +71,7 @@ def _build_history_persistence_adapters(
             cursor_provider=cursor_provider,
             write_transaction_cursor_provider=lifecycle.write_transaction_cursor,
             raw_capture_store=raw_capture_store,
+            whole_run_artifact_store=whole_run_artifact_store,
         ),
         settings_snapshot_repository=SettingsSnapshotRepository(
             engine=lifecycle,

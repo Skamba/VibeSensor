@@ -14,6 +14,9 @@ import aiosqlite
 from vibesensor.adapters.persistence.history_db._raw_capture_store import (
     HistoryRawCaptureStore,
 )
+from vibesensor.adapters.persistence.history_db._whole_run_artifact_store import (
+    HistoryWholeRunArtifactStore,
+)
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.analysis_payloads import (
     persisted_analysis_from_storage_json_object,
@@ -33,6 +36,7 @@ from vibesensor.shared.types.raw_capture import (
     RawRunCapture,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 
 LOGGER = logging.getLogger(__name__)
 
@@ -41,6 +45,7 @@ _T = TypeVar("_T")
 
 class _HistoryDBQueryMixin:
     _raw_capture_store: HistoryRawCaptureStore
+    _whole_run_artifact_store: HistoryWholeRunArtifactStore
 
     def _cursor(self, *, commit: bool = True) -> AbstractAsyncContextManager[aiosqlite.Cursor]:
         raise NotImplementedError
@@ -116,6 +121,28 @@ class _HistoryDBQueryMixin:
             return None
         return RawCaptureManifest.from_mapping(parsed)
 
+    def _coerce_whole_run_artifact_manifest(
+        self,
+        *,
+        run_id: str,
+        manifest_json: str | None,
+        source: str,
+    ) -> WholeRunArtifactManifest | None:
+        parsed = safe_json_loads(
+            manifest_json,
+            context=f"run {run_id} whole_run_artifact_manifest",
+        )
+        if not is_json_object(parsed):
+            if parsed is not None:
+                LOGGER.warning(
+                    "%s: run %s whole_run_artifact_manifest_json parsed to %s, expected dict",
+                    source,
+                    run_id,
+                    type(parsed).__name__,
+                )
+            return None
+        return WholeRunArtifactManifest.from_mapping(parsed)
+
     def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         return self._run_sync(self.alist_runs(limit))
 
@@ -163,7 +190,8 @@ class _HistoryDBQueryMixin:
         async with self._cursor(commit=False) as cur:
             await cur.execute(
                 "SELECT run_id, case_id, status, start_time_utc, end_time_utc, "
-                "metadata_json, raw_capture_manifest_json, analysis_json, "
+                "metadata_json, raw_capture_manifest_json, whole_run_artifact_manifest_json, "
+                "analysis_json, "
                 "error_message, created_at, "
                 "sample_count, analysis_started_at, analysis_completed_at "
                 "FROM runs WHERE run_id = ?",
@@ -180,6 +208,7 @@ class _HistoryDBQueryMixin:
             end,
             meta_json,
             raw_capture_manifest_json,
+            whole_run_artifact_manifest_json,
             analysis_json,
             error,
             created,
@@ -201,6 +230,13 @@ class _HistoryDBQueryMixin:
             run_id=str(rid),
             manifest_json=str(raw_capture_manifest_json)
             if raw_capture_manifest_json is not None
+            else None,
+            source="get_run",
+        )
+        whole_run_artifact_manifest = self._coerce_whole_run_artifact_manifest(
+            run_id=str(rid),
+            manifest_json=str(whole_run_artifact_manifest_json)
+            if whole_run_artifact_manifest_json is not None
             else None,
             source="get_run",
         )
@@ -229,6 +265,7 @@ class _HistoryDBQueryMixin:
             metadata=metadata,
             analysis=analysis,
             raw_capture_manifest=raw_capture_manifest,
+            whole_run_artifact_manifest=whole_run_artifact_manifest,
             analysis_corrupt=analysis_corrupt,
             error_message=str(error) if error else None,
             created_at=str(created),
@@ -252,11 +289,43 @@ class _HistoryDBQueryMixin:
             source="get_raw_capture_manifest",
         )
 
+    async def aget_whole_run_artifact_manifest(
+        self,
+        run_id: str,
+    ) -> WholeRunArtifactManifest | None:
+        async with self._cursor(commit=False) as cur:
+            await cur.execute(
+                "SELECT whole_run_artifact_manifest_json FROM runs WHERE run_id = ?",
+                (run_id,),
+            )
+            row = await cur.fetchone()
+        if row is None or row[0] is None:
+            return None
+        return self._coerce_whole_run_artifact_manifest(
+            run_id=run_id,
+            manifest_json=str(row[0]),
+            source="get_whole_run_artifact_manifest",
+        )
+
     async def aload_raw_capture(self, run_id: str) -> RawRunCapture | None:
         manifest = await self.aget_raw_capture_manifest(run_id)
         if manifest is None:
             return None
         return await asyncio.to_thread(self._raw_capture_store.load_capture, manifest)
+
+    async def aload_whole_run_artifact(
+        self,
+        run_id: str,
+        artifact_key: str,
+    ) -> bytes | None:
+        manifest = await self.aget_whole_run_artifact_manifest(run_id)
+        if manifest is None:
+            return None
+        return await asyncio.to_thread(
+            self._whole_run_artifact_store.load_artifact_bytes,
+            manifest,
+            artifact_key=artifact_key,
+        )
 
     async def aload_raw_capture_sensor_range(
         self,
