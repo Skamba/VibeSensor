@@ -39,6 +39,11 @@ from vibesensor.use_cases.diagnostics.whole_run_context import (
     WholeRunContextArtifactBundle,
     build_whole_run_context_artifact_bundle,
 )
+from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
+    WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY,
+    WholeRunSpatialCoherenceArtifactBundle,
+    build_whole_run_spatial_coherence_artifact_bundle,
+)
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralArtifactBundle,
     build_whole_run_spectral_artifact_bundle,
@@ -161,6 +166,19 @@ class WholeRunOrderFamilySummaryBuilder(Protocol):
     ) -> WholeRunOrderFamilySummaryArtifactBundle | None: ...
 
 
+class WholeRunSpatialCoherenceBuilder(Protocol):
+    """Injected boundary for building candidate-level whole-run spatial coherence."""
+
+    def __call__(
+        self,
+        *,
+        run: PostAnalysisRunInput,
+        spectral_bundle: WholeRunSpectralArtifactBundle,
+        context_bundle: WholeRunContextArtifactBundle,
+        order_trace_bundle: WholeRunOrderTraceArtifactBundle,
+    ) -> WholeRunSpatialCoherenceArtifactBundle | None: ...
+
+
 @dataclass(frozen=True, slots=True)
 class _StoredWholeRunArtifactBundle:
     """Generic sidecar bundle shape for final manifest persistence."""
@@ -180,6 +198,7 @@ def execute_post_analysis(
     whole_run_order_trace_builder: WholeRunOrderTraceBuilder | None = None,
     whole_run_order_trace_summary_builder: WholeRunOrderTraceSummaryBuilder | None = None,
     whole_run_order_family_summary_builder: WholeRunOrderFamilySummaryBuilder | None = None,
+    whole_run_spatial_coherence_builder: WholeRunSpatialCoherenceBuilder | None = None,
     defer_retryable_error_storage: bool = False,
 ) -> PostAnalysisAttemptResult:
     analysis_start = time.monotonic()
@@ -207,6 +226,11 @@ def execute_post_analysis(
         _build_whole_run_order_family_summary_artifacts
         if whole_run_order_family_summary_builder is None
         else whole_run_order_family_summary_builder
+    )
+    resolved_whole_run_spatial_coherence_builder = (
+        _build_whole_run_spatial_coherence_artifacts
+        if whole_run_spatial_coherence_builder is None
+        else whole_run_spatial_coherence_builder
     )
     with start_span(
         __name__,
@@ -280,6 +304,7 @@ def execute_post_analysis(
             order_trace_bundle: WholeRunOrderTraceArtifactBundle | None = None
             order_trace_summary_bundle: WholeRunOrderTraceSummaryArtifactBundle | None = None
             order_family_summary_bundle: WholeRunOrderFamilySummaryArtifactBundle | None = None
+            spatial_coherence_bundle: WholeRunSpatialCoherenceArtifactBundle | None = None
             if loaded.raw_capture_manifest is not None:
                 spectral_bundle = resolved_whole_run_artifact_builder(
                     run_id=loaded.run_id,
@@ -312,12 +337,24 @@ def execute_post_analysis(
                         order_trace_summary_bundle=order_trace_summary_bundle,
                         context_bundle=context_bundle,
                     )
+                if (
+                    spectral_bundle is not None
+                    and context_bundle is not None
+                    and order_trace_bundle is not None
+                ):
+                    spatial_coherence_bundle = resolved_whole_run_spatial_coherence_builder(
+                        run=run_input,
+                        spectral_bundle=spectral_bundle,
+                        context_bundle=context_bundle,
+                        order_trace_bundle=order_trace_bundle,
+                    )
                 merged_bundle = _merge_whole_run_artifact_bundles(
                     spectral_bundle,
                     context_bundle,
                     order_trace_bundle,
                     order_trace_summary_bundle,
                     order_family_summary_bundle,
+                    spatial_coherence_bundle,
                 )
                 if merged_bundle is not None:
                     stored_artifact_manifest = _sync_call(
@@ -348,6 +385,11 @@ def execute_post_analysis(
                 summary = _append_whole_run_order_family_summary_metadata(
                     summary,
                     order_family_summary_bundle,
+                )
+            if spatial_coherence_bundle is not None:
+                summary = _append_whole_run_spatial_coherence_metadata(
+                    summary,
+                    spatial_coherence_bundle,
                 )
             if stored_artifact_manifest is not None:
                 summary = _append_whole_run_analysis_metadata(summary, stored_artifact_manifest)
@@ -593,6 +635,25 @@ def _build_whole_run_order_family_summary_artifacts(
     )
 
 
+def _build_whole_run_spatial_coherence_artifacts(
+    *,
+    run: PostAnalysisRunInput,
+    spectral_bundle: WholeRunSpectralArtifactBundle,
+    context_bundle: WholeRunContextArtifactBundle,
+    order_trace_bundle: WholeRunOrderTraceArtifactBundle,
+) -> WholeRunSpatialCoherenceArtifactBundle | None:
+    if not order_trace_bundle.points:
+        return None
+    return build_whole_run_spatial_coherence_artifact_bundle(
+        order_trace_bundle=order_trace_bundle,
+        spectral_manifest=spectral_bundle.manifest,
+        spectral_artifact_contents=spectral_bundle.artifact_contents,
+        context_labels=context_bundle.labels,
+        samples=run.samples,
+        lang=run.language,
+    )
+
+
 def _merge_whole_run_artifact_bundles(
     *bundles: (
         WholeRunSpectralArtifactBundle
@@ -600,6 +661,7 @@ def _merge_whole_run_artifact_bundles(
         | WholeRunOrderTraceArtifactBundle
         | WholeRunOrderTraceSummaryArtifactBundle
         | WholeRunOrderFamilySummaryArtifactBundle
+        | WholeRunSpatialCoherenceArtifactBundle
         | None
     ),
 ) -> _StoredWholeRunArtifactBundle | None:
@@ -754,6 +816,27 @@ def _append_whole_run_order_family_summary_metadata(
     analysis_metadata["whole_run_order_family_summary_count"] = len(bundle.summaries)
     analysis_metadata["whole_run_order_family_summary_artifact_key"] = (
         WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY
+    )
+    return PersistedAnalysis.from_json_object(payload)
+
+
+def _append_whole_run_spatial_coherence_metadata(
+    summary: PersistedAnalysis,
+    bundle: WholeRunSpatialCoherenceArtifactBundle,
+) -> PersistedAnalysis:
+    payload = summary.to_json_object()
+    analysis_metadata = payload.get("analysis_metadata")
+    if not isinstance(analysis_metadata, dict):
+        analysis_metadata = {}
+        payload["analysis_metadata"] = analysis_metadata
+    analysis_metadata["whole_run_spatial_coherence_available"] = True
+    analysis_metadata["whole_run_spatial_coherence_window_count"] = len(bundle.windows)
+    analysis_metadata["whole_run_spatial_coherence_candidate_count"] = len(
+        {row.candidate_key for row in bundle.windows}
+    )
+    analysis_metadata["whole_run_spatial_coherence_summary_count"] = len(bundle.summaries)
+    analysis_metadata["whole_run_spatial_coherence_artifact_key"] = (
+        WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY
     )
     return PersistedAnalysis.from_json_object(payload)
 

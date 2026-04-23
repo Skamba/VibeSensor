@@ -13,12 +13,6 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunWindowPolicy,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTracePoint
-from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (
-    WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY,
-)
-from vibesensor.use_cases.diagnostics.orders.whole_run_scoring import (
-    WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY,
-)
 from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
     WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
     WholeRunOrderTraceArtifactBundle,
@@ -26,6 +20,9 @@ from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
 from vibesensor.use_cases.diagnostics.whole_run_context import (
     WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
     WholeRunContextArtifactBundle,
+)
+from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
+    WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY,
 )
 from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
@@ -47,14 +44,29 @@ def _run_metadata(run_id: str):
 
 
 def _samples():
-    return sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}])
+    return sensor_frames_from_mappings(
+        [
+            {
+                "t_s": 0.0,
+                "client_id": "sensor-front",
+                "location": "front-left",
+                "vibration_strength_db": 10.0,
+            },
+            {
+                "t_s": 0.0,
+                "client_id": "sensor-rear",
+                "location": "rear-left",
+                "vibration_strength_db": 9.0,
+            },
+        ]
+    )
 
 
-def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metadata() -> None:
+def test_execute_post_analysis_persists_whole_run_spatial_coherence_sidecar_and_metadata() -> None:
     stored: dict[str, object] = {}
     raw_capture_manifest = RawCaptureManifest(
-        run_id="run-order-traces",
-        relative_dir="raw-runs/run-order-traces",
+        run_id="run-spatial-coherence",
+        relative_dir="raw-runs/run-spatial-coherence",
         sensors=(),
         total_samples=0,
         total_bytes=0,
@@ -68,25 +80,32 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
         feature_interval_s=0.25,
     )
     spectral_manifest = WholeRunArtifactManifest(
-        run_id="run-order-traces",
-        relative_dir="whole-run-artifacts/run-order-traces",
+        run_id="run-spatial-coherence",
+        relative_dir="whole-run-artifacts/run-spatial-coherence",
         window_policy=window_policy,
         total_window_count=2,
         artifacts=(
             WholeRunArtifactFile(
-                artifact_key="spectral-summary:sensor-a",
-                relative_path="spectra/sensor-a/windows.jsonl",
+                artifact_key="spectral-summary:sensor-front",
+                relative_path="spectra/sensor-front/windows.jsonl",
                 file_format="jsonl",
                 record_count=2,
-                sensor_id="sensor-a",
+                sensor_id="sensor-front",
+            ),
+            WholeRunArtifactFile(
+                artifact_key="spectral-summary:sensor-rear",
+                relative_path="spectra/sensor-rear/windows.jsonl",
+                file_format="jsonl",
+                record_count=2,
+                sensor_id="sensor-rear",
             ),
         ),
         created_at="2025-01-01T00:00:00Z",
     )
     context_bundle = WholeRunContextArtifactBundle(
         manifest=WholeRunArtifactManifest(
-            run_id="run-order-traces",
-            relative_dir="whole-run-artifacts/run-order-traces",
+            run_id="run-spatial-coherence",
+            relative_dir="whole-run-artifacts/run-spatial-coherence",
             window_policy=window_policy,
             total_window_count=2,
             artifacts=(
@@ -134,8 +153,8 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
     )
     order_trace_bundle = WholeRunOrderTraceArtifactBundle(
         manifest=WholeRunArtifactManifest(
-            run_id="run-order-traces",
-            relative_dir="whole-run-artifacts/run-order-traces",
+            run_id="run-spatial-coherence",
+            relative_dir="whole-run-artifacts/run-spatial-coherence",
             window_policy=window_policy,
             total_window_count=2,
             artifacts=(
@@ -148,11 +167,7 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
             ),
             created_at="2025-01-01T00:00:00Z",
         ),
-        artifact_contents={
-            WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY: (
-                b'{"hypothesis_key":"wheel_1x","harmonic":1,"window_index":0}\n'
-            ),
-        },
+        artifact_contents={WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY: b""},
         points=(
             OrderTracePoint(
                 hypothesis_key="wheel_1x",
@@ -164,12 +179,6 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
                 eligible=True,
                 matched=True,
                 predicted_hz=5.0,
-                matched_hz=5.1,
-                relative_error=0.02,
-                peak_intensity_db=30.0,
-                vibration_strength_db=24.0,
-                ref_source="speed+tire",
-                strongest_location="Front Left",
             ),
             OrderTracePoint(
                 hypothesis_key="wheel_1x",
@@ -179,9 +188,8 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
                 order_label="1x wheel",
                 window_index=1,
                 eligible=True,
-                matched=False,
+                matched=True,
                 predicted_hz=6.0,
-                ref_source="speed+tire",
             ),
         ),
     )
@@ -201,14 +209,14 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
             raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
 
     result = execute_post_analysis(
-        run_id="run-order-traces",
+        run_id="run-spatial-coherence",
         db=FakeDB(),
         load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
             run_id=run_id,
             metadata=_run_metadata(run_id),
             language="en",
             samples=_samples(),
-            total_sample_count=1,
+            total_sample_count=2,
             stride=1,
             raw_capture_manifest=raw_capture_manifest,
         ),
@@ -217,17 +225,35 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
             (),
             {
                 "manifest": spectral_manifest,
-                "artifact_contents": {"spectral-summary:sensor-a": b"{}\n{}\n"},
+                "artifact_contents": {
+                    "spectral-summary:sensor-front": (
+                        b'{"window_index":0,"coverage_state":"full","returned_sample_start":0,'
+                        b'"returned_sample_count":256,"top_peaks":[{"hz":5.0,"amp":0.2,'
+                        b'"vibration_strength_db":31.0}]}\n'
+                        b'{"window_index":1,"coverage_state":"full","returned_sample_start":200,'
+                        b'"returned_sample_count":256,"top_peaks":[{"hz":6.0,"amp":0.2,'
+                        b'"vibration_strength_db":31.0}]}\n'
+                    ),
+                    "spectral-summary:sensor-rear": (
+                        b'{"window_index":0,"coverage_state":"full","returned_sample_start":0,'
+                        b'"returned_sample_count":256,"top_peaks":[{"hz":5.05,"amp":0.15,'
+                        b'"vibration_strength_db":29.0}]}\n'
+                        b'{"window_index":1,"coverage_state":"full","returned_sample_start":200,'
+                        b'"returned_sample_count":256,"top_peaks":[{"hz":6.05,"amp":0.15,'
+                        b'"vibration_strength_db":29.0}]}\n'
+                    ),
+                },
             },
         )(),
         whole_run_context_builder=lambda **_kwargs: context_bundle,
         whole_run_order_trace_builder=lambda **_kwargs: order_trace_bundle,
-        whole_run_spatial_coherence_builder=lambda **_kwargs: None,
+        whole_run_order_trace_summary_builder=lambda **_kwargs: None,
+        whole_run_order_family_summary_builder=lambda **_kwargs: None,
         analysis_runner=lambda _run: make_persisted_analysis(
             {
                 "analysis_metadata": {
-                    "analyzed_sample_count": 1,
-                    "total_sample_count": 1,
+                    "analyzed_sample_count": 2,
+                    "total_sample_count": 2,
                     "sampling_method": "full",
                 },
                 "run_suitability": [],
@@ -238,42 +264,15 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
     assert isinstance(result, PostAnalysisExecutionSuccess)
     merged_manifest = stored["whole_run_manifest"]
     assert isinstance(merged_manifest, WholeRunArtifactManifest)
-    assert merged_manifest.artifact(WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY) is not None
-    assert merged_manifest.artifact(WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY) is not None
-    assert merged_manifest.artifact(WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY) is not None
-    assert stored["analysis"]["analysis_metadata"]["whole_run_order_traces_available"] is True
-    assert stored["analysis"]["analysis_metadata"]["whole_run_order_trace_point_count"] == 2
-    assert stored["analysis"]["analysis_metadata"]["whole_run_order_trace_candidate_count"] == 1
+    assert merged_manifest.artifact(WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY) is not None
+    artifact_contents = stored["whole_run_artifact_contents"]
+    assert WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY in artifact_contents
+    analysis_metadata = stored["analysis"]["analysis_metadata"]
+    assert analysis_metadata["whole_run_spatial_coherence_available"] is True
+    assert analysis_metadata["whole_run_spatial_coherence_window_count"] == 4
+    assert analysis_metadata["whole_run_spatial_coherence_candidate_count"] == 1
+    assert analysis_metadata["whole_run_spatial_coherence_summary_count"] == 1
     assert (
-        stored["analysis"]["analysis_metadata"]["whole_run_order_trace_artifact_key"]
-        == WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY
+        analysis_metadata["whole_run_spatial_coherence_artifact_key"]
+        == WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY
     )
-    assert (
-        stored["analysis"]["analysis_metadata"]["whole_run_order_trace_summaries_available"] is True
-    )
-    assert stored["analysis"]["analysis_metadata"]["whole_run_order_trace_summary_count"] == 1
-    assert (
-        stored["analysis"]["analysis_metadata"]["whole_run_order_trace_summary_artifact_key"]
-        == WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY
-    )
-    assert (
-        stored["analysis"]["analysis_metadata"]["whole_run_order_family_summaries_available"]
-        is True
-    )
-    assert stored["analysis"]["analysis_metadata"]["whole_run_order_family_summary_count"] == 1
-    assert (
-        stored["analysis"]["analysis_metadata"]["whole_run_order_family_summary_artifact_key"]
-        == WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY
-    )
-    assert len(stored["analysis"]["whole_run_order_summaries"]) == 1
-    order_summary = stored["analysis"]["whole_run_order_summaries"][0]
-    assert order_summary["hypothesis_key"] == "wheel"
-    assert order_summary["suspected_source"] == "wheel/tire"
-    assert order_summary["matched_window_count"] == 1
-    assert order_summary["support_intervals"][0]["phase"] == "cruise"
-    assert order_summary["phase_support"][0]["matched_window_count"] == 1
-    assert order_summary["harmonic_summaries"][0]["harmonic"] == 1
-    assert order_summary["stable_frequency_min_hz"] == 5.1
-    assert order_summary["exemplar_interval_index"] == 0
-    assert order_summary["ref_sources"] == ["speed+tire"]
-    assert stored["analysis"]["analysis_metadata"]["whole_run_artifact_count"] == 5
