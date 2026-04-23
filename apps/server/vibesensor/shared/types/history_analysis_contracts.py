@@ -50,6 +50,10 @@ __all__ = [
     "FindingPayload",
     "LocationIntensitySummaryResponse",
     "OutlierSummaryResponse",
+    "OrderHarmonicEvidenceSummaryResponse",
+    "OrderTracePhaseSupportResponse",
+    "OrderTraceSummaryResponse",
+    "OrderTraceSupportIntervalResponse",
     "PayloadObject",
     "PayloadValue",
     "PhaseInfoResponse",
@@ -142,6 +146,68 @@ class WholeRunContextIntervalResponse(TypedDict, total=False):
     full_context_window_count: Required[int]
     partial_context_window_count: Required[int]
     missing_context_window_count: Required[int]
+
+
+class OrderTraceSupportIntervalResponse(TypedDict, total=False):
+    """Compact persisted support interval derived from dense whole-run order traces."""
+
+    interval_index: Required[int]
+    start_window_index: Required[int]
+    end_window_index: Required[int]
+    matched_window_count: Required[int]
+    support_ratio: Required[float]
+    start_t_s: float | None
+    end_t_s: float | None
+    phase: str | None
+    load_state: str | None
+    speed_band: str | None
+    mean_relative_error: float | None
+
+
+class OrderTracePhaseSupportResponse(TypedDict, total=False):
+    """Phase-aware support row for a compact whole-run order-trace summary."""
+
+    phase: Required[str]
+    eligible_window_count: Required[int]
+    matched_window_count: Required[int]
+    support_ratio: Required[float]
+
+
+class OrderHarmonicEvidenceSummaryResponse(TypedDict, total=False):
+    """Compact harmonic-specific evidence row for a whole-run order-trace summary."""
+
+    harmonic: Required[int]
+    order_label: Required[str]
+    eligible_window_count: Required[int]
+    matched_window_count: Required[int]
+    support_ratio: Required[float]
+    mean_relative_error: float | None
+    peak_intensity_db: float | None
+    mean_vibration_strength_db: float | None
+
+
+class OrderTraceSummaryResponse(TypedDict, total=False):
+    """Future persisted/report-facing summary shape for whole-run order traces."""
+
+    hypothesis_key: Required[str]
+    suspected_source: Required[str]
+    order_family: Required[str]
+    order_label: Required[str]
+    total_window_count: Required[int]
+    eligible_window_count: Required[int]
+    matched_window_count: Required[int]
+    support_ratio: Required[float]
+    longest_contiguous_support_window_count: Required[int]
+    support_intervals: Required[list[OrderTraceSupportIntervalResponse]]
+    phase_support: Required[list[OrderTracePhaseSupportResponse]]
+    harmonic_summaries: Required[list[OrderHarmonicEvidenceSummaryResponse]]
+    dominant_phase: str | None
+    dominant_speed_band: str | None
+    strongest_location: str | None
+    mean_relative_error: float | None
+    peak_intensity_db: float | None
+    mean_vibration_strength_db: float | None
+    ref_sources: Required[list[str]]
 
 
 class SpeedStatsResponse(TypedDict):
@@ -292,6 +358,10 @@ for _typed_dict in (
     PhaseTimelineEntryResponse,
     PhaseSegmentSummaryResponse,
     WholeRunContextIntervalResponse,
+    OrderTraceSupportIntervalResponse,
+    OrderTracePhaseSupportResponse,
+    OrderHarmonicEvidenceSummaryResponse,
+    OrderTraceSummaryResponse,
     SpeedStatsResponse,
     PhaseInfoResponse,
     OutlierSummaryResponse,
