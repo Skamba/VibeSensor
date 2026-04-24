@@ -20,6 +20,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureCoverageState,
     RawCaptureLossStats,
     RawCaptureManifest,
+    RawCaptureSensorClockSync,
     RawCaptureSensorData,
     RawCaptureSensorLossStats,
     RawCaptureSensorManifest,
@@ -92,6 +93,7 @@ class HistoryRawCaptureStore:
         run_id: str,
         *,
         run_start_monotonic_us: int | None = None,
+        sensor_clock_sync: Mapping[str, RawCaptureSensorClockSync] | None = None,
         sensor_losses: Mapping[str, RawCaptureLossStats] | None = None,
     ) -> RawCaptureManifest | None:
         with self._lock:
@@ -118,6 +120,7 @@ class HistoryRawCaptureStore:
                 bytes_written=stream.bytes_written,
                 first_t0_us=stream.first_t0_us,
                 last_t0_us=stream.last_t0_us,
+                clock_sync=(sensor_clock_sync or {}).get(client_id),
             )
             sensor_manifests.append(sensor_manifest)
             total_samples += sensor_manifest.sample_count

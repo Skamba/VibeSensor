@@ -11,11 +11,13 @@ from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, medfilt3
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,
+    WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED,
     WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
 )
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunkIndex,
     RawCaptureManifest,
+    RawCaptureSensorClockSync,
     RawCaptureSensorData,
     RawCaptureSensorManifest,
     RawRunCapture,
@@ -74,6 +76,7 @@ def _raw_capture(
     *,
     sensors: list[tuple[str, list[tuple[int, np.ndarray]]]],
     run_start_monotonic_us: int | None = _RUN_START_MONOTONIC_US,
+    clock_sync_by_sensor: dict[str, RawCaptureSensorClockSync | None] | None = None,
 ) -> RawRunCapture:
     sensor_rows: list[RawCaptureSensorData] = []
     sensor_manifests: list[RawCaptureSensorManifest] = []
@@ -110,6 +113,9 @@ def _raw_capture(
             bytes_written=int(samples_i16.nbytes),
             first_t0_us=chunks[0][0] if chunks else None,
             last_t0_us=chunks[-1][0] if chunks else None,
+            clock_sync=(_verified_clock_sync() if run_start_monotonic_us is not None else None)
+            if clock_sync_by_sensor is None
+            else clock_sync_by_sensor.get(client_id),
         )
         sensor_rows.append(
             RawCaptureSensorData(
@@ -131,6 +137,19 @@ def _raw_capture(
         run_start_monotonic_us=run_start_monotonic_us,
     )
     return RawRunCapture(manifest=manifest, sensors=tuple(sensor_rows))
+
+
+def _verified_clock_sync() -> RawCaptureSensorClockSync:
+    return RawCaptureSensorClockSync(
+        clock_domain="server_monotonic",
+        proof_state="verified",
+        observed_monotonic_us=1_010_000,
+        last_sync_monotonic_us=1_009_000,
+        sync_offset_us=5_000,
+        sync_rtt_us=4_000,
+        max_sync_age_us=15_000_000,
+        max_sync_rtt_us=50_000,
+    )
 
 
 def _shared_strength_metrics(window_i16: np.ndarray) -> dict[str, object]:
@@ -547,5 +566,68 @@ def test_build_post_analysis_input_falls_back_for_legacy_raw_capture_without_anc
     assert [warning.code for warning in result.raw_replay.warnings] == [
         WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK
     ]
+    assert result.samples[0].vibration_strength_db == 11.0
+    assert result.samples[0].dominant_freq_hz == 13.0
+
+
+def test_build_post_analysis_input_falls_back_when_sync_proof_is_stale() -> None:
+    raw_start_offset_us = 100_000
+    raw_capture = _raw_capture(
+        "run-stale-sync",
+        sensors=[
+            (
+                "sensor-a",
+                [
+                    (
+                        _RUN_START_MONOTONIC_US + raw_start_offset_us,
+                        np.vstack([_wave(36.0, _FFT_N), _wave(80.0, 96)]),
+                    )
+                ],
+            )
+        ],
+        clock_sync_by_sensor={
+            "sensor-a": RawCaptureSensorClockSync(
+                clock_domain="unverified",
+                proof_state="stale_sync",
+                observed_monotonic_us=2_000_000,
+                last_sync_monotonic_us=1_000_000,
+                sync_offset_us=5_000,
+                sync_rtt_us=4_000,
+                max_sync_age_us=15_000_000,
+                max_sync_rtt_us=50_000,
+            )
+        },
+    )
+    loaded = LoadedPostAnalysisRun(
+        run_id="run-stale-sync",
+        metadata=_metadata("run-stale-sync"),
+        language="en",
+        samples=sensor_frames_from_mappings(
+            [
+                {
+                    "client_id": "sensor-a",
+                    "t_s": _sample_t_s(raw_start_offset_us=raw_start_offset_us, sample_end=_FFT_N),
+                    "sample_rate_hz": _SAMPLE_RATE_HZ,
+                    "vibration_strength_db": 11.0,
+                    "dominant_freq_hz": 13.0,
+                }
+            ]
+        ),
+        raw_capture=raw_capture,
+        total_sample_count=1,
+        stride=1,
+    )
+
+    result = build_post_analysis_input(loaded)
+
+    assert result.raw_backed_sample_count == 0
+    assert result.raw_replay.raw_capture_mode == "summary_only"
+    assert result.raw_replay.sync_unverified_sensor_count == 1
+    assert result.raw_replay.stale_sync_sensor_count == 1
+    assert [warning.code for warning in result.raw_replay.warnings] == [
+        WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED,
+        WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
+    ]
+    assert result.raw_replay_window_coverages[0].reason == "clock_sync_stale_sync"
     assert result.samples[0].vibration_strength_db == 11.0
     assert result.samples[0].dominant_freq_hz == 13.0

@@ -7,6 +7,7 @@ import threading
 import numpy as np
 import pytest
 
+from vibesensor.shared.types.raw_capture import RawCaptureSensorClockSync
 from vibesensor.use_cases.run.raw_capture_writer import RunRawCaptureWriter
 
 
@@ -37,14 +38,39 @@ def test_raw_capture_writer_persists_queue_invalid_and_write_failures(
             _run_id: str,
             *,
             run_start_monotonic_us: int | None = None,
+            sensor_clock_sync=None,
             sensor_losses=None,
         ):
             assert run_start_monotonic_us == 1234
+            assert sensor_clock_sync == {
+                "sensor-a": RawCaptureSensorClockSync(
+                    clock_domain="server_monotonic",
+                    proof_state="verified",
+                ),
+                "sensor-b": RawCaptureSensorClockSync(
+                    clock_domain="unverified",
+                    proof_state="missing_sync",
+                ),
+                "sensor-c": RawCaptureSensorClockSync(
+                    clock_domain="unverified",
+                    proof_state="missing_sync",
+                ),
+            }
             self.finalized_sensor_losses = sensor_losses
             return None
 
     history_db = FakeHistoryDb()
-    writer = RunRawCaptureWriter(history_db=history_db, logger=logging.getLogger(__name__))
+    writer = RunRawCaptureWriter(
+        history_db=history_db,
+        logger=logging.getLogger(__name__),
+        sensor_sync_snapshotter=lambda client_ids: {
+            client_id: RawCaptureSensorClockSync(
+                clock_domain="server_monotonic" if client_id == "sensor-a" else "unverified",
+                proof_state="verified" if client_id == "sensor-a" else "missing_sync",
+            )
+            for client_id in client_ids
+        },
+    )
     writer.start_run("run-losses", run_start_monotonic_us=1234)
 
     writer.capture_raw_samples(
