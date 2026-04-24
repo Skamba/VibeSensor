@@ -56,6 +56,7 @@ class UdpTransportLifecycle:
         processor: object,
         raw_capture_sink: object | None = None,
         queue_maxsize: int,
+        ingest_diagnostics: object | None = None,
     ) -> None:
         self._data_transport, consumer = await self._start_udp_receiver(
             host=host,
@@ -64,6 +65,7 @@ class UdpTransportLifecycle:
             processor=processor,
             raw_capture_sink=raw_capture_sink,
             queue_maxsize=queue_maxsize,
+            ingest_diagnostics=ingest_diagnostics,
         )
         if consumer is not None:
             self._start_background_task(consumer.process_queue)

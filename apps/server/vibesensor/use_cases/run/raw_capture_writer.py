@@ -11,6 +11,7 @@ from typing import Any, cast
 
 import numpy as np
 
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
@@ -109,6 +110,7 @@ class RunRawCaptureWriter:
     __slots__ = (
         "_active_run_id",
         "_history_db",
+        "_ingest_diagnostics",
         "_lock",
         "_logger",
         "_queue",
@@ -123,6 +125,7 @@ class RunRawCaptureWriter:
         *,
         history_db: RunPersistence | None,
         logger: logging.Logger,
+        ingest_diagnostics: IngestDiagnosticsCollector | None = None,
         sensor_sync_snapshotter: (
             Callable[[tuple[str, ...]], Mapping[str, RawCaptureSensorClockSync] | None] | None
         ) = None,
@@ -135,6 +138,7 @@ class RunRawCaptureWriter:
             else None
         )
         self._logger = logger
+        self._ingest_diagnostics = ingest_diagnostics
         self._lock = threading.RLock()
         self._sensor_sync_snapshotter = sensor_sync_snapshotter
         self._queue: queue.Queue[
@@ -202,9 +206,13 @@ class RunRawCaptureWriter:
                     run_stats,
                 )
             )
+            if self._ingest_diagnostics is not None:
+                self._ingest_diagnostics.note_raw_capture_queue_depth(self._queue.qsize())
         except queue.Full:
             if run_stats is not None:
                 run_stats.record_queue_overflow(client_id)
+            if self._ingest_diagnostics is not None:
+                self._ingest_diagnostics.note_raw_capture_drop(depth=self._queue.qsize())
             self._logger.error(
                 "Raw capture queue full for run %s; dropping raw chunk for %s",
                 run_id,
@@ -243,6 +251,8 @@ class RunRawCaptureWriter:
             extra_sensor_losses=sensor_losses,
         )
         self._queue.put(request)
+        if self._ingest_diagnostics is not None:
+            self._ingest_diagnostics.note_raw_capture_queue_depth(self._queue.qsize())
         request.done.wait()
         if request.error is not None:
             raise RuntimeError(f"raw capture finalize failed for {run_id}") from request.error
@@ -262,6 +272,8 @@ class RunRawCaptureWriter:
             return True
         request = _ShutdownRequest()
         self._queue.put(request)
+        if self._ingest_diagnostics is not None:
+            self._ingest_diagnostics.note_raw_capture_queue_depth(self._queue.qsize())
         finished = request.done.wait(timeout=max(0.1, timeout_s))
         thread.join(timeout=max(0.1, timeout_s))
         self._thread = None
@@ -273,6 +285,8 @@ class RunRawCaptureWriter:
         while True:
             item = self._queue.get()
             try:
+                if self._ingest_diagnostics is not None:
+                    self._ingest_diagnostics.note_raw_capture_queue_depth(self._queue.qsize())
                 if isinstance(item, _ShutdownRequest):
                     item.done.set()
                     return
@@ -311,6 +325,8 @@ class RunRawCaptureWriter:
                 except BaseException:  # noqa: BLE001
                     if run_stats is not None:
                         run_stats.record_write_error(chunk.client_id)
+                    if self._ingest_diagnostics is not None:
+                        self._ingest_diagnostics.note_raw_capture_write_error()
                     self._logger.error(
                         "Failed to persist raw capture chunk for run %s sensor %s",
                         run_id,

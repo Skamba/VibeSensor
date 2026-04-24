@@ -12,6 +12,7 @@ from uuid import uuid4
 import numpy as np
 from opentelemetry.trace import SpanKind
 
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import (
     ClientTracker,
     LanguageReader,
@@ -91,6 +92,7 @@ class RunRecorder:
         settings_reader: SettingsReader | None = None,
         sensor_metadata_reader: SensorMetadataReader | None = None,
         language_reader: LanguageReader | None = None,
+        ingest_diagnostics: IngestDiagnosticsCollector | None = None,
     ):
         self.metrics_log_hz = max(1, config.metrics_log_hz)
         self.registry = registry
@@ -142,6 +144,7 @@ class RunRecorder:
         self._raw_capture = RunRawCaptureWriter(
             history_db=history_db if config.persist_history_db else None,
             logger=LOGGER,
+            ingest_diagnostics=ingest_diagnostics,
             sensor_sync_snapshotter=lambda client_ids: _snapshot_raw_capture_sensor_sync(
                 self.registry,
                 client_ids,

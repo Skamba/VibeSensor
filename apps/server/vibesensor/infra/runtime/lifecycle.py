@@ -25,6 +25,7 @@ from vibesensor.infra.runtime.shutdown_sequence import (
 )
 from vibesensor.infra.runtime.task_supervisor import TaskSupervisor
 from vibesensor.infra.runtime.udp_transport_lifecycle import StartUdpReceiver, UdpTransportLifecycle
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.payload_types import LiveWsPayload
 
 
@@ -50,6 +51,7 @@ class LifecycleWsHub(Protocol):
         hz: int,
         payload_builder: Callable[[str | None], LiveWsPayload],
         on_tick: Callable[[], None] | None = None,
+        metrics_recorder: Callable[[int, float], None] | None = None,
     ) -> None: ...
 
 
@@ -118,6 +120,7 @@ class LifecycleRuntime:
     shutdown_analysis_timeout_s: float
     registry: object
     processor: object
+    ingest_diagnostics: IngestDiagnosticsCollector
     control_plane: LifecycleControlPlane
     processing_loop: LifecycleProcessingLoop
     ws_hub: LifecycleWsHub

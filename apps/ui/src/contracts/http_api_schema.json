@@ -3094,6 +3094,107 @@
         "title": "HealthDataLossResponse",
         "type": "object"
       },
+      "HealthIngestClientResponse": {
+        "properties": {
+          "advertised_sample_rate_hz": {
+            "title": "Advertised Sample Rate Hz",
+            "type": "integer"
+          },
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "duplicates_received": {
+            "title": "Duplicates Received",
+            "type": "integer"
+          },
+          "estimated_ingest_hz": {
+            "title": "Estimated Ingest Hz",
+            "type": "number"
+          },
+          "frames_dropped": {
+            "title": "Frames Dropped",
+            "type": "integer"
+          },
+          "last_ack_latency_ms": {
+            "title": "Last Ack Latency Ms",
+            "type": "number"
+          },
+          "last_packet_queue_age_ms": {
+            "title": "Last Packet Queue Age Ms",
+            "type": "number"
+          },
+          "late_packets": {
+            "title": "Late Packets",
+            "type": "integer"
+          },
+          "parse_errors": {
+            "title": "Parse Errors",
+            "type": "integer"
+          },
+          "processed_packets": {
+            "title": "Processed Packets",
+            "type": "integer"
+          },
+          "processed_samples": {
+            "title": "Processed Samples",
+            "type": "integer"
+          },
+          "queue_overflow_drops": {
+            "title": "Queue Overflow Drops",
+            "type": "integer"
+          },
+          "server_queue_drops": {
+            "title": "Server Queue Drops",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "client_id",
+          "advertised_sample_rate_hz",
+          "estimated_ingest_hz",
+          "processed_packets",
+          "processed_samples",
+          "late_packets",
+          "last_packet_queue_age_ms",
+          "last_ack_latency_ms",
+          "frames_dropped",
+          "queue_overflow_drops",
+          "server_queue_drops",
+          "parse_errors",
+          "duplicates_received"
+        ],
+        "title": "HealthIngestClientResponse",
+        "type": "object"
+      },
+      "HealthIngestResponse": {
+        "properties": {
+          "clients": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/HealthIngestClientResponse"
+            },
+            "title": "Clients",
+            "type": "array"
+          },
+          "raw_capture": {
+            "$ref": "#/components/schemas/HealthRawCaptureResponse"
+          },
+          "udp": {
+            "$ref": "#/components/schemas/HealthUdpIngestResponse"
+          },
+          "ws_publish": {
+            "$ref": "#/components/schemas/HealthWsPublishResponse"
+          }
+        },
+        "required": [
+          "udp",
+          "raw_capture",
+          "ws_publish"
+        ],
+        "title": "HealthIngestResponse",
+        "type": "object"
+      },
       "HealthIntakeStatsResponse": {
         "description": "Response body for processing intake timing and throughput counters.",
         "properties": {
@@ -3256,6 +3357,34 @@
         "title": "HealthPersistenceResponse",
         "type": "object"
       },
+      "HealthRawCaptureResponse": {
+        "properties": {
+          "dropped_chunks": {
+            "title": "Dropped Chunks",
+            "type": "integer"
+          },
+          "queue_depth": {
+            "title": "Queue Depth",
+            "type": "integer"
+          },
+          "queue_max_depth": {
+            "title": "Queue Max Depth",
+            "type": "integer"
+          },
+          "write_error_chunks": {
+            "title": "Write Error Chunks",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "queue_depth",
+          "queue_max_depth",
+          "dropped_chunks",
+          "write_error_chunks"
+        ],
+        "title": "HealthRawCaptureResponse",
+        "type": "object"
+      },
       "HealthResponse": {
         "description": "Response body for the server health check endpoint.",
         "properties": {
@@ -3294,6 +3423,9 @@
           "frame_size_mismatch_count": {
             "title": "Frame Size Mismatch Count",
             "type": "integer"
+          },
+          "ingest": {
+            "$ref": "#/components/schemas/HealthIngestResponse"
           },
           "intake_stats": {
             "$ref": "#/components/schemas/HealthIntakeStatsResponse"
@@ -3398,9 +3530,91 @@
           "degradation_reasons",
           "data_loss",
           "persistence",
-          "intake_stats"
+          "intake_stats",
+          "ingest"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "HealthUdpIngestResponse": {
+        "properties": {
+          "dropped_datagrams": {
+            "title": "Dropped Datagrams",
+            "type": "integer"
+          },
+          "enqueued_datagrams": {
+            "title": "Enqueued Datagrams",
+            "type": "integer"
+          },
+          "last_ack_latency_ms": {
+            "title": "Last Ack Latency Ms",
+            "type": "number"
+          },
+          "last_packet_queue_age_ms": {
+            "title": "Last Packet Queue Age Ms",
+            "type": "number"
+          },
+          "max_ack_latency_ms": {
+            "title": "Max Ack Latency Ms",
+            "type": "number"
+          },
+          "max_packet_queue_age_ms": {
+            "title": "Max Packet Queue Age Ms",
+            "type": "number"
+          },
+          "processed_datagrams": {
+            "title": "Processed Datagrams",
+            "type": "integer"
+          },
+          "queue_depth": {
+            "title": "Queue Depth",
+            "type": "integer"
+          },
+          "queue_max_depth": {
+            "title": "Queue Max Depth",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "queue_depth",
+          "queue_max_depth",
+          "enqueued_datagrams",
+          "dropped_datagrams",
+          "processed_datagrams",
+          "last_packet_queue_age_ms",
+          "max_packet_queue_age_ms",
+          "last_ack_latency_ms",
+          "max_ack_latency_ms"
+        ],
+        "title": "HealthUdpIngestResponse",
+        "type": "object"
+      },
+      "HealthWsPublishResponse": {
+        "properties": {
+          "active_connections": {
+            "title": "Active Connections",
+            "type": "integer"
+          },
+          "last_publish_duration_ms": {
+            "title": "Last Publish Duration Ms",
+            "type": "number"
+          },
+          "max_publish_duration_ms": {
+            "title": "Max Publish Duration Ms",
+            "type": "number"
+          },
+          "total_publish_ticks": {
+            "title": "Total Publish Ticks",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "active_connections",
+          "total_publish_ticks",
+          "last_publish_duration_ms",
+          "max_publish_duration_ms"
+        ],
+        "title": "HealthWsPublishResponse",
         "type": "object"
       },
       "HistoryInsightWarningResponse": {

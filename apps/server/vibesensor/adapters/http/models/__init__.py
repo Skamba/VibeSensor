@@ -24,9 +24,14 @@ from .clients import (
 )
 from .health import (
     HealthDataLossResponse,
+    HealthIngestClientResponse,
+    HealthIngestResponse,
     HealthIntakeStatsResponse,
     HealthPersistenceResponse,
+    HealthRawCaptureResponse,
     HealthResponse,
+    HealthUdpIngestResponse,
+    HealthWsPublishResponse,
 )
 from .history import (
     AmplitudeMetric,
@@ -114,9 +119,14 @@ __all__ = [
     "EspFlashStartRequest",
     # Response models
     "HealthDataLossResponse",
+    "HealthIngestClientResponse",
+    "HealthIngestResponse",
     "HealthIntakeStatsResponse",
     "HealthPersistenceResponse",
+    "HealthRawCaptureResponse",
     "HealthResponse",
+    "HealthUdpIngestResponse",
+    "HealthWsPublishResponse",
     "CarResponse",
     "CarsResponse",
     "ObdDeviceResponse",

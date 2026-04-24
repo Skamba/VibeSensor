@@ -14,6 +14,7 @@ from test_support.tracing import configured_trace_output, read_trace_output
 from vibesensor.adapters.udp.protocol import pack_data
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 from vibesensor.infra.runtime.registry import DataUpdateResult
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 
 @pytest.mark.asyncio
@@ -55,6 +56,64 @@ def test_datagram_queue_backpressure_drops_when_full() -> None:
     registry.note_parse_error.assert_not_called()
 
 
+def test_ingest_diagnostics_tracks_udp_backpressure_and_client_timing(
+    fake_transport,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    registry = Mock()
+    registry.update_from_data.side_effect = [DataUpdateResult(), DataUpdateResult()]
+    registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
+    processor = Mock()
+    ingest_diagnostics = IngestDiagnosticsCollector()
+    proto = DataDatagramProtocol(
+        registry=registry,
+        processor=processor,
+        ingest_diagnostics=ingest_diagnostics,
+        queue_maxsize=1,
+    )
+    proto.connection_made(fake_transport)
+    client_id = bytes.fromhex("010203040506")
+    packet_one = pack_data(
+        client_id,
+        seq=1,
+        t0_us=100_000,
+        samples=np.zeros((4, 3), dtype=np.int16),
+    )
+    packet_two = pack_data(
+        client_id,
+        seq=2,
+        t0_us=200_000,
+        samples=np.zeros((4, 3), dtype=np.int16),
+    )
+
+    proto.datagram_received(packet_one, ("127.0.0.1", 10001))
+    proto.datagram_received(packet_two, ("127.0.0.1", 10002))
+
+    udp_snapshot = ingest_diagnostics.udp_snapshot()
+    assert udp_snapshot.queue_max_depth == 1
+    assert udp_snapshot.dropped_datagrams == 1
+
+    monotonic_ticks = iter([10.010, 10.020, 10.050, 10.080])
+    monkeypatch.setattr(
+        "vibesensor.adapters.udp.udp_data_rx.time.monotonic",
+        lambda: next(monotonic_ticks),
+    )
+
+    proto._process_datagram(packet_one, ("127.0.0.1", 10001), received_mono_s=10.000)
+    proto._process_datagram(packet_two, ("127.0.0.1", 10001), received_mono_s=10.030)
+
+    udp_snapshot = ingest_diagnostics.udp_snapshot()
+    client_snapshot = ingest_diagnostics.client_snapshots()["010203040506"]
+    assert udp_snapshot.processed_datagrams == 2
+    assert udp_snapshot.max_packet_queue_age_ms == pytest.approx(20.0, abs=0.001)
+    assert udp_snapshot.max_ack_latency_ms == pytest.approx(50.0, abs=0.001)
+    assert client_snapshot.processed_packets == 2
+    assert client_snapshot.processed_samples == 8
+    assert client_snapshot.estimated_ingest_hz == pytest.approx(66.667, abs=0.001)
+    assert client_snapshot.last_packet_queue_age_ms == pytest.approx(20.0, abs=0.001)
+    assert client_snapshot.last_ack_latency_ms == pytest.approx(50.0, abs=0.001)
+
+
 def test_datagram_queue_backpressure_rate_limits_drop_warnings() -> None:
     registry = Mock()
     processor = Mock()
@@ -71,10 +130,15 @@ def test_datagram_queue_backpressure_rate_limits_drop_warnings() -> None:
         samples=np.zeros((1, 3), dtype=np.int16),
     )
     proto.datagram_received(pkt, ("127.0.0.1", 10001))
+    monotonic_ticks = iter([0.0, 100.0, 0.0, 101.0, 0.0, 102.0, 0.0, 115.0])
+
+    def _fake_monotonic() -> float:
+        return next(monotonic_ticks, 116.0)
+
     with (
         patch(
             "vibesensor.adapters.udp.udp_data_rx.time.monotonic",
-            side_effect=[100.0, 101.0, 102.0, 115.0],
+            side_effect=_fake_monotonic,
         ),
         patch("vibesensor.adapters.udp.udp_data_rx.LOGGER.warning") as warning_log,
     ):

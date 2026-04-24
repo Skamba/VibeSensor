@@ -102,6 +102,55 @@ const healthPersistenceSchema = v.looseObject({
   write_error: nullableStringSchema,
 });
 
+const healthUdpIngestSchema = v.looseObject({
+  dropped_datagrams: integerSchema,
+  enqueued_datagrams: integerSchema,
+  last_ack_latency_ms: finiteNumberSchema,
+  last_packet_queue_age_ms: finiteNumberSchema,
+  max_ack_latency_ms: finiteNumberSchema,
+  max_packet_queue_age_ms: finiteNumberSchema,
+  processed_datagrams: integerSchema,
+  queue_depth: integerSchema,
+  queue_max_depth: integerSchema,
+});
+
+const healthRawCaptureSchema = v.looseObject({
+  dropped_chunks: integerSchema,
+  queue_depth: integerSchema,
+  queue_max_depth: integerSchema,
+  write_error_chunks: integerSchema,
+});
+
+const healthWsPublishSchema = v.looseObject({
+  active_connections: integerSchema,
+  last_publish_duration_ms: finiteNumberSchema,
+  max_publish_duration_ms: finiteNumberSchema,
+  total_publish_ticks: integerSchema,
+});
+
+const healthIngestClientSchema = v.looseObject({
+  advertised_sample_rate_hz: integerSchema,
+  client_id: v.string(),
+  duplicates_received: integerSchema,
+  estimated_ingest_hz: finiteNumberSchema,
+  frames_dropped: integerSchema,
+  last_ack_latency_ms: finiteNumberSchema,
+  last_packet_queue_age_ms: finiteNumberSchema,
+  late_packets: integerSchema,
+  parse_errors: integerSchema,
+  processed_packets: integerSchema,
+  processed_samples: integerSchema,
+  queue_overflow_drops: integerSchema,
+  server_queue_drops: integerSchema,
+});
+
+const healthIngestSchema = v.looseObject({
+  clients: v.array(healthIngestClientSchema),
+  raw_capture: healthRawCaptureSchema,
+  udp: healthUdpIngestSchema,
+  ws_publish: healthWsPublishSchema,
+});
+
 const healthStatusPayloadSchema = v.looseObject({
   background_task_failures: stringMapSchema,
   data_loss: healthDataLossSchema,
@@ -110,6 +159,7 @@ const healthStatusPayloadSchema = v.looseObject({
   db_max_write_duration_s: finiteNumberSchema,
   degradation_reasons: v.array(v.string()),
   frame_size_mismatch_count: integerSchema,
+  ingest: healthIngestSchema,
   intake_stats: healthIntakeStatsSchema,
   max_tick_duration_s: finiteNumberSchema,
   persistence: healthPersistenceSchema,
