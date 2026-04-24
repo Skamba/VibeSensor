@@ -6,6 +6,7 @@ from typing import Literal, TypedDict
 import numpy as np
 import numpy.typing as npt
 
+from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.payload_types import AxisPeak, ClientMetrics
 from vibesensor.vibration_strength import VibrationStrengthMetrics
 
@@ -77,6 +78,7 @@ class MetricsSnapshot:
     ingest_generation: int
     time_window: FloatArray
     fft_block: FloatArray | None
+    analysis_time_range: AnalysisTimeRange | None = None
     buffer_epoch: int = 0
 
 
@@ -92,4 +94,5 @@ class MetricsComputationResult:
     strength_metrics: VibrationStrengthMetrics
     has_fft_data: bool
     duration_s: float
+    analysis_time_range: AnalysisTimeRange | None = None
     buffer_epoch: int = 0

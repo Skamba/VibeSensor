@@ -95,6 +95,7 @@ class SampleFlushOrchestrator:
         t_s: float,
         timestamp_utc: str,
         live_sample_window_s: float | None = _LIVE_SAMPLE_WINDOW_S,
+        run_start_mono_s: float | None = None,
     ) -> list[SensorFrame]:
         analysis_settings_snapshot = self._analysis_settings_snapshot()
         speed_resolution = self._gps_monitor.resolve_speed()
@@ -116,6 +117,7 @@ class SampleFlushOrchestrator:
             default_sample_rate_hz=self._default_sample_rate_hz,
             sensor_metadata_reader=self._sensor_metadata_reader,
             live_sample_window_s=live_sample_window_s,
+            run_start_mono_s=run_start_mono_s,
         )
 
     def build_live_sample_records(
@@ -130,6 +132,7 @@ class SampleFlushOrchestrator:
             run_id=run_id,
             t_s=live_t_s,
             timestamp_utc=timestamp_utc,
+            run_start_mono_s=live_start_mono_s,
         )
 
     def pending_flush_snapshot(self) -> ActiveRunSnapshot | None:
@@ -173,6 +176,7 @@ class SampleFlushOrchestrator:
                 run_id=run_id,
                 t_s=t_s,
                 timestamp_utc=current_timestamp,
+                run_start_mono_s=run_start_mono_s,
             )
             if refresh_metrics and (
                 not rows or not any(row.vibration_strength_db is not None for row in rows)
@@ -185,6 +189,7 @@ class SampleFlushOrchestrator:
                     t_s=t_s,
                     timestamp_utc=current_timestamp,
                     live_sample_window_s=None,
+                    run_start_mono_s=run_start_mono_s,
                 )
 
         if (

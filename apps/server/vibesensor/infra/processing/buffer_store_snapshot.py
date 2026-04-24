@@ -5,6 +5,7 @@ from collections.abc import Iterable
 
 from vibesensor.infra.processing.buffer_mutations import ClientBufferMutator
 from vibesensor.infra.processing.buffer_registry import ClientBufferRegistry
+from vibesensor.infra.processing.buffers import ClientBuffer
 from vibesensor.infra.processing.models import (
     CachedMetricsHit,
     ClientMetrics,
@@ -13,6 +14,8 @@ from vibesensor.infra.processing.models import (
     ProcessorConfig,
 )
 from vibesensor.infra.processing.snapshot_builder import check_cache_hit, compute_snapshot_window
+from vibesensor.infra.processing.time_align import analysis_time_range
+from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 
 
 class BufferStoreSnapshotReader:
@@ -81,6 +84,7 @@ class BufferStoreSnapshotReader:
                 buffer_epoch=buf.buffer_epoch,
                 time_window=time_window,
                 fft_block=fft_block,
+                analysis_time_range=self._analysis_time_range(buf, sample_rate_hz=sr),
             )
 
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:
@@ -101,6 +105,12 @@ class BufferStoreSnapshotReader:
             rate = int(buf.sample_rate_hz or 0)
             return rate if rate > 0 else None
 
+    def latest_analysis_time_range(self, client_id: str) -> AnalysisTimeRange | None:
+        with self._registry.locked_client_buffer(client_id) as buf:
+            if buf is None:
+                return None
+            return buf.latest_analysis_time_range
+
     def latest_metrics(self, client_id: str) -> ClientMetrics:
         with self._registry.locked_client_buffer(client_id) as buf:
             if buf is None:
@@ -115,6 +125,26 @@ class BufferStoreSnapshotReader:
                 if buf is not None and buf.latest_metrics:
                     result[cid] = buf.latest_metrics
             return result
+
+    def _analysis_time_range(
+        self,
+        buf: ClientBuffer,
+        *,
+        sample_rate_hz: int,
+    ) -> AnalysisTimeRange | None:
+        time_range = analysis_time_range(
+            count=buf.count,
+            last_ingest_mono_s=buf.last_ingest_mono_s,
+            sample_rate_hz=sample_rate_hz,
+            waveform_seconds=self._config.waveform_seconds,
+            capacity=buf.capacity,
+            last_t0_us=buf.last_t0_us,
+            samples_since_t0=buf.samples_since_t0,
+        )
+        if time_range is None:
+            return None
+        start_s, end_s, synced = time_range
+        return AnalysisTimeRange(start_s=start_s, end_s=end_s, synced=synced)
 
     def clients_with_recent_data(
         self,

@@ -6,6 +6,7 @@ from collections.abc import AsyncIterator
 from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSourceKind
+from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.car_config import CarConfigUpdatePayload, CarsSnapshot
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
@@ -291,6 +292,8 @@ class SignalSource(Protocol):
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None: ...
 
     def latest_sample_rate_hz(self, client_id: str) -> int | None: ...
+
+    def latest_analysis_time_range(self, client_id: str) -> AnalysisTimeRange | None: ...
 
 
 class TrackedClient(Protocol):
