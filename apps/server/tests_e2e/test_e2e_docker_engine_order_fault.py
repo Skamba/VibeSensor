@@ -8,7 +8,11 @@ import time
 
 import pytest
 
-from tests_e2e._docker_edge_helpers import _cleanup_clients, _cleanup_run
+from tests_e2e._docker_edge_helpers import (
+    _cleanup_clients,
+    _cleanup_run,
+    _prepare_simulator_locations,
+)
 from tests_e2e.e2e_helpers import (
     api_bytes,
     api_json,
@@ -31,6 +35,13 @@ def test_e2e_docker_engine_order_fault() -> None:
     sim_data_port = os.environ["VIBESENSOR_SIM_DATA_PORT"]
     sim_control_port = os.environ["VIBESENSOR_SIM_CONTROL_PORT"]
     sim_duration = os.environ["VIBESENSOR_SIM_DURATION"]
+    e2e_env = {
+        "base_url": base_url,
+        "sim_host": sim_host,
+        "sim_data_port": sim_data_port,
+        "sim_control_port": sim_control_port,
+        "sim_duration": sim_duration,
+    }
     run_id: str | None = None
     _cleanup_clients(base_url)
     wait_for(
@@ -40,6 +51,7 @@ def test_e2e_docker_engine_order_fault() -> None:
         message="simulator clients did not quiesce before engine-order E2E run",
     )
     time.sleep(2.5)
+    _prepare_simulator_locations(e2e_env)
     try:
         api_json(
             base_url,
@@ -100,8 +112,8 @@ def test_e2e_docker_engine_order_fault() -> None:
         report_text = pdf_text(pdf_resp.body)
         assert "what to do next" in report_text
         assert "recapture before acting" in report_text
-        assert re.search(r"most likely source\s+insufficient evidence", report_text)
-        assert not re.search(r"most likely source\s+wheel / tire", report_text)
+        assert re.search(r"(?:most\s+)?likely source\s+insufficient evidence", report_text)
+        assert not re.search(r"(?:most\s+)?likely source\s+wheel / tire", report_text)
     finally:
         cleanup_steps = [
             ("stop recording", lambda: api_json(base_url, "/api/recording/stop", method="POST")),
