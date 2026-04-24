@@ -39,6 +39,17 @@ from .analysis_settings import AnalysisSettingsSnapshot
 from .capture_readiness import CaptureReadiness, CaptureReadinessCheck, CaptureReadinessPolicy
 from .car import Car, CarSnapshot
 from .confidence_assessment import ConfidenceAssessment
+from .diagnosis_assessment import (
+    DIAGNOSIS_AMBIGUOUS_SCORE_GAP,
+    DIAGNOSIS_CLOSE_ALTERNATIVE_REEVALUATION_GAP,
+    DiagnosisAssessment,
+    DiagnosisAssessmentFactor,
+    DiagnosisAssessmentFactorDetails,
+    DiagnosisAssessmentInputs,
+    apply_diagnosis_assessment_fallback,
+    diagnosis_assessment_from_components,
+    score_diagnosis_assessment_inputs,
+)
 from .diagnostic_case import DiagnosticCase, Symptom
 from .driving_phase_summary import DrivingPhaseSummary
 from .driving_segment import DrivingPhase, DrivingPhaseInterval, DrivingPhaseSegment, DrivingSegment
@@ -95,6 +106,10 @@ __all__ = [
     "VibrationReading",
     # Value objects — findings and diagnostics
     "ConfidenceAssessment",
+    "DiagnosisAssessment",
+    "DiagnosisAssessmentFactor",
+    "DiagnosisAssessmentFactorDetails",
+    "DiagnosisAssessmentInputs",
     "Finding",
     "FindingEvidence",
     "FindingKind",
@@ -128,11 +143,16 @@ __all__ = [
     "TestPlan",
     # Functions
     "RUN_TRANSITIONS",
+    "DIAGNOSIS_AMBIGUOUS_SCORE_GAP",
+    "DIAGNOSIS_CLOSE_ALTERNATIVE_REEVALUATION_GAP",
+    "apply_diagnosis_assessment_fallback",
     "coerce_float",
     "coerce_int",
+    "diagnosis_assessment_from_components",
     "is_run_deletable",
     "normalize_sensor_id",
     "plan_test_actions",
+    "score_diagnosis_assessment_inputs",
     "speed_band_sort_key",
     "speed_bin_label",
     "transition_run",
