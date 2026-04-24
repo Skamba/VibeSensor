@@ -23,7 +23,7 @@ __all__ = [
 
 type OpenAPIResponses = dict[int | str, dict[str, Any]]
 _CAR_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
-_RUN_ID_RE = re.compile(r"^[!-~]{1,128}$")
+_RUN_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 
 
 def normalize_client_id_or_400(client_id: str) -> str:
@@ -36,7 +36,7 @@ def normalize_client_id_or_400(client_id: str) -> str:
 
 def normalize_run_id_or_400(run_id: str) -> str:
     """Validate a history run identifier or raise HTTP 400."""
-    if _RUN_ID_RE.fullmatch(run_id):
+    if _RUN_ID_RE.fullmatch(run_id) and ".." not in run_id:
         return run_id
     raise HTTPException(status_code=400, detail="Invalid run identifier")
 
