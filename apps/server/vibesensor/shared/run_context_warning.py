@@ -17,6 +17,7 @@ WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE = "raw_replay_coverage_incomplete"
 WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK = "raw_replay_legacy_fallback"
 WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS = "raw_replay_dropped_chunks"
 WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK = "raw_replay_timing_fallback"
+WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED = "raw_replay_sync_unverified"
 WarningSeverity = Literal["warn", "error"]
 
 

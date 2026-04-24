@@ -30,6 +30,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
     RawCaptureManifest,
+    RawCaptureSensorClockSync,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
@@ -160,6 +161,7 @@ class _HistoryDBRunLifecycleMixin:
         run_id: str,
         *,
         run_start_monotonic_us: int | None = None,
+        sensor_clock_sync: Mapping[str, RawCaptureSensorClockSync] | None = None,
         sensor_losses: Mapping[str, RawCaptureLossStats] | None = None,
     ) -> RawCaptureManifest | None:
         manifest = cast(
@@ -168,6 +170,7 @@ class _HistoryDBRunLifecycleMixin:
                 self._raw_capture_store.finalize_run,
                 run_id,
                 run_start_monotonic_us=run_start_monotonic_us,
+                sensor_clock_sync=sensor_clock_sync,
                 sensor_losses=sensor_losses,
             ),
         )

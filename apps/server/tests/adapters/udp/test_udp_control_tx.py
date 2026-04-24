@@ -208,6 +208,7 @@ def test_broadcast_sync_clock_rolls_ack_timestamps_into_next_sync_payload(
     assert record is not None
     assert record.sync_offset_us == 5_000
     assert record.sync_rtt_us == 4_000
+    assert record.last_sync_monotonic_us == 1_004_500
 
     current_mono[0] = 2.0
     assert plane.broadcast_sync_clock() == 1

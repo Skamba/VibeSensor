@@ -17,10 +17,15 @@ from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
     WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,
+    WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED,
     WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
     RunContextWarning,
 )
-from vibesensor.shared.types.raw_capture import RawCaptureSensorData, RawRunCapture
+from vibesensor.shared.types.raw_capture import (
+    RawCaptureSensorClockSync,
+    RawCaptureSensorData,
+    RawRunCapture,
+)
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -66,6 +71,10 @@ class RawReplaySummary:
     timing_fallback_count: int
     sample_rate_mismatch_count: int
     unanchored_sensor_count: int
+    legacy_sensor_count: int
+    sync_unverified_sensor_count: int
+    stale_sync_sensor_count: int
+    high_rtt_sensor_count: int
     replay_confidence: RawReplayConfidence
     raw_capture_mode: str
     warnings: tuple[RunContextWarning, ...] = ()
@@ -106,6 +115,8 @@ class _SensorTimeline:
     overlap_intervals: tuple[_TimelineInterval, ...]
     run_start_monotonic_us: int | None
     anchored: bool
+    anchor_reason: str | None
+    clock_sync: RawCaptureSensorClockSync | None = None
 
     @property
     def timing_tolerance_us(self) -> float:
@@ -153,6 +164,10 @@ def build_raw_backed_samples(
                 timing_fallback_count=0,
                 sample_rate_mismatch_count=0,
                 unanchored_sensor_count=0,
+                legacy_sensor_count=0,
+                sync_unverified_sensor_count=0,
+                stale_sync_sensor_count=0,
+                high_rtt_sensor_count=0,
                 replay_confidence="unavailable",
                 raw_capture_mode="summary_only",
             ),
@@ -187,6 +202,10 @@ def build_raw_backed_samples(
                 timing_fallback_count=0,
                 sample_rate_mismatch_count=0,
                 unanchored_sensor_count=0,
+                legacy_sensor_count=0,
+                sync_unverified_sensor_count=0,
+                stale_sync_sensor_count=0,
+                high_rtt_sensor_count=0,
                 replay_confidence="fallback",
                 raw_capture_mode="summary_only",
             ),
@@ -243,6 +262,20 @@ def build_raw_backed_samples(
     gap_count = sum(len(timeline.gap_intervals) for timeline in timelines.values())
     overlap_count = sum(len(timeline.overlap_intervals) for timeline in timelines.values())
     unanchored_sensor_count = sum(1 for timeline in timelines.values() if not timeline.anchored)
+    legacy_sensor_count = sum(1 for timeline in timelines.values() if _timeline_is_legacy(timeline))
+    sync_unverified_sensor_count = sum(
+        1 for timeline in timelines.values() if _timeline_has_unverified_sync(timeline)
+    )
+    stale_sync_sensor_count = sum(
+        1
+        for timeline in timelines.values()
+        if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "stale_sync"
+    )
+    high_rtt_sensor_count = sum(
+        1
+        for timeline in timelines.values()
+        if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "high_rtt"
+    )
     dropped_chunk_count = raw_capture.manifest.total_dropped_chunk_count
     queue_overflow_chunk_count = raw_capture.manifest.losses.queue_overflow_chunk_count
     invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
@@ -257,6 +290,7 @@ def build_raw_backed_samples(
         dropped_chunk_count=dropped_chunk_count,
         sample_rate_mismatch_count=sample_rate_mismatch_count,
         unanchored_sensor_count=unanchored_sensor_count,
+        sync_unverified_sensor_count=sync_unverified_sensor_count,
     )
     raw_capture_mode = (
         "summary_only"
@@ -281,6 +315,10 @@ def build_raw_backed_samples(
             timing_fallback_count=timing_fallback_count,
             sample_rate_mismatch_count=sample_rate_mismatch_count,
             unanchored_sensor_count=unanchored_sensor_count,
+            legacy_sensor_count=legacy_sensor_count,
+            sync_unverified_sensor_count=sync_unverified_sensor_count,
+            stale_sync_sensor_count=stale_sync_sensor_count,
+            high_rtt_sensor_count=high_rtt_sensor_count,
             replay_confidence=replay_confidence,
             raw_capture_mode=raw_capture_mode,
             warnings=_build_replay_warnings(
@@ -295,7 +333,11 @@ def build_raw_backed_samples(
                 invalid_chunk_count=invalid_chunk_count,
                 write_error_chunk_count=write_error_chunk_count,
                 sample_rate_mismatch_count=sample_rate_mismatch_count,
+                legacy_sensor_count=legacy_sensor_count,
                 unanchored_sensor_count=unanchored_sensor_count,
+                sync_unverified_sensor_count=sync_unverified_sensor_count,
+                stale_sync_sensor_count=stale_sync_sensor_count,
+                high_rtt_sensor_count=high_rtt_sensor_count,
             ),
         ),
         window_coverages=tuple(coverages),
@@ -437,6 +479,7 @@ def _build_sensor_timeline(raw_capture: RawRunCapture, *, sensor_id: str) -> _Se
             overlap_intervals=(),
             run_start_monotonic_us=None,
             anchored=False,
+            anchor_reason="sensor_missing",
         )
     sample_rate_hz = int(sensor_data.manifest.sample_rate_hz or 0)
     sample_period_us = 1_000_000.0 / float(sample_rate_hz) if sample_rate_hz > 0 else 0.0
@@ -460,6 +503,8 @@ def _build_sensor_timeline(raw_capture: RawRunCapture, *, sensor_id: str) -> _Se
             overlap_intervals=(),
             run_start_monotonic_us=raw_capture.manifest.run_start_monotonic_us,
             anchored=False,
+            anchor_reason="raw_chunks_missing",
+            clock_sync=sensor_data.manifest.clock_sync,
         )
     gap_intervals: list[_TimelineInterval] = []
     overlap_intervals: list[_TimelineInterval] = []
@@ -488,7 +533,16 @@ def _build_sensor_timeline(raw_capture: RawRunCapture, *, sensor_id: str) -> _Se
         gap_intervals=tuple(gap_intervals),
         overlap_intervals=tuple(overlap_intervals),
         run_start_monotonic_us=raw_capture.manifest.run_start_monotonic_us,
-        anchored=raw_capture.manifest.run_start_monotonic_us is not None,
+        anchored=(
+            raw_capture.manifest.run_start_monotonic_us is not None
+            and sensor_data.manifest.clock_sync is not None
+            and sensor_data.manifest.clock_sync.verified
+        ),
+        anchor_reason=_anchor_reason(
+            run_start_monotonic_us=raw_capture.manifest.run_start_monotonic_us,
+            clock_sync=sensor_data.manifest.clock_sync,
+        ),
+        clock_sync=sensor_data.manifest.clock_sync,
     )
 
 
@@ -499,7 +553,10 @@ def _resolve_window(
     fft_n: int,
 ) -> _ResolvedWindow:
     if not timeline.anchored:
-        return _ResolvedWindow(coverage_state="missing", reason="legacy_anchor_missing")
+        return _ResolvedWindow(
+            coverage_state="missing",
+            reason=timeline.anchor_reason or "legacy_anchor_missing",
+        )
     if not timeline.chunks or timeline.sample_period_us <= 0:
         return _ResolvedWindow(coverage_state="missing", reason="raw_chunks_missing")
     requested_end_us, timing_source = _requested_end_us(timeline=timeline, sample=sample)
@@ -650,6 +707,7 @@ def _replay_confidence(
     overlap_count: int,
     dropped_chunk_count: int,
     sample_rate_mismatch_count: int,
+    sync_unverified_sensor_count: int,
     unanchored_sensor_count: int,
 ) -> RawReplayConfidence:
     if replay_window_count <= 0:
@@ -664,6 +722,7 @@ def _replay_confidence(
         and overlap_count <= 0
         and dropped_chunk_count <= 0
         and sample_rate_mismatch_count <= 0
+        and sync_unverified_sensor_count <= 0
         and unanchored_sensor_count <= 0
     ):
         return "full"
@@ -683,9 +742,13 @@ def _build_replay_warnings(
     invalid_chunk_count: int,
     write_error_chunk_count: int,
     sample_rate_mismatch_count: int,
+    legacy_sensor_count: int,
     unanchored_sensor_count: int,
+    sync_unverified_sensor_count: int,
+    stale_sync_sensor_count: int,
+    high_rtt_sensor_count: int,
 ) -> tuple[RunContextWarning, ...]:
-    if unanchored_sensor_count > 0 and raw_backed_sample_count <= 0:
+    if legacy_sensor_count > 0 and raw_backed_sample_count <= 0:
         return (
             RunContextWarning(
                 code=WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,
@@ -696,6 +759,38 @@ def _build_replay_warnings(
             ),
         )
     warnings: list[RunContextWarning] = []
+    if legacy_sensor_count > 0:
+        warnings.append(
+            RunContextWarning(
+                code=WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,
+                severity="warn",
+                applies_to="raw_replay",
+                title=i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_LEGACY_TITLE"),
+                detail=i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_LEGACY_DETAIL"),
+            )
+        )
+    if sync_unverified_sensor_count > 0:
+        missing_sync_sensor_count = max(
+            0,
+            sync_unverified_sensor_count
+            - max(0, stale_sync_sensor_count)
+            - max(0, high_rtt_sensor_count),
+        )
+        warnings.append(
+            RunContextWarning(
+                code=WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED,
+                severity="warn",
+                applies_to="raw_replay",
+                title=i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_SYNC_UNVERIFIED_TITLE"),
+                detail=i18n_ref(
+                    "RUN_CONTEXT_WARNING_RAW_REPLAY_SYNC_UNVERIFIED_DETAIL",
+                    sensors=str(max(0, sync_unverified_sensor_count)),
+                    missing_sync=str(missing_sync_sensor_count),
+                    stale=str(max(0, stale_sync_sensor_count)),
+                    high_rtt=str(max(0, high_rtt_sensor_count)),
+                ),
+            )
+        )
     if timing_fallback_count > 0:
         warnings.append(
             RunContextWarning(
@@ -750,6 +845,30 @@ def _build_replay_warnings(
         )
     )
     return tuple(warnings)
+
+
+def _anchor_reason(
+    *,
+    run_start_monotonic_us: int | None,
+    clock_sync: RawCaptureSensorClockSync | None,
+) -> str:
+    if run_start_monotonic_us is None or clock_sync is None:
+        return "legacy_anchor_missing"
+    if clock_sync.proof_state == "verified":
+        return "anchor_verified"
+    return f"clock_sync_{clock_sync.proof_state}"
+
+
+def _timeline_is_legacy(timeline: _SensorTimeline) -> bool:
+    return timeline.run_start_monotonic_us is None or timeline.clock_sync is None
+
+
+def _timeline_has_unverified_sync(timeline: _SensorTimeline) -> bool:
+    return (
+        timeline.clock_sync is not None
+        and not timeline.clock_sync.verified
+        and timeline.run_start_monotonic_us is not None
+    )
 
 
 def _compute_strength_metrics(
