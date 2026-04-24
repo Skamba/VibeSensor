@@ -29,7 +29,6 @@ class PostAnalysisRunInput:
     raw_backed_sample_count: int
     raw_replay: RawReplaySummary
     raw_replay_window_coverages: tuple[RawReplayWindowCoverage, ...] = field(default_factory=tuple)
-    summary_samples: tuple[Sample, ...] = field(default_factory=tuple)
     context_samples: tuple[Sample, ...] = field(default_factory=tuple)
 
     @property
@@ -67,7 +66,6 @@ def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunI
         raw_backed_sample_count=replay_result.summary.raw_backed_sample_count,
         raw_replay=replay_result.summary,
         raw_replay_window_coverages=replay_result.window_coverages,
-        summary_samples=tuple(loaded.samples),
         context_samples=(
             tuple(loaded.context_samples) if loaded.context_samples is not None else tuple()
         ),
