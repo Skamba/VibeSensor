@@ -8,7 +8,11 @@ import time
 from dataclasses import dataclass
 from math import floor
 
-from tests_e2e._docker_edge_helpers import _cleanup_clients, _cleanup_run
+from tests_e2e._docker_edge_helpers import (
+    _cleanup_clients,
+    _cleanup_run,
+    _prepare_simulator_locations,
+)
 from tests_e2e.e2e_helpers import (
     api_bytes,
     api_json,
@@ -48,6 +52,7 @@ def run_localized_wheel_fault_capture(
         message="simulator clients did not quiesce before wheel-fault E2E run",
     )
     time.sleep(2.5)
+    _prepare_simulator_locations(e2e_env)
 
     api_json(
         base_url,
@@ -134,10 +139,10 @@ def assert_localized_wheel_fault_report(
     report_text = pdf_text(artifacts.pdf_bytes)
     report_text_normalized = normalize_location(report_text)
     assert "what to do next" in report_text
-    assert re.search(r"most likely source\s+wheel / tire", report_text)
+    assert re.search(r"(?:most\s+)?likely source\s+wheel / tire", report_text)
     assert expected_location in report_text_normalized
-    assert not re.search(r"most likely source\s+driveline", report_text)
-    assert not re.search(r"most likely source\s+engine", report_text)
+    assert not re.search(r"(?:most\s+)?likely source\s+driveline", report_text)
+    assert not re.search(r"(?:most\s+)?likely source\s+engine", report_text)
     _validate_pdf_report(artifacts.pdf_bytes, primary_finding)
 
 
