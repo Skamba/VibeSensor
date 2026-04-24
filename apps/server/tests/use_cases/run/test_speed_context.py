@@ -7,8 +7,12 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
-from vibesensor.use_cases.run.sample_speed_context import resolve_speed_context
+from vibesensor.use_cases.run.sample_speed_context import (
+    resolve_speed_context,
+    resolve_speed_context_snapshot,
+)
 
 
 def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
@@ -89,6 +93,14 @@ class TestResolveSpeedContext:
         assert speed_kmh == pytest.approx(72.0, rel=0.01)
         assert source == "manual"
 
+    def test_fallback_manual_override_preserves_distinct_source(self) -> None:
+        logger, gps_mock = _make_run_recorder()
+        gps_mock.override_speed_mps = 20.0
+        gps_mock.resolve_speed.return_value = MagicMock(source="fallback_manual", speed_mps=20.0)
+        speed_kmh, _, source, _, _ = self._resolve_from_logger(logger)
+        assert speed_kmh == pytest.approx(72.0, rel=0.01)
+        assert source == "fallback_manual"
+
     def test_no_gear_ratio_skips_rpm(self) -> None:
         logger, gps_mock = _make_run_recorder()
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=15.0)
@@ -124,3 +136,33 @@ class TestResolveSpeedContext:
         assert speed == pytest.approx(36.0, rel=0.01)
         assert rpm == 1234.5
         assert rpm_source == "estimated_from_speed_and_ratios"
+
+
+def test_resolve_speed_context_snapshot_preserves_fallback_manual_source() -> None:
+    snapshot = AlignedSpeedContextSnapshot(
+        selected_speed_source="gps",
+        resolved_speed_mps=20.0,
+        resolved_speed_source="fallback_manual",
+        resolved_speed_aligned=True,
+        gps_speed_mps=None,
+        gps_speed_aligned=False,
+        measured_engine_rpm=None,
+        measured_engine_rpm_source=None,
+        measured_engine_rpm_aligned=False,
+    )
+
+    context = resolve_speed_context_snapshot(
+        snapshot=snapshot,
+        analysis_settings_snapshot=AnalysisSettingsSnapshot(
+            tire_width_mm=205,
+            tire_aspect_pct=55,
+            rim_in=16,
+            final_drive_ratio=3.73,
+            current_gear_ratio=1.0,
+        ),
+    )
+
+    assert context.speed_kmh == pytest.approx(72.0, rel=0.01)
+    assert context.speed_source == "fallback_manual"
+    assert context.engine_rpm is not None and context.engine_rpm > 0.0
+    assert context.engine_rpm_source == "estimated_from_speed_and_ratios"

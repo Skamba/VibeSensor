@@ -121,6 +121,39 @@ def test_normalize_whole_run_context_labels_marks_stale_context_explicitly() -> 
     assert label.load_state == "unknown"
 
 
+def test_normalize_whole_run_context_labels_marks_fallback_manual_as_stale_provenance() -> None:
+    metadata = _metadata()
+    window_plan = plan_whole_run_windows(metadata=metadata, total_sample_count=2048)
+    samples = sensor_frames_from_mappings(
+        [
+            {
+                "t_s": 1.28,
+                "client_id": "sensor-a",
+                "speed_kmh": 30.0,
+                "speed_source": "fallback_manual",
+                "gear": 0.64,
+                "final_drive_ratio": 3.08,
+            }
+        ]
+    )
+
+    label = normalize_whole_run_context_labels(
+        metadata=metadata,
+        samples=samples,
+        window_plan=window_plan,
+    )[0]
+
+    assert label.context_coverage == "partial"
+    assert label.speed_validity == "assumed"
+    assert label.rpm_validity == "estimated"
+    assert label.speed_source == "fallback_manual"
+    assert label.speed_is_stale is True
+    assert label.rpm_is_stale is True
+    assert label.speed_band is None
+    assert label.phase == DrivingPhase.SPEED_UNKNOWN
+    assert label.load_state == "unknown"
+
+
 def test_normalize_whole_run_context_labels_keeps_missing_windows_explicit() -> None:
     metadata = _metadata()
     window_plan = plan_whole_run_windows(metadata=metadata, total_sample_count=2048)
