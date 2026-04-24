@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 
 from opentelemetry.trace import SpanKind
 
@@ -120,6 +121,15 @@ class HistoryReportRequestLoader:
             sort_keys=True,
         )
 
+    @staticmethod
+    def _analysis_cache_token(analysis: object) -> str:
+        if hasattr(analysis, "to_json_object"):
+            analysis_payload = analysis.to_json_object()
+        else:
+            analysis_payload = analysis
+        encoded = json_text_dumps(analysis_payload, sort_keys=True).encode("utf-8")
+        return sha256(encoded).hexdigest()
+
     def _report_pdf_cache_key(
         self,
         run: StoredHistoryRun,
@@ -132,6 +142,7 @@ class HistoryReportRequestLoader:
             run.analysis_completed_at,
             run.sample_count,
             self._metadata_cache_token(run.metadata),
+            self._analysis_cache_token(run.analysis),
             _PERSISTED_REPORT_MODE_TOKEN,
         )
 
