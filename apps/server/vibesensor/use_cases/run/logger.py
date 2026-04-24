@@ -45,7 +45,10 @@ from vibesensor.use_cases.run.persistence_writer import (
 )
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
-from vibesensor.use_cases.run.raw_capture_writer import RunRawCaptureWriter
+from vibesensor.use_cases.run.raw_capture_writer import (
+    RawCaptureFinalizeResult,
+    RunRawCaptureWriter,
+)
 from vibesensor.use_cases.run.run_context import build_run_context_snapshot
 from vibesensor.use_cases.run.run_sensor_snapshot import (
     build_run_sensor_snapshot,
@@ -406,12 +409,11 @@ class RunRecorder:
                             baseline=self._run_ingest_drop_baseline,
                         )
                         if run_id:
-                            manifest = self._raw_capture.finalize_run(
+                            finalize_result = self._raw_capture.finalize_run(
                                 run_id,
                                 sensor_losses=ingest_drop_losses,
                             )
-                            if manifest is not None:
-                                self._finalized_raw_capture_manifests[run_id] = manifest
+                            self._record_raw_capture_finalize_result(run_id, finalize_result)
                         if run_id and not self._persistence.finalize_run(
                             run_id,
                             start_time_utc,
@@ -513,12 +515,11 @@ class RunRecorder:
                         baseline=self._run_ingest_drop_baseline,
                     )
                     if run_id:
-                        manifest = self._raw_capture.finalize_run(
+                        finalize_result = self._raw_capture.finalize_run(
                             run_id,
                             sensor_losses=ingest_drop_losses,
                         )
-                        if manifest is not None:
-                            self._finalized_raw_capture_manifests[run_id] = manifest
+                        self._record_raw_capture_finalize_result(run_id, finalize_result)
                     if run_id and not self._persistence.finalize_run(
                         run_id,
                         start_time_utc,
@@ -589,6 +590,26 @@ class RunRecorder:
 
     def shutdown_raw_capture(self, timeout_s: float = 5.0) -> bool:
         return self._raw_capture.shutdown(timeout_s)
+
+    def _record_raw_capture_finalize_result(
+        self,
+        run_id: str,
+        result: RawCaptureFinalizeResult,
+    ) -> None:
+        if result.manifest is not None:
+            self._finalized_raw_capture_manifests[run_id] = result.manifest
+        if result.completed or result.status == "not_configured":
+            return
+        LOGGER.warning(
+            "raw_capture_finalize_degraded",
+            extra=log_extra(
+                event="raw_capture_finalize_degraded",
+                run_id=run_id,
+                raw_capture_finalize_status=result.status,
+                raw_capture_queue_depth=result.queue_depth,
+                raw_capture_error=result.error,
+            ),
+        )
 
     async def run(self) -> None:
         await _recorder_runtime.run_loop(self, logger=LOGGER)
