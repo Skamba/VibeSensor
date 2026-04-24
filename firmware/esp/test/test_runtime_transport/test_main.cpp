@@ -56,6 +56,7 @@ void copy_client_id(uint8_t out[vibesensor::kClientIdBytes],
 void setUp() {
   arduino_test::reset_time();
   WiFi.reset();
+  ESP.setEfuseMac(0xD05A00000001ULL);
 }
 
 void test_service_tx_tracks_send_failures_and_retries_after_backoff() {
@@ -135,9 +136,62 @@ void test_service_control_rx_handles_handshake_identify_and_sync_clock() {
                                 fixture::kSyncClockAckPacket.size());
 }
 
+void test_service_tx_drops_stale_and_retry_exhausted_frames() {
+  DataFrame frames[1] = {};
+  FrameQueueState queue_state = make_queue_state(frames, 1);
+  RuntimeStatus status{};
+  TransportState transport{};
+  copy_client_id(transport.client_id, fixture::kCommandClientId);
+  transport.handshake_complete = true;
+  WiFi.setStatus(WL_CONNECTED);
+
+  arduino_test::set_millis(1000);
+  append_full_frame(queue_state, status, 10, 1000, 0);
+  DataFrame* frame = vibesensor::runtime::peek_frame(queue_state);
+  TEST_ASSERT_NOT_NULL(frame);
+  frame->queued_ms = 1000U - vibesensor::runtime::kDataMaxFrameAgeMs;
+
+  vibesensor::runtime::service_tx(transport, queue_state, status);
+  TEST_ASSERT_EQUAL_UINT32(1, status.tx_stale_frame_drops);
+  TEST_ASSERT_EQUAL_UINT8(11, status.last_error_code);
+  TEST_ASSERT_NULL(vibesensor::runtime::peek_frame(queue_state));
+
+  append_full_frame(queue_state, status, 100, 2000, 0);
+  frame = vibesensor::runtime::peek_frame(queue_state);
+  TEST_ASSERT_NOT_NULL(frame);
+  frame->transmitted = true;
+  frame->queued_ms = 1000;
+  frame->first_tx_ms = 1000;
+  frame->last_tx_ms = 1000;
+  frame->tx_attempts = static_cast<uint8_t>(vibesensor::runtime::kDataMaxRetransmits + 1U);
+  arduino_test::set_millis(1000 + vibesensor::runtime::kDataRetransmitIntervalMs);
+
+  vibesensor::runtime::service_tx(transport, queue_state, status);
+  TEST_ASSERT_EQUAL_UINT32(1, status.tx_retransmit_limit_drops);
+  TEST_ASSERT_EQUAL_UINT8(12, status.last_error_code);
+  TEST_ASSERT_NULL(vibesensor::runtime::peek_frame(queue_state));
+}
+
+void test_initialize_transport_uses_efuse_fallback_client_id_when_wifi_mac_is_invalid() {
+  TransportState transport{};
+  WiFi.setMacAddress("not-a-mac");
+  ESP.setEfuseMac(0x112233445566ULL);
+
+  vibesensor::runtime::initialize_transport(transport);
+
+  const uint8_t expected_client_id[vibesensor::kClientIdBytes] = {
+      0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+  TEST_ASSERT_EQUAL_UINT8_ARRAY(expected_client_id, transport.client_id, vibesensor::kClientIdBytes);
+  TEST_ASSERT_EQUAL_UINT16(
+      vibesensor::runtime::kControlPortBase + 2U,
+      transport.control_port);
+}
+
 int main(int argc, char** argv) {
   UNITY_BEGIN();
   RUN_TEST(test_service_tx_tracks_send_failures_and_retries_after_backoff);
   RUN_TEST(test_service_control_rx_handles_handshake_identify_and_sync_clock);
+  RUN_TEST(test_service_tx_drops_stale_and_retry_exhausted_frames);
+  RUN_TEST(test_initialize_transport_uses_efuse_fallback_client_id_when_wifi_mac_is_invalid);
   return UNITY_END();
 }

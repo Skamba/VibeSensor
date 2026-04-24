@@ -35,6 +35,9 @@ void enqueue_frame(FrameQueueState& state,
   frame.t0_us = static_cast<uint64_t>(static_cast<int64_t>(state.build_t0_us) + clock_offset_us);
   frame.sample_count = state.build_count;
   frame.transmitted = false;
+  frame.tx_attempts = 0;
+  frame.queued_ms = millis();
+  frame.first_tx_ms = 0;
   frame.last_tx_ms = 0;
   memcpy(frame.xyz,
          state.build_xyz,

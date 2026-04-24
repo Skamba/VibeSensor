@@ -1,5 +1,6 @@
 #include "runtime_transport.h"
 
+#include <Esp.h>
 #include <WiFi.h>
 #include <esp_timer.h>
 #include <string.h>
@@ -10,6 +11,28 @@
 
 namespace vibesensor::runtime {
 namespace {
+
+constexpr uint8_t kTransportErrorStaleFrameDrop = 11;
+constexpr uint8_t kTransportErrorRetransmitLimitDrop = 12;
+
+void derive_fallback_client_id(uint8_t client_id[vibesensor::kClientIdBytes]) {
+  uint64_t fallback_id = ESP.getEfuseMac();
+  if (fallback_id == 0ULL) {
+    fallback_id = (static_cast<uint64_t>(esp_random()) << 32) | esp_random();
+    fallback_id &= 0x0000FFFFFFFFFFFFULL;
+    fallback_id |= 0x020000000000ULL;
+  }
+  for (size_t i = 0; i < vibesensor::kClientIdBytes; ++i) {
+    client_id[vibesensor::kClientIdBytes - 1U - i] =
+        static_cast<uint8_t>(fallback_id & 0xFFU);
+    fallback_id >>= 8U;
+  }
+}
+
+uint32_t frame_age_ms(const DataFrame& frame, uint32_t now_ms) {
+  const uint32_t reference_ms = frame.first_tx_ms != 0 ? frame.first_tx_ms : frame.queued_ms;
+  return now_ms - reference_ms;
+}
 
 bool send_control_packet(TransportState& state,
                          RuntimeStatus& status,
@@ -66,8 +89,7 @@ void send_sync_clock_ack(TransportState& state,
 void initialize_transport(TransportState& state) {
   String mac = WiFi.macAddress();
   if (!vibesensor::parse_mac(mac, state.client_id)) {
-    const uint8_t fallback[vibesensor::kClientIdBytes] = {0xD0, 0x5A, 0x00, 0x00, 0x00, 0x01};
-    memcpy(state.client_id, fallback, sizeof(state.client_id));
+    derive_fallback_client_id(state.client_id);
   }
   state.control_port =
       static_cast<uint16_t>(kControlPortBase + (state.client_id[5] % 100));
@@ -126,9 +148,21 @@ void service_tx(TransportState& state,
     }
 
     uint32_t now_ms = millis();
+    if (frame_age_ms(*frame, now_ms) >= kDataMaxFrameAgeMs) {
+      status.tx_stale_frame_drops++;
+      set_last_error(status, kTransportErrorStaleFrameDrop);
+      drop_front_frame(queue_state);
+      continue;
+    }
     if (frame->transmitted &&
         (now_ms - frame->last_tx_ms) < kDataRetransmitIntervalMs) {
       return;
+    }
+    if (frame->tx_attempts >= static_cast<uint8_t>(kDataMaxRetransmits + 1U)) {
+      status.tx_retransmit_limit_drops++;
+      set_last_error(status, kTransportErrorRetransmitLimitDrop);
+      drop_front_frame(queue_state);
+      continue;
     }
 
     size_t len = vibesensor::pack_data(packet,
@@ -156,7 +190,11 @@ void service_tx(TransportState& state,
       set_last_error(status, 7);
       break;
     }
+    if (frame->tx_attempts == 0) {
+      frame->first_tx_ms = now_ms;
+    }
     frame->transmitted = true;
+    frame->tx_attempts++;
     frame->last_tx_ms = now_ms;
   }
 }
