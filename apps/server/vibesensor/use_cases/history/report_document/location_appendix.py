@@ -66,7 +66,7 @@ def build_appendix_b_data(
             p95_db=row.p95_intensity_db,
             coverage_state=(
                 tr("REPORT_COVERAGE_STATE_PARTIAL")
-                if row.partial_coverage or row.sample_coverage_warning
+                if row.partial_coverage or row.diagnostic_sample_coverage_warning
                 else tr("REPORT_COVERAGE_STATE_COMPLETE")
             ),
         )

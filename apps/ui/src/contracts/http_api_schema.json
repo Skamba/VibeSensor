@@ -4310,6 +4310,39 @@
           },
           "strength_bucket_distribution": {
             "$ref": "#/components/schemas/StrengthBucketDistributionResponse"
+          },
+          "usable_sample_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usable Sample Count"
+          },
+          "usable_sample_coverage_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usable Sample Coverage Ratio"
+          },
+          "usable_sample_coverage_warning": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usable Sample Coverage Warning"
           }
         },
         "required": [
