@@ -11,11 +11,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from vibesensor.infra.processing.fft import float_list
 from vibesensor.infra.processing.models import (
     SpectrumAxisData,
 )
 from vibesensor.infra.processing.time_align import compute_overlap
+from vibesensor.shared.fft_analysis import float_list
 from vibesensor.shared.types.payload_types import (
     AlignmentInfoPayload,
     FrequencyWarningPayload,

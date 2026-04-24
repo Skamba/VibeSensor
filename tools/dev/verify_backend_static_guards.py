@@ -267,6 +267,34 @@ def _check_strength_metric_definition_is_centralized() -> list[str]:
     return failures
 
 
+def _check_fft_analysis_is_centralized() -> list[str]:
+    canonical = VIBESENSOR_DIR / "shared" / "fft_analysis.py"
+    legacy_wrapper = VIBESENSOR_DIR / "infra" / "processing" / "fft.py"
+    failures: list[str] = []
+    if legacy_wrapper.exists():
+        failures.append(
+            "apps/server/vibesensor/infra/processing/fft.py must stay removed; use vibesensor.shared.fft_analysis directly"
+        )
+    patterns = {
+        "np.fft": "numpy.fft",
+        "np.hanning(": "np.hanning",
+        "scipy.fft": "scipy.fft",
+        "scipy_fft.": "scipy_fft",
+        "signal_windows.hann(": "signal_windows.hann",
+        "pyfftw.": "pyfftw",
+    }
+    for path in _python_files(VIBESENSOR_DIR):
+        if path == canonical:
+            continue
+        for lineno, line in enumerate(_read_text(path).splitlines(), start=1):
+            for needle, label in patterns.items():
+                if needle in line:
+                    failures.append(
+                        f"{path.relative_to(REPO_ROOT)}:{lineno}: FFT implementation details must stay in shared/fft_analysis.py; import shared helpers instead of {label}"
+                    )
+    return failures
+
+
 def _check_server_has_no_local_vibration_strength_module() -> list[str]:
     path = VIBESENSOR_DIR / "use_cases" / "diagnostics" / "vibration_strength.py"
     if path.exists():
@@ -2071,6 +2099,7 @@ CHECKS: tuple[Check, ...] = (
         "Strength metric math stays centralized",
         _check_strength_metric_definition_is_centralized,
     ),
+    ("FFT analysis stays centralized", _check_fft_analysis_is_centralized),
     (
         "No local diagnostics vibration_strength module exists",
         _check_server_has_no_local_vibration_strength_module,

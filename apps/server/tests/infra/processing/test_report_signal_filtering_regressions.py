@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from vibesensor.infra.processing import SignalProcessor
-from vibesensor.infra.processing.fft import medfilt3
+from vibesensor.shared.fft_analysis import medfilt3
 
 
 def _make_processor(**overrides) -> SignalProcessor:

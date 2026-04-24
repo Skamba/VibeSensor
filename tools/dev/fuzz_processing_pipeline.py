@@ -606,7 +606,7 @@ def _run_fft_target(config: FuzzConfig, *, duration_s: float) -> dict[str, objec
     from hypothesis import strategies as st
     from pydantic import TypeAdapter
 
-    from vibesensor.infra.processing.fft import compute_fft_spectrum
+    from vibesensor.shared.fft_analysis import compute_fft_spectrum
     from vibesensor.shared.types.payload_types import AxisPeak
     from vibesensor.vibration_strength import VibrationStrengthMetrics
 
