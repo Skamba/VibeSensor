@@ -230,12 +230,25 @@ def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: ArrayLike) -> float:
     return _noise_floor_amp_p20_g_aligned(combined_spectrum_amp_g=band)
 
 
-def _noise_floor_amp_p20_g_aligned(*, combined_spectrum_amp_g: npt.NDArray[np.float64]) -> float:
+def _spectrum_includes_dc_bin_aligned(*, freq_hz: npt.NDArray[np.float64] | None) -> bool:
+    if freq_hz is None or freq_hz.size == 0:
+        return True
+    first_hz = float(freq_hz[0])
+    return isfinite(first_hz) and abs(first_hz) <= 1e-12
+
+
+def _noise_floor_amp_p20_g_aligned(
+    *,
+    combined_spectrum_amp_g: npt.NDArray[np.float64],
+    freq_hz: npt.NDArray[np.float64] | None = None,
+) -> float:
     band = combined_spectrum_amp_g
-    if band.size <= 1:
-        # Empty spectrum or DC-only: no frequency content to estimate noise from.
+    noise_bins = band[1:] if _spectrum_includes_dc_bin_aligned(freq_hz=freq_hz) else band
+    if noise_bins.size == 0:
+        # Empty spectrum, DC-only, or DC removed before slicing: no usable
+        # frequency content remains to estimate the noise floor from.
         return 0.0
-    return _quantile_or_zero(band[1:], 0.20)
+    return _quantile_or_zero(noise_bins, 0.20)
 
 
 def strength_floor_amp_g(
@@ -528,7 +541,10 @@ def compute_vibration_strength_db(
 
     freq = freq_arr[:n]
     combined = np.where(np.isfinite(combined_arr[:n]), np.maximum(combined_arr[:n], 0.0), 0.0)
-    floor_p20 = _noise_floor_amp_p20_g_aligned(combined_spectrum_amp_g=combined)
+    floor_p20 = _noise_floor_amp_p20_g_aligned(
+        combined_spectrum_amp_g=combined,
+        freq_hz=freq,
+    )
     threshold = max(
         floor_p20 * PEAK_THRESHOLD_FLOOR_RATIO,
         floor_p20 + STRENGTH_EPSILON_MIN_G,
