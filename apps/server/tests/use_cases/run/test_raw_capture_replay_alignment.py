@@ -282,6 +282,65 @@ def test_build_post_analysis_input_replays_each_sensor_on_its_own_timeline() -> 
     assert 45.0 <= float(by_sensor["sensor-b"].dominant_freq_hz) <= 60.0
 
 
+def test_build_post_analysis_input_replays_out_of_order_chunks_from_chunk_offsets() -> None:
+    raw_start_offset_us = 100_000
+    early_chunk = _wave(28.0, _FFT_N)
+    late_chunk = _wave(92.0, _FFT_N)
+    raw_capture = _raw_capture(
+        "run-out-of-order",
+        sensors=[
+            (
+                "sensor-a",
+                [
+                    (_RUN_START_MONOTONIC_US + raw_start_offset_us + 80_000, late_chunk),
+                    (_RUN_START_MONOTONIC_US + raw_start_offset_us, early_chunk),
+                ],
+            )
+        ],
+    )
+    expected_window = np.vstack([early_chunk[16:], late_chunk[:16]])
+    expected = _shared_strength_metrics(expected_window)
+    loaded = LoadedPostAnalysisRun(
+        run_id="run-out-of-order",
+        metadata=_metadata("run-out-of-order"),
+        language="en",
+        samples=sensor_frames_from_mappings(
+            [
+                {
+                    "client_id": "sensor-a",
+                    "t_s": 0.2,
+                    "analysis_window_end_us": _analysis_window_end_us(
+                        raw_start_offset_us=raw_start_offset_us,
+                        sample_end=80,
+                    ),
+                    "sample_rate_hz": _SAMPLE_RATE_HZ,
+                    "vibration_strength_db": 0.0,
+                    "dominant_freq_hz": 0.0,
+                }
+            ]
+        ),
+        raw_capture=raw_capture,
+        total_sample_count=1,
+        stride=1,
+    )
+
+    result = build_post_analysis_input(loaded)
+
+    rebuilt = result.samples[0]
+    assert result.raw_backed_sample_count == 1
+    assert result.raw_replay.complete_window_count == 1
+    assert result.raw_replay.warnings == ()
+    assert rebuilt.dominant_freq_hz is not None
+    assert float(rebuilt.dominant_freq_hz) == pytest.approx(
+        float(expected["top_peaks"][0]["hz"]),
+        abs=0.5,
+    )
+    assert float(rebuilt.vibration_strength_db or 0.0) == pytest.approx(
+        float(expected["vibration_strength_db"] or 0.0),
+        abs=1e-6,
+    )
+
+
 def test_build_post_analysis_input_prefers_explicit_analysis_window_over_flush_time() -> None:
     raw_start_offset_us = 100_000
     aligned_window = _wave(32.0, _FFT_N)
