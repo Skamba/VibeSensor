@@ -13,7 +13,6 @@ namespace {
 using vibesensor::runtime::PendingSample;
 using vibesensor::runtime::SampleHandoffState;
 
-constexpr uint64_t kStepUs = 1000000ULL / vibesensor::runtime::kSampleRateHz;
 constexpr uint64_t kRunDurationUs = 12000000ULL;
 constexpr uint64_t kStatusSpikeIntervalUs = 10000000ULL;
 constexpr uint32_t kPreLoopWorkUs = 120;
@@ -45,9 +44,15 @@ struct ProducerState {
   size_t last_refill_request = 0;
   size_t last_refill_count = 0;
   bool recent_refill_shortfall = false;
-  uint64_t next_due_us = kStepUs;
+  vibesensor::reliability::SamplingIntervalSchedule due_schedule =
+      vibesensor::reliability::make_sampling_interval_schedule(vibesensor::runtime::kSampleRateHz);
+  uint64_t next_due_us = 0;
   uint64_t producer_now_us = 0;
 };
+
+void initialize_schedule(ProducerState& state) {
+  state.next_due_us = vibesensor::reliability::sampling_schedule_advance_us(state.due_schedule);
+}
 
 void update_refill_metrics(SimulationMetrics& metrics, size_t refill_count) {
   if (refill_count == 0) {
@@ -142,14 +147,15 @@ void produce_due_slots(ProducerState& state,
 
     metrics.samples_produced++;
     state.producer_now_us += kProduceSampleCostUs;
-    state.next_due_us += kStepUs;
+    state.next_due_us += vibesensor::reliability::sampling_schedule_advance_us(state.due_schedule);
     produced++;
   }
 
   const size_t missed_slots = due_slots - produced;
   if (missed_slots > 0) {
     metrics.missed_samples += missed_slots;
-    state.next_due_us += static_cast<uint64_t>(missed_slots) * kStepUs;
+    state.next_due_us +=
+        vibesensor::reliability::sampling_schedule_advance_us(state.due_schedule, missed_slots);
   }
   metrics.handoff_overflow_drops = state.handoff.overflow_drops;
 }
@@ -164,7 +170,7 @@ void advance_dedicated_producer_to(uint64_t wall_time_us,
     const size_t due_slots = static_cast<size_t>(vibesensor::reliability::sampling_slots_due(
         state.producer_now_us,
         state.next_due_us,
-        kStepUs));
+        state.due_schedule));
     produce_due_slots(state, due_slots, true, metrics);
   }
 }
@@ -178,6 +184,7 @@ void drain_handoff(ProducerState& state, SimulationMetrics& metrics) {
 
 SimulationMetrics run_cooperative_simulation() {
   ProducerState state{};
+  initialize_schedule(state);
   SimulationMetrics metrics{};
   uint64_t loop_now_us = 0;
   uint64_t next_status_spike_us = kStatusSpikeIntervalUs;
@@ -190,7 +197,7 @@ SimulationMetrics run_cooperative_simulation() {
       const size_t due_slots = static_cast<size_t>(vibesensor::reliability::sampling_slots_due(
           state.producer_now_us,
           state.next_due_us,
-          kStepUs));
+          state.due_schedule));
       produce_due_slots(state, due_slots, false, metrics);
       loop_now_us = state.producer_now_us;
     }
@@ -209,6 +216,7 @@ SimulationMetrics run_cooperative_simulation() {
 
 SimulationMetrics run_dedicated_simulation() {
   ProducerState state{};
+  initialize_schedule(state);
   SimulationMetrics metrics{};
   uint64_t loop_now_us = 0;
   uint64_t next_status_spike_us = kStatusSpikeIntervalUs;

@@ -19,6 +19,38 @@ constexpr uint16_t clamp_sample_rate(uint16_t configured_hz,
              : (configured_hz > max_hz ? max_hz : configured_hz);
 }
 
+struct SamplingIntervalSchedule {
+  uint32_t sample_rate_hz = 0;
+  uint64_t base_interval_us = 0;
+  uint32_t remainder_us = 0;
+  uint32_t accumulated_remainder_us = 0;
+};
+
+inline SamplingIntervalSchedule make_sampling_interval_schedule(uint32_t sample_rate_hz) {
+  SamplingIntervalSchedule schedule{};
+  schedule.sample_rate_hz = sample_rate_hz;
+  if (sample_rate_hz == 0U) {
+    return schedule;
+  }
+  schedule.base_interval_us = 1000000ULL / sample_rate_hz;
+  schedule.remainder_us = static_cast<uint32_t>(1000000ULL % sample_rate_hz);
+  return schedule;
+}
+
+inline uint64_t sampling_schedule_advance_us(SamplingIntervalSchedule& schedule,
+                                             uint64_t slot_count = 1U) {
+  if (slot_count == 0U || schedule.sample_rate_hz == 0U) {
+    return 0;
+  }
+  const uint64_t total_remainder =
+      static_cast<uint64_t>(schedule.accumulated_remainder_us) +
+      (static_cast<uint64_t>(schedule.remainder_us) * slot_count);
+  const uint64_t carry_us = total_remainder / schedule.sample_rate_hz;
+  schedule.accumulated_remainder_us =
+      static_cast<uint32_t>(total_remainder % schedule.sample_rate_hz);
+  return (schedule.base_interval_us * slot_count) + carry_us;
+}
+
 inline uint64_t sampling_slots_due(uint64_t now_us,
                                    uint64_t next_due_us,
                                    uint64_t step_us) {
@@ -26,6 +58,21 @@ inline uint64_t sampling_slots_due(uint64_t now_us,
     return 0;
   }
   return ((now_us - next_due_us) / step_us) + 1;
+}
+
+inline uint64_t sampling_slots_due(uint64_t now_us,
+                                   uint64_t next_due_us,
+                                   SamplingIntervalSchedule schedule) {
+  if (schedule.sample_rate_hz == 0U || next_due_us == 0U || now_us < next_due_us) {
+    return 0;
+  }
+  uint64_t due_slots = 1;
+  uint64_t candidate_due_us = next_due_us + sampling_schedule_advance_us(schedule);
+  while (candidate_due_us <= now_us) {
+    due_slots++;
+    candidate_due_us += sampling_schedule_advance_us(schedule);
+  }
+  return due_slots;
 }
 
 enum class SensorFailureClass : uint8_t {
