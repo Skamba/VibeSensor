@@ -186,6 +186,7 @@ class WholeRunSpectralCoverageSummary:
     stale_sync_sensor_count: int
     high_rtt_sensor_count: int
     coverage_confidence: WholeRunCoverageConfidence
+    udp_ingest_queue_drop_count: int = 0
     warnings: tuple[RunContextWarning, ...] = ()
 
 
@@ -247,6 +248,7 @@ def build_whole_run_spectral_artifact_bundle(
             stale_sync_sensor_count=0,
             high_rtt_sensor_count=0,
             coverage_confidence="unavailable",
+            udp_ingest_queue_drop_count=0,
         )
         return WholeRunSpectralBuildResult(bundle=None, coverage_summary=coverage_summary)
     timelines = {
@@ -802,6 +804,7 @@ def _build_coverage_summary(
         if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "high_rtt"
     )
     dropped_chunk_count = raw_capture.manifest.total_dropped_chunk_count
+    udp_ingest_queue_drop_count = raw_capture.manifest.losses.udp_ingest_queue_drop_count
     queue_overflow_chunk_count = raw_capture.manifest.losses.queue_overflow_chunk_count
     invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
     write_error_chunk_count = raw_capture.manifest.losses.write_error_chunk_count
@@ -825,6 +828,7 @@ def _build_coverage_summary(
         gap_count=gap_count,
         overlap_count=overlap_count,
         dropped_chunk_count=dropped_chunk_count,
+        udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
         queue_overflow_chunk_count=queue_overflow_chunk_count,
         invalid_chunk_count=invalid_chunk_count,
         write_error_chunk_count=write_error_chunk_count,
@@ -844,6 +848,7 @@ def _build_coverage_summary(
         gap_count=gap_count,
         overlap_count=overlap_count,
         dropped_chunk_count=dropped_chunk_count,
+        udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
         queue_overflow_chunk_count=queue_overflow_chunk_count,
         invalid_chunk_count=invalid_chunk_count,
         write_error_chunk_count=write_error_chunk_count,
@@ -897,6 +902,7 @@ def _build_whole_run_warnings(
     gap_count: int,
     overlap_count: int,
     dropped_chunk_count: int,
+    udp_ingest_queue_drop_count: int,
     queue_overflow_chunk_count: int,
     invalid_chunk_count: int,
     write_error_chunk_count: int,
@@ -944,6 +950,7 @@ def _build_whole_run_warnings(
                 gaps=str(max(0, gap_count)),
                 overlaps=str(max(0, overlap_count)),
                 dropped=str(max(0, dropped_chunk_count)),
+                udp_ingest=str(max(0, udp_ingest_queue_drop_count)),
                 queue_overflow=str(max(0, queue_overflow_chunk_count)),
                 invalid=str(max(0, invalid_chunk_count)),
                 write_errors=str(max(0, write_error_chunk_count)),

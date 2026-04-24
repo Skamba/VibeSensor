@@ -7,7 +7,7 @@ import threading
 import numpy as np
 import pytest
 
-from vibesensor.shared.types.raw_capture import RawCaptureSensorClockSync
+from vibesensor.shared.types.raw_capture import RawCaptureLossStats, RawCaptureSensorClockSync
 from vibesensor.use_cases.run.raw_capture_writer import RunRawCaptureWriter
 
 
@@ -101,11 +101,15 @@ def test_raw_capture_writer_persists_queue_invalid_and_write_failures(
     )
 
     history_db.allow_first_write.set()
-    writer.finalize_run("run-losses")
+    writer.finalize_run(
+        "run-losses",
+        sensor_losses={"sensor-d": RawCaptureLossStats(udp_ingest_queue_drop_count=2)},
+    )
 
     assert history_db.finalized_sensor_losses is not None
     assert history_db.finalized_sensor_losses["sensor-a"].queue_overflow_chunk_count == 1
     assert history_db.finalized_sensor_losses["sensor-b"].write_error_chunk_count == 1
     assert history_db.finalized_sensor_losses["sensor-c"].invalid_chunk_count == 1
+    assert history_db.finalized_sensor_losses["sensor-d"].udp_ingest_queue_drop_count == 2
 
     assert writer.shutdown()
