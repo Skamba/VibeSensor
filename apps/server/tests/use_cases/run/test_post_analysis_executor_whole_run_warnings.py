@@ -104,6 +104,7 @@ def test_execute_post_analysis_appends_whole_run_alignment_warning_and_metadata(
                             gaps="1",
                             overlaps="0",
                             dropped="2",
+                            udp_ingest="0",
                             queue_overflow="2",
                             invalid="0",
                             write_errors="0",

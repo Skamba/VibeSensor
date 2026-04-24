@@ -80,6 +80,7 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "raw_replay_gap_count": run.raw_replay.gap_count,
         "raw_replay_overlap_count": run.raw_replay.overlap_count,
         "raw_replay_dropped_chunk_count": run.raw_replay.dropped_chunk_count,
+        "raw_replay_udp_ingest_queue_drop_count": run.raw_replay.udp_ingest_queue_drop_count,
         "raw_replay_queue_overflow_chunk_count": run.raw_replay.queue_overflow_chunk_count,
         "raw_replay_invalid_chunk_count": run.raw_replay.invalid_chunk_count,
         "raw_replay_write_error_chunk_count": run.raw_replay.write_error_chunk_count,

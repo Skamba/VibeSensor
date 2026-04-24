@@ -133,6 +133,7 @@ def test_build_post_analysis_input_replays_raw_backed_strength_metrics() -> None
 def test_build_post_analysis_input_surfaces_persisted_dropped_chunk_counts() -> None:
     raw_capture = _raw_capture("run-drops")
     loss_stats = RawCaptureLossStats(
+        udp_ingest_queue_drop_count=1,
         queue_overflow_chunk_count=2,
         invalid_chunk_count=1,
     )
@@ -167,7 +168,8 @@ def test_build_post_analysis_input_surfaces_persisted_dropped_chunk_counts() -> 
     result = build_post_analysis_input(loaded)
 
     assert result.raw_backed_sample_count == 1
-    assert result.raw_replay.dropped_chunk_count == 3
+    assert result.raw_replay.dropped_chunk_count == 4
+    assert result.raw_replay.udp_ingest_queue_drop_count == 1
     assert result.raw_replay.queue_overflow_chunk_count == 2
     assert result.raw_replay.invalid_chunk_count == 1
     assert result.raw_replay.write_error_chunk_count == 0
