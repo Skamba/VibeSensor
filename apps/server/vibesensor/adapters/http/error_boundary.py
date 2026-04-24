@@ -28,6 +28,8 @@ __all__ = [
     "route_errors_to_http",
 ]
 
+_UNEXPECTED_ROUTE_ERROR_DETAIL = "Internal Server Error"
+
 
 def http_status_for_operational_error(exc: OperationalError) -> int:
     """Return the HTTP status code for one operational failure."""
@@ -120,3 +122,9 @@ def route_errors_to_http() -> Iterator[None]:
         raise http_exception_for_vibesensor_error(exc) from exc
     except OperationalError as exc:
         raise http_exception_for_operational_error(exc) from exc
+    except HTTPException:
+        raise
+    except ValueError:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=_UNEXPECTED_ROUTE_ERROR_DETAIL) from exc
