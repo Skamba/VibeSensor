@@ -23,7 +23,11 @@ from vibesensor.shared.ports import (
 from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.tracing import mark_span_error, start_span
-from vibesensor.shared.types.raw_capture import RawCaptureClockProofState, RawCaptureSensorClockSync
+from vibesensor.shared.types.raw_capture import (
+    RawCaptureClockProofState,
+    RawCaptureLossStats,
+    RawCaptureSensorClockSync,
+)
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
 from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
 from vibesensor.use_cases.run.lifecycle_state import RunLifecycleState
@@ -151,6 +155,7 @@ class RunRecorder:
 
         with self._lock:
             self._persistence.reset()
+        self._run_ingest_drop_baseline: dict[str, int] | None = None
 
     @property
     def enabled(self) -> bool:
@@ -227,6 +232,7 @@ class RunRecorder:
             snapshot.run_id,
             run_start_monotonic_us=int(round(snapshot.start_mono_s * 1_000_000.0)),
         )
+        self._run_ingest_drop_baseline = _snapshot_server_queue_drops(self.registry)
         return snapshot
 
     def capture_raw_samples(
@@ -336,8 +342,15 @@ class RunRecorder:
                         start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
                         end_time_utc = utc_now_iso()
                         persistence_snapshot = self._persistence.status_snapshot()
+                        ingest_drop_losses = _udp_ingest_drop_sensor_losses(
+                            self.registry,
+                            baseline=self._run_ingest_drop_baseline,
+                        )
                         if run_id:
-                            self._raw_capture.finalize_run(run_id)
+                            self._raw_capture.finalize_run(
+                                run_id,
+                                sensor_losses=ingest_drop_losses,
+                            )
                         if run_id and not self._persistence.finalize_run(
                             run_id,
                             start_time_utc,
@@ -434,8 +447,15 @@ class RunRecorder:
                     start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
                     end_time_utc = utc_now_iso()
                     persistence_snapshot = self._persistence.status_snapshot()
+                    ingest_drop_losses = _udp_ingest_drop_sensor_losses(
+                        self.registry,
+                        baseline=self._run_ingest_drop_baseline,
+                    )
                     if run_id:
-                        self._raw_capture.finalize_run(run_id)
+                        self._raw_capture.finalize_run(
+                            run_id,
+                            sensor_losses=ingest_drop_losses,
+                        )
                     if run_id and not self._persistence.finalize_run(
                         run_id,
                         start_time_utc,
@@ -458,6 +478,7 @@ class RunRecorder:
                     self._lifecycle.stop()
                     self._active_run_context = None
                     self._persistence.reset()
+                    self._run_ingest_drop_baseline = None
                     result = self.status()
             except Exception as exc:
                 mark_span_error(span, exc)
@@ -569,3 +590,40 @@ def _raw_capture_clock_proof_state(
 def _int_attr(value: object, name: str) -> int | None:
     raw_value = getattr(value, name, None)
     return int(raw_value) if isinstance(raw_value, int) else None
+
+
+def _snapshot_server_queue_drops(registry: ClientTracker) -> dict[str, int]:
+    client_ids: set[str] = set()
+    client_snapshots = getattr(registry, "client_snapshots", None)
+    if callable(client_snapshots):
+        for client_snapshot in client_snapshots():
+            client_id = str(getattr(client_snapshot, "client_id", "") or "").strip()
+            if client_id:
+                client_ids.add(client_id)
+    else:
+        client_ids.update(str(client_id) for client_id in registry.active_client_ids())
+    queue_drop_snapshot: dict[str, int] = {}
+    for client_id in sorted(client_ids):
+        record = registry.get(client_id)
+        if record is None:
+            continue
+        queue_drop_snapshot[client_id] = _int_attr(record, "server_queue_drops") or 0
+    return queue_drop_snapshot
+
+
+def _udp_ingest_drop_sensor_losses(
+    registry: ClientTracker,
+    *,
+    baseline: dict[str, int] | None,
+) -> dict[str, RawCaptureLossStats] | None:
+    current = _snapshot_server_queue_drops(registry)
+    client_ids = set(current) | set(baseline or {})
+    if not client_ids:
+        return None
+    losses: dict[str, RawCaptureLossStats] = {}
+    for client_id in sorted(client_ids):
+        delta = max(0, current.get(client_id, 0) - (baseline or {}).get(client_id, 0))
+        if delta <= 0:
+            continue
+        losses[client_id] = RawCaptureLossStats(udp_ingest_queue_drop_count=delta)
+    return losses or None

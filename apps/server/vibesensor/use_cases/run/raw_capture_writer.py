@@ -39,6 +39,7 @@ class _FinalizeRequest:
     run_start_monotonic_us: int | None = None
     sensor_clock_sync: Mapping[str, RawCaptureSensorClockSync] | None = None
     sensor_losses: _RunCaptureStats | None = None
+    extra_sensor_losses: Mapping[str, RawCaptureLossStats] | None = None
     done: threading.Event = field(default_factory=threading.Event)
     manifest: RawCaptureManifest | None = None
     error: BaseException | None = None
@@ -204,7 +205,12 @@ class RunRawCaptureWriter:
                 client_id,
             )
 
-    def finalize_run(self, run_id: str) -> RawCaptureManifest | None:
+    def finalize_run(
+        self,
+        run_id: str,
+        *,
+        sensor_losses: Mapping[str, RawCaptureLossStats] | None = None,
+    ) -> RawCaptureManifest | None:
         if self._history_db is None or self._thread is None:
             return None
         with self._lock:
@@ -228,6 +234,7 @@ class RunRawCaptureWriter:
             run_start_monotonic_us=run_start_monotonic_us,
             sensor_clock_sync=sensor_clock_sync,
             sensor_losses=run_stats,
+            extra_sensor_losses=sensor_losses,
         )
         self._queue.put(request)
         request.done.wait()
@@ -265,10 +272,11 @@ class RunRawCaptureWriter:
                                     item.run_id,
                                     run_start_monotonic_us=item.run_start_monotonic_us,
                                     sensor_clock_sync=item.sensor_clock_sync,
-                                    sensor_losses=(
+                                    sensor_losses=_merge_sensor_losses(
                                         item.sensor_losses.freeze()
                                         if item.sensor_losses is not None
-                                        else None
+                                        else None,
+                                        item.extra_sensor_losses,
                                     ),
                                 ),
                             ),
@@ -297,3 +305,23 @@ class RunRawCaptureWriter:
                     )
             finally:
                 self._queue.task_done()
+
+
+def _merge_sensor_losses(
+    primary: Mapping[str, RawCaptureLossStats] | None,
+    secondary: Mapping[str, RawCaptureLossStats] | None,
+) -> dict[str, RawCaptureLossStats] | None:
+    if not primary and not secondary:
+        return None
+    merged: dict[str, RawCaptureLossStats] = {}
+    client_ids = set(primary or ()) | set(secondary or ())
+    for client_id in sorted(client_ids):
+        losses = RawCaptureLossStats()
+        if primary is not None:
+            losses = losses.merged(primary.get(client_id, RawCaptureLossStats()))
+        if secondary is not None:
+            losses = losses.merged(secondary.get(client_id, RawCaptureLossStats()))
+        if losses.total_dropped_chunk_count <= 0:
+            continue
+        merged[client_id] = losses
+    return merged or None

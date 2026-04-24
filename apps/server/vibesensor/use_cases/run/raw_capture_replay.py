@@ -81,6 +81,7 @@ class RawReplaySummary:
     high_rtt_sensor_count: int
     replay_confidence: RawReplayConfidence
     raw_capture_mode: str
+    udp_ingest_queue_drop_count: int = 0
     warnings: tuple[RunContextWarning, ...] = ()
 
 
@@ -134,6 +135,7 @@ def build_raw_backed_samples(
                 high_rtt_sensor_count=0,
                 replay_confidence="unavailable",
                 raw_capture_mode="summary_only",
+                udp_ingest_queue_drop_count=0,
             ),
             window_coverages=tuple(
                 RawReplayWindowCoverage(
@@ -172,6 +174,7 @@ def build_raw_backed_samples(
                 high_rtt_sensor_count=0,
                 replay_confidence="fallback",
                 raw_capture_mode="summary_only",
+                udp_ingest_queue_drop_count=0,
             ),
             window_coverages=tuple(
                 RawReplayWindowCoverage(
@@ -241,6 +244,7 @@ def build_raw_backed_samples(
         if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "high_rtt"
     )
     dropped_chunk_count = raw_capture.manifest.total_dropped_chunk_count
+    udp_ingest_queue_drop_count = raw_capture.manifest.losses.udp_ingest_queue_drop_count
     queue_overflow_chunk_count = raw_capture.manifest.losses.queue_overflow_chunk_count
     invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
     write_error_chunk_count = raw_capture.manifest.losses.write_error_chunk_count
@@ -285,6 +289,7 @@ def build_raw_backed_samples(
             high_rtt_sensor_count=high_rtt_sensor_count,
             replay_confidence=replay_confidence,
             raw_capture_mode=raw_capture_mode,
+            udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
             warnings=_build_replay_warnings(
                 raw_backed_sample_count=raw_backed_count,
                 timing_fallback_count=timing_fallback_count,
@@ -293,6 +298,7 @@ def build_raw_backed_samples(
                 gap_count=gap_count,
                 overlap_count=overlap_count,
                 dropped_chunk_count=dropped_chunk_count,
+                udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
                 queue_overflow_chunk_count=queue_overflow_chunk_count,
                 invalid_chunk_count=invalid_chunk_count,
                 write_error_chunk_count=write_error_chunk_count,
@@ -524,6 +530,7 @@ def _build_replay_warnings(
     gap_count: int,
     overlap_count: int,
     dropped_chunk_count: int,
+    udp_ingest_queue_drop_count: int,
     queue_overflow_chunk_count: int,
     invalid_chunk_count: int,
     write_error_chunk_count: int,
@@ -600,6 +607,7 @@ def _build_replay_warnings(
                 detail=i18n_ref(
                     "RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_DETAIL",
                     count=str(max(0, dropped_chunk_count)),
+                    udp_ingest=str(max(0, udp_ingest_queue_drop_count)),
                     queue_overflow=str(max(0, queue_overflow_chunk_count)),
                     invalid=str(max(0, invalid_chunk_count)),
                     write_errors=str(max(0, write_error_chunk_count)),

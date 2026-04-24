@@ -35,7 +35,7 @@ type RawCaptureClockProofState = Literal[
     "missing_registry_record",
 ]
 
-_RAW_CAPTURE_SCHEMA_VERSION = 4
+_RAW_CAPTURE_SCHEMA_VERSION = 5
 _RAW_CAPTURE_STORAGE_TYPE = "run-directory-v1"
 _RAW_CAPTURE_MODE = "full_run"
 
@@ -82,6 +82,7 @@ class RawCaptureChunkIndex:
 class RawCaptureLossStats:
     """Structured counts for raw chunks lost before persistence."""
 
+    udp_ingest_queue_drop_count: int = 0
     queue_overflow_chunk_count: int = 0
     invalid_chunk_count: int = 0
     write_error_chunk_count: int = 0
@@ -89,13 +90,15 @@ class RawCaptureLossStats:
     @property
     def total_dropped_chunk_count(self) -> int:
         return (
-            max(0, self.queue_overflow_chunk_count)
+            max(0, self.udp_ingest_queue_drop_count)
+            + max(0, self.queue_overflow_chunk_count)
             + max(0, self.invalid_chunk_count)
             + max(0, self.write_error_chunk_count)
         )
 
     def to_json_object(self) -> JsonObject:
         return {
+            "udp_ingest_queue_drop_count": self.udp_ingest_queue_drop_count,
             "queue_overflow_chunk_count": self.queue_overflow_chunk_count,
             "invalid_chunk_count": self.invalid_chunk_count,
             "write_error_chunk_count": self.write_error_chunk_count,
@@ -104,6 +107,7 @@ class RawCaptureLossStats:
     @classmethod
     def from_mapping(cls, data: JsonObject) -> RawCaptureLossStats:
         return cls(
+            udp_ingest_queue_drop_count=_int_from_json(data.get("udp_ingest_queue_drop_count")),
             queue_overflow_chunk_count=_int_from_json(data.get("queue_overflow_chunk_count")),
             invalid_chunk_count=_int_from_json(data.get("invalid_chunk_count")),
             write_error_chunk_count=_int_from_json(data.get("write_error_chunk_count")),
@@ -111,6 +115,9 @@ class RawCaptureLossStats:
 
     def merged(self, other: RawCaptureLossStats) -> RawCaptureLossStats:
         return RawCaptureLossStats(
+            udp_ingest_queue_drop_count=(
+                self.udp_ingest_queue_drop_count + other.udp_ingest_queue_drop_count
+            ),
             queue_overflow_chunk_count=(
                 self.queue_overflow_chunk_count + other.queue_overflow_chunk_count
             ),
