@@ -5,7 +5,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 from vibesensor.domain import DrivingPhase
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
-from vibesensor.shared.types.raw_capture import RawCaptureManifest
+from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
@@ -23,6 +23,10 @@ from vibesensor.use_cases.diagnostics.whole_run_context import (
 )
 from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
     WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY,
+)
+from vibesensor.use_cases.diagnostics.whole_run_spectra import (
+    WholeRunSpectralBuildResult,
+    WholeRunSpectralCoverageSummary,
 )
 from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
@@ -60,6 +64,36 @@ def _samples():
             },
         ]
     )
+
+
+def _spectral_result(bundle) -> WholeRunSpectralBuildResult:
+    return WholeRunSpectralBuildResult(
+        bundle=bundle,
+        coverage_summary=WholeRunSpectralCoverageSummary(
+            total_sensor_window_count=0,
+            full_sensor_window_count=0,
+            partial_sensor_window_count=0,
+            missing_sensor_window_count=0,
+            empty_sensor_window_count=0,
+            gap_count=0,
+            overlap_count=0,
+            dropped_chunk_count=0,
+            queue_overflow_chunk_count=0,
+            invalid_chunk_count=0,
+            write_error_chunk_count=0,
+            sample_rate_mismatch_sensor_count=0,
+            unanchored_sensor_count=0,
+            legacy_sensor_count=0,
+            sync_unverified_sensor_count=0,
+            stale_sync_sensor_count=0,
+            high_rtt_sensor_count=0,
+            coverage_confidence="unavailable",
+        ),
+    )
+
+
+def _empty_raw_capture(manifest: RawCaptureManifest) -> RawRunCapture:
+    return RawRunCapture(manifest=manifest, sensors=())
 
 
 def test_execute_post_analysis_persists_whole_run_spatial_coherence_sidecar_and_metadata() -> None:
@@ -218,33 +252,36 @@ def test_execute_post_analysis_persists_whole_run_spatial_coherence_sidecar_and_
             samples=_samples(),
             total_sample_count=2,
             stride=1,
+            raw_capture=_empty_raw_capture(raw_capture_manifest),
             raw_capture_manifest=raw_capture_manifest,
         ),
-        whole_run_artifact_builder=lambda **_kwargs: type(
-            "Bundle",
-            (),
-            {
-                "manifest": spectral_manifest,
-                "artifact_contents": {
-                    "spectral-summary:sensor-front": (
-                        b'{"window_index":0,"coverage_state":"full","returned_sample_start":0,'
-                        b'"returned_sample_count":256,"top_peaks":[{"hz":5.0,"amp":0.2,'
-                        b'"vibration_strength_db":31.0}]}\n'
-                        b'{"window_index":1,"coverage_state":"full","returned_sample_start":200,'
-                        b'"returned_sample_count":256,"top_peaks":[{"hz":6.0,"amp":0.2,'
-                        b'"vibration_strength_db":31.0}]}\n'
-                    ),
-                    "spectral-summary:sensor-rear": (
-                        b'{"window_index":0,"coverage_state":"full","returned_sample_start":0,'
-                        b'"returned_sample_count":256,"top_peaks":[{"hz":5.05,"amp":0.15,'
-                        b'"vibration_strength_db":29.0}]}\n'
-                        b'{"window_index":1,"coverage_state":"full","returned_sample_start":200,'
-                        b'"returned_sample_count":256,"top_peaks":[{"hz":6.05,"amp":0.15,'
-                        b'"vibration_strength_db":29.0}]}\n'
-                    ),
+        whole_run_artifact_builder=lambda **_kwargs: _spectral_result(
+            type(
+                "Bundle",
+                (),
+                {
+                    "manifest": spectral_manifest,
+                    "artifact_contents": {
+                        "spectral-summary:sensor-front": (
+                            b'{"window_index":0,"coverage_state":"full","returned_sample_start":0,'
+                            b'"returned_sample_count":256,"top_peaks":[{"hz":5.0,"amp":0.2,'
+                            b'"vibration_strength_db":31.0}]}\n'
+                            b'{"window_index":1,"coverage_state":"full","returned_sample_start":200,'
+                            b'"returned_sample_count":256,"top_peaks":[{"hz":6.0,"amp":0.2,'
+                            b'"vibration_strength_db":31.0}]}\n'
+                        ),
+                        "spectral-summary:sensor-rear": (
+                            b'{"window_index":0,"coverage_state":"full","returned_sample_start":0,'
+                            b'"returned_sample_count":256,"top_peaks":[{"hz":5.05,"amp":0.15,'
+                            b'"vibration_strength_db":29.0}]}\n'
+                            b'{"window_index":1,"coverage_state":"full","returned_sample_start":200,'
+                            b'"returned_sample_count":256,"top_peaks":[{"hz":6.05,"amp":0.15,'
+                            b'"vibration_strength_db":29.0}]}\n'
+                        ),
+                    },
                 },
-            },
-        )(),
+            )()
+        ),
         whole_run_context_builder=lambda **_kwargs: context_bundle,
         whole_run_order_trace_builder=lambda **_kwargs: order_trace_bundle,
         whole_run_order_trace_summary_builder=lambda **_kwargs: None,

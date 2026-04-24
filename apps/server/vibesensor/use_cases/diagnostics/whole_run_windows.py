@@ -16,6 +16,7 @@ type TrailingWindowPolicy = Literal["drop_incomplete_trailing"]
 __all__ = [
     "TrailingWindowPolicy",
     "WholeRunWindowPlan",
+    "plan_whole_run_window_range",
     "plan_whole_run_windows",
 ]
 
@@ -25,9 +26,14 @@ class WholeRunWindowPlan:
     """Deterministic whole-run window grid shared by later offline analysis stages."""
 
     policy: WholeRunWindowPolicy
-    total_sample_count: int
+    coverage_sample_start: int
+    coverage_sample_end: int
     windows: tuple[WholeRunWindowDescriptor, ...]
     trailing_window_policy: TrailingWindowPolicy = "drop_incomplete_trailing"
+
+    @property
+    def total_sample_count(self) -> int:
+        return max(0, self.coverage_sample_end - self.coverage_sample_start)
 
     @property
     def total_window_count(self) -> int:
@@ -54,7 +60,7 @@ class WholeRunWindowPlan:
         expected_end = self.expected_sensor_coverage_end
         if expected_end is None:
             return self.total_sample_count
-        return max(0, self.total_sample_count - expected_end)
+        return max(0, self.coverage_sample_end - expected_end)
 
     def window(self, window_index: int) -> WholeRunWindowDescriptor | None:
         if window_index < 0 or window_index >= len(self.windows):
@@ -71,14 +77,37 @@ def plan_whole_run_windows(
 
     if total_sample_count < 0:
         raise ValueError("whole-run window planner requires total_sample_count >= 0")
+    return plan_whole_run_window_range(
+        metadata=metadata,
+        coverage_sample_start=0,
+        coverage_sample_end=total_sample_count,
+    )
+
+
+def plan_whole_run_window_range(
+    *,
+    metadata: RunMetadata,
+    coverage_sample_start: int,
+    coverage_sample_end: int,
+) -> WholeRunWindowPlan:
+    """Return the canonical whole-run window grid for one shared sample-time range."""
+
+    if coverage_sample_start < 0:
+        raise ValueError("whole-run window planner requires coverage_sample_start >= 0")
+    if coverage_sample_end < coverage_sample_start:
+        raise ValueError(
+            "whole-run window planner requires coverage_sample_end >= coverage_sample_start"
+        )
     policy = WholeRunWindowPolicy.from_metadata(metadata)
-    if total_sample_count < policy.window_size_samples:
+    coverage_sample_count = coverage_sample_end - coverage_sample_start
+    if coverage_sample_count < policy.window_size_samples:
         return WholeRunWindowPlan(
             policy=policy,
-            total_sample_count=total_sample_count,
+            coverage_sample_start=coverage_sample_start,
+            coverage_sample_end=coverage_sample_end,
             windows=(),
         )
-    max_sample_start = total_sample_count - policy.window_size_samples
+    max_sample_start = coverage_sample_end - policy.window_size_samples
     windows = tuple(
         WholeRunWindowDescriptor.from_policy(
             window_index=window_index,
@@ -86,11 +115,12 @@ def plan_whole_run_windows(
             policy=policy,
         )
         for window_index, sample_start in enumerate(
-            range(0, max_sample_start + 1, policy.stride_samples)
+            range(coverage_sample_start, max_sample_start + 1, policy.stride_samples)
         )
     )
     return WholeRunWindowPlan(
         policy=policy,
-        total_sample_count=total_sample_count,
+        coverage_sample_start=coverage_sample_start,
+        coverage_sample_end=coverage_sample_end,
         windows=windows,
     )

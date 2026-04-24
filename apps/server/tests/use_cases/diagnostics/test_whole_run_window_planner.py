@@ -3,7 +3,10 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.use_cases.diagnostics.whole_run_windows import plan_whole_run_windows
+from vibesensor.use_cases.diagnostics.whole_run_windows import (
+    plan_whole_run_window_range,
+    plan_whole_run_windows,
+)
 
 
 def _metadata(
@@ -73,6 +76,29 @@ def test_window_planner_handles_exact_boundary_for_second_window() -> None:
     assert plan.dropped_trailing_samples == 0
 
 
+def test_window_planner_builds_offset_grid_from_sample_range() -> None:
+    plan = plan_whole_run_window_range(
+        metadata=_metadata(),
+        coverage_sample_start=400,
+        coverage_sample_end=3048,
+    )
+
+    assert [window.sample_start for window in plan.windows] == [400, 600, 800, 1000]
+    assert [window.sample_end for window in plan.windows] == [2448, 2648, 2848, 3048]
+    assert plan.expected_sensor_coverage_start == 400
+    assert plan.expected_sensor_coverage_end == 3048
+    assert plan.dropped_trailing_samples == 0
+
+
 def test_window_planner_rejects_negative_total_sample_count() -> None:
     with pytest.raises(ValueError, match="total_sample_count >= 0"):
         plan_whole_run_windows(metadata=_metadata(), total_sample_count=-1)
+
+
+def test_window_planner_rejects_invalid_sample_range() -> None:
+    with pytest.raises(ValueError, match="coverage_sample_end >= coverage_sample_start"):
+        plan_whole_run_window_range(
+            metadata=_metadata(),
+            coverage_sample_start=10,
+            coverage_sample_end=9,
+        )
