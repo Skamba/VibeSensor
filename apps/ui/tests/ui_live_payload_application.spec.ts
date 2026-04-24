@@ -149,4 +149,55 @@ describe("applyLivePayloadUpdate", () => {
     expect(state.spectrum.spectra.value).toBe(previousSpectra);
     expect(update.hasNewSpectrumFrame).toBe(false);
   });
+
+  test("treats a new frame fingerprint as a new spectrum frame without deep equality fallback", () => {
+    const state = createAppState();
+    const previousSpectra = {
+      frame_fingerprint: "client-1:0:0:1",
+      clients: {
+        "client-1": {
+          freq: [1, 2, 3],
+          combined: [0.01, 0.02, 0.03],
+          strength_metrics: {
+            vibration_strength_db: 5,
+            peak_amp_g: 0,
+            noise_floor_amp_g: 0,
+            strength_bucket: null,
+            top_peaks: [],
+          },
+        },
+      },
+    };
+    state.spectrum.spectra.value = previousSpectra;
+    state.spectrum.hasSpectrumData.value = true;
+
+    const incomingSpectra = {
+      frame_fingerprint: "client-1:0:0:2",
+      clients: {
+        "client-1": {
+          freq: [1, 2, 3],
+          combined: [0.01, 0.02, 0.03],
+          strength_metrics: {
+            vibration_strength_db: 5,
+            peak_amp_g: 0,
+            noise_floor_amp_g: 0,
+            strength_bucket: null,
+            top_peaks: [],
+          },
+        },
+      },
+    };
+
+    const update = applyLivePayloadUpdate({
+      realtime: state.realtime,
+      spectrum: state.spectrum,
+      adaptedPayload: makeAdaptedPayload({
+        clients: [makeClient("client-1")],
+        spectra: incomingSpectra,
+      }),
+    });
+
+    expect(state.spectrum.spectra.value).toBe(incomingSpectra);
+    expect(update.hasNewSpectrumFrame).toBe(true);
+  });
 });

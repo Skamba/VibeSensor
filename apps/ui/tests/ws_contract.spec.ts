@@ -149,6 +149,7 @@ describe("shared freq optimization", () => {
     const adapted = adaptServerPayload({
       ...basePayload,
       spectra: {
+        frame_fingerprint: "sensor1:0:0:1|sensor2:1:0:2",
         freq: [10, 20, 30],
         clients: {
           sensor1: {
@@ -165,6 +166,7 @@ describe("shared freq optimization", () => {
       },
     });
     const spectra = requireSpectra(adapted);
+    expect(spectra.frame_fingerprint).toBe("sensor1:0:0:1|sensor2:1:0:2");
     expect(spectra.clients.sensor1.freq).toEqual([10, 20, 30]);
     expect(spectra.clients.sensor2.freq).toEqual([10, 20, 30]);
     expect(spectra.clients.sensor1.strength_metrics.peak_amp_g).toBe(0);

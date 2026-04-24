@@ -106,6 +106,7 @@ const alignmentSchema = v.looseObject({
 });
 
 const spectraSchema = v.looseObject({
+  frame_fingerprint: v.optional(v.string()),
   freq: v.optional(finiteNumberArraySchema),
   clients: v.optional(v.record(v.string(), spectrumSeriesSchema)),
   warning: v.optional(warningSchema),
