@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from io import BytesIO
 from math import pi
 
@@ -260,6 +261,66 @@ def test_whole_run_spectra_mark_gap_windows_partial() -> None:
     assert np.allclose(matrix[2], 0.0)
     assert result.coverage_summary.partial_sensor_window_count == 2
     assert result.coverage_summary.gap_count == 1
+    assert [warning.code for warning in result.coverage_summary.warnings] == [
+        "whole_run_alignment_incomplete"
+    ]
+
+
+def test_whole_run_spectra_keep_contiguous_chunk_boundaries_full() -> None:
+    raw_capture = _raw_capture(
+        _make_sensor(
+            client_id="sensor-contiguous",
+            sample_rate_hz=8,
+            chunks=[
+                (_RUN_START_US, _sine_samples(total_samples=8)),
+                (_RUN_START_US + 1_000_000, _sine_samples(total_samples=8, phase_rad=0.5)),
+            ],
+            clock_sync=_verified_sync(),
+        ),
+    )
+
+    result = build_whole_run_spectral_artifact_bundle(
+        run_id="run-spectra",
+        metadata=_metadata(),
+        raw_capture=raw_capture,
+        max_workers=1,
+        chunk_window_count=4,
+        created_at="2025-01-01T00:00:00Z",
+    )
+
+    assert result.bundle is not None
+    rows = _summary_rows(result.bundle.artifact_contents["spectral-summary:sensor-contiguous"])
+    assert [row["coverage_state"] for row in rows] == ["full", "full", "full"]
+    assert {row.get("coverage_reason") for row in rows} == {None}
+    assert rows[1]["returned_sample_count"] == 8
+    assert result.coverage_summary.partial_sensor_window_count == 0
+    assert result.coverage_summary.gap_count == 0
+    assert result.coverage_summary.coverage_confidence == "full"
+
+
+def test_whole_run_spectra_missing_chunk_metadata_falls_back_to_warning() -> None:
+    sensor = _make_sensor(
+        client_id="sensor-metadata-missing",
+        sample_rate_hz=8,
+        chunks=[(_RUN_START_US, _sine_samples(total_samples=16))],
+        clock_sync=_verified_sync(),
+    )
+    raw_capture = _raw_capture(replace(sensor, chunks=()))
+
+    result = build_whole_run_spectral_artifact_bundle(
+        run_id="run-spectra",
+        metadata=_metadata(),
+        raw_capture=raw_capture,
+        max_workers=1,
+        chunk_window_count=2,
+        created_at="2025-01-01T00:00:00Z",
+    )
+
+    assert result.bundle is None
+    assert result.window_plan is None
+    assert result.coverage_summary.total_sensor_window_count == 0
+    assert result.coverage_summary.unanchored_sensor_count == 1
+    assert result.coverage_summary.coverage_confidence == "unavailable"
     assert [warning.code for warning in result.coverage_summary.warnings] == [
         "whole_run_alignment_incomplete"
     ]
