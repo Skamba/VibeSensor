@@ -75,6 +75,8 @@ def _make_sensor(
     sample_rate_hz: int,
     chunks: list[tuple[int, np.ndarray]],
     clock_sync: RawCaptureSensorClockSync | None = None,
+    declared_sample_rate_hz: int | None = None,
+    sample_rate_proof_state: str = "observed_consistent",
 ) -> RawCaptureSensorData:
     append_start = 0
     chunk_indexes: list[RawCaptureChunkIndex] = []
@@ -103,6 +105,8 @@ def _make_sensor(
         first_t0_us=chunks[0][0] if chunks else None,
         last_t0_us=chunks[-1][0] if chunks else None,
         clock_sync=clock_sync,
+        declared_sample_rate_hz=declared_sample_rate_hz or sample_rate_hz,
+        sample_rate_proof_state=sample_rate_proof_state,
     )
     return RawCaptureSensorData(
         manifest=manifest,
@@ -326,18 +330,18 @@ def test_whole_run_spectra_missing_chunk_metadata_falls_back_to_warning() -> Non
     ]
 
 
-def test_whole_run_spectra_mark_sample_rate_mismatch_missing() -> None:
+def test_whole_run_spectra_allow_mixed_observed_sample_rates() -> None:
     raw_capture = _raw_capture(
         _make_sensor(
             client_id="sensor-a",
             sample_rate_hz=8,
-            chunks=[(_RUN_START_US, _sine_samples(total_samples=16))],
+            chunks=[(_RUN_START_US, _sine_samples(total_samples=24))],
             clock_sync=_verified_sync(),
         ),
         _make_sensor(
-            client_id="sensor-mismatch",
+            client_id="sensor-fast",
             sample_rate_hz=10,
-            chunks=[(_RUN_START_US, _sine_samples(total_samples=16, sample_rate_hz=10))],
+            chunks=[(_RUN_START_US, _sine_samples(total_samples=30, sample_rate_hz=10))],
             clock_sync=_verified_sync(),
         ),
     )
@@ -352,10 +356,37 @@ def test_whole_run_spectra_mark_sample_rate_mismatch_missing() -> None:
     )
 
     assert result.bundle is not None
-    mismatch_rows = _summary_rows(
-        result.bundle.artifact_contents["spectral-summary:sensor-mismatch"]
+    fast_rows = _summary_rows(result.bundle.artifact_contents["spectral-summary:sensor-fast"])
+    assert [row["coverage_state"] for row in fast_rows] == ["full", "full", "full", "full", "full"]
+    assert {row.get("coverage_reason") for row in fast_rows} == {None}
+    assert result.coverage_summary.sample_rate_mismatch_sensor_count == 0
+    assert result.coverage_summary.sample_rate_unverified_sensor_count == 0
+    assert result.coverage_summary.coverage_confidence == "full"
+
+
+def test_whole_run_spectra_warn_when_sample_rate_is_unverified() -> None:
+    raw_capture = _raw_capture(
+        _make_sensor(
+            client_id="sensor-unverified",
+            sample_rate_hz=8,
+            chunks=[(_RUN_START_US, _sine_samples(total_samples=16))],
+            clock_sync=_verified_sync(),
+            sample_rate_proof_state="declared_only",
+        ),
     )
-    assert {row["coverage_state"] for row in mismatch_rows} == {"missing"}
-    assert {row["coverage_reason"] for row in mismatch_rows} == {"sample_rate_mismatch"}
-    assert result.coverage_summary.sample_rate_mismatch_sensor_count == 1
+
+    result = build_whole_run_spectral_artifact_bundle(
+        run_id="run-spectra",
+        metadata=_metadata(),
+        raw_capture=raw_capture,
+        max_workers=1,
+        chunk_window_count=2,
+        created_at="2025-01-01T00:00:00Z",
+    )
+
+    assert result.bundle is not None
+    rows = _summary_rows(result.bundle.artifact_contents["spectral-summary:sensor-unverified"])
+    assert [row["coverage_state"] for row in rows] == ["full", "full", "full"]
+    assert result.coverage_summary.sample_rate_mismatch_sensor_count == 0
+    assert result.coverage_summary.sample_rate_unverified_sensor_count == 1
     assert result.coverage_summary.coverage_confidence == "partial"

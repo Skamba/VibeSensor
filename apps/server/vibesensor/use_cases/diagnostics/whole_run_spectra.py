@@ -7,7 +7,6 @@ from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from io import BytesIO
-from math import floor
 from typing import Literal, cast
 
 import numpy as np
@@ -43,10 +42,7 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunWindowDescriptor,
     WholeRunWindowPolicy,
 )
-from vibesensor.use_cases.diagnostics.whole_run_windows import (
-    WholeRunWindowPlan,
-    plan_whole_run_window_range,
-)
+from vibesensor.use_cases.diagnostics.whole_run_windows import WholeRunWindowPlan
 from vibesensor.vibration_strength import StrengthPeak
 
 DEFAULT_WHOLE_RUN_MAX_WORKERS = 1
@@ -180,6 +176,7 @@ class WholeRunSpectralCoverageSummary:
     invalid_chunk_count: int
     write_error_chunk_count: int
     sample_rate_mismatch_sensor_count: int
+    sample_rate_unverified_sensor_count: int
     unanchored_sensor_count: int
     legacy_sensor_count: int
     sync_unverified_sensor_count: int
@@ -242,6 +239,7 @@ def build_whole_run_spectral_artifact_bundle(
             invalid_chunk_count=0,
             write_error_chunk_count=0,
             sample_rate_mismatch_sensor_count=0,
+            sample_rate_unverified_sensor_count=0,
             unanchored_sensor_count=0,
             legacy_sensor_count=0,
             sync_unverified_sensor_count=0,
@@ -281,7 +279,6 @@ def build_whole_run_spectral_artifact_bundle(
     chunk_results = _execute_chunks(
         chunks=chunks,
         metadata=metadata,
-        expected_sample_rate_hz=plan.policy.sample_rate_hz,
         max_workers=max_workers,
     )
     summaries_by_sensor = {
@@ -313,57 +310,131 @@ def _build_time_domain_window_plan(
     metadata: RunMetadata,
     timelines: Mapping[str, RawSensorTimeline],
 ) -> WholeRunWindowPlan | None:
-    policy = WholeRunWindowPolicy.from_metadata(metadata)
+    fft_n = int(metadata.fft_window_size_samples or 0)
+    feature_interval_s = float(metadata.feature_interval_s or 0.0)
+    if fft_n <= 0 or feature_interval_s <= 0.0:
+        return None
     aligned_timelines = tuple(
         timeline
         for timeline in timelines.values()
-        if (
-            timeline.anchored
-            and timeline.chunks
-            and timeline.sample_rate_hz == policy.sample_rate_hz
-        )
+        if timeline.anchored and timeline.chunks and timeline.sample_rate_hz > 0
     )
     if not aligned_timelines:
         return None
-    coverage_sample_start = min(
-        _timeline_sample_start(timeline, sample_rate_hz=policy.sample_rate_hz)
-        for timeline in aligned_timelines
-    )
-    coverage_sample_end = max(
-        _timeline_sample_end(timeline, sample_rate_hz=policy.sample_rate_hz)
-        for timeline in aligned_timelines
-    )
-    if coverage_sample_end <= coverage_sample_start:
-        return None
-    return plan_whole_run_window_range(
+    reference_sample_rate_hz = _reference_window_sample_rate_hz(
         metadata=metadata,
-        coverage_sample_start=coverage_sample_start,
-        coverage_sample_end=coverage_sample_end,
+        timelines=aligned_timelines,
+    )
+    if reference_sample_rate_hz <= 0:
+        return None
+    stride_samples = max(1, int(round(feature_interval_s * float(reference_sample_rate_hz))))
+    if stride_samples > fft_n:
+        return None
+    policy = WholeRunWindowPolicy(
+        sample_rate_hz=reference_sample_rate_hz,
+        window_size_samples=fft_n,
+        stride_samples=stride_samples,
+        overlap_samples=fft_n - stride_samples,
+        feature_interval_s=feature_interval_s,
+    )
+    first_window_end_t_s = max(
+        policy.window_duration_s,
+        min(
+            _timeline_first_window_end_t_s(timeline, window_size_samples=fft_n)
+            for timeline in aligned_timelines
+        ),
+    )
+    coverage_end_t_s = max(_timeline_end_t_s(timeline) for timeline in aligned_timelines)
+    if coverage_end_t_s < first_window_end_t_s:
+        return None
+    windows = _build_time_windows(
+        policy=policy,
+        first_window_end_t_s=first_window_end_t_s,
+        coverage_end_t_s=coverage_end_t_s,
+    )
+    if not windows:
+        return None
+    return WholeRunWindowPlan(
+        policy=policy,
+        coverage_sample_start=windows[0].sample_start,
+        coverage_sample_end=windows[-1].sample_end,
+        windows=windows,
     )
 
 
-def _timeline_sample_start(
+def _timeline_first_window_end_t_s(
     timeline: RawSensorTimeline,
     *,
-    sample_rate_hz: int,
-) -> int:
-    if not timeline.chunks or timeline.run_start_monotonic_us is None or sample_rate_hz <= 0:
-        return 0
-    sample_period_us = 1_000_000.0 / float(sample_rate_hz)
-    offset_us = max(0.0, timeline.chunks[0].start_us - float(timeline.run_start_monotonic_us))
-    return max(0, int(floor(offset_us / sample_period_us)))
+    window_size_samples: int,
+) -> float:
+    if (
+        not timeline.chunks
+        or timeline.run_start_monotonic_us is None
+        or timeline.sample_rate_hz <= 0
+        or window_size_samples <= 0
+    ):
+        return 0.0
+    start_offset_us = max(
+        0.0,
+        timeline.chunks[0].start_us - float(timeline.run_start_monotonic_us),
+    )
+    return (start_offset_us / 1_000_000.0) + (
+        float(window_size_samples) / float(timeline.sample_rate_hz)
+    )
 
 
-def _timeline_sample_end(
+def _timeline_end_t_s(
     timeline: RawSensorTimeline,
+) -> float:
+    if not timeline.chunks or timeline.run_start_monotonic_us is None:
+        return 0.0
+    end_offset_us = max(
+        0.0,
+        timeline.chunks[-1].end_us - float(timeline.run_start_monotonic_us),
+    )
+    return end_offset_us / 1_000_000.0
+
+
+def _reference_window_sample_rate_hz(
     *,
-    sample_rate_hz: int,
+    metadata: RunMetadata,
+    timelines: Sequence[RawSensorTimeline],
 ) -> int:
-    if not timeline.chunks or timeline.run_start_monotonic_us is None or sample_rate_hz <= 0:
-        return 0
-    sample_period_us = 1_000_000.0 / float(sample_rate_hz)
-    offset_us = max(0.0, timeline.chunks[-1].end_us - float(timeline.run_start_monotonic_us))
-    return max(0, int(floor(offset_us / sample_period_us)))
+    configured_rate_hz = int(metadata.raw_sample_rate_hz or 0)
+    if configured_rate_hz > 0:
+        return configured_rate_hz
+    observed_rates_hz = sorted(
+        {timeline.sample_rate_hz for timeline in timelines if timeline.sample_rate_hz > 0}
+    )
+    return observed_rates_hz[-1] if observed_rates_hz else 0
+
+
+def _build_time_windows(
+    *,
+    policy: WholeRunWindowPolicy,
+    first_window_end_t_s: float,
+    coverage_end_t_s: float,
+) -> tuple[WholeRunWindowDescriptor, ...]:
+    windows: list[WholeRunWindowDescriptor] = []
+    end_t_s = first_window_end_t_s
+    window_duration_s = policy.window_duration_s
+    sample_rate_hz = float(policy.sample_rate_hz)
+    while end_t_s <= coverage_end_t_s + 1e-9:
+        sample_end = max(0, int(round(end_t_s * sample_rate_hz)))
+        sample_start = max(0, sample_end - policy.window_size_samples)
+        windows.append(
+            WholeRunWindowDescriptor(
+                window_index=len(windows),
+                sample_start=sample_start,
+                sample_end=sample_end,
+                center_sample=sample_start + (policy.window_size_samples // 2),
+                start_t_s=end_t_s - window_duration_s,
+                end_t_s=end_t_s,
+                center_t_s=end_t_s - (window_duration_s / 2.0),
+            )
+        )
+        end_t_s += policy.feature_interval_s
+    return tuple(windows)
 
 
 def _build_chunks(
@@ -397,7 +468,6 @@ def _execute_chunks(
     *,
     chunks: Sequence[_SpectralChunk],
     metadata: RunMetadata,
-    expected_sample_rate_hz: int,
     max_workers: int,
 ) -> tuple[_SpectralChunkResult, ...]:
     if not chunks:
@@ -407,7 +477,6 @@ def _execute_chunks(
             _process_chunk(
                 chunk=chunk,
                 metadata=metadata,
-                expected_sample_rate_hz=expected_sample_rate_hz,
             )
             for chunk in chunks
         )
@@ -420,7 +489,6 @@ def _execute_chunks(
                 _process_chunk,
                 chunk=chunk,
                 metadata=metadata,
-                expected_sample_rate_hz=expected_sample_rate_hz,
             )
             for chunk in chunks
         ]
@@ -431,14 +499,9 @@ def _process_chunk(
     *,
     chunk: _SpectralChunk,
     metadata: RunMetadata,
-    expected_sample_rate_hz: int,
 ) -> _SpectralChunkResult:
     sensor_manifest = chunk.sensor_data.manifest
-    sample_rate_hz = (
-        expected_sample_rate_hz
-        if expected_sample_rate_hz > 0
-        else int(sensor_manifest.sample_rate_hz or 0)
-    )
+    sample_rate_hz = int(sensor_manifest.sample_rate_hz or 0)
     fft_computer = _build_fft_computer(
         metadata=metadata,
         sample_rate_hz=sample_rate_hz,
@@ -455,7 +518,6 @@ def _process_chunk(
             metadata=metadata,
             sensor_manifest=sensor_manifest,
             fft_computer=fft_computer,
-            expected_sample_rate_hz=expected_sample_rate_hz,
         )
         for row_index, window in enumerate(chunk.windows)
     )
@@ -478,16 +540,18 @@ def _build_window_summary(
     metadata: RunMetadata,
     sensor_manifest: RawCaptureSensorManifest,
     fft_computer: SpectralAnalysisComputer,
-    expected_sample_rate_hz: int,
 ) -> WholeRunWindowSpectralSummary:
-    if (
-        expected_sample_rate_hz > 0
-        and int(sensor_manifest.sample_rate_hz or 0) != expected_sample_rate_hz
-    ):
+    if int(sensor_manifest.sample_rate_hz or 0) <= 0:
         return _coverage_only_summary(
             window=window,
             coverage_state="missing",
-            coverage_reason="sample_rate_mismatch",
+            coverage_reason="sample_rate_missing",
+        )
+    if sensor_manifest.sample_rate_proof_state == "timing_inconsistent":
+        return _coverage_only_summary(
+            window=window,
+            coverage_state="missing",
+            coverage_reason="sample_rate_unverified",
         )
     requested_end_us = float(timeline.run_start_monotonic_us or 0) + (window.end_t_s * 1_000_000.0)
     resolved = resolve_raw_window_end_time(
@@ -784,7 +848,11 @@ def _build_coverage_summary(
     sample_rate_mismatch_sensor_count = sum(
         1
         for sensor in sensors
-        if plan is not None and sensor.manifest.sample_rate_hz != plan.policy.sample_rate_hz
+        if sensor.manifest.sample_rate_corrected
+        or sensor.manifest.sample_rate_proof_state == "timing_inconsistent"
+    )
+    sample_rate_unverified_sensor_count = sum(
+        1 for sensor in sensors if sensor.manifest.sample_rate_unverified
     )
     unanchored_sensor_count = sum(1 for timeline in timelines.values() if not timeline.anchored)
     legacy_sensor_count = sum(
@@ -817,6 +885,7 @@ def _build_coverage_summary(
         overlap_count=overlap_count,
         dropped_chunk_count=dropped_chunk_count,
         sample_rate_mismatch_sensor_count=sample_rate_mismatch_sensor_count,
+        sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
         unanchored_sensor_count=unanchored_sensor_count,
         sync_unverified_sensor_count=sync_unverified_sensor_count,
     )
@@ -833,6 +902,7 @@ def _build_coverage_summary(
         invalid_chunk_count=invalid_chunk_count,
         write_error_chunk_count=write_error_chunk_count,
         sample_rate_mismatch_sensor_count=sample_rate_mismatch_sensor_count,
+        sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
         legacy_sensor_count=legacy_sensor_count,
         unanchored_sensor_count=unanchored_sensor_count,
         sync_unverified_sensor_count=sync_unverified_sensor_count,
@@ -853,6 +923,7 @@ def _build_coverage_summary(
         invalid_chunk_count=invalid_chunk_count,
         write_error_chunk_count=write_error_chunk_count,
         sample_rate_mismatch_sensor_count=sample_rate_mismatch_sensor_count,
+        sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
         unanchored_sensor_count=unanchored_sensor_count,
         legacy_sensor_count=legacy_sensor_count,
         sync_unverified_sensor_count=sync_unverified_sensor_count,
@@ -873,6 +944,7 @@ def _coverage_confidence(
     overlap_count: int,
     dropped_chunk_count: int,
     sample_rate_mismatch_sensor_count: int,
+    sample_rate_unverified_sensor_count: int,
     unanchored_sensor_count: int,
     sync_unverified_sensor_count: int,
 ) -> WholeRunCoverageConfidence:
@@ -886,6 +958,7 @@ def _coverage_confidence(
         and overlap_count <= 0
         and dropped_chunk_count <= 0
         and sample_rate_mismatch_sensor_count <= 0
+        and sample_rate_unverified_sensor_count <= 0
         and unanchored_sensor_count <= 0
         and sync_unverified_sensor_count <= 0
     ):
@@ -907,6 +980,7 @@ def _build_whole_run_warnings(
     invalid_chunk_count: int,
     write_error_chunk_count: int,
     sample_rate_mismatch_sensor_count: int,
+    sample_rate_unverified_sensor_count: int,
     legacy_sensor_count: int,
     unanchored_sensor_count: int,
     sync_unverified_sensor_count: int,
@@ -921,6 +995,7 @@ def _build_whole_run_warnings(
         and overlap_count <= 0
         and dropped_chunk_count <= 0
         and sample_rate_mismatch_sensor_count <= 0
+        and sample_rate_unverified_sensor_count <= 0
         and sync_unverified_sensor_count <= 0
         and unanchored_sensor_count <= 0
         and legacy_sensor_count <= 0
@@ -955,6 +1030,7 @@ def _build_whole_run_warnings(
                 invalid=str(max(0, invalid_chunk_count)),
                 write_errors=str(max(0, write_error_chunk_count)),
                 mismatches=str(max(0, sample_rate_mismatch_sensor_count)),
+                unverified_rates=str(max(0, sample_rate_unverified_sensor_count)),
                 legacy=str(max(0, legacy_sensor_count)),
                 unanchored=str(max(0, unanchored_sensor_count)),
                 sync_unverified=str(max(0, sync_unverified_sensor_count)),

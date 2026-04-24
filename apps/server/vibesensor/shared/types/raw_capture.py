@@ -16,6 +16,7 @@ __all__ = [
     "RawCaptureClockDomain",
     "RawCaptureLossStats",
     "RawCaptureManifest",
+    "RawCaptureSampleRateProofState",
     "RawCaptureSensorClockSync",
     "RawCaptureSensorLossStats",
     "RawCaptureSensorData",
@@ -27,6 +28,12 @@ __all__ = [
 type Int16Array = npt.NDArray[np.int16]
 type RawCaptureCoverageState = Literal["missing", "empty", "partial", "full"]
 type RawCaptureClockDomain = Literal["server_monotonic", "unverified"]
+type RawCaptureSampleRateProofState = Literal[
+    "declared_only",
+    "observed_consistent",
+    "timing_inconsistent",
+    "missing",
+]
 type RawCaptureClockProofState = Literal[
     "verified",
     "missing_sync",
@@ -35,7 +42,7 @@ type RawCaptureClockProofState = Literal[
     "missing_registry_record",
 ]
 
-_RAW_CAPTURE_SCHEMA_VERSION = 5
+_RAW_CAPTURE_SCHEMA_VERSION = 6
 _RAW_CAPTURE_STORAGE_TYPE = "run-directory-v1"
 _RAW_CAPTURE_MODE = "full_run"
 
@@ -227,6 +234,26 @@ class RawCaptureSensorManifest:
     first_t0_us: int | None = None
     last_t0_us: int | None = None
     clock_sync: RawCaptureSensorClockSync | None = None
+    declared_sample_rate_hz: int | None = None
+    sample_rate_proof_state: RawCaptureSampleRateProofState = "declared_only"
+
+    @property
+    def sample_rate_observed(self) -> bool:
+        return self.sample_rate_proof_state == "observed_consistent"
+
+    @property
+    def sample_rate_unverified(self) -> bool:
+        return self.sample_rate_proof_state != "observed_consistent"
+
+    @property
+    def sample_rate_corrected(self) -> bool:
+        declared = self.declared_sample_rate_hz
+        return (
+            declared is not None
+            and declared > 0
+            and self.sample_rate_hz > 0
+            and self.sample_rate_hz != declared
+        )
 
     def to_json_object(self) -> JsonObject:
         payload: JsonObject = {
@@ -237,6 +264,7 @@ class RawCaptureSensorManifest:
             "sample_count": self.sample_count,
             "chunk_count": self.chunk_count,
             "bytes_written": self.bytes_written,
+            "sample_rate_proof_state": self.sample_rate_proof_state,
         }
         if self.first_t0_us is not None:
             payload["first_t0_us"] = self.first_t0_us
@@ -244,13 +272,16 @@ class RawCaptureSensorManifest:
             payload["last_t0_us"] = self.last_t0_us
         if self.clock_sync is not None:
             payload["clock_sync"] = self.clock_sync.to_json_object()
+        if self.declared_sample_rate_hz is not None:
+            payload["declared_sample_rate_hz"] = self.declared_sample_rate_hz
         return payload
 
     @classmethod
     def from_mapping(cls, data: JsonObject) -> RawCaptureSensorManifest:
+        sample_rate_hz = _int_from_json(data.get("sample_rate_hz"))
         return cls(
             client_id=_str_from_json(data.get("client_id")),
-            sample_rate_hz=_int_from_json(data.get("sample_rate_hz")),
+            sample_rate_hz=sample_rate_hz,
             data_file=_str_from_json(data.get("data_file")),
             index_file=_str_from_json(data.get("index_file")),
             sample_count=_int_from_json(data.get("sample_count")),
@@ -263,6 +294,13 @@ class RawCaptureSensorManifest:
                 if is_json_object(clock_sync_raw := data.get("clock_sync"))
                 else None
             ),
+            declared_sample_rate_hz=(
+                _int_or_none(data.get("declared_sample_rate_hz")) or sample_rate_hz or None
+            ),
+            sample_rate_proof_state=_str_from_json(
+                data.get("sample_rate_proof_state"),
+                "declared_only",
+            ),  # type: ignore[arg-type]
         )
 
 

@@ -116,6 +116,8 @@ def _raw_capture(
             clock_sync=(_verified_clock_sync() if run_start_monotonic_us is not None else None)
             if clock_sync_by_sensor is None
             else clock_sync_by_sensor.get(client_id),
+            declared_sample_rate_hz=_SAMPLE_RATE_HZ,
+            sample_rate_proof_state="observed_consistent",
         )
         sensor_rows.append(
             RawCaptureSensorData(
