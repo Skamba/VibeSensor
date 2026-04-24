@@ -22,6 +22,7 @@ class DataUpdateResult:
 
     reset_detected: bool = False
     is_duplicate: bool = False
+    is_late: bool = False
 
 
 def _is_short_session_restart(
@@ -38,6 +39,26 @@ def _is_short_session_restart(
         and seq <= last_seq
         and t0_us > last_t0_us
         and (last_seq - seq) < _RESTART_SEQ_GAP
+    )
+
+
+def _is_seq_behind(*, seq: int, last_seq: int) -> bool:
+    return seq != last_seq and ((last_seq - seq) & _SEQ_MASK) < _SEQ_HALF
+
+
+def _is_late_packet(
+    record: ClientRecord,
+    *,
+    seq: int,
+    t0_us: int,
+) -> bool:
+    last_seq = record.last_seq
+    last_t0_us = record.last_t0_us
+    return (
+        last_seq is not None
+        and last_t0_us is not None
+        and _is_seq_behind(seq=seq, last_seq=last_seq)
+        and t0_us <= last_t0_us
     )
 
 
@@ -69,6 +90,8 @@ def apply_data_message_update(
     if record.dedup_window.track(seq):
         record.duplicates_received += 1
         return DataUpdateResult(is_duplicate=True)
+    if _is_late_packet(record, seq=seq, t0_us=t0_us):
+        return DataUpdateResult(is_late=True)
 
     record.frames_total += 1
     reset_detected = False
