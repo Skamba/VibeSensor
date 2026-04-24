@@ -83,7 +83,7 @@ def test_build_post_analysis_summary_persists_sync_unverified_warning(
                     max_sync_rtt_us=50_000,
                 ),
             ),
-            total_sample_count=1,
+            total_summary_row_count=1,
             stride=1,
         )
     )

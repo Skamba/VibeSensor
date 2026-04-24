@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from math import ceil
+from typing import TYPE_CHECKING
+
 from vibesensor.shared.boundaries.analysis_payloads import analysis_result_to_summary
 from vibesensor.shared.boundaries.summary_fields.warnings import summary_warning_payloads
 from vibesensor.shared.boundaries.summary_serialization._location_intensity import (
@@ -19,6 +23,9 @@ from vibesensor.use_cases.diagnostics.run_analysis_projection import build_senso
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
 
 _MIN_POST_ANALYSIS_DURATION_S = 1.0
+
+if TYPE_CHECKING:
+    from vibesensor.domain import SuitabilityCheck
 
 
 def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
@@ -68,10 +75,13 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
 
     analysis_metadata: JsonObject = {
         "analyzed_sample_count": len(run.samples),
-        "total_sample_count": run.total_sample_count,
+        "analyzed_summary_row_count": len(run.samples),
+        "total_sample_count": run.total_summary_row_count,
+        "total_summary_row_count": run.total_summary_row_count,
         "sampling_method": run.sampling_method,
         "raw_capture_available": run.raw_replay.raw_capture_available,
-        "raw_backed_sample_count": run.raw_replay.raw_backed_sample_count,
+        "raw_backed_sample_count": run.raw_replay.raw_backed_summary_row_count,
+        "raw_backed_summary_row_count": run.raw_replay.raw_backed_summary_row_count,
         "raw_capture_mode": run.raw_replay.raw_capture_mode,
         "raw_replay_window_count": run.raw_replay.replay_window_count,
         "raw_replay_complete_window_count": run.raw_replay.complete_window_count,
@@ -96,6 +106,12 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "raw_replay_high_rtt_sensor_count": run.raw_replay.high_rtt_sensor_count,
         "raw_replay_confidence": run.raw_replay.replay_confidence,
     }
+    if run.summary_duration_s is not None:
+        analysis_metadata["summary_duration_s"] = round(run.summary_duration_s, 3)
+    if run.raw_min_sensor_sample_count is not None:
+        analysis_metadata["raw_min_sensor_sample_count"] = run.raw_min_sensor_sample_count
+    if run.raw_min_sensor_duration_s is not None:
+        analysis_metadata["raw_min_sensor_duration_s"] = round(run.raw_min_sensor_duration_s, 3)
     unaligned_speed_sample_count = sum(
         1 for sample in run.samples if str(sample.speed_source or "").endswith("_unaligned")
     )
@@ -108,6 +124,8 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         analysis_metadata["sampling_base_stride"] = run.stride
         analysis_metadata["sampling_evenly_spaced_sample_count"] = run.evenly_spaced_sample_count
         analysis_metadata["sampling_event_sample_count"] = run.event_sample_count
+        analysis_metadata["sampling_evenly_spaced_row_count"] = run.evenly_spaced_sample_count
+        analysis_metadata["sampling_event_row_count"] = run.event_sample_count
     summary_payload["analysis_metadata"] = payload_object_from_json(analysis_metadata)
     summary_warnings: list[RunContextWarning] = list(run.raw_replay.warnings)
     if unaligned_speed_sample_count > 0 or unaligned_rpm_sample_count > 0:
@@ -130,16 +148,13 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         warnings_payload.extend(summary_warning_payloads(summary_warnings))
         summary_payload["warnings"] = warnings_payload
 
-    sample_rate_hz = _post_analysis_sample_rate_hz(run)
-    if sample_rate_hz is not None and run.total_sample_count < max(
-        1,
-        int(sample_rate_hz * _MIN_POST_ANALYSIS_DURATION_S),
-    ):
-        short_run_check = SuitabilityCheck(
-            check_key="SUITABILITY_CHECK_RUN_DURATION",
-            state="warn",
+    short_run_check = _short_run_check(run)
+    if short_run_check is not None:
+        explanation = _translate_check_explanation(
+            run.language,
+            short_run_check,
+            tr=tr,
         )
-        explanation = tr(run.language, "SUITABILITY_RUN_DURATION_WARNING")
         append_run_suitability_warning(
             check_key=short_run_check.check_key,
             state=short_run_check.state,
@@ -167,8 +182,70 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
 
 
 def _post_analysis_sample_rate_hz(run: PostAnalysisRunInput) -> int | None:
-    """Resolve the sample rate from the canonical diagnostics context only."""
     raw_sample_rate_hz = run.context.raw_sample_rate_hz
     if raw_sample_rate_hz is not None and raw_sample_rate_hz > 0:
         return int(raw_sample_rate_hz)
     return None
+
+
+def _short_run_check(run: PostAnalysisRunInput) -> SuitabilityCheck | None:
+    from vibesensor.domain import SuitabilityCheck
+
+    required_raw_samples = _minimum_raw_sample_count(run)
+    if run.raw_capture_available and run.raw_min_sensor_duration_s is not None:
+        if run.raw_min_sensor_duration_s < _MIN_POST_ANALYSIS_DURATION_S:
+            return SuitabilityCheck(
+                check_key="SUITABILITY_CHECK_RUN_DURATION",
+                state="warn",
+                details=(
+                    ("raw_samples", max(0, int(run.raw_min_sensor_sample_count or 0))),
+                    ("required_raw_samples", max(1, int(required_raw_samples or 0))),
+                ),
+            )
+        return None
+    if run.summary_duration_s is not None:
+        if run.summary_duration_s < _MIN_POST_ANALYSIS_DURATION_S:
+            return SuitabilityCheck(
+                check_key="SUITABILITY_CHECK_RUN_DURATION",
+                state="warn",
+            )
+        return None
+    required_summary_rows = _minimum_summary_row_count(run)
+    if run.total_summary_row_count < required_summary_rows:
+        return SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_RUN_DURATION",
+            state="warn",
+            details=(
+                ("summary_rows", max(0, int(run.total_summary_row_count))),
+                ("required_summary_rows", required_summary_rows),
+            ),
+        )
+    return None
+
+
+def _minimum_raw_sample_count(run: PostAnalysisRunInput) -> int | None:
+    sample_rate_hz = _post_analysis_sample_rate_hz(run)
+    if sample_rate_hz is None:
+        return None
+    return max(1, int(ceil(sample_rate_hz * _MIN_POST_ANALYSIS_DURATION_S)))
+
+
+def _minimum_summary_row_count(run: PostAnalysisRunInput) -> int:
+    feature_interval_s = run.context.feature_interval_s
+    if feature_interval_s is not None and feature_interval_s > 0:
+        return max(1, int(ceil(_MIN_POST_ANALYSIS_DURATION_S / float(feature_interval_s))))
+    return 2
+
+
+def _translate_check_explanation(
+    language: str,
+    check: SuitabilityCheck,
+    *,
+    tr: Callable[..., str],
+) -> str:
+    explanation = check.explanation_i18n_ref()
+    if not isinstance(explanation, dict) or "_i18n_key" not in explanation:
+        return str(explanation) if explanation is not None else ""
+    key = str(explanation["_i18n_key"])
+    params = {k: v for k, v in explanation.items() if k not in {"_i18n_key", "_suffix"}}
+    return str(tr(language, key, **params))
