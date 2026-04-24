@@ -198,8 +198,16 @@ def normalize_whole_run_context_labels(
         rpm_age_s = (
             abs(rpm_observation.t_s - window.center_t_s) if rpm_observation is not None else None
         )
-        speed_is_stale = speed_age_s is not None and speed_age_s > freshness_limit_s
-        rpm_is_stale = rpm_age_s is not None and rpm_age_s > freshness_limit_s
+        speed_source = speed_observation.speed_source if speed_observation is not None else None
+        engine_rpm_source = (
+            rpm_observation.engine_rpm_source if rpm_observation is not None else None
+        )
+        speed_is_stale = (
+            speed_age_s is not None and speed_age_s > freshness_limit_s
+        ) or _speed_source_requires_stale_context(speed_source)
+        rpm_is_stale = (rpm_age_s is not None and rpm_age_s > freshness_limit_s) or (
+            speed_is_stale and engine_rpm_source == "estimated_from_speed_and_ratios"
+        )
         speed_kmh = speed_observation.speed_kmh if speed_observation is not None else None
         speed_validity = (
             speed_observation.speed_validity if speed_observation is not None else "missing"
@@ -230,14 +238,10 @@ def normalize_whole_run_context_labels(
                     if speed_kmh is not None and not speed_is_stale
                     else None
                 ),
-                speed_source=(
-                    speed_observation.speed_source if speed_observation is not None else None
-                ),
+                speed_source=speed_source,
                 speed_is_stale=speed_is_stale,
                 engine_rpm=(rpm_observation.engine_rpm if rpm_observation is not None else None),
-                engine_rpm_source=(
-                    rpm_observation.engine_rpm_source if rpm_observation is not None else None
-                ),
+                engine_rpm_source=engine_rpm_source,
                 rpm_is_stale=rpm_is_stale,
             )
         )
@@ -402,7 +406,7 @@ def _speed_validity_for_source(source: str) -> WholeRunSpeedValidity:
         return "missing"
     if source in {"gps", "obd2"}:
         return "measured"
-    if source == "manual":
+    if source in {"manual", "fallback_manual"}:
         return "assumed"
     return "missing"
 
@@ -422,4 +426,10 @@ def _speed_source_rank(source: str) -> int:
         return 2
     if source == "manual":
         return 1
+    if source == "fallback_manual":
+        return 0
     return 0
+
+
+def _speed_source_requires_stale_context(source: str | None) -> bool:
+    return source == "fallback_manual"
