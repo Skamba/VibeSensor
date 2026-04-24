@@ -136,6 +136,39 @@ def _empty_fft_spectrum_result(freq_slice: FloatArray) -> FftSpectrumResult:
     }
 
 
+def _axis_peaks_from_spectrum(
+    *,
+    freq_slice: FloatArray,
+    amp_slice: FloatArray,
+    strength_range_mask: BoolArray | None,
+) -> list[AxisPeak]:
+    if freq_slice.size == 0 or amp_slice.size == 0:
+        return []
+    strength_metrics = compute_vibration_strength_db(
+        freq_hz=freq_slice,
+        combined_spectrum_amp_g_values=amp_slice,
+        peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
+        peak_separation_hz=PEAK_SEPARATION_HZ,
+        top_n=8,
+        strength_range_mask=strength_range_mask,
+    )
+    floor_amp_g = float(strength_metrics["noise_floor_amp_g"])
+    peaks: list[AxisPeak] = []
+    for peak in strength_metrics["top_peaks"]:
+        hz = float(peak["hz"])
+        amp = float(peak["amp"])
+        if hz <= 0.0 or amp <= 0.0:
+            continue
+        axis_peak: AxisPeak = {
+            "hz": hz,
+            "amp": amp,
+        }
+        if floor_amp_g > 0.0:
+            axis_peak["snr_ratio"] = amp / floor_amp_g
+        peaks.append(axis_peak)
+    return peaks
+
+
 def medfilt3(block: FloatArray) -> FloatArray:
     """Apply a 3-point median filter per-row (per-axis)."""
     if block.ndim != 2:
@@ -251,11 +284,15 @@ def compute_fft_spectrum(
 
     for axis_idx, axis in enumerate(AXES):
         amp_slice = specs_all[axis_idx, valid_idx]
-        axis_peaks[axis] = []
         spectrum_by_axis[axis] = {
             "freq": freq_slice,
             "amp": amp_slice,
         }
+        axis_peaks[axis] = _axis_peaks_from_spectrum(
+            freq_slice=freq_slice,
+            amp_slice=amp_slice,
+            strength_range_mask=strength_range_mask,
+        )
 
     combined_amp: FloatArray = np.empty(0, dtype=np.float32)
     strength_metrics: VibrationStrengthMetrics = empty_vibration_strength_metrics()

@@ -208,7 +208,8 @@ class TestComputeFftSpectrum:
             assert float(result["spectrum_by_axis"][axis]["amp"][dominant_idx]) == pytest.approx(
                 float(result["combined_amp"][dominant_idx]),
             )
-            assert result["axis_peaks"][axis] == []
+            assert float(result["axis_peaks"][axis][0]["hz"]) == pytest.approx(50.0, abs=1.0)
+            assert float(result["axis_peaks"][axis][0]["amp"]) > 0.0
 
     def test_spike_filter_toggle(self) -> None:
         """Verify spike filter can be disabled."""
@@ -508,10 +509,14 @@ class TestComputeFftSpectrum:
             **_make_fft_params(sr=sr, fft_n=fft_n, max_hz=200.0),
         )
         peak_freqs = [float(peak["hz"]) for peak in result["strength_metrics"]["top_peaks"][:2]]
+        x_axis_peak_freqs = [float(peak["hz"]) for peak in result["axis_peaks"]["x"][:1]]
+        y_axis_peak_freqs = [float(peak["hz"]) for peak in result["axis_peaks"]["y"][:1]]
         idx_50 = int(np.argmin(np.abs(result["freq_slice"] - 50.0)))
         idx_80 = int(np.argmin(np.abs(result["freq_slice"] - 80.0)))
 
         assert peak_freqs == pytest.approx([50.0, 80.0], abs=1.0)
+        assert x_axis_peak_freqs == pytest.approx([50.0], abs=1.0)
+        assert y_axis_peak_freqs == pytest.approx([80.0], abs=1.0)
         assert float(result["combined_amp"][idx_50]) > float(
             result["spectrum_by_axis"]["y"]["amp"][idx_50],
         )
