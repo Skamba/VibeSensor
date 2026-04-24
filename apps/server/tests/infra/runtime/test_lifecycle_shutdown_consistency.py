@@ -12,6 +12,7 @@ import pytest
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 
 def _make_lifecycle() -> LifecycleManager:
@@ -28,6 +29,7 @@ def _make_lifecycle() -> LifecycleManager:
         shutdown_analysis_timeout_s=5.0,
         registry=MagicMock(),
         processor=MagicMock(),
+        ingest_diagnostics=IngestDiagnosticsCollector(),
         control_plane=MagicMock(close=MagicMock()),
         processing_loop=MagicMock(),
         ws_hub=MagicMock(),
