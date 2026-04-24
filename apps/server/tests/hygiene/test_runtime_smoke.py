@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.adapters.http import create_router
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 
 @pytest.mark.smoke
@@ -20,6 +21,7 @@ def test_smoke_health_route_registered() -> None:
         processor=placeholder,
         registry=placeholder,
         run_recorder=placeholder,
+        ingest_diagnostics=IngestDiagnosticsCollector(),
     )
     state.live = SimpleNamespace(
         control_plane=placeholder,

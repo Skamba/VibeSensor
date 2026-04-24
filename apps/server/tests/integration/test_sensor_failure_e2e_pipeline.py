@@ -32,6 +32,7 @@ from vibesensor.infra.runtime.processing_tick import ProcessingTickRunner
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.boundaries.reporting import prepare_report_input
 from vibesensor.shared.constants.units import KMH_TO_MPS
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.use_cases.history.report_document import build_report_document
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
@@ -258,6 +259,7 @@ def _run_pipeline(
         processor,
         registry,
         logger,
+        IngestDiagnosticsCollector(),
     )
     return _PipelineArtifacts(
         analysis=analysis,

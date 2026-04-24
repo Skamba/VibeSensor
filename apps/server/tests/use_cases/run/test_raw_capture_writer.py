@@ -7,6 +7,7 @@ import threading
 import numpy as np
 import pytest
 
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.raw_capture import RawCaptureLossStats, RawCaptureSensorClockSync
 from vibesensor.use_cases.run.raw_capture_writer import RunRawCaptureWriter
 
@@ -60,9 +61,11 @@ def test_raw_capture_writer_persists_queue_invalid_and_write_failures(
             return None
 
     history_db = FakeHistoryDb()
+    ingest_diagnostics = IngestDiagnosticsCollector()
     writer = RunRawCaptureWriter(
         history_db=history_db,
         logger=logging.getLogger(__name__),
+        ingest_diagnostics=ingest_diagnostics,
         sensor_sync_snapshotter=lambda client_ids: {
             client_id: RawCaptureSensorClockSync(
                 clock_domain="server_monotonic" if client_id == "sensor-a" else "unverified",
@@ -113,5 +116,9 @@ def test_raw_capture_writer_persists_queue_invalid_and_write_failures(
     assert history_db.finalized_sensor_losses["sensor-b"].late_packet_chunk_count == 1
     assert history_db.finalized_sensor_losses["sensor-c"].invalid_chunk_count == 1
     assert history_db.finalized_sensor_losses["sensor-d"].udp_ingest_queue_drop_count == 2
+    snapshot = ingest_diagnostics.raw_capture_snapshot()
+    assert snapshot.queue_max_depth >= 1
+    assert snapshot.dropped_chunks == 1
+    assert snapshot.write_error_chunks == 1
 
     assert writer.shutdown()

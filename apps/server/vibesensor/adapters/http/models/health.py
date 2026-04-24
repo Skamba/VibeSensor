@@ -48,6 +48,55 @@ class HealthIntakeStatsResponse(BaseModel):
     last_ingest_duration_s: float
 
 
+class HealthUdpIngestResponse(BaseModel):
+    queue_depth: int
+    queue_max_depth: int
+    enqueued_datagrams: int
+    dropped_datagrams: int
+    processed_datagrams: int
+    last_packet_queue_age_ms: float
+    max_packet_queue_age_ms: float
+    last_ack_latency_ms: float
+    max_ack_latency_ms: float
+
+
+class HealthRawCaptureResponse(BaseModel):
+    queue_depth: int
+    queue_max_depth: int
+    dropped_chunks: int
+    write_error_chunks: int
+
+
+class HealthWsPublishResponse(BaseModel):
+    active_connections: int
+    total_publish_ticks: int
+    last_publish_duration_ms: float
+    max_publish_duration_ms: float
+
+
+class HealthIngestClientResponse(BaseModel):
+    client_id: str
+    advertised_sample_rate_hz: int
+    estimated_ingest_hz: float
+    processed_packets: int
+    processed_samples: int
+    late_packets: int
+    last_packet_queue_age_ms: float
+    last_ack_latency_ms: float
+    frames_dropped: int
+    queue_overflow_drops: int
+    server_queue_drops: int
+    parse_errors: int
+    duplicates_received: int
+
+
+class HealthIngestResponse(BaseModel):
+    udp: HealthUdpIngestResponse
+    raw_capture: HealthRawCaptureResponse
+    ws_publish: HealthWsPublishResponse
+    clients: list[HealthIngestClientResponse] = []
+
+
 class HealthResponse(BaseModel):
     """Response body for the server health check endpoint."""
 
@@ -69,6 +118,7 @@ class HealthResponse(BaseModel):
     data_loss: HealthDataLossResponse
     persistence: HealthPersistenceResponse
     intake_stats: HealthIntakeStatsResponse
+    ingest: HealthIngestResponse
 
     tick_duration_s: float = 0.0
     max_tick_duration_s: float = 0.0

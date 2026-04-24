@@ -16,6 +16,7 @@ from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.boundaries.clients import ClientSnapshotSource
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import (
     AnalysisSettingsStore,
     CarSettingsStore,
@@ -116,6 +117,7 @@ class HealthDeps:
     processor: SignalProcessor
     registry: ClientRegistry
     run_recorder: RunRecorder
+    ingest_diagnostics: IngestDiagnosticsCollector
 
 
 @dataclass(slots=True)

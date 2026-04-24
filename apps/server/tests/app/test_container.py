@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 from vibesensor.app import container as container_module
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 
 def test_create_history_db_skips_stale_recovery_when_quick_check_marked_corrupted(
@@ -488,12 +489,15 @@ def test_build_live_runtime_exposes_http_route_bundle_deps_and_requeues_stale_ru
         "settings_reader": "settings-reader",
         "sensor_metadata_reader": "sensor-reader",
         "language_reader": runtime_settings.language_reader,
+        "ingest_diagnostics": bundle.ingest_diagnostics,
     }
     assert health.processing_loop_state is processing_loop_state
     assert health.health_state == "health-state"
     assert health.processor is processor
     assert health.registry is registry
     assert health.run_recorder is run_recorder
+    assert isinstance(bundle.ingest_diagnostics, IngestDiagnosticsCollector)
+    assert health.ingest_diagnostics is bundle.ingest_diagnostics
     assert live.registry is registry
     assert live.control_plane is control_plane
     assert live.sensor_metadata_store == "sensor-store"

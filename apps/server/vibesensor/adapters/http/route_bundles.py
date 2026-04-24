@@ -39,6 +39,7 @@ def create_health_route_bundle(services: HealthDeps) -> APIRouter:
             services.processor,
             services.registry,
             services.run_recorder,
+            services.ingest_diagnostics,
         ),
     )
     return router

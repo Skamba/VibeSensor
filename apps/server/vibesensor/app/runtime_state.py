@@ -17,6 +17,7 @@ from vibesensor.infra.runtime.processing_loop import ProcessingLoop
 from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import ClientTracker, SettingsReader, SignalSource
 from vibesensor.use_cases.run import RunRecorder
 from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
@@ -44,6 +45,7 @@ class RuntimeState:
     history_db: LifecycleHistoryDb
     processing_loop_state: ProcessingLoopState
     health_state: RuntimeHealthState
+    ingest_diagnostics: IngestDiagnosticsCollector
     processing_loop: ProcessingLoop
     ws_hub: WebSocketHub
     ws_broadcast: WsBroadcastService

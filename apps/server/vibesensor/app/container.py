@@ -63,6 +63,7 @@ from vibesensor.shared.constants.dsp import (
     WAVEFORM_DISPLAY_HZ,
 )
 from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import (
     LanguageReader,
     SensorMetadataReader,
@@ -170,6 +171,7 @@ class LiveRuntimeBundle:
     processor: SignalProcessor
     control_plane: UDPControlPlane
     processing_loop_state: ProcessingLoopState
+    ingest_diagnostics: IngestDiagnosticsCollector
     processing_loop: ProcessingLoop
     ws_hub: WebSocketHub
     ws_broadcast: WsBroadcastService
@@ -184,6 +186,7 @@ class LiveRuntimeBundle:
             processor=self.processor,
             registry=self.registry,
             run_recorder=self.run_recorder,
+            ingest_diagnostics=self.ingest_diagnostics,
         )
 
     def http_live_deps(self, *, sensor_metadata_store: SensorMetadataStore) -> LiveDeps:
@@ -399,6 +402,7 @@ def build_live_runtime(
         processor=processor,
         control_plane=control_plane,
     )
+    ingest_diagnostics = IngestDiagnosticsCollector()
     ws_hub = WebSocketHub()
     ws_payload_projector = LiveWsPayloadProjector(
         registry=registry,
@@ -431,6 +435,7 @@ def build_live_runtime(
         settings_reader=runtime_settings.settings_reader,
         sensor_metadata_reader=runtime_settings.sensor_metadata_reader,
         language_reader=runtime_settings.language_reader,
+        ingest_diagnostics=ingest_diagnostics,
     )
 
     stale_analyzing = history.run_repository.stale_analyzing_run_ids()
@@ -446,6 +451,7 @@ def build_live_runtime(
         processor=processor,
         control_plane=control_plane,
         processing_loop_state=processing_loop_state,
+        ingest_diagnostics=ingest_diagnostics,
         processing_loop=processing_loop,
         ws_hub=ws_hub,
         ws_broadcast=ws_broadcast,
@@ -490,6 +496,7 @@ def build_lifecycle_state(
         history_db=history.lifecycle,
         processing_loop_state=live_runtime.processing_loop_state,
         health_state=health_state,
+        ingest_diagnostics=live_runtime.ingest_diagnostics,
         processing_loop=live_runtime.processing_loop,
         ws_hub=live_runtime.ws_hub,
         ws_broadcast=live_runtime.ws_broadcast,

@@ -10,6 +10,7 @@ import type {
   HealthStatusPayload,
   UpdateStatusPayload,
 } from "../src/api/types";
+import { createHealthyUpdateStatus } from "./maintenance_payload_test_support";
 
 function t(key: string, vars?: Record<string, unknown>): string {
   if (!vars || Object.keys(vars).length === 0) {
@@ -53,29 +54,7 @@ function makeStatus(
 function makeHealth(
   overrides: Partial<HealthStatusPayload> = {},
 ): HealthStatusPayload {
-  return {
-    status: "ok",
-    processing_state: "idle",
-    processing_failures: 0,
-    degradation_reasons: [],
-    data_loss: {
-      affected_clients: 0,
-      tracked_clients: 0,
-      frames_dropped: 0,
-      queue_overflow_drops: 0,
-      server_queue_drops: 0,
-      parse_errors: 0,
-    },
-    persistence: {
-      analysis_in_progress: false,
-      analysis_queue_depth: 0,
-      write_error: null,
-      analysis_active_run_id: null,
-      analysis_started_at: null,
-      analysis_elapsed_s: null,
-    },
-    ...overrides,
-  };
+  return createHealthyUpdateStatus(overrides);
 }
 
 const deps = {

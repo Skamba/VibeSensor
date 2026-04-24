@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_state import ProcessingHealth, ProcessingLoopState
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.payload_types import IntakeStatsPayload, WorkerPoolStats
 
 
@@ -66,6 +68,8 @@ def _make_deps(
     """Return (registry, run_recorder) mocks with configurable snapshots."""
     registry = MagicMock()
     registry.data_loss_snapshot.return_value = data_loss or _clean_data_loss()
+    registry.active_client_ids.return_value = []
+    registry.get.return_value = None
     run_recorder = MagicMock()
     run_recorder.health_snapshot.return_value = persistence or _clean_persistence()
     run_recorder.last_write_duration_s = 0.0
@@ -93,6 +97,7 @@ def _snapshot(
     run_recorder: MagicMock,
     *,
     processor: MagicMock | None = None,
+    ingest_diagnostics: IngestDiagnosticsCollector | None = None,
 ) -> dict:
     return build_system_health_snapshot(
         loop_state,
@@ -100,6 +105,7 @@ def _snapshot(
         _make_processor() if processor is None else processor,
         registry,
         run_recorder,
+        IngestDiagnosticsCollector() if ingest_diagnostics is None else ingest_diagnostics,
     )
 
 
@@ -153,6 +159,70 @@ class TestBuildSystemHealthSnapshotOk:
 
         assert result["intake_stats"]["worker_pool"]["total_tasks"] == 7
 
+    def test_ingest_snapshot_merges_runtime_and_registry_client_diagnostics(self) -> None:
+        loop_state = ProcessingLoopState()
+        health_state = _ready_health_state()
+        registry, run_recorder = _make_deps()
+        registry.active_client_ids.return_value = ["sensor-a"]
+        registry.get.return_value = SimpleNamespace(
+            sample_rate_hz=800,
+            frames_dropped=2,
+            queue_overflow_drops=1,
+            server_queue_drops=0,
+            parse_errors=0,
+            duplicates_received=3,
+        )
+        ingest_diagnostics = IngestDiagnosticsCollector()
+        ingest_diagnostics.note_udp_processed(
+            client_id="sensor-a",
+            sample_count=400,
+            queue_age_s=0.015,
+            ack_latency_s=0.025,
+            processed_at_mono_s=10.0,
+            count_for_ingest=True,
+        )
+        ingest_diagnostics.note_udp_processed(
+            client_id="sensor-a",
+            sample_count=400,
+            queue_age_s=0.020,
+            ack_latency_s=0.030,
+            processed_at_mono_s=11.0,
+            count_for_ingest=True,
+        )
+        ingest_diagnostics.note_late_packet(client_id="sensor-a")
+        ingest_diagnostics.note_raw_capture_queue_depth(3)
+        ingest_diagnostics.note_ws_publish(connection_count=1, duration_s=0.012)
+
+        result = _snapshot(
+            loop_state,
+            health_state,
+            registry,
+            run_recorder,
+            ingest_diagnostics=ingest_diagnostics,
+        )
+
+        assert result["ingest"]["udp"]["max_packet_queue_age_ms"] == 20.0
+        assert result["ingest"]["raw_capture"]["queue_max_depth"] == 3
+        assert result["ingest"]["ws_publish"]["active_connections"] == 1
+        assert result["ingest"]["ws_publish"]["max_publish_duration_ms"] == 12.0
+        assert result["ingest"]["clients"] == [
+            {
+                "client_id": "sensor-a",
+                "advertised_sample_rate_hz": 800,
+                "estimated_ingest_hz": 400.0,
+                "processed_packets": 2,
+                "processed_samples": 800,
+                "late_packets": 1,
+                "last_packet_queue_age_ms": 20.0,
+                "last_ack_latency_ms": 30.0,
+                "frames_dropped": 2,
+                "queue_overflow_drops": 1,
+                "server_queue_drops": 0,
+                "parse_errors": 0,
+                "duplicates_received": 3,
+            }
+        ]
+
 
 class TestBuildSystemHealthSnapshotDegraded:
     def test_startup_not_ready_is_degraded(self) -> None:
@@ -161,7 +231,12 @@ class TestBuildSystemHealthSnapshotDegraded:
         registry, run_recorder = _make_deps()
 
         result = build_system_health_snapshot(
-            loop_state, health_state, _make_processor(), registry, run_recorder
+            loop_state,
+            health_state,
+            _make_processor(),
+            registry,
+            run_recorder,
+            IngestDiagnosticsCollector(),
         )
 
         assert result["status"] == "degraded"
