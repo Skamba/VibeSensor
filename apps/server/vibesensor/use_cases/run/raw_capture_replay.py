@@ -74,6 +74,7 @@ class RawReplaySummary:
     write_error_chunk_count: int
     timing_fallback_count: int
     sample_rate_mismatch_count: int
+    sample_rate_unverified_sensor_count: int
     unanchored_sensor_count: int
     legacy_sensor_count: int
     sync_unverified_sensor_count: int
@@ -128,6 +129,7 @@ def build_raw_backed_samples(
                 write_error_chunk_count=0,
                 timing_fallback_count=0,
                 sample_rate_mismatch_count=0,
+                sample_rate_unverified_sensor_count=0,
                 unanchored_sensor_count=0,
                 legacy_sensor_count=0,
                 sync_unverified_sensor_count=0,
@@ -167,6 +169,7 @@ def build_raw_backed_samples(
                 write_error_chunk_count=0,
                 timing_fallback_count=0,
                 sample_rate_mismatch_count=0,
+                sample_rate_unverified_sensor_count=0,
                 unanchored_sensor_count=0,
                 legacy_sensor_count=0,
                 sync_unverified_sensor_count=0,
@@ -229,6 +232,9 @@ def build_raw_backed_samples(
     gap_count = sum(len(timeline.gap_intervals) for timeline in timelines.values())
     overlap_count = sum(len(timeline.overlap_intervals) for timeline in timelines.values())
     unanchored_sensor_count = sum(1 for timeline in timelines.values() if not timeline.anchored)
+    sample_rate_unverified_sensor_count = sum(
+        1 for sensor in raw_capture.sensors if sensor.manifest.sample_rate_unverified
+    )
     legacy_sensor_count = sum(1 for timeline in timelines.values() if _timeline_is_legacy(timeline))
     sync_unverified_sensor_count = sum(
         1 for timeline in timelines.values() if _timeline_has_unverified_sync(timeline)
@@ -257,6 +263,7 @@ def build_raw_backed_samples(
         overlap_count=overlap_count,
         dropped_chunk_count=dropped_chunk_count,
         sample_rate_mismatch_count=sample_rate_mismatch_count,
+        sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
         unanchored_sensor_count=unanchored_sensor_count,
         sync_unverified_sensor_count=sync_unverified_sensor_count,
     )
@@ -282,6 +289,7 @@ def build_raw_backed_samples(
             write_error_chunk_count=write_error_chunk_count,
             timing_fallback_count=timing_fallback_count,
             sample_rate_mismatch_count=sample_rate_mismatch_count,
+            sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
             unanchored_sensor_count=unanchored_sensor_count,
             legacy_sensor_count=legacy_sensor_count,
             sync_unverified_sensor_count=sync_unverified_sensor_count,
@@ -303,6 +311,7 @@ def build_raw_backed_samples(
                 invalid_chunk_count=invalid_chunk_count,
                 write_error_chunk_count=write_error_chunk_count,
                 sample_rate_mismatch_count=sample_rate_mismatch_count,
+                sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
                 legacy_sensor_count=legacy_sensor_count,
                 unanchored_sensor_count=unanchored_sensor_count,
                 sync_unverified_sensor_count=sync_unverified_sensor_count,
@@ -346,7 +355,8 @@ def _rebuild_sample(
                 reason="sensor_missing",
             ),
         )
-    sample_rate_hz = int(sample.sample_rate_hz or timeline.sample_rate_hz or 0)
+    sensor_manifest = sensor_data.manifest
+    sample_rate_hz = int(sensor_manifest.sample_rate_hz or timeline.sample_rate_hz or 0)
     if sample_rate_hz <= 0:
         return (
             sample,
@@ -358,7 +368,22 @@ def _rebuild_sample(
                 reason="sample_rate_missing",
             ),
         )
-    if sample_rate_hz != timeline.sample_rate_hz:
+    if sensor_manifest.sample_rate_proof_state == "timing_inconsistent":
+        return (
+            sample,
+            RawReplayWindowCoverage(
+                client_id=sample.client_id,
+                t_s=sample.t_s,
+                coverage_state="missing",
+                raw_backed=False,
+                reason="sample_rate_unverified",
+            ),
+        )
+    requested_sample_rate_hz = int(sample.sample_rate_hz or 0)
+    sample_rate_mismatch = (
+        requested_sample_rate_hz > 0 and requested_sample_rate_hz != sample_rate_hz
+    )
+    if sample_rate_mismatch and sensor_manifest.sample_rate_unverified:
         return (
             sample,
             RawReplayWindowCoverage(
@@ -424,7 +449,11 @@ def _rebuild_sample(
             t_s=sample.t_s,
             coverage_state="complete",
             raw_backed=True,
-            reason="timing_fallback" if window.timing_source == "legacy_t_s" else None,
+            reason=(
+                "sample_rate_mismatch"
+                if sample_rate_mismatch
+                else ("timing_fallback" if window.timing_source == "legacy_t_s" else None)
+            ),
         ),
     )
 
@@ -499,6 +528,7 @@ def _replay_confidence(
     overlap_count: int,
     dropped_chunk_count: int,
     sample_rate_mismatch_count: int,
+    sample_rate_unverified_sensor_count: int,
     sync_unverified_sensor_count: int,
     unanchored_sensor_count: int,
 ) -> RawReplayConfidence:
@@ -514,6 +544,7 @@ def _replay_confidence(
         and overlap_count <= 0
         and dropped_chunk_count <= 0
         and sample_rate_mismatch_count <= 0
+        and sample_rate_unverified_sensor_count <= 0
         and sync_unverified_sensor_count <= 0
         and unanchored_sensor_count <= 0
     ):
@@ -535,6 +566,7 @@ def _build_replay_warnings(
     invalid_chunk_count: int,
     write_error_chunk_count: int,
     sample_rate_mismatch_count: int,
+    sample_rate_unverified_sensor_count: int,
     legacy_sensor_count: int,
     unanchored_sensor_count: int,
     sync_unverified_sensor_count: int,
@@ -620,6 +652,7 @@ def _build_replay_warnings(
         and gap_count <= 0
         and overlap_count <= 0
         and sample_rate_mismatch_count <= 0
+        and sample_rate_unverified_sensor_count <= 0
     ):
         return tuple(warnings)
     warnings.append(
@@ -635,6 +668,7 @@ def _build_replay_warnings(
                 gaps=str(max(0, gap_count)),
                 overlaps=str(max(0, overlap_count)),
                 mismatches=str(max(0, sample_rate_mismatch_count)),
+                unverified_rates=str(max(0, sample_rate_unverified_sensor_count)),
             ),
         )
     )

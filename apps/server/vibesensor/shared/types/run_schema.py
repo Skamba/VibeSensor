@@ -50,6 +50,7 @@ class RunMetadata:
     sensor_model: str
     firmware_version: str | None
     raw_sample_rate_hz: int | None
+    configured_raw_sample_rate_hz: int | None
     feature_interval_s: float | None
     fft_window_size_samples: int | None
     fft_window_type: str | None
@@ -80,6 +81,7 @@ class RunMetadata:
         firmware_version: str | None = None,
         end_time_utc: str | None = None,
         incomplete_for_order_analysis: bool = False,
+        configured_raw_sample_rate_hz: int | None = None,
         analysis_settings: AnalysisSettingsSnapshot | None = None,
         car: RunCarMetadata | None = None,
         case_id: str = "",
@@ -100,6 +102,7 @@ class RunMetadata:
             sensor_model=sensor_model,
             firmware_version=firmware_version,
             raw_sample_rate_hz=raw_sample_rate_hz,
+            configured_raw_sample_rate_hz=configured_raw_sample_rate_hz,
             feature_interval_s=feature_interval_s,
             fft_window_size_samples=fft_window_size_samples,
             fft_window_type=FFT_WINDOW_TYPE,

@@ -20,6 +20,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureCoverageState,
     RawCaptureLossStats,
     RawCaptureManifest,
+    RawCaptureSampleRateProofState,
     RawCaptureSensorClockSync,
     RawCaptureSensorData,
     RawCaptureSensorLossStats,
@@ -33,6 +34,8 @@ _BYTES_PER_AXIS = 2
 _BYTES_PER_SAMPLE = _AXIS_COUNT * _BYTES_PER_AXIS
 _MANIFEST_FILE_NAME = "manifest.json"
 _RAW_CAPTURE_DIR_NAME = "raw-runs"
+_OBSERVED_SAMPLE_RATE_STABILITY_TOLERANCE = 0.02
+_DECLARED_SAMPLE_RATE_ALIGNMENT_TOLERANCE = 0.01
 
 
 @dataclass(slots=True)
@@ -110,9 +113,15 @@ class HistoryRawCaptureStore:
             stream = streams[client_id]
             stream.data_handle.close()
             stream.index_handle.close()
+            chunk_indexes = tuple(self._load_chunk_indexes(stream.index_path))
+            (
+                sample_rate_hz,
+                declared_sample_rate_hz,
+                sample_rate_proof_state,
+            ) = _derive_sensor_sample_rate(stream, chunk_indexes)
             sensor_manifest = RawCaptureSensorManifest(
                 client_id=stream.client_id,
-                sample_rate_hz=stream.sample_rate_hz,
+                sample_rate_hz=sample_rate_hz,
                 data_file=stream.data_path.name,
                 index_file=stream.index_path.name,
                 sample_count=stream.sample_count,
@@ -121,6 +130,8 @@ class HistoryRawCaptureStore:
                 first_t0_us=stream.first_t0_us,
                 last_t0_us=stream.last_t0_us,
                 clock_sync=(sensor_clock_sync or {}).get(client_id),
+                declared_sample_rate_hz=declared_sample_rate_hz,
+                sample_rate_proof_state=sample_rate_proof_state,
             )
             sensor_manifests.append(sensor_manifest)
             total_samples += sensor_manifest.sample_count
@@ -335,3 +346,55 @@ def _overlapping_chunks(
         if chunk.sample_start < sample_end
         and (chunk.sample_start + chunk.sample_count) > sample_start
     )
+
+
+def _derive_sensor_sample_rate(
+    stream: _OpenSensorStream,
+    chunk_indexes: tuple[RawCaptureChunkIndex, ...],
+) -> tuple[int, int | None, RawCaptureSampleRateProofState]:
+    declared_sample_rate_hz = stream.sample_rate_hz if stream.sample_rate_hz > 0 else None
+    observed_rates_hz: list[float] = []
+    for previous, current in zip(chunk_indexes, chunk_indexes[1:], strict=False):
+        if previous.sample_count <= 0:
+            continue
+        delta_t_us = current.t0_us - previous.t0_us
+        if delta_t_us <= 0:
+            continue
+        observed_rates_hz.append((previous.sample_count * 1_000_000.0) / delta_t_us)
+    if not observed_rates_hz:
+        if declared_sample_rate_hz is not None:
+            return declared_sample_rate_hz, declared_sample_rate_hz, "declared_only"
+        return 0, None, "missing"
+
+    representative_rate_hz = _rounded_median(observed_rates_hz)
+    if representative_rate_hz <= 0:
+        if declared_sample_rate_hz is not None:
+            return declared_sample_rate_hz, declared_sample_rate_hz, "declared_only"
+        return 0, None, "missing"
+
+    stability_baseline_hz = max(1, representative_rate_hz)
+    max_relative_deviation = max(
+        abs(rate_hz - representative_rate_hz) / stability_baseline_hz
+        for rate_hz in observed_rates_hz
+    )
+    if max_relative_deviation > _OBSERVED_SAMPLE_RATE_STABILITY_TOLERANCE:
+        fallback_rate_hz = declared_sample_rate_hz or representative_rate_hz
+        return fallback_rate_hz, declared_sample_rate_hz, "timing_inconsistent"
+
+    if declared_sample_rate_hz is not None:
+        declared_delta = abs(representative_rate_hz - declared_sample_rate_hz) / max(
+            1,
+            declared_sample_rate_hz,
+        )
+        if declared_delta <= _DECLARED_SAMPLE_RATE_ALIGNMENT_TOLERANCE:
+            representative_rate_hz = declared_sample_rate_hz
+
+    return representative_rate_hz, declared_sample_rate_hz, "observed_consistent"
+
+
+def _rounded_median(values: list[float]) -> int:
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    if len(ordered) % 2 == 1:
+        return int(round(ordered[middle]))
+    return int(round((ordered[middle - 1] + ordered[middle]) / 2.0))

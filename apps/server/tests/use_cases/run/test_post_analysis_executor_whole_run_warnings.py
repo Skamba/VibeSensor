@@ -85,6 +85,7 @@ def test_execute_post_analysis_appends_whole_run_alignment_warning_and_metadata(
                 invalid_chunk_count=0,
                 write_error_chunk_count=0,
                 sample_rate_mismatch_sensor_count=1,
+                sample_rate_unverified_sensor_count=2,
                 unanchored_sensor_count=1,
                 legacy_sensor_count=0,
                 sync_unverified_sensor_count=1,
@@ -109,6 +110,7 @@ def test_execute_post_analysis_appends_whole_run_alignment_warning_and_metadata(
                             invalid="0",
                             write_errors="0",
                             mismatches="1",
+                            unverified_rates="2",
                             legacy="0",
                             unanchored="1",
                             sync_unverified="1",
@@ -141,6 +143,7 @@ def test_execute_post_analysis_appends_whole_run_alignment_warning_and_metadata(
     assert analysis_metadata["whole_run_spectral_missing_sensor_window_count"] == 1
     assert analysis_metadata["whole_run_spectral_gap_count"] == 1
     assert analysis_metadata["whole_run_spectral_sample_rate_mismatch_sensor_count"] == 1
+    assert analysis_metadata["whole_run_spectral_sample_rate_unverified_sensor_count"] == 2
     assert analysis_metadata["whole_run_spectral_sync_unverified_sensor_count"] == 1
     assert analysis_metadata["whole_run_spectral_coverage_confidence"] == "partial"
     assert [warning["code"] for warning in stored["analysis"]["warnings"]] == [

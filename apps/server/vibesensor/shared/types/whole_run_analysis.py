@@ -86,7 +86,7 @@ class WholeRunWindowPolicy:
 
     @property
     def stride_duration_s(self) -> float:
-        return float(self.stride_samples) / float(self.sample_rate_hz)
+        return float(self.feature_interval_s)
 
     def to_json_object(self) -> JsonObject:
         return {

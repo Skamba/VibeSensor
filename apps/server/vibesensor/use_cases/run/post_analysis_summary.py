@@ -86,6 +86,9 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "raw_replay_write_error_chunk_count": run.raw_replay.write_error_chunk_count,
         "raw_replay_timing_fallback_count": run.raw_replay.timing_fallback_count,
         "raw_replay_sample_rate_mismatch_count": run.raw_replay.sample_rate_mismatch_count,
+        "raw_replay_sample_rate_unverified_sensor_count": (
+            run.raw_replay.sample_rate_unverified_sensor_count
+        ),
         "raw_replay_unanchored_sensor_count": run.raw_replay.unanchored_sensor_count,
         "raw_replay_legacy_sensor_count": run.raw_replay.legacy_sensor_count,
         "raw_replay_sync_unverified_sensor_count": run.raw_replay.sync_unverified_sensor_count,
