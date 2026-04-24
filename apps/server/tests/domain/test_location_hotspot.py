@@ -139,6 +139,7 @@ class TestLocationIntensitySummaryRows:
         assert summary.location == "rear-left"
         assert summary.strength_bucket_distribution.total == 8
         assert summary.strength_bucket_distribution.counts["l1"] == 6
+        assert summary.diagnostic_sample_count == 8
         assert summary.phase_intensity is not None
         assert summary.phase_intensity["cruise"].max_intensity_db == 18.0
 

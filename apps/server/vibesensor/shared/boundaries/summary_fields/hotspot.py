@@ -77,6 +77,15 @@ def location_intensity_summary_from_mapping(raw: Mapping[str, object]) -> Locati
     except (TypeError, ValueError):
         sample_coverage_ratio = 0.0
 
+    usable_sample_count = _opt_int(raw.get("usable_sample_count"))
+    usable_sample_coverage_ratio = _opt_float(raw.get("usable_sample_coverage_ratio"))
+    usable_sample_coverage_warning_raw = raw.get("usable_sample_coverage_warning")
+    usable_sample_coverage_warning = (
+        bool(usable_sample_coverage_warning_raw)
+        if usable_sample_coverage_warning_raw is not None
+        else None
+    )
+
     phase_intensity_raw = raw.get("phase_intensity")
     phase_intensity: dict[str, PhaseIntensitySummary] | None = None
     if isinstance(phase_intensity_raw, Mapping):
@@ -93,6 +102,9 @@ def location_intensity_summary_from_mapping(raw: Mapping[str, object]) -> Locati
         sample_count=sample_count,
         sample_coverage_ratio=sample_coverage_ratio,
         sample_coverage_warning=bool(raw.get("sample_coverage_warning", False)),
+        usable_sample_count=usable_sample_count,
+        usable_sample_coverage_ratio=usable_sample_coverage_ratio,
+        usable_sample_coverage_warning=usable_sample_coverage_warning,
         mean_intensity_db=_opt_float(raw.get("mean_intensity_db")),
         p50_intensity_db=_opt_float(raw.get("p50_intensity_db")),
         p95_intensity_db=_opt_float(raw.get("p95_intensity_db")),
@@ -124,5 +136,14 @@ def _opt_float(value: object) -> float | None:
         return None
     try:
         return coerce_float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _opt_int(value: object) -> int | None:
+    if value is None or not isinstance(value, (int, float, str)):
+        return None
+    try:
+        return coerce_int(value)
     except (TypeError, ValueError):
         return None

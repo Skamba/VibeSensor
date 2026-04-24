@@ -241,6 +241,9 @@ class LocationIntensitySummary:
     sample_count: int = 0
     sample_coverage_ratio: float = 0.0
     sample_coverage_warning: bool = False
+    usable_sample_count: int | None = None
+    usable_sample_coverage_ratio: float | None = None
+    usable_sample_coverage_warning: bool | None = None
     mean_intensity_db: float | None = None
     p50_intensity_db: float | None = None
     p95_intensity_db: float | None = None
@@ -257,3 +260,31 @@ class LocationIntensitySummary:
             raise ValueError("sample_count must be >= 0")
         if not (0.0 <= self.sample_coverage_ratio <= 1.0):
             raise ValueError("sample_coverage_ratio must be in [0.0, 1.0]")
+        if self.usable_sample_count is not None and self.usable_sample_count < 0:
+            raise ValueError("usable_sample_count must be >= 0")
+        if self.usable_sample_coverage_ratio is not None and not (
+            0.0 <= self.usable_sample_coverage_ratio <= 1.0
+        ):
+            raise ValueError("usable_sample_coverage_ratio must be in [0.0, 1.0]")
+
+    @property
+    def diagnostic_sample_count(self) -> int:
+        return (
+            self.usable_sample_count if self.usable_sample_count is not None else self.sample_count
+        )
+
+    @property
+    def diagnostic_sample_coverage_ratio(self) -> float:
+        return (
+            self.usable_sample_coverage_ratio
+            if self.usable_sample_coverage_ratio is not None
+            else self.sample_coverage_ratio
+        )
+
+    @property
+    def diagnostic_sample_coverage_warning(self) -> bool:
+        return (
+            self.usable_sample_coverage_warning
+            if self.usable_sample_coverage_warning is not None
+            else self.sample_coverage_warning
+        )
