@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from vibesensor.domain import DIAGNOSIS_AMBIGUOUS_SCORE_GAP
 from vibesensor.shared.boundaries.codecs.scalars import coerce_count, text_or_none
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context_warning import (
@@ -36,6 +37,7 @@ from vibesensor.shared.boundaries.reporting.confidence_facts import (
     apply_report_confidence_fallback,
     build_report_confidence_facts,
     project_whole_run_diagnosis_factors,
+    report_confidence_from_diagnosis_summary,
 )
 from vibesensor.shared.boundaries.reporting.decision_facts import (
     ActionStatusKey,
@@ -155,30 +157,10 @@ class PreparedReportFacts:
     def report_surface_diagnosis_summaries(
         self,
     ) -> tuple[ReportWholeRunDiagnosisSummary, ...]:
-        if not self.whole_run_diagnosis_summaries:
-            return ()
-        primary = self.whole_run_diagnosis_summaries[0]
-        if primary.uses_summary_fallback or (
-            not primary.ambiguous_diagnosis and not primary.suspicious
-        ):
-            return self.whole_run_diagnosis_summaries
-        summary_primary_source = str(self.decision.primary_candidate.primary_source or "").strip()
-        if not summary_primary_source:
-            return ()
-        for index, diagnosis in enumerate(self.whole_run_diagnosis_summaries):
-            if diagnosis.suspected_source != summary_primary_source:
-                continue
-            if index == 0:
-                return self.whole_run_diagnosis_summaries
-            return (
-                diagnosis,
-                *(
-                    row
-                    for row_index, row in enumerate(self.whole_run_diagnosis_summaries)
-                    if row_index != index
-                ),
-            )
-        return ()
+        return _report_surface_diagnosis_summaries(
+            self.whole_run_diagnosis_summaries,
+            summary_primary_source=text_or_none(self.decision.primary_candidate.primary_source),
+        )
 
     @property
     def primary_diagnosis(self) -> ReportWholeRunDiagnosisSummary | None:
@@ -225,7 +207,7 @@ def prepare_report_facts(
         primary_candidate=decision_facts.primary_candidate,
         evidence_data_basis=evidence_facts.data_basis,
     )
-    confidence_facts = build_report_confidence_facts(
+    provisional_confidence_facts = build_report_confidence_facts(
         has_explicit_analysis_metadata=isinstance(payload.get("analysis_metadata"), Mapping),
         primary_candidate=decision_facts.primary_candidate,
         evidence_facts=evidence_facts,
@@ -238,8 +220,14 @@ def prepare_report_facts(
         sensor_facts=sensor_facts,
         decision_facts=decision_facts,
         evidence_facts=evidence_facts,
-        confidence_facts=confidence_facts,
+        confidence_facts=provisional_confidence_facts,
         context_facts=context_facts,
+    )
+    confidence_facts = _report_surface_confidence_facts(
+        whole_run_diagnosis_summaries,
+        summary_primary_source=text_or_none(decision_facts.primary_candidate.primary_source),
+        fallback_confidence=provisional_confidence_facts,
+        prefer_summary_projection=bool(summary.whole_run_diagnosis_summaries),
     )
     return PreparedReportFacts(
         run=ReportRunFacts(
@@ -442,7 +430,7 @@ def _report_whole_run_diagnosis_summaries(
         "confidence_gap_to_alternative": decision_facts.confidence_gap_to_alternative,
         "ambiguous_diagnosis": bool(
             decision_facts.confidence_gap_to_alternative is not None
-            and decision_facts.confidence_gap_to_alternative <= 0.05
+            and decision_facts.confidence_gap_to_alternative <= DIAGNOSIS_AMBIGUOUS_SCORE_GAP
         ),
         "ambiguous_location": False,
         "suspicious": _fallback_diagnosis_is_suspicious(
@@ -495,6 +483,55 @@ def _whole_run_diagnosis_fallback_reason(
     if has_partial_whole_run_inputs:
         return "whole-run diagnosis inputs incomplete; replayed summary-era evidence"
     return "whole-run artifacts unavailable; replayed summary-era evidence"
+
+
+def _report_surface_confidence_facts(
+    whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...],
+    *,
+    summary_primary_source: str | None,
+    fallback_confidence: ReportConfidenceFacts,
+    prefer_summary_projection: bool,
+) -> ReportConfidenceFacts:
+    if not prefer_summary_projection:
+        return fallback_confidence
+    report_surface = _report_surface_diagnosis_summaries(
+        whole_run_diagnosis_summaries,
+        summary_primary_source=summary_primary_source,
+    )
+    if not report_surface:
+        return fallback_confidence
+    return report_confidence_from_diagnosis_summary(report_surface[0])
+
+
+def _report_surface_diagnosis_summaries(
+    whole_run_diagnosis_summaries: tuple[ReportWholeRunDiagnosisSummary, ...],
+    *,
+    summary_primary_source: str | None,
+) -> tuple[ReportWholeRunDiagnosisSummary, ...]:
+    if not whole_run_diagnosis_summaries:
+        return ()
+    primary = whole_run_diagnosis_summaries[0]
+    if primary.uses_summary_fallback or (
+        not primary.ambiguous_diagnosis and not primary.suspicious
+    ):
+        return whole_run_diagnosis_summaries
+    normalized_primary_source = str(summary_primary_source or "").strip()
+    if not normalized_primary_source:
+        return ()
+    for index, diagnosis in enumerate(whole_run_diagnosis_summaries):
+        if diagnosis.suspected_source != normalized_primary_source:
+            continue
+        if index == 0:
+            return whole_run_diagnosis_summaries
+        return (
+            diagnosis,
+            *(
+                row
+                for row_index, row in enumerate(whole_run_diagnosis_summaries)
+                if row_index != index
+            ),
+        )
+    return ()
 
 
 def _factor_weight_sum(rows: tuple[DiagnosisFactorResponse, ...]) -> float:
