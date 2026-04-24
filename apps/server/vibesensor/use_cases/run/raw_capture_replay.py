@@ -61,7 +61,7 @@ class RawReplaySummary:
     """Rolled-up replay coverage facts persisted into analysis metadata."""
 
     raw_capture_available: bool
-    raw_backed_sample_count: int
+    raw_backed_summary_row_count: int
     replay_window_count: int
     complete_window_count: int
     partial_window_count: int
@@ -116,7 +116,7 @@ def build_raw_backed_samples(
             samples=samples,
             summary=RawReplaySummary(
                 raw_capture_available=False,
-                raw_backed_sample_count=0,
+                raw_backed_summary_row_count=0,
                 replay_window_count=len(samples),
                 complete_window_count=0,
                 partial_window_count=0,
@@ -156,7 +156,7 @@ def build_raw_backed_samples(
             samples=samples,
             summary=RawReplaySummary(
                 raw_capture_available=True,
-                raw_backed_sample_count=0,
+                raw_backed_summary_row_count=0,
                 replay_window_count=len(samples),
                 complete_window_count=0,
                 partial_window_count=0,
@@ -255,7 +255,7 @@ def build_raw_backed_samples(
     invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
     write_error_chunk_count = raw_capture.manifest.losses.write_error_chunk_count
     replay_confidence = _replay_confidence(
-        raw_backed_sample_count=raw_backed_count,
+        raw_backed_summary_row_count=raw_backed_count,
         replay_window_count=len(samples),
         partial_window_count=partial_window_count,
         missing_window_count=missing_window_count,
@@ -276,7 +276,7 @@ def build_raw_backed_samples(
         samples=tuple(replayed),
         summary=RawReplaySummary(
             raw_capture_available=True,
-            raw_backed_sample_count=raw_backed_count,
+            raw_backed_summary_row_count=raw_backed_count,
             replay_window_count=len(samples),
             complete_window_count=complete_window_count,
             partial_window_count=partial_window_count,
@@ -299,7 +299,7 @@ def build_raw_backed_samples(
             raw_capture_mode=raw_capture_mode,
             udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
             warnings=_build_replay_warnings(
-                raw_backed_sample_count=raw_backed_count,
+                raw_backed_summary_row_count=raw_backed_count,
                 timing_fallback_count=timing_fallback_count,
                 partial_window_count=partial_window_count,
                 missing_window_count=missing_window_count,
@@ -520,7 +520,7 @@ def _assemble_window_samples(
 
 def _replay_confidence(
     *,
-    raw_backed_sample_count: int,
+    raw_backed_summary_row_count: int,
     replay_window_count: int,
     partial_window_count: int,
     missing_window_count: int,
@@ -534,10 +534,10 @@ def _replay_confidence(
 ) -> RawReplayConfidence:
     if replay_window_count <= 0:
         return "unavailable"
-    if raw_backed_sample_count <= 0:
+    if raw_backed_summary_row_count <= 0:
         return "fallback"
     if (
-        raw_backed_sample_count == replay_window_count
+        raw_backed_summary_row_count == replay_window_count
         and partial_window_count <= 0
         and missing_window_count <= 0
         and gap_count <= 0
@@ -554,7 +554,7 @@ def _replay_confidence(
 
 def _build_replay_warnings(
     *,
-    raw_backed_sample_count: int,
+    raw_backed_summary_row_count: int,
     timing_fallback_count: int,
     partial_window_count: int,
     missing_window_count: int,
@@ -573,7 +573,7 @@ def _build_replay_warnings(
     stale_sync_sensor_count: int,
     high_rtt_sensor_count: int,
 ) -> tuple[RunContextWarning, ...]:
-    if legacy_sensor_count > 0 and raw_backed_sample_count <= 0:
+    if legacy_sensor_count > 0 and raw_backed_summary_row_count <= 0:
         return (
             RunContextWarning(
                 code=WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,

@@ -203,7 +203,7 @@ def test_build_post_analysis_input_aligns_raw_replay_from_run_start_anchor(
             ]
         ),
         raw_capture=raw_capture,
-        total_sample_count=1,
+        total_summary_row_count=1,
         stride=1,
     )
     expected = _shared_strength_metrics(replay_window)
@@ -223,7 +223,7 @@ def test_build_post_analysis_input_aligns_raw_replay_from_run_start_anchor(
     result = build_post_analysis_input(loaded)
 
     rebuilt = result.samples[0]
-    assert result.raw_backed_sample_count == 1
+    assert result.raw_backed_summary_row_count == 1
     assert result.raw_replay.raw_capture_mode == "raw_backed"
     assert result.raw_replay.complete_window_count == 1
     assert calls == [_SAMPLE_RATE_HZ]
@@ -289,14 +289,14 @@ def test_build_post_analysis_input_replays_each_sensor_on_its_own_timeline() -> 
             ]
         ),
         raw_capture=raw_capture,
-        total_sample_count=2,
+        total_summary_row_count=2,
         stride=1,
     )
 
     result = build_post_analysis_input(loaded)
 
     by_sensor = {sample.client_id: sample for sample in result.samples}
-    assert result.raw_backed_sample_count == 2
+    assert result.raw_backed_summary_row_count == 2
     assert by_sensor["sensor-a"].dominant_freq_hz is not None
     assert by_sensor["sensor-b"].dominant_freq_hz is not None
     assert 20.0 <= float(by_sensor["sensor-a"].dominant_freq_hz) <= 35.0
@@ -341,14 +341,14 @@ def test_build_post_analysis_input_replays_out_of_order_chunks_from_chunk_offset
             ]
         ),
         raw_capture=raw_capture,
-        total_sample_count=1,
+        total_summary_row_count=1,
         stride=1,
     )
 
     result = build_post_analysis_input(loaded)
 
     rebuilt = result.samples[0]
-    assert result.raw_backed_sample_count == 1
+    assert result.raw_backed_summary_row_count == 1
     assert result.raw_replay.complete_window_count == 1
     assert result.raw_replay.warnings == ()
     assert rebuilt.dominant_freq_hz is not None
@@ -400,14 +400,14 @@ def test_build_post_analysis_input_prefers_explicit_analysis_window_over_flush_t
             ]
         ),
         raw_capture=raw_capture,
-        total_sample_count=1,
+        total_summary_row_count=1,
         stride=1,
     )
 
     result = build_post_analysis_input(loaded)
 
     rebuilt = result.samples[0]
-    assert result.raw_backed_sample_count == 1
+    assert result.raw_backed_summary_row_count == 1
     assert result.raw_replay.timing_fallback_count == 0
     assert result.raw_replay.warnings == ()
     assert rebuilt.dominant_freq_hz is not None
@@ -453,13 +453,13 @@ def test_build_post_analysis_input_marks_gap_windows_partial_and_falls_back() ->
             ]
         ),
         raw_capture=raw_capture,
-        total_sample_count=2,
+        total_summary_row_count=2,
         stride=1,
     )
 
     result = build_post_analysis_input(loaded)
 
-    assert result.raw_backed_sample_count == 1
+    assert result.raw_backed_summary_row_count == 1
     assert result.raw_replay.raw_capture_mode == "partial_raw_backed"
     assert result.raw_replay.partial_window_count == 1
     assert result.raw_replay.gap_count == 1
@@ -508,13 +508,13 @@ def test_build_post_analysis_input_warns_when_replay_falls_back_to_legacy_sample
             ]
         ),
         raw_capture=raw_capture,
-        total_sample_count=1,
+        total_summary_row_count=1,
         stride=1,
     )
 
     result = build_post_analysis_input(loaded)
 
-    assert result.raw_backed_sample_count == 1
+    assert result.raw_backed_summary_row_count == 1
     assert result.raw_replay.timing_fallback_count == 1
     assert [warning.code for warning in result.raw_replay.warnings] == [
         WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK
@@ -555,13 +555,13 @@ def test_build_post_analysis_input_falls_back_for_legacy_raw_capture_without_anc
             ]
         ),
         raw_capture=raw_capture,
-        total_sample_count=1,
+        total_summary_row_count=1,
         stride=1,
     )
 
     result = build_post_analysis_input(loaded)
 
-    assert result.raw_backed_sample_count == 0
+    assert result.raw_backed_summary_row_count == 0
     assert result.raw_replay.raw_capture_mode == "summary_only"
     assert result.raw_replay.replay_confidence == "fallback"
     assert result.raw_replay.unanchored_sensor_count == 1
@@ -616,13 +616,13 @@ def test_build_post_analysis_input_falls_back_when_sync_proof_is_stale() -> None
             ]
         ),
         raw_capture=raw_capture,
-        total_sample_count=1,
+        total_summary_row_count=1,
         stride=1,
     )
 
     result = build_post_analysis_input(loaded)
 
-    assert result.raw_backed_sample_count == 0
+    assert result.raw_backed_summary_row_count == 0
     assert result.raw_replay.raw_capture_mode == "summary_only"
     assert result.raw_replay.sync_unverified_sensor_count == 1
     assert result.raw_replay.stale_sync_sensor_count == 1

@@ -66,7 +66,7 @@ def test_build_post_analysis_summary_warns_when_vehicle_context_is_unaligned(
                 ]
             ),
             raw_capture=None,
-            total_sample_count=1,
+            total_summary_row_count=1,
             stride=1,
             sampling_method="full",
             evenly_spaced_sample_count=0,

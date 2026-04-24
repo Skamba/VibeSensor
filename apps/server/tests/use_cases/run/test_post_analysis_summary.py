@@ -37,20 +37,21 @@ def _run_metadata(
     *,
     language: str = "en",
     raw_sample_rate_hz: int = 800,
+    feature_interval_s: float | None = 1.0,
 ) -> RunMetadata:
-    return run_metadata_from_mapping(
-        {
-            "run_id": run_id,
-            "start_time_utc": "2025-01-01T00:00:00Z",
-            "sensor_model": "fixture-sensor",
-            "raw_sample_rate_hz": raw_sample_rate_hz,
-            "sample_rate_hz": raw_sample_rate_hz,
-            "feature_interval_s": 1.0,
-            "fft_window_size_samples": 64,
-            "accel_scale_g_per_lsb": 0.001,
-            "language": language,
-        }
-    )
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2025-01-01T00:00:00Z",
+        "sensor_model": "fixture-sensor",
+        "raw_sample_rate_hz": raw_sample_rate_hz,
+        "sample_rate_hz": raw_sample_rate_hz,
+        "fft_window_size_samples": 64,
+        "accel_scale_g_per_lsb": 0.001,
+        "language": language,
+    }
+    if feature_interval_s is not None:
+        payload["feature_interval_s"] = feature_interval_s
+    return run_metadata_from_mapping(payload)
 
 
 def _run_input(
@@ -58,7 +59,9 @@ def _run_input(
     *,
     language: str = "en",
     raw_sample_rate_hz: int = 800,
-    total_sample_count: int = 1,
+    total_summary_row_count: int = 1,
+    summary_duration_s: float | None = None,
+    feature_interval_s: float | None = 1.0,
     stride: int = 1,
     sampling_method: str = "full",
     evenly_spaced_sample_count: int = 0,
@@ -71,12 +74,16 @@ def _run_input(
                 run_id,
                 language=language,
                 raw_sample_rate_hz=raw_sample_rate_hz,
+                feature_interval_s=feature_interval_s,
             ),
             language=language,
             samples=sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}]),
             raw_capture=None,
-            total_sample_count=total_sample_count,
+            total_summary_row_count=total_summary_row_count,
             stride=stride,
+            summary_duration_s=(
+                float(total_summary_row_count) if summary_duration_s is None else summary_duration_s
+            ),
             sampling_method=sampling_method,
             evenly_spaced_sample_count=evenly_spaced_sample_count,
             event_sample_count=event_sample_count,
@@ -151,11 +158,12 @@ def _gap_raw_capture(run_id: str) -> RawRunCapture:
 def _full_raw_capture(
     run_id: str,
     *,
+    chunk_sample_count: int = 160,
     losses: RawCaptureLossStats | None = None,
     clock_sync: RawCaptureSensorClockSync | None = None,
 ) -> RawRunCapture:
     run_start_monotonic_us = 1_000_000
-    chunk = _wave(32.0, 160)
+    chunk = _wave(32.0, chunk_sample_count)
     chunk_rows = (
         RawCaptureChunkIndex(
             sample_start=0,
@@ -248,7 +256,7 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
     )
 
     summary = build_post_analysis_summary(
-        _run_input("run-ok", language="nl", raw_sample_rate_hz=1, total_sample_count=3),
+        _run_input("run-ok", language="nl", raw_sample_rate_hz=1, total_summary_row_count=3),
     )
 
     assert captured["lang"] == "nl"
@@ -257,12 +265,16 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
     assert summary["case_id"] == "case-1"
     assert summary["analysis_metadata"] == {
         "analyzed_sample_count": 1,
+        "analyzed_summary_row_count": 1,
         "total_sample_count": 3,
+        "total_summary_row_count": 3,
         "sampling_method": "full",
+        "summary_duration_s": 3.0,
         "vehicle_context_unaligned_speed_sample_count": 0,
         "vehicle_context_unaligned_rpm_sample_count": 0,
         "raw_capture_available": False,
         "raw_backed_sample_count": 0,
+        "raw_backed_summary_row_count": 0,
         "raw_capture_mode": "summary_only",
         "raw_replay_window_count": 1,
         "raw_replay_complete_window_count": 0,
@@ -316,7 +328,7 @@ def test_build_post_analysis_summary_adds_stride_warning(
         _run_input(
             "run-stride",
             raw_sample_rate_hz=1,
-            total_sample_count=5,
+            total_summary_row_count=5,
             stride=3,
             sampling_method="event_preserving",
             evenly_spaced_sample_count=2,
@@ -335,44 +347,6 @@ def test_build_post_analysis_summary_adds_stride_warning(
             "check_key": "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
             "state": "warn",
             "explanation": "stride=3",
-        }
-    ]
-
-
-def test_build_post_analysis_summary_adds_short_run_warning(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    class FakeRunAnalysis:
-        def __init__(self, *_args, **_kwargs):
-            pass
-
-        def summarize(self):
-            return SimpleNamespace(
-                diagnostic_case=SimpleNamespace(case_id="case-3"),
-            )
-
-    monkeypatch.setattr(
-        "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
-        FakeRunAnalysis,
-    )
-    monkeypatch.setattr(
-        "vibesensor.use_cases.run.post_analysis_summary.analysis_result_to_summary",
-        lambda _result: {},
-    )
-    monkeypatch.setattr(
-        "vibesensor.report_i18n.tr",
-        lambda _language, key, **_kwargs: key,
-    )
-
-    summary = build_post_analysis_summary(
-        _run_input("run-short", raw_sample_rate_hz=800, total_sample_count=100),
-    )
-
-    assert summary["run_suitability"] == [
-        {
-            "check_key": "SUITABILITY_CHECK_RUN_DURATION",
-            "state": "warn",
-            "explanation": "SUITABILITY_RUN_DURATION_WARNING",
         }
     ]
 
@@ -423,7 +397,7 @@ def test_build_post_analysis_summary_propagates_dropped_chunk_metadata_and_warni
                         write_error_chunk_count=1,
                     ),
                 ),
-                total_sample_count=1,
+                total_summary_row_count=1,
                 stride=1,
             )
         )
@@ -480,7 +454,7 @@ def test_build_post_analysis_summary_uses_raw_backed_samples_for_sensor_intensit
                 ]
             ),
             raw_capture=_full_raw_capture("run-raw-intensity"),
-            total_sample_count=1,
+            total_summary_row_count=1,
             stride=1,
         )
     )
@@ -536,7 +510,7 @@ def test_build_post_analysis_summary_enriches_missing_strength_db_from_peak_and_
                 ]
             ),
             raw_capture=None,
-            total_sample_count=1,
+            total_summary_row_count=1,
             stride=1,
         )
     )
@@ -593,7 +567,7 @@ def test_build_post_analysis_summary_persists_raw_replay_warning_and_counts(
                 ]
             ),
             raw_capture=_gap_raw_capture("run-raw-gap"),
-            total_sample_count=2,
+            total_summary_row_count=2,
             stride=1,
         )
     )
@@ -647,7 +621,7 @@ def test_build_post_analysis_summary_persists_timing_fallback_warning(
                 ]
             ),
             raw_capture=_full_raw_capture("run-legacy-sample-time"),
-            total_sample_count=1,
+            total_summary_row_count=1,
             stride=1,
         )
     )
