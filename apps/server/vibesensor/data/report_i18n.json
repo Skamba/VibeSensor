@@ -1739,6 +1739,14 @@
     "en": "Some persisted samples did not include explicit analysis-window timing metadata, so replay aligned {count} window(s) using legacy sample timestamps.",
     "nl": "Sommige persistente samples bevatten geen expliciete analysevenster-timingmetadata, dus replay lijnde {count} venster(s) uit met legacy-sampletijdstempels."
   },
+  "RUN_CONTEXT_WARNING_RAW_REPLAY_FFT_UNUSABLE_TITLE": {
+    "en": "Raw replay found windows with no analyzable FFT band",
+    "nl": "Raw replay vond vensters zonder analyseerbare FFT-band"
+  },
+  "RUN_CONTEXT_WARNING_RAW_REPLAY_FFT_UNUSABLE_DETAIL": {
+    "en": "Replay rebuilt {count} window(s) with complete raw coverage but no valid in-band FFT bins, so those windows stayed reduced-confidence instead of being marked raw-backed.",
+    "nl": "Replay herbouwde {count} venster(s) met volledige raw-dekking maar zonder geldige in-band FFT-bins, dus die vensters bleven verlaagde-confidence in plaats van raw-backed te worden gemarkeerd."
+  },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_LEGACY_TITLE": {
     "en": "Raw replay fell back to persisted summary metrics",
     "nl": "Raw replay viel terug op persistente samenvattingsmetrieken"
