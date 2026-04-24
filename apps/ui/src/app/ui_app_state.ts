@@ -4,6 +4,7 @@ import type {
   AdaptedClient,
   AdaptedPayload,
   RotationalSpeeds,
+  SpectrumFrameData,
   SpectrumClientData,
 } from "../transport/live_models";
 import { defaultLocationCodes } from "../constants";
@@ -148,7 +149,7 @@ export interface ChartBand {
 }
 
 export interface SpectrumTickUpdate {
-  spectra: { clients: Record<string, SpectrumClientData> };
+  spectra: SpectrumFrameData;
   hasSpectrumData: boolean;
   hasNewSpectrumFrame: boolean;
 }
@@ -165,8 +166,14 @@ export interface LivePayloadUpdateResult {
   hasNewSpectrumFrame: boolean;
 }
 
-function hasRenderableSpectrumData(spectra: { clients: Record<string, SpectrumClientData> }): boolean {
+function hasRenderableSpectrumData(spectra: SpectrumFrameData): boolean {
   return Object.values(spectra.clients).some((clientSpec) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0);
+}
+
+function hasSpectrumFingerprint(
+  spectra: SpectrumFrameData,
+): spectra is SpectrumFrameData & { frame_fingerprint: string } {
+  return typeof spectra.frame_fingerprint === "string";
 }
 
 function areNumberArraysEqual(left: readonly number[], right: readonly number[]): boolean {
@@ -221,8 +228,8 @@ function areSpectrumClientDataEqual(left: SpectrumClientData, right: SpectrumCli
 }
 
 export function areSpectrumFramesEqual(
-  left: { clients: Record<string, SpectrumClientData> },
-  right: { clients: Record<string, SpectrumClientData> },
+  left: SpectrumFrameData,
+  right: SpectrumFrameData,
 ): boolean {
   const leftClientIds = Object.keys(left.clients);
   const rightClientIds = Object.keys(right.clients);
@@ -240,15 +247,29 @@ export function areSpectrumFramesEqual(
 }
 
 export function applySpectrumTick(
-  previousSpectra: { clients: Record<string, SpectrumClientData> },
+  previousSpectra: SpectrumFrameData,
   previousHasSpectrumData: boolean,
-  incomingSpectra: { clients: Record<string, SpectrumClientData> } | null,
+  incomingSpectra: SpectrumFrameData | null,
 ): SpectrumTickUpdate {
   if (!incomingSpectra) {
     return {
       spectra: previousSpectra,
       hasSpectrumData: previousHasSpectrumData,
       hasNewSpectrumFrame: false,
+    };
+  }
+  if (hasSpectrumFingerprint(previousSpectra) && hasSpectrumFingerprint(incomingSpectra)) {
+    if (previousSpectra.frame_fingerprint === incomingSpectra.frame_fingerprint) {
+      return {
+        spectra: previousSpectra,
+        hasSpectrumData: previousHasSpectrumData,
+        hasNewSpectrumFrame: false,
+      };
+    }
+    return {
+      spectra: incomingSpectra,
+      hasSpectrumData: hasRenderableSpectrumData(incomingSpectra),
+      hasNewSpectrumFrame: true,
     };
   }
   if (areSpectrumFramesEqual(previousSpectra, incomingSpectra)) {
@@ -370,7 +391,7 @@ export interface SpeedSettingsValue {
 
 export interface SpectrumStateValue {
   spectrumPlot: SpectrumChart | null;
-  spectra: { clients: Record<string, SpectrumClientData> };
+  spectra: SpectrumFrameData;
   chartBands: ChartBand[];
   hasSpectrumData: boolean;
   chartLoading: boolean;
@@ -465,7 +486,7 @@ export function createAppState(): AppState {
     },
     spectrum: {
       spectrumPlot: signal<SpectrumChart | null>(null),
-      spectra: signal<{ clients: Record<string, SpectrumClientData> }>({ clients: {} }),
+      spectra: signal<SpectrumFrameData>({ clients: {} }),
       chartBands: signal<ChartBand[]>([]),
       hasSpectrumData: signal(false),
       chartLoading: signal(false),

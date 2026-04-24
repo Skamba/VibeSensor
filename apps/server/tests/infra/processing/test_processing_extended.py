@@ -226,6 +226,28 @@ def test_multi_spectrum_payload_compares_freq_axes_without_np_asarray(
     assert result["freq"]
 
 
+def test_multi_spectrum_payload_fingerprint_is_order_stable_and_changes_with_new_compute() -> None:
+    proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
+    samples = _random_samples(300)
+
+    proc.ingest("c1", samples, sample_rate_hz=200)
+    proc.ingest("c2", samples, sample_rate_hz=200)
+    proc.compute_metrics("c1", sample_rate_hz=200)
+    proc.compute_metrics("c2", sample_rate_hz=200)
+
+    first = proc.multi_spectrum_payload(["c1", "c2"])
+    reordered = proc.multi_spectrum_payload(["c2", "c1"])
+
+    assert first["frame_fingerprint"] == reordered["frame_fingerprint"]
+
+    proc.ingest("c1", samples, sample_rate_hz=200)
+    proc.compute_metrics("c1", sample_rate_hz=200)
+
+    updated = proc.multi_spectrum_payload(["c1", "c2"])
+
+    assert updated["frame_fingerprint"] != first["frame_fingerprint"]
+
+
 def test_multi_spectrum_payload_skips_allclose_for_shared_freq_object(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

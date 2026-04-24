@@ -59,7 +59,13 @@ def test_schema_export_check_passes() -> None:
     }
 
     spectra = parsed["$defs"]["SpectraPayload"]
-    assert set(spectra["properties"]) == {"alignment", "clients", "freq", "warning"}
+    assert set(spectra["properties"]) == {
+        "alignment",
+        "clients",
+        "frame_fingerprint",
+        "freq",
+        "warning",
+    }
 
 
 # ---------------------------------------------------------------------------

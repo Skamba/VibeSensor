@@ -51,6 +51,21 @@ def _axis_data_or_empty(
     return latest_spectrum.get(axis, {"freq": _EMPTY_F32, "amp": _EMPTY_F32})
 
 
+def _build_spectrum_frame_fingerprint(
+    buffers: dict[str, ClientBuffer],
+    client_ids: list[str],
+) -> str:
+    parts: list[str] = []
+    for client_id in sorted(dict.fromkeys(client_ids)):
+        buf = buffers.get(client_id)
+        if buf is None or not buf.latest_spectrum:
+            continue
+        parts.append(
+            f"{client_id}:{buf.buffer_epoch}:{buf.reset_generation}:{buf.spectrum_generation}"
+        )
+    return "|".join(parts)
+
+
 def build_spectrum_payload(buf: ClientBuffer) -> SpectrumSeriesPayload:
     """Build a per-client spectrum payload from the buffer's cached spectrum.
 
@@ -228,6 +243,7 @@ def build_multi_spectrum_payload(
         shared_freq_list = float_list(shared_freq) if shared_freq is not None else []
 
     payload: SpectraPayload = {
+        "frame_fingerprint": _build_spectrum_frame_fingerprint(buffers, client_ids),
         "freq": shared_freq_list,
         "clients": clients,
     }
