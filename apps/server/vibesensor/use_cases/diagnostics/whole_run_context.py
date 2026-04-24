@@ -85,21 +85,25 @@ def build_whole_run_context_artifact_bundle(
     run_id: str,
     metadata: RunMetadata,
     samples: Sequence[Sample],
-    total_sample_count: int,
+    total_sample_count: int | None = None,
+    window_plan: WholeRunWindowPlan | None = None,
     created_at: str | None = None,
 ) -> WholeRunContextArtifactBundle:
     """Build whole-run context labels and compact segments for persistence."""
 
-    plan = plan_whole_run_windows(
-        metadata=metadata,
-        total_sample_count=total_sample_count,
-    )
+    if window_plan is None:
+        if total_sample_count is None:
+            raise ValueError("whole-run context builder requires total_sample_count or window_plan")
+        window_plan = plan_whole_run_windows(
+            metadata=metadata,
+            total_sample_count=total_sample_count,
+        )
     labels = normalize_whole_run_context_labels(
         metadata=metadata,
         samples=samples,
-        window_plan=plan,
+        window_plan=window_plan,
     )
-    segmentation = segment_whole_run_context(labels=labels, window_plan=plan)
+    segmentation = segment_whole_run_context(labels=labels, window_plan=window_plan)
     artifact_file = WholeRunArtifactFile(
         artifact_key=WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
         relative_path=_WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_PATH,
@@ -109,8 +113,8 @@ def build_whole_run_context_artifact_bundle(
     manifest = WholeRunArtifactManifest(
         run_id=run_id,
         relative_dir=f"{WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME}/{run_id}",
-        window_policy=plan.policy,
-        total_window_count=plan.total_window_count,
+        window_policy=window_plan.policy,
+        total_window_count=window_plan.total_window_count,
         artifacts=(artifact_file,),
         created_at=created_at or utc_now_iso(),
     )

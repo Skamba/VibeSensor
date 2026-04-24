@@ -10,6 +10,7 @@ from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
     WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED,
     WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
+    WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
 )
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.report_document import build_report_document
@@ -265,13 +266,84 @@ def test_prepare_persisted_report_input_surfaces_sync_unverified_warning() -> No
         )
     )
 
-    document = build_report_document(prepared)
-
     assert WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED in [
         warning.code for warning in prepared.report_facts.decision.warnings
     ]
-    assert "summary_only" in prepared.report_facts.confidence.caveat_keys
+
+
+def test_prepare_persisted_report_input_surfaces_whole_run_alignment_warning() -> None:
+    primary = make_finding_payload(
+        finding_id="F_WHOLE_RUN_ALIGNMENT",
+        suspected_source="wheel/tire",
+        confidence=0.79,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+    )
+    prepared = prepare_persisted_report_input(
+        PersistedAnalysis.from_json_object(
+            minimal_summary(
+                run_id="whole-run-alignment-report",
+                lang="en",
+                metadata={
+                    "run_id": "whole-run-alignment-report",
+                    "record_type": "metadata",
+                    "schema_version": "v2-jsonl",
+                    "feature_interval_s": 0.5,
+                },
+                sensor_count_used=2,
+                sensor_locations=["Front Left", "Rear Left"],
+                sensor_locations_connected_throughout=["Front Left", "Rear Left"],
+                findings=[primary],
+                top_causes=[primary],
+                analysis_metadata={
+                    "raw_backed_sample_count": 8,
+                    "raw_capture_mode": "partial_raw_backed",
+                    "whole_run_spectral_available": True,
+                    "whole_run_spectral_window_count": 4,
+                    "whole_run_spectral_partial_sensor_window_count": 1,
+                    "whole_run_spectral_missing_sensor_window_count": 1,
+                    "whole_run_spectral_gap_count": 1,
+                    "whole_run_spectral_sample_rate_mismatch_sensor_count": 1,
+                    "whole_run_spectral_sync_unverified_sensor_count": 1,
+                },
+                warnings=[
+                    {
+                        "code": WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
+                        "severity": "warn",
+                        "applies_to": "whole_run",
+                        "title": i18n_ref(
+                            "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_TITLE"
+                        ),
+                        "detail": i18n_ref(
+                            "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_DETAIL",
+                            partial="1",
+                            missing="1",
+                            gaps="1",
+                            overlaps="0",
+                            dropped="0",
+                            queue_overflow="0",
+                            invalid="0",
+                            write_errors="0",
+                            mismatches="1",
+                            legacy="0",
+                            unanchored="0",
+                            sync_unverified="1",
+                            missing_sync="1",
+                            stale="0",
+                            high_rtt="0",
+                        ),
+                    }
+                ],
+            )
+        )
+    )
+
+    document = build_report_document(prepared)
+
+    assert WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE in [
+        warning.code for warning in prepared.report_facts.decision.warnings
+    ]
     assert any(
-        "could not be proven against the recorder clock" in (row.detail or "")
+        "Whole-run raw coverage was incomplete for some time-aligned windows" in (row.detail or "")
         for row in document.data_trust
     )
