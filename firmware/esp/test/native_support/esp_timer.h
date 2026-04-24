@@ -27,6 +27,8 @@ inline esp_err_t esp_timer_create(const esp_timer_create_args_t*, esp_timer_hand
   return ESP_OK;
 }
 
+inline esp_err_t esp_timer_start_once(esp_timer_handle_t, uint64_t) { return ESP_OK; }
+
 inline esp_err_t esp_timer_start_periodic(esp_timer_handle_t, uint64_t) { return ESP_OK; }
 
 inline esp_err_t esp_timer_delete(esp_timer_handle_t) { return ESP_OK; }
