@@ -11,7 +11,11 @@ from test_support.history_db_lifecycle import (
     create_recording_run,
 )
 
-from vibesensor.shared.types.raw_capture import RawCaptureChunk, RawCaptureLossStats
+from vibesensor.shared.types.raw_capture import (
+    RawCaptureChunk,
+    RawCaptureLossStats,
+    RawCaptureSensorClockSync,
+)
 
 
 def _append_chunk(
@@ -38,12 +42,14 @@ def _finalize_raw_capture(
     run_id: str,
     *,
     run_start_monotonic_us: int | None = None,
+    sensor_clock_sync: dict[str, RawCaptureSensorClockSync] | None = None,
     sensor_losses: dict[str, RawCaptureLossStats] | None = None,
 ):
     return db.run_repository._run_sync(
         db.run_repository.afinalize_raw_capture(
             run_id,
             run_start_monotonic_us=run_start_monotonic_us,
+            sensor_clock_sync=sensor_clock_sync,
             sensor_losses=sensor_losses,
         )
     )
@@ -84,12 +90,24 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(tmp_path: Path) ->
         db,
         "run-raw",
         run_start_monotonic_us=1_234_567,
+        sensor_clock_sync={
+            "sensor-a": RawCaptureSensorClockSync(
+                clock_domain="server_monotonic",
+                proof_state="verified",
+                observed_monotonic_us=1_300_000,
+                last_sync_monotonic_us=1_299_000,
+                sync_offset_us=5_000,
+                sync_rtt_us=4_000,
+            )
+        },
     )
 
     assert manifest is not None
     assert manifest.total_samples == 3
     assert manifest.run_start_monotonic_us == 1_234_567
     assert manifest.sensor_manifest("sensor-a") is not None
+    assert manifest.sensor_manifest("sensor-a").clock_sync is not None
+    assert manifest.sensor_manifest("sensor-a").clock_sync.verified is True
 
     stored = db.run_repository.get_run("run-raw")
     assert stored is not None
@@ -100,6 +118,8 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(tmp_path: Path) ->
     assert loaded.manifest.run_start_monotonic_us == 1_234_567
     sensor = loaded.sensor_data("sensor-a")
     assert sensor is not None
+    assert sensor.manifest.clock_sync is not None
+    assert sensor.manifest.clock_sync.sync_rtt_us == 4_000
     assert sensor.manifest.chunk_count == 2
     assert sensor.manifest.sample_count == 3
     assert len(sensor.chunks) == 2

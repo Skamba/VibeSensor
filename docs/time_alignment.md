@@ -101,14 +101,22 @@ here.
 
 Post-stop raw replay now uses the persisted raw chunk timeline instead
 of assuming that summary-sample `t_s` starts at raw sample index zero.
-New raw-capture manifests store `run_start_monotonic_us`, and replay
-anchors each summary sample into the same monotonic time domain as the
-chunk `t0_us` timestamps before resolving the matching raw window.
+Raw-capture manifests store the run anchor plus **per-sensor clock-sync
+proof** captured at finalize time:
 
-If a persisted run predates that anchor, or if replay detects gaps,
-overlaps, or other incomplete coverage inside a requested window, the
-system falls back to the persisted summary sample for that window and
-stores a deterministic warning instead of guessing.
+- whether the sensor `t0_us` was proven to be in the server monotonic
+  clock domain,
+- the last successful sync-ack monotonic timestamp,
+- the applied offset and measured RTT,
+- the proof status (`verified`, `stale_sync`, `high_rtt`,
+  `missing_sync`, or `missing_registry_record`).
+
+Replay only treats `t0_us` as server-monotonic when that proof is
+explicitly `verified`. Older artifacts without the per-sensor proof, or
+newer artifacts whose proof is stale/missing/high-RTT, fall back to the
+persisted summary sample instead of guessing raw alignment. Gaps,
+overlaps, dropped chunks, and other incomplete raw coverage still fall
+back per window and emit deterministic warnings.
 
 ## Fallback Behaviour
 

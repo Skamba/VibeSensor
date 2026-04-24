@@ -19,6 +19,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
     RawCaptureManifest,
+    RawCaptureSensorClockSync,
     RawCaptureSensorRange,
     RawRunCapture,
 )
@@ -120,6 +121,7 @@ class RunPersistence(Protocol):
         run_id: str,
         *,
         run_start_monotonic_us: int | None = None,
+        sensor_clock_sync: Mapping[str, RawCaptureSensorClockSync] | None = None,
         sensor_losses: Mapping[str, RawCaptureLossStats] | None = None,
     ) -> RawCaptureManifest | None: ...
 

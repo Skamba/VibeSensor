@@ -13,8 +13,10 @@ from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_ob
 __all__ = [
     "RawCaptureChunk",
     "RawCaptureChunkIndex",
+    "RawCaptureClockDomain",
     "RawCaptureLossStats",
     "RawCaptureManifest",
+    "RawCaptureSensorClockSync",
     "RawCaptureSensorLossStats",
     "RawCaptureSensorData",
     "RawCaptureSensorManifest",
@@ -24,8 +26,16 @@ __all__ = [
 
 type Int16Array = npt.NDArray[np.int16]
 type RawCaptureCoverageState = Literal["missing", "empty", "partial", "full"]
+type RawCaptureClockDomain = Literal["server_monotonic", "unverified"]
+type RawCaptureClockProofState = Literal[
+    "verified",
+    "missing_sync",
+    "stale_sync",
+    "high_rtt",
+    "missing_registry_record",
+]
 
-_RAW_CAPTURE_SCHEMA_VERSION = 3
+_RAW_CAPTURE_SCHEMA_VERSION = 4
 _RAW_CAPTURE_STORAGE_TYPE = "run-directory-v1"
 _RAW_CAPTURE_MODE = "full_run"
 
@@ -141,6 +151,62 @@ class RawCaptureSensorLossStats:
 
 
 @dataclass(frozen=True, slots=True)
+class RawCaptureSensorClockSync:
+    """Persisted proof about whether one sensor's ``t0_us`` uses server monotonic time."""
+
+    clock_domain: RawCaptureClockDomain = "unverified"
+    proof_state: RawCaptureClockProofState = "missing_sync"
+    observed_monotonic_us: int | None = None
+    last_sync_monotonic_us: int | None = None
+    sync_offset_us: int | None = None
+    sync_rtt_us: int | None = None
+    max_sync_age_us: int | None = None
+    max_sync_rtt_us: int | None = None
+
+    @property
+    def verified(self) -> bool:
+        return self.clock_domain == "server_monotonic" and self.proof_state == "verified"
+
+    @property
+    def sync_age_us(self) -> int | None:
+        if self.observed_monotonic_us is None or self.last_sync_monotonic_us is None:
+            return None
+        return max(0, self.observed_monotonic_us - self.last_sync_monotonic_us)
+
+    def to_json_object(self) -> JsonObject:
+        payload: JsonObject = {
+            "clock_domain": self.clock_domain,
+            "proof_state": self.proof_state,
+        }
+        if self.observed_monotonic_us is not None:
+            payload["observed_monotonic_us"] = self.observed_monotonic_us
+        if self.last_sync_monotonic_us is not None:
+            payload["last_sync_monotonic_us"] = self.last_sync_monotonic_us
+        if self.sync_offset_us is not None:
+            payload["sync_offset_us"] = self.sync_offset_us
+        if self.sync_rtt_us is not None:
+            payload["sync_rtt_us"] = self.sync_rtt_us
+        if self.max_sync_age_us is not None:
+            payload["max_sync_age_us"] = self.max_sync_age_us
+        if self.max_sync_rtt_us is not None:
+            payload["max_sync_rtt_us"] = self.max_sync_rtt_us
+        return payload
+
+    @classmethod
+    def from_mapping(cls, data: JsonObject) -> RawCaptureSensorClockSync:
+        return cls(
+            clock_domain=_str_from_json(data.get("clock_domain"), "unverified"),  # type: ignore[arg-type]
+            proof_state=_str_from_json(data.get("proof_state"), "missing_sync"),  # type: ignore[arg-type]
+            observed_monotonic_us=_int_or_none(data.get("observed_monotonic_us")),
+            last_sync_monotonic_us=_int_or_none(data.get("last_sync_monotonic_us")),
+            sync_offset_us=_int_or_none(data.get("sync_offset_us")),
+            sync_rtt_us=_int_or_none(data.get("sync_rtt_us")),
+            max_sync_age_us=_int_or_none(data.get("max_sync_age_us")),
+            max_sync_rtt_us=_int_or_none(data.get("max_sync_rtt_us")),
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class RawCaptureSensorManifest:
     """One sensor stream persisted inside a raw run-artifact bundle."""
 
@@ -153,6 +219,7 @@ class RawCaptureSensorManifest:
     bytes_written: int
     first_t0_us: int | None = None
     last_t0_us: int | None = None
+    clock_sync: RawCaptureSensorClockSync | None = None
 
     def to_json_object(self) -> JsonObject:
         payload: JsonObject = {
@@ -168,6 +235,8 @@ class RawCaptureSensorManifest:
             payload["first_t0_us"] = self.first_t0_us
         if self.last_t0_us is not None:
             payload["last_t0_us"] = self.last_t0_us
+        if self.clock_sync is not None:
+            payload["clock_sync"] = self.clock_sync.to_json_object()
         return payload
 
     @classmethod
@@ -182,6 +251,11 @@ class RawCaptureSensorManifest:
             bytes_written=_int_from_json(data.get("bytes_written")),
             first_t0_us=_int_or_none(data.get("first_t0_us")),
             last_t0_us=_int_or_none(data.get("last_t0_us")),
+            clock_sync=(
+                RawCaptureSensorClockSync.from_mapping(clock_sync_raw)
+                if is_json_object(clock_sync_raw := data.get("clock_sync"))
+                else None
+            ),
         )
 
 

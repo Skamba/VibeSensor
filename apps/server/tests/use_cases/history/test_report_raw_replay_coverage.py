@@ -8,6 +8,7 @@ from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
+    WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED,
     WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
 )
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -211,5 +212,66 @@ def test_prepare_persisted_report_input_surfaces_dropped_raw_chunk_warning() -> 
     ]
     assert any(
         "Raw capture dropped 3 chunk(s) before persistence" in (row.detail or "")
+        for row in document.data_trust
+    )
+
+
+def test_prepare_persisted_report_input_surfaces_sync_unverified_warning() -> None:
+    primary = make_finding_payload(
+        finding_id="F_STALE_SYNC",
+        suspected_source="wheel/tire",
+        confidence=0.75,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+    )
+    prepared = prepare_persisted_report_input(
+        PersistedAnalysis.from_json_object(
+            minimal_summary(
+                run_id="stale-sync-report",
+                lang="en",
+                metadata={
+                    "run_id": "stale-sync-report",
+                    "record_type": "metadata",
+                    "schema_version": "v2-jsonl",
+                    "feature_interval_s": 0.5,
+                },
+                sensor_count_used=1,
+                sensor_locations=["Front Left"],
+                sensor_locations_connected_throughout=["Front Left"],
+                findings=[primary],
+                top_causes=[primary],
+                analysis_metadata={
+                    "raw_backed_sample_count": 0,
+                    "raw_capture_mode": "summary_only",
+                    "raw_replay_sync_unverified_sensor_count": 1,
+                    "raw_replay_stale_sync_sensor_count": 1,
+                },
+                warnings=[
+                    {
+                        "code": WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED,
+                        "severity": "warn",
+                        "applies_to": "raw_replay",
+                        "title": i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_SYNC_UNVERIFIED_TITLE"),
+                        "detail": i18n_ref(
+                            "RUN_CONTEXT_WARNING_RAW_REPLAY_SYNC_UNVERIFIED_DETAIL",
+                            sensors="1",
+                            missing_sync="0",
+                            stale="1",
+                            high_rtt="0",
+                        ),
+                    }
+                ],
+            )
+        )
+    )
+
+    document = build_report_document(prepared)
+
+    assert WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED in [
+        warning.code for warning in prepared.report_facts.decision.warnings
+    ]
+    assert "summary_only" in prepared.report_facts.confidence.caveat_keys
+    assert any(
+        "could not be proven against the recorder clock" in (row.detail or "")
         for row in document.data_trust
     )
