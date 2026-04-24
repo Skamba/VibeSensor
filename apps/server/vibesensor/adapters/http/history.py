@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from vibesensor.adapters.http._helpers import (
     OpenAPIResponses,
     normalize_run_id_or_400,
+    safe_filename,
 )
 from vibesensor.adapters.http.error_boundary import route_errors_to_http
 from vibesensor.adapters.http.models import (
@@ -158,7 +159,7 @@ def create_history_routes(
         with route_errors_to_http():
             pdf = await report_service.build_pdf(run_id, lang)
         pdf_headers = {
-            "Content-Disposition": f'attachment; filename="{pdf.filename}"',
+            "Content-Disposition": f'attachment; filename="{safe_filename(pdf.filename)}"',
         }
         return Response(
             content=pdf.content,
@@ -182,7 +183,7 @@ def create_history_routes(
             content=export.iter_bytes(),
             media_type="application/zip",
             headers={
-                "Content-Disposition": f'attachment; filename="{export.filename}"',
+                "Content-Disposition": f'attachment; filename="{safe_filename(export.filename)}"',
                 "Content-Length": str(export.file_size),
             },
         )
