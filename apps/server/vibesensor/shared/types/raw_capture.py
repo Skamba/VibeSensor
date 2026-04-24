@@ -23,7 +23,7 @@ __all__ = [
 type Int16Array = npt.NDArray[np.int16]
 type RawCaptureCoverageState = Literal["missing", "empty", "partial", "full"]
 
-_RAW_CAPTURE_SCHEMA_VERSION = 1
+_RAW_CAPTURE_SCHEMA_VERSION = 2
 _RAW_CAPTURE_STORAGE_TYPE = "run-directory-v1"
 _RAW_CAPTURE_MODE = "full_run"
 
@@ -121,12 +121,13 @@ class RawCaptureManifest:
     total_samples: int
     total_bytes: int
     created_at: str
+    run_start_monotonic_us: int | None = None
     schema_version: int = _RAW_CAPTURE_SCHEMA_VERSION
     storage_type: str = _RAW_CAPTURE_STORAGE_TYPE
     capture_mode: str = _RAW_CAPTURE_MODE
 
     def to_json_object(self) -> JsonObject:
-        return {
+        payload: JsonObject = {
             "schema_version": self.schema_version,
             "storage_type": self.storage_type,
             "capture_mode": self.capture_mode,
@@ -137,6 +138,9 @@ class RawCaptureManifest:
             "created_at": self.created_at,
             "sensors": [sensor.to_json_object() for sensor in self.sensors],
         }
+        if self.run_start_monotonic_us is not None:
+            payload["run_start_monotonic_us"] = self.run_start_monotonic_us
+        return payload
 
     @classmethod
     def from_mapping(cls, data: JsonObject) -> RawCaptureManifest:
@@ -156,6 +160,7 @@ class RawCaptureManifest:
             total_samples=_int_from_json(data.get("total_samples")),
             total_bytes=_int_from_json(data.get("total_bytes")),
             created_at=_str_from_json(data.get("created_at")),
+            run_start_monotonic_us=_int_or_none(data.get("run_start_monotonic_us")),
         )
 
     def sensor_manifest(self, client_id: str) -> RawCaptureSensorManifest | None:

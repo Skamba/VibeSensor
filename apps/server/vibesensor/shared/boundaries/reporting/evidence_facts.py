@@ -75,7 +75,7 @@ def _resolve_data_basis(
     raw_backed_sample_count: int,
 ) -> str:
     raw_capture_mode = text_or_none(analysis_metadata.get("raw_capture_mode"))
-    if raw_capture_mode in {"raw_backed", "summary_only"}:
+    if raw_capture_mode in {"raw_backed", "partial_raw_backed", "summary_only"}:
         return raw_capture_mode
     return "raw_backed" if raw_backed_sample_count > 0 else "summary_only"
 

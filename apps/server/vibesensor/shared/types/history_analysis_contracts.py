@@ -97,6 +97,7 @@ type DiagnosisFactorKey = Literal[
     "localized_support",
     "clean_signal",
     "summary_only",
+    "raw_replay_incomplete",
     "legacy_context",
     "speed_context_gaps",
     "rpm_context_gaps",
@@ -112,7 +113,7 @@ type DiagnosisFactorKey = Literal[
 ]
 type DiagnosisFactorPolarity = Literal["support", "counterevidence"]
 type DiagnosisFactorSeverity = Literal["low", "medium", "high"]
-type WholeRunDiagnosisDataBasis = Literal["raw_backed", "summary_only"]
+type WholeRunDiagnosisDataBasis = Literal["raw_backed", "partial_raw_backed", "summary_only"]
 type LocationProofBasis = Literal[
     "whole_run_summary",
     "supporting_windows_raw_backed",

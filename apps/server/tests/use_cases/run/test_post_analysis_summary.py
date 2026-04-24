@@ -2,10 +2,19 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.run_context_warning import WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE
+from vibesensor.shared.types.raw_capture import (
+    RawCaptureChunkIndex,
+    RawCaptureManifest,
+    RawCaptureSensorData,
+    RawCaptureSensorManifest,
+    RawRunCapture,
+)
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.run.post_analysis_input import (
     PostAnalysisRunInput,
@@ -29,6 +38,8 @@ def _run_metadata(
             "raw_sample_rate_hz": raw_sample_rate_hz,
             "sample_rate_hz": raw_sample_rate_hz,
             "feature_interval_s": 1.0,
+            "fft_window_size_samples": 64,
+            "accel_scale_g_per_lsb": 0.001,
             "language": language,
         }
     )
@@ -55,6 +66,69 @@ def _run_input(
             raw_capture=None,
             total_sample_count=total_sample_count,
             stride=stride,
+        ),
+    )
+
+
+def _wave(freq_hz: float, sample_count: int, *, sample_rate_hz: int = 800) -> np.ndarray:
+    time_axis = np.arange(sample_count, dtype=np.float64) / float(sample_rate_hz)
+    wave = np.round(1000.0 * np.sin(2.0 * np.pi * freq_hz * time_axis)).astype(np.int16)
+    return np.column_stack(
+        [
+            wave,
+            np.zeros(sample_count, dtype=np.int16),
+            np.zeros(sample_count, dtype=np.int16),
+        ]
+    )
+
+
+def _gap_raw_capture(run_id: str) -> RawRunCapture:
+    run_start_monotonic_us = 1_000_000
+    first_chunk = _wave(32.0, 64)
+    second_chunk = _wave(72.0, 64)
+    chunk_rows = (
+        RawCaptureChunkIndex(
+            sample_start=0,
+            sample_count=64,
+            t0_us=run_start_monotonic_us + 100_000,
+            byte_offset=0,
+        ),
+        RawCaptureChunkIndex(
+            sample_start=64,
+            sample_count=64,
+            t0_us=run_start_monotonic_us + 220_000,
+            byte_offset=int(first_chunk.nbytes),
+        ),
+    )
+    samples_i16 = np.vstack([first_chunk, second_chunk])
+    sensor_manifest = RawCaptureSensorManifest(
+        client_id="sensor-a",
+        sample_rate_hz=800,
+        data_file="sensor-a.raw.i16le",
+        index_file="sensor-a.index.jsonl",
+        sample_count=int(samples_i16.shape[0]),
+        chunk_count=2,
+        bytes_written=int(samples_i16.nbytes),
+        first_t0_us=chunk_rows[0].t0_us,
+        last_t0_us=chunk_rows[-1].t0_us,
+    )
+    manifest = RawCaptureManifest(
+        run_id=run_id,
+        relative_dir=f"raw-runs/{run_id}",
+        sensors=(sensor_manifest,),
+        total_samples=int(samples_i16.shape[0]),
+        total_bytes=int(samples_i16.nbytes),
+        created_at="2025-01-01T00:00:01Z",
+        run_start_monotonic_us=run_start_monotonic_us,
+    )
+    return RawRunCapture(
+        manifest=manifest,
+        sensors=(
+            RawCaptureSensorData(
+                manifest=sensor_manifest,
+                samples_i16=samples_i16,
+                chunks=chunk_rows,
+            ),
         ),
     )
 
@@ -101,6 +175,16 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
         "raw_capture_available": False,
         "raw_backed_sample_count": 0,
         "raw_capture_mode": "summary_only",
+        "raw_replay_window_count": 1,
+        "raw_replay_complete_window_count": 0,
+        "raw_replay_partial_window_count": 0,
+        "raw_replay_missing_window_count": 1,
+        "raw_replay_gap_count": 0,
+        "raw_replay_overlap_count": 0,
+        "raw_replay_dropped_chunk_count": 0,
+        "raw_replay_sample_rate_mismatch_count": 0,
+        "raw_replay_unanchored_sensor_count": 0,
+        "raw_replay_confidence": "unavailable",
     }
 
 
@@ -231,3 +315,63 @@ def test_build_post_analysis_summary_enriches_missing_strength_db_from_peak_and_
     sample = captured["sample"]
     assert sample.vibration_strength_db is not None
     assert sample.strength_bucket
+
+
+def test_build_post_analysis_summary_persists_raw_replay_warning_and_counts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeRunAnalysis:
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def summarize(self):
+            return SimpleNamespace(
+                diagnostic_case=SimpleNamespace(case_id="case-raw-gap"),
+            )
+
+    monkeypatch.setattr(
+        "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
+        FakeRunAnalysis,
+    )
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run.post_analysis_summary.analysis_result_to_summary",
+        lambda _result: {"warnings": [], "run_suitability": []},
+    )
+
+    run = build_post_analysis_input(
+        LoadedPostAnalysisRun(
+            run_id="run-raw-gap",
+            metadata=_run_metadata("run-raw-gap"),
+            language="en",
+            samples=sensor_frames_from_mappings(
+                [
+                    {
+                        "client_id": "sensor-a",
+                        "t_s": 0.18,
+                        "sample_rate_hz": 800,
+                        "vibration_strength_db": 0.0,
+                        "dominant_freq_hz": 0.0,
+                    },
+                    {
+                        "client_id": "sensor-a",
+                        "t_s": 0.24,
+                        "sample_rate_hz": 800,
+                        "vibration_strength_db": 12.0,
+                        "dominant_freq_hz": 14.0,
+                    },
+                ]
+            ),
+            raw_capture=_gap_raw_capture("run-raw-gap"),
+            total_sample_count=2,
+            stride=1,
+        )
+    )
+
+    summary = build_post_analysis_summary(run)
+
+    assert summary["analysis_metadata"]["raw_capture_mode"] == "partial_raw_backed"
+    assert summary["analysis_metadata"]["raw_replay_partial_window_count"] == 1
+    assert summary["analysis_metadata"]["raw_replay_gap_count"] == 1
+    assert [warning["code"] for warning in summary["warnings"]] == [
+        WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE
+    ]

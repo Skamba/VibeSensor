@@ -1,0 +1,99 @@
+from __future__ import annotations
+
+from test_support.findings import make_finding_payload
+from test_support.report_helpers import minimal_summary
+
+from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
+from vibesensor.shared.json_utils import i18n_ref
+from vibesensor.shared.run_context_warning import WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.use_cases.history.report_document import build_report_document
+
+
+def test_prepare_persisted_report_input_surfaces_partial_raw_replay_honestly() -> None:
+    primary = make_finding_payload(
+        finding_id="F_PARTIAL_RAW",
+        suspected_source="wheel/tire",
+        confidence=0.86,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+        matched_points=[
+            {
+                "t_s": 1.0,
+                "speed_kmh": 64.0,
+                "predicted_hz": 15.0,
+                "matched_hz": 15.1,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.10,
+            },
+            {
+                "t_s": 1.5,
+                "speed_kmh": 66.0,
+                "predicted_hz": 15.0,
+                "matched_hz": 15.0,
+                "location": "Front Left",
+                "phase": "cruise",
+                "amp": 0.11,
+            },
+        ],
+        evidence_metrics={
+            "mean_relative_error": 0.03,
+            "snr_db": 7.5,
+            "matched_samples": 2,
+        },
+    )
+    prepared = prepare_persisted_report_input(
+        PersistedAnalysis.from_json_object(
+            minimal_summary(
+                run_id="partial-raw-report",
+                lang="en",
+                metadata={
+                    "run_id": "partial-raw-report",
+                    "record_type": "metadata",
+                    "schema_version": "v2-jsonl",
+                    "feature_interval_s": 0.5,
+                },
+                sensor_count_used=2,
+                sensor_locations=["Front Left", "Rear Left"],
+                sensor_locations_connected_throughout=["Front Left", "Rear Left"],
+                findings=[primary],
+                top_causes=[primary],
+                analysis_metadata={
+                    "raw_backed_sample_count": 6,
+                    "raw_capture_mode": "partial_raw_backed",
+                },
+                warnings=[
+                    {
+                        "code": WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
+                        "severity": "warn",
+                        "applies_to": "raw_replay",
+                        "title": i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_INCOMPLETE_TITLE"),
+                        "detail": i18n_ref(
+                            "RUN_CONTEXT_WARNING_RAW_REPLAY_INCOMPLETE_DETAIL",
+                            partial="1",
+                            missing="0",
+                            gaps="1",
+                            overlaps="0",
+                            mismatches="0",
+                        ),
+                    }
+                ],
+            )
+        )
+    )
+
+    document = build_report_document(prepared)
+
+    assert prepared.report_facts.evidence.data_basis == "partial_raw_backed"
+    assert "raw_replay_incomplete" in prepared.report_facts.confidence.caveat_keys
+    assert WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE in [
+        warning.code for warning in prepared.report_facts.decision.warnings
+    ]
+    assert any(
+        "Partially raw-backed replay" in row.value
+        for row in document.verdict_page.proof_snapshot_rows
+    )
+    assert "raw capture coverage was incomplete for some replay windows" in (
+        document.observed.certainty_reason
+    )
