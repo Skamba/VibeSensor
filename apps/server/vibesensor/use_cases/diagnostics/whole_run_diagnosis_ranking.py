@@ -276,7 +276,7 @@ def _data_basis(
     spatial_summary: SpatialEvidenceSummary | None,
 ) -> str:
     raw_capture_mode = str(analysis_metadata.get("raw_capture_mode") or "").strip().lower()
-    if raw_capture_mode in {"raw_backed", "summary_only"}:
+    if raw_capture_mode in {"raw_backed", "partial_raw_backed", "summary_only"}:
         return raw_capture_mode
     if (
         spatial_summary is not None

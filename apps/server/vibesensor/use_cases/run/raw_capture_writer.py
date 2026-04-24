@@ -30,6 +30,7 @@ def _sync_call(db: Any, coro: Any) -> object:
 @dataclass(slots=True)
 class _FinalizeRequest:
     run_id: str
+    run_start_monotonic_us: int | None = None
     done: threading.Event = field(default_factory=threading.Event)
     manifest: RawCaptureManifest | None = None
     error: BaseException | None = None
@@ -50,6 +51,7 @@ class RunRawCaptureWriter:
         "_logger",
         "_queue",
         "_thread",
+        "_run_start_monotonic_us",
     )
 
     def __init__(
@@ -71,6 +73,7 @@ class RunRawCaptureWriter:
             tuple[str, RawCaptureChunk] | _FinalizeRequest | _ShutdownRequest
         ] = queue.Queue(maxsize=_QUEUE_MAXSIZE)
         self._active_run_id: str | None = None
+        self._run_start_monotonic_us: int | None = None
         self._thread: threading.Thread | None = None
         if self._history_db is not None:
             self._thread = threading.Thread(
@@ -80,9 +83,10 @@ class RunRawCaptureWriter:
             )
             self._thread.start()
 
-    def start_run(self, run_id: str) -> None:
+    def start_run(self, run_id: str, *, run_start_monotonic_us: int | None = None) -> None:
         with self._lock:
             self._active_run_id = run_id
+            self._run_start_monotonic_us = run_start_monotonic_us
 
     def capture_raw_samples(
         self,
@@ -131,7 +135,12 @@ class RunRawCaptureWriter:
         with self._lock:
             if self._active_run_id == run_id:
                 self._active_run_id = None
-        request = _FinalizeRequest(run_id=run_id)
+            run_start_monotonic_us = self._run_start_monotonic_us
+            self._run_start_monotonic_us = None
+        request = _FinalizeRequest(
+            run_id=run_id,
+            run_start_monotonic_us=run_start_monotonic_us,
+        )
         self._queue.put(request)
         request.done.wait()
         if request.error is not None:
@@ -164,7 +173,10 @@ class RunRawCaptureWriter:
                             RawCaptureManifest | None,
                             _sync_call(
                                 history_db,
-                                history_db.afinalize_raw_capture(item.run_id),
+                                history_db.afinalize_raw_capture(
+                                    item.run_id,
+                                    run_start_monotonic_us=item.run_start_monotonic_us,
+                                ),
                             ),
                         )
                     except BaseException as exc:  # noqa: BLE001

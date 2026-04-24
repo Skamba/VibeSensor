@@ -139,6 +139,10 @@ def score_diagnosis_assessment_inputs(inputs: DiagnosisAssessmentInputs) -> Diag
     if inputs.data_basis == "raw_backed":
         score += 0.10
         signal_keys.append("raw_backed")
+    elif inputs.data_basis == "partial_raw_backed":
+        score += 0.05
+        signal_keys.append("raw_backed")
+        caveat_keys.append("raw_replay_incomplete")
     else:
         score -= 0.05
         caveat_keys.append("summary_only")
@@ -259,6 +263,8 @@ def apply_diagnosis_assessment_fallback(
     caveat_keys = list(assessment.caveat_keys)
     if assessment.data_basis == "summary_only" and "summary_only" not in caveat_keys:
         caveat_keys.append("summary_only")
+    if assessment.data_basis == "partial_raw_backed" and "raw_replay_incomplete" not in caveat_keys:
+        caveat_keys.append("raw_replay_incomplete")
     return _assessment_from_keys(
         score_0_to_1=assessment.score_0_to_1,
         data_basis=assessment.data_basis,
@@ -485,6 +491,8 @@ def _factor_severity(weight: float) -> str:
 
 def _support_factor_weight(factor_key: str, assessment: DiagnosisAssessment) -> float:
     if factor_key == "raw_backed":
+        if assessment.data_basis == "partial_raw_backed":
+            return 0.05
         return 0.10
     if factor_key == "repeated_support":
         if (
@@ -515,7 +523,7 @@ def _support_factor_weight(factor_key: str, assessment: DiagnosisAssessment) -> 
 
 
 def _counter_factor_weight(factor_key: str) -> float:
-    if factor_key in {"summary_only", "legacy_context"}:
+    if factor_key in {"summary_only", "legacy_context", "raw_replay_incomplete"}:
         return 0.05
     if factor_key in {"speed_context_gaps", "rpm_context_gaps"}:
         return 0.04
@@ -601,6 +609,7 @@ def _tier_for_score(*, label_key: str, score_0_to_1: float, caveat_keys: tuple[s
     if set(caveat_keys).intersection(
         {
             "summary_only",
+            "raw_replay_incomplete",
             "drifting_frequency",
             "loose_order_lock",
             "mixed_support_locations",

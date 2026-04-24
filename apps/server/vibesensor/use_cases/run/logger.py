@@ -216,7 +216,10 @@ class RunRecorder:
         self._active_run_context = run_context
         self._persistence.reset()
         self._live_start_mono_s = snapshot.start_mono_s
-        self._raw_capture.start_run(snapshot.run_id)
+        self._raw_capture.start_run(
+            snapshot.run_id,
+            run_start_monotonic_us=int(round(snapshot.start_mono_s * 1_000_000.0)),
+        )
         return snapshot
 
     def capture_raw_samples(

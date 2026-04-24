@@ -63,7 +63,7 @@ def build_evidence_snapshot_rows(
 
 def _data_basis_text(report_facts: PreparedReportFacts, *, tr: Callable[..., str]) -> str:
     diagnosis = report_facts.primary_diagnosis
-    if diagnosis is not None and diagnosis.data_basis == "raw_backed":
+    if diagnosis is not None and diagnosis.data_basis in {"raw_backed", "partial_raw_backed"}:
         raw_backed_samples = 0
         for factor in diagnosis.support_factors:
             if (
@@ -72,13 +72,20 @@ def _data_basis_text(report_facts: PreparedReportFacts, *, tr: Callable[..., str
             ):
                 raw_backed_samples = factor.details.raw_backed_sample_count
                 break
-        return tr(
-            "REPORT_EVIDENCE_BASIS_RAW",
-            samples=str(max(0, raw_backed_samples)),
-        )
+        if diagnosis.data_basis == "partial_raw_backed":
+            return tr(
+                "REPORT_EVIDENCE_BASIS_PARTIAL_RAW",
+                samples=str(max(0, raw_backed_samples)),
+            )
+        return tr("REPORT_EVIDENCE_BASIS_RAW", samples=str(max(0, raw_backed_samples)))
     if diagnosis is not None and diagnosis.data_basis == "summary_only":
         return tr("REPORT_EVIDENCE_BASIS_SUMMARY")
     evidence = report_facts.evidence
+    if evidence.data_basis == "partial_raw_backed":
+        return tr(
+            "REPORT_EVIDENCE_BASIS_PARTIAL_RAW",
+            samples=str(max(0, evidence.raw_backed_sample_count)),
+        )
     if evidence.data_basis == "raw_backed":
         return tr(
             "REPORT_EVIDENCE_BASIS_RAW",
