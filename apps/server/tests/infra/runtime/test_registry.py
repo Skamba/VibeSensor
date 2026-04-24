@@ -577,8 +577,10 @@ def test_duplicate_does_not_inflate_frames_total(tmp_path: Path) -> None:
     assert row["dropped_frames"] == 0
 
 
-def test_out_of_order_not_flagged_as_duplicate(tmp_path: Path) -> None:
-    """A frame arriving out of order (but not yet seen) should be ingested."""
+def test_out_of_order_packet_is_marked_late_without_rewinding_live_state(
+    tmp_path: Path,
+) -> None:
+    """A late non-duplicate frame should not mutate the live sequence state."""
     registry, client_id = _make_registry_with_hello(tmp_path)
 
     # Send seq 0, 2 (skip 1), then 1 arrives late
@@ -589,10 +591,14 @@ def test_out_of_order_not_flagged_as_duplicate(tmp_path: Path) -> None:
     msg1 = _data_msg(client_id, 1, 10000)
     r = registry.update_from_data(msg1, ("10.4.0.2", 50000), now=5.0)
     assert r.is_duplicate is False
+    assert r.is_late is True
 
     row = snapshot_for_api(registry, now=5.0)[0]
-    assert row["frames_total"] == 3
+    assert row["frames_total"] == 2
+    assert row["dropped_frames"] == 1
     assert registry.get(client_id.hex()).duplicates_received == 0
+    assert registry.get(client_id.hex()).last_seq == 2
+    assert registry.get(client_id.hex()).last_t0_us == 20_000
 
 
 def test_reset_clears_seen_seqs(tmp_path: Path) -> None:
