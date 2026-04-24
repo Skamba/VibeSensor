@@ -23,6 +23,7 @@ from vibesensor.shared.ports import (
 from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.tracing import mark_span_error, start_span
+from vibesensor.shared.types.raw_capture import RawCaptureClockProofState, RawCaptureSensorClockSync
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
 from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
 from vibesensor.use_cases.run.lifecycle_state import RunLifecycleState
@@ -53,6 +54,8 @@ if TYPE_CHECKING:
     from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot
 
 LOGGER = logging.getLogger(__name__)
+_RAW_CAPTURE_MAX_SYNC_AGE_US = 15_000_000
+_RAW_CAPTURE_MAX_SYNC_RTT_US = 50_000
 
 __all__ = [
     "RunRecorder",
@@ -126,6 +129,10 @@ class RunRecorder:
         self._raw_capture = RunRawCaptureWriter(
             history_db=history_db if config.persist_history_db else None,
             logger=LOGGER,
+            sensor_sync_snapshotter=lambda client_ids: _snapshot_raw_capture_sensor_sync(
+                self.registry,
+                client_ids,
+            ),
         )
 
         self._sample_flush = SampleFlushOrchestrator(
@@ -500,3 +507,65 @@ class RunRecorder:
 
     async def run(self) -> None:
         await _recorder_runtime.run_loop(self, logger=LOGGER)
+
+
+def _snapshot_raw_capture_sensor_sync(
+    registry: ClientTracker,
+    client_ids: tuple[str, ...],
+) -> dict[str, RawCaptureSensorClockSync]:
+    observed_monotonic_us = int(round(time.monotonic() * 1_000_000.0))
+    snapshot: dict[str, RawCaptureSensorClockSync] = {}
+    for client_id in client_ids:
+        record = registry.get(client_id)
+        if record is None:
+            snapshot[client_id] = RawCaptureSensorClockSync(
+                clock_domain="unverified",
+                proof_state="missing_registry_record",
+                observed_monotonic_us=observed_monotonic_us,
+                max_sync_age_us=_RAW_CAPTURE_MAX_SYNC_AGE_US,
+                max_sync_rtt_us=_RAW_CAPTURE_MAX_SYNC_RTT_US,
+            )
+            continue
+        sync_offset_us = _int_attr(record, "sync_offset_us")
+        sync_rtt_us = _int_attr(record, "sync_rtt_us")
+        last_sync_monotonic_us = _int_attr(record, "last_sync_monotonic_us")
+        proof_state = _raw_capture_clock_proof_state(
+            observed_monotonic_us=observed_monotonic_us,
+            last_sync_monotonic_us=last_sync_monotonic_us,
+            sync_offset_us=sync_offset_us,
+            sync_rtt_us=sync_rtt_us,
+        )
+        snapshot[client_id] = RawCaptureSensorClockSync(
+            clock_domain="server_monotonic" if proof_state == "verified" else "unverified",
+            proof_state=proof_state,
+            observed_monotonic_us=observed_monotonic_us,
+            last_sync_monotonic_us=last_sync_monotonic_us,
+            sync_offset_us=sync_offset_us,
+            sync_rtt_us=sync_rtt_us,
+            max_sync_age_us=_RAW_CAPTURE_MAX_SYNC_AGE_US,
+            max_sync_rtt_us=_RAW_CAPTURE_MAX_SYNC_RTT_US,
+        )
+    return snapshot
+
+
+def _raw_capture_clock_proof_state(
+    *,
+    observed_monotonic_us: int,
+    last_sync_monotonic_us: int | None,
+    sync_offset_us: int | None,
+    sync_rtt_us: int | None,
+) -> RawCaptureClockProofState:
+    if sync_offset_us is None or sync_rtt_us is None or last_sync_monotonic_us is None:
+        return "missing_sync"
+    if observed_monotonic_us < last_sync_monotonic_us:
+        return "stale_sync"
+    if (observed_monotonic_us - last_sync_monotonic_us) > _RAW_CAPTURE_MAX_SYNC_AGE_US:
+        return "stale_sync"
+    if sync_rtt_us > _RAW_CAPTURE_MAX_SYNC_RTT_US:
+        return "high_rtt"
+    return "verified"
+
+
+def _int_attr(value: object, name: str) -> int | None:
+    raw_value = getattr(value, name, None)
+    return int(raw_value) if isinstance(raw_value, int) else None

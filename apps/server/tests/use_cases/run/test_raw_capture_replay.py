@@ -12,6 +12,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureChunkIndex,
     RawCaptureLossStats,
     RawCaptureManifest,
+    RawCaptureSensorClockSync,
     RawCaptureSensorData,
     RawCaptureSensorLossStats,
     RawCaptureSensorManifest,
@@ -59,6 +60,14 @@ def _raw_capture(run_id: str) -> RawRunCapture:
         bytes_written=int(samples_i16.nbytes),
         first_t0_us=1,
         last_t0_us=1,
+        clock_sync=RawCaptureSensorClockSync(
+            clock_domain="server_monotonic",
+            proof_state="verified",
+            observed_monotonic_us=1_010_000,
+            last_sync_monotonic_us=1_009_000,
+            sync_offset_us=5_000,
+            sync_rtt_us=4_000,
+        ),
     )
     manifest = RawCaptureManifest(
         run_id=run_id,

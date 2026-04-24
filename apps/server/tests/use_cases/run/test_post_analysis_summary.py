@@ -17,6 +17,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureChunkIndex,
     RawCaptureLossStats,
     RawCaptureManifest,
+    RawCaptureSensorClockSync,
     RawCaptureSensorData,
     RawCaptureSensorLossStats,
     RawCaptureSensorManifest,
@@ -118,6 +119,7 @@ def _gap_raw_capture(run_id: str) -> RawRunCapture:
         bytes_written=int(samples_i16.nbytes),
         first_t0_us=chunk_rows[0].t0_us,
         last_t0_us=chunk_rows[-1].t0_us,
+        clock_sync=_verified_clock_sync(),
     )
     manifest = RawCaptureManifest(
         run_id=run_id,
@@ -144,6 +146,7 @@ def _full_raw_capture(
     run_id: str,
     *,
     losses: RawCaptureLossStats | None = None,
+    clock_sync: RawCaptureSensorClockSync | None = None,
 ) -> RawRunCapture:
     run_start_monotonic_us = 1_000_000
     chunk = _wave(32.0, 160)
@@ -165,6 +168,7 @@ def _full_raw_capture(
         bytes_written=int(chunk.nbytes),
         first_t0_us=chunk_rows[0].t0_us,
         last_t0_us=chunk_rows[-1].t0_us,
+        clock_sync=clock_sync or _verified_clock_sync(),
     )
     manifest = RawCaptureManifest(
         run_id=run_id,
@@ -194,6 +198,19 @@ def _full_raw_capture(
                 chunks=chunk_rows,
             ),
         ),
+    )
+
+
+def _verified_clock_sync() -> RawCaptureSensorClockSync:
+    return RawCaptureSensorClockSync(
+        clock_domain="server_monotonic",
+        proof_state="verified",
+        observed_monotonic_us=1_010_000,
+        last_sync_monotonic_us=1_009_000,
+        sync_offset_us=5_000,
+        sync_rtt_us=4_000,
+        max_sync_age_us=15_000_000,
+        max_sync_rtt_us=50_000,
     )
 
 
@@ -252,6 +269,10 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
         "raw_replay_timing_fallback_count": 0,
         "raw_replay_sample_rate_mismatch_count": 0,
         "raw_replay_unanchored_sensor_count": 0,
+        "raw_replay_legacy_sensor_count": 0,
+        "raw_replay_sync_unverified_sensor_count": 0,
+        "raw_replay_stale_sync_sensor_count": 0,
+        "raw_replay_high_rtt_sensor_count": 0,
         "raw_replay_confidence": "unavailable",
     }
 

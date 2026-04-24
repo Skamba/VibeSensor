@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import queue
 import threading
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, cast
 
@@ -15,6 +16,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
     RawCaptureManifest,
+    RawCaptureSensorClockSync,
 )
 
 __all__ = ["RunRawCaptureWriter"]
@@ -35,6 +37,7 @@ def _sync_call(db: Any, coro: Any) -> object:
 class _FinalizeRequest:
     run_id: str
     run_start_monotonic_us: int | None = None
+    sensor_clock_sync: Mapping[str, RawCaptureSensorClockSync] | None = None
     sensor_losses: _RunCaptureStats | None = None
     done: threading.Event = field(default_factory=threading.Event)
     manifest: RawCaptureManifest | None = None
@@ -63,18 +66,25 @@ class _MutableLossStats:
 @dataclass(slots=True)
 class _RunCaptureStats:
     by_client: dict[str, _MutableLossStats] = field(default_factory=dict)
+    seen_client_ids: set[str] = field(default_factory=set)
 
     def _sensor(self, client_id: str) -> _MutableLossStats:
         return self.by_client.setdefault(client_id, _MutableLossStats())
 
     def record_queue_overflow(self, client_id: str) -> None:
+        self.seen_client_ids.add(client_id)
         self._sensor(client_id).queue_overflow_chunk_count += 1
 
     def record_invalid_chunk(self, client_id: str) -> None:
+        self.seen_client_ids.add(client_id)
         self._sensor(client_id).invalid_chunk_count += 1
 
     def record_write_error(self, client_id: str) -> None:
+        self.seen_client_ids.add(client_id)
         self._sensor(client_id).write_error_chunk_count += 1
+
+    def record_seen(self, client_id: str) -> None:
+        self.seen_client_ids.add(client_id)
 
     def freeze(self) -> dict[str, RawCaptureLossStats]:
         frozen: dict[str, RawCaptureLossStats] = {}
@@ -96,6 +106,7 @@ class RunRawCaptureWriter:
         "_logger",
         "_queue",
         "_run_stats",
+        "_sensor_sync_snapshotter",
         "_thread",
         "_run_start_monotonic_us",
     )
@@ -105,6 +116,9 @@ class RunRawCaptureWriter:
         *,
         history_db: RunPersistence | None,
         logger: logging.Logger,
+        sensor_sync_snapshotter: (
+            Callable[[tuple[str, ...]], Mapping[str, RawCaptureSensorClockSync] | None] | None
+        ) = None,
     ) -> None:
         self._history_db = (
             history_db
@@ -115,6 +129,7 @@ class RunRawCaptureWriter:
         )
         self._logger = logger
         self._lock = threading.RLock()
+        self._sensor_sync_snapshotter = sensor_sync_snapshotter
         self._queue: queue.Queue[
             tuple[str, RawCaptureChunk, _RunCaptureStats | None]
             | _FinalizeRequest
@@ -164,6 +179,8 @@ class RunRawCaptureWriter:
             if run_stats is not None:
                 run_stats.record_invalid_chunk(client_id)
             return
+        if run_stats is not None:
+            run_stats.record_seen(client_id)
         try:
             self._queue.put_nowait(
                 (
@@ -197,9 +214,19 @@ class RunRawCaptureWriter:
             self._run_start_monotonic_us = None
             run_stats = self._run_stats
             self._run_stats = None
+        sensor_clock_sync = None
+        if (
+            self._sensor_sync_snapshotter is not None
+            and run_stats is not None
+            and run_stats.seen_client_ids
+        ):
+            sensor_clock_sync = self._sensor_sync_snapshotter(
+                tuple(sorted(run_stats.seen_client_ids)),
+            )
         request = _FinalizeRequest(
             run_id=run_id,
             run_start_monotonic_us=run_start_monotonic_us,
+            sensor_clock_sync=sensor_clock_sync,
             sensor_losses=run_stats,
         )
         self._queue.put(request)
@@ -237,6 +264,7 @@ class RunRawCaptureWriter:
                                 history_db.afinalize_raw_capture(
                                     item.run_id,
                                     run_start_monotonic_us=item.run_start_monotonic_us,
+                                    sensor_clock_sync=item.sensor_clock_sync,
                                     sensor_losses=(
                                         item.sensor_losses.freeze()
                                         if item.sensor_losses is not None

@@ -84,6 +84,7 @@ class ClientRecord:
     pending_sync_send_us: int | None = None
     sync_offset_us: int | None = None
     sync_rtt_us: int | None = None
+    last_sync_monotonic_us: int | None = None
     reset_count: int = 0
     last_reset_time: float | None = None
     last_t0_us: int | None = None
@@ -117,6 +118,7 @@ class ClientRecordSnapshot:
     last_ack_status: int | None = None
     sync_offset_us: int | None = None
     sync_rtt_us: int | None = None
+    last_sync_monotonic_us: int | None = None
     reset_count: int = 0
     last_reset_time: float | None = None
     last_t0_us: int | None = None
@@ -147,6 +149,7 @@ def _snapshot_record(record: ClientRecord) -> ClientRecordSnapshot:
         last_ack_status=record.last_ack_status,
         sync_offset_us=record.sync_offset_us,
         sync_rtt_us=record.sync_rtt_us,
+        last_sync_monotonic_us=record.last_sync_monotonic_us,
         reset_count=record.reset_count,
         last_reset_time=record.last_reset_time,
         last_t0_us=record.last_t0_us,
@@ -304,6 +307,7 @@ class ClientRegistry:
                         + (server_receive_us - ack.device_send_us)
                     ) // 2
                     record.sync_rtt_us = round_trip_us
+                    record.last_sync_monotonic_us = server_receive_us
                 record.pending_sync_cmd_seq = None
                 record.pending_sync_send_us = None
 
