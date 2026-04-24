@@ -8,6 +8,7 @@ protection via per-connection send queues.
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable
 
 from fastapi import WebSocket
@@ -92,6 +93,7 @@ class WebSocketHub:
         hz: int,
         payload_builder: Callable[[str | None], LiveWsPayload],
         on_tick: Callable[[], None] | None = None,
+        metrics_recorder: Callable[[int, float], None] | None = None,
     ) -> None:
         """Drive broadcast ticks at *hz* frames per second until cancelled.
 
@@ -102,7 +104,17 @@ class WebSocketHub:
         background ws-broadcast loop.
         """
         controller = BroadcastTickController(hz=hz, logger=LOGGER)
+
+        async def _timed_broadcast() -> None:
+            started_mono_s = time.monotonic()
+            await self.broadcast(payload_builder)
+            if metrics_recorder is not None:
+                metrics_recorder(
+                    self.connection_count(),
+                    max(0.0, time.monotonic() - started_mono_s),
+                )
+
         await controller.run(
-            broadcast_tick=lambda: self.broadcast(payload_builder),
+            broadcast_tick=_timed_broadcast,
             on_tick=on_tick,
         )

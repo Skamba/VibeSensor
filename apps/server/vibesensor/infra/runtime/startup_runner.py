@@ -107,6 +107,12 @@ class StartupRunner:
                         UI_PUSH_HZ,
                         r.ws_broadcast.build_payload,
                         on_tick=r.ws_broadcast.on_tick,
+                        metrics_recorder=lambda connection_count, duration_s: (
+                            r.ingest_diagnostics.note_ws_publish(
+                                connection_count=connection_count,
+                                duration_s=duration_s,
+                            )
+                        ),
                     ),
                     "ws-broadcast",
                     restartable_exceptions=(BroadcastTickLoopFailure,),
@@ -144,6 +150,7 @@ class StartupRunner:
             processor=self._runtime.processor,
             raw_capture_sink=self._runtime.run_recorder,
             queue_maxsize=self._runtime.udp_data_queue_maxsize,
+            ingest_diagnostics=self._runtime.ingest_diagnostics,
         )
 
     async def _start_background(

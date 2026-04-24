@@ -9,6 +9,7 @@ from fastapi import APIRouter
 
 from vibesensor.adapters.http.models import HealthResponse
 from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor
@@ -24,6 +25,7 @@ def create_health_routes(
     processor: SignalProcessor,
     registry: ClientRegistry,
     run_recorder: RunRecorder,
+    ingest_diagnostics: IngestDiagnosticsCollector,
 ) -> APIRouter:
     """Create and return the health-check API routes."""
     router = APIRouter(tags=["health"])
@@ -39,6 +41,7 @@ def create_health_routes(
                 processor,
                 registry,
                 run_recorder,
+                ingest_diagnostics,
             )
         )
 

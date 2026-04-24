@@ -34,6 +34,7 @@ from vibesensor.shared.boundaries.sensor_frames import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
 )
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -278,6 +279,7 @@ class FakeState:
                 "client_snapshots": (
                     lambda self, now=None, now_mono=None, metrics_by_client=None: []
                 ),
+                "active_client_ids": lambda self, now=None, stale_after_s=None: [],
                 "data_loss_snapshot": lambda self: {
                     "tracked_clients": 0,
                     "affected_clients": 0,
@@ -327,6 +329,7 @@ class FakeState:
 
         self.processing_loop_state = ProcessingLoopState()
         self.health_state = RuntimeHealthState()
+        self.ingest_diagnostics = IngestDiagnosticsCollector()
         self.health_state.mark_ready()
         self.update_manager = MagicMock()
         self.esp_flash_manager = MagicMock()
@@ -354,6 +357,7 @@ class FakeState:
             processor=self.processor,
             registry=self.registry,
             run_recorder=self.run_recorder,
+            ingest_diagnostics=self.ingest_diagnostics,
         )
 
     @property

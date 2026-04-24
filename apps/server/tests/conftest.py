@@ -33,6 +33,7 @@ from vibesensor.domain import AnalysisSettingsSnapshot
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime import ProcessingLoopState, RuntimeHealthState
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.car_config import CarsSnapshot
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService
@@ -249,6 +250,9 @@ class FakeState:
     esp_flash_manager: EspFlashManager = field(default_factory=_esp_flash_manager_mock)
     processing_loop_state: ProcessingLoopState = field(default_factory=ProcessingLoopState)
     health_state: RuntimeHealthState = field(default_factory=RuntimeHealthState)
+    ingest_diagnostics: IngestDiagnosticsCollector = field(
+        default_factory=IngestDiagnosticsCollector
+    )
     processing_loop: object = field(default_factory=MagicMock)
     ws_broadcast: object = field(default_factory=MagicMock)
     run_service: object | None = None
@@ -296,6 +300,7 @@ class FakeState:
             processor=self.processor,
             registry=self.registry,
             run_recorder=self.run_recorder,
+            ingest_diagnostics=self.ingest_diagnostics,
         )
 
     @property

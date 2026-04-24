@@ -38,6 +38,7 @@ class TestUpdateApiEndpoints:
                 processor=placeholder,
                 registry=placeholder,
                 run_recorder=placeholder,
+                ingest_diagnostics=placeholder,
             ),
             settings=settings,
             live=LiveDeps(

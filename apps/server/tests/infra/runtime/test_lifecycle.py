@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 
 # ---------------------------------------------------------------------------
 # Minimal stubs
@@ -30,6 +31,7 @@ def _make_lifecycle(db_path: str | None) -> tuple[LifecycleManager, RuntimeHealt
         shutdown_analysis_timeout_s=5.0,
         registry=MagicMock(),
         processor=MagicMock(),
+        ingest_diagnostics=IngestDiagnosticsCollector(),
         control_plane=MagicMock(),
         processing_loop=MagicMock(),
         ws_hub=MagicMock(),

@@ -86,6 +86,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             esp_flash_manager=runtime.lifecycle.esp_flash_manager,
             worker_pool=runtime.lifecycle.worker_pool,
             history_db=runtime.lifecycle.history_db,
+            ingest_diagnostics=runtime.lifecycle.ingest_diagnostics,
         ),
         start_udp_receiver=start_udp_data_receiver,
     )
