@@ -36,6 +36,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureManifest,
     RawCaptureSensorRange,
+    RawRunCapture,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
@@ -91,6 +92,7 @@ class _WholeRunBenchmarkFixture:
     run_id: str
     metadata: RunMetadata
     raw_capture_manifest: RawCaptureManifest
+    raw_capture: RawRunCapture
     plan: WholeRunWindowPlan
 
     def load_sensor_range(
@@ -141,12 +143,15 @@ def whole_run_fixture(tmp_path_factory: pytest.TempPathFactory) -> _WholeRunBenc
         db.run_repository.afinalize_raw_capture(run_id)
     )
     assert raw_capture_manifest is not None
+    raw_capture = db.run_repository._run_sync(db.run_repository.aload_raw_capture(run_id))
+    assert raw_capture is not None
     plan = plan_whole_run_windows(metadata=metadata, total_sample_count=_TOTAL_SAMPLES)
     return _WholeRunBenchmarkFixture(
         db=db,
         run_id=run_id,
         metadata=metadata,
         raw_capture_manifest=raw_capture_manifest,
+        raw_capture=raw_capture,
         plan=plan,
     )
 
@@ -204,8 +209,7 @@ def test_whole_run_spectral_executor_benchmark(
         return build_whole_run_spectral_artifact_bundle(
             run_id=whole_run_fixture.run_id,
             metadata=whole_run_fixture.metadata,
-            raw_capture_manifest=whole_run_fixture.raw_capture_manifest,
-            load_sensor_range=whole_run_fixture.load_sensor_range,
+            raw_capture=whole_run_fixture.raw_capture,
             max_workers=max_workers,
             chunk_window_count=chunk_window_count,
             created_at="2026-01-01T00:00:00Z",
@@ -223,6 +227,6 @@ def test_whole_run_spectral_executor_benchmark(
         warmup_rounds=0,
     )
 
-    assert bundle is not None
-    assert bundle.manifest.total_window_count == whole_run_fixture.plan.total_window_count
-    assert len(bundle.manifest.artifacts) == _SENSOR_COUNT * 3
+    assert bundle.bundle is not None
+    assert bundle.bundle.manifest.total_window_count == whole_run_fixture.plan.total_window_count
+    assert len(bundle.bundle.manifest.artifacts) == _SENSOR_COUNT * 3

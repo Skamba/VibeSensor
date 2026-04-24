@@ -7,20 +7,33 @@ from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Protocol, cast
+from math import floor
+from typing import Literal, cast
 
 import numpy as np
 
 from vibesensor.shared.constants.dsp import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, float_list, medfilt3
-from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
+from vibesensor.shared.json_utils import i18n_ref, safe_json_dumps, safe_json_loads
+from vibesensor.shared.raw_capture_timeline import (
+    RawSensorTimeline,
+    assemble_raw_window_samples,
+    build_raw_sensor_timeline,
+    raw_timeline_has_unverified_sync,
+    raw_timeline_is_legacy,
+    resolve_raw_window_end_time,
+)
+from vibesensor.shared.run_context_warning import (
+    WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
+    RunContextWarning,
+)
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.shared.types.raw_capture import (
     RawCaptureCoverageState,
-    RawCaptureManifest,
+    RawCaptureSensorData,
     RawCaptureSensorManifest,
-    RawCaptureSensorRange,
+    RawRunCapture,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import (
@@ -28,36 +41,28 @@ from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunWindowDescriptor,
+    WholeRunWindowPolicy,
 )
 from vibesensor.use_cases.diagnostics.whole_run_windows import (
     WholeRunWindowPlan,
-    plan_whole_run_windows,
+    plan_whole_run_window_range,
 )
 from vibesensor.vibration_strength import StrengthPeak
 
 DEFAULT_WHOLE_RUN_MAX_WORKERS = 1
 _DEFAULT_CHUNK_WINDOW_COUNT = 32
+type WholeRunCoverageConfidence = Literal["full", "partial", "unavailable"]
 
 __all__ = [
     "WholeRunSpectralArtifactBundle",
+    "WholeRunSpectralBuildResult",
+    "WholeRunSpectralCoverageSummary",
     "WholeRunWindowSpectralSummary",
     "build_whole_run_spectral_artifact_bundle",
     "whole_run_spectral_summaries_by_sensor",
     "whole_run_window_spectral_summaries_from_jsonl_bytes",
     "whole_run_window_spectral_summaries_to_jsonl_bytes",
 ]
-
-
-class RawCaptureRangeLoader(Protocol):
-    """Loader boundary for one sensor/sample range from raw sidecar storage."""
-
-    def __call__(
-        self,
-        *,
-        client_id: str,
-        sample_start: int,
-        sample_count: int,
-    ) -> RawCaptureSensorRange | None: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +73,9 @@ class WholeRunWindowSpectralSummary:
     coverage_state: RawCaptureCoverageState
     returned_sample_start: int | None
     returned_sample_count: int
+    window_start_t_s: float | None = None
+    window_end_t_s: float | None = None
+    coverage_reason: str | None = None
     dominant_freq_hz: float | None = None
     vibration_strength_db: float | None = None
     strength_peak_amp_g: float | None = None
@@ -82,6 +90,12 @@ class WholeRunWindowSpectralSummary:
             "returned_sample_start": self.returned_sample_start,
             "returned_sample_count": self.returned_sample_count,
         }
+        if self.window_start_t_s is not None:
+            payload["window_start_t_s"] = self.window_start_t_s
+        if self.window_end_t_s is not None:
+            payload["window_end_t_s"] = self.window_end_t_s
+        if self.coverage_reason is not None:
+            payload["coverage_reason"] = self.coverage_reason
         payload["top_peaks"] = [
             {
                 "hz": float(peak["hz"]),
@@ -130,6 +144,9 @@ class WholeRunWindowSpectralSummary:
             coverage_state=_coverage_state(data.get("coverage_state")),
             returned_sample_start=_int_or_none(data.get("returned_sample_start")),
             returned_sample_count=_int_or_default(data.get("returned_sample_count"), default=0),
+            window_start_t_s=_float_or_none(data.get("window_start_t_s")),
+            window_end_t_s=_float_or_none(data.get("window_end_t_s")),
+            coverage_reason=_text_or_none(data.get("coverage_reason")),
             dominant_freq_hz=_float_or_none(data.get("dominant_freq_hz")),
             vibration_strength_db=_float_or_none(data.get("vibration_strength_db")),
             strength_peak_amp_g=_float_or_none(data.get("strength_peak_amp_g")),
@@ -148,11 +165,44 @@ class WholeRunSpectralArtifactBundle:
 
 
 @dataclass(frozen=True, slots=True)
+class WholeRunSpectralCoverageSummary:
+    """Rolled-up coverage facts for time-aligned whole-run spectral windows."""
+
+    total_sensor_window_count: int
+    full_sensor_window_count: int
+    partial_sensor_window_count: int
+    missing_sensor_window_count: int
+    empty_sensor_window_count: int
+    gap_count: int
+    overlap_count: int
+    dropped_chunk_count: int
+    queue_overflow_chunk_count: int
+    invalid_chunk_count: int
+    write_error_chunk_count: int
+    sample_rate_mismatch_sensor_count: int
+    unanchored_sensor_count: int
+    legacy_sensor_count: int
+    sync_unverified_sensor_count: int
+    stale_sync_sensor_count: int
+    high_rtt_sensor_count: int
+    coverage_confidence: WholeRunCoverageConfidence
+    warnings: tuple[RunContextWarning, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class WholeRunSpectralBuildResult:
+    """Whole-run spectral build outcome plus coverage/accounting metadata."""
+
+    bundle: WholeRunSpectralArtifactBundle | None
+    coverage_summary: WholeRunSpectralCoverageSummary
+    window_plan: WholeRunWindowPlan | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class _SpectralChunk:
-    sensor_manifest: RawCaptureSensorManifest
+    sensor_data: RawCaptureSensorData
+    timeline: RawSensorTimeline
     chunk_index: int
-    sample_start: int
-    sample_count: int
     windows: tuple[WholeRunWindowDescriptor, ...]
 
 
@@ -169,57 +219,172 @@ def build_whole_run_spectral_artifact_bundle(
     *,
     run_id: str,
     metadata: RunMetadata,
-    raw_capture_manifest: RawCaptureManifest,
-    load_sensor_range: RawCaptureRangeLoader,
+    raw_capture: RawRunCapture,
     max_workers: int = DEFAULT_WHOLE_RUN_MAX_WORKERS,
     chunk_window_count: int = _DEFAULT_CHUNK_WINDOW_COUNT,
     created_at: str | None = None,
-) -> WholeRunSpectralArtifactBundle | None:
-    """Compute deterministic whole-run spectral artifacts from raw sidecars."""
+) -> WholeRunSpectralBuildResult:
+    """Compute deterministic time-aligned whole-run spectral artifacts from raw capture."""
 
-    sensors = tuple(sorted(raw_capture_manifest.sensors, key=lambda sensor: sensor.client_id))
+    sensors = tuple(sorted(raw_capture.sensors, key=lambda sensor: sensor.manifest.client_id))
     if not sensors:
-        return None
-    run_total_sample_count = max(int(sensor.sample_count) for sensor in sensors)
-    plan = plan_whole_run_windows(metadata=metadata, total_sample_count=run_total_sample_count)
-    chunks = _build_chunks(sensors=sensors, plan=plan, chunk_window_count=chunk_window_count)
+        coverage_summary = WholeRunSpectralCoverageSummary(
+            total_sensor_window_count=0,
+            full_sensor_window_count=0,
+            partial_sensor_window_count=0,
+            missing_sensor_window_count=0,
+            empty_sensor_window_count=0,
+            gap_count=0,
+            overlap_count=0,
+            dropped_chunk_count=0,
+            queue_overflow_chunk_count=0,
+            invalid_chunk_count=0,
+            write_error_chunk_count=0,
+            sample_rate_mismatch_sensor_count=0,
+            unanchored_sensor_count=0,
+            legacy_sensor_count=0,
+            sync_unverified_sensor_count=0,
+            stale_sync_sensor_count=0,
+            high_rtt_sensor_count=0,
+            coverage_confidence="unavailable",
+        )
+        return WholeRunSpectralBuildResult(bundle=None, coverage_summary=coverage_summary)
+    timelines = {
+        sensor.manifest.client_id: build_raw_sensor_timeline(
+            raw_capture,
+            sensor_id=sensor.manifest.client_id,
+        )
+        for sensor in sensors
+    }
+    plan = _build_time_domain_window_plan(metadata=metadata, timelines=timelines)
+    if plan is None or plan.total_window_count <= 0:
+        coverage_summary = _build_coverage_summary(
+            raw_capture=raw_capture,
+            plan=None,
+            sensors=sensors,
+            timelines=timelines,
+            summaries_by_sensor={},
+        )
+        return WholeRunSpectralBuildResult(
+            bundle=None,
+            coverage_summary=coverage_summary,
+            window_plan=None,
+        )
+    chunks = _build_chunks(
+        sensors=sensors,
+        timelines=timelines,
+        plan=plan,
+        chunk_window_count=chunk_window_count,
+    )
     chunk_results = _execute_chunks(
         chunks=chunks,
         metadata=metadata,
-        load_sensor_range=load_sensor_range,
+        expected_sample_rate_hz=plan.policy.sample_rate_hz,
         max_workers=max_workers,
     )
-    return _build_artifact_bundle(
-        run_id=run_id,
+    summaries_by_sensor = {
+        sensor_id: tuple(summary for result in sensor_results for summary in result.summaries)
+        for sensor_id, sensor_results in _chunk_results_by_sensor(chunk_results).items()
+    }
+    coverage_summary = _build_coverage_summary(
+        raw_capture=raw_capture,
         plan=plan,
         sensors=sensors,
-        chunk_results=chunk_results,
-        created_at=created_at or utc_now_iso(),
+        timelines=timelines,
+        summaries_by_sensor=summaries_by_sensor,
     )
+    return WholeRunSpectralBuildResult(
+        bundle=_build_artifact_bundle(
+            run_id=run_id,
+            plan=plan,
+            sensors=tuple(sensor.manifest for sensor in sensors),
+            chunk_results=chunk_results,
+            created_at=created_at or utc_now_iso(),
+        ),
+        coverage_summary=coverage_summary,
+        window_plan=plan,
+    )
+
+
+def _build_time_domain_window_plan(
+    *,
+    metadata: RunMetadata,
+    timelines: Mapping[str, RawSensorTimeline],
+) -> WholeRunWindowPlan | None:
+    policy = WholeRunWindowPolicy.from_metadata(metadata)
+    aligned_timelines = tuple(
+        timeline
+        for timeline in timelines.values()
+        if (
+            timeline.anchored
+            and timeline.chunks
+            and timeline.sample_rate_hz == policy.sample_rate_hz
+        )
+    )
+    if not aligned_timelines:
+        return None
+    coverage_sample_start = min(
+        _timeline_sample_start(timeline, sample_rate_hz=policy.sample_rate_hz)
+        for timeline in aligned_timelines
+    )
+    coverage_sample_end = max(
+        _timeline_sample_end(timeline, sample_rate_hz=policy.sample_rate_hz)
+        for timeline in aligned_timelines
+    )
+    if coverage_sample_end <= coverage_sample_start:
+        return None
+    return plan_whole_run_window_range(
+        metadata=metadata,
+        coverage_sample_start=coverage_sample_start,
+        coverage_sample_end=coverage_sample_end,
+    )
+
+
+def _timeline_sample_start(
+    timeline: RawSensorTimeline,
+    *,
+    sample_rate_hz: int,
+) -> int:
+    if not timeline.chunks or timeline.run_start_monotonic_us is None or sample_rate_hz <= 0:
+        return 0
+    sample_period_us = 1_000_000.0 / float(sample_rate_hz)
+    offset_us = max(0.0, timeline.chunks[0].start_us - float(timeline.run_start_monotonic_us))
+    return max(0, int(floor(offset_us / sample_period_us)))
+
+
+def _timeline_sample_end(
+    timeline: RawSensorTimeline,
+    *,
+    sample_rate_hz: int,
+) -> int:
+    if not timeline.chunks or timeline.run_start_monotonic_us is None or sample_rate_hz <= 0:
+        return 0
+    sample_period_us = 1_000_000.0 / float(sample_rate_hz)
+    offset_us = max(0.0, timeline.chunks[-1].end_us - float(timeline.run_start_monotonic_us))
+    return max(0, int(floor(offset_us / sample_period_us)))
 
 
 def _build_chunks(
     *,
-    sensors: Sequence[RawCaptureSensorManifest],
+    sensors: Sequence[RawCaptureSensorData],
+    timelines: Mapping[str, RawSensorTimeline],
     plan: WholeRunWindowPlan,
     chunk_window_count: int,
 ) -> tuple[_SpectralChunk, ...]:
     normalized_chunk_size = max(1, int(chunk_window_count))
     chunks: list[_SpectralChunk] = []
-    for sensor_manifest in sensors:
+    for sensor_data in sensors:
         windows = plan.windows
+        timeline = timelines[sensor_data.manifest.client_id]
         for chunk_index, start in enumerate(range(0, len(windows), normalized_chunk_size)):
             chunk_windows = windows[start : start + normalized_chunk_size]
             if not chunk_windows:
                 continue
-            sample_start = chunk_windows[0].sample_start
-            sample_end = chunk_windows[-1].sample_end
             chunks.append(
                 _SpectralChunk(
-                    sensor_manifest=sensor_manifest,
+                    sensor_data=sensor_data,
+                    timeline=timeline,
                     chunk_index=chunk_index,
-                    sample_start=sample_start,
-                    sample_count=sample_end - sample_start,
                     windows=chunk_windows,
                 )
             )
@@ -230,7 +395,7 @@ def _execute_chunks(
     *,
     chunks: Sequence[_SpectralChunk],
     metadata: RunMetadata,
-    load_sensor_range: RawCaptureRangeLoader,
+    expected_sample_rate_hz: int,
     max_workers: int,
 ) -> tuple[_SpectralChunkResult, ...]:
     if not chunks:
@@ -240,7 +405,7 @@ def _execute_chunks(
             _process_chunk(
                 chunk=chunk,
                 metadata=metadata,
-                load_sensor_range=load_sensor_range,
+                expected_sample_rate_hz=expected_sample_rate_hz,
             )
             for chunk in chunks
         )
@@ -253,7 +418,7 @@ def _execute_chunks(
                 _process_chunk,
                 chunk=chunk,
                 metadata=metadata,
-                load_sensor_range=load_sensor_range,
+                expected_sample_rate_hz=expected_sample_rate_hz,
             )
             for chunk in chunks
         ]
@@ -264,35 +429,31 @@ def _process_chunk(
     *,
     chunk: _SpectralChunk,
     metadata: RunMetadata,
-    load_sensor_range: RawCaptureRangeLoader,
+    expected_sample_rate_hz: int,
 ) -> _SpectralChunkResult:
-    sensor_manifest = chunk.sensor_manifest
+    sensor_manifest = chunk.sensor_data.manifest
+    sample_rate_hz = (
+        expected_sample_rate_hz
+        if expected_sample_rate_hz > 0
+        else int(sensor_manifest.sample_rate_hz or 0)
+    )
     fft_computer = _build_fft_computer(
         metadata=metadata,
-        sample_rate_hz=sensor_manifest.sample_rate_hz,
+        sample_rate_hz=sample_rate_hz,
     )
-    freq_hz = tuple(float_list(fft_computer.fft_params(sensor_manifest.sample_rate_hz)[0]))
+    freq_hz = tuple(float_list(fft_computer.fft_params(sample_rate_hz)[0]))
     spectrum_rows = np.zeros((len(chunk.windows), len(freq_hz)), dtype=np.float32)
-    range_result = load_sensor_range(
-        client_id=sensor_manifest.client_id,
-        sample_start=chunk.sample_start,
-        sample_count=chunk.sample_count,
-    )
-    if range_result is None:
-        range_result = RawCaptureSensorRange.missing(
-            client_id=sensor_manifest.client_id,
-            requested_sample_start=chunk.sample_start,
-            requested_sample_count=chunk.sample_count,
-        )
     summaries = tuple(
         _build_window_summary(
             window=window,
-            range_result=range_result,
+            sensor_data=chunk.sensor_data,
+            timeline=chunk.timeline,
             spectrum_rows=spectrum_rows,
             row_index=row_index,
             metadata=metadata,
             sensor_manifest=sensor_manifest,
             fft_computer=fft_computer,
+            expected_sample_rate_hz=expected_sample_rate_hz,
         )
         for row_index, window in enumerate(chunk.windows)
     )
@@ -308,35 +469,53 @@ def _process_chunk(
 def _build_window_summary(
     *,
     window: WholeRunWindowDescriptor,
-    range_result: RawCaptureSensorRange,
+    sensor_data: RawCaptureSensorData,
+    timeline: RawSensorTimeline,
     spectrum_rows: np.ndarray,
     row_index: int,
     metadata: RunMetadata,
     sensor_manifest: RawCaptureSensorManifest,
     fft_computer: SpectralAnalysisComputer,
+    expected_sample_rate_hz: int,
 ) -> WholeRunWindowSpectralSummary:
-    coverage_state, returned_sample_start, returned_sample_count = _window_coverage(
-        window=window,
-        range_result=range_result,
-    )
-    if coverage_state != "full" or returned_sample_start is None:
-        return WholeRunWindowSpectralSummary(
-            window_index=window.window_index,
-            coverage_state=coverage_state,
-            returned_sample_start=returned_sample_start,
-            returned_sample_count=returned_sample_count,
+    if (
+        expected_sample_rate_hz > 0
+        and int(sensor_manifest.sample_rate_hz or 0) != expected_sample_rate_hz
+    ):
+        return _coverage_only_summary(
+            window=window,
+            coverage_state="missing",
+            coverage_reason="sample_rate_mismatch",
         )
-    range_start = range_result.returned_sample_start
-    assert range_start is not None
-    local_start = returned_sample_start - range_start
-    local_end = local_start + returned_sample_count
-    samples_i16 = range_result.samples_i16[local_start:local_end]
-    if samples_i16.shape[0] != returned_sample_count:
-        return WholeRunWindowSpectralSummary(
-            window_index=window.window_index,
+    requested_end_us = float(timeline.run_start_monotonic_us or 0) + (window.end_t_s * 1_000_000.0)
+    resolved = resolve_raw_window_end_time(
+        timeline=timeline,
+        requested_end_us=requested_end_us,
+        sample_count=window.sample_count,
+    )
+    if resolved.coverage_state != "complete":
+        return _coverage_only_summary(
+            window=window,
+            coverage_state=_summary_coverage_state(resolved.coverage_state),
+            coverage_reason=resolved.reason,
+        )
+    samples_i16 = np.asarray(
+        assemble_raw_window_samples(
+            sensor_data=sensor_data,
+            segments=resolved.segments,
+        ),
+        dtype=np.int16,
+    )
+    returned_sample_count = int(samples_i16.shape[0])
+    if returned_sample_count != window.sample_count:
+        return _coverage_only_summary(
+            window=window,
             coverage_state="partial",
-            returned_sample_start=returned_sample_start,
-            returned_sample_count=int(samples_i16.shape[0]),
+            coverage_reason="assembled_window_short",
+            returned_sample_start=(
+                resolved.segments[0].sample_start if resolved.segments else None
+            ),
+            returned_sample_count=returned_sample_count,
         )
     spectrum_row, top_peaks, vibration_strength_db, peak_amp_g, floor_amp_g, strength_bucket = (
         _compute_window_spectrum(
@@ -348,11 +527,17 @@ def _build_window_summary(
     )
     spectrum_rows[row_index, :] = spectrum_row
     dominant_freq_hz = top_peaks[0]["hz"] if top_peaks else None
+    returned_sample_start = resolved.segments[0].sample_start if resolved.segments else None
+    returned_sample_count = sum(
+        max(0, segment.sample_end - segment.sample_start) for segment in resolved.segments
+    )
     return WholeRunWindowSpectralSummary(
         window_index=window.window_index,
         coverage_state="full",
         returned_sample_start=returned_sample_start,
         returned_sample_count=returned_sample_count,
+        window_start_t_s=window.start_t_s,
+        window_end_t_s=window.end_t_s,
         dominant_freq_hz=dominant_freq_hz,
         vibration_strength_db=vibration_strength_db,
         strength_peak_amp_g=peak_amp_g,
@@ -362,23 +547,31 @@ def _build_window_summary(
     )
 
 
-def _window_coverage(
+def _coverage_only_summary(
     *,
     window: WholeRunWindowDescriptor,
-    range_result: RawCaptureSensorRange,
-) -> tuple[RawCaptureCoverageState, int | None, int]:
-    if range_result.coverage_state == "missing" or range_result.returned_sample_start is None:
-        return "missing", None, 0
-    available_start = range_result.returned_sample_start
-    available_end = range_result.returned_sample_end or available_start
-    overlap_start = max(window.sample_start, available_start)
-    overlap_end = min(window.sample_end, available_end)
-    if overlap_end <= overlap_start:
-        return "empty", None, 0
-    returned_count = overlap_end - overlap_start
-    if overlap_start != window.sample_start or overlap_end != window.sample_end:
-        return "partial", overlap_start, returned_count
-    return "full", overlap_start, returned_count
+    coverage_state: RawCaptureCoverageState,
+    coverage_reason: str | None,
+    returned_sample_start: int | None = None,
+    returned_sample_count: int = 0,
+) -> WholeRunWindowSpectralSummary:
+    return WholeRunWindowSpectralSummary(
+        window_index=window.window_index,
+        coverage_state=coverage_state,
+        returned_sample_start=returned_sample_start,
+        returned_sample_count=returned_sample_count,
+        window_start_t_s=window.start_t_s,
+        window_end_t_s=window.end_t_s,
+        coverage_reason=coverage_reason,
+    )
+
+
+def _summary_coverage_state(value: str) -> RawCaptureCoverageState:
+    if value == "complete":
+        return "full"
+    if value == "partial":
+        return "partial"
+    return "missing"
 
 
 def _compute_window_spectrum(
@@ -439,14 +632,12 @@ def _build_artifact_bundle(
     chunk_results: Sequence[_SpectralChunkResult],
     created_at: str,
 ) -> WholeRunSpectralArtifactBundle:
-    results_by_sensor: dict[str, list[_SpectralChunkResult]] = defaultdict(list)
-    for result in chunk_results:
-        results_by_sensor[result.sensor_id].append(result)
+    results_by_sensor = _chunk_results_by_sensor(chunk_results)
     artifact_files: list[WholeRunArtifactFile] = []
     artifact_contents: dict[str, bytes] = {}
     for sensor_manifest in sensors:
         sensor_results = sorted(
-            results_by_sensor.get(sensor_manifest.client_id, []),
+            results_by_sensor.get(sensor_manifest.client_id, ()),
             key=lambda result: result.chunk_index,
         )
         freq_hz, spectrum_rows, summaries = _merge_sensor_results(
@@ -513,11 +704,10 @@ def _merge_sensor_results(
     )
     if not sensor_results:
         empty_summaries = tuple(
-            WholeRunWindowSpectralSummary(
-                window_index=window.window_index,
+            _coverage_only_summary(
+                window=window,
                 coverage_state="missing",
-                returned_sample_start=None,
-                returned_sample_count=0,
+                coverage_reason="sensor_missing",
             )
             for window in plan.windows
         )
@@ -547,6 +737,235 @@ def _merge_sensor_results(
         else np.zeros((plan.total_window_count, merged_freq_hz.shape[0]), dtype=np.float32)
     )
     return merged_freq_hz, spectrum_rows, tuple(summary_list)
+
+
+def _chunk_results_by_sensor(
+    chunk_results: Sequence[_SpectralChunkResult],
+) -> dict[str, list[_SpectralChunkResult]]:
+    results_by_sensor: dict[str, list[_SpectralChunkResult]] = defaultdict(list)
+    for result in chunk_results:
+        results_by_sensor[result.sensor_id].append(result)
+    return results_by_sensor
+
+
+def _build_coverage_summary(
+    *,
+    raw_capture: RawRunCapture,
+    plan: WholeRunWindowPlan | None,
+    sensors: Sequence[RawCaptureSensorData],
+    timelines: Mapping[str, RawSensorTimeline],
+    summaries_by_sensor: Mapping[str, Sequence[WholeRunWindowSpectralSummary]],
+) -> WholeRunSpectralCoverageSummary:
+    total_sensor_window_count = 0
+    full_sensor_window_count = 0
+    partial_sensor_window_count = 0
+    missing_sensor_window_count = 0
+    empty_sensor_window_count = 0
+    for sensor in sensors:
+        summaries = summaries_by_sensor.get(sensor.manifest.client_id, ())
+        if not summaries and plan is not None:
+            total_sensor_window_count += plan.total_window_count
+            missing_sensor_window_count += plan.total_window_count
+            continue
+        for summary in summaries:
+            total_sensor_window_count += 1
+            if summary.coverage_state == "full":
+                full_sensor_window_count += 1
+            elif summary.coverage_state == "partial":
+                partial_sensor_window_count += 1
+            elif summary.coverage_state == "empty":
+                empty_sensor_window_count += 1
+            else:
+                missing_sensor_window_count += 1
+    gap_count = sum(len(timeline.gap_intervals) for timeline in timelines.values())
+    overlap_count = sum(len(timeline.overlap_intervals) for timeline in timelines.values())
+    sample_rate_mismatch_sensor_count = sum(
+        1
+        for sensor in sensors
+        if plan is not None and sensor.manifest.sample_rate_hz != plan.policy.sample_rate_hz
+    )
+    unanchored_sensor_count = sum(1 for timeline in timelines.values() if not timeline.anchored)
+    legacy_sensor_count = sum(
+        1 for timeline in timelines.values() if raw_timeline_is_legacy(timeline)
+    )
+    sync_unverified_sensor_count = sum(
+        1 for timeline in timelines.values() if raw_timeline_has_unverified_sync(timeline)
+    )
+    stale_sync_sensor_count = sum(
+        1
+        for timeline in timelines.values()
+        if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "stale_sync"
+    )
+    high_rtt_sensor_count = sum(
+        1
+        for timeline in timelines.values()
+        if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "high_rtt"
+    )
+    dropped_chunk_count = raw_capture.manifest.total_dropped_chunk_count
+    queue_overflow_chunk_count = raw_capture.manifest.losses.queue_overflow_chunk_count
+    invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
+    write_error_chunk_count = raw_capture.manifest.losses.write_error_chunk_count
+    coverage_confidence = _coverage_confidence(
+        total_sensor_window_count=total_sensor_window_count,
+        partial_sensor_window_count=partial_sensor_window_count,
+        missing_sensor_window_count=missing_sensor_window_count,
+        empty_sensor_window_count=empty_sensor_window_count,
+        gap_count=gap_count,
+        overlap_count=overlap_count,
+        dropped_chunk_count=dropped_chunk_count,
+        sample_rate_mismatch_sensor_count=sample_rate_mismatch_sensor_count,
+        unanchored_sensor_count=unanchored_sensor_count,
+        sync_unverified_sensor_count=sync_unverified_sensor_count,
+    )
+    warnings = _build_whole_run_warnings(
+        total_sensor_window_count=total_sensor_window_count,
+        partial_sensor_window_count=partial_sensor_window_count,
+        missing_sensor_window_count=missing_sensor_window_count,
+        empty_sensor_window_count=empty_sensor_window_count,
+        gap_count=gap_count,
+        overlap_count=overlap_count,
+        dropped_chunk_count=dropped_chunk_count,
+        queue_overflow_chunk_count=queue_overflow_chunk_count,
+        invalid_chunk_count=invalid_chunk_count,
+        write_error_chunk_count=write_error_chunk_count,
+        sample_rate_mismatch_sensor_count=sample_rate_mismatch_sensor_count,
+        legacy_sensor_count=legacy_sensor_count,
+        unanchored_sensor_count=unanchored_sensor_count,
+        sync_unverified_sensor_count=sync_unverified_sensor_count,
+        stale_sync_sensor_count=stale_sync_sensor_count,
+        high_rtt_sensor_count=high_rtt_sensor_count,
+    )
+    return WholeRunSpectralCoverageSummary(
+        total_sensor_window_count=total_sensor_window_count,
+        full_sensor_window_count=full_sensor_window_count,
+        partial_sensor_window_count=partial_sensor_window_count,
+        missing_sensor_window_count=missing_sensor_window_count,
+        empty_sensor_window_count=empty_sensor_window_count,
+        gap_count=gap_count,
+        overlap_count=overlap_count,
+        dropped_chunk_count=dropped_chunk_count,
+        queue_overflow_chunk_count=queue_overflow_chunk_count,
+        invalid_chunk_count=invalid_chunk_count,
+        write_error_chunk_count=write_error_chunk_count,
+        sample_rate_mismatch_sensor_count=sample_rate_mismatch_sensor_count,
+        unanchored_sensor_count=unanchored_sensor_count,
+        legacy_sensor_count=legacy_sensor_count,
+        sync_unverified_sensor_count=sync_unverified_sensor_count,
+        stale_sync_sensor_count=stale_sync_sensor_count,
+        high_rtt_sensor_count=high_rtt_sensor_count,
+        coverage_confidence=coverage_confidence,
+        warnings=warnings,
+    )
+
+
+def _coverage_confidence(
+    *,
+    total_sensor_window_count: int,
+    partial_sensor_window_count: int,
+    missing_sensor_window_count: int,
+    empty_sensor_window_count: int,
+    gap_count: int,
+    overlap_count: int,
+    dropped_chunk_count: int,
+    sample_rate_mismatch_sensor_count: int,
+    unanchored_sensor_count: int,
+    sync_unverified_sensor_count: int,
+) -> WholeRunCoverageConfidence:
+    if total_sensor_window_count <= 0:
+        return "unavailable"
+    if (
+        partial_sensor_window_count <= 0
+        and missing_sensor_window_count <= 0
+        and empty_sensor_window_count <= 0
+        and gap_count <= 0
+        and overlap_count <= 0
+        and dropped_chunk_count <= 0
+        and sample_rate_mismatch_sensor_count <= 0
+        and unanchored_sensor_count <= 0
+        and sync_unverified_sensor_count <= 0
+    ):
+        return "full"
+    return "partial"
+
+
+def _build_whole_run_warnings(
+    *,
+    total_sensor_window_count: int,
+    partial_sensor_window_count: int,
+    missing_sensor_window_count: int,
+    empty_sensor_window_count: int,
+    gap_count: int,
+    overlap_count: int,
+    dropped_chunk_count: int,
+    queue_overflow_chunk_count: int,
+    invalid_chunk_count: int,
+    write_error_chunk_count: int,
+    sample_rate_mismatch_sensor_count: int,
+    legacy_sensor_count: int,
+    unanchored_sensor_count: int,
+    sync_unverified_sensor_count: int,
+    stale_sync_sensor_count: int,
+    high_rtt_sensor_count: int,
+) -> tuple[RunContextWarning, ...]:
+    if (
+        partial_sensor_window_count <= 0
+        and missing_sensor_window_count <= 0
+        and empty_sensor_window_count <= 0
+        and gap_count <= 0
+        and overlap_count <= 0
+        and dropped_chunk_count <= 0
+        and sample_rate_mismatch_sensor_count <= 0
+        and sync_unverified_sensor_count <= 0
+        and unanchored_sensor_count <= 0
+        and legacy_sensor_count <= 0
+    ):
+        return ()
+    missing_sync_sensor_count = max(
+        0,
+        sync_unverified_sensor_count
+        - max(0, stale_sync_sensor_count)
+        - max(0, high_rtt_sensor_count),
+    )
+    detail_key = (
+        "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_UNAVAILABLE_DETAIL"
+        if total_sensor_window_count <= 0
+        else "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_DETAIL"
+    )
+    return (
+        RunContextWarning(
+            code=WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
+            severity="warn",
+            applies_to="whole_run",
+            title=i18n_ref("RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_TITLE"),
+            detail=i18n_ref(
+                detail_key,
+                partial=str(max(0, partial_sensor_window_count)),
+                missing=str(max(0, missing_sensor_window_count + empty_sensor_window_count)),
+                gaps=str(max(0, gap_count)),
+                overlaps=str(max(0, overlap_count)),
+                dropped=str(max(0, dropped_chunk_count)),
+                queue_overflow=str(max(0, queue_overflow_chunk_count)),
+                invalid=str(max(0, invalid_chunk_count)),
+                write_errors=str(max(0, write_error_chunk_count)),
+                mismatches=str(max(0, sample_rate_mismatch_sensor_count)),
+                legacy=str(max(0, legacy_sensor_count)),
+                unanchored=str(max(0, unanchored_sensor_count)),
+                sync_unverified=str(max(0, sync_unverified_sensor_count)),
+                missing_sync=str(max(0, missing_sync_sensor_count)),
+                stale=str(max(0, stale_sync_sensor_count)),
+                high_rtt=str(max(0, high_rtt_sensor_count)),
+            ),
+        ),
+    )
+
+
+def _default_frequency_grid(*, sample_rate_hz: int, fft_n: int) -> np.ndarray:
+    fft_computer = SpectralAnalysisComputer(
+        fft_n=fft_n,
+        spectrum_min_hz=SPECTRUM_MIN_HZ,
+        spectrum_max_hz=SPECTRUM_MAX_HZ,
+    )
+    return np.asarray(float_list(fft_computer.fft_params(sample_rate_hz)[0]), dtype=np.float32)
 
 
 def _npy_bytes(array: np.ndarray) -> bytes:
@@ -618,18 +1037,12 @@ def whole_run_spectral_summaries_by_sensor(
     return summaries_by_sensor
 
 
-def _float_or_none(value: object) -> float | None:
-    if isinstance(value, (int, float)):
-        return float(value)
-    return None
-
-
 def _int_or_none(value: object) -> int | None:
     if isinstance(value, bool) or value is None:
         return None
     if isinstance(value, int):
         return value
-    if isinstance(value, float):
+    if isinstance(value, float) and value.is_integer():
         return int(value)
     return None
 
@@ -639,20 +1052,19 @@ def _int_or_default(value: object, *, default: int) -> int:
     return parsed if parsed is not None else default
 
 
+def _float_or_none(value: object) -> float | None:
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, int | float):
+        return float(value)
+    return None
+
+
 def _text_or_none(value: object) -> str | None:
-    return value if isinstance(value, str) else None
+    return value if isinstance(value, str) and value else None
 
 
 def _coverage_state(value: object) -> RawCaptureCoverageState:
     if value in {"missing", "empty", "partial", "full"}:
         return cast(RawCaptureCoverageState, value)
     return "missing"
-
-
-def _default_frequency_grid(*, sample_rate_hz: int, fft_n: int) -> np.ndarray:
-    fft_computer = SpectralAnalysisComputer(
-        fft_n=fft_n,
-        spectrum_min_hz=SPECTRUM_MIN_HZ,
-        spectrum_max_hz=SPECTRUM_MAX_HZ,
-    )
-    return np.asarray(fft_computer.fft_params(sample_rate_hz)[0], dtype=np.float32)
