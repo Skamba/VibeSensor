@@ -25,6 +25,7 @@ from vibesensor.shared.raw_capture_timeline import (
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
+    WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE,
     WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,
     WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED,
     WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
@@ -74,6 +75,7 @@ class RawReplaySummary:
     write_error_chunk_count: int
     timing_fallback_count: int
     sample_rate_mismatch_count: int
+    fft_unusable_window_count: int
     sample_rate_unverified_sensor_count: int
     unanchored_sensor_count: int
     legacy_sensor_count: int
@@ -103,6 +105,13 @@ class _ResolvedWindow:
     timing_source: str = "explicit_window"
 
 
+@dataclass(frozen=True, slots=True)
+class _ComputedStrengthMetrics:
+    metrics: StrengthMetrics
+    has_valid_analysis_bins: bool
+    analytically_valid: bool
+
+
 def build_raw_backed_samples(
     *,
     samples: tuple[SensorFrame, ...],
@@ -129,6 +138,7 @@ def build_raw_backed_samples(
                 write_error_chunk_count=0,
                 timing_fallback_count=0,
                 sample_rate_mismatch_count=0,
+                fft_unusable_window_count=0,
                 sample_rate_unverified_sensor_count=0,
                 unanchored_sensor_count=0,
                 legacy_sensor_count=0,
@@ -169,6 +179,7 @@ def build_raw_backed_samples(
                 write_error_chunk_count=0,
                 timing_fallback_count=0,
                 sample_rate_mismatch_count=0,
+                fft_unusable_window_count=0,
                 sample_rate_unverified_sensor_count=0,
                 unanchored_sensor_count=0,
                 legacy_sensor_count=0,
@@ -204,6 +215,7 @@ def build_raw_backed_samples(
     missing_window_count = 0
     sample_rate_mismatch_count = 0
     timing_fallback_count = 0
+    fft_unusable_window_count = 0
     raw_backed_count = 0
     scale = metadata.accel_scale_g_per_lsb
     for sample in samples:
@@ -227,6 +239,8 @@ def build_raw_backed_samples(
             sample_rate_mismatch_count += 1
         if coverage.reason == "timing_fallback":
             timing_fallback_count += 1
+        if coverage.reason == "fft_no_valid_bins":
+            fft_unusable_window_count += 1
         replayed.append(rebuilt)
         coverages.append(coverage)
     gap_count = sum(len(timeline.gap_intervals) for timeline in timelines.values())
@@ -263,6 +277,7 @@ def build_raw_backed_samples(
         overlap_count=overlap_count,
         dropped_chunk_count=dropped_chunk_count,
         sample_rate_mismatch_count=sample_rate_mismatch_count,
+        fft_unusable_window_count=fft_unusable_window_count,
         sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
         unanchored_sensor_count=unanchored_sensor_count,
         sync_unverified_sensor_count=sync_unverified_sensor_count,
@@ -289,6 +304,7 @@ def build_raw_backed_samples(
             write_error_chunk_count=write_error_chunk_count,
             timing_fallback_count=timing_fallback_count,
             sample_rate_mismatch_count=sample_rate_mismatch_count,
+            fft_unusable_window_count=fft_unusable_window_count,
             sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
             unanchored_sensor_count=unanchored_sensor_count,
             legacy_sensor_count=legacy_sensor_count,
@@ -311,6 +327,7 @@ def build_raw_backed_samples(
                 invalid_chunk_count=invalid_chunk_count,
                 write_error_chunk_count=write_error_chunk_count,
                 sample_rate_mismatch_count=sample_rate_mismatch_count,
+                fft_unusable_window_count=fft_unusable_window_count,
                 sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
                 legacy_sensor_count=legacy_sensor_count,
                 unanchored_sensor_count=unanchored_sensor_count,
@@ -424,13 +441,36 @@ def _rebuild_sample(
     window_f32 = window_i16.astype(np.float32, copy=True)
     if accel_scale_g_per_lsb is not None and accel_scale_g_per_lsb > 0:
         window_f32 *= np.float32(accel_scale_g_per_lsb)
-    domain_strength = _compute_strength_metrics(
+    computed_strength = _compute_strength_metrics(
         window_f32,
         sample_rate_hz,
         fft_computer=fft_computer,
     )
-    top_peaks = tuple(peak for peak in domain_strength.top_peaks if peak.is_valid)
     last_xyz = window_f32[-1]
+    if not computed_strength.analytically_valid:
+        return (
+            replace(
+                sample,
+                accel_x_g=float(last_xyz[0]),
+                accel_y_g=float(last_xyz[1]),
+                accel_z_g=float(last_xyz[2]),
+                dominant_freq_hz=None,
+                top_peaks=(),
+                vibration_strength_db=None,
+                strength_bucket=None,
+                strength_peak_amp_g=None,
+                strength_floor_amp_g=None,
+            ),
+            RawReplayWindowCoverage(
+                client_id=sample.client_id,
+                t_s=sample.t_s,
+                coverage_state="complete",
+                raw_backed=False,
+                reason="fft_no_valid_bins",
+            ),
+        )
+    domain_strength = computed_strength.metrics
+    top_peaks = tuple(peak for peak in domain_strength.top_peaks if peak.is_valid)
     return (
         replace(
             sample,
@@ -528,6 +568,7 @@ def _replay_confidence(
     overlap_count: int,
     dropped_chunk_count: int,
     sample_rate_mismatch_count: int,
+    fft_unusable_window_count: int,
     sample_rate_unverified_sensor_count: int,
     sync_unverified_sensor_count: int,
     unanchored_sensor_count: int,
@@ -544,6 +585,7 @@ def _replay_confidence(
         and overlap_count <= 0
         and dropped_chunk_count <= 0
         and sample_rate_mismatch_count <= 0
+        and fft_unusable_window_count <= 0
         and sample_rate_unverified_sensor_count <= 0
         and sync_unverified_sensor_count <= 0
         and unanchored_sensor_count <= 0
@@ -566,6 +608,7 @@ def _build_replay_warnings(
     invalid_chunk_count: int,
     write_error_chunk_count: int,
     sample_rate_mismatch_count: int,
+    fft_unusable_window_count: int,
     sample_rate_unverified_sensor_count: int,
     legacy_sensor_count: int,
     unanchored_sensor_count: int,
@@ -629,6 +672,19 @@ def _build_replay_warnings(
                 ),
             )
         )
+    if fft_unusable_window_count > 0:
+        warnings.append(
+            RunContextWarning(
+                code=WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE,
+                severity="warn",
+                applies_to="raw_replay",
+                title=i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_FFT_UNUSABLE_TITLE"),
+                detail=i18n_ref(
+                    "RUN_CONTEXT_WARNING_RAW_REPLAY_FFT_UNUSABLE_DETAIL",
+                    count=str(max(0, fft_unusable_window_count)),
+                ),
+            )
+        )
     if dropped_chunk_count > 0:
         warnings.append(
             RunContextWarning(
@@ -688,12 +744,20 @@ def _compute_strength_metrics(
     sample_rate_hz: int,
     *,
     fft_computer: SpectralAnalysisComputer,
-) -> StrengthMetrics:
+) -> _ComputedStrengthMetrics:
     if window_f32.size <= 0:
-        return strength_metrics_from_mapping(None)
+        return _ComputedStrengthMetrics(
+            metrics=strength_metrics_from_mapping(None),
+            has_valid_analysis_bins=False,
+            analytically_valid=False,
+        )
     fft_result = fft_computer.compute_fft_spectrum(
         medfilt3(window_f32.T),
         sample_rate_hz,
         spike_filter_enabled=False,
     )
-    return strength_metrics_from_mapping(fft_result["strength_metrics"])
+    return _ComputedStrengthMetrics(
+        metrics=strength_metrics_from_mapping(fft_result["strength_metrics"]),
+        has_valid_analysis_bins=bool(fft_result["has_valid_analysis_bins"]),
+        analytically_valid=bool(fft_result["strength_metrics_analytically_valid"]),
+    )

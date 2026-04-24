@@ -7,7 +7,10 @@ import numpy as np
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
-from vibesensor.shared.run_context_warning import WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS
+from vibesensor.shared.run_context_warning import (
+    WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
+    WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE,
+)
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunkIndex,
     RawCaptureLossStats,
@@ -22,14 +25,14 @@ from vibesensor.use_cases.run.post_analysis_input import build_post_analysis_inp
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 
 
-def _metadata(run_id: str):
+def _metadata(run_id: str, *, sample_rate_hz: int = 800):
     return run_metadata_from_mapping(
         {
             "run_id": run_id,
             "start_time_utc": "2025-01-01T00:00:00Z",
             "sensor_model": "fixture-sensor",
-            "raw_sample_rate_hz": 800,
-            "sample_rate_hz": 800,
+            "raw_sample_rate_hz": sample_rate_hz,
+            "sample_rate_hz": sample_rate_hz,
             "feature_interval_s": 1.0,
             "fft_window_size_samples": 64,
             "accel_scale_g_per_lsb": 0.001,
@@ -38,11 +41,10 @@ def _metadata(run_id: str):
     )
 
 
-def _raw_capture(run_id: str) -> RawRunCapture:
-    sample_rate_hz = 800
+def _raw_capture(run_id: str, *, sample_rate_hz: int = 800, wave_hz: float = 50.0) -> RawRunCapture:
     fft_n = 64
     time_axis = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
-    wave = np.round(1000.0 * np.sin(2.0 * math.pi * 50.0 * time_axis)).astype(np.int16)
+    wave = np.round(1000.0 * np.sin(2.0 * math.pi * wave_hz * time_axis)).astype(np.int16)
     samples_i16 = np.column_stack(
         [
             wave,
@@ -128,6 +130,49 @@ def test_build_post_analysis_input_replays_raw_backed_strength_metrics() -> None
     assert rebuilt.dominant_freq_hz is not None
     assert 30.0 <= rebuilt.dominant_freq_hz <= 70.0
     assert rebuilt.top_peaks
+
+
+def test_build_post_analysis_input_marks_no_valid_bin_fft_windows_unusable() -> None:
+    sample_rate_hz = 8
+    fft_n = 64
+    loaded = LoadedPostAnalysisRun(
+        run_id="run-no-valid-bins",
+        metadata=_metadata("run-no-valid-bins", sample_rate_hz=sample_rate_hz),
+        language="en",
+        samples=sensor_frames_from_mappings(
+            [
+                {
+                    "client_id": "sensor-a",
+                    "t_s": fft_n / sample_rate_hz,
+                    "sample_rate_hz": sample_rate_hz,
+                    "vibration_strength_db": 0.0,
+                    "dominant_freq_hz": 0.0,
+                }
+            ]
+        ),
+        raw_capture=_raw_capture("run-no-valid-bins", sample_rate_hz=sample_rate_hz, wave_hz=2.0),
+        total_summary_row_count=1,
+        stride=1,
+    )
+
+    result = build_post_analysis_input(loaded)
+
+    rebuilt = result.diagnostics_run.samples[0]
+    assert result.raw_backed_summary_row_count == 0
+    assert result.raw_replay.complete_window_count == 1
+    assert result.raw_replay.fft_unusable_window_count == 1
+    assert result.raw_replay.replay_confidence == "fallback"
+    assert result.raw_replay.raw_capture_mode == "summary_only"
+    assert result.raw_replay_window_coverages[0].reason == "fft_no_valid_bins"
+    assert WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE in [
+        warning.code for warning in result.raw_replay.warnings
+    ]
+    assert rebuilt.vibration_strength_db is None
+    assert rebuilt.dominant_freq_hz is None
+    assert rebuilt.top_peaks == ()
+    assert rebuilt.strength_bucket is None
+    assert rebuilt.strength_peak_amp_g is None
+    assert rebuilt.strength_floor_amp_g is None
 
 
 def test_build_post_analysis_input_surfaces_persisted_dropped_chunk_counts() -> None:
