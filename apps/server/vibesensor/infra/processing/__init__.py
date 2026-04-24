@@ -10,7 +10,8 @@ This package contains the core vibration signal processing pipeline:
   computation from immutable snapshots.
 - :mod:`~vibesensor.infra.processing.snapshot_builder` — compute-snapshot caching and
   window-size helpers.
-- :mod:`~vibesensor.infra.processing.fft` — pure FFT / spectral-analysis functions.
+- :mod:`~vibesensor.shared.fft_analysis` — shared FFTW-backed spectral-analysis
+  functions reused by processing, replay, diagnostics, and reporting.
 - :mod:`~vibesensor.infra.processing.payload` — payload builders for spectrum,
   debug-spectrum, intake-stats, and time-alignment views.
 - :mod:`~vibesensor.infra.processing.time_align` — multi-sensor time-alignment utilities.

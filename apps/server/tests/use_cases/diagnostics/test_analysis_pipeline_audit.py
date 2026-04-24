@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 
 from vibesensor.infra.processing import SignalProcessor
-from vibesensor.infra.processing.fft import noise_floor
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.fft_analysis import noise_floor
 from vibesensor.shared.report_presentation import strength_label
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics.phase_segmentation import (

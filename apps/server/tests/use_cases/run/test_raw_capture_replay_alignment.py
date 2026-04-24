@@ -3,9 +3,11 @@ from __future__ import annotations
 import math
 
 import numpy as np
+import pytest
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, medfilt3
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,
@@ -17,6 +19,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorManifest,
     RawRunCapture,
 )
+from vibesensor.use_cases.run import raw_capture_replay
 from vibesensor.use_cases.run.post_analysis_input import build_post_analysis_input
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 
@@ -123,8 +126,25 @@ def _raw_capture(
     return RawRunCapture(manifest=manifest, sensors=tuple(sensor_rows))
 
 
-def test_build_post_analysis_input_aligns_raw_replay_from_run_start_anchor() -> None:
+def _shared_strength_metrics(window_i16: np.ndarray) -> dict[str, object]:
+    window_f32 = window_i16.astype(np.float32, copy=True) * np.float32(0.001)
+    computer = SpectralAnalysisComputer(
+        fft_n=_FFT_N,
+        spectrum_min_hz=5.0,
+        spectrum_max_hz=200.0,
+    )
+    return computer.compute_fft_spectrum(
+        medfilt3(window_f32.T),
+        _SAMPLE_RATE_HZ,
+        spike_filter_enabled=False,
+    )["strength_metrics"]
+
+
+def test_build_post_analysis_input_aligns_raw_replay_from_run_start_anchor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     raw_start_offset_us = 100_000
+    replay_window = _wave(32.0, _FFT_N)
     raw_capture = _raw_capture(
         "run-anchor",
         sensors=[
@@ -133,7 +153,7 @@ def test_build_post_analysis_input_aligns_raw_replay_from_run_start_anchor() -> 
                 [
                     (
                         _RUN_START_MONOTONIC_US + raw_start_offset_us,
-                        np.vstack([_wave(32.0, _FFT_N), _wave(88.0, 160)]),
+                        np.vstack([replay_window, _wave(88.0, 160)]),
                     )
                 ],
             )
@@ -158,6 +178,19 @@ def test_build_post_analysis_input_aligns_raw_replay_from_run_start_anchor() -> 
         total_sample_count=1,
         stride=1,
     )
+    expected = _shared_strength_metrics(replay_window)
+    calls: list[int] = []
+    original_compute = raw_capture_replay.SpectralAnalysisComputer.compute_fft_spectrum
+
+    def _counting_compute(self, fft_block, sample_rate_hz, **kwargs):
+        calls.append(sample_rate_hz)
+        return original_compute(self, fft_block, sample_rate_hz, **kwargs)
+
+    monkeypatch.setattr(
+        raw_capture_replay.SpectralAnalysisComputer,
+        "compute_fft_spectrum",
+        _counting_compute,
+    )
 
     result = build_post_analysis_input(loaded)
 
@@ -165,8 +198,17 @@ def test_build_post_analysis_input_aligns_raw_replay_from_run_start_anchor() -> 
     assert result.raw_backed_sample_count == 1
     assert result.raw_replay.raw_capture_mode == "raw_backed"
     assert result.raw_replay.complete_window_count == 1
+    assert calls == [_SAMPLE_RATE_HZ]
     assert rebuilt.dominant_freq_hz is not None
     assert 25.0 <= rebuilt.dominant_freq_hz <= 40.0
+    assert float(rebuilt.dominant_freq_hz) == pytest.approx(
+        float(expected["top_peaks"][0]["hz"]),
+        abs=0.5,
+    )
+    assert float(rebuilt.vibration_strength_db or 0.0) == pytest.approx(
+        float(expected["vibration_strength_db"] or 0.0),
+        abs=1e-6,
+    )
 
 
 def test_build_post_analysis_input_replays_each_sensor_on_its_own_timeline() -> None:

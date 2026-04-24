@@ -11,6 +11,7 @@ import numpy as np
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.shared.boundaries.codecs import strength_metrics_from_mapping
 from vibesensor.shared.constants.dsp import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
+from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, medfilt3
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
@@ -20,7 +21,6 @@ from vibesensor.shared.run_context_warning import (
 from vibesensor.shared.types.raw_capture import RawRunCapture
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
-from vibesensor.vibration_strength import combined_spectrum_amp_g, compute_vibration_strength_db
 
 __all__ = [
     "RawReplayResult",
@@ -184,6 +184,7 @@ def build_raw_backed_samples(
         )
         for sensor in raw_capture.sensors
     }
+    fft_computer = _build_fft_computer(metadata)
     replayed: list[SensorFrame] = []
     coverages: list[RawReplayWindowCoverage] = []
     complete_window_count = 0
@@ -197,6 +198,7 @@ def build_raw_backed_samples(
             sample=sample,
             timeline=timelines.get(sample.client_id),
             raw_capture=raw_capture,
+            fft_computer=fft_computer,
             fft_n=fft_n,
             accel_scale_g_per_lsb=scale,
         )
@@ -265,6 +267,7 @@ def _rebuild_sample(
     sample: SensorFrame,
     timeline: _SensorTimeline | None,
     raw_capture: RawRunCapture,
+    fft_computer: SpectralAnalysisComputer,
     fft_n: int,
     accel_scale_g_per_lsb: float | None,
 ) -> tuple[SensorFrame, RawReplayWindowCoverage]:
@@ -341,7 +344,11 @@ def _rebuild_sample(
     window_f32 = window_i16.astype(np.float32, copy=True)
     if accel_scale_g_per_lsb is not None and accel_scale_g_per_lsb > 0:
         window_f32 *= np.float32(accel_scale_g_per_lsb)
-    domain_strength = _compute_strength_metrics(window_f32, sample_rate_hz)
+    domain_strength = _compute_strength_metrics(
+        window_f32,
+        sample_rate_hz,
+        fft_computer=fft_computer,
+    )
     top_peaks = tuple(peak for peak in domain_strength.top_peaks if peak.is_valid)
     last_xyz = window_f32[-1]
     return (
@@ -363,6 +370,14 @@ def _rebuild_sample(
             coverage_state="complete",
             raw_backed=True,
         ),
+    )
+
+
+def _build_fft_computer(metadata: RunMetadata) -> SpectralAnalysisComputer:
+    return SpectralAnalysisComputer(
+        fft_n=int(metadata.fft_window_size_samples or 0),
+        spectrum_min_hz=SPECTRUM_MIN_HZ,
+        spectrum_max_hz=SPECTRUM_MAX_HZ,
     )
 
 
@@ -585,25 +600,17 @@ def _build_replay_warnings(
     )
 
 
-def _compute_strength_metrics(window_f32: np.ndarray, sample_rate_hz: int) -> StrengthMetrics:
-    axes_by_time = window_f32.T
-    detrended = axes_by_time - np.mean(axes_by_time, axis=1, keepdims=True, dtype=np.float32)
-    fft_window = np.asarray(np.hanning(window_f32.shape[0]), dtype=np.float32)
-    if fft_window.size <= 0:
+def _compute_strength_metrics(
+    window_f32: np.ndarray,
+    sample_rate_hz: int,
+    *,
+    fft_computer: SpectralAnalysisComputer,
+) -> StrengthMetrics:
+    if window_f32.size <= 0:
         return strength_metrics_from_mapping(None)
-    scale = float(2.0 / max(1.0, float(np.sum(fft_window))))
-    transformed = np.fft.rfft(detrended * fft_window, axis=1)
-    freqs = np.fft.rfftfreq(window_f32.shape[0], d=1.0 / sample_rate_hz)
-    valid = (freqs >= SPECTRUM_MIN_HZ) & (freqs <= SPECTRUM_MAX_HZ)
-    if not np.any(valid):
-        return strength_metrics_from_mapping(None)
-    axis_spectra = np.abs(transformed[:, valid]).astype(np.float64, copy=False) * scale
-    combined = np.asarray(
-        combined_spectrum_amp_g(axis_spectra_amp_g=axis_spectra, axis_count_for_mean=3),
-        dtype=np.float64,
+    fft_result = fft_computer.compute_fft_spectrum(
+        medfilt3(window_f32.T),
+        sample_rate_hz,
+        spike_filter_enabled=False,
     )
-    raw_strength = compute_vibration_strength_db(
-        freq_hz=freqs[valid],
-        combined_spectrum_amp_g_values=combined,
-    )
-    return strength_metrics_from_mapping(raw_strength)
+    return strength_metrics_from_mapping(fft_result["strength_metrics"])
