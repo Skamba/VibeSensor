@@ -60,6 +60,9 @@ def _run_input(
     raw_sample_rate_hz: int = 800,
     total_sample_count: int = 1,
     stride: int = 1,
+    sampling_method: str = "full",
+    evenly_spaced_sample_count: int = 0,
+    event_sample_count: int = 0,
 ) -> PostAnalysisRunInput:
     return build_post_analysis_input(
         LoadedPostAnalysisRun(
@@ -74,6 +77,9 @@ def _run_input(
             raw_capture=None,
             total_sample_count=total_sample_count,
             stride=stride,
+            sampling_method=sampling_method,
+            evenly_spaced_sample_count=evenly_spaced_sample_count,
+            event_sample_count=event_sample_count,
         ),
     )
 
@@ -303,9 +309,21 @@ def test_build_post_analysis_summary_adds_stride_warning(
     )
 
     summary = build_post_analysis_summary(
-        _run_input("run-stride", raw_sample_rate_hz=1, total_sample_count=5, stride=3),
+        _run_input(
+            "run-stride",
+            raw_sample_rate_hz=1,
+            total_sample_count=5,
+            stride=3,
+            sampling_method="event_preserving",
+            evenly_spaced_sample_count=2,
+            event_sample_count=1,
+        ),
     )
 
+    assert summary["analysis_metadata"]["sampling_method"] == "event_preserving"
+    assert summary["analysis_metadata"]["sampling_base_stride"] == 3
+    assert summary["analysis_metadata"]["sampling_evenly_spaced_sample_count"] == 2
+    assert summary["analysis_metadata"]["sampling_event_sample_count"] == 1
     run_suitability = summary["run_suitability"]
     assert isinstance(run_suitability, list)
     assert run_suitability == [
