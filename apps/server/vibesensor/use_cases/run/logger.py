@@ -26,6 +26,7 @@ from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.raw_capture import (
     RawCaptureClockProofState,
     RawCaptureLossStats,
+    RawCaptureManifest,
     RawCaptureSensorClockSync,
 )
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
@@ -156,6 +157,7 @@ class RunRecorder:
         with self._lock:
             self._persistence.reset()
         self._run_ingest_drop_baseline: dict[str, int] | None = None
+        self._finalized_raw_capture_manifests: dict[str, RawCaptureManifest] = {}
 
     @property
     def enabled(self) -> bool:
@@ -179,6 +181,9 @@ class RunRecorder:
 
     def _analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         return _recorder_runtime.analysis_settings_snapshot(self._settings_reader)
+
+    def _raw_capture_manifest_for_run(self, run_id: str) -> RawCaptureManifest | None:
+        return self._finalized_raw_capture_manifests.get(run_id)
 
     def _live_run_context_snapshot(self) -> RunContextSnapshot:
         active_car_snapshot = (
@@ -347,10 +352,12 @@ class RunRecorder:
                             baseline=self._run_ingest_drop_baseline,
                         )
                         if run_id:
-                            self._raw_capture.finalize_run(
+                            manifest = self._raw_capture.finalize_run(
                                 run_id,
                                 sensor_losses=ingest_drop_losses,
                             )
+                            if manifest is not None:
+                                self._finalized_raw_capture_manifests[run_id] = manifest
                         if run_id and not self._persistence.finalize_run(
                             run_id,
                             start_time_utc,
@@ -452,10 +459,12 @@ class RunRecorder:
                         baseline=self._run_ingest_drop_baseline,
                     )
                     if run_id:
-                        self._raw_capture.finalize_run(
+                        manifest = self._raw_capture.finalize_run(
                             run_id,
                             sensor_losses=ingest_drop_losses,
                         )
+                        if manifest is not None:
+                            self._finalized_raw_capture_manifests[run_id] = manifest
                     if run_id and not self._persistence.finalize_run(
                         run_id,
                         start_time_utc,

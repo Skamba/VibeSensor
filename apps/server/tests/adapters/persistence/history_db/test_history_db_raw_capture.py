@@ -84,7 +84,7 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(tmp_path: Path) ->
     second = np.asarray([[7, 8, 9]], dtype=np.int16)
 
     _append_chunk(db, run_id="run-raw", client_id="sensor-a", t0_us=1000, samples=first)
-    _append_chunk(db, run_id="run-raw", client_id="sensor-a", t0_us=2000, samples=second)
+    _append_chunk(db, run_id="run-raw", client_id="sensor-a", t0_us=3500, samples=second)
 
     manifest = _finalize_raw_capture(
         db,
@@ -108,6 +108,9 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(tmp_path: Path) ->
     assert manifest.sensor_manifest("sensor-a") is not None
     assert manifest.sensor_manifest("sensor-a").clock_sync is not None
     assert manifest.sensor_manifest("sensor-a").clock_sync.verified is True
+    assert manifest.sensor_manifest("sensor-a").sample_rate_hz == 800
+    assert manifest.sensor_manifest("sensor-a").declared_sample_rate_hz == 800
+    assert manifest.sensor_manifest("sensor-a").sample_rate_proof_state == "observed_consistent"
 
     stored = db.run_repository.get_run("run-raw")
     assert stored is not None
@@ -198,7 +201,7 @@ def test_raw_capture_range_read_spans_chunk_boundaries_without_loading_full_capt
     second = np.asarray([[7, 8, 9], [10, 11, 12], [13, 14, 15]], dtype=np.int16)
 
     _append_chunk(db, run_id="run-range", client_id="sensor-a", t0_us=1000, samples=first)
-    _append_chunk(db, run_id="run-range", client_id="sensor-a", t0_us=2000, samples=second)
+    _append_chunk(db, run_id="run-range", client_id="sensor-a", t0_us=3500, samples=second)
     manifest = _finalize_raw_capture(db, "run-range")
 
     assert manifest is not None
@@ -216,6 +219,38 @@ def test_raw_capture_range_read_spans_chunk_boundaries_without_loading_full_capt
     assert loaded.returned_sample_count == 3
     assert len(loaded.chunks) == 2
     assert np.array_equal(loaded.samples_i16, np.vstack([first[1:], second[:2]]))
+
+
+def test_raw_capture_finalization_persists_corrected_observed_sample_rate(tmp_path: Path) -> None:
+    db = build_history_db(tmp_path)
+    create_recording_run(db, "run-observed-rate")
+    samples = np.asarray([[1, 2, 3]] * 8, dtype=np.int16)
+
+    _append_chunk(
+        db,
+        run_id="run-observed-rate",
+        client_id="sensor-a",
+        t0_us=1_000_000,
+        samples=samples,
+        sample_rate_hz=800,
+    )
+    _append_chunk(
+        db,
+        run_id="run-observed-rate",
+        client_id="sensor-a",
+        t0_us=1_010_256,
+        samples=samples,
+        sample_rate_hz=800,
+    )
+
+    manifest = _finalize_raw_capture(db, "run-observed-rate")
+
+    assert manifest is not None
+    sensor_manifest = manifest.sensor_manifest("sensor-a")
+    assert sensor_manifest is not None
+    assert sensor_manifest.sample_rate_hz == 780
+    assert sensor_manifest.declared_sample_rate_hz == 800
+    assert sensor_manifest.sample_rate_proof_state == "observed_consistent"
 
 
 def test_raw_capture_range_read_marks_partial_and_missing_coverage(tmp_path: Path) -> None:

@@ -855,6 +855,9 @@ def _append_whole_run_spectral_metadata(
     analysis_metadata["whole_run_spectral_sample_rate_mismatch_sensor_count"] = (
         coverage_summary.sample_rate_mismatch_sensor_count
     )
+    analysis_metadata["whole_run_spectral_sample_rate_unverified_sensor_count"] = (
+        coverage_summary.sample_rate_unverified_sensor_count
+    )
     analysis_metadata["whole_run_spectral_unanchored_sensor_count"] = (
         coverage_summary.unanchored_sensor_count
     )

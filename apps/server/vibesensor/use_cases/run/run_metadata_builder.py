@@ -6,6 +6,7 @@ from vibesensor.domain import CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.ports import ClientTracker, LanguageReader
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
+from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_schema import RunCarMetadata, RunMetadata
 
 from .run_context import order_reference_context_complete
@@ -43,6 +44,7 @@ def create_run_metadata(
     firmware_version: str | None = None,
     end_time_utc: str | None = None,
     incomplete_for_order_analysis: bool = False,
+    configured_raw_sample_rate_hz: int | None = None,
     recorded_utc_offset_seconds: int | None = None,
 ) -> RunMetadata:
     """Build and return typed run metadata from the supplied fields."""
@@ -53,6 +55,7 @@ def create_run_metadata(
         sensor_model=sensor_model,
         firmware_version=firmware_version,
         raw_sample_rate_hz=raw_sample_rate_hz,
+        configured_raw_sample_rate_hz=configured_raw_sample_rate_hz,
         feature_interval_s=feature_interval_s,
         fft_window_size_samples=fft_window_size_samples,
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
@@ -74,12 +77,17 @@ def build_run_metadata(
     fft_window_size_samples: int,
     accel_scale_g_per_lsb: float | None,
     active_car_snapshot: CarSnapshot | None = None,
+    raw_capture_manifest: RawCaptureManifest | None = None,
     language_reader: LanguageReader | None = None,
     recorded_utc_offset_seconds: int | None = None,
 ) -> RunMetadata:
     """Assemble comprehensive typed run metadata."""
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
-    raw_sample_rate_hz = default_sample_rate_hz if default_sample_rate_hz > 0 else None
+    configured_raw_sample_rate_hz = default_sample_rate_hz if default_sample_rate_hz > 0 else None
+    raw_sample_rate_hz = _canonical_raw_sample_rate_hz(
+        raw_capture_manifest,
+        fallback_sample_rate_hz=configured_raw_sample_rate_hz,
+    )
     incomplete = raw_sample_rate_hz is None
     run_car_metadata = _run_car_metadata_for_run(
         active_car_snapshot=active_car_snapshot,
@@ -91,6 +99,7 @@ def build_run_metadata(
         sensor_model=sensor_model,
         firmware_version=firmware_version,
         raw_sample_rate_hz=raw_sample_rate_hz,
+        configured_raw_sample_rate_hz=configured_raw_sample_rate_hz,
         feature_interval_s=feature_interval_s,
         fft_window_size_samples=(fft_window_size_samples if fft_window_size_samples > 0 else None),
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
@@ -103,6 +112,25 @@ def build_run_metadata(
     if language_reader is not None:
         metadata.language = str(language_reader.language).strip().lower() or "en"
     return metadata
+
+
+def _canonical_raw_sample_rate_hz(
+    raw_capture_manifest: RawCaptureManifest | None,
+    *,
+    fallback_sample_rate_hz: int | None,
+) -> int | None:
+    if raw_capture_manifest is None:
+        return fallback_sample_rate_hz
+    observed_rates_hz = {
+        sensor.sample_rate_hz
+        for sensor in raw_capture_manifest.sensors
+        if sensor.sample_rate_hz > 0
+    }
+    if len(observed_rates_hz) == 1:
+        return next(iter(observed_rates_hz))
+    if len(observed_rates_hz) > 1:
+        return None
+    return fallback_sample_rate_hz
 
 
 _SIMULATOR_DEFAULT_CAR = RunCarMetadata(
