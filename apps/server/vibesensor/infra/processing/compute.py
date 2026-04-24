@@ -112,6 +112,7 @@ class SignalMetricsComputer(SpectralAnalysisComputer):
             sample_rate_hz=snapshot.sample_rate_hz,
             ingest_generation=snapshot.ingest_generation,
             buffer_epoch=snapshot.buffer_epoch,
+            reset_generation=snapshot.reset_generation,
             metrics=metrics,
             spectrum_by_axis=spectrum_by_axis,
             strength_metrics=strength_metrics_dict,

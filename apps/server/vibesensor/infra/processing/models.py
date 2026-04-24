@@ -80,6 +80,7 @@ class MetricsSnapshot:
     fft_block: FloatArray | None
     analysis_time_range: AnalysisTimeRange | None = None
     buffer_epoch: int = 0
+    reset_generation: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,3 +97,4 @@ class MetricsComputationResult:
     duration_s: float
     analysis_time_range: AnalysisTimeRange | None = None
     buffer_epoch: int = 0
+    reset_generation: int = 0
