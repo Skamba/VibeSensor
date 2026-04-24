@@ -172,6 +172,7 @@ class WholeRunSpectralCoverageSummary:
     gap_count: int
     overlap_count: int
     dropped_chunk_count: int
+    late_packet_chunk_count: int
     queue_overflow_chunk_count: int
     invalid_chunk_count: int
     write_error_chunk_count: int
@@ -235,6 +236,7 @@ def build_whole_run_spectral_artifact_bundle(
             gap_count=0,
             overlap_count=0,
             dropped_chunk_count=0,
+            late_packet_chunk_count=0,
             queue_overflow_chunk_count=0,
             invalid_chunk_count=0,
             write_error_chunk_count=0,
@@ -872,6 +874,7 @@ def _build_coverage_summary(
         if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "high_rtt"
     )
     dropped_chunk_count = raw_capture.manifest.total_dropped_chunk_count
+    late_packet_chunk_count = raw_capture.manifest.total_late_packet_chunk_count
     udp_ingest_queue_drop_count = raw_capture.manifest.losses.udp_ingest_queue_drop_count
     queue_overflow_chunk_count = raw_capture.manifest.losses.queue_overflow_chunk_count
     invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
@@ -884,6 +887,7 @@ def _build_coverage_summary(
         gap_count=gap_count,
         overlap_count=overlap_count,
         dropped_chunk_count=dropped_chunk_count,
+        late_packet_chunk_count=late_packet_chunk_count,
         sample_rate_mismatch_sensor_count=sample_rate_mismatch_sensor_count,
         sample_rate_unverified_sensor_count=sample_rate_unverified_sensor_count,
         unanchored_sensor_count=unanchored_sensor_count,
@@ -897,6 +901,7 @@ def _build_coverage_summary(
         gap_count=gap_count,
         overlap_count=overlap_count,
         dropped_chunk_count=dropped_chunk_count,
+        late_packet_chunk_count=late_packet_chunk_count,
         udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
         queue_overflow_chunk_count=queue_overflow_chunk_count,
         invalid_chunk_count=invalid_chunk_count,
@@ -918,6 +923,7 @@ def _build_coverage_summary(
         gap_count=gap_count,
         overlap_count=overlap_count,
         dropped_chunk_count=dropped_chunk_count,
+        late_packet_chunk_count=late_packet_chunk_count,
         udp_ingest_queue_drop_count=udp_ingest_queue_drop_count,
         queue_overflow_chunk_count=queue_overflow_chunk_count,
         invalid_chunk_count=invalid_chunk_count,
@@ -943,6 +949,7 @@ def _coverage_confidence(
     gap_count: int,
     overlap_count: int,
     dropped_chunk_count: int,
+    late_packet_chunk_count: int,
     sample_rate_mismatch_sensor_count: int,
     sample_rate_unverified_sensor_count: int,
     unanchored_sensor_count: int,
@@ -957,6 +964,7 @@ def _coverage_confidence(
         and gap_count <= 0
         and overlap_count <= 0
         and dropped_chunk_count <= 0
+        and late_packet_chunk_count <= 0
         and sample_rate_mismatch_sensor_count <= 0
         and sample_rate_unverified_sensor_count <= 0
         and unanchored_sensor_count <= 0
@@ -975,6 +983,7 @@ def _build_whole_run_warnings(
     gap_count: int,
     overlap_count: int,
     dropped_chunk_count: int,
+    late_packet_chunk_count: int,
     udp_ingest_queue_drop_count: int,
     queue_overflow_chunk_count: int,
     invalid_chunk_count: int,
@@ -994,6 +1003,7 @@ def _build_whole_run_warnings(
         and gap_count <= 0
         and overlap_count <= 0
         and dropped_chunk_count <= 0
+        and late_packet_chunk_count <= 0
         and sample_rate_mismatch_sensor_count <= 0
         and sample_rate_unverified_sensor_count <= 0
         and sync_unverified_sensor_count <= 0
@@ -1025,6 +1035,7 @@ def _build_whole_run_warnings(
                 gaps=str(max(0, gap_count)),
                 overlaps=str(max(0, overlap_count)),
                 dropped=str(max(0, dropped_chunk_count)),
+                late=str(max(0, late_packet_chunk_count)),
                 udp_ingest=str(max(0, udp_ingest_queue_drop_count)),
                 queue_overflow=str(max(0, queue_overflow_chunk_count)),
                 invalid=str(max(0, invalid_chunk_count)),

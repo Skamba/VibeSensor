@@ -99,6 +99,7 @@ def test_raw_capture_writer_persists_queue_invalid_and_write_failures(
         t0_us=1300,
         samples=_samples(),
     )
+    writer.note_late_packet_loss(client_id="sensor-b")
 
     history_db.allow_first_write.set()
     writer.finalize_run(
@@ -109,6 +110,7 @@ def test_raw_capture_writer_persists_queue_invalid_and_write_failures(
     assert history_db.finalized_sensor_losses is not None
     assert history_db.finalized_sensor_losses["sensor-a"].queue_overflow_chunk_count == 1
     assert history_db.finalized_sensor_losses["sensor-b"].write_error_chunk_count == 1
+    assert history_db.finalized_sensor_losses["sensor-b"].late_packet_chunk_count == 1
     assert history_db.finalized_sensor_losses["sensor-c"].invalid_chunk_count == 1
     assert history_db.finalized_sensor_losses["sensor-d"].udp_ingest_queue_drop_count == 2
 

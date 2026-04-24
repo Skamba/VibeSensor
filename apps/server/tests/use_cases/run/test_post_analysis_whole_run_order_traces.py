@@ -66,6 +66,7 @@ def _spectral_result(bundle) -> WholeRunSpectralBuildResult:
             gap_count=0,
             overlap_count=0,
             dropped_chunk_count=0,
+            late_packet_chunk_count=0,
             queue_overflow_chunk_count=0,
             invalid_chunk_count=0,
             write_error_chunk_count=0,
