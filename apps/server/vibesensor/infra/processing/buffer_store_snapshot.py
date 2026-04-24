@@ -82,6 +82,7 @@ class BufferStoreSnapshotReader:
                 sample_rate_hz=sr,
                 ingest_generation=buf.ingest_generation,
                 buffer_epoch=buf.buffer_epoch,
+                reset_generation=buf.reset_generation,
                 time_window=time_window,
                 fft_block=fft_block,
                 analysis_time_range=self._analysis_time_range(buf, sample_rate_hz=sr),

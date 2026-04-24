@@ -23,6 +23,7 @@ class ClientBufferMutator:
 
     def reset(self, buf: ClientBuffer) -> None:
         buf.data[:] = 0.0
+        buf.reset_generation += 1
         buf.write_idx = 0
         buf.count = 0
         buf.last_t0_us = 0
@@ -31,6 +32,8 @@ class ClientBufferMutator:
         buf.latest_analysis_time_range = None
         buf.latest_spectrum = {}
         buf.latest_strength_metrics = empty_vibration_strength_metrics()
+        buf.compute_generation = -1
+        buf.compute_sample_rate_hz = 0
         self.invalidate_cached_payloads(buf)
         buf.ingest_generation += 1
 
@@ -41,6 +44,7 @@ class ClientBufferMutator:
     ) -> bool:
         if (
             result.buffer_epoch != buf.buffer_epoch
+            or result.reset_generation != buf.reset_generation
             or result.ingest_generation < buf.compute_generation
         ):
             return False
