@@ -21,6 +21,7 @@ from vibesensor.infra.runtime.processing_loop import ProcessingLoop
 from vibesensor.infra.runtime.processing_state import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.payload_types import SCHEMA_VERSION, LiveWsPayload
 
 
@@ -270,6 +271,7 @@ def build_runtime(**overrides: Any):
     update_manager = overrides.pop("update_manager", MagicMock())
     esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())
     payload_source = overrides.pop("payload_source", StubWsPayloadSource())
+    ingest_diagnostics = overrides.pop("ingest_diagnostics", IngestDiagnosticsCollector())
     processing_state = ProcessingLoopState()
     health_state = runtime_module.RuntimeHealthState()
     rt = RuntimeState(
@@ -284,6 +286,7 @@ def build_runtime(**overrides: Any):
         history_db=history_db,
         processing_loop_state=processing_state,
         health_state=health_state,
+        ingest_diagnostics=ingest_diagnostics,
         processing_loop=ProcessingLoop(
             state=processing_state,
             fft_update_hz=config.processing.fft_update_hz,
@@ -314,6 +317,7 @@ def build_runtime(**overrides: Any):
         shutdown_analysis_timeout_s=config.logging.shutdown_analysis_timeout_s,
         registry=registry,
         processor=processor,
+        ingest_diagnostics=ingest_diagnostics,
         control_plane=control_plane,
         processing_loop=rt.processing_loop,
         ws_hub=rt.ws_hub,

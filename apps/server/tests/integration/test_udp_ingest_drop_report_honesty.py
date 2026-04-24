@@ -132,7 +132,7 @@ def test_udp_ingest_queue_drop_reaches_persisted_report_honesty(
         proto.datagram_received(first, _ADDR)
         proto.datagram_received(dropped, _ADDR)
 
-        queued_data, queued_addr = proto._queue.get_nowait()
+        queued_data, queued_addr, _received_mono_s = proto._queue.get_nowait()
         try:
             proto._process_datagram(queued_data, queued_addr)
         finally:
@@ -279,7 +279,7 @@ def test_clean_udp_run_keeps_report_free_of_ingest_drop_warning(
 
         packet = pack_data(_CLIENT_ID, seq=1, t0_us=0, samples=_samples())
         proto.datagram_received(packet, _ADDR)
-        queued_data, queued_addr = proto._queue.get_nowait()
+        queued_data, queued_addr, _received_mono_s = proto._queue.get_nowait()
         try:
             proto._process_datagram(queued_data, queued_addr)
         finally:

@@ -26,6 +26,55 @@ class RunRecorderHealthSnapshot(TypedDict):
     last_completed_run_error: str | None
 
 
+class UdpIngestHealthSnapshot(TypedDict):
+    queue_depth: int
+    queue_max_depth: int
+    enqueued_datagrams: int
+    dropped_datagrams: int
+    processed_datagrams: int
+    last_packet_queue_age_ms: float
+    max_packet_queue_age_ms: float
+    last_ack_latency_ms: float
+    max_ack_latency_ms: float
+
+
+class RawCaptureQueueHealthSnapshot(TypedDict):
+    queue_depth: int
+    queue_max_depth: int
+    dropped_chunks: int
+    write_error_chunks: int
+
+
+class WsPublishHealthSnapshot(TypedDict):
+    active_connections: int
+    total_publish_ticks: int
+    last_publish_duration_ms: float
+    max_publish_duration_ms: float
+
+
+class IngestClientHealthSnapshot(TypedDict):
+    client_id: str
+    advertised_sample_rate_hz: int
+    estimated_ingest_hz: float
+    processed_packets: int
+    processed_samples: int
+    late_packets: int
+    last_packet_queue_age_ms: float
+    last_ack_latency_ms: float
+    frames_dropped: int
+    queue_overflow_drops: int
+    server_queue_drops: int
+    parse_errors: int
+    duplicates_received: int
+
+
+class IngestHealthSnapshot(TypedDict):
+    udp: UdpIngestHealthSnapshot
+    raw_capture: RawCaptureQueueHealthSnapshot
+    ws_publish: WsPublishHealthSnapshot
+    clients: list[IngestClientHealthSnapshot]
+
+
 class HealthSnapshotData(TypedDict):
     """Typed snapshot returned by the health-snapshot builder."""
 
@@ -46,6 +95,7 @@ class HealthSnapshotData(TypedDict):
     data_loss: dict[str, int]
     persistence: RunRecorderHealthSnapshot
     intake_stats: IntakeStatsPayload
+    ingest: IngestHealthSnapshot
     tick_duration_s: float | None
     max_tick_duration_s: float | None
     tick_count: int

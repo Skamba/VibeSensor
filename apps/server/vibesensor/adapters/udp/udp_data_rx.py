@@ -26,6 +26,7 @@ from vibesensor.adapters.udp.protocol_validator import ProtocolVersionMismatch
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry, DataUpdateResult
 from vibesensor.shared.exceptions import ProtocolError
+from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.tracing import mark_span_error, start_span
 
 LOGGER = logging.getLogger(__name__)
@@ -71,14 +72,16 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         registry: ClientRegistry,
         processor: SignalProcessor,
         raw_capture_sink: RawCaptureSink | None = None,
+        ingest_diagnostics: IngestDiagnosticsCollector | None = None,
         queue_maxsize: int = 1024,
         queue_drop_log_interval_s: float = _QUEUE_DROP_LOG_INTERVAL_S,
     ):
         self.registry = registry
         self.processor = processor
         self._raw_capture_sink = raw_capture_sink
+        self._ingest_diagnostics = ingest_diagnostics
         self.transport: asyncio.DatagramTransport | None = None
-        self._queue: asyncio.Queue[tuple[bytes, tuple[str, int]]] = asyncio.Queue(
+        self._queue: asyncio.Queue[tuple[bytes, tuple[str, int], float]] = asyncio.Queue(
             maxsize=max(1, queue_maxsize),
         )
         self._queue_drop_log_interval_s = max(0.0, float(queue_drop_log_interval_s))
@@ -95,11 +98,16 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             return
         if data[0] != self._MSG_DATA:
             return
+        received_mono_s = time.monotonic()
         try:
-            self._queue.put_nowait((data, addr))
+            self._queue.put_nowait((data, addr, received_mono_s))
+            if self._ingest_diagnostics is not None:
+                self._ingest_diagnostics.note_udp_enqueued(self._queue.qsize())
         except asyncio.QueueFull:
             client_id = extract_client_id_hex(data)
             self.registry.note_server_queue_drop(client_id)
+            if self._ingest_diagnostics is not None:
+                self._ingest_diagnostics.note_udp_drop(self._queue.qsize())
             now = time.monotonic()
             if (now - self._last_queue_drop_log_ts) >= self._queue_drop_log_interval_s:
                 suppressed = self._suppressed_queue_drop_warnings
@@ -126,9 +134,11 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
     async def process_queue(self) -> None:
         """Consume the ingestion queue until cancelled, processing each datagram."""
         while True:
-            data, addr = await self._queue.get()
+            data, addr, received_mono_s = await self._queue.get()
             try:
-                self._process_datagram(data, addr)
+                if self._ingest_diagnostics is not None:
+                    self._ingest_diagnostics.note_udp_queue_depth(self._queue.qsize())
+                self._process_datagram(data, addr, received_mono_s=received_mono_s)
             except DatagramDispatchError as exc:
                 LOGGER.warning(
                     "Error processing datagram from %s (client=%s): %s",
@@ -140,7 +150,13 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             finally:
                 self._queue.task_done()
 
-    def _process_datagram(self, data: bytes, addr: tuple[str, int]) -> None:
+    def _process_datagram(
+        self,
+        data: bytes,
+        addr: tuple[str, int],
+        *,
+        received_mono_s: float | None = None,
+    ) -> None:
         with start_span(
             __name__,
             "udp.data.dispatch",
@@ -158,7 +174,11 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             span.set_attribute("vibesensor.client_id", msg.client_id.hex())
             span.set_attribute("vibesensor.sample_count", len(msg.samples))
             try:
-                result = self._dispatch_data_message(msg, addr)
+                result = self._dispatch_data_message(
+                    msg,
+                    addr,
+                    received_mono_s=received_mono_s,
+                )
             except Exception as exc:
                 mark_span_error(span, exc)
                 raise
@@ -180,10 +200,22 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             self.registry.note_parse_error(client_id)
             return None
 
-    def _dispatch_data_message(self, msg: DataMessage, addr: tuple[str, int]) -> DataUpdateResult:
+    def _dispatch_data_message(
+        self,
+        msg: DataMessage,
+        addr: tuple[str, int],
+        *,
+        received_mono_s: float | None = None,
+    ) -> DataUpdateResult:
         client_id = msg.client_id.hex()
         registry = self.registry
         processor = self.processor
+        dispatch_started_mono_s = time.monotonic()
+        queue_age_s = (
+            max(0.0, dispatch_started_mono_s - received_mono_s)
+            if received_mono_s is not None
+            else 0.0
+        )
         now_ts = time.time()
         result = registry.update_from_data(msg, addr, now_ts)
         if not result.is_duplicate:
@@ -211,7 +243,22 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                     t0_us=msg.t0_us,
                     samples=msg.samples,
                 )
+        if result.is_late and self._ingest_diagnostics is not None:
+            self._ingest_diagnostics.note_late_packet(client_id=client_id)
         self._send_data_ack(msg, addr, client_id=client_id)
+        if self._ingest_diagnostics is not None:
+            ack_completed_mono_s = time.monotonic()
+            self._ingest_diagnostics.note_udp_processed(
+                client_id=client_id,
+                sample_count=len(msg.samples),
+                queue_age_s=queue_age_s,
+                ack_latency_s=max(
+                    0.0,
+                    ack_completed_mono_s - (received_mono_s or dispatch_started_mono_s),
+                ),
+                processed_at_mono_s=ack_completed_mono_s,
+                count_for_ingest=not result.is_duplicate and not result.is_late,
+            )
         return result
 
     def _send_data_ack(
@@ -241,6 +288,7 @@ async def start_udp_data_receiver(
     registry: ClientRegistry,
     processor: SignalProcessor,
     raw_capture_sink: RawCaptureSink | None = None,
+    ingest_diagnostics: IngestDiagnosticsCollector | None = None,
     queue_maxsize: int = 1024,
 ) -> tuple[asyncio.DatagramTransport, DataDatagramProtocol]:
     """Bind the UDP data socket and start the background consumer task."""
@@ -249,6 +297,7 @@ async def start_udp_data_receiver(
         registry=registry,
         processor=processor,
         raw_capture_sink=raw_capture_sink,
+        ingest_diagnostics=ingest_diagnostics,
         queue_maxsize=queue_maxsize,
     )
     transport, _ = await loop.create_datagram_endpoint(

@@ -52,6 +52,11 @@ async def test_health_endpoint_response_shape(_health_router):
     assert result["persistence"]["analysis_queue_depth"] == 0
     assert result["persistence"]["analysis_queue_max_depth"] == 0
     assert result["persistence"]["analysis_active_run_id"] is None
+    assert result["ingest"]["udp"]["queue_depth"] == 0
+    assert result["ingest"]["udp"]["dropped_datagrams"] == 0
+    assert result["ingest"]["raw_capture"]["queue_depth"] == 0
+    assert result["ingest"]["ws_publish"]["active_connections"] == 0
+    assert result["ingest"]["clients"] == []
 
 
 @pytest.mark.asyncio
