@@ -33,12 +33,11 @@ Agent workflow
   - when adding large inline data definitions, move them into appropriate data files (`.json`, `.yaml`, etc.),
   - do not create duplicate parallel implementations when extending existing logic is cleaner.
 
-Deliberate reasoning gates
-- Medium/large code changes need an architecture pass before edits: owner module, data flow, invariants, root cause, and validation target.
-- Compare at least two viable approaches before non-trivial implementation, then choose the one that best preserves correctness, simplicity, and existing architecture.
-- Gather current-behavior evidence before refactoring: read owner code, direct callers, and nearest tests; run or inspect the closest relevant test when practical.
-- When an AI mistake repeats, prefer a lint/static guard/hygiene test or tighter path-scoped instruction over more prose.
-- Keep instructions short and scoped: repo-wide rules must affect most tasks; area rules belong near their paths; add a rule only when removing it would cause real mistakes.
+Deep-thinking gate
+- Non-trivial work: no edits before owner, current behavior, root cause, chosen approach, and validation are named.
+- Compare two approaches; choose the one with one owner, one code path, one source of truth.
+- List one tempting wrong fix and why it is wrong.
+- For large refactors, use an ExecPlan.
 
 Complexity hygiene
 - Remove config fields that are not read by any code path. Do not add speculative config knobs.
