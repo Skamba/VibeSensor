@@ -10,20 +10,20 @@ Agent workflow
 - Scan the blast radius for similar in-scope issues and fix them in the same run.
 - Prefer extending and hardening existing logic over adding parallel implementations.
 - When a larger refactor or other major in-scope change is the clearest path to better long-term maintainability, prefer that over a narrowly local patch that preserves poor structure.
-- Analysis-first default: examine the issue from multiple angles, choose the strongest approach, and deliver the most direct, validated, **complete** in-scope fix that addresses root cause and nearby in-scope blast radius.
+- Analysis-first default: examine the issue from multiple angles, choose the strongest approach, and deliver the most direct, validated, complete in-scope fix that addresses root cause and nearby in-scope blast radius.
 - Avoid symptom-only patches. Prefer fixes that make sense to a human maintainer and reduce future maintenance burden in the touched area.
 - Avoid over-conservative blocking behavior: do not hold a clear fix for exhaustive hypothetical analysis.
 - Use bounded risk rather than risk avoidance: keep changes reversible, validate early, and recover quickly on failures.
-- Continue autonomously on clearly adjacent in-scope issues without waiting for another prompt.
+- Continue autonomously on clearly adjacent in-scope issues without waiting for another prompt, but do not turn incidental cleanup into a new project.
 - Stop only when one of these conditions is true:
   1. all plan items are complete and validated,
   2. no similar in-scope issues remain,
   3. a real blocker exists (credentials/hardware/external dependency),
   4. the user explicitly asks to pause.
-- Long, thorough runs are allowed and preferred for deeper tasks; multi-hour runs are acceptable when needed to complete in-scope work well.
-- Execution-completion bias: the default mode is to finish the requested work entirely, not to make progress toward it. Do not stop at analysis, planning, or partial implementation. Do not treat "first green test pass" as completion if architectural residue remains.
-- Task size is not a blocker. Large tasks must be decomposed and executed in full, not narrowed or deferred. When a task is large, split it into strong execution buckets and work through all of them in the same run.
-- Anti-hedging rule: do not write or think with language like "this is probably too large for one session", "I'll do as much as possible", "maybe just inspect first and continue later", "I should keep the first pass small", "this is huge so I'll narrow scope", or "I should avoid coordinated breaking changes unless absolutely necessary". Replace those defaults with: decompose → execute → continue until done.
+- Long, thorough runs are allowed for deeper tasks when the requested scope and validation needs justify them.
+- Execution-completion bias: finish the requested work, not merely a first pass. Do not stop at analysis, planning, or partial implementation. Do not treat "first green test pass" as completion if architectural residue remains.
+- Task size is not a blocker by itself. For large tasks, decompose into execution buckets and work through the in-scope buckets in order.
+- Avoid hedging language such as "this is probably too large for one session" or "I'll do as much as possible." Instead, state the execution buckets, current validation target, and any real blocker.
 - Context/noise control:
   - avoid scanning generated/build/cache/vendor artifacts unless debugging them (`artifacts/`, `.cache/`, `node_modules/`, `dist/`, `.venv/`, `.pytest_cache/`, `.ruff_cache/`),
   - use focused file reads and scoped searches,
@@ -32,6 +32,13 @@ Agent workflow
   - put executable logic in proper code files, not hidden in docs/json/txt wrappers,
   - when adding large inline data definitions, move them into appropriate data files (`.json`, `.yaml`, etc.),
   - do not create duplicate parallel implementations when extending existing logic is cleaner.
+
+Deliberate reasoning gates
+- Medium/large code changes need an architecture pass before edits: owner module, data flow, invariants, root cause, and validation target.
+- Compare at least two viable approaches before non-trivial implementation, then choose the one that best preserves correctness, simplicity, and existing architecture.
+- Gather current-behavior evidence before refactoring: read owner code, direct callers, and nearest tests; run or inspect the closest relevant test when practical.
+- When an AI mistake repeats, prefer a lint/static guard/hygiene test or tighter path-scoped instruction over more prose.
+- Keep instructions short and scoped: repo-wide rules must affect most tasks; area rules belong near their paths; add a rule only when removing it would cause real mistakes.
 
 Complexity hygiene
 - Remove config fields that are not read by any code path. Do not add speculative config knobs.
@@ -66,6 +73,7 @@ Validation (always required)
 - Use proportionate validation instead of the local Docker stack for docs-only changes, AI-instruction-only changes, README/repo-map/docs-lint edits, pure test-only changes that do not alter runtime behavior, and CI/workflow-only changes unless they also change local stack behavior.
 - Breaking changes are allowed when intentional.
 - No-backward-compatibility policy: we own the full codebase end to end. Do not add or preserve backward-compatibility layers (deprecated paths, adapters, fallbacks, shims, version-bridging logic, or legacy schema support) unless explicitly asked. Remove them when encountered. Standardize on the current contract, schema, config, and runtime path. Do not add new compatibility code "just in case". If compatibility seems necessary, flag it explicitly rather than implementing it silently. Internal-only backward compatibility is never the default: when the repo controls both producers and consumers, coordinated breaking changes are preferred over preserving old shapes. The cleaner architecture always wins over old migration scaffolding.
+- Completion reports should state files changed, validation commands run, any validation skipped with the reason, and whether docs or AI guidance were updated or confirmed unnecessary.
 
 Docs (`docs/`)
 - Keep `docs/` short and focused. Add design changes (e.g. report layout) to `docs/design_language.md`.
