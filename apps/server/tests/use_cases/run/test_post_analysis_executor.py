@@ -77,6 +77,7 @@ def _spectral_result(bundle) -> WholeRunSpectralBuildResult:
             invalid_chunk_count=0,
             write_error_chunk_count=0,
             sample_rate_mismatch_sensor_count=0,
+            sample_rate_unverified_sensor_count=0,
             unanchored_sensor_count=0,
             legacy_sensor_count=0,
             sync_unverified_sensor_count=0,

@@ -48,6 +48,7 @@ class _RunMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
     sensor_model: object = "unknown"
     firmware_version: object = None
     raw_sample_rate_hz: object = None
+    configured_raw_sample_rate_hz: object = None
     feature_interval_s: object = None
     fft_window_size_samples: object = None
     fft_window_type: object = None
@@ -92,6 +93,7 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         sensor_model=text_or_none(data.get("sensor_model")) or "unknown",
         firmware_version=text_or_none(data.get("firmware_version")),
         raw_sample_rate_hz=as_int_or_none(data.get("raw_sample_rate_hz")),
+        configured_raw_sample_rate_hz=as_int_or_none(data.get("configured_raw_sample_rate_hz")),
         feature_interval_s=as_float_or_none(data.get("feature_interval_s")),
         fft_window_size_samples=as_int_or_none(data.get("fft_window_size_samples")),
         fft_window_type=text_or_none(data.get("fft_window_type")),
@@ -126,6 +128,7 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
         "sensor_model": metadata.sensor_model,
         "firmware_version": metadata.firmware_version,
         "raw_sample_rate_hz": metadata.raw_sample_rate_hz,
+        "configured_raw_sample_rate_hz": metadata.configured_raw_sample_rate_hz,
         "feature_interval_s": metadata.feature_interval_s,
         "fft_window_size_samples": metadata.fft_window_size_samples,
         "fft_window_type": metadata.fft_window_type,

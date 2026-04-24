@@ -82,6 +82,7 @@ def test_prepare_persisted_report_input_surfaces_partial_raw_replay_honestly() -
                             gaps="1",
                             overlaps="0",
                             mismatches="0",
+                            unverified_rates="0",
                         ),
                     }
                 ],
@@ -303,6 +304,7 @@ def test_prepare_persisted_report_input_surfaces_whole_run_alignment_warning() -
                     "whole_run_spectral_missing_sensor_window_count": 1,
                     "whole_run_spectral_gap_count": 1,
                     "whole_run_spectral_sample_rate_mismatch_sensor_count": 1,
+                    "whole_run_spectral_sample_rate_unverified_sensor_count": 0,
                     "whole_run_spectral_sync_unverified_sensor_count": 1,
                 },
                 warnings=[
@@ -325,6 +327,7 @@ def test_prepare_persisted_report_input_surfaces_whole_run_alignment_warning() -
                             invalid="0",
                             write_errors="0",
                             mismatches="1",
+                            unverified_rates="0",
                             legacy="0",
                             unanchored="0",
                             sync_unverified="1",

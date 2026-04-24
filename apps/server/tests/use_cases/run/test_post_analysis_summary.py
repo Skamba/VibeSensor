@@ -277,6 +277,7 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
         "raw_replay_write_error_chunk_count": 0,
         "raw_replay_timing_fallback_count": 0,
         "raw_replay_sample_rate_mismatch_count": 0,
+        "raw_replay_sample_rate_unverified_sensor_count": 0,
         "raw_replay_unanchored_sensor_count": 0,
         "raw_replay_legacy_sensor_count": 0,
         "raw_replay_sync_unverified_sensor_count": 0,
@@ -655,5 +656,6 @@ def test_build_post_analysis_summary_persists_timing_fallback_warning(
 
     assert summary["analysis_metadata"]["raw_replay_timing_fallback_count"] == 1
     assert [warning["code"] for warning in summary["warnings"]] == [
-        WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK
+        WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
+        WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     ]
