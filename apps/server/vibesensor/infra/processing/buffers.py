@@ -24,6 +24,7 @@ class ClientBuffer:
     data: np.ndarray
     capacity: int
     buffer_epoch: int = 0
+    reset_generation: int = 0
     write_idx: int = 0
     count: int = 0
     sample_rate_hz: int = 0
@@ -40,7 +41,8 @@ class ClientBuffer:
     # Number of samples ingested since last_t0_us was recorded.  Used to
     # back-compute the timestamp of the oldest sample in the analysis window.
     samples_since_t0: int = 0
-    # Generation counters: ingest_generation increments on new samples,
+    # Generation counters: reset_generation invalidates in-flight compute work
+    # across buffer flushes, ingest_generation increments on new samples,
     # compute_generation marks which ingest generation metrics reflect, and
     # spectrum_generation marks spectrum snapshot updates for payload caching.
     ingest_generation: int = 0
