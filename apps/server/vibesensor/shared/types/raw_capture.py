@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 import numpy as np
@@ -13,7 +13,9 @@ from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_ob
 __all__ = [
     "RawCaptureChunk",
     "RawCaptureChunkIndex",
+    "RawCaptureLossStats",
     "RawCaptureManifest",
+    "RawCaptureSensorLossStats",
     "RawCaptureSensorData",
     "RawCaptureSensorManifest",
     "RawCaptureSensorRange",
@@ -23,7 +25,7 @@ __all__ = [
 type Int16Array = npt.NDArray[np.int16]
 type RawCaptureCoverageState = Literal["missing", "empty", "partial", "full"]
 
-_RAW_CAPTURE_SCHEMA_VERSION = 2
+_RAW_CAPTURE_SCHEMA_VERSION = 3
 _RAW_CAPTURE_STORAGE_TYPE = "run-directory-v1"
 _RAW_CAPTURE_MODE = "full_run"
 
@@ -63,6 +65,78 @@ class RawCaptureChunkIndex:
             sample_count=_int_from_json(data.get("sample_count")),
             t0_us=_int_from_json(data.get("t0_us")),
             byte_offset=_int_from_json(data.get("byte_offset")),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class RawCaptureLossStats:
+    """Structured counts for raw chunks lost before persistence."""
+
+    queue_overflow_chunk_count: int = 0
+    invalid_chunk_count: int = 0
+    write_error_chunk_count: int = 0
+
+    @property
+    def total_dropped_chunk_count(self) -> int:
+        return (
+            max(0, self.queue_overflow_chunk_count)
+            + max(0, self.invalid_chunk_count)
+            + max(0, self.write_error_chunk_count)
+        )
+
+    def to_json_object(self) -> JsonObject:
+        return {
+            "queue_overflow_chunk_count": self.queue_overflow_chunk_count,
+            "invalid_chunk_count": self.invalid_chunk_count,
+            "write_error_chunk_count": self.write_error_chunk_count,
+        }
+
+    @classmethod
+    def from_mapping(cls, data: JsonObject) -> RawCaptureLossStats:
+        return cls(
+            queue_overflow_chunk_count=_int_from_json(data.get("queue_overflow_chunk_count")),
+            invalid_chunk_count=_int_from_json(data.get("invalid_chunk_count")),
+            write_error_chunk_count=_int_from_json(data.get("write_error_chunk_count")),
+        )
+
+    def merged(self, other: RawCaptureLossStats) -> RawCaptureLossStats:
+        return RawCaptureLossStats(
+            queue_overflow_chunk_count=(
+                self.queue_overflow_chunk_count + other.queue_overflow_chunk_count
+            ),
+            invalid_chunk_count=self.invalid_chunk_count + other.invalid_chunk_count,
+            write_error_chunk_count=(self.write_error_chunk_count + other.write_error_chunk_count),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class RawCaptureSensorLossStats:
+    """Per-sensor raw chunk loss counts persisted alongside the manifest."""
+
+    client_id: str
+    losses: RawCaptureLossStats = field(default_factory=RawCaptureLossStats)
+
+    @property
+    def total_dropped_chunk_count(self) -> int:
+        return self.losses.total_dropped_chunk_count
+
+    def to_json_object(self) -> JsonObject:
+        return {
+            "client_id": self.client_id,
+            "losses": self.losses.to_json_object(),
+        }
+
+    @classmethod
+    def from_mapping(cls, data: JsonObject) -> RawCaptureSensorLossStats:
+        losses_raw = data.get("losses")
+        losses = (
+            RawCaptureLossStats.from_mapping(losses_raw)
+            if is_json_object(losses_raw)
+            else RawCaptureLossStats()
+        )
+        return cls(
+            client_id=_str_from_json(data.get("client_id")),
+            losses=losses,
         )
 
 
@@ -122,6 +196,8 @@ class RawCaptureManifest:
     total_bytes: int
     created_at: str
     run_start_monotonic_us: int | None = None
+    sensor_losses: tuple[RawCaptureSensorLossStats, ...] = ()
+    losses: RawCaptureLossStats = field(default_factory=RawCaptureLossStats)
     schema_version: int = _RAW_CAPTURE_SCHEMA_VERSION
     storage_type: str = _RAW_CAPTURE_STORAGE_TYPE
     capture_mode: str = _RAW_CAPTURE_MODE
@@ -140,6 +216,12 @@ class RawCaptureManifest:
         }
         if self.run_start_monotonic_us is not None:
             payload["run_start_monotonic_us"] = self.run_start_monotonic_us
+        if self.sensor_losses:
+            payload["sensor_losses"] = [
+                sensor_loss.to_json_object() for sensor_loss in self.sensor_losses
+            ]
+        if self.losses.total_dropped_chunk_count > 0:
+            payload["losses"] = self.losses.to_json_object()
         return payload
 
     @classmethod
@@ -150,6 +232,18 @@ class RawCaptureManifest:
             for item in sensors_raw:
                 if is_json_object(item):
                     sensors.append(RawCaptureSensorManifest.from_mapping(item))
+        sensor_losses_raw = data.get("sensor_losses")
+        sensor_losses: list[RawCaptureSensorLossStats] = []
+        if isinstance(sensor_losses_raw, list):
+            for item in sensor_losses_raw:
+                if is_json_object(item):
+                    sensor_losses.append(RawCaptureSensorLossStats.from_mapping(item))
+        losses_raw = data.get("losses")
+        losses = (
+            RawCaptureLossStats.from_mapping(losses_raw)
+            if is_json_object(losses_raw)
+            else RawCaptureLossStats()
+        )
         return cls(
             schema_version=_int_from_json(data.get("schema_version"), _RAW_CAPTURE_SCHEMA_VERSION),
             storage_type=_str_from_json(data.get("storage_type"), _RAW_CAPTURE_STORAGE_TYPE),
@@ -161,6 +255,8 @@ class RawCaptureManifest:
             total_bytes=_int_from_json(data.get("total_bytes")),
             created_at=_str_from_json(data.get("created_at")),
             run_start_monotonic_us=_int_or_none(data.get("run_start_monotonic_us")),
+            sensor_losses=tuple(sensor_losses),
+            losses=losses,
         )
 
     def sensor_manifest(self, client_id: str) -> RawCaptureSensorManifest | None:
@@ -168,6 +264,23 @@ class RawCaptureManifest:
             if sensor.client_id == client_id:
                 return sensor
         return None
+
+    def sensor_loss(self, client_id: str) -> RawCaptureSensorLossStats | None:
+        for sensor_loss in self.sensor_losses:
+            if sensor_loss.client_id == client_id:
+                return sensor_loss
+        return None
+
+    @property
+    def total_chunk_count(self) -> int:
+        return sum(max(0, sensor.chunk_count) for sensor in self.sensors)
+
+    @property
+    def total_dropped_chunk_count(self) -> int:
+        sensor_total = sum(
+            max(0, sensor_loss.total_dropped_chunk_count) for sensor_loss in self.sensor_losses
+        )
+        return self.losses.total_dropped_chunk_count or sensor_total
 
 
 @dataclass(frozen=True, slots=True)

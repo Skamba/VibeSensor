@@ -15,6 +15,7 @@ WARNING_CODE_WHOLE_RUN_CONTEXT_INCOMPLETE = "whole_run_context_incomplete"
 WARNING_CODE_WHOLE_RUN_CONTEXT_LEGACY_FALLBACK = "whole_run_context_legacy_fallback"
 WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE = "raw_replay_coverage_incomplete"
 WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK = "raw_replay_legacy_fallback"
+WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS = "raw_replay_dropped_chunks"
 WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK = "raw_replay_timing_fallback"
 WarningSeverity = Literal["warn", "error"]
 

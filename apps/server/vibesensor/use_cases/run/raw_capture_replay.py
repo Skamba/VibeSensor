@@ -15,6 +15,7 @@ from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, medfilt3
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
+    WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
     WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,
     WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
     RunContextWarning,
@@ -59,6 +60,9 @@ class RawReplaySummary:
     gap_count: int
     overlap_count: int
     dropped_chunk_count: int
+    queue_overflow_chunk_count: int
+    invalid_chunk_count: int
+    write_error_chunk_count: int
     timing_fallback_count: int
     sample_rate_mismatch_count: int
     unanchored_sensor_count: int
@@ -135,6 +139,9 @@ def build_raw_backed_samples(
                 gap_count=0,
                 overlap_count=0,
                 dropped_chunk_count=0,
+                queue_overflow_chunk_count=0,
+                invalid_chunk_count=0,
+                write_error_chunk_count=0,
                 timing_fallback_count=0,
                 sample_rate_mismatch_count=0,
                 unanchored_sensor_count=0,
@@ -166,6 +173,9 @@ def build_raw_backed_samples(
                 gap_count=0,
                 overlap_count=0,
                 dropped_chunk_count=0,
+                queue_overflow_chunk_count=0,
+                invalid_chunk_count=0,
+                write_error_chunk_count=0,
                 timing_fallback_count=0,
                 sample_rate_mismatch_count=0,
                 unanchored_sensor_count=0,
@@ -225,6 +235,10 @@ def build_raw_backed_samples(
     gap_count = sum(len(timeline.gap_intervals) for timeline in timelines.values())
     overlap_count = sum(len(timeline.overlap_intervals) for timeline in timelines.values())
     unanchored_sensor_count = sum(1 for timeline in timelines.values() if not timeline.anchored)
+    dropped_chunk_count = raw_capture.manifest.total_dropped_chunk_count
+    queue_overflow_chunk_count = raw_capture.manifest.losses.queue_overflow_chunk_count
+    invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
+    write_error_chunk_count = raw_capture.manifest.losses.write_error_chunk_count
     replay_confidence = _replay_confidence(
         raw_backed_sample_count=raw_backed_count,
         replay_window_count=len(samples),
@@ -232,6 +246,7 @@ def build_raw_backed_samples(
         missing_window_count=missing_window_count,
         gap_count=gap_count,
         overlap_count=overlap_count,
+        dropped_chunk_count=dropped_chunk_count,
         sample_rate_mismatch_count=sample_rate_mismatch_count,
         unanchored_sensor_count=unanchored_sensor_count,
     )
@@ -251,7 +266,10 @@ def build_raw_backed_samples(
             missing_window_count=missing_window_count,
             gap_count=gap_count,
             overlap_count=overlap_count,
-            dropped_chunk_count=0,
+            dropped_chunk_count=dropped_chunk_count,
+            queue_overflow_chunk_count=queue_overflow_chunk_count,
+            invalid_chunk_count=invalid_chunk_count,
+            write_error_chunk_count=write_error_chunk_count,
             timing_fallback_count=timing_fallback_count,
             sample_rate_mismatch_count=sample_rate_mismatch_count,
             unanchored_sensor_count=unanchored_sensor_count,
@@ -264,6 +282,10 @@ def build_raw_backed_samples(
                 missing_window_count=missing_window_count,
                 gap_count=gap_count,
                 overlap_count=overlap_count,
+                dropped_chunk_count=dropped_chunk_count,
+                queue_overflow_chunk_count=queue_overflow_chunk_count,
+                invalid_chunk_count=invalid_chunk_count,
+                write_error_chunk_count=write_error_chunk_count,
                 sample_rate_mismatch_count=sample_rate_mismatch_count,
                 unanchored_sensor_count=unanchored_sensor_count,
             ),
@@ -566,6 +588,7 @@ def _replay_confidence(
     missing_window_count: int,
     gap_count: int,
     overlap_count: int,
+    dropped_chunk_count: int,
     sample_rate_mismatch_count: int,
     unanchored_sensor_count: int,
 ) -> RawReplayConfidence:
@@ -579,6 +602,7 @@ def _replay_confidence(
         and missing_window_count <= 0
         and gap_count <= 0
         and overlap_count <= 0
+        and dropped_chunk_count <= 0
         and sample_rate_mismatch_count <= 0
         and unanchored_sensor_count <= 0
     ):
@@ -594,6 +618,10 @@ def _build_replay_warnings(
     missing_window_count: int,
     gap_count: int,
     overlap_count: int,
+    dropped_chunk_count: int,
+    queue_overflow_chunk_count: int,
+    invalid_chunk_count: int,
+    write_error_chunk_count: int,
     sample_rate_mismatch_count: int,
     unanchored_sensor_count: int,
 ) -> tuple[RunContextWarning, ...]:
@@ -618,6 +646,22 @@ def _build_replay_warnings(
                 detail=i18n_ref(
                     "RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_DETAIL",
                     count=str(max(0, timing_fallback_count)),
+                ),
+            )
+        )
+    if dropped_chunk_count > 0:
+        warnings.append(
+            RunContextWarning(
+                code=WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
+                severity="warn",
+                applies_to="raw_replay",
+                title=i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_TITLE"),
+                detail=i18n_ref(
+                    "RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_DETAIL",
+                    count=str(max(0, dropped_chunk_count)),
+                    queue_overflow=str(max(0, queue_overflow_chunk_count)),
+                    invalid=str(max(0, invalid_chunk_count)),
+                    write_errors=str(max(0, write_error_chunk_count)),
                 ),
             )
         )

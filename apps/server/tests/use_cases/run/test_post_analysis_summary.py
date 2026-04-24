@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from types import SimpleNamespace
 
 import numpy as np
@@ -9,12 +10,15 @@ from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
+    WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
     WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
 )
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunkIndex,
+    RawCaptureLossStats,
     RawCaptureManifest,
     RawCaptureSensorData,
+    RawCaptureSensorLossStats,
     RawCaptureSensorManifest,
     RawRunCapture,
 )
@@ -136,7 +140,11 @@ def _gap_raw_capture(run_id: str) -> RawRunCapture:
     )
 
 
-def _full_raw_capture(run_id: str) -> RawRunCapture:
+def _full_raw_capture(
+    run_id: str,
+    *,
+    losses: RawCaptureLossStats | None = None,
+) -> RawRunCapture:
     run_start_monotonic_us = 1_000_000
     chunk = _wave(32.0, 160)
     chunk_rows = (
@@ -168,7 +176,17 @@ def _full_raw_capture(run_id: str) -> RawRunCapture:
         run_start_monotonic_us=run_start_monotonic_us,
     )
     return RawRunCapture(
-        manifest=manifest,
+        manifest=(
+            replace(
+                manifest,
+                sensor_losses=(
+                    ()
+                    if losses is None or losses.total_dropped_chunk_count <= 0
+                    else (RawCaptureSensorLossStats(client_id="sensor-a", losses=losses),)
+                ),
+                losses=losses or RawCaptureLossStats(),
+            )
+        ),
         sensors=(
             RawCaptureSensorData(
                 manifest=sensor_manifest,
@@ -228,6 +246,9 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
         "raw_replay_gap_count": 0,
         "raw_replay_overlap_count": 0,
         "raw_replay_dropped_chunk_count": 0,
+        "raw_replay_queue_overflow_chunk_count": 0,
+        "raw_replay_invalid_chunk_count": 0,
+        "raw_replay_write_error_chunk_count": 0,
         "raw_replay_timing_fallback_count": 0,
         "raw_replay_sample_rate_mismatch_count": 0,
         "raw_replay_unanchored_sensor_count": 0,
@@ -310,6 +331,66 @@ def test_build_post_analysis_summary_adds_short_run_warning(
             "state": "warn",
             "explanation": "SUITABILITY_RUN_DURATION_WARNING",
         }
+    ]
+
+
+def test_build_post_analysis_summary_propagates_dropped_chunk_metadata_and_warning(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeRunAnalysis:
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def summarize(self):
+            return SimpleNamespace(
+                diagnostic_case=SimpleNamespace(case_id="case-drops"),
+            )
+
+    monkeypatch.setattr(
+        "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
+        FakeRunAnalysis,
+    )
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run.post_analysis_summary.analysis_result_to_summary",
+        lambda _result: {},
+    )
+
+    summary = build_post_analysis_summary(
+        build_post_analysis_input(
+            LoadedPostAnalysisRun(
+                run_id="run-drops",
+                metadata=_run_metadata("run-drops"),
+                language="en",
+                samples=sensor_frames_from_mappings(
+                    [
+                        {
+                            "client_id": "sensor-a",
+                            "t_s": 0.08,
+                            "sample_rate_hz": 800,
+                            "vibration_strength_db": 0.0,
+                            "dominant_freq_hz": 0.0,
+                        }
+                    ]
+                ),
+                raw_capture=_full_raw_capture(
+                    "run-drops",
+                    losses=RawCaptureLossStats(
+                        queue_overflow_chunk_count=2,
+                        write_error_chunk_count=1,
+                    ),
+                ),
+                total_sample_count=1,
+                stride=1,
+            )
+        )
+    )
+
+    assert summary["analysis_metadata"]["raw_replay_dropped_chunk_count"] == 3
+    assert summary["analysis_metadata"]["raw_replay_queue_overflow_chunk_count"] == 2
+    assert summary["analysis_metadata"]["raw_replay_invalid_chunk_count"] == 0
+    assert summary["analysis_metadata"]["raw_replay_write_error_chunk_count"] == 1
+    assert WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS in [
+        warning["code"] for warning in summary["warnings"]
     ]
 
 

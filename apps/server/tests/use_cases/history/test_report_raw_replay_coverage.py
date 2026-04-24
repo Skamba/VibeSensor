@@ -7,6 +7,7 @@ from vibesensor.shared.boundaries.reporting import prepare_persisted_report_inpu
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
+    WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
     WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
 )
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -150,3 +151,65 @@ def test_prepare_persisted_report_input_surfaces_legacy_sample_timing_warning() 
     assert WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK in [
         warning.code for warning in prepared.report_facts.decision.warnings
     ]
+
+
+def test_prepare_persisted_report_input_surfaces_dropped_raw_chunk_warning() -> None:
+    primary = make_finding_payload(
+        finding_id="F_DROPPED_CHUNKS",
+        suspected_source="wheel/tire",
+        confidence=0.78,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+    )
+    prepared = prepare_persisted_report_input(
+        PersistedAnalysis.from_json_object(
+            minimal_summary(
+                run_id="dropped-chunks-report",
+                lang="en",
+                metadata={
+                    "run_id": "dropped-chunks-report",
+                    "record_type": "metadata",
+                    "schema_version": "v2-jsonl",
+                    "feature_interval_s": 0.5,
+                },
+                sensor_count_used=1,
+                sensor_locations=["Front Left"],
+                sensor_locations_connected_throughout=["Front Left"],
+                findings=[primary],
+                top_causes=[primary],
+                analysis_metadata={
+                    "raw_backed_sample_count": 4,
+                    "raw_capture_mode": "partial_raw_backed",
+                    "raw_replay_dropped_chunk_count": 3,
+                    "raw_replay_queue_overflow_chunk_count": 2,
+                    "raw_replay_invalid_chunk_count": 1,
+                    "raw_replay_write_error_chunk_count": 0,
+                },
+                warnings=[
+                    {
+                        "code": WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
+                        "severity": "warn",
+                        "applies_to": "raw_replay",
+                        "title": i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_TITLE"),
+                        "detail": i18n_ref(
+                            "RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_DETAIL",
+                            count="3",
+                            queue_overflow="2",
+                            invalid="1",
+                            write_errors="0",
+                        ),
+                    }
+                ],
+            )
+        )
+    )
+
+    document = build_report_document(prepared)
+
+    assert WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS in [
+        warning.code for warning in prepared.report_facts.decision.warnings
+    ]
+    assert any(
+        "Raw capture dropped 3 chunk(s) before persistence" in (row.detail or "")
+        for row in document.data_trust
+    )
