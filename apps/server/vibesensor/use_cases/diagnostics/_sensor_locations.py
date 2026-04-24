@@ -6,12 +6,37 @@ from collections import defaultdict
 from collections.abc import Sequence
 
 from vibesensor.shared.locations import label_for_code as _label_for_code
+from vibesensor.shared.types.run_schema import RunMetadata, RunSensorMetadata
 
 from ._types import Sample
 
 
-def _location_label(sample: Sample, *, lang: str = "en") -> str:
+def _sensor_snapshot_label(snapshot: RunSensorMetadata, *, lang: str = "en") -> str:
+    del lang
+    location_code = snapshot.location_code.strip()
+    if location_code:
+        translated = _label_for_code(location_code)
+        return str(translated) if translated else location_code
+    display_name = snapshot.display_name.strip()
+    if display_name:
+        return display_name
+    sensor_id = snapshot.sensor_id.strip()
+    if sensor_id:
+        return fallback_location_label(sensor_id)
+    return "Unknown sensor"
+
+
+def _location_label(
+    sample: Sample,
+    *,
+    metadata: RunMetadata | None = None,
+    lang: str = "en",
+) -> str:
     """Return a stable language-neutral location label for the sample."""
+    if metadata is not None:
+        snapshot = metadata.sensor_snapshot_for(sample.client_id)
+        if snapshot is not None:
+            return _sensor_snapshot_label(snapshot, lang=lang)
     del lang
     location_code = sample.location.strip()
     if location_code:
@@ -30,6 +55,7 @@ def _location_label(sample: Sample, *, lang: str = "en") -> str:
 def client_locations_by_sensor(
     samples: Sequence[Sample],
     *,
+    metadata: RunMetadata | None = None,
     lang: str = "en",
 ) -> dict[str, str]:
     """Return deterministic location labels keyed by client id."""
@@ -39,7 +65,7 @@ def client_locations_by_sensor(
         client_id = sample.client_id.strip()
         if not client_id or client_id in locations:
             continue
-        locations[client_id] = _location_label(sample, lang=lang)
+        locations[client_id] = _location_label(sample, metadata=metadata, lang=lang)
     return locations
 
 
@@ -53,6 +79,7 @@ def fallback_location_label(client_id: str) -> str:
 def _locations_connected_throughout_run(
     samples: Sequence[Sample],
     *,
+    metadata: RunMetadata | None = None,
     lang: str = "en",
 ) -> set[str]:
     """Return locations that remain present across the full run span."""
@@ -60,7 +87,7 @@ def _locations_connected_throughout_run(
     all_times: list[float] = []
 
     for sample in samples:
-        location = _location_label(sample, lang=lang)
+        location = _location_label(sample, metadata=metadata, lang=lang)
         if not location:
             continue
         t_s = sample.t_s

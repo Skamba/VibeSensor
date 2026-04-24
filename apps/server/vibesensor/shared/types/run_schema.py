@@ -18,6 +18,7 @@ __all__ = [
     "RUN_SCHEMA_VERSION",
     "RunMetadata",
     "RunCarMetadata",
+    "RunSensorMetadata",
 ]
 
 RUN_SCHEMA_VERSION = "v2-jsonl"
@@ -36,6 +37,17 @@ class RunCarMetadata:
     name: str | None = None
     car_type: str | None = None
     variant: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class RunSensorMetadata:
+    """Stable per-run snapshot of sensor identity and presentation metadata."""
+
+    sensor_id: str
+    display_name: str = ""
+    location_code: str = ""
+    sample_rate_hz: int | None = None
+    firmware_version: str | None = None
 
 
 @dataclass(slots=True)
@@ -59,6 +71,7 @@ class RunMetadata:
     incomplete_for_order_analysis: bool
     analysis_settings: AnalysisSettingsSnapshot = field(default_factory=AnalysisSettingsSnapshot)
     car: RunCarMetadata | None = None
+    sensor_snapshots: tuple[RunSensorMetadata, ...] = field(default_factory=tuple)
     case_id: str = ""
     sensor_mac: str | None = None
     symptom: Symptom | None = None
@@ -84,6 +97,7 @@ class RunMetadata:
         configured_raw_sample_rate_hz: int | None = None,
         analysis_settings: AnalysisSettingsSnapshot | None = None,
         car: RunCarMetadata | None = None,
+        sensor_snapshots: tuple[RunSensorMetadata, ...] = (),
         case_id: str = "",
         sensor_mac: str | None = None,
         symptom: Symptom | None = None,
@@ -113,6 +127,7 @@ class RunMetadata:
                 analysis_settings if analysis_settings is not None else AnalysisSettingsSnapshot()
             ),
             car=car,
+            sensor_snapshots=tuple(sensor_snapshots),
             case_id=case_id.strip(),
             sensor_mac=sensor_mac,
             symptom=symptom,
@@ -137,6 +152,15 @@ class RunMetadata:
     @property
     def active_car_id(self) -> str | None:
         return self.car.car_id if self.car is not None else None
+
+    def sensor_snapshot_for(self, sensor_id: str) -> RunSensorMetadata | None:
+        normalized_sensor_id = str(sensor_id).strip()
+        if not normalized_sensor_id:
+            return None
+        for snapshot in self.sensor_snapshots:
+            if snapshot.sensor_id == normalized_sensor_id:
+                return snapshot
+        return None
 
     @property
     def order_reference_spec(self) -> OrderReferenceSpec | None:

@@ -47,6 +47,7 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
             samples=run.samples,
             language=run.language,
             per_sample_phases=list(prepared.per_sample_phases),
+            metadata=run.context,
         )
         summary_payload["sensor_locations"] = sensor_locations
         summary_payload["sensor_locations_connected_throughout"] = sorted(connected_locations)
