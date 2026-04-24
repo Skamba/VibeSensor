@@ -113,6 +113,7 @@ class SampleFlushOrchestrator:
                 measured_engine_rpm=self._gps_monitor.engine_rpm,
                 measured_engine_rpm_source=self._gps_monitor.engine_rpm_source,
             ),
+            speed_provider=self._gps_monitor,
             analysis_settings_snapshot=analysis_settings_snapshot,
             default_sample_rate_hz=self._default_sample_rate_hz,
             sensor_metadata_reader=self._sensor_metadata_reader,

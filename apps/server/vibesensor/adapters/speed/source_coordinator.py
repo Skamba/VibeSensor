@@ -14,6 +14,8 @@ from vibesensor.domain import SpeedSourceKind
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import MPS_TO_KMH
 from vibesensor.shared.ports import SpeedSourceSync
+from vibesensor.shared.timed_observation import TimedObservationLookup
+from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
 
 __all__ = [
     "SpeedSourceAdminService",
@@ -34,12 +36,26 @@ class ObdFacts(Protocol):
     @property
     def engine_rpm_source(self) -> str | None: ...
 
+    def engine_rpm_at(
+        self,
+        target_mono_s: float | None,
+        *,
+        tolerance_s: float | None = None,
+    ) -> TimedObservationLookup: ...
+
 
 class ObdProjection(Protocol):
     @property
     def stale_timeout_s(self) -> float: ...
 
     def resolve_speed(self) -> SpeedResolution: ...
+
+    def resolve_speed_context_at(
+        self,
+        target_mono_s: float | None,
+        *,
+        tolerance_s: float | None = None,
+    ) -> AlignedSpeedContextSnapshot: ...
 
     def status_snapshot(self) -> ObdStatusSnapshot: ...
 
@@ -114,6 +130,38 @@ class SpeedSourceObservationService:
         if self._selected_source.get() is SpeedSourceKind.OBD2:
             return self._obd_projection.resolve_speed()
         return self._gps_monitor.resolve_speed()
+
+    def resolve_speed_context_at(
+        self,
+        target_mono_s: float | None,
+        *,
+        tolerance_s: float | None = None,
+    ) -> AlignedSpeedContextSnapshot:
+        gps_context = self._gps_monitor.resolve_speed_context_at(
+            target_mono_s,
+            tolerance_s=tolerance_s,
+        )
+        if self._selected_source.get() is not SpeedSourceKind.OBD2:
+            return gps_context
+        obd_context = self._obd_projection.resolve_speed_context_at(
+            target_mono_s,
+            tolerance_s=tolerance_s,
+        )
+        rpm_lookup = self._obd_facts.engine_rpm_at(
+            target_mono_s,
+            tolerance_s=tolerance_s,
+        )
+        return AlignedSpeedContextSnapshot(
+            selected_speed_source=obd_context.selected_speed_source,
+            resolved_speed_mps=obd_context.resolved_speed_mps,
+            resolved_speed_source=obd_context.resolved_speed_source,
+            resolved_speed_aligned=obd_context.resolved_speed_aligned,
+            gps_speed_mps=gps_context.gps_speed_mps,
+            gps_speed_aligned=gps_context.gps_speed_aligned,
+            measured_engine_rpm=rpm_lookup.value if rpm_lookup.aligned else None,
+            measured_engine_rpm_source="obd2" if rpm_lookup.aligned else None,
+            measured_engine_rpm_aligned=rpm_lookup.aligned,
+        )
 
     def status_snapshot(self) -> SpeedSourceStatusSnapshot:
         if self._selected_source.get() is not SpeedSourceKind.OBD2:

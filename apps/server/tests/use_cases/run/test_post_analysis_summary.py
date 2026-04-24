@@ -259,6 +259,8 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
         "analyzed_sample_count": 1,
         "total_sample_count": 3,
         "sampling_method": "full",
+        "vehicle_context_unaligned_speed_sample_count": 0,
+        "vehicle_context_unaligned_rpm_sample_count": 0,
         "raw_capture_available": False,
         "raw_backed_sample_count": 0,
         "raw_capture_mode": "summary_only",

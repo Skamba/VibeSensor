@@ -15,6 +15,7 @@ from vibesensor.adapters.gps.gpsd_message_handler import (
 )
 from vibesensor.adapters.gps.speed_validation import evaluate_speed_sample, is_speed_plausible
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
+from vibesensor.shared.timed_observation import append_timed_observation
 from vibesensor.shared.types.json_types import JsonObject
 
 if TYPE_CHECKING:
@@ -120,11 +121,22 @@ def apply_tpv(
         if is_speed_plausible(tpv.speed):
             accepted, zero_speed_streak = evaluate_snapshot_speed_sample(snapshot, tpv.speed)
             if accepted:
-                speed_snapshot = (tpv.speed, monotonic())
+                observed_at = monotonic()
+                speed_snapshot = (tpv.speed, observed_at)
+                speed_history = append_timed_observation(
+                    snapshot.speed_history,
+                    value=tpv.speed,
+                    monotonic_s=observed_at,
+                    now_s=observed_at,
+                )
+            else:
+                speed_history = snapshot.speed_history
         else:
             zero_speed_streak = 0
+            speed_history = snapshot.speed_history
     else:
         zero_speed_streak = 0
+        speed_history = snapshot.speed_history
 
     device_info = tpv.device if tpv.device else snapshot.device_info
     state._replace_transport(
@@ -133,6 +145,7 @@ def apply_tpv(
         last_epy_m=tpv.epy,
         last_epv_m=tpv.epv,
         speed_snapshot=speed_snapshot,
+        speed_history=speed_history,
         zero_speed_streak=zero_speed_streak,
         device_info=device_info,
     )

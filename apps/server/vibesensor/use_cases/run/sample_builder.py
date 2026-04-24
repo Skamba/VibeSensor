@@ -7,14 +7,20 @@ from typing import TYPE_CHECKING
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
+from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength
 
-from .sample_speed_context import SpeedContext
+from .sample_speed_context import SpeedContext, resolve_speed_context_snapshot
 from .sample_strength_metrics import dominant_hz_from_strength, extract_strength_data
 
 if TYPE_CHECKING:
-    from vibesensor.shared.ports import ClientTracker, SensorMetadataReader, SignalSource
+    from vibesensor.shared.ports import (
+        ClientTracker,
+        SensorMetadataReader,
+        SignalSource,
+        SpeedProvider,
+    )
 
 
 _LIVE_SAMPLE_WINDOW_S = 2.0
@@ -28,6 +34,7 @@ def build_sample_records(
     registry: ClientTracker,
     processor: SignalSource,
     speed_context: SpeedContext,
+    speed_provider: SpeedProvider | None = None,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     default_sample_rate_hz: int,
     sensor_metadata_reader: SensorMetadataReader | None = None,
@@ -36,13 +43,6 @@ def build_sample_records(
 ) -> list[SensorFrame]:
     """Build one batch of typed sample records from all active clients."""
 
-    (
-        speed_kmh,
-        gps_speed_kmh,
-        speed_source,
-        engine_rpm,
-        engine_rpm_source,
-    ) = speed_context
     order_reference_spec = order_reference_spec_from_snapshot(analysis_settings_snapshot)
     final_drive_ratio = (
         order_reference_spec.final_drive_ratio if order_reference_spec is not None else None
@@ -105,9 +105,23 @@ def build_sample_records(
             analysis_window_start_us,
             analysis_window_end_us,
             analysis_window_synced,
+            analysis_time_range,
         ) = _analysis_window_fields(
             processor=processor,
             client_id=record.client_id,
+            run_start_mono_s=run_start_mono_s,
+        )
+        (
+            speed_kmh,
+            gps_speed_kmh,
+            speed_source,
+            engine_rpm,
+            engine_rpm_source,
+        ) = _speed_context_for_record(
+            fallback_speed_context=speed_context,
+            speed_provider=speed_provider,
+            analysis_settings_snapshot=analysis_settings_snapshot,
+            analysis_time_range=analysis_time_range,
             run_start_mono_s=run_start_mono_s,
         )
         records.append(
@@ -154,14 +168,36 @@ def _analysis_window_fields(
     processor: SignalSource,
     client_id: str,
     run_start_mono_s: float | None,
-) -> tuple[int | None, int | None, bool | None]:
+) -> tuple[int | None, int | None, bool | None, AnalysisTimeRange | None]:
     if run_start_mono_s is None:
-        return None, None, None
+        return None, None, None, None
     time_range = processor.latest_analysis_time_range(client_id)
     if time_range is None:
-        return None, None, None
+        return None, None, None, None
     return (
         int(round((time_range.start_s - run_start_mono_s) * 1_000_000.0)),
         int(round((time_range.end_s - run_start_mono_s) * 1_000_000.0)),
         bool(time_range.synced),
+        time_range,
+    )
+
+
+def _speed_context_for_record(
+    *,
+    fallback_speed_context: SpeedContext,
+    speed_provider: SpeedProvider | None,
+    analysis_settings_snapshot: AnalysisSettingsSnapshot,
+    analysis_time_range: AnalysisTimeRange | None,
+    run_start_mono_s: float | None,
+) -> SpeedContext:
+    if speed_provider is None or run_start_mono_s is None:
+        return fallback_speed_context
+    target_mono_s = None
+    if analysis_time_range is not None:
+        target_mono_s = analysis_time_range.start_s + (
+            (analysis_time_range.end_s - analysis_time_range.start_s) / 2.0
+        )
+    return resolve_speed_context_snapshot(
+        snapshot=speed_provider.resolve_speed_context_at(target_mono_s),
+        analysis_settings_snapshot=analysis_settings_snapshot,
     )
