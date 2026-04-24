@@ -17,7 +17,7 @@ _SPEED_SOURCE_MAP = {
     "manual": "manual",
     "gps": "gps",
     "obd2": "obd2",
-    "fallback_manual": "manual",
+    "fallback_manual": "fallback_manual",
     "none": "none",
 }
 

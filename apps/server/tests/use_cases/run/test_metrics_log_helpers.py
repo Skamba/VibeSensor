@@ -77,11 +77,18 @@ def test_build_sample_records_caps_combined_and_axis_peak_lists(make_logger, fak
 
 
 @pytest.mark.parametrize(
-    ("gps_speed_mps", "override_speed_mps", "expected_source", "expected_speed_kmh"),
+    (
+        "gps_speed_mps",
+        "override_speed_mps",
+        "resolved_source",
+        "expected_source",
+        "expected_speed_kmh",
+    ),
     [
-        (10.0, 20.0, "manual", 20.0 * 3.6),
-        (10.0, None, "gps", 10.0 * 3.6),
-        (None, None, "none", None),
+        (10.0, 20.0, None, "manual", 20.0 * 3.6),
+        (10.0, None, "gps", "gps", 10.0 * 3.6),
+        (10.0, None, "fallback_manual", "fallback_manual", 10.0 * 3.6),
+        (None, None, None, "none", None),
     ],
 )
 def test_speed_source_reports(
@@ -89,12 +96,14 @@ def test_speed_source_reports(
     fake_gps_monitor,
     gps_speed_mps: float | None,
     override_speed_mps: float | None,
+    resolved_source: str | None,
     expected_source: str,
     expected_speed_kmh: float | None,
 ) -> None:
     """speed_source should reflect manual override, GPS, or missing speed state."""
     fake_gps_monitor.speed_mps = gps_speed_mps
     fake_gps_monitor.override_speed_mps = override_speed_mps
+    fake_gps_monitor.resolved_source = resolved_source
     fake_gps_monitor.effective_speed_mps = (
         override_speed_mps if override_speed_mps is not None else gps_speed_mps
     )
