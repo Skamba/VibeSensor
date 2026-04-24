@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
@@ -38,6 +39,7 @@ def build_sample_records(
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     default_sample_rate_hz: int,
     sensor_metadata_reader: SensorMetadataReader | None = None,
+    run_sensor_presentation_resolver: Callable[..., tuple[str, str]] | None = None,
     live_sample_window_s: float | None = _LIVE_SAMPLE_WINDOW_S,
     run_start_mono_s: float | None = None,
 ) -> list[SensorFrame]:
@@ -95,12 +97,24 @@ def build_sample_records(
             or default_sample_rate_hz
             or None
         )
-        resolved_name, resolved_location = resolve_sensor_presentation(
-            sensor_id=record.client_id,
-            sensors_by_mac=sensors_by_mac,
-            fallback_name=str(record.name or ""),
-            fallback_location_code=str(getattr(record, "location_code", "") or ""),
-        )
+        fallback_name = str(record.name or "")
+        fallback_location_code = str(getattr(record, "location_code", "") or "")
+        if run_sensor_presentation_resolver is None:
+            resolved_name, resolved_location = resolve_sensor_presentation(
+                sensor_id=record.client_id,
+                sensors_by_mac=sensors_by_mac,
+                fallback_name=fallback_name,
+                fallback_location_code=fallback_location_code,
+            )
+        else:
+            resolved_name, resolved_location = run_sensor_presentation_resolver(
+                client_id=record.client_id,
+                fallback_name=fallback_name,
+                fallback_location_code=fallback_location_code,
+                sample_rate_hz=int(sample_rate_hz) if sample_rate_hz else None,
+                firmware_version=str(getattr(record, "firmware_version", "") or "") or None,
+                sensors_by_mac=sensors_by_mac,
+            )
         (
             analysis_window_start_us,
             analysis_window_end_us,

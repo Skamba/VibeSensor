@@ -36,6 +36,7 @@ class SampleFlushOrchestrator:
         analysis_settings_snapshot: AnalysisSettingsProvider,
         default_sample_rate_hz: int,
         sensor_metadata_reader: SensorMetadataReader | None = None,
+        run_sensor_presentation_resolver: Callable[..., tuple[str, str]] | None = None,
         lifecycle: RunLifecycleState,
         persistence: RunPersistenceWriter,
         active_frames_total: CurrentTotalProvider,
@@ -49,6 +50,7 @@ class SampleFlushOrchestrator:
         self._analysis_settings_snapshot = analysis_settings_snapshot
         self._default_sample_rate_hz = default_sample_rate_hz
         self._sensor_metadata_reader = sensor_metadata_reader
+        self._run_sensor_presentation_resolver = run_sensor_presentation_resolver
         self._lifecycle = lifecycle
         self._persistence = persistence
         self._active_frames_total = active_frames_total
@@ -117,6 +119,7 @@ class SampleFlushOrchestrator:
             analysis_settings_snapshot=analysis_settings_snapshot,
             default_sample_rate_hz=self._default_sample_rate_hz,
             sensor_metadata_reader=self._sensor_metadata_reader,
+            run_sensor_presentation_resolver=self._run_sensor_presentation_resolver,
             live_sample_window_s=live_sample_window_s,
             run_start_mono_s=run_start_mono_s,
         )

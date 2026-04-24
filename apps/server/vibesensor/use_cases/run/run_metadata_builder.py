@@ -7,7 +7,7 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.ports import ClientTracker, LanguageReader
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
 from vibesensor.shared.types.raw_capture import RawCaptureManifest
-from vibesensor.shared.types.run_schema import RunCarMetadata, RunMetadata
+from vibesensor.shared.types.run_schema import RunCarMetadata, RunMetadata, RunSensorMetadata
 
 from .run_context import order_reference_context_complete
 
@@ -46,6 +46,7 @@ def create_run_metadata(
     incomplete_for_order_analysis: bool = False,
     configured_raw_sample_rate_hz: int | None = None,
     recorded_utc_offset_seconds: int | None = None,
+    sensor_snapshots: tuple[RunSensorMetadata, ...] = (),
 ) -> RunMetadata:
     """Build and return typed run metadata from the supplied fields."""
     normalized_offset = coerce_utc_offset_seconds(recorded_utc_offset_seconds)
@@ -62,6 +63,7 @@ def create_run_metadata(
         end_time_utc=end_time_utc,
         incomplete_for_order_analysis=incomplete_for_order_analysis,
         recorded_utc_offset_seconds=normalized_offset,
+        sensor_snapshots=sensor_snapshots,
     )
 
 
@@ -80,6 +82,7 @@ def build_run_metadata(
     raw_capture_manifest: RawCaptureManifest | None = None,
     language_reader: LanguageReader | None = None,
     recorded_utc_offset_seconds: int | None = None,
+    sensor_snapshots: tuple[RunSensorMetadata, ...] = (),
 ) -> RunMetadata:
     """Assemble comprehensive typed run metadata."""
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
@@ -105,6 +108,7 @@ def build_run_metadata(
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         incomplete_for_order_analysis=incomplete,
         recorded_utc_offset_seconds=recorded_utc_offset_seconds,
+        sensor_snapshots=sensor_snapshots,
     )
     metadata.analysis_settings = analysis_settings_snapshot
     metadata.car = run_car_metadata
