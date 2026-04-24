@@ -380,18 +380,20 @@ def test_location_label(info: dict, lang: str, expected: str) -> None:
 def test_locations_connected_throughout_requires_mid_run_continuity() -> None:
     samples = []
     for t_s in (0.0, 1.0, 2.0, 8.0, 9.0, 10.0):
-        samples.append({"t_s": t_s, "client_name": "Front Left"})
+        samples.append({"t_s": t_s, "client_name": "Front Left", "vibration_strength_db": 22.0})
     for t_s in range(11):
-        samples.append({"t_s": float(t_s), "client_name": "Rear Right"})
+        samples.append(
+            {"t_s": float(t_s), "client_name": "Rear Right", "vibration_strength_db": 18.0}
+        )
     connected = _locations_connected_throughout_run(_typed_samples(samples))
     assert connected == {"Rear Right"}
 
 
 def test_locations_connected_throughout_can_be_empty() -> None:
     samples = [
-        {"t_s": 2.0, "client_name": "Front Left"},
-        {"t_s": 5.0, "client_name": "Front Left"},
-        {"t_s": 8.0, "client_name": "Rear Right"},
+        {"t_s": 2.0, "client_name": "Front Left", "vibration_strength_db": 20.0},
+        {"t_s": 5.0, "client_name": "Front Left", "vibration_strength_db": 20.0},
+        {"t_s": 8.0, "client_name": "Rear Right", "vibration_strength_db": 20.0},
     ]
     assert _locations_connected_throughout_run(_typed_samples(samples)) == set()
 
@@ -399,10 +401,12 @@ def test_locations_connected_throughout_can_be_empty() -> None:
 def test_locations_connected_throughout_deduplicates_timestamps() -> None:
     samples = []
     for _ in range(10):
-        samples.append({"t_s": 0.0, "client_name": "Front Left"})
-        samples.append({"t_s": 10.0, "client_name": "Front Left"})
+        samples.append({"t_s": 0.0, "client_name": "Front Left", "vibration_strength_db": 22.0})
+        samples.append({"t_s": 10.0, "client_name": "Front Left", "vibration_strength_db": 22.0})
     for t_s in range(11):
-        samples.append({"t_s": float(t_s), "client_name": "Rear Right"})
+        samples.append(
+            {"t_s": float(t_s), "client_name": "Rear Right", "vibration_strength_db": 18.0}
+        )
     connected = _locations_connected_throughout_run(_typed_samples(samples))
     assert connected == {"Rear Right"}
 

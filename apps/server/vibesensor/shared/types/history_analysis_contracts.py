@@ -440,6 +440,9 @@ class LocationIntensitySummaryResponse(TypedDict, total=False):
     sample_count: Required[int]
     sample_coverage_ratio: Required[float]
     sample_coverage_warning: Required[bool]
+    usable_sample_count: int | None
+    usable_sample_coverage_ratio: float | None
+    usable_sample_coverage_warning: bool | None
     mean_intensity_db: Required[float | None]
     p50_intensity_db: Required[float | None]
     p95_intensity_db: Required[float | None]
