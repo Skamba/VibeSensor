@@ -32,6 +32,7 @@ def build_sample_records(
     default_sample_rate_hz: int,
     sensor_metadata_reader: SensorMetadataReader | None = None,
     live_sample_window_s: float | None = _LIVE_SAMPLE_WINDOW_S,
+    run_start_mono_s: float | None = None,
 ) -> list[SensorFrame]:
     """Build one batch of typed sample records from all active clients."""
 
@@ -100,6 +101,15 @@ def build_sample_records(
             fallback_name=str(record.name or ""),
             fallback_location_code=str(getattr(record, "location_code", "") or ""),
         )
+        (
+            analysis_window_start_us,
+            analysis_window_end_us,
+            analysis_window_synced,
+        ) = _analysis_window_fields(
+            processor=processor,
+            client_id=record.client_id,
+            run_start_mono_s=run_start_mono_s,
+        )
         records.append(
             SensorFrame(
                 run_id=run_id,
@@ -130,7 +140,28 @@ def build_sample_records(
                 strength_floor_amp_g=strength_floor_amp_g,
                 frames_dropped_total=int(record.frames_dropped),
                 queue_overflow_drops=int(record.queue_overflow_drops),
+                analysis_window_start_us=analysis_window_start_us,
+                analysis_window_end_us=analysis_window_end_us,
+                analysis_window_synced=analysis_window_synced,
             )
         )
 
     return records
+
+
+def _analysis_window_fields(
+    *,
+    processor: SignalSource,
+    client_id: str,
+    run_start_mono_s: float | None,
+) -> tuple[int | None, int | None, bool | None]:
+    if run_start_mono_s is None:
+        return None, None, None
+    time_range = processor.latest_analysis_time_range(client_id)
+    if time_range is None:
+        return None, None, None
+    return (
+        int(round((time_range.start_s - run_start_mono_s) * 1_000_000.0)),
+        int(round((time_range.end_s - run_start_mono_s) * 1_000_000.0)),
+        bool(time_range.synced),
+    )

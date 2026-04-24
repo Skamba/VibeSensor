@@ -39,6 +39,7 @@ from vibesensor.infra.processing.payload import (
 )
 from vibesensor.infra.processing.time_align import analysis_time_range
 from vibesensor.infra.workers.worker_pool import WorkerPool
+from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 
 if TYPE_CHECKING:
     from vibesensor.shared.types.payload_types import (
@@ -179,6 +180,9 @@ class SignalProcessor:
 
     def latest_sample_rate_hz(self, client_id: str) -> int | None:
         return self._store.latest_sample_rate_hz(client_id)
+
+    def latest_analysis_time_range(self, client_id: str) -> AnalysisTimeRange | None:
+        return self._store.latest_analysis_time_range(client_id)
 
     def latest_metrics(self, client_id: str) -> ClientMetrics:
         """Return latest computed metrics for a client."""

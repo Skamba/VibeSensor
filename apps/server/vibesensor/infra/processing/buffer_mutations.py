@@ -28,6 +28,7 @@ class ClientBufferMutator:
         buf.last_t0_us = 0
         buf.samples_since_t0 = 0
         buf.latest_metrics = {}
+        buf.latest_analysis_time_range = None
         buf.latest_spectrum = {}
         buf.latest_strength_metrics = empty_vibration_strength_metrics()
         self.invalidate_cached_payloads(buf)
@@ -44,6 +45,7 @@ class ClientBufferMutator:
         ):
             return False
         buf.latest_metrics = result.metrics
+        buf.latest_analysis_time_range = result.analysis_time_range
         buf.compute_generation = result.ingest_generation
         buf.compute_sample_rate_hz = result.sample_rate_hz
         if result.has_fft_data:
