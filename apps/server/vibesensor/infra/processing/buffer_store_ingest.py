@@ -78,8 +78,17 @@ class BufferStoreIngestCoordinator:
                 chunk,
                 capacity=buf.capacity,
             )
+            effective_sample_rate_hz = buf.sample_rate_hz or self._config.sample_rate_hz
             dropped_samples = prepared.overflow.drop_count
-            ingested_samples = apply_ring_buffer_ingest(buf, prepared.chunk, t0_us=t0_us)
+            adjusted_t0_us = prepared.adjusted_t0_us(
+                t0_us=t0_us,
+                sample_rate_hz=effective_sample_rate_hz,
+            )
+            ingested_samples = apply_ring_buffer_ingest(
+                buf,
+                prepared.chunk,
+                t0_us=adjusted_t0_us,
+            )
             self._buffer_mutator.invalidate_cached_payloads(buf)
         self._stats.record_ingest(
             ingested_samples=ingested_samples,

@@ -18,6 +18,18 @@ class PreparedIngestChunk:
     chunk: FloatArray
     overflow: OverflowResult
 
+    def adjusted_t0_us(
+        self,
+        *,
+        t0_us: int | None,
+        sample_rate_hz: int,
+    ) -> int | None:
+        if t0_us is None or t0_us <= 0:
+            return t0_us
+        if self.overflow.start_offset <= 0 or sample_rate_hz <= 0:
+            return int(t0_us)
+        return int(t0_us) + (self.overflow.start_offset * 1_000_000) // sample_rate_hz
+
 
 class IngestChunkPreparer:
     """Own input normalization and overflow trimming for incoming sample chunks."""
