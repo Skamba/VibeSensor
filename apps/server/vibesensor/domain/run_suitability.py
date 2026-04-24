@@ -88,6 +88,22 @@ class SuitabilityCheck:
                 return _i18n_ref("SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING", stride=stride)
             return ""
         if self.check_key == "SUITABILITY_CHECK_RUN_DURATION":
+            raw_samples = int(details.get("raw_samples", 0))
+            required_raw_samples = int(details.get("required_raw_samples", 0))
+            if required_raw_samples > 0:
+                return _i18n_ref(
+                    "SUITABILITY_RAW_SAMPLE_DURATION_WARNING",
+                    raw_samples=raw_samples,
+                    required_raw_samples=required_raw_samples,
+                )
+            summary_rows = int(details.get("summary_rows", 0))
+            required_summary_rows = int(details.get("required_summary_rows", 0))
+            if required_summary_rows > 0:
+                return _i18n_ref(
+                    "SUITABILITY_SUMMARY_ROW_COUNT_WARNING",
+                    summary_rows=summary_rows,
+                    required_summary_rows=required_summary_rows,
+                )
             return _i18n_ref("SUITABILITY_RUN_DURATION_WARNING")
         return ""
 

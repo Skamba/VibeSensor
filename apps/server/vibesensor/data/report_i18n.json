@@ -1399,6 +1399,14 @@
     "en": "Very short run analyzed. Confidence may be limited.",
     "nl": "Zeer korte rit geanalyseerd. De betrouwbaarheid kan beperkt zijn."
   },
+  "SUITABILITY_SUMMARY_ROW_COUNT_WARNING": {
+    "en": "Only {summary_rows} summary row(s) were available; at least {required_summary_rows} are needed to judge run duration confidently.",
+    "nl": "Er waren slechts {summary_rows} samenvattingsrij(en) beschikbaar; minstens {required_summary_rows} zijn nodig om de ritduur betrouwbaar te beoordelen."
+  },
+  "SUITABILITY_RAW_SAMPLE_DURATION_WARNING": {
+    "en": "Raw capture only preserved {raw_samples} raw sample(s) per sensor; at least {required_raw_samples} are needed for the minimum analysis duration.",
+    "nl": "De raw-capture bewaarde slechts {raw_samples} raw sample(s) per sensor; minstens {required_raw_samples} zijn nodig voor de minimale analyseduur."
+  },
   "SUITABILITY_FRAME_INTEGRITY_PASS": {
     "en": "No dropped frames or queue overflows detected.",
     "nl": "Geen verloren frames of wachtrijoverlopen gedetecteerd."

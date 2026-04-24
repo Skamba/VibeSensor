@@ -65,7 +65,7 @@ def test_execute_post_analysis_appends_whole_run_alignment_warning_and_metadata(
             metadata=_run_metadata(run_id),
             language="en",
             samples=_samples(),
-            total_sample_count=1,
+            total_summary_row_count=1,
             stride=1,
             raw_capture=RawRunCapture(manifest=raw_capture_manifest, sensors=()),
             raw_capture_manifest=raw_capture_manifest,

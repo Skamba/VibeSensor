@@ -604,7 +604,7 @@ def test_post_analysis_uses_run_language_from_metadata(
         assert run.run_id == snapshot.run_id
         assert run.context.language == "nl"
         assert run.language == "nl"
-        assert run.total_sample_count == len(run.samples)
+        assert run.total_summary_row_count == len(run.samples)
         assert run.stride == 1
         return make_persisted_analysis(
             {
@@ -612,7 +612,7 @@ def test_post_analysis_uses_run_language_from_metadata(
                 "row_count": len(run.samples),
                 "analysis_metadata": {
                     "analyzed_sample_count": len(run.samples),
-                    "total_sample_count": run.total_sample_count,
+                    "total_sample_count": run.total_summary_row_count,
                     "sampling_method": "full",
                 },
                 "run_suitability": [],
@@ -729,7 +729,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
                 "row_count": len(run.samples),
                 "analysis_metadata": {
                     "analyzed_sample_count": len(run.samples),
-                    "total_sample_count": run.total_sample_count,
+                    "total_sample_count": run.total_summary_row_count,
                     "sampling_method": ("full" if run.stride == 1 else f"stride_{run.stride}"),
                 },
                 "run_suitability": (

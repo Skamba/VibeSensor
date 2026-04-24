@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from math import ceil
+from math import ceil, isfinite
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
@@ -21,8 +21,9 @@ class LoadedPostAnalysisRun:
     metadata: RunMetadata
     language: str
     samples: list[SensorFrame]
-    total_sample_count: int
+    total_summary_row_count: int
     stride: int
+    summary_duration_s: float | None = None
     sampling_method: str = "full"
     evenly_spaced_sample_count: int = 0
     event_sample_count: int = 0
@@ -75,7 +76,7 @@ def load_post_analysis_run(
         raw_capture_manifest: RawCaptureManifest | None = None
         if stored_run is not None:
             metadata = stored_run.metadata
-            total_sample_count = max(0, int(stored_run.sample_count))
+            total_summary_row_count = max(0, int(stored_run.sample_count))
             raw_capture_manifest = getattr(stored_run, "raw_capture_manifest", None)
         else:
             metadata = await db.aget_run_metadata(run_id)
@@ -84,7 +85,7 @@ def load_post_analysis_run(
                     run_id=run_id,
                     error_message="Metadata not found or corrupt; cannot analyse",
                 )
-            total_sample_count = 0
+            total_summary_row_count = 0
             get_raw_capture_manifest = getattr(db, "aget_raw_capture_manifest", None)
             if callable(get_raw_capture_manifest):
                 raw_capture_manifest = await get_raw_capture_manifest(run_id)
@@ -93,13 +94,18 @@ def load_post_analysis_run(
         async for batch in db.aiter_run_samples(run_id, batch_size=1024):
             full_samples.extend(batch)
         samples = full_samples
-        if total_sample_count <= 0:
-            total_sample_count = len(full_samples)
+        if total_summary_row_count <= 0:
+            total_summary_row_count = len(full_samples)
         if not samples:
             return EmptyPostAnalysisSamples(
                 run_id=run_id,
                 error_message="No samples collected during run",
             )
+        summary_duration_s = _summary_duration_s(
+            full_samples,
+            total_summary_row_count=total_summary_row_count,
+            feature_interval_s=metadata.feature_interval_s,
+        )
         sample_selection = _select_post_analysis_samples(full_samples)
         context_samples: list[SensorFrame] | None = None
         if raw_capture_manifest is not None:
@@ -113,7 +119,8 @@ def load_post_analysis_run(
             language=metadata.language or "en",
             samples=sample_selection.samples,
             context_samples=context_samples,
-            total_sample_count=total_sample_count,
+            total_summary_row_count=total_summary_row_count,
+            summary_duration_s=summary_duration_s,
             stride=sample_selection.stride,
             sampling_method=sample_selection.sampling_method,
             evenly_spaced_sample_count=sample_selection.evenly_spaced_sample_count,
@@ -128,6 +135,33 @@ def load_post_analysis_run(
     import asyncio as _asyncio
 
     return _asyncio.run(_aload())
+
+
+def _summary_duration_s(
+    samples: Sequence[SensorFrame],
+    *,
+    total_summary_row_count: int,
+    feature_interval_s: float | None,
+) -> float | None:
+    observed_timestamps = sorted(
+        sample.t_s
+        for sample in samples
+        if sample.t_s is not None and isfinite(sample.t_s) and sample.t_s >= 0.0
+    )
+    if observed_timestamps:
+        if len(observed_timestamps) == 1:
+            observed_duration_s = observed_timestamps[0]
+            if feature_interval_s is not None and feature_interval_s > 0:
+                observed_duration_s = max(observed_duration_s, feature_interval_s)
+            if observed_duration_s > 0:
+                return observed_duration_s
+        else:
+            observed_duration_s = max(0.0, observed_timestamps[-1] - observed_timestamps[0])
+            if observed_duration_s > 0:
+                return observed_duration_s
+    if feature_interval_s is not None and feature_interval_s > 0 and total_summary_row_count > 0:
+        return float(total_summary_row_count) * float(feature_interval_s)
+    return None
 
 
 def _select_post_analysis_samples(

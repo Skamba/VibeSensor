@@ -114,7 +114,7 @@ def test_build_post_analysis_input_replays_raw_backed_strength_metrics() -> None
             ]
         ),
         raw_capture=_raw_capture("run-raw"),
-        total_sample_count=1,
+        total_summary_row_count=1,
         stride=1,
     )
 
@@ -122,7 +122,7 @@ def test_build_post_analysis_input_replays_raw_backed_strength_metrics() -> None
 
     rebuilt = result.diagnostics_run.samples[0]
     assert result.raw_capture_available is True
-    assert result.raw_backed_sample_count == 1
+    assert result.raw_backed_summary_row_count == 1
     assert rebuilt.vibration_strength_db is not None
     assert rebuilt.vibration_strength_db > 0.0
     assert rebuilt.dominant_freq_hz is not None
@@ -161,13 +161,13 @@ def test_build_post_analysis_input_surfaces_persisted_dropped_chunk_counts() -> 
             ]
         ),
         raw_capture=raw_capture,
-        total_sample_count=1,
+        total_summary_row_count=1,
         stride=1,
     )
 
     result = build_post_analysis_input(loaded)
 
-    assert result.raw_backed_sample_count == 1
+    assert result.raw_backed_summary_row_count == 1
     assert result.raw_replay.dropped_chunk_count == 4
     assert result.raw_replay.udp_ingest_queue_drop_count == 1
     assert result.raw_replay.queue_overflow_chunk_count == 2
@@ -197,12 +197,12 @@ def test_build_post_analysis_input_falls_back_when_raw_capture_missing() -> None
             ]
         ),
         raw_capture=None,
-        total_sample_count=1,
+        total_summary_row_count=1,
         stride=1,
     )
 
     result = build_post_analysis_input(loaded)
 
     assert result.raw_capture_available is False
-    assert result.raw_backed_sample_count == 0
+    assert result.raw_backed_summary_row_count == 0
     assert result.diagnostics_run.samples[0].vibration_strength_db == 12.0
