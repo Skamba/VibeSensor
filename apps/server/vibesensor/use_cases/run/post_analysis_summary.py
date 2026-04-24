@@ -7,7 +7,11 @@ from vibesensor.shared.boundaries.summary_fields.warnings import summary_warning
 from vibesensor.shared.boundaries.summary_serialization._location_intensity import (
     serialize_location_intensity_rows,
 )
-from vibesensor.shared.json_utils import payload_object_from_json
+from vibesensor.shared.json_utils import i18n_ref, payload_object_from_json
+from vibesensor.shared.run_context_warning import (
+    WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE,
+    RunContextWarning,
+)
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -88,15 +92,38 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "raw_replay_high_rtt_sensor_count": run.raw_replay.high_rtt_sensor_count,
         "raw_replay_confidence": run.raw_replay.replay_confidence,
     }
+    unaligned_speed_sample_count = sum(
+        1 for sample in run.samples if str(sample.speed_source or "").endswith("_unaligned")
+    )
+    unaligned_rpm_sample_count = sum(
+        1 for sample in run.samples if str(sample.engine_rpm_source or "") == "context_unaligned"
+    )
+    analysis_metadata["vehicle_context_unaligned_speed_sample_count"] = unaligned_speed_sample_count
+    analysis_metadata["vehicle_context_unaligned_rpm_sample_count"] = unaligned_rpm_sample_count
     if run.sampling_method != "full":
         analysis_metadata["sampling_base_stride"] = run.stride
         analysis_metadata["sampling_evenly_spaced_sample_count"] = run.evenly_spaced_sample_count
         analysis_metadata["sampling_event_sample_count"] = run.event_sample_count
     summary_payload["analysis_metadata"] = payload_object_from_json(analysis_metadata)
-    if run.raw_replay.warnings:
+    summary_warnings: list[RunContextWarning] = list(run.raw_replay.warnings)
+    if unaligned_speed_sample_count > 0 or unaligned_rpm_sample_count > 0:
+        summary_warnings.append(
+            RunContextWarning(
+                code=WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE,
+                severity="warn",
+                applies_to="order_analysis",
+                title=i18n_ref("RUN_CONTEXT_WARNING_VEHICLE_CONTEXT_ALIGNMENT_TITLE"),
+                detail=i18n_ref(
+                    "RUN_CONTEXT_WARNING_VEHICLE_CONTEXT_ALIGNMENT_DETAIL",
+                    speed_samples=str(max(0, unaligned_speed_sample_count)),
+                    rpm_samples=str(max(0, unaligned_rpm_sample_count)),
+                ),
+            )
+        )
+    if summary_warnings:
         existing_warnings = summary_payload.get("warnings")
         warnings_payload = list(existing_warnings) if isinstance(existing_warnings, list) else []
-        warnings_payload.extend(summary_warning_payloads(run.raw_replay.warnings))
+        warnings_payload.extend(summary_warning_payloads(summary_warnings))
         summary_payload["warnings"] = warnings_payload
 
     sample_rate_hz = _post_analysis_sample_rate_hz(run)

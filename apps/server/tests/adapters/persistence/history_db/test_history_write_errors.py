@@ -91,6 +91,21 @@ class _FakeGPSMonitor:
     def resolve_speed(self) -> SpeedResolution:
         return SpeedResolution(speed_mps=None, fallback_active=False, source="none")
 
+    def resolve_speed_context_at(self, target_mono_s, *, tolerance_s=None):
+        from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
+
+        return AlignedSpeedContextSnapshot(
+            selected_speed_source="gps",
+            resolved_speed_mps=None,
+            resolved_speed_source="none",
+            resolved_speed_aligned=target_mono_s is not None,
+            gps_speed_mps=None,
+            gps_speed_aligned=target_mono_s is not None,
+            measured_engine_rpm=None,
+            measured_engine_rpm_source=None,
+            measured_engine_rpm_aligned=target_mono_s is not None,
+        )
+
 
 class _FakeProcessor:
     def __init__(self, registry: _FakeRegistry | None = None) -> None:

@@ -149,6 +149,7 @@ class SpeedResolutionPolicy:
         speed_snapshot: tuple[float | None, float | None],
         snapshot: SpeedResolutionPolicySnapshot | None = None,
         live_source: ResolvedSpeedSource = "gps",
+        reference_time_s: float | None = None,
     ) -> SpeedResolution:
         policy = self._snapshot if snapshot is None else snapshot
         if policy.manual_source_selected and isinstance(policy.override_speed_mps, NUMERIC_TYPES):
@@ -158,7 +159,11 @@ class SpeedResolutionPolicy:
 
         gps_speed, _ = speed_snapshot
         if isinstance(gps_speed, NUMERIC_TYPES) and not isinstance(gps_speed, bool):
-            if self.is_gps_stale(speed_snapshot, snapshot=policy):
+            if self.is_gps_stale(
+                speed_snapshot,
+                snapshot=policy,
+                reference_time_s=reference_time_s,
+            ):
                 fallback_speed = self.fallback_speed_value(snapshot=policy)
                 return SpeedResolution(
                     fallback_speed,
@@ -172,6 +177,7 @@ class SpeedResolutionPolicy:
             actual_connection_state=connection_state,
             speed_snapshot=speed_snapshot,
             snapshot=policy,
+            reference_time_s=reference_time_s,
         )
         if gps_enabled and effective_connection in ("disconnected", "stale"):
             fallback_speed = self.fallback_speed_value(snapshot=policy)
@@ -190,12 +196,17 @@ class SpeedResolutionPolicy:
         actual_connection_state: str,
         speed_snapshot: tuple[float | None, float | None],
         snapshot: SpeedResolutionPolicySnapshot | None = None,
+        reference_time_s: float | None = None,
     ) -> str:
         policy = self._snapshot if snapshot is None else snapshot
         if (
             gps_enabled
             and actual_connection_state == "connected"
-            and self.is_gps_stale(speed_snapshot, snapshot=policy)
+            and self.is_gps_stale(
+                speed_snapshot,
+                snapshot=policy,
+                reference_time_s=reference_time_s,
+            )
         ):
             return "stale"
         return actual_connection_state
@@ -205,12 +216,13 @@ class SpeedResolutionPolicy:
         speed_snapshot: tuple[float | None, float | None],
         *,
         snapshot: SpeedResolutionPolicySnapshot | None = None,
+        reference_time_s: float | None = None,
     ) -> bool:
         policy = self._snapshot if snapshot is None else snapshot
         _, timestamp = speed_snapshot
         if timestamp is None:
             return True
-        age = self._monotonic() - timestamp
+        age = (self._monotonic() if reference_time_s is None else reference_time_s) - timestamp
         return age > policy.stale_timeout_s
 
     def fallback_speed_value(

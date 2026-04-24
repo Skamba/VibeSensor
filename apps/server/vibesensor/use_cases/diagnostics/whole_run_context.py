@@ -398,6 +398,8 @@ def _baseline_phase_state(
 
 
 def _speed_validity_for_source(source: str) -> WholeRunSpeedValidity:
+    if source.endswith("_unaligned"):
+        return "missing"
     if source in {"gps", "obd2"}:
         return "measured"
     if source == "manual":
@@ -406,6 +408,8 @@ def _speed_validity_for_source(source: str) -> WholeRunSpeedValidity:
 
 
 def _rpm_validity_for_source(source: str) -> WholeRunRpmValidity:
+    if source == "context_unaligned":
+        return "missing"
     if source == "estimated_from_speed_and_ratios":
         return "estimated"
     if source == "missing":

@@ -107,12 +107,14 @@ class ObdRuntimePolicy:
         *,
         connection_state: str,
         speed_snapshot: tuple[float | None, float | None],
+        reference_time_s: float | None = None,
     ) -> SpeedResolution:
         return self._speed_policy.resolve(
             gps_enabled=self._selected_source is SpeedSourceKind.OBD2,
             connection_state=connection_state,
             speed_snapshot=speed_snapshot,
             live_source="obd2",
+            reference_time_s=reference_time_s,
         )
 
     def effective_connection_state(
@@ -120,11 +122,13 @@ class ObdRuntimePolicy:
         *,
         connection_state: str,
         speed_snapshot: tuple[float | None, float | None],
+        reference_time_s: float | None = None,
     ) -> str:
         return self._speed_policy.effective_connection_state(
             gps_enabled=self._selected_source is SpeedSourceKind.OBD2,
             actual_connection_state=connection_state,
             speed_snapshot=speed_snapshot,
+            reference_time_s=reference_time_s,
         )
 
     def set_manual_source_selected(self, selected: bool) -> None:

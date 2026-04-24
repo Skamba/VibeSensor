@@ -1671,6 +1671,14 @@
     "en": "Order-analysis reference context was incomplete for this run",
     "nl": "De referentiecontext voor ordeanalyse was onvolledig voor deze run"
   },
+  "RUN_CONTEXT_WARNING_VEHICLE_CONTEXT_ALIGNMENT_TITLE": {
+    "en": "Vehicle-state context was not aligned for some vibration windows",
+    "nl": "De voertuigstatuscontext was voor sommige trillingsvensters niet uitgelijnd"
+  },
+  "RUN_CONTEXT_WARNING_VEHICLE_CONTEXT_ALIGNMENT_DETAIL": {
+    "en": "Vehicle speed or RPM context could not be aligned to some vibration analysis windows, so affected samples were excluded from time-matched order context. Unaligned speed samples: {speed_samples}, unaligned RPM samples: {rpm_samples}.",
+    "nl": "De voertuig-snelheids- of toerentalcontext kon voor sommige trillingsanalysevensters niet worden uitgelijnd, dus getroffen samples zijn uitgesloten van tijdsgematchte ordecontext. Niet-uitgelijnde snelheidsamples: {speed_samples}, niet-uitgelijnde toerentalsamples: {rpm_samples}."
+  },
   "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_INCOMPLETE_DETAIL": {
     "en": "Whole-run context was persisted for this run, but {partial_windows} windows had partial context and {missing_windows} windows had none. Speed context gaps affected {speed_gap_windows} windows and RPM context gaps affected {rpm_gap_windows} windows.",
     "nl": "Whole-run context is voor deze run bewaard, maar {partial_windows} vensters hadden slechts gedeeltelijke context en {missing_windows} vensters helemaal geen. Snelheidscontext-hiaten raakten {speed_gap_windows} vensters en toerentalcontext-hiaten raakten {rpm_gap_windows} vensters."
