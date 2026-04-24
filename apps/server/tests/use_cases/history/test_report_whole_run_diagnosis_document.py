@@ -153,7 +153,8 @@ def test_build_report_document_prefers_persisted_whole_run_diagnosis_surfaces() 
         ],
     )
 
-    document = build_report_document(prepare_report_input(summary))
+    prepared = prepare_report_input(summary)
+    document = build_report_document(prepared)
 
     assert document.verdict_page.suspected_source == "Driveline"
     assert document.verdict_page.inspect_first == "Rear-Right"
@@ -162,6 +163,8 @@ def test_build_report_document_prefers_persisted_whole_run_diagnosis_surfaces() 
     assert document.appendix_b.runner_up_corner == "Front-Left"
     assert document.appendix_a.ranked_candidates[0].source_name == "Driveline"
     assert document.appendix_a.ranked_candidates[1].source_name == "Wheel / Tire"
+    assert prepared.report_facts.confidence.signal_keys == ("raw_backed",)
+    assert prepared.report_facts.confidence.caveat_keys == ("close_alternative",)
     assert any(
         "12" in row.value and "6.0" in row.value
         for row in document.verdict_page.proof_snapshot_rows
@@ -289,20 +292,39 @@ def test_build_report_document_uses_matching_persisted_source_when_top_row_is_am
                 "weak_spatial_separation": False,
                 "has_reference_gap": False,
                 "uses_summary_fallback": False,
-                "support_factors": [],
-                "counterevidence_factors": [],
+                "support_factors": [
+                    {
+                        "factor_key": "raw_backed",
+                        "polarity": "support",
+                        "severity": "high",
+                        "weight": 0.10,
+                        "details": {"raw_backed_sample_count": 84},
+                    }
+                ],
+                "counterevidence_factors": [
+                    {
+                        "factor_key": "rpm_context_gaps",
+                        "polarity": "counterevidence",
+                        "severity": "low",
+                        "weight": 0.04,
+                        "details": {"rpm_gap_window_count": 2},
+                    }
+                ],
                 "exemplar_references": [],
             },
         ],
     )
 
-    document = build_report_document(prepare_report_input(summary))
+    prepared = prepare_report_input(summary)
+    document = build_report_document(prepared)
 
     assert document.verdict_page.suspected_source == "Wheel / Tire"
     assert document.verdict_page.inspect_first == "Front-Left"
     assert document.verdict_page.also_consider == "Driveline"
     assert document.appendix_a.ranked_candidates[0].source_name == "Wheel / Tire"
     assert document.appendix_a.ranked_candidates[1].source_name == "Driveline"
+    assert prepared.report_facts.confidence.signal_keys == ("raw_backed",)
+    assert prepared.report_facts.confidence.caveat_keys == ("rpm_context_gaps",)
     assert any(
         "12.9" in row.value
         for row in document.verdict_page.proof_snapshot_rows
