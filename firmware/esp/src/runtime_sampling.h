@@ -4,6 +4,7 @@
 #include <Wire.h>
 
 #include "adxl345.h"
+#include "reliability.h"
 #include "runtime_config.h"
 #include "runtime_queue.h"
 #include "runtime_sample_handoff.h"
@@ -25,6 +26,8 @@ struct SamplingState {
   uint8_t sensor_consecutive_errors = 0;
   uint32_t last_sensor_reinit_ms = 0;
   uint64_t next_sample_due_us = 0;
+  vibesensor::reliability::SamplingIntervalSchedule due_schedule = {};
+  vibesensor::reliability::SamplingIntervalSchedule timer_schedule = {};
   size_t last_refill_request = 0;
   size_t last_refill_count = 0;
   bool recent_refill_shortfall = false;

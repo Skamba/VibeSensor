@@ -389,12 +389,15 @@ size_t current_handoff_headroom(SamplingState& state) {
   return free_slots;
 }
 
+uint64_t advance_due_schedule(SamplingState& state, uint64_t slot_count = 1U) {
+  return vibesensor::reliability::sampling_schedule_advance_us(state.due_schedule, slot_count);
+}
+
 void process_due_samples(SamplingState& state, uint32_t due_slots) {
   if (due_slots == 0) {
     return;
   }
 
-  const uint64_t step_us = 1000000ULL / kSampleRateHz;
   maybe_refill_sensor_prefetch(state, due_slots);
   const vibesensor::reliability::SamplingRecoveryPlan recovery =
       vibesensor::reliability::sampling_recovery_plan(due_slots,
@@ -410,11 +413,11 @@ void process_due_samples(SamplingState& state, uint32_t due_slots) {
     if (!sample_once(state, remaining_due, &sample) || !publish_sample(state, sample)) {
       const uint32_t missed_samples = static_cast<uint32_t>(remaining_due);
       note_missed_samples(state, missed_samples, remaining_due > 1);
-      state.next_sample_due_us += static_cast<uint64_t>(missed_samples) * step_us;
+      state.next_sample_due_us += advance_due_schedule(state, missed_samples);
       return;
     }
     produced++;
-    state.next_sample_due_us += step_us;
+    state.next_sample_due_us += advance_due_schedule(state);
   }
 
   if (recovery.missed_slots > 0) {
@@ -422,14 +425,26 @@ void process_due_samples(SamplingState& state, uint32_t due_slots) {
         state,
         static_cast<uint32_t>(recovery.missed_slots),
         vibesensor::reliability::sampling_recovery_abandoned(recovery.missed_slots));
-    state.next_sample_due_us += static_cast<uint64_t>(recovery.missed_slots) * step_us;
+    state.next_sample_due_us += advance_due_schedule(state, recovery.missed_slots);
   }
 }
 
 void sampling_timer_callback(void* arg) {
-  (void)arg;
+  auto& state = *static_cast<SamplingState*>(arg);
   if (g_sampling_task_handle != nullptr) {
     xTaskNotifyGive(g_sampling_task_handle);
+  }
+  if (g_sampling_timer_handle == nullptr) {
+    return;
+  }
+  const uint64_t next_step_us =
+      vibesensor::reliability::sampling_schedule_advance_us(state.timer_schedule);
+  if (next_step_us == 0U) {
+    return;
+  }
+  const esp_err_t rearm_err = esp_timer_start_once(g_sampling_timer_handle, next_step_us);
+  if (rearm_err != ESP_OK) {
+    Serial.printf("WARN: failed to rearm sampling timer (%d)\n", static_cast<int>(rearm_err));
   }
 }
 
@@ -480,8 +495,13 @@ bool begin_sampling(SamplingState& state) {
                 static_cast<int>(xPortGetCoreID()),
                 kSamplingTaskCore);
 
-  const uint64_t step_us = 1000000ULL / kSampleRateHz;
-  state.next_sample_due_us = esp_timer_get_time() + step_us;
+  state.due_schedule = vibesensor::reliability::make_sampling_interval_schedule(kSampleRateHz);
+  state.timer_schedule = vibesensor::reliability::make_sampling_interval_schedule(kSampleRateHz);
+  const uint64_t first_due_step_us =
+      vibesensor::reliability::sampling_schedule_advance_us(state.due_schedule);
+  const uint64_t first_timer_step_us =
+      vibesensor::reliability::sampling_schedule_advance_us(state.timer_schedule);
+  state.next_sample_due_us = esp_timer_get_time() + first_due_step_us;
 
   esp_timer_create_args_t timer_args = {};
   timer_args.callback = &sampling_timer_callback;
@@ -497,7 +517,7 @@ bool begin_sampling(SamplingState& state) {
     return false;
   }
 
-  const esp_err_t start_err = esp_timer_start_periodic(g_sampling_timer_handle, step_us);
+  const esp_err_t start_err = esp_timer_start_once(g_sampling_timer_handle, first_timer_step_us);
   if (start_err != ESP_OK) {
     Serial.printf("WARN: failed to start sampling timer (%d)\n", static_cast<int>(start_err));
     esp_timer_delete(g_sampling_timer_handle);
