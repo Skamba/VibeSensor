@@ -6,6 +6,7 @@ from collections.abc import AsyncIterator, Mapping
 from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSourceKind
+from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.car_config import CarConfigUpdatePayload, CarsSnapshot
 from vibesensor.shared.types.history_records import (
@@ -408,6 +409,13 @@ class SpeedProvider(Protocol):
     def engine_rpm_source(self) -> str | None: ...
 
     def resolve_speed(self) -> ResolvedSpeedSnapshot: ...
+
+    def resolve_speed_context_at(
+        self,
+        target_mono_s: float | None,
+        *,
+        tolerance_s: float | None = None,
+    ) -> AlignedSpeedContextSnapshot: ...
 
 
 class SpeedSourceSync(Protocol):

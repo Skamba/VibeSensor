@@ -11,6 +11,20 @@ compute_ui_hash() {
   )
 }
 
+sync_dir_contents() {
+  local source_dir="$1"
+  local target_dir="$2"
+
+  mkdir -p "${target_dir}"
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete "${source_dir}/" "${target_dir}/"
+    return
+  fi
+
+  find "${target_dir}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+  cp -a "${source_dir}/." "${target_dir}/"
+}
+
 build_ui_bundle() {
   local ui_dir="${REPO_ROOT}/apps/ui"
   local server_static_dir="${REPO_ROOT}/apps/server/vibesensor/static"
@@ -48,8 +62,7 @@ build_ui_bundle() {
   fi
 
   echo "Syncing UI bundle into apps/server/vibesensor/static"
-  mkdir -p "${server_static_dir}"
-  rsync -a --delete "${ui_dir}/dist/" "${server_static_dir}/"
+  sync_dir_contents "${ui_dir}/dist" "${server_static_dir}"
 }
 
 compute_app_build_version() {
@@ -97,7 +110,7 @@ build_app_artifacts() {
 
   rm -rf "${APP_ARTIFACT_DIR}"
   mkdir -p "${APP_WHEEL_DIR}" "${APP_PUBLIC_DIR}"
-  rsync -a --delete "${REPO_ROOT}/apps/server/vibesensor/static/" "${APP_PUBLIC_DIR}/"
+  sync_dir_contents "${REPO_ROOT}/apps/server/vibesensor/static" "${APP_PUBLIC_DIR}"
 
   build_root="$(mktemp -d -p "${CACHE_DIR}" app-build-XXXXXX)"
   mkdir -p "${build_root}/apps"
@@ -108,8 +121,7 @@ build_app_artifacts() {
   stamp_app_version_file "${build_root}/apps/server/vibesensor/_version.py" "${app_version}"
 
   rm -rf "${build_root}/apps/server/vibesensor/static"
-  mkdir -p "${build_root}/apps/server/vibesensor/static"
-  rsync -a --delete "${APP_PUBLIC_DIR}/" "${build_root}/apps/server/vibesensor/static/"
+  sync_dir_contents "${APP_PUBLIC_DIR}" "${build_root}/apps/server/vibesensor/static"
 
   (
     cd "${build_root}"

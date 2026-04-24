@@ -25,6 +25,13 @@ from vibesensor.adapters.gps.speed_status import (
     build_status_snapshot,
     speed_confidence,
 )
+from vibesensor.shared.timed_observation import (
+    DEFAULT_ALIGNMENT_TOLERANCE_S,
+    TimedObservationLookup,
+    TimedScalarObservation,
+    resolve_timed_observation,
+)
+from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.shared.types.json_types import JsonObject
 
 DEFAULT_STALE_TIMEOUT_S = _speed_resolution.DEFAULT_STALE_TIMEOUT_S
@@ -200,6 +207,44 @@ class GPSSpeedMonitor:
             snapshot=policy_snapshot,
         )
 
+    def resolve_speed_context_at(
+        self,
+        target_mono_s: float | None,
+        *,
+        tolerance_s: float | None = None,
+    ) -> AlignedSpeedContextSnapshot:
+        transport_snapshot, policy_snapshot = self._captured_snapshots()
+        selected_source: Literal["gps", "manual"] = (
+            "manual" if policy_snapshot.manual_source_selected else "gps"
+        )
+        raw_speed = self._speed_observation_at(
+            transport_snapshot=transport_snapshot,
+            target_mono_s=target_mono_s,
+            tolerance_s=tolerance_s,
+        )
+        resolution = self._policy.resolve(
+            gps_enabled=transport_snapshot.gps_enabled,
+            connection_state=transport_snapshot.connection_state,
+            speed_snapshot=(raw_speed.value, raw_speed.monotonic_s),
+            snapshot=policy_snapshot,
+            live_source="gps",
+            reference_time_s=target_mono_s,
+        )
+        resolved_aligned = (
+            resolution.source in {"manual", "fallback_manual"} and resolution.speed_mps is not None
+        ) or (resolution.source == "gps" and raw_speed.aligned and resolution.speed_mps is not None)
+        return AlignedSpeedContextSnapshot(
+            selected_speed_source=selected_source,
+            resolved_speed_mps=resolution.speed_mps,
+            resolved_speed_source=resolution.source,
+            resolved_speed_aligned=resolved_aligned,
+            gps_speed_mps=raw_speed.value if raw_speed.aligned else None,
+            gps_speed_aligned=raw_speed.aligned,
+            measured_engine_rpm=None,
+            measured_engine_rpm_source=None,
+            measured_engine_rpm_aligned=False,
+        )
+
     def _effective_connection_state(self) -> str:
         transport_snapshot, policy_snapshot = self._captured_snapshots()
         return self._policy.effective_connection_state(
@@ -273,6 +318,33 @@ class GPSSpeedMonitor:
         self,
     ) -> tuple[GPSTransportCapturedState, SpeedResolutionPolicySnapshot]:
         return self._transport.captured_state(), self._policy.snapshot()
+
+    def _speed_observation_at(
+        self,
+        *,
+        transport_snapshot: GPSTransportSnapshot,
+        target_mono_s: float | None,
+        tolerance_s: float | None,
+    ) -> TimedObservationLookup:
+        if target_mono_s is None:
+            return TimedObservationLookup(value=None, monotonic_s=None, aligned=False)
+        history = transport_snapshot.speed_history
+        if not history and transport_snapshot.speed_snapshot[0] is not None:
+            speed_value, speed_time = transport_snapshot.speed_snapshot
+            if speed_value is not None and speed_time is not None:
+                history = (
+                    TimedScalarObservation(
+                        value=float(speed_value),
+                        monotonic_s=float(speed_time),
+                    ),
+                )
+        return resolve_timed_observation(
+            history,
+            target_mono_s=target_mono_s,
+            tolerance_s=(
+                DEFAULT_ALIGNMENT_TOLERANCE_S if tolerance_s is None else float(tolerance_s)
+            ),
+        )
 
     def status_snapshot(self) -> SpeedSourceStatusSnapshot:
         captured_state, policy_snapshot = self._captured_status_snapshots()
