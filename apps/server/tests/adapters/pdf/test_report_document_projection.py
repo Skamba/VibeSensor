@@ -850,7 +850,11 @@ def test_build_report_document_data_trust_keeps_warning_detail() -> None:
             {
                 "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "state": "warn",
-                "explanation": "3 dropped frames, 2 queue overflows detected.",
+                "explanation": {
+                    "_i18n_key": "SUITABILITY_FRAME_INTEGRITY_WARN",
+                    "total_dropped": 3,
+                    "total_overflow": 2,
+                },
             },
         ],
     )
@@ -858,8 +862,7 @@ def test_build_report_document_data_trust_keeps_warning_detail() -> None:
     assert data.data_trust
     assert data.data_trust[0].state == "warn"
     assert data.data_trust[0].check == "Frame-integriteit"
-    # Domain resolves via i18n with zeroed details (payload details not recovered)
-    assert data.data_trust[0].detail == "0 verloren frames, 0 wachtrijoverlopen gedetecteerd."
+    assert data.data_trust[0].detail == "3 verloren frames, 2 wachtrijoverlopen gedetecteerd."
 
 
 def test_build_report_document_data_trust_literal_check_labels() -> None:

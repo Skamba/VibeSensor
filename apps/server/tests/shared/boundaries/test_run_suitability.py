@@ -20,6 +20,30 @@ def test_run_suitability_from_payload_uses_canonical_check_key() -> None:
     assert suitability.checks == (SuitabilityCheck(check_key="speed_profile", state="warn"),)
 
 
+def test_run_suitability_from_payload_recovers_numeric_details_from_i18n_explanation() -> None:
+    suitability = run_suitability_from_payload(
+        [
+            {
+                "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "state": "warn",
+                "explanation": {
+                    "_i18n_key": "SUITABILITY_FRAME_INTEGRITY_WARN",
+                    "total_dropped": "4",
+                    "total_overflow": 7,
+                },
+            }
+        ]
+    )
+
+    assert suitability.checks == (
+        SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_FRAME_INTEGRITY",
+            state="warn",
+            details=(("total_dropped", 4), ("total_overflow", 7)),
+        ),
+    )
+
+
 def test_run_suitability_payload_projects_domain_checks() -> None:
     suitability = RunSuitability(
         checks=(
