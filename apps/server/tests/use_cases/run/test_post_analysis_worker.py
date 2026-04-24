@@ -266,7 +266,7 @@ class TestPostAnalysisWorkerErrorHandling:
                     "context": run.context,
                     "samples": run.samples,
                     "language": run.language,
-                    "total_sample_count": run.total_sample_count,
+                    "total_sample_count": run.total_summary_row_count,
                     "stride": run.stride,
                 }
             )
@@ -275,7 +275,7 @@ class TestPostAnalysisWorkerErrorHandling:
                 "row_count": len(run.samples),
                 "analysis_metadata": {
                     "analyzed_sample_count": len(run.samples),
-                    "total_sample_count": run.total_sample_count,
+                    "total_sample_count": run.total_summary_row_count,
                     "sampling_method": ("full" if run.stride == 1 else f"stride_{run.stride}"),
                 },
                 "run_suitability": [],

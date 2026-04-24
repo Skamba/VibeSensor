@@ -211,7 +211,7 @@ def test_udp_ingest_queue_drop_reaches_persisted_report_honesty(
                         ]
                     ),
                     raw_capture=raw_capture,
-                    total_sample_count=1,
+                    total_summary_row_count=1,
                     stride=1,
                 )
             )
@@ -356,7 +356,7 @@ def test_clean_udp_run_keeps_report_free_of_ingest_drop_warning(
                         ]
                     ),
                     raw_capture=raw_capture,
-                    total_sample_count=1,
+                    total_summary_row_count=1,
                     stride=1,
                 )
             )

@@ -251,7 +251,7 @@ def test_execute_post_analysis_persists_whole_run_spatial_coherence_sidecar_and_
             metadata=_run_metadata(run_id),
             language="en",
             samples=_samples(),
-            total_sample_count=2,
+            total_summary_row_count=2,
             stride=1,
             raw_capture=_empty_raw_capture(raw_capture_manifest),
             raw_capture_manifest=raw_capture_manifest,

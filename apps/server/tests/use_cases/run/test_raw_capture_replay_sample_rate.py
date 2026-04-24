@@ -155,7 +155,7 @@ def test_build_post_analysis_input_uses_corrected_observed_sample_rate(
             sample_rate_proof_state="observed_consistent",
             raw_start_offset_us=raw_start_offset_us,
         ),
-        total_sample_count=1,
+        total_summary_row_count=1,
         stride=1,
     )
     calls: list[int] = []
@@ -173,7 +173,7 @@ def test_build_post_analysis_input_uses_corrected_observed_sample_rate(
 
     result = build_post_analysis_input(loaded)
 
-    assert result.raw_backed_sample_count == 1
+    assert result.raw_backed_summary_row_count == 1
     assert result.raw_replay.sample_rate_mismatch_count == 1
     assert result.raw_replay.replay_confidence == "partial"
     assert calls == [observed_sample_rate_hz]
@@ -211,13 +211,13 @@ def test_build_post_analysis_input_warns_for_unverified_sample_rate_manifest() -
             sample_rate_proof_state="declared_only",
             raw_start_offset_us=raw_start_offset_us,
         ),
-        total_sample_count=1,
+        total_summary_row_count=1,
         stride=1,
     )
 
     result = build_post_analysis_input(loaded)
 
-    assert result.raw_backed_sample_count == 1
+    assert result.raw_backed_summary_row_count == 1
     assert result.raw_replay.sample_rate_unverified_sensor_count == 1
     assert result.raw_replay.replay_confidence == "partial"
     assert [warning.code for warning in result.raw_replay.warnings] == [

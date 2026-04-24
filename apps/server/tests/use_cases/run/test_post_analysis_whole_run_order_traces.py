@@ -243,7 +243,7 @@ def test_execute_post_analysis_persists_whole_run_order_trace_sidecar_and_metada
             metadata=_run_metadata(run_id),
             language="en",
             samples=_samples(),
-            total_sample_count=1,
+            total_summary_row_count=1,
             stride=1,
             raw_capture=_empty_raw_capture(raw_capture_manifest),
             raw_capture_manifest=raw_capture_manifest,

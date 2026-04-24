@@ -78,7 +78,8 @@ def test_load_post_analysis_run_returns_loaded_run() -> None:
     assert isinstance(result, LoadedPostAnalysisRun)
     assert result.run_id == "run-ok"
     assert result.language == "nl"
-    assert result.total_sample_count == 2
+    assert result.total_summary_row_count == 2
+    assert result.summary_duration_s == pytest.approx(1.0)
     assert result.stride == 1
     assert len(result.samples) == 2
 
@@ -194,7 +195,8 @@ def test_load_post_analysis_run_preserves_transient_events_when_capped(
 
     assert isinstance(result, LoadedPostAnalysisRun)
     assert len(result.samples) == 2
-    assert result.total_sample_count == 4
+    assert result.total_summary_row_count == 4
+    assert result.summary_duration_s == pytest.approx(3.0)
     assert result.stride == 2
     assert result.sampling_method == "event_preserving"
     assert result.event_sample_count == 1
