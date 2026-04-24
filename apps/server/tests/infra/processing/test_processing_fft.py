@@ -1,4 +1,4 @@
-"""Unit tests for vibesensor.infra.processing.fft pure spectral functions.
+"""Unit tests for the shared FFTW-backed spectral analysis helpers.
 
 These tests validate the stateless FFT/spectral functions that were
 extracted from the monolithic SignalProcessor class during the
@@ -14,6 +14,7 @@ import pytest
 
 import vibesensor.shared.fft_analysis as fft_module
 from vibesensor.shared.fft_analysis import (
+    SpectralAnalysisComputer,
     compute_fft_spectrum,
     float_list,
     medfilt3,
@@ -27,15 +28,17 @@ def _make_fft_params(
     max_hz: float = 100.0,
 ) -> dict:
     """Build the common FFT parameter dict used by ``compute_fft_spectrum``."""
-    window = np.hanning(fft_n).astype(np.float32)
-    scale = float(2.0 / max(1.0, float(np.sum(window))))
-    freqs = np.fft.rfftfreq(fft_n, d=1.0 / sr)
-    valid = (freqs >= 0) & (freqs <= max_hz)
+    computer = SpectralAnalysisComputer(
+        fft_n=fft_n,
+        spectrum_min_hz=0.0,
+        spectrum_max_hz=max_hz,
+    )
+    freq_slice, valid_idx = computer.fft_params(sr)
     return {
-        "fft_window": window,
-        "fft_scale": scale,
-        "freq_slice": freqs[valid].astype(np.float32),
-        "valid_idx": np.flatnonzero(valid),
+        "fft_window": computer.fft_window,
+        "fft_scale": computer.fft_scale,
+        "freq_slice": freq_slice,
+        "valid_idx": valid_idx,
     }
 
 
@@ -239,24 +242,67 @@ class TestComputeFftSpectrum:
         t = np.arange(fft_n, dtype=np.float32) / sr
         signal = 0.5 * np.sin(2 * np.pi * 6 * t)
         block = np.stack([signal, signal, signal], axis=0)
-
-        window = np.hanning(fft_n).astype(np.float32)
-        scale = float(2.0 / max(1.0, float(np.sum(window))))
-        freqs = np.fft.rfftfreq(fft_n, d=1.0 / sr)
-        valid = (freqs >= 6.0) & (freqs <= 100.0)
+        computer = SpectralAnalysisComputer(
+            fft_n=fft_n,
+            spectrum_min_hz=6.0,
+            spectrum_max_hz=100.0,
+        )
+        freq_slice, valid_idx = computer.fft_params(sr)
 
         result = compute_fft_spectrum(
             block,
             sr,
-            fft_window=window,
-            fft_scale=scale,
-            freq_slice=freqs[valid].astype(np.float32),
-            valid_idx=np.flatnonzero(valid),
+            fft_window=computer.fft_window,
+            fft_scale=computer.fft_scale,
+            freq_slice=freq_slice,
+            valid_idx=valid_idx,
         )
 
         assert result["freq_slice"][0] == pytest.approx(6.0)
         assert float(result["spectrum_by_axis"]["x"]["amp"][0]) > 0.0
         assert float(result["combined_amp"][0]) > 0.0
+
+    def test_dc_bias_does_not_mask_signal_peak(self) -> None:
+        sr = 512
+        fft_n = 512
+        t = np.arange(fft_n, dtype=np.float32) / sr
+        block = np.stack(
+            [
+                np.full_like(t, 5.0) + 0.2 * np.sin(2 * np.pi * 40 * t),
+                np.full_like(t, -3.0),
+                np.full_like(t, 1.5),
+            ],
+            axis=0,
+        )
+
+        result = compute_fft_spectrum(
+            block,
+            sr,
+            **_make_fft_params(sr=sr, fft_n=fft_n, max_hz=200.0),
+        )
+
+        assert float(result["strength_metrics"]["top_peaks"][0]["hz"]) == pytest.approx(
+            40.0,
+            abs=1.0,
+        )
+
+    def test_high_frequency_edge_tone_stays_visible(self) -> None:
+        sr = 512
+        fft_n = 512
+        t = np.arange(fft_n, dtype=np.float32) / sr
+        edge_tone = 0.15 * np.sin(2 * np.pi * 255 * t)
+        block = np.stack([edge_tone, edge_tone, edge_tone], axis=0)
+
+        result = compute_fft_spectrum(
+            block,
+            sr,
+            **_make_fft_params(sr=sr, fft_n=fft_n, max_hz=256.0),
+        )
+
+        assert float(result["strength_metrics"]["top_peaks"][0]["hz"]) == pytest.approx(
+            255.0,
+            abs=1.0,
+        )
 
     def test_get_rfft_plan_uses_estimate_planning(self, monkeypatch: pytest.MonkeyPatch) -> None:
         captured: dict[str, object] = {}

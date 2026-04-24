@@ -22,7 +22,7 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 
-from vibesensor.infra.processing.fft import _get_rfft_plan
+from vibesensor.shared.fft_analysis import _get_rfft_plan
 
 # Representative shapes: always 3 axes (x/y/z); vary fft_n from small-real to
 # large-synthetic so the FFTW-vs-pocketfft crossover is visible.
