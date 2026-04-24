@@ -25,6 +25,7 @@ from vibesensor.shared.types.run_schema import (
     RUN_METADATA_TYPE,
     RUN_SCHEMA_VERSION,
     RunMetadata,
+    RunSensorMetadata,
 )
 
 __all__ = [
@@ -57,6 +58,7 @@ class _RunMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
     incomplete_for_order_analysis: object = False
     analysis_settings_snapshot: object = None
     active_car_snapshot: object = None
+    sensor_snapshots: object = None
     case_id: object = ""
     sensor_mac: object = None
     symptom: object = None
@@ -104,6 +106,7 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
             data.get("analysis_settings_snapshot"),
         ),
         car=run_car_metadata_from_mapping(data.get("active_car_snapshot")),
+        sensor_snapshots=_run_sensor_snapshots_from_payload(data.get("sensor_snapshots")),
         case_id=text_or_none(data.get("case_id")) or "",
         sensor_mac=text_or_none(data.get("sensor_mac")),
         symptom=_symptom_from_payload(data.get("symptom")),
@@ -145,6 +148,10 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
     }
     if (car_metadata := run_car_metadata_to_json_object(metadata.car)) is not None:
         payload["active_car_snapshot"] = car_metadata
+    if metadata.sensor_snapshots:
+        payload["sensor_snapshots"] = [
+            _run_sensor_snapshot_to_json_object(snapshot) for snapshot in metadata.sensor_snapshots
+        ]
     if metadata.symptom is not None and not metadata.symptom.is_unspecified:
         payload["symptom"] = _symptom_to_json_object(metadata.symptom)
     if metadata.wheel_circumference_m is not None:
@@ -196,3 +203,61 @@ def _reference_tire_circumference(payload: object) -> float | None:
     if not isinstance(payload, Mapping):
         return None
     return as_float_or_none(payload.get("tire_circumference_m"))
+
+
+def _run_sensor_snapshots_from_payload(payload: object) -> tuple[RunSensorMetadata, ...]:
+    records: list[RunSensorMetadata] = []
+    if isinstance(payload, Mapping):
+        iterable: list[tuple[object, object]] = list(payload.items())
+        for sensor_id, entry in iterable:
+            if not isinstance(entry, Mapping):
+                continue
+            snapshot = _run_sensor_snapshot_from_mapping(entry, fallback_sensor_id=sensor_id)
+            if snapshot is not None:
+                records.append(snapshot)
+    elif isinstance(payload, list):
+        for entry in payload:
+            snapshot = _run_sensor_snapshot_from_mapping(entry)
+            if snapshot is not None:
+                records.append(snapshot)
+    records.sort(key=lambda snapshot: snapshot.sensor_id)
+    return tuple(records)
+
+
+def _run_sensor_snapshot_from_mapping(
+    payload: object,
+    *,
+    fallback_sensor_id: object = None,
+) -> RunSensorMetadata | None:
+    if not isinstance(payload, Mapping):
+        return None
+    sensor_id = (
+        text_or_none(payload.get("sensor_id"))
+        or text_or_none(payload.get("client_id"))
+        or text_or_none(fallback_sensor_id)
+        or ""
+    )
+    if not sensor_id:
+        return None
+    return RunSensorMetadata(
+        sensor_id=sensor_id,
+        display_name=text_or_none(payload.get("display_name"))
+        or text_or_none(payload.get("client_name"))
+        or "",
+        location_code=text_or_none(payload.get("location_code")) or "",
+        sample_rate_hz=as_int_or_none(payload.get("sample_rate_hz")),
+        firmware_version=text_or_none(payload.get("firmware_version")),
+    )
+
+
+def _run_sensor_snapshot_to_json_object(snapshot: RunSensorMetadata) -> JsonObject:
+    payload: JsonObject = {
+        "sensor_id": snapshot.sensor_id,
+        "display_name": snapshot.display_name,
+        "location_code": snapshot.location_code,
+    }
+    if snapshot.sample_rate_hz is not None:
+        payload["sample_rate_hz"] = snapshot.sample_rate_hz
+    if snapshot.firmware_version is not None:
+        payload["firmware_version"] = snapshot.firmware_version
+    return payload

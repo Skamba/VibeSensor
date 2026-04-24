@@ -58,6 +58,7 @@ def prepare_analysis_context(
         samples=typed_samples,
         language=language,
         per_sample_phases=list(prepared.per_sample_phases),
+        metadata=context,
     )
     sensor_ids = {client_id for sample in typed_samples if (client_id := sample.client_id)}
     total_dropped, total_overflow = compute_frame_integrity_counts(typed_samples)
