@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from threading import RLock
@@ -17,8 +18,10 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureChunkIndex,
     RawCaptureCoverageState,
+    RawCaptureLossStats,
     RawCaptureManifest,
     RawCaptureSensorData,
+    RawCaptureSensorLossStats,
     RawCaptureSensorManifest,
     RawCaptureSensorRange,
     RawRunCapture,
@@ -89,6 +92,7 @@ class HistoryRawCaptureStore:
         run_id: str,
         *,
         run_start_monotonic_us: int | None = None,
+        sensor_losses: Mapping[str, RawCaptureLossStats] | None = None,
     ) -> RawCaptureManifest | None:
         with self._lock:
             streams = self._open_runs.pop(run_id, None)
@@ -96,8 +100,10 @@ class HistoryRawCaptureStore:
             self.delete_run_artifacts(run_id)
             return None
         sensor_manifests: list[RawCaptureSensorManifest] = []
+        sensor_loss_rows: list[RawCaptureSensorLossStats] = []
         total_samples = 0
         total_bytes = 0
+        total_losses = RawCaptureLossStats()
         for client_id in sorted(streams):
             stream = streams[client_id]
             stream.data_handle.close()
@@ -116,6 +122,15 @@ class HistoryRawCaptureStore:
             sensor_manifests.append(sensor_manifest)
             total_samples += sensor_manifest.sample_count
             total_bytes += sensor_manifest.bytes_written
+        if sensor_losses:
+            for client_id in sorted(sensor_losses):
+                losses = sensor_losses[client_id]
+                if losses.total_dropped_chunk_count <= 0:
+                    continue
+                sensor_loss_rows.append(
+                    RawCaptureSensorLossStats(client_id=client_id, losses=losses)
+                )
+                total_losses = total_losses.merged(losses)
         manifest = RawCaptureManifest(
             run_id=run_id,
             relative_dir=str(Path(_RAW_CAPTURE_DIR_NAME) / run_id),
@@ -124,6 +139,8 @@ class HistoryRawCaptureStore:
             total_bytes=total_bytes,
             created_at=utc_now_iso(),
             run_start_monotonic_us=run_start_monotonic_us,
+            sensor_losses=tuple(sensor_loss_rows),
+            losses=total_losses,
         )
         run_dir = self.run_dir(run_id)
         run_dir.mkdir(parents=True, exist_ok=True)
