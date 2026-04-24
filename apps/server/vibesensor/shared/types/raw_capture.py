@@ -42,7 +42,7 @@ type RawCaptureClockProofState = Literal[
     "missing_registry_record",
 ]
 
-_RAW_CAPTURE_SCHEMA_VERSION = 6
+_RAW_CAPTURE_SCHEMA_VERSION = 7
 _RAW_CAPTURE_STORAGE_TYPE = "run-directory-v1"
 _RAW_CAPTURE_MODE = "full_run"
 
@@ -87,9 +87,10 @@ class RawCaptureChunkIndex:
 
 @dataclass(frozen=True, slots=True)
 class RawCaptureLossStats:
-    """Structured counts for raw chunks lost before persistence."""
+    """Structured counts for raw chunk issues persisted alongside the run."""
 
     udp_ingest_queue_drop_count: int = 0
+    late_packet_chunk_count: int = 0
     queue_overflow_chunk_count: int = 0
     invalid_chunk_count: int = 0
     write_error_chunk_count: int = 0
@@ -103,9 +104,14 @@ class RawCaptureLossStats:
             + max(0, self.write_error_chunk_count)
         )
 
+    @property
+    def total_loss_event_count(self) -> int:
+        return self.total_dropped_chunk_count + max(0, self.late_packet_chunk_count)
+
     def to_json_object(self) -> JsonObject:
         return {
             "udp_ingest_queue_drop_count": self.udp_ingest_queue_drop_count,
+            "late_packet_chunk_count": self.late_packet_chunk_count,
             "queue_overflow_chunk_count": self.queue_overflow_chunk_count,
             "invalid_chunk_count": self.invalid_chunk_count,
             "write_error_chunk_count": self.write_error_chunk_count,
@@ -115,6 +121,7 @@ class RawCaptureLossStats:
     def from_mapping(cls, data: JsonObject) -> RawCaptureLossStats:
         return cls(
             udp_ingest_queue_drop_count=_int_from_json(data.get("udp_ingest_queue_drop_count")),
+            late_packet_chunk_count=_int_from_json(data.get("late_packet_chunk_count")),
             queue_overflow_chunk_count=_int_from_json(data.get("queue_overflow_chunk_count")),
             invalid_chunk_count=_int_from_json(data.get("invalid_chunk_count")),
             write_error_chunk_count=_int_from_json(data.get("write_error_chunk_count")),
@@ -125,6 +132,7 @@ class RawCaptureLossStats:
             udp_ingest_queue_drop_count=(
                 self.udp_ingest_queue_drop_count + other.udp_ingest_queue_drop_count
             ),
+            late_packet_chunk_count=self.late_packet_chunk_count + other.late_packet_chunk_count,
             queue_overflow_chunk_count=(
                 self.queue_overflow_chunk_count + other.queue_overflow_chunk_count
             ),
@@ -143,6 +151,14 @@ class RawCaptureSensorLossStats:
     @property
     def total_dropped_chunk_count(self) -> int:
         return self.losses.total_dropped_chunk_count
+
+    @property
+    def total_loss_event_count(self) -> int:
+        return self.losses.total_loss_event_count
+
+    @property
+    def late_packet_chunk_count(self) -> int:
+        return max(0, self.losses.late_packet_chunk_count)
 
     def to_json_object(self) -> JsonObject:
         return {
@@ -339,7 +355,7 @@ class RawCaptureManifest:
             payload["sensor_losses"] = [
                 sensor_loss.to_json_object() for sensor_loss in self.sensor_losses
             ]
-        if self.losses.total_dropped_chunk_count > 0:
+        if self.losses.total_loss_event_count > 0:
             payload["losses"] = self.losses.to_json_object()
         return payload
 
@@ -400,6 +416,20 @@ class RawCaptureManifest:
             max(0, sensor_loss.total_dropped_chunk_count) for sensor_loss in self.sensor_losses
         )
         return self.losses.total_dropped_chunk_count or sensor_total
+
+    @property
+    def total_late_packet_chunk_count(self) -> int:
+        sensor_total = sum(
+            max(0, sensor_loss.late_packet_chunk_count) for sensor_loss in self.sensor_losses
+        )
+        return max(0, self.losses.late_packet_chunk_count) or sensor_total
+
+    @property
+    def total_loss_event_count(self) -> int:
+        sensor_total = sum(
+            max(0, sensor_loss.total_loss_event_count) for sensor_loss in self.sensor_losses
+        )
+        return self.losses.total_loss_event_count or sensor_total
 
 
 @dataclass(frozen=True, slots=True)

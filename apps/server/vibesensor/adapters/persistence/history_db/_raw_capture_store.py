@@ -139,7 +139,7 @@ class HistoryRawCaptureStore:
         if sensor_losses:
             for client_id in sorted(sensor_losses):
                 losses = sensor_losses[client_id]
-                if losses.total_dropped_chunk_count <= 0:
+                if losses.total_loss_event_count <= 0:
                     continue
                 sensor_loss_rows.append(
                     RawCaptureSensorLossStats(client_id=client_id, losses=losses)

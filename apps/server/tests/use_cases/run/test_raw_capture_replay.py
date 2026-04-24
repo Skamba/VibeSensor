@@ -178,6 +178,7 @@ def test_build_post_analysis_input_marks_no_valid_bin_fft_windows_unusable() -> 
 def test_build_post_analysis_input_surfaces_persisted_dropped_chunk_counts() -> None:
     raw_capture = _raw_capture("run-drops")
     loss_stats = RawCaptureLossStats(
+        late_packet_chunk_count=1,
         udp_ingest_queue_drop_count=1,
         queue_overflow_chunk_count=2,
         invalid_chunk_count=1,
@@ -214,6 +215,7 @@ def test_build_post_analysis_input_surfaces_persisted_dropped_chunk_counts() -> 
 
     assert result.raw_backed_summary_row_count == 1
     assert result.raw_replay.dropped_chunk_count == 4
+    assert result.raw_replay.late_packet_chunk_count == 1
     assert result.raw_replay.udp_ingest_queue_drop_count == 1
     assert result.raw_replay.queue_overflow_chunk_count == 2
     assert result.raw_replay.invalid_chunk_count == 1

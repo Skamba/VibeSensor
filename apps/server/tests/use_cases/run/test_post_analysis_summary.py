@@ -199,7 +199,7 @@ def _full_raw_capture(
                 manifest,
                 sensor_losses=(
                     ()
-                    if losses is None or losses.total_dropped_chunk_count <= 0
+                    if losses is None or losses.total_loss_event_count <= 0
                     else (RawCaptureSensorLossStats(client_id="sensor-a", losses=losses),)
                 ),
                 losses=losses or RawCaptureLossStats(),
@@ -283,6 +283,7 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
         "raw_replay_gap_count": 0,
         "raw_replay_overlap_count": 0,
         "raw_replay_dropped_chunk_count": 0,
+        "raw_replay_late_packet_chunk_count": 0,
         "raw_replay_udp_ingest_queue_drop_count": 0,
         "raw_replay_queue_overflow_chunk_count": 0,
         "raw_replay_invalid_chunk_count": 0,
@@ -393,6 +394,7 @@ def test_build_post_analysis_summary_propagates_dropped_chunk_metadata_and_warni
                 raw_capture=_full_raw_capture(
                     "run-drops",
                     losses=RawCaptureLossStats(
+                        late_packet_chunk_count=1,
                         udp_ingest_queue_drop_count=1,
                         queue_overflow_chunk_count=2,
                         write_error_chunk_count=1,
@@ -405,6 +407,7 @@ def test_build_post_analysis_summary_propagates_dropped_chunk_metadata_and_warni
     )
 
     assert summary["analysis_metadata"]["raw_replay_dropped_chunk_count"] == 4
+    assert summary["analysis_metadata"]["raw_replay_late_packet_chunk_count"] == 1
     assert summary["analysis_metadata"]["raw_replay_udp_ingest_queue_drop_count"] == 1
     assert summary["analysis_metadata"]["raw_replay_queue_overflow_chunk_count"] == 2
     assert summary["analysis_metadata"]["raw_replay_invalid_chunk_count"] == 0

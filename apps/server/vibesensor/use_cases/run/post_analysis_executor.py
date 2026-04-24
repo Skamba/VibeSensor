@@ -840,6 +840,9 @@ def _append_whole_run_spectral_metadata(
     analysis_metadata["whole_run_spectral_dropped_chunk_count"] = (
         coverage_summary.dropped_chunk_count
     )
+    analysis_metadata["whole_run_spectral_late_packet_chunk_count"] = getattr(
+        coverage_summary, "late_packet_chunk_count", 0
+    )
     analysis_metadata["whole_run_spectral_udp_ingest_queue_drop_count"] = getattr(
         coverage_summary, "udp_ingest_queue_drop_count", 0
     )

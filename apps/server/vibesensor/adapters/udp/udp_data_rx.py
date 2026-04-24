@@ -43,6 +43,8 @@ class RawCaptureSink(Protocol):
         samples: np.ndarray,
     ) -> None: ...
 
+    def note_late_packet_loss(self, *, client_id: str) -> None: ...
+
 
 class DatagramDispatchError(RuntimeError):
     """Operational failure while dispatching one parsed DATA message."""
@@ -201,6 +203,8 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                     t0_us=msg.t0_us,
                 )
             if self._raw_capture_sink is not None:
+                if result.is_late:
+                    self._raw_capture_sink.note_late_packet_loss(client_id=client_id)
                 self._raw_capture_sink.capture_raw_samples(
                     client_id=client_id,
                     sample_rate_hz=sample_rate_hz,
