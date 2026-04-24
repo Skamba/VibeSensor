@@ -9,11 +9,12 @@ Guidance stack
 - Paths below are repo-relative unless a bullet is explicitly talking about a Python import namespace such as `vibesensor.domain` or `vibesensor.shared.*`.
 
 Execution philosophy
-- Be decisive, direct, and completion-oriented. Attack large tasks aggressively; do not narrow scope because the work is broad or invasive.
-- Large scope is not itself a blocker. Decompose and execute in waves until the work is done. Do not stop at analysis, planning, or partial implementation.
+- Be decisive, direct, and completion-oriented. Default to completing the user's requested change end to end.
+- Expand scope only to fix the root cause, update direct callers, or handle clearly adjacent regressions found during validation. Do not broaden into unrelated cleanup.
+- Decompose large tasks into execution waves and keep going until the in-scope work is done, validated, or blocked by credentials, hardware, external services, or an explicit user pause.
 - Breaking internal-only interfaces is acceptable and preferred when the result is cleaner. The repo controls both producers and consumers; coordinated breaking refactors are the right default, not the exception.
 - Do not preserve deprecated aliases, old DTO shapes, fallback branches, or legacy config forms unless a real external consumer is confirmed. The cleaner architecture wins.
-- Full execution-completion rules and anti-hedging guidance live in `.github/instructions/general.instructions.md`.
+- Full workflow and validation rules live in `.github/instructions/general.instructions.md`.
 
 Repository overview
 - VibeSensor: Python backend (`apps/server/`), TypeScript/Vite dashboard (`apps/ui/`), ESP32 firmware (`firmware/esp/`), Pi image build (`infra/pi-image/`).
@@ -65,6 +66,24 @@ Commands
 - `BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh`
 - `./infra/pi-image/pi-gen/validate-image.sh`
 - `docker compose build --pull && docker compose up -d`
+
+Validation chooser
+- Backend source: `make lint`, `make typecheck-backend`, and targeted `pytest -q apps/server/tests/<module>/`.
+- Backend contracts/API payloads: add `make sync-contracts` and `make ui-typecheck`.
+- Frontend logic, contracts, or composition: `make ui-typecheck`; for bundle behavior also run `cd apps/ui && npm ci && npm run build`.
+- Rendered UI or snapshots: add `cd apps/ui && npm run test:visual`.
+- Firmware code: `cd firmware/esp && pio run`.
+- Pi app artifact changes: `BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh`.
+- Pi image-stage logic: `BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh`, then `./infra/pi-image/pi-gen/validate-image.sh [artifact]` when an artifact is available.
+- Docs or AI-instruction-only changes: `make docs-lint`.
+
+Command gotchas
+- `make ui-typecheck` is the default frontend gate because it materializes generated UI contract artifacts before linting and TypeScript checks.
+- Raw `cd apps/ui && npm run typecheck` or `npm run build` can fail when generated UI contract files are stale; run `make sync-contracts` or `make ui-typecheck` first when backend contracts changed.
+- `act` requires Docker and is best for targeted GitHub workflow parity, not docs-only changes.
+- PlatformIO must be installed before `cd firmware/esp && pio run`.
+- Pi image builds are expensive; use the narrow `BUILD_MODE=app` or `BUILD_MODE=image` path unless both layers changed.
+- The local Docker stack is for runtime integration behavior, not docs-only, instruction-only, or pure unit-test changes.
 
 Pi access defaults (prebuilt image)
 - Narrow owner: `infra/pi-image/pi-gen/README.md` and `docs/operational-runbooks.md`
