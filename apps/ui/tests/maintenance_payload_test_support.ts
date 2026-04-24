@@ -79,6 +79,32 @@ export function createHealthyUpdateStatus(
       server_queue_drops: 0,
       parse_errors: 0,
     },
+    ingest: {
+      udp: {
+        queue_depth: 0,
+        queue_max_depth: 0,
+        enqueued_datagrams: 0,
+        dropped_datagrams: 0,
+        processed_datagrams: 0,
+        last_packet_queue_age_ms: 0,
+        max_packet_queue_age_ms: 0,
+        last_ack_latency_ms: 0,
+        max_ack_latency_ms: 0,
+      },
+      raw_capture: {
+        queue_depth: 0,
+        queue_max_depth: 0,
+        dropped_chunks: 0,
+        write_error_chunks: 0,
+      },
+      ws_publish: {
+        active_connections: 0,
+        total_publish_ticks: 0,
+        last_publish_duration_ms: 0,
+        max_publish_duration_ms: 0,
+      },
+      clients: [],
+    },
     intake_stats: {
       last_compute_all_duration_s: 0,
       last_compute_duration_s: 0,
