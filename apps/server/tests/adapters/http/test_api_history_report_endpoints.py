@@ -18,9 +18,11 @@ from _history_endpoint_helpers import (
 )
 from fastapi import FastAPI, HTTPException
 from pypdf import PdfReader
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.http import create_router
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 
 
 def _pdf_text(body: bytes) -> str:
@@ -174,6 +176,54 @@ async def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes()
 
     state = FakeState(
         TimestampFlipDB(metadata, samples, analysis), FakeWsHub(), pdf_renderer=fake_renderer
+    )
+    router = create_router(state)
+    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
+
+    await endpoint("run-1", "en")
+    await endpoint("run-1", "en")
+
+    assert call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_report_pdf_cache_invalidates_when_analysis_content_changes() -> None:
+    metadata = make_metadata()
+    samples = [sample(i) for i in range(20)]
+    first_analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    first_analysis["_report_template_data"] = {"lang": "en", "title": "legacy"}
+    second_analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    second_analysis["_report_template_data"] = {"lang": "en", "title": "updated"}
+
+    @dataclass
+    class AnalysisFlipDB(FakeHistoryDB):
+        analyses: list[AnalysisSummary] = field(default_factory=list)
+        idx: int = 0
+
+        async def aget_run(self, run_id: str):
+            result = await super().aget_run(run_id)
+            if result is None:
+                return None
+            analysis = self.analyses[min(self.idx, len(self.analyses) - 1)]
+            self.idx += 1
+            return replace(result, analysis=make_persisted_analysis(analysis))
+
+    call_count = 0
+
+    def fake_renderer(_prepared: object) -> bytes:
+        nonlocal call_count
+        call_count += 1
+        return b"%PDF-analysis-versioned"
+
+    state = FakeState(
+        AnalysisFlipDB(
+            metadata,
+            samples,
+            first_analysis,
+            analyses=[first_analysis, second_analysis],
+        ),
+        FakeWsHub(),
+        pdf_renderer=fake_renderer,
     )
     router = create_router(state)
     endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")

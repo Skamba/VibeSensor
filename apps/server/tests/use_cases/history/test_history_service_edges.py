@@ -169,7 +169,7 @@ async def test_report_loader_uses_requested_lang_when_persisted_lang_is_blank() 
 @pytest.mark.asyncio
 async def test_report_pdf_cache_retries_after_build_failure() -> None:
     cache = HistoryReportPdfCache()
-    cache_key = ("run-1", "en", None, 12, "{}", "none")
+    cache_key = ("run-1", "en", None, 12, "{}", "analysis", "none")
     calls = 0
 
     def _build() -> bytes:
@@ -193,7 +193,7 @@ async def test_report_pdf_cache_retries_after_build_failure() -> None:
 def test_report_pdf_cache_evicts_lru_entries_and_drops_evicted_locks() -> None:
     cache = HistoryReportPdfCache()
     keys = [
-        (f"run-{index}", "en", None, index, "{}", "none")
+        (f"run-{index}", "en", None, index, "{}", f"analysis-{index}", "none")
         for index in range(REPORT_PDF_CACHE_MAX_ENTRIES + 1)
     ]
 
