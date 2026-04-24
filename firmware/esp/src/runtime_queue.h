@@ -13,6 +13,9 @@ struct DataFrame {
   uint16_t sample_count = 0;
   int16_t xyz[static_cast<size_t>(kFrameSamples) * kAxesPerSample] = {};
   bool transmitted = false;
+  uint8_t tx_attempts = 0;
+  uint32_t queued_ms = 0;
+  uint32_t first_tx_ms = 0;
   uint32_t last_tx_ms = 0;
 };
 

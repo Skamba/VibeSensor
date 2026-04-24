@@ -36,7 +36,8 @@ void report_runtime_status(RuntimeStatus& status,
       sampling_error_newer ? sampling.last_error_ms : status.last_error_ms;
 
   Serial.printf(
-      "status wifi=%d q=%u/%u drop=%lu tx_fail={pack:%lu begin:%lu end:%lu} "
+      "status wifi=%d q=%u/%u drop={queue:%lu stale:%lu retry:%lu} "
+      "tx_fail={pack:%lu begin:%lu end:%lu} "
       "sensor={err:%lu stat:%lu data:%lu trunc:%lu bus:%lu/%lu reinit:%lu/%lu miss:%lu late:%lu handoff:%lu "
       "sq:%u/%u prefetch:%u refill:%u/%u} "
       "wifi_retry={attempts:%lu fail:%lu} sync={offset_us:%lld rtt_us:%lu} "
@@ -45,6 +46,8 @@ void report_runtime_status(RuntimeStatus& status,
       static_cast<unsigned>(queue_size),
       static_cast<unsigned>(queue_capacity),
       static_cast<unsigned long>(status.queue_overflow_drops),
+      static_cast<unsigned long>(status.tx_stale_frame_drops),
+      static_cast<unsigned long>(status.tx_retransmit_limit_drops),
       static_cast<unsigned long>(status.tx_pack_failures),
       static_cast<unsigned long>(status.tx_begin_failures),
       static_cast<unsigned long>(status.tx_end_failures),

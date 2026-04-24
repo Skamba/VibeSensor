@@ -7,6 +7,8 @@ namespace vibesensor::runtime {
 struct RuntimeStatus {
   uint32_t last_status_report_ms = 0;
   uint32_t queue_overflow_drops = 0;
+  uint32_t tx_stale_frame_drops = 0;
+  uint32_t tx_retransmit_limit_drops = 0;
   uint32_t tx_pack_failures = 0;
   uint32_t tx_begin_failures = 0;
   uint32_t tx_end_failures = 0;
