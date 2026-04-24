@@ -13,7 +13,11 @@ from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength
 
 from .sample_speed_context import SpeedContext, resolve_speed_context_snapshot
-from .sample_strength_metrics import dominant_hz_from_strength, extract_strength_data
+from .sample_strength_metrics import (
+    dominant_axis_from_metrics,
+    dominant_hz_from_strength,
+    extract_strength_data,
+)
 
 if TYPE_CHECKING:
     from vibesensor.shared.ports import (
@@ -82,6 +86,7 @@ def build_sample_records(
 
         strength_metrics = extract_strength_data(metrics)
         dominant_hz = dominant_hz_from_strength(strength_metrics)
+        dominant_axis = dominant_axis_from_metrics(metrics, dominant_hz=dominant_hz)
         vibration_strength_db = strength_metrics.vibration_strength_db
         strength_peak_amp_g = strength_metrics.peak_amp_g
         strength_floor_amp_g = strength_metrics.noise_floor_amp_g
@@ -160,7 +165,7 @@ def build_sample_records(
                 accel_y_g=accel_y_g,
                 accel_z_g=accel_z_g,
                 dominant_freq_hz=dominant_hz,
-                dominant_axis="combined",
+                dominant_axis=dominant_axis,
                 top_peaks=tuple(peak for peak in strength_metrics.top_peaks[:8] if peak.is_valid),
                 vibration_strength_db=vibration_strength_db,
                 strength_bucket=strength_bucket,

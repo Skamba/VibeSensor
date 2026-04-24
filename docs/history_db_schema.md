@@ -82,7 +82,7 @@ are rehydrated back into typed `SensorFrame.top_peaks` data on read.
 | `accel_y_g` | REAL | Y-axis acceleration (g) |
 | `accel_z_g` | REAL | Z-axis acceleration (g) |
 | `dominant_freq_hz` | REAL | Dominant vibration frequency |
-| `dominant_axis` | TEXT | Axis with dominant vibration |
+| `dominant_axis` | TEXT | Real dominant axis (`x`/`y`/`z`) when one axis clearly owns the strongest peak, `combined` when the strongest peak is non-directional across axes, empty when unavailable |
 | `vibration_strength_db` | REAL | Vibration strength in dB |
 | `strength_bucket` | TEXT | Strength classification label |
 | `strength_peak_amp_g` | REAL | Peak amplitude (g) |
