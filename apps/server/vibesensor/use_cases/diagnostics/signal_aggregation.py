@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from vibesensor.domain import (
     LocationIntensitySummary,
@@ -28,6 +29,9 @@ from vibesensor.use_cases.diagnostics.math_utils import _mean
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _phase_to_str
 from vibesensor.vibration_strength import percentile
+
+if TYPE_CHECKING:
+    from vibesensor.shared.types.run_schema import RunMetadata
 
 
 def _counter_delta(counter_values: Sequence[tuple[float | None, float]]) -> int:
@@ -126,6 +130,7 @@ def _sensor_intensity_by_location(
     samples: Sequence[Sample],
     include_locations: Sequence[str] | set[str] | None = None,
     *,
+    metadata: RunMetadata | None = None,
     lang: str = "en",
     connected_locations: Sequence[str] | set[str] | None = None,
     per_sample_phases: Sequence[DrivingPhase] | None = None,
@@ -144,7 +149,7 @@ def _sensor_intensity_by_location(
     _vib_db = _primary_vibration_strength_db
     _loc_label = _location_label
     for i, sample in enumerate(samples):
-        location = _loc_label(sample, lang=lang)
+        location = _loc_label(sample, metadata=metadata, lang=lang)
         if not location:
             continue
         if include_locations is not None and location not in include_locations:

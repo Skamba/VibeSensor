@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Mapping
 from threading import RLock
 from typing import TYPE_CHECKING
 from uuid import uuid4
@@ -29,6 +30,8 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureManifest,
     RawCaptureSensorClockSync,
 )
+from vibesensor.shared.types.run_schema import RunSensorMetadata
+from vibesensor.shared.types.sensor_config import SensorConfigPayload
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
 from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
 from vibesensor.use_cases.run.lifecycle_state import RunLifecycleState
@@ -43,6 +46,10 @@ from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
 from vibesensor.use_cases.run.raw_capture_writer import RunRawCaptureWriter
 from vibesensor.use_cases.run.run_context import build_run_context_snapshot
+from vibesensor.use_cases.run.run_sensor_snapshot import (
+    build_run_sensor_snapshot,
+    capture_run_sensor_snapshots,
+)
 from vibesensor.use_cases.run.sample_flush import SampleFlushOrchestrator
 from vibesensor.use_cases.run.status_reporting import (
     RunRecorderStatusSnapshot,
@@ -102,6 +109,7 @@ class RunRecorder:
         self._language_reader = language_reader
         self._live_start_mono_s = time.monotonic()
         self._active_run_context: RunContextSnapshot | None = None
+        self._run_sensor_snapshots: dict[str, RunSensorMetadata] = {}
         self._capture_readiness = CaptureReadinessTracker()
 
         self._lifecycle = RunLifecycleState(
@@ -147,6 +155,7 @@ class RunRecorder:
             analysis_settings_snapshot=self._recording_analysis_settings_snapshot,
             default_sample_rate_hz=self.default_sample_rate_hz,
             sensor_metadata_reader=sensor_metadata_reader,
+            run_sensor_presentation_resolver=self._resolve_run_sensor_presentation,
             lifecycle=self._lifecycle,
             persistence=self._persistence,
             active_frames_total=lambda: _recorder_runtime.active_frames_total(self.registry),
@@ -212,6 +221,40 @@ class RunRecorder:
     def _recording_analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         return self._run_context_snapshot().analysis_settings
 
+    def _run_sensor_snapshots_for_run(self, run_id: str) -> tuple[RunSensorMetadata, ...]:
+        with self._lock:
+            current_run = self._lifecycle.current_run
+            if current_run is None or current_run.run_id != run_id:
+                return tuple()
+            return tuple(
+                self._run_sensor_snapshots[client_id]
+                for client_id in sorted(self._run_sensor_snapshots)
+            )
+
+    def _resolve_run_sensor_presentation(
+        self,
+        *,
+        client_id: str,
+        fallback_name: str,
+        fallback_location_code: str,
+        sample_rate_hz: int | None,
+        firmware_version: str | None,
+        sensors_by_mac: Mapping[str, SensorConfigPayload],
+    ) -> tuple[str, str]:
+        with self._lock:
+            snapshot = self._run_sensor_snapshots.get(client_id)
+            if snapshot is None:
+                snapshot = build_run_sensor_snapshot(
+                    sensor_id=client_id,
+                    fallback_name=fallback_name,
+                    fallback_location_code=fallback_location_code,
+                    sample_rate_hz=sample_rate_hz,
+                    firmware_version=firmware_version,
+                    sensors_by_mac=sensors_by_mac,
+                )
+                self._run_sensor_snapshots[client_id] = snapshot
+            return snapshot.display_name, snapshot.location_code
+
     def _session_snapshot(self) -> ActiveRunSnapshot | None:
         with self._lock:
             return self._lifecycle.snapshot()
@@ -231,6 +274,11 @@ class RunRecorder:
             current_total=_recorder_runtime.active_frames_total(self.registry),
         )
         self._active_run_context = run_context
+        self._run_sensor_snapshots = capture_run_sensor_snapshots(
+            client_ids=self.registry.active_client_ids(),
+            registry=self.registry,
+            sensor_metadata_reader=self._sensor_metadata_reader,
+        )
         self._persistence.reset()
         self._live_start_mono_s = snapshot.start_mono_s
         self._raw_capture.start_run(
@@ -486,6 +534,7 @@ class RunRecorder:
                         )
                     self._lifecycle.stop()
                     self._active_run_context = None
+                    self._run_sensor_snapshots = {}
                     self._persistence.reset()
                     self._run_ingest_drop_baseline = None
                     result = self.status()

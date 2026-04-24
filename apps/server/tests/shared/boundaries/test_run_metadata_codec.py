@@ -84,3 +84,42 @@ def test_run_metadata_from_json_tolerates_legacy_non_string_record_type() -> Non
 
     assert decoded.record_type == "run_metadata"
     assert decoded.run_id == "legacy-run"
+
+
+def test_run_metadata_codec_roundtrip_preserves_sensor_snapshots() -> None:
+    metadata = run_metadata_from_mapping(
+        {
+            "run_id": "run-sensors",
+            "start_time_utc": "2026-01-01T00:00:00Z",
+            "sensor_model": "ADXL345",
+            "sensor_snapshots": [
+                {
+                    "sensor_id": "sensor-a",
+                    "display_name": "Front left",
+                    "location_code": "front_left_wheel",
+                    "sample_rate_hz": 800,
+                    "firmware_version": "1.2.3",
+                }
+            ],
+        }
+    )
+
+    payload = run_metadata_to_json_object(metadata)
+    decoded = run_metadata_from_json(run_metadata_to_json_bytes(metadata))
+
+    assert payload["sensor_snapshots"] == [
+        {
+            "sensor_id": "sensor-a",
+            "display_name": "Front left",
+            "location_code": "front_left_wheel",
+            "sample_rate_hz": 800,
+            "firmware_version": "1.2.3",
+        }
+    ]
+    assert len(decoded.sensor_snapshots) == 1
+    snapshot = decoded.sensor_snapshots[0]
+    assert snapshot.sensor_id == "sensor-a"
+    assert snapshot.display_name == "Front left"
+    assert snapshot.location_code == "front_left_wheel"
+    assert snapshot.sample_rate_hz == 800
+    assert snapshot.firmware_version == "1.2.3"
