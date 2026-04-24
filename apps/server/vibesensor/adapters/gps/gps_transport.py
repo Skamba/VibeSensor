@@ -10,6 +10,7 @@ from vibesensor.adapters.gps import gps_transport_updates as _transport_updates
 from vibesensor.adapters.gps import transport_lifecycle as _transport_lifecycle
 from vibesensor.adapters.gps.gps_transport_runner import GPSTransportRunner
 from vibesensor.adapters.gps.gpsd_message_handler import GpsdVersionInfo, NormalizedTpvData
+from vibesensor.shared.timed_observation import TimedScalarObservation, append_timed_observation
 from vibesensor.shared.types.json_types import JsonObject
 
 TpvModeReader = _transport_updates.TpvModeReader
@@ -23,6 +24,7 @@ class GPSTransportSnapshot:
     gps_enabled: bool
     connection_state: str
     speed_snapshot: tuple[float | None, float | None] = (None, None)
+    speed_history: tuple[TimedScalarObservation, ...] = ()
     device_info: str | None = None
     last_fix_mode: int | None = None
     last_epx_m: float | None = None
@@ -157,7 +159,14 @@ class GPSTransportState:
         if speed_f is None:
             self._replace_transport(speed_snapshot=(None, None))
             return
-        self._replace_transport(speed_snapshot=(speed_f, time.monotonic()))
+        now = time.monotonic()
+        history = append_timed_observation(
+            self._state.transport.speed_history,
+            value=speed_f,
+            monotonic_s=now,
+            now_s=now,
+        )
+        self._replace_transport(speed_snapshot=(speed_f, now), speed_history=history)
 
     @property
     def _speed_snapshot(self) -> tuple[float | None, float | None]:
@@ -165,7 +174,15 @@ class GPSTransportState:
 
     @_speed_snapshot.setter
     def _speed_snapshot(self, value: tuple[float | None, float | None]) -> None:
-        self._replace_transport(speed_snapshot=_transport_updates.normalize_speed_snapshot(value))
+        normalized = _transport_updates.normalize_speed_snapshot(value)
+        speed_value, timestamp = normalized
+        history = append_timed_observation(
+            self._state.transport.speed_history,
+            value=speed_value,
+            monotonic_s=timestamp,
+            now_s=time.monotonic(),
+        )
+        self._replace_transport(speed_snapshot=normalized, speed_history=history)
 
     @property
     def last_update_ts(self) -> float | None:

@@ -131,6 +131,7 @@ class _FakeGPSMonitor:
     engine_rpm_source: str | None = None
     speed_status_override: Any = None
     obd_status_override: Any = None
+    context_override: Any = None
 
     @property
     def gps_speed_mps(self) -> float | None:
@@ -154,6 +155,30 @@ class _FakeGPSMonitor:
                 source=str(self.resolved_source or "gps"),
             )
         return SpeedResolution(speed_mps=None, fallback_active=self.fallback_active, source="none")
+
+    def resolve_speed_context_at(self, target_mono_s, *, tolerance_s=None):
+        from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
+
+        if callable(self.context_override):
+            return self.context_override(target_mono_s, tolerance_s=tolerance_s)
+        resolution = self.resolve_speed()
+        selected_source = "manual" if isinstance(self.override_speed_mps, (int, float)) else "gps"
+        gps_speed = self.gps_speed_mps
+        return AlignedSpeedContextSnapshot(
+            selected_speed_source=selected_source,
+            resolved_speed_mps=resolution.speed_mps,
+            resolved_speed_source=resolution.source,
+            resolved_speed_aligned=target_mono_s is not None
+            or resolution.source in {"manual", "fallback_manual"},
+            gps_speed_mps=gps_speed,
+            gps_speed_aligned=target_mono_s is not None and isinstance(gps_speed, (int, float)),
+            measured_engine_rpm=(
+                float(self.engine_rpm) if isinstance(self.engine_rpm, (int, float)) else None
+            ),
+            measured_engine_rpm_source=self.engine_rpm_source,
+            measured_engine_rpm_aligned=target_mono_s is not None
+            and isinstance(self.engine_rpm, (int, float)),
+        )
 
     def status_snapshot(self):
         from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot

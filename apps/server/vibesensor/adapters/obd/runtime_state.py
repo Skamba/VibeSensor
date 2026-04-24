@@ -8,6 +8,7 @@ from vibesensor.adapters.obd.polling import ObdPidPollResult, ObdPollingCadence,
 from vibesensor.adapters.obd.status import ObdRuntimeStatusFacts
 from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.constants.units import KMH_TO_MPS
+from vibesensor.shared.timed_observation import TimedScalarObservation, append_timed_observation
 
 __all__ = ["ObdRuntimeState"]
 
@@ -23,6 +24,7 @@ class ObdRuntimeState:
         "_device_name",
         "_engine_rpm",
         "_engine_rpm_stale_timeout_s",
+        "_engine_rpm_history",
         "_engine_rpm_ts",
         "_initial_reconnect_delay_s",
         "_last_admin_error",
@@ -30,6 +32,7 @@ class ObdRuntimeState:
         "_paired",
         "_rfcomm_channel",
         "_speed_snapshot",
+        "_speed_history",
         "_trusted",
     )
 
@@ -47,12 +50,14 @@ class ObdRuntimeState:
         self._device_mac: str | None = None
         self._device_name: str | None = None
         self._engine_rpm: float | None = None
+        self._engine_rpm_history: tuple[TimedScalarObservation, ...] = ()
         self._engine_rpm_ts: float | None = None
         self._last_admin_error: str | None = None
         self._last_error: str | None = None
         self._paired = False
         self._rfcomm_channel: int | None = None
         self._speed_snapshot: tuple[float | None, float | None] = (None, None)
+        self._speed_history: tuple[TimedScalarObservation, ...] = ()
         self._trusted = False
 
     @property
@@ -68,8 +73,16 @@ class ObdRuntimeState:
         self._speed_snapshot = value
 
     @property
+    def speed_history(self) -> tuple[TimedScalarObservation, ...]:
+        return self._speed_history
+
+    @property
     def speed_mps(self) -> float | None:
         return self._speed_snapshot[0]
+
+    @property
+    def engine_rpm_ts(self) -> float | None:
+        return self._engine_rpm_ts
 
     @property
     def last_error(self) -> str | None:
@@ -101,6 +114,12 @@ class ObdRuntimeState:
         ):
             speed_sample_time = self._completed_at(result.speed, fallback_now=now)
             self._speed_snapshot = (float(result.speed.value) * KMH_TO_MPS, speed_sample_time)
+            self._speed_history = append_timed_observation(
+                self._speed_history,
+                value=float(result.speed.value) * KMH_TO_MPS,
+                monotonic_s=speed_sample_time,
+                now_s=now,
+            )
         if (
             result.rpm.value is not None
             and isinstance(result.rpm.value, NUMERIC_TYPES)
@@ -109,6 +128,12 @@ class ObdRuntimeState:
             rpm_sample_time = self._completed_at(result.rpm, fallback_now=now)
             self._engine_rpm = float(result.rpm.value)
             self._engine_rpm_ts = rpm_sample_time
+            self._engine_rpm_history = append_timed_observation(
+                self._engine_rpm_history,
+                value=float(result.rpm.value),
+                monotonic_s=rpm_sample_time,
+                now_s=now,
+            )
         self._last_error = result.rpm.error or result.speed.error
         if result.connection_lost:
             return
@@ -186,6 +211,10 @@ class ObdRuntimeState:
             reconnect_delay_s=self._current_reconnect_delay,
             polling=polling.snapshot(),
         )
+
+    @property
+    def engine_rpm_history(self) -> tuple[TimedScalarObservation, ...]:
+        return self._engine_rpm_history
 
     @staticmethod
     def _completed_at(result: ObdPidPollResult, *, fallback_now: float) -> float:
