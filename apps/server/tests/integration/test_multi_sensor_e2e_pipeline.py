@@ -144,7 +144,7 @@ def test_multi_sensor_udp_to_report_pipeline(
     run_id = snapshot.run_id
     start_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
-    seq = 1
+    seq_by_sensor = {client_id.hex(): 1 for client_id, _, _ in SENSORS}
 
     for step in range(70):
         speed_kmh = (
@@ -155,9 +155,16 @@ def test_multi_sensor_udp_to_report_pipeline(
         assert wheel_hz > 0
 
         for client_id, _, amplitude in SENSORS:
-            packet = _build_sensor_packet(client_id, amplitude, step, seq, wheel_hz)
+            sensor_id = client_id.hex()
+            packet = _build_sensor_packet(
+                client_id,
+                amplitude,
+                step,
+                seq_by_sensor[sensor_id],
+                wheel_hz,
+            )
             proto._process_datagram(packet, ("127.0.0.1", 5005))
-            seq += 1
+            seq_by_sensor[sensor_id] += 1
 
         active_ids = registry.active_client_ids()
         rates = {
@@ -209,6 +216,12 @@ def test_multi_sensor_udp_to_report_pipeline(
     }
     assert set(by_location) >= _SENSOR_LOCATIONS
     assert max(by_location, key=by_location.get) == "front-left"
+    frame_integrity = {
+        str(check.get("check_key")): str(check.get("state"))
+        for check in (analysis.get("run_suitability") or [])
+        if isinstance(check, dict)
+    }
+    assert frame_integrity.get("SUITABILITY_CHECK_FRAME_INTEGRITY") == "pass"
 
     pdf_bytes = build_report_pdf(build_report_document(prepare_report_input(analysis)))
     assert pdf_bytes.startswith(b"%PDF-")
