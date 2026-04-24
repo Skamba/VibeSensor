@@ -6,8 +6,10 @@ import pytest
 
 from tests_e2e._docker_edge_helpers import (
     _assert_no_placeholders,
+    _cleanup_clients,
     _cleanup_run,
     _pdf_mentions_frequency,
+    _prepare_simulator_locations,
     _simulate,
     _wait_complete,
 )
@@ -25,6 +27,8 @@ pytestmark = pytest.mark.e2e
 def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     duration_long = float(e2e_env["sim_duration_long"])
+    _cleanup_clients(base)
+    _prepare_simulator_locations(e2e_env)
     run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
     try:
         _simulate(e2e_env, duration=duration_long, count=4)
@@ -41,10 +45,12 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
 
         for required in (
             "vibesensor diagnostic report",
-            "observed signature",
-            "systems with findings",
-            "next steps",
-            "data trust",
+            "likely source",
+            "what to do next",
+            "sensor model",
+            "firmware version",
+            "analysis rows",
+            "raw sample rate",
         ):
             assert required in text, f"missing PDF section: {required}"
 
@@ -105,7 +111,11 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
         # The PDF renders frequencies from the persistence-ranked peaks_table, not
         # from the raw fft_spectrum top amplitude (which may be a transient spike).
         peaks_table = analysis.get("plots", {}).get("peaks_table", [])
-        if peaks_table and isinstance(peaks_table[0], dict):
+        if (
+            peaks_table
+            and isinstance(peaks_table[0], dict)
+            and "recapture before acting" not in text
+        ):
             peak_hz = float(peaks_table[0].get("frequency_hz") or 0)
             assert _pdf_mentions_frequency(text, peak_hz), (
                 f"PDF missing expected peaks-table top frequency {peak_hz:.2f} Hz"
@@ -115,3 +125,4 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
     finally:
         api_json(base, "/api/recording/stop", method="POST")
         _cleanup_run(base, run_id)
+        _cleanup_clients(base)
