@@ -412,6 +412,7 @@ def _require_factor_key(value: DiagnosisFactorKey) -> None:
 def _required_factor_key(value: object) -> DiagnosisFactorKey:
     if value not in {
         "raw_backed",
+        "partial_raw_backed",
         "repeated_support",
         "sustained_support",
         "stable_frequency",
@@ -419,6 +420,7 @@ def _required_factor_key(value: object) -> DiagnosisFactorKey:
         "localized_support",
         "clean_signal",
         "summary_only",
+        "raw_replay_incomplete",
         "legacy_context",
         "speed_context_gaps",
         "rpm_context_gaps",
@@ -457,7 +459,7 @@ def _required_factor_severity(value: object) -> DiagnosisFactorSeverity:
 
 
 def _required_data_basis(value: object) -> WholeRunDiagnosisDataBasis:
-    if value not in {"raw_backed", "summary_only"}:
+    if value not in {"raw_backed", "partial_raw_backed", "summary_only"}:
         raise ValueError("data_basis must be a supported whole-run diagnosis data basis")
     return cast(WholeRunDiagnosisDataBasis, value)
 

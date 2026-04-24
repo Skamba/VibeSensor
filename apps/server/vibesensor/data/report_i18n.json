@@ -263,6 +263,10 @@
     "en": "only summary-level evidence was available",
     "nl": "alleen samenvattingsniveau-bewijs was beschikbaar"
   },
+  "REPORT_CONFIDENCE_CAVEAT_RAW_REPLAY_INCOMPLETE": {
+    "en": "raw capture coverage was incomplete for some replay windows",
+    "nl": "de raw-capturedekking was onvolledig voor sommige replayvensters"
+  },
   "REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT": {
     "en": "this run predates whole-run context coverage tracking",
     "nl": "deze run is ouder dan de whole-run contextdekkingsregistratie"
@@ -1683,6 +1687,22 @@
     "en": "Whole-run context coverage was not captured for this persisted run",
     "nl": "Whole-run contextdekking is niet vastgelegd voor deze bewaarde run"
   },
+  "RUN_CONTEXT_WARNING_RAW_REPLAY_INCOMPLETE_TITLE": {
+    "en": "Raw replay coverage was incomplete",
+    "nl": "De dekking van raw replay was onvolledig"
+  },
+  "RUN_CONTEXT_WARNING_RAW_REPLAY_INCOMPLETE_DETAIL": {
+    "en": "Raw capture coverage was incomplete for some replay windows; affected metrics used persisted summary samples. Partial windows: {partial}, missing windows: {missing}, timing gaps: {gaps}, overlaps: {overlaps}, sample-rate mismatches: {mismatches}.",
+    "nl": "De raw-capturedekking was onvolledig voor sommige replayvensters; getroffen metrieken gebruikten persistente samenvattingssamples. Gedeeltelijke vensters: {partial}, ontbrekende vensters: {missing}, timinggaten: {gaps}, overlappen: {overlaps}, samplefrequentiemismatches: {mismatches}."
+  },
+  "RUN_CONTEXT_WARNING_RAW_REPLAY_LEGACY_TITLE": {
+    "en": "Raw replay fell back to persisted summary metrics",
+    "nl": "Raw replay viel terug op persistente samenvattingsmetrieken"
+  },
+  "RUN_CONTEXT_WARNING_RAW_REPLAY_LEGACY_DETAIL": {
+    "en": "Raw capture timing metadata was unavailable for this run, so replay used persisted summary samples instead of guessing raw alignment.",
+    "nl": "Raw-capturetimingmetadata was niet beschikbaar voor deze run, dus replay gebruikte persistente samenvattingssamples in plaats van raw-uitlijning te raden."
+  },
   "WORKSHOP_SUMMARY": {
     "en": "Workshop Summary",
     "nl": "Werkplaatsoverzicht"
@@ -1994,6 +2014,10 @@
   "REPORT_EVIDENCE_BASIS_RAW": {
     "en": "Raw-backed replay ({samples} analyzed samples)",
     "nl": "Raw-ondersteunde replay ({samples} geanalyseerde samples)"
+  },
+  "REPORT_EVIDENCE_BASIS_PARTIAL_RAW": {
+    "en": "Partially raw-backed replay ({samples} raw-backed samples; summary fallback used where coverage was incomplete)",
+    "nl": "Gedeeltelijk raw-ondersteunde replay ({samples} raw-ondersteunde samples; samenvattingsfallback gebruikt waar de dekking onvolledig was)"
   },
   "REPORT_EVIDENCE_BASIS_SUMMARY": {
     "en": "Summary-only fallback",

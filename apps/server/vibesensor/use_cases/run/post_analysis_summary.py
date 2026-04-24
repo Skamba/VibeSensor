@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from vibesensor.shared.boundaries.analysis_payloads import analysis_result_to_summary
+from vibesensor.shared.boundaries.summary_fields.warnings import summary_warning_payloads
 from vibesensor.shared.boundaries.summary_serialization._location_intensity import (
     serialize_location_intensity_rows,
 )
@@ -66,11 +67,26 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "analyzed_sample_count": len(run.samples),
         "total_sample_count": run.total_sample_count,
         "sampling_method": "full" if run.stride == 1 else f"stride_{run.stride}",
-        "raw_capture_available": run.raw_capture_available,
-        "raw_backed_sample_count": run.raw_backed_sample_count,
-        "raw_capture_mode": "raw_backed" if run.raw_backed_sample_count > 0 else "summary_only",
+        "raw_capture_available": run.raw_replay.raw_capture_available,
+        "raw_backed_sample_count": run.raw_replay.raw_backed_sample_count,
+        "raw_capture_mode": run.raw_replay.raw_capture_mode,
+        "raw_replay_window_count": run.raw_replay.replay_window_count,
+        "raw_replay_complete_window_count": run.raw_replay.complete_window_count,
+        "raw_replay_partial_window_count": run.raw_replay.partial_window_count,
+        "raw_replay_missing_window_count": run.raw_replay.missing_window_count,
+        "raw_replay_gap_count": run.raw_replay.gap_count,
+        "raw_replay_overlap_count": run.raw_replay.overlap_count,
+        "raw_replay_dropped_chunk_count": run.raw_replay.dropped_chunk_count,
+        "raw_replay_sample_rate_mismatch_count": run.raw_replay.sample_rate_mismatch_count,
+        "raw_replay_unanchored_sensor_count": run.raw_replay.unanchored_sensor_count,
+        "raw_replay_confidence": run.raw_replay.replay_confidence,
     }
     summary_payload["analysis_metadata"] = payload_object_from_json(analysis_metadata)
+    if run.raw_replay.warnings:
+        existing_warnings = summary_payload.get("warnings")
+        warnings_payload = list(existing_warnings) if isinstance(existing_warnings, list) else []
+        warnings_payload.extend(summary_warning_payloads(run.raw_replay.warnings))
+        summary_payload["warnings"] = warnings_payload
 
     sample_rate_hz = _post_analysis_sample_rate_hz(run)
     if sample_rate_hz is not None and run.total_sample_count < max(

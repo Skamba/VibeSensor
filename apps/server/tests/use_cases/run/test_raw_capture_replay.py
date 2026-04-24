@@ -7,6 +7,7 @@ import numpy as np
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
 from vibesensor.shared.types.raw_capture import (
+    RawCaptureChunkIndex,
     RawCaptureManifest,
     RawCaptureSensorData,
     RawCaptureSensorManifest,
@@ -62,6 +63,7 @@ def _raw_capture(run_id: str) -> RawRunCapture:
         total_samples=fft_n,
         total_bytes=int(samples_i16.nbytes),
         created_at="2025-01-01T00:00:01Z",
+        run_start_monotonic_us=1_000_000,
     )
     return RawRunCapture(
         manifest=manifest,
@@ -69,7 +71,14 @@ def _raw_capture(run_id: str) -> RawRunCapture:
             RawCaptureSensorData(
                 manifest=sensor_manifest,
                 samples_i16=samples_i16,
-                chunks=(),
+                chunks=(
+                    RawCaptureChunkIndex(
+                        sample_start=0,
+                        sample_count=fft_n,
+                        t0_us=1_000_000,
+                        byte_offset=0,
+                    ),
+                ),
             ),
         ),
     )

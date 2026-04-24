@@ -84,7 +84,12 @@ class HistoryRawCaptureStore:
             stream.first_t0_us = chunk.t0_us if stream.first_t0_us is None else stream.first_t0_us
             stream.last_t0_us = chunk.t0_us
 
-    def finalize_run(self, run_id: str) -> RawCaptureManifest | None:
+    def finalize_run(
+        self,
+        run_id: str,
+        *,
+        run_start_monotonic_us: int | None = None,
+    ) -> RawCaptureManifest | None:
         with self._lock:
             streams = self._open_runs.pop(run_id, None)
         if not streams:
@@ -118,6 +123,7 @@ class HistoryRawCaptureStore:
             total_samples=total_samples,
             total_bytes=total_bytes,
             created_at=utc_now_iso(),
+            run_start_monotonic_us=run_start_monotonic_us,
         )
         run_dir = self.run_dir(run_id)
         run_dir.mkdir(parents=True, exist_ok=True)

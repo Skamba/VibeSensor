@@ -151,10 +151,19 @@ class _HistoryDBRunLifecycleMixin:
     async def aappend_raw_capture_chunk(self, run_id: str, chunk: RawCaptureChunk) -> None:
         await asyncio.to_thread(self._raw_capture_store.append_chunk, run_id, chunk)
 
-    async def afinalize_raw_capture(self, run_id: str) -> RawCaptureManifest | None:
+    async def afinalize_raw_capture(
+        self,
+        run_id: str,
+        *,
+        run_start_monotonic_us: int | None = None,
+    ) -> RawCaptureManifest | None:
         manifest = cast(
             RawCaptureManifest | None,
-            await asyncio.to_thread(self._raw_capture_store.finalize_run, run_id),
+            await asyncio.to_thread(
+                self._raw_capture_store.finalize_run,
+                run_id,
+                run_start_monotonic_us=run_start_monotonic_us,
+            ),
         )
         if manifest is None:
             return None

@@ -849,7 +849,7 @@ class ReportSummaryNormalizer:
 
     def _diagnosis_data_basis(self, raw_value: object) -> WholeRunDiagnosisDataBasis | None:
         value = text_or_none(raw_value)
-        if value not in {"raw_backed", "summary_only"}:
+        if value not in {"raw_backed", "partial_raw_backed", "summary_only"}:
             return None
         return cast(WholeRunDiagnosisDataBasis, value)
 
@@ -864,6 +864,7 @@ class ReportSummaryNormalizer:
             "localized_support",
             "clean_signal",
             "summary_only",
+            "raw_replay_incomplete",
             "legacy_context",
             "speed_context_gaps",
             "rpm_context_gaps",
