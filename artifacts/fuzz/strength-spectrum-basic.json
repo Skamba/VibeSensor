@@ -1,0 +1,21 @@
+{
+  "target": "strength",
+  "notes": "Replay a truncated multi-axis spectrum with one dominant in-band peak and verify the top strength peak stays stable.",
+  "expect": {
+    "kind": "success",
+    "peak_hz": 2.0
+  },
+  "case": {
+    "axis_spectra": [
+      [0.0, 0.12, 0.92, 0.18, 0.08],
+      [0.0, 0.18, 0.81, 0.11],
+      [0.0, 0.07, 0.74, 0.15, 0.05, 0.02]
+    ],
+    "axis_count_for_mean": 3,
+    "freq_step_hz": 1.0,
+    "start_hz": 0.0,
+    "center_idx": 2,
+    "bandwidth_hz": 1.2,
+    "epsilon_g": 1e-09
+  }
+}
