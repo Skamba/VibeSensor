@@ -10,8 +10,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.infra.processing.fft import noise_floor
 from vibesensor.shared.constants.analysis import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
+from vibesensor.shared.fft_analysis import noise_floor
 from vibesensor.strength_bands import bucket_for_strength
 
 

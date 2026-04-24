@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from vibesensor.infra.processing import MAX_CLIENT_SAMPLE_RATE_HZ, SignalProcessor
-from vibesensor.infra.processing.fft import noise_floor
+from vibesensor.shared.fft_analysis import noise_floor
 
 
 def _make_processor(**kwargs) -> SignalProcessor:
@@ -250,7 +250,7 @@ def test_multi_spectrum_payload_skips_allclose_for_shared_freq_object(
 def test_multi_spectrum_payload_reuses_shared_freq_conversion_for_matching_clients(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from vibesensor.infra.processing.fft import float_list as real_float_list
+    from vibesensor.shared.fft_analysis import float_list as real_float_list
 
     proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
     samples = _random_samples(300)
