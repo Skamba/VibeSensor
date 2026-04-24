@@ -40,6 +40,7 @@ def _build_projector() -> tuple[LiveWsPayloadProjector, MagicMock, MagicMock, Ma
     processor = MagicMock()
     processor.clients_with_recent_data.return_value = ["aaaaaaaaaaaa"]
     processor.multi_spectrum_payload.return_value = {
+        "frame_fingerprint": "aaaaaaaaaaaa:0:0:0",
         "freq": [],
         "clients": {"aaaaaaaaaaaa": {}},
     }
@@ -72,6 +73,7 @@ def test_build_shared_payload_projects_live_rows_without_broadcaster() -> None:
     assert payload["clients"][0]["name"] == "front-left"
     assert payload["rotational_speeds"]["basis_speed_source"] == "gps"
     assert "spectra" in payload
+    assert payload["spectra"]["frame_fingerprint"] == "aaaaaaaaaaaa:0:0:0"
     registry.client_snapshots.assert_called_once_with(
         now=None,
         now_mono=None,

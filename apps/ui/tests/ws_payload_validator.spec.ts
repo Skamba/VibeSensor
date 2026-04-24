@@ -47,6 +47,7 @@ describe("validateLiveWsPayload", () => {
       validateLiveWsPayload({
         ...basePayload,
         spectra: {
+          frame_fingerprint: "sensor-1:0:0:1",
           freq: [10, 20, 30],
           clients: {
             "sensor-1": {
@@ -59,6 +60,7 @@ describe("validateLiveWsPayload", () => {
     ).toMatchObject({
       schema_version: "1",
       clients: [{ id: "sensor-1" }],
+      spectra: { frame_fingerprint: "sensor-1:0:0:1" },
     });
   });
 
@@ -132,5 +134,16 @@ describe("validateLiveWsPayload", () => {
         },
       }),
     ).toThrow(/Invalid websocket payload: \/rotational_speeds\/order_bands\/0\/tolerance/);
+  });
+
+  test("reports malformed spectrum frame fingerprint", () => {
+    expect(() =>
+      validateLiveWsPayload({
+        ...basePayload,
+        spectra: {
+          frame_fingerprint: 123,
+        },
+      }),
+    ).toThrow(/Invalid websocket payload: \/spectra\/frame_fingerprint/);
   });
 });

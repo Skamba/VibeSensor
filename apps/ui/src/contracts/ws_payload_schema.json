@@ -359,6 +359,10 @@
           "title": "Clients",
           "type": "object"
         },
+        "frame_fingerprint": {
+          "title": "Frame Fingerprint",
+          "type": "string"
+        },
         "freq": {
           "items": {
             "type": "number"

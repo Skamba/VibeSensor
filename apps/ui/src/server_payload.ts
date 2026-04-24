@@ -2,7 +2,12 @@ import {
   EXPECTED_SCHEMA_VERSION,
   type LiveWsPayload,
 } from "./contracts/ws_payload_types";
-import type { AdaptedClient, AdaptedPayload, SpectrumClientData } from "./transport/live_models";
+import type {
+  AdaptedClient,
+  AdaptedPayload,
+  SpectrumClientData,
+  SpectrumFrameData,
+} from "./transport/live_models";
 import { validateLiveWsPayload } from "./ws_payload_validator";
 
 function hasCompleteSpectrumData(
@@ -33,7 +38,13 @@ function adaptSpectra(spectra: LiveWsPayload["spectra"]): AdaptedPayload["spectr
     };
   }
 
-  return { clients: adaptedClients };
+  const adaptedSpectra: SpectrumFrameData = {
+    clients: adaptedClients,
+  };
+  if (typeof spectra.frame_fingerprint === "string") {
+    adaptedSpectra.frame_fingerprint = spectra.frame_fingerprint;
+  }
+  return adaptedSpectra;
 }
 
 let schemaWarningLogged = false;
