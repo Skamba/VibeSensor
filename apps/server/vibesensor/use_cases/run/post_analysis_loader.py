@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from math import ceil
 
@@ -11,6 +12,7 @@ from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 _MAX_POST_ANALYSIS_SAMPLES = 12_000
+_EVENT_PRESERVING_SAMPLING_METHOD = "event_preserving"
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +23,9 @@ class LoadedPostAnalysisRun:
     samples: list[SensorFrame]
     total_sample_count: int
     stride: int
+    sampling_method: str = "full"
+    evenly_spaced_sample_count: int = 0
+    event_sample_count: int = 0
     context_samples: list[SensorFrame] | None = None
     raw_capture: RawRunCapture | None = None
     raw_capture_manifest: RawCaptureManifest | None = None
@@ -41,6 +46,15 @@ class EmptyPostAnalysisSamples:
 PostAnalysisLoadResult = (
     LoadedPostAnalysisRun | MissingPostAnalysisMetadata | EmptyPostAnalysisSamples
 )
+
+
+@dataclass(frozen=True, slots=True)
+class _PostAnalysisSampleSelection:
+    samples: list[SensorFrame]
+    stride: int
+    sampling_method: str = "full"
+    evenly_spaced_sample_count: int = 0
+    event_sample_count: int = 0
 
 
 def _sample_stride(total_sample_count: int) -> int:
@@ -75,33 +89,21 @@ def load_post_analysis_run(
             if callable(get_raw_capture_manifest):
                 raw_capture_manifest = await get_raw_capture_manifest(run_id)
 
-        stride = _sample_stride(total_sample_count)
-        samples: list[SensorFrame] = []
-        if stored_run is not None:
-            async for batch in db.aiter_run_samples(run_id, batch_size=1024, stride=stride):
-                samples.extend(batch)
-        else:
-            async for batch in db.aiter_run_samples(run_id, batch_size=1024):
-                samples.extend(batch)
+        full_samples: list[SensorFrame] = []
+        async for batch in db.aiter_run_samples(run_id, batch_size=1024):
+            full_samples.extend(batch)
+        samples = full_samples
         if total_sample_count <= 0:
-            total_sample_count = len(samples)
+            total_sample_count = len(full_samples)
         if not samples:
             return EmptyPostAnalysisSamples(
                 run_id=run_id,
                 error_message="No samples collected during run",
             )
+        sample_selection = _select_post_analysis_samples(full_samples)
         context_samples: list[SensorFrame] | None = None
         if raw_capture_manifest is not None:
-            if stride == 1:
-                context_samples = list(samples)
-            else:
-                get_run_samples = getattr(db, "aget_run_samples", None)
-                if callable(get_run_samples):
-                    context_samples = list(await get_run_samples(run_id))
-                else:
-                    context_samples = []
-                    async for batch in db.aiter_run_samples(run_id, batch_size=1024):
-                        context_samples.extend(batch)
+            context_samples = list(full_samples)
         load_raw_capture = getattr(db, "aload_raw_capture", None)
         raw_capture = await load_raw_capture(run_id) if callable(load_raw_capture) else None
 
@@ -109,10 +111,13 @@ def load_post_analysis_run(
             run_id=run_id,
             metadata=metadata,
             language=metadata.language or "en",
-            samples=samples,
+            samples=sample_selection.samples,
             context_samples=context_samples,
             total_sample_count=total_sample_count,
-            stride=stride,
+            stride=sample_selection.stride,
+            sampling_method=sample_selection.sampling_method,
+            evenly_spaced_sample_count=sample_selection.evenly_spaced_sample_count,
+            event_sample_count=sample_selection.event_sample_count,
             raw_capture=raw_capture,
             raw_capture_manifest=raw_capture_manifest,
         )
@@ -123,3 +128,99 @@ def load_post_analysis_run(
     import asyncio as _asyncio
 
     return _asyncio.run(_aload())
+
+
+def _select_post_analysis_samples(
+    samples: Sequence[SensorFrame],
+) -> _PostAnalysisSampleSelection:
+    total_sample_count = len(samples)
+    stride = _sample_stride(total_sample_count)
+    if stride <= 1 or total_sample_count <= _MAX_POST_ANALYSIS_SAMPLES:
+        return _PostAnalysisSampleSelection(samples=list(samples), stride=1)
+    event_budget = max(1, _MAX_POST_ANALYSIS_SAMPLES // 3)
+    evenly_spaced_budget = max(1, _MAX_POST_ANALYSIS_SAMPLES - event_budget)
+    evenly_spaced_indices = set(
+        _evenly_spaced_indices(total_sample_count, selection_count=evenly_spaced_budget)
+    )
+    event_indices = _event_preserving_indices(
+        samples,
+        bucket_count=event_budget,
+        exclude=evenly_spaced_indices,
+    )
+    selected_indices = sorted(evenly_spaced_indices | set(event_indices))
+    if len(selected_indices) < _MAX_POST_ANALYSIS_SAMPLES:
+        for index in _evenly_spaced_indices(
+            total_sample_count,
+            selection_count=min(total_sample_count, _MAX_POST_ANALYSIS_SAMPLES * 3),
+        ):
+            if index in evenly_spaced_indices or index in event_indices:
+                continue
+            selected_indices.append(index)
+            if len(selected_indices) >= _MAX_POST_ANALYSIS_SAMPLES:
+                break
+        selected_indices.sort()
+    return _PostAnalysisSampleSelection(
+        samples=[samples[index] for index in selected_indices[:_MAX_POST_ANALYSIS_SAMPLES]],
+        stride=stride,
+        sampling_method=_EVENT_PRESERVING_SAMPLING_METHOD,
+        evenly_spaced_sample_count=len(evenly_spaced_indices),
+        event_sample_count=len(set(event_indices) - evenly_spaced_indices),
+    )
+
+
+def _evenly_spaced_indices(total_sample_count: int, *, selection_count: int) -> list[int]:
+    if total_sample_count <= 0 or selection_count <= 0:
+        return []
+    if selection_count >= total_sample_count:
+        return list(range(total_sample_count))
+    if selection_count == 1:
+        return [0]
+    last_index = total_sample_count - 1
+    return sorted(
+        {
+            min(last_index, round((last_index * step) / float(selection_count - 1)))
+            for step in range(selection_count)
+        }
+    )
+
+
+def _event_preserving_indices(
+    samples: Sequence[SensorFrame],
+    *,
+    bucket_count: int,
+    exclude: set[int],
+) -> list[int]:
+    if bucket_count <= 0:
+        return []
+    total_sample_count = len(samples)
+    selected: list[int] = []
+    for bucket_index in range(bucket_count):
+        start = (bucket_index * total_sample_count) // bucket_count
+        end = ((bucket_index + 1) * total_sample_count) // bucket_count
+        best_index: int | None = None
+        best_score: tuple[float, float, float] | None = None
+        for sample_index in range(start, end):
+            if sample_index in exclude:
+                continue
+            score = _sample_event_score(samples[sample_index])
+            if best_score is None or score > best_score:
+                best_index = sample_index
+                best_score = score
+        if best_index is not None:
+            selected.append(best_index)
+    return selected
+
+
+def _sample_event_score(sample: SensorFrame) -> tuple[float, float, float]:
+    strength_db = (
+        float(sample.vibration_strength_db)
+        if sample.vibration_strength_db is not None
+        else float("-inf")
+    )
+    peak_amp_g = (
+        float(sample.strength_peak_amp_g)
+        if sample.strength_peak_amp_g is not None
+        else float("-inf")
+    )
+    top_peak_amp_g = max((peak.amp for peak in sample.top_peaks), default=float("-inf"))
+    return (strength_db, peak_amp_g, top_peak_amp_g)

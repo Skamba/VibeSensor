@@ -25,6 +25,9 @@ class PostAnalysisRunInput:
     language: str
     total_sample_count: int
     stride: int
+    sampling_method: str
+    evenly_spaced_sample_count: int
+    event_sample_count: int
     raw_capture_available: bool
     raw_backed_sample_count: int
     raw_replay: RawReplaySummary
@@ -62,6 +65,9 @@ def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunI
         language=loaded.language,
         total_sample_count=loaded.total_sample_count,
         stride=loaded.stride,
+        sampling_method=loaded.sampling_method,
+        evenly_spaced_sample_count=loaded.evenly_spaced_sample_count,
+        event_sample_count=loaded.event_sample_count,
         raw_capture_available=replay_result.summary.raw_capture_available,
         raw_backed_sample_count=replay_result.summary.raw_backed_sample_count,
         raw_replay=replay_result.summary,
