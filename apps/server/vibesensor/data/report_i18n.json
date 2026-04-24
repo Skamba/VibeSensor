@@ -1695,6 +1695,14 @@
     "en": "Raw capture coverage was incomplete for some replay windows; affected metrics used persisted summary samples. Partial windows: {partial}, missing windows: {missing}, timing gaps: {gaps}, overlaps: {overlaps}, sample-rate mismatches: {mismatches}.",
     "nl": "De raw-capturedekking was onvolledig voor sommige replayvensters; getroffen metrieken gebruikten persistente samenvattingssamples. Gedeeltelijke vensters: {partial}, ontbrekende vensters: {missing}, timinggaten: {gaps}, overlappen: {overlaps}, samplefrequentiemismatches: {mismatches}."
   },
+  "RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_TITLE": {
+    "en": "Raw capture dropped chunks before persistence",
+    "nl": "Raw capture verloor chunks voor persistente opslag"
+  },
+  "RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_DETAIL": {
+    "en": "Raw capture dropped {count} chunk(s) before persistence ({queue_overflow} queue overflows, {invalid} invalid chunks, {write_errors} write errors); affected metrics used persisted summary samples where needed.",
+    "nl": "Raw capture verloor {count} chunk(s) voor persistente opslag ({queue_overflow} wachtrijoverlopen, {invalid} ongeldige chunks, {write_errors} schrijffouten); getroffen metrieken gebruikten waar nodig persistente samenvattingssamples."
+  },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_TITLE": {
     "en": "Raw replay used persisted sample timing for some windows",
     "nl": "Raw replay gebruikte persistente sampletiming voor sommige vensters"

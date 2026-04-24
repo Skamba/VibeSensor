@@ -11,7 +11,7 @@ from test_support.history_db_lifecycle import (
     create_recording_run,
 )
 
-from vibesensor.shared.types.raw_capture import RawCaptureChunk
+from vibesensor.shared.types.raw_capture import RawCaptureChunk, RawCaptureLossStats
 
 
 def _append_chunk(
@@ -33,11 +33,18 @@ def _append_chunk(
     db.run_repository._run_sync(db.run_repository.aappend_raw_capture_chunk(run_id, chunk))
 
 
-def _finalize_raw_capture(db, run_id: str, *, run_start_monotonic_us: int | None = None):
+def _finalize_raw_capture(
+    db,
+    run_id: str,
+    *,
+    run_start_monotonic_us: int | None = None,
+    sensor_losses: dict[str, RawCaptureLossStats] | None = None,
+):
     return db.run_repository._run_sync(
         db.run_repository.afinalize_raw_capture(
             run_id,
             run_start_monotonic_us=run_start_monotonic_us,
+            sensor_losses=sensor_losses,
         )
     )
 
@@ -97,6 +104,46 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(tmp_path: Path) ->
     assert sensor.manifest.sample_count == 3
     assert len(sensor.chunks) == 2
     assert np.array_equal(sensor.samples_i16, np.vstack([first, second]))
+
+
+def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(tmp_path: Path) -> None:
+    db = build_history_db(tmp_path)
+    create_recording_run(db, "run-losses")
+    samples = np.asarray([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
+
+    _append_chunk(db, run_id="run-losses", client_id="sensor-a", t0_us=1000, samples=samples)
+    manifest = _finalize_raw_capture(
+        db,
+        "run-losses",
+        sensor_losses={
+            "sensor-a": RawCaptureLossStats(queue_overflow_chunk_count=2),
+            "sensor-b": RawCaptureLossStats(
+                invalid_chunk_count=1,
+                write_error_chunk_count=1,
+            ),
+        },
+    )
+
+    assert manifest is not None
+    assert manifest.total_dropped_chunk_count == 4
+    assert manifest.losses.queue_overflow_chunk_count == 2
+    assert manifest.losses.invalid_chunk_count == 1
+    assert manifest.losses.write_error_chunk_count == 1
+    assert manifest.sensor_loss("sensor-a") is not None
+    assert manifest.sensor_loss("sensor-a").losses.queue_overflow_chunk_count == 2
+    assert manifest.sensor_loss("sensor-b") is not None
+    assert manifest.sensor_loss("sensor-b").losses.write_error_chunk_count == 1
+
+    db.lifecycle.close()
+    reopened = build_history_db(tmp_path)
+    stored = reopened.run_repository.get_run("run-losses")
+
+    assert stored is not None
+    assert stored.raw_capture_manifest is not None
+    assert stored.raw_capture_manifest.total_dropped_chunk_count == 4
+    assert stored.raw_capture_manifest.losses.invalid_chunk_count == 1
+    assert stored.raw_capture_manifest.sensor_loss("sensor-b") is not None
+    assert stored.raw_capture_manifest.sensor_loss("sensor-b").losses.invalid_chunk_count == 1
 
 
 def test_delete_run_removes_raw_capture_artifacts(tmp_path: Path) -> None:

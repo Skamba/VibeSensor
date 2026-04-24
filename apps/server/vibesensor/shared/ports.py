@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, SpeedSourceKind
@@ -17,6 +17,7 @@ from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
+    RawCaptureLossStats,
     RawCaptureManifest,
     RawCaptureSensorRange,
     RawRunCapture,
@@ -119,6 +120,7 @@ class RunPersistence(Protocol):
         run_id: str,
         *,
         run_start_monotonic_us: int | None = None,
+        sensor_losses: Mapping[str, RawCaptureLossStats] | None = None,
     ) -> RawCaptureManifest | None: ...
 
     async def aget_raw_capture_manifest(self, run_id: str) -> RawCaptureManifest | None: ...

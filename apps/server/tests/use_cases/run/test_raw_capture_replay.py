@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 
 import numpy as np
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
+from vibesensor.shared.run_context_warning import WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunkIndex,
+    RawCaptureLossStats,
     RawCaptureManifest,
     RawCaptureSensorData,
+    RawCaptureSensorLossStats,
     RawCaptureSensorManifest,
     RawRunCapture,
 )
@@ -115,6 +119,54 @@ def test_build_post_analysis_input_replays_raw_backed_strength_metrics() -> None
     assert rebuilt.dominant_freq_hz is not None
     assert 30.0 <= rebuilt.dominant_freq_hz <= 70.0
     assert rebuilt.top_peaks
+
+
+def test_build_post_analysis_input_surfaces_persisted_dropped_chunk_counts() -> None:
+    raw_capture = _raw_capture("run-drops")
+    loss_stats = RawCaptureLossStats(
+        queue_overflow_chunk_count=2,
+        invalid_chunk_count=1,
+    )
+    raw_capture = RawRunCapture(
+        manifest=replace(
+            raw_capture.manifest,
+            sensor_losses=(RawCaptureSensorLossStats(client_id="sensor-a", losses=loss_stats),),
+            losses=loss_stats,
+        ),
+        sensors=raw_capture.sensors,
+    )
+    loaded = LoadedPostAnalysisRun(
+        run_id="run-drops",
+        metadata=_metadata("run-drops"),
+        language="en",
+        samples=sensor_frames_from_mappings(
+            [
+                {
+                    "client_id": "sensor-a",
+                    "t_s": 64 / 800,
+                    "sample_rate_hz": 800,
+                    "vibration_strength_db": 0.0,
+                    "dominant_freq_hz": 0.0,
+                }
+            ]
+        ),
+        raw_capture=raw_capture,
+        total_sample_count=1,
+        stride=1,
+    )
+
+    result = build_post_analysis_input(loaded)
+
+    assert result.raw_backed_sample_count == 1
+    assert result.raw_replay.dropped_chunk_count == 3
+    assert result.raw_replay.queue_overflow_chunk_count == 2
+    assert result.raw_replay.invalid_chunk_count == 1
+    assert result.raw_replay.write_error_chunk_count == 0
+    assert result.raw_replay.replay_confidence == "partial"
+    assert result.raw_replay.raw_capture_mode == "partial_raw_backed"
+    assert WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS in [
+        warning.code for warning in result.raw_replay.warnings
+    ]
 
 
 def test_build_post_analysis_input_falls_back_when_raw_capture_missing() -> None:
