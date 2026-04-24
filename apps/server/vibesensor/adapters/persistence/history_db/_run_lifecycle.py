@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Mapping
 from contextlib import AbstractAsyncContextManager
 from datetime import UTC, datetime, timedelta
 from typing import TypeVar, cast
@@ -26,7 +26,11 @@ from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_obje
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.shared.types.raw_capture import RawCaptureChunk, RawCaptureManifest
+from vibesensor.shared.types.raw_capture import (
+    RawCaptureChunk,
+    RawCaptureLossStats,
+    RawCaptureManifest,
+)
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
@@ -156,6 +160,7 @@ class _HistoryDBRunLifecycleMixin:
         run_id: str,
         *,
         run_start_monotonic_us: int | None = None,
+        sensor_losses: Mapping[str, RawCaptureLossStats] | None = None,
     ) -> RawCaptureManifest | None:
         manifest = cast(
             RawCaptureManifest | None,
@@ -163,6 +168,7 @@ class _HistoryDBRunLifecycleMixin:
                 self._raw_capture_store.finalize_run,
                 run_id,
                 run_start_monotonic_us=run_start_monotonic_us,
+                sensor_losses=sensor_losses,
             ),
         )
         if manifest is None:
