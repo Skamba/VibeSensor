@@ -9,7 +9,9 @@ import pytest
 
 from vibesensor.vibration_strength import (
     _combined_spectrum_amp_g_array,
+    _noise_floor_amp_p20_g_aligned,
     combined_spectrum_amp_g,
+    compute_vibration_strength_db,
     median,
     noise_floor_amp_p20_g,
     percentile,
@@ -129,6 +131,36 @@ class TestNoiseFloorAmpP20G:
         result = noise_floor_amp_p20_g(combined_spectrum_amp_g=[-1.0, -2.0, 0.01, 0.02])
         # Only non-negative finite values are used
         assert result >= 0.0
+
+    def test_aligned_helper_skips_first_bin_only_when_dc_is_present(self) -> None:
+        with_dc = _noise_floor_amp_p20_g_aligned(
+            freq_hz=np.array([0.0, 5.0, 6.0, 7.0, 8.0], dtype=np.float64),
+            combined_spectrum_amp_g=np.array([100.0, 0.01, 0.02, 0.04, 0.08], dtype=np.float64),
+        )
+        without_dc = _noise_floor_amp_p20_g_aligned(
+            freq_hz=np.array([5.0, 6.0, 7.0, 8.0], dtype=np.float64),
+            combined_spectrum_amp_g=np.array([0.01, 0.02, 0.04, 0.08], dtype=np.float64),
+        )
+
+        expected = float(np.quantile(np.array([0.01, 0.02, 0.04, 0.08], dtype=np.float64), 0.20))
+        assert with_dc == pytest.approx(expected)
+        assert without_dc == pytest.approx(expected)
+
+    def test_compute_vibration_strength_preserves_first_in_band_noise_bin(self) -> None:
+        freq_hz = [5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
+        combined = [0.001, 0.05, 0.02, 0.02, 0.02, 0.30]
+
+        result = compute_vibration_strength_db(
+            freq_hz=freq_hz,
+            combined_spectrum_amp_g_values=combined,
+            peak_bandwidth_hz=0.5,
+            peak_separation_hz=0.5,
+            top_n=3,
+        )
+
+        assert result["top_peaks"]
+        assert result["top_peaks"][0]["hz"] == pytest.approx(10.0)
+        assert result["noise_floor_amp_g"] == pytest.approx(0.02)
 
 
 # -- relative_level_db_scalar --------------------------------------------------
