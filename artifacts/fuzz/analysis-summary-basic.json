@@ -1,0 +1,84 @@
+{
+  "target": "analysis",
+  "notes": "Replay a small persisted-summary corpus through summarize_run_data() and assert the typed summary contract still holds.",
+  "expect": {
+    "kind": "success",
+    "rows": 3
+  },
+  "case": {
+    "metadata": {
+      "run_id": "fuzz-analysis-replay",
+      "start_time_utc": "2026-01-01T12:00:00Z",
+      "end_time_utc": "2026-01-01T12:00:03Z",
+      "sensor_model": "ADXL345",
+      "raw_sample_rate_hz": 800,
+      "feature_interval_s": 1.0,
+      "fft_window_size_samples": 256,
+      "language": "en",
+      "incomplete_for_order_analysis": false,
+      "tire_width_mm": 225.0,
+      "tire_aspect_pct": 45.0,
+      "rim_in": 17.0,
+      "final_drive_ratio": 3.2,
+      "current_gear_ratio": 1.0
+    },
+    "lang": "en",
+    "include_samples": false,
+    "samples": [
+      {
+        "client_id": "fl-wheel",
+        "client_name": "Front Left Wheel",
+        "location": "front_left_wheel",
+        "t_s": 0.0,
+        "speed_kmh": 45.0,
+        "vibration_strength_db": 22.0,
+        "strength_bucket": "l2",
+        "top_peaks": [
+          {
+            "hz": 13.2,
+            "amp": 0.042
+          }
+        ],
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.01,
+        "accel_z_g": 0.98
+      },
+      {
+        "client_id": "fl-wheel",
+        "client_name": "Front Left Wheel",
+        "location": "front_left_wheel",
+        "t_s": 1.0,
+        "speed_kmh": 46.5,
+        "vibration_strength_db": 24.5,
+        "strength_bucket": "l2",
+        "top_peaks": [
+          {
+            "hz": 13.0,
+            "amp": 0.048
+          }
+        ],
+        "accel_x_g": 0.03,
+        "accel_y_g": 0.01,
+        "accel_z_g": 0.99
+      },
+      {
+        "client_id": "fl-wheel",
+        "client_name": "Front Left Wheel",
+        "location": "front_left_wheel",
+        "t_s": 2.0,
+        "speed_kmh": 47.0,
+        "vibration_strength_db": 23.5,
+        "strength_bucket": "l2",
+        "top_peaks": [
+          {
+            "hz": 13.1,
+            "amp": 0.045
+          }
+        ],
+        "accel_x_g": 0.01,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.97
+      }
+    ]
+  }
+}
