@@ -20,6 +20,7 @@ from vibesensor.infra.processing.models import (
     MetricsSnapshot,
     ProcessorConfig,
 )
+from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.payload_types import (
     IntakeStatsPayload,
 )
@@ -106,6 +107,9 @@ class SignalBufferStore:
 
     def latest_sample_rate_hz(self, client_id: str) -> int | None:
         return self._snapshot.latest_sample_rate_hz(client_id)
+
+    def latest_analysis_time_range(self, client_id: str) -> AnalysisTimeRange | None:
+        return self._snapshot.latest_analysis_time_range(client_id)
 
     def latest_metrics(self, client_id: str) -> ClientMetrics:
         """Return the most recent computed metrics for *client_id*."""

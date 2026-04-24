@@ -43,3 +43,6 @@ class SensorFrame:
     strength_floor_amp_g: float | None
     frames_dropped_total: int
     queue_overflow_drops: int
+    analysis_window_start_us: int | None = None
+    analysis_window_end_us: int | None = None
+    analysis_window_synced: bool | None = None

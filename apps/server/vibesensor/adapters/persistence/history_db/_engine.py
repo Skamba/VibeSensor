@@ -353,13 +353,19 @@ class SQLiteHistoryEngine:
             await self._migrate_v11_to_v12()
             await self._migrate_v12_to_v13()
             await self._migrate_v13_to_v14()
+            await self._migrate_v14_to_v15()
             return
         if version == 12:
             await self._migrate_v12_to_v13()
             await self._migrate_v13_to_v14()
+            await self._migrate_v14_to_v15()
             return
         if version == 13:
             await self._migrate_v13_to_v14()
+            await self._migrate_v14_to_v15()
+            return
+        if version == 14:
+            await self._migrate_v14_to_v15()
             return
         if version > SCHEMA_VERSION:
             raise RuntimeError(
@@ -418,6 +424,29 @@ class SQLiteHistoryEngine:
             async with self._cursor() as cur:
                 await cur.execute(
                     "ALTER TABLE runs ADD COLUMN whole_run_artifact_manifest_json TEXT"
+                )
+        async with self._cursor() as cur:
+            await cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+
+    async def _migrate_v14_to_v15(self) -> None:
+        LOGGER.info("Migrating history DB schema v14 -> v15")
+        async with self._cursor(commit=False) as cur:
+            await cur.execute("PRAGMA table_info(samples_v2)")
+            columns = {str(row[1]) for row in await cur.fetchall()}
+        if "analysis_window_start_us" not in columns:
+            async with self._cursor() as cur:
+                await cur.execute(
+                    "ALTER TABLE samples_v2 ADD COLUMN analysis_window_start_us INTEGER"
+                )
+        if "analysis_window_end_us" not in columns:
+            async with self._cursor() as cur:
+                await cur.execute(
+                    "ALTER TABLE samples_v2 ADD COLUMN analysis_window_end_us INTEGER"
+                )
+        if "analysis_window_synced" not in columns:
+            async with self._cursor() as cur:
+                await cur.execute(
+                    "ALTER TABLE samples_v2 ADD COLUMN analysis_window_synced INTEGER"
                 )
         async with self._cursor() as cur:
             await cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")

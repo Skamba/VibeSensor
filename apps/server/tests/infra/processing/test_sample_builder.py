@@ -18,6 +18,7 @@ from vibesensor.shared.boundaries.codecs import (
     strength_peak_payloads,
 )
 from vibesensor.shared.boundaries.sensor_frames import sensor_frame_to_json_object
+from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.run_metadata_builder import (
@@ -295,6 +296,11 @@ class TestBuildSampleRecords:
         }
         proc.latest_sample_xyz.return_value = (0.1, 0.2, 0.3)
         proc.latest_sample_rate_hz.return_value = 400
+        proc.latest_analysis_time_range.return_value = AnalysisTimeRange(
+            start_s=100.5,
+            end_s=101.0,
+            synced=True,
+        )
 
         records = build_sample_records(
             run_id="r1",
@@ -305,6 +311,7 @@ class TestBuildSampleRecords:
             speed_context=SpeedContext(None, None, "none", None, "missing"),
             analysis_settings_snapshot=AnalysisSettingsSnapshot(),
             default_sample_rate_hz=800,
+            run_start_mono_s=100.0,
         )
 
         assert len(records) == 1
@@ -315,6 +322,9 @@ class TestBuildSampleRecords:
         assert frame.strength_peak_amp_g == 0.15
         assert frame.strength_floor_amp_g == 0.003
         assert frame.strength_bucket == "l2"
+        assert frame.analysis_window_start_us == 500_000
+        assert frame.analysis_window_end_us == 1_000_000
+        assert frame.analysis_window_synced is True
         assert sensor_frame_to_json_object(frame)["top_peaks"] == [
             {
                 "hz": 15.0,
@@ -342,6 +352,7 @@ class TestBuildSampleRecords:
         proc.latest_metrics.return_value = {"combined": {}}
         proc.latest_sample_xyz.return_value = None
         proc.latest_sample_rate_hz.return_value = 400
+        proc.latest_analysis_time_range.return_value = None
 
         class _Reader:
             def get_sensors(self) -> dict[str, dict[str, str]]:

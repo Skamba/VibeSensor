@@ -16,6 +16,7 @@ from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,
+    WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
     RunContextWarning,
 )
 from vibesensor.shared.types.raw_capture import RawRunCapture
@@ -58,6 +59,7 @@ class RawReplaySummary:
     gap_count: int
     overlap_count: int
     dropped_chunk_count: int
+    timing_fallback_count: int
     sample_rate_mismatch_count: int
     unanchored_sensor_count: int
     replay_confidence: RawReplayConfidence
@@ -109,6 +111,7 @@ class _ResolvedWindow:
     coverage_state: RawReplayCoverageState
     reason: str | None
     sample_end: int | None = None
+    timing_source: str = "explicit_window"
 
 
 def build_raw_backed_samples(
@@ -132,6 +135,7 @@ def build_raw_backed_samples(
                 gap_count=0,
                 overlap_count=0,
                 dropped_chunk_count=0,
+                timing_fallback_count=0,
                 sample_rate_mismatch_count=0,
                 unanchored_sensor_count=0,
                 replay_confidence="unavailable",
@@ -162,6 +166,7 @@ def build_raw_backed_samples(
                 gap_count=0,
                 overlap_count=0,
                 dropped_chunk_count=0,
+                timing_fallback_count=0,
                 sample_rate_mismatch_count=0,
                 unanchored_sensor_count=0,
                 replay_confidence="fallback",
@@ -191,6 +196,7 @@ def build_raw_backed_samples(
     partial_window_count = 0
     missing_window_count = 0
     sample_rate_mismatch_count = 0
+    timing_fallback_count = 0
     raw_backed_count = 0
     scale = metadata.accel_scale_g_per_lsb
     for sample in samples:
@@ -212,6 +218,8 @@ def build_raw_backed_samples(
             missing_window_count += 1
         if coverage.reason == "sample_rate_mismatch":
             sample_rate_mismatch_count += 1
+        if coverage.reason == "timing_fallback":
+            timing_fallback_count += 1
         replayed.append(rebuilt)
         coverages.append(coverage)
     gap_count = sum(len(timeline.gap_intervals) for timeline in timelines.values())
@@ -244,12 +252,14 @@ def build_raw_backed_samples(
             gap_count=gap_count,
             overlap_count=overlap_count,
             dropped_chunk_count=0,
+            timing_fallback_count=timing_fallback_count,
             sample_rate_mismatch_count=sample_rate_mismatch_count,
             unanchored_sensor_count=unanchored_sensor_count,
             replay_confidence=replay_confidence,
             raw_capture_mode=raw_capture_mode,
             warnings=_build_replay_warnings(
                 raw_backed_sample_count=raw_backed_count,
+                timing_fallback_count=timing_fallback_count,
                 partial_window_count=partial_window_count,
                 missing_window_count=missing_window_count,
                 gap_count=gap_count,
@@ -319,6 +329,9 @@ def _rebuild_sample(
         )
     window = _resolve_window(timeline=timeline, sample=sample, fft_n=fft_n)
     if window.coverage_state != "complete" or window.sample_end is None:
+        coverage_reason = (
+            "timing_fallback" if window.timing_source == "legacy_t_s" else window.reason
+        )
         return (
             sample,
             RawReplayWindowCoverage(
@@ -326,7 +339,7 @@ def _rebuild_sample(
                 t_s=sample.t_s,
                 coverage_state=window.coverage_state,
                 raw_backed=False,
-                reason=window.reason,
+                reason=coverage_reason,
             ),
         )
     window_i16 = sensor_data.samples_i16[window.sample_end - fft_n : window.sample_end]
@@ -369,6 +382,7 @@ def _rebuild_sample(
             t_s=sample.t_s,
             coverage_state="complete",
             raw_backed=True,
+            reason="timing_fallback" if window.timing_source == "legacy_t_s" else None,
         ),
     )
 
@@ -458,10 +472,9 @@ def _resolve_window(
         return _ResolvedWindow(coverage_state="missing", reason="legacy_anchor_missing")
     if not timeline.chunks or timeline.sample_period_us <= 0:
         return _ResolvedWindow(coverage_state="missing", reason="raw_chunks_missing")
-    if sample.t_s is None or not isfinite(sample.t_s) or sample.t_s <= 0:
+    requested_end_us, timing_source = _requested_end_us(timeline=timeline, sample=sample)
+    if requested_end_us is None:
         return _ResolvedWindow(coverage_state="missing", reason="sample_time_missing")
-    run_start_monotonic_us = float(timeline.run_start_monotonic_us or 0)
-    requested_end_us = run_start_monotonic_us + (float(sample.t_s) * 1_000_000.0)
     requested_start_us = requested_end_us - (float(fft_n) * timeline.sample_period_us)
     if requested_start_us < 0:
         return _ResolvedWindow(coverage_state="missing", reason="window_before_capture")
@@ -491,7 +504,26 @@ def _resolve_window(
     )
     if sample_end is None or sample_end < fft_n:
         return _ResolvedWindow(coverage_state="missing", reason="window_after_capture")
-    return _ResolvedWindow(coverage_state="complete", reason=None, sample_end=sample_end)
+    return _ResolvedWindow(
+        coverage_state="complete",
+        reason=None,
+        sample_end=sample_end,
+        timing_source=timing_source,
+    )
+
+
+def _requested_end_us(
+    *,
+    timeline: _SensorTimeline,
+    sample: SensorFrame,
+) -> tuple[float | None, str]:
+    run_start_monotonic_us = float(timeline.run_start_monotonic_us or 0)
+    analysis_window_end_us = sample.analysis_window_end_us
+    if analysis_window_end_us is not None:
+        return run_start_monotonic_us + float(analysis_window_end_us), "explicit_window"
+    if sample.t_s is None or not isfinite(sample.t_s) or sample.t_s <= 0:
+        return None, "legacy_t_s"
+    return run_start_monotonic_us + (float(sample.t_s) * 1_000_000.0), "legacy_t_s"
 
 
 def _sample_end_for_time(
@@ -557,6 +589,7 @@ def _replay_confidence(
 def _build_replay_warnings(
     *,
     raw_backed_sample_count: int,
+    timing_fallback_count: int,
     partial_window_count: int,
     missing_window_count: int,
     gap_count: int,
@@ -574,6 +607,20 @@ def _build_replay_warnings(
                 detail=i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_LEGACY_DETAIL"),
             ),
         )
+    warnings: list[RunContextWarning] = []
+    if timing_fallback_count > 0:
+        warnings.append(
+            RunContextWarning(
+                code=WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
+                severity="warn",
+                applies_to="raw_replay",
+                title=i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_TITLE"),
+                detail=i18n_ref(
+                    "RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_DETAIL",
+                    count=str(max(0, timing_fallback_count)),
+                ),
+            )
+        )
     if (
         partial_window_count <= 0
         and missing_window_count <= 0
@@ -581,8 +628,8 @@ def _build_replay_warnings(
         and overlap_count <= 0
         and sample_rate_mismatch_count <= 0
     ):
-        return ()
-    return (
+        return tuple(warnings)
+    warnings.append(
         RunContextWarning(
             code=WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
             severity="warn",
@@ -596,8 +643,9 @@ def _build_replay_warnings(
                 overlaps=str(max(0, overlap_count)),
                 mismatches=str(max(0, sample_rate_mismatch_count)),
             ),
-        ),
+        )
     )
+    return tuple(warnings)
 
 
 def _compute_strength_metrics(

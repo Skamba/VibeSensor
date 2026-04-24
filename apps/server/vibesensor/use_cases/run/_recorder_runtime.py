@@ -75,6 +75,7 @@ def _flush_active_run_tick(
         run_id=snapshot.run_id,
         t_s=max(0.0, time.monotonic() - live_start_mono_s),
         timestamp_utc=timestamp_utc,
+        run_start_mono_s=live_start_mono_s,
     )
     if not isinstance(live_rows, list):
         logger.warning(

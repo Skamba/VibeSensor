@@ -5,7 +5,10 @@ from test_support.report_helpers import minimal_summary
 
 from vibesensor.shared.boundaries.reporting import prepare_persisted_report_input
 from vibesensor.shared.json_utils import i18n_ref
-from vibesensor.shared.run_context_warning import WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE
+from vibesensor.shared.run_context_warning import (
+    WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
+    WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
+)
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.report_document import build_report_document
 
@@ -97,3 +100,53 @@ def test_prepare_persisted_report_input_surfaces_partial_raw_replay_honestly() -
     assert "raw capture coverage was incomplete for some replay windows" in (
         document.observed.certainty_reason
     )
+
+
+def test_prepare_persisted_report_input_surfaces_legacy_sample_timing_warning() -> None:
+    primary = make_finding_payload(
+        finding_id="F_TIMING_FALLBACK",
+        suspected_source="wheel/tire",
+        confidence=0.81,
+        strongest_location="Front Left",
+        strongest_speed_band="60-80 km/h",
+    )
+    prepared = prepare_persisted_report_input(
+        PersistedAnalysis.from_json_object(
+            minimal_summary(
+                run_id="timing-fallback-report",
+                lang="en",
+                metadata={
+                    "run_id": "timing-fallback-report",
+                    "record_type": "metadata",
+                    "schema_version": "v2-jsonl",
+                    "feature_interval_s": 0.5,
+                },
+                sensor_count_used=1,
+                sensor_locations=["Front Left"],
+                sensor_locations_connected_throughout=["Front Left"],
+                findings=[primary],
+                top_causes=[primary],
+                analysis_metadata={
+                    "raw_backed_sample_count": 4,
+                    "raw_capture_mode": "raw_backed",
+                    "raw_replay_timing_fallback_count": 2,
+                },
+                warnings=[
+                    {
+                        "code": WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
+                        "severity": "warn",
+                        "applies_to": "raw_replay",
+                        "title": i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_TITLE"),
+                        "detail": i18n_ref(
+                            "RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_DETAIL",
+                            count="2",
+                        ),
+                    }
+                ],
+            )
+        )
+    )
+
+    assert WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK in [
+        warning.code for warning in prepared.report_facts.decision.warnings
+    ]
