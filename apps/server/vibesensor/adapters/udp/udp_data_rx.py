@@ -161,6 +161,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                 mark_span_error(span, exc)
                 raise
             span.set_attribute("vibesensor.is_duplicate", result.is_duplicate)
+            span.set_attribute("vibesensor.is_late", result.is_late)
             span.set_attribute("vibesensor.reset_detected", result.reset_detected)
 
     def _parse_data_message(self, data: bytes, addr: tuple[str, int]) -> DataMessage | None:
@@ -192,12 +193,13 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                 processor.flush_client_buffer(client_id)
             record = registry.get(client_id)
             sample_rate_hz = record.sample_rate_hz if record is not None else None
-            processor.ingest(
-                client_id,
-                msg.samples,
-                sample_rate_hz=sample_rate_hz,
-                t0_us=msg.t0_us,
-            )
+            if not result.is_late:
+                processor.ingest(
+                    client_id,
+                    msg.samples,
+                    sample_rate_hz=sample_rate_hz,
+                    t0_us=msg.t0_us,
+                )
             if self._raw_capture_sink is not None:
                 self._raw_capture_sink.capture_raw_samples(
                     client_id=client_id,
