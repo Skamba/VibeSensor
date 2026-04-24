@@ -81,6 +81,7 @@ def test_execute_post_analysis_appends_whole_run_alignment_warning_and_metadata(
                 gap_count=1,
                 overlap_count=0,
                 dropped_chunk_count=2,
+                late_packet_chunk_count=1,
                 queue_overflow_chunk_count=2,
                 invalid_chunk_count=0,
                 write_error_chunk_count=0,
@@ -105,6 +106,7 @@ def test_execute_post_analysis_appends_whole_run_alignment_warning_and_metadata(
                             gaps="1",
                             overlaps="0",
                             dropped="2",
+                            late="1",
                             udp_ingest="0",
                             queue_overflow="2",
                             invalid="0",
@@ -142,6 +144,7 @@ def test_execute_post_analysis_appends_whole_run_alignment_warning_and_metadata(
     assert analysis_metadata["whole_run_spectral_partial_sensor_window_count"] == 1
     assert analysis_metadata["whole_run_spectral_missing_sensor_window_count"] == 1
     assert analysis_metadata["whole_run_spectral_gap_count"] == 1
+    assert analysis_metadata["whole_run_spectral_late_packet_chunk_count"] == 1
     assert analysis_metadata["whole_run_spectral_sample_rate_mismatch_sensor_count"] == 1
     assert analysis_metadata["whole_run_spectral_sample_rate_unverified_sensor_count"] == 2
     assert analysis_metadata["whole_run_spectral_sync_unverified_sensor_count"] == 1
