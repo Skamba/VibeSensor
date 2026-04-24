@@ -15,6 +15,11 @@ export interface SpectrumClientData {
   combined: number[];
 }
 
+export interface SpectrumFrameData {
+  frame_fingerprint?: string | null;
+  clients: Record<string, SpectrumClientData>;
+}
+
 export type AdaptedClient = Pick<
   WsClientInfo,
   | "id"
@@ -36,7 +41,5 @@ export interface AdaptedPayload {
   clients: AdaptedClient[];
   speed_mps: number | null;
   rotational_speeds: RotationalSpeeds | null;
-  spectra: {
-    clients: Record<string, SpectrumClientData>;
-  } | null;
+  spectra: SpectrumFrameData | null;
 }

@@ -101,6 +101,7 @@ class FrequencyWarningPayload(TypedDict):
 
 
 class SpectraPayload(TypedDict, total=False):
+    frame_fingerprint: str
     freq: list[float]
     clients: dict[str, SpectrumSeriesPayload]
     alignment: AlignmentInfoPayload
