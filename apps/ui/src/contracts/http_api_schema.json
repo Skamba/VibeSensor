@@ -2009,6 +2009,7 @@
           "localized_support",
           "clean_signal",
           "summary_only",
+          "raw_replay_incomplete",
           "legacy_context",
           "speed_context_gaps",
           "rpm_context_gaps",
@@ -7932,6 +7933,7 @@
       "WholeRunDiagnosisDataBasis": {
         "enum": [
           "raw_backed",
+          "partial_raw_backed",
           "summary_only"
         ],
         "type": "string"

@@ -414,6 +414,8 @@ def _confidence_caveat_texts(
     for key in confidence_facts.caveat_keys:
         if key == "summary_only":
             parts.append(tr("REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY"))
+        elif key == "raw_replay_incomplete":
+            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_RAW_REPLAY_INCOMPLETE"))
         elif key == "legacy_context":
             parts.append(tr("REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT"))
         elif key == "sparse_support":

@@ -33,8 +33,13 @@ def _append_chunk(
     db.run_repository._run_sync(db.run_repository.aappend_raw_capture_chunk(run_id, chunk))
 
 
-def _finalize_raw_capture(db, run_id: str):
-    return db.run_repository._run_sync(db.run_repository.afinalize_raw_capture(run_id))
+def _finalize_raw_capture(db, run_id: str, *, run_start_monotonic_us: int | None = None):
+    return db.run_repository._run_sync(
+        db.run_repository.afinalize_raw_capture(
+            run_id,
+            run_start_monotonic_us=run_start_monotonic_us,
+        )
+    )
 
 
 def _load_raw_capture(db, run_id: str):
@@ -68,10 +73,15 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(tmp_path: Path) ->
     _append_chunk(db, run_id="run-raw", client_id="sensor-a", t0_us=1000, samples=first)
     _append_chunk(db, run_id="run-raw", client_id="sensor-a", t0_us=2000, samples=second)
 
-    manifest = _finalize_raw_capture(db, "run-raw")
+    manifest = _finalize_raw_capture(
+        db,
+        "run-raw",
+        run_start_monotonic_us=1_234_567,
+    )
 
     assert manifest is not None
     assert manifest.total_samples == 3
+    assert manifest.run_start_monotonic_us == 1_234_567
     assert manifest.sensor_manifest("sensor-a") is not None
 
     stored = db.run_repository.get_run("run-raw")
@@ -80,6 +90,7 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(tmp_path: Path) ->
 
     loaded = _load_raw_capture(db, "run-raw")
     assert loaded is not None
+    assert loaded.manifest.run_start_monotonic_us == 1_234_567
     sensor = loaded.sensor_data("sensor-a")
     assert sensor is not None
     assert sensor.manifest.chunk_count == 2

@@ -113,7 +113,12 @@ class RunPersistence(Protocol):
 
     async def astore_analysis_error(self, run_id: str, error: str) -> bool: ...
 
-    async def afinalize_raw_capture(self, run_id: str) -> RawCaptureManifest | None: ...
+    async def afinalize_raw_capture(
+        self,
+        run_id: str,
+        *,
+        run_start_monotonic_us: int | None = None,
+    ) -> RawCaptureManifest | None: ...
 
     async def aget_raw_capture_manifest(self, run_id: str) -> RawCaptureManifest | None: ...
 
