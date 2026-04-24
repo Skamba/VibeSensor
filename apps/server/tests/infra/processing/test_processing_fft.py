@@ -262,6 +262,41 @@ class TestComputeFftSpectrum:
         assert float(result["spectrum_by_axis"]["x"]["amp"][0]) > 0.0
         assert float(result["combined_amp"][0]) > 0.0
 
+    def test_strength_noise_floor_uses_first_analysis_bin_when_dc_is_absent(self) -> None:
+        sr = 512
+        fft_n = 512
+        t = np.arange(fft_n, dtype=np.float32) / sr
+        first_bin_tone = 0.05 * np.sin(2 * np.pi * 6 * t)
+        upper_tone = 0.25 * np.sin(2 * np.pi * 10 * t)
+        block = np.stack(
+            [
+                first_bin_tone + upper_tone,
+                first_bin_tone + upper_tone,
+                first_bin_tone + upper_tone,
+            ],
+            axis=0,
+        )
+        computer = SpectralAnalysisComputer(
+            fft_n=fft_n,
+            spectrum_min_hz=6.0,
+            spectrum_max_hz=100.0,
+        )
+        freq_slice, valid_idx = computer.fft_params(sr)
+
+        result = compute_fft_spectrum(
+            block,
+            sr,
+            fft_window=computer.fft_window,
+            fft_scale=computer.fft_scale,
+            freq_slice=freq_slice,
+            valid_idx=valid_idx,
+        )
+
+        assert result["freq_slice"][0] == pytest.approx(6.0)
+        assert result["strength_metrics"]["top_peaks"]
+        assert result["strength_metrics"]["top_peaks"][0]["hz"] == pytest.approx(10.0, abs=1.0)
+        assert float(result["strength_metrics"]["noise_floor_amp_g"]) > 0.0
+
     def test_dc_bias_does_not_mask_signal_peak(self) -> None:
         sr = 512
         fft_n = 512
