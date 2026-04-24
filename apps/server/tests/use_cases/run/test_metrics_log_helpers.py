@@ -214,6 +214,9 @@ def test_stop_recording_salvages_final_batch_when_recent_window_is_too_strict(
         def latest_sample_rate_hz(self, client_id: str):
             return 800
 
+        def latest_analysis_time_range(self, client_id: str):
+            return None
+
         def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None):
             self._refreshed = True
             return self.latest_metrics(client_id)

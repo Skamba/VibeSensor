@@ -110,6 +110,9 @@ class _FakeProcessor:
     def latest_sample_rate_hz(self, client_id: str) -> int:
         return 800
 
+    def latest_analysis_time_range(self, client_id: str):
+        return None
+
     def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> ClientMetrics:
         return self.latest_metrics(client_id)
 
