@@ -34,6 +34,9 @@ _SENSOR_FRAME_SCALAR_FIELD_NAMES: tuple[str, ...] = (
     "run_id",
     "timestamp_utc",
     "t_s",
+    "analysis_window_start_us",
+    "analysis_window_end_us",
+    "analysis_window_synced",
     "client_id",
     "client_name",
     "location",
@@ -67,6 +70,9 @@ class SensorFrameScalarValues:
     run_id: str
     timestamp_utc: str
     t_s: float | None
+    analysis_window_start_us: int | None
+    analysis_window_end_us: int | None
+    analysis_window_synced: bool | None
     client_id: str
     client_name: str
     location: str
@@ -116,6 +122,9 @@ def sensor_frame_to_mapping_payload(frame: SensorFrame) -> JsonObject:
         "run_id": frame.run_id,
         "timestamp_utc": frame.timestamp_utc,
         "t_s": frame.t_s,
+        "analysis_window_start_us": frame.analysis_window_start_us,
+        "analysis_window_end_us": frame.analysis_window_end_us,
+        "analysis_window_synced": frame.analysis_window_synced,
         "client_id": frame.client_id,
         "client_name": frame.client_name,
         "location": frame.location,
@@ -168,6 +177,9 @@ def sensor_frame_to_row_payload(frame: SensorFrame) -> tuple[object, ...]:
         frame.run_id,
         frame.timestamp_utc,
         _finite_or_none(frame.t_s),
+        frame.analysis_window_start_us,
+        frame.analysis_window_end_us,
+        _bool_to_sqlite(frame.analysis_window_synced),
         frame.client_id,
         frame.client_name,
         frame.location,
@@ -199,6 +211,9 @@ def _build_sensor_frame(values: SensorFrameScalarValues, *, top_peaks: object) -
         run_id=values.run_id,
         timestamp_utc=values.timestamp_utc,
         t_s=values.t_s,
+        analysis_window_start_us=values.analysis_window_start_us,
+        analysis_window_end_us=values.analysis_window_end_us,
+        analysis_window_synced=values.analysis_window_synced,
         client_id=values.client_id,
         client_name=values.client_name,
         location=values.location,
@@ -245,6 +260,20 @@ def _scalars_from_mapping(
         run_id=_text_value(record.get("run_id")),
         timestamp_utc=_text_value(record.get("timestamp_utc")),
         t_s=decode_float(record.get("t_s"), field="t_s"),
+        analysis_window_start_us=decode_int(
+            record.get("analysis_window_start_us"),
+            field="analysis_window_start_us",
+        ),
+        analysis_window_end_us=decode_int(
+            record.get("analysis_window_end_us"),
+            field="analysis_window_end_us",
+        ),
+        analysis_window_synced=_decode_optional_bool(
+            record.get("analysis_window_synced"),
+            strict=strict,
+            source=source,
+            field="analysis_window_synced",
+        ),
         client_id=_text_value(record.get("client_id")),
         client_name=_text_value(record.get("client_name")),
         location=_text_value(record.get("location")),
@@ -295,53 +324,94 @@ def _scalars_from_row(values: Sequence[object], *, source: str) -> SensorFrameSc
         run_id=_text_value(values[0]),
         timestamp_utc=_text_value(values[1]),
         t_s=strict_optional_float(values[2], field="t_s", source=source),
-        client_id=_text_value(values[3]),
-        client_name=_text_value(values[4]),
-        location=_text_value(values[5]),
-        sample_rate_hz=strict_optional_int(values[6], field="sample_rate_hz", source=source),
-        speed_kmh=strict_optional_float(values[7], field="speed_kmh", source=source),
-        gps_speed_kmh=strict_optional_float(values[8], field="gps_speed_kmh", source=source),
-        speed_source=_text_value(values[9]),
-        engine_rpm=strict_optional_float(values[10], field="engine_rpm", source=source),
-        engine_rpm_source=_text_value(values[11]),
-        gear=strict_optional_float(values[12], field="gear", source=source),
+        analysis_window_start_us=strict_optional_int(
+            values[3],
+            field="analysis_window_start_us",
+            source=source,
+        ),
+        analysis_window_end_us=strict_optional_int(
+            values[4],
+            field="analysis_window_end_us",
+            source=source,
+        ),
+        analysis_window_synced=_decode_optional_bool(
+            values[5],
+            strict=True,
+            source=source,
+            field="analysis_window_synced",
+        ),
+        client_id=_text_value(values[6]),
+        client_name=_text_value(values[7]),
+        location=_text_value(values[8]),
+        sample_rate_hz=strict_optional_int(values[9], field="sample_rate_hz", source=source),
+        speed_kmh=strict_optional_float(values[10], field="speed_kmh", source=source),
+        gps_speed_kmh=strict_optional_float(values[11], field="gps_speed_kmh", source=source),
+        speed_source=_text_value(values[12]),
+        engine_rpm=strict_optional_float(values[13], field="engine_rpm", source=source),
+        engine_rpm_source=_text_value(values[14]),
+        gear=strict_optional_float(values[15], field="gear", source=source),
         final_drive_ratio=strict_optional_float(
-            values[13],
+            values[16],
             field="final_drive_ratio",
             source=source,
         ),
-        accel_x_g=strict_optional_float(values[14], field="accel_x_g", source=source),
-        accel_y_g=strict_optional_float(values[15], field="accel_y_g", source=source),
-        accel_z_g=strict_optional_float(values[16], field="accel_z_g", source=source),
+        accel_x_g=strict_optional_float(values[17], field="accel_x_g", source=source),
+        accel_y_g=strict_optional_float(values[18], field="accel_y_g", source=source),
+        accel_z_g=strict_optional_float(values[19], field="accel_z_g", source=source),
         dominant_freq_hz=strict_optional_float(
-            values[17],
+            values[20],
             field="dominant_freq_hz",
             source=source,
         ),
-        dominant_axis=_text_value(values[18]),
+        dominant_axis=_text_value(values[21]),
         vibration_strength_db=strict_optional_float(
-            values[19],
+            values[22],
             field=_VIBRATION_STRENGTH_DB_KEY,
             source=source,
         ),
-        strength_bucket=_strength_bucket(values[20]),
+        strength_bucket=_strength_bucket(values[23]),
         strength_peak_amp_g=strict_optional_float(
-            values[21],
+            values[24],
             field="strength_peak_amp_g",
             source=source,
         ),
         strength_floor_amp_g=strict_optional_float(
-            values[22],
+            values[25],
             field="strength_floor_amp_g",
             source=source,
         ),
         frames_dropped_total=(
-            strict_optional_int(values[23], field="frames_dropped_total", source=source) or 0
+            strict_optional_int(values[26], field="frames_dropped_total", source=source) or 0
         ),
         queue_overflow_drops=(
-            strict_optional_int(values[24], field="queue_overflow_drops", source=source) or 0
+            strict_optional_int(values[27], field="queue_overflow_drops", source=source) or 0
         ),
     )
+
+
+def _bool_to_sqlite(value: bool | None) -> int | None:
+    if value is None:
+        return None
+    return 1 if value else 0
+
+
+def _decode_optional_bool(
+    value: object,
+    *,
+    strict: bool,
+    source: str,
+    field: str,
+) -> bool | None:
+    if value in (None, ""):
+        return None
+    decoded = (
+        strict_optional_int(value, field=field, source=source)
+        if strict
+        else optional_int(value, field=field, source=source)
+    )
+    if decoded is None:
+        return None
+    return bool(decoded)
 
 
 def _text_value(value: object) -> str:

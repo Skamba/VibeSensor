@@ -7,7 +7,10 @@ import pytest
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
-from vibesensor.shared.run_context_warning import WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE
+from vibesensor.shared.run_context_warning import (
+    WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
+    WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
+)
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunkIndex,
     RawCaptureManifest,
@@ -133,6 +136,49 @@ def _gap_raw_capture(run_id: str) -> RawRunCapture:
     )
 
 
+def _full_raw_capture(run_id: str) -> RawRunCapture:
+    run_start_monotonic_us = 1_000_000
+    chunk = _wave(32.0, 160)
+    chunk_rows = (
+        RawCaptureChunkIndex(
+            sample_start=0,
+            sample_count=160,
+            t0_us=run_start_monotonic_us + 100_000,
+            byte_offset=0,
+        ),
+    )
+    sensor_manifest = RawCaptureSensorManifest(
+        client_id="sensor-a",
+        sample_rate_hz=800,
+        data_file="sensor-a.raw.i16le",
+        index_file="sensor-a.index.jsonl",
+        sample_count=int(chunk.shape[0]),
+        chunk_count=1,
+        bytes_written=int(chunk.nbytes),
+        first_t0_us=chunk_rows[0].t0_us,
+        last_t0_us=chunk_rows[-1].t0_us,
+    )
+    manifest = RawCaptureManifest(
+        run_id=run_id,
+        relative_dir=f"raw-runs/{run_id}",
+        sensors=(sensor_manifest,),
+        total_samples=int(chunk.shape[0]),
+        total_bytes=int(chunk.nbytes),
+        created_at="2025-01-01T00:00:01Z",
+        run_start_monotonic_us=run_start_monotonic_us,
+    )
+    return RawRunCapture(
+        manifest=manifest,
+        sensors=(
+            RawCaptureSensorData(
+                manifest=sensor_manifest,
+                samples_i16=chunk,
+                chunks=chunk_rows,
+            ),
+        ),
+    )
+
+
 def test_build_post_analysis_summary_adds_analysis_metadata(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -182,6 +228,7 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
         "raw_replay_gap_count": 0,
         "raw_replay_overlap_count": 0,
         "raw_replay_dropped_chunk_count": 0,
+        "raw_replay_timing_fallback_count": 0,
         "raw_replay_sample_rate_mismatch_count": 0,
         "raw_replay_unanchored_sensor_count": 0,
         "raw_replay_confidence": "unavailable",
@@ -373,5 +420,57 @@ def test_build_post_analysis_summary_persists_raw_replay_warning_and_counts(
     assert summary["analysis_metadata"]["raw_replay_partial_window_count"] == 1
     assert summary["analysis_metadata"]["raw_replay_gap_count"] == 1
     assert [warning["code"] for warning in summary["warnings"]] == [
-        WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE
+        WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
+        WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
+    ]
+
+
+def test_build_post_analysis_summary_persists_timing_fallback_warning(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeRunAnalysis:
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def summarize(self):
+            return SimpleNamespace(
+                diagnostic_case=SimpleNamespace(case_id="case-legacy-sample-time"),
+            )
+
+    monkeypatch.setattr(
+        "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
+        FakeRunAnalysis,
+    )
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run.post_analysis_summary.analysis_result_to_summary",
+        lambda _result: {"warnings": [], "run_suitability": []},
+    )
+
+    run = build_post_analysis_input(
+        LoadedPostAnalysisRun(
+            run_id="run-legacy-sample-time",
+            metadata=_run_metadata("run-legacy-sample-time"),
+            language="en",
+            samples=sensor_frames_from_mappings(
+                [
+                    {
+                        "client_id": "sensor-a",
+                        "t_s": 0.18,
+                        "sample_rate_hz": 800,
+                        "vibration_strength_db": 0.0,
+                        "dominant_freq_hz": 0.0,
+                    }
+                ]
+            ),
+            raw_capture=_full_raw_capture("run-legacy-sample-time"),
+            total_sample_count=1,
+            stride=1,
+        )
+    )
+
+    summary = build_post_analysis_summary(run)
+
+    assert summary["analysis_metadata"]["raw_replay_timing_fallback_count"] == 1
+    assert [warning["code"] for warning in summary["warnings"]] == [
+        WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK
     ]

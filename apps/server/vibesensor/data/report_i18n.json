@@ -1695,6 +1695,14 @@
     "en": "Raw capture coverage was incomplete for some replay windows; affected metrics used persisted summary samples. Partial windows: {partial}, missing windows: {missing}, timing gaps: {gaps}, overlaps: {overlaps}, sample-rate mismatches: {mismatches}.",
     "nl": "De raw-capturedekking was onvolledig voor sommige replayvensters; getroffen metrieken gebruikten persistente samenvattingssamples. Gedeeltelijke vensters: {partial}, ontbrekende vensters: {missing}, timinggaten: {gaps}, overlappen: {overlaps}, samplefrequentiemismatches: {mismatches}."
   },
+  "RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_TITLE": {
+    "en": "Raw replay used persisted sample timing for some windows",
+    "nl": "Raw replay gebruikte persistente sampletiming voor sommige vensters"
+  },
+  "RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_DETAIL": {
+    "en": "Some persisted samples did not include explicit analysis-window timing metadata, so replay aligned {count} window(s) using legacy sample timestamps.",
+    "nl": "Sommige persistente samples bevatten geen expliciete analysevenster-timingmetadata, dus replay lijnde {count} venster(s) uit met legacy-sampletijdstempels."
+  },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_LEGACY_TITLE": {
     "en": "Raw replay fell back to persisted summary metrics",
     "nl": "Raw replay viel terug op persistente samenvattingsmetrieken"

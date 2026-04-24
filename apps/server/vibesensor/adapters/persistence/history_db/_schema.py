@@ -7,7 +7,7 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
-SCHEMA_VERSION = 14
+SCHEMA_VERSION = 15
 
 SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS runs (
@@ -34,6 +34,9 @@ CREATE TABLE IF NOT EXISTS samples_v2 (
     run_id                TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
     timestamp_utc         TEXT,
     t_s                   REAL,
+    analysis_window_start_us INTEGER,
+    analysis_window_end_us INTEGER,
+    analysis_window_synced INTEGER,
     client_id             TEXT,
     client_name           TEXT,
     location              TEXT,

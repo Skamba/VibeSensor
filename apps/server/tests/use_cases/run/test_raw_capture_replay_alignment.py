@@ -11,6 +11,7 @@ from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, medfilt3
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,
+    WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
 )
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunkIndex,
@@ -60,6 +61,12 @@ def _sample_t_s(*, raw_start_offset_us: int, sample_end: int) -> float:
     return (
         float(raw_start_offset_us) + (float(sample_end) / float(_SAMPLE_RATE_HZ) * 1_000_000.0)
     ) / 1_000_000.0
+
+
+def _analysis_window_end_us(*, raw_start_offset_us: int, sample_end: int) -> int:
+    return int(
+        raw_start_offset_us + (float(sample_end) / float(_SAMPLE_RATE_HZ) * 1_000_000.0),
+    )
 
 
 def _raw_capture(
@@ -275,6 +282,58 @@ def test_build_post_analysis_input_replays_each_sensor_on_its_own_timeline() -> 
     assert 45.0 <= float(by_sensor["sensor-b"].dominant_freq_hz) <= 60.0
 
 
+def test_build_post_analysis_input_prefers_explicit_analysis_window_over_flush_time() -> None:
+    raw_start_offset_us = 100_000
+    aligned_window = _wave(32.0, _FFT_N)
+    later_window = _wave(88.0, _FFT_N)
+    raw_capture = _raw_capture(
+        "run-delayed-flush",
+        sensors=[
+            (
+                "sensor-a",
+                [
+                    (
+                        _RUN_START_MONOTONIC_US + raw_start_offset_us,
+                        np.vstack([aligned_window, later_window, _wave(96.0, 96)]),
+                    )
+                ],
+            )
+        ],
+    )
+    loaded = LoadedPostAnalysisRun(
+        run_id="run-delayed-flush",
+        metadata=_metadata("run-delayed-flush"),
+        language="en",
+        samples=sensor_frames_from_mappings(
+            [
+                {
+                    "client_id": "sensor-a",
+                    "t_s": 0.24,
+                    "analysis_window_end_us": _analysis_window_end_us(
+                        raw_start_offset_us=raw_start_offset_us,
+                        sample_end=_FFT_N,
+                    ),
+                    "sample_rate_hz": _SAMPLE_RATE_HZ,
+                    "vibration_strength_db": 0.0,
+                    "dominant_freq_hz": 0.0,
+                }
+            ]
+        ),
+        raw_capture=raw_capture,
+        total_sample_count=1,
+        stride=1,
+    )
+
+    result = build_post_analysis_input(loaded)
+
+    rebuilt = result.samples[0]
+    assert result.raw_backed_sample_count == 1
+    assert result.raw_replay.timing_fallback_count == 0
+    assert result.raw_replay.warnings == ()
+    assert rebuilt.dominant_freq_hz is not None
+    assert 25.0 <= float(rebuilt.dominant_freq_hz) <= 40.0
+
+
 def test_build_post_analysis_input_marks_gap_windows_partial_and_falls_back() -> None:
     raw_start_offset_us = 100_000
     first_chunk = _wave(34.0, _FFT_N)
@@ -325,7 +384,8 @@ def test_build_post_analysis_input_marks_gap_windows_partial_and_falls_back() ->
     assert result.raw_replay.partial_window_count == 1
     assert result.raw_replay.gap_count == 1
     assert [warning.code for warning in result.raw_replay.warnings] == [
-        WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE
+        WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
+        WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     ]
     assert [coverage.coverage_state for coverage in result.raw_replay_window_coverages] == [
         "complete",
@@ -333,6 +393,53 @@ def test_build_post_analysis_input_marks_gap_windows_partial_and_falls_back() ->
     ]
     assert result.samples[1].vibration_strength_db == 12.0
     assert result.samples[1].dominant_freq_hz == 14.0
+
+
+def test_build_post_analysis_input_warns_when_replay_falls_back_to_legacy_sample_time() -> None:
+    raw_start_offset_us = 100_000
+    replay_window = _wave(36.0, _FFT_N)
+    raw_capture = _raw_capture(
+        "run-legacy-sample-time",
+        sensors=[
+            (
+                "sensor-a",
+                [
+                    (
+                        _RUN_START_MONOTONIC_US + raw_start_offset_us,
+                        np.vstack([replay_window, _wave(82.0, 160)]),
+                    )
+                ],
+            )
+        ],
+    )
+    loaded = LoadedPostAnalysisRun(
+        run_id="run-legacy-sample-time",
+        metadata=_metadata("run-legacy-sample-time"),
+        language="en",
+        samples=sensor_frames_from_mappings(
+            [
+                {
+                    "client_id": "sensor-a",
+                    "t_s": _sample_t_s(raw_start_offset_us=raw_start_offset_us, sample_end=_FFT_N),
+                    "sample_rate_hz": _SAMPLE_RATE_HZ,
+                    "vibration_strength_db": 0.0,
+                    "dominant_freq_hz": 0.0,
+                }
+            ]
+        ),
+        raw_capture=raw_capture,
+        total_sample_count=1,
+        stride=1,
+    )
+
+    result = build_post_analysis_input(loaded)
+
+    assert result.raw_backed_sample_count == 1
+    assert result.raw_replay.timing_fallback_count == 1
+    assert [warning.code for warning in result.raw_replay.warnings] == [
+        WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK
+    ]
+    assert result.raw_replay_window_coverages[0].reason == "timing_fallback"
 
 
 def test_build_post_analysis_input_falls_back_for_legacy_raw_capture_without_anchor() -> None:

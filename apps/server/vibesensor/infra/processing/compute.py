@@ -117,4 +117,5 @@ class SignalMetricsComputer(SpectralAnalysisComputer):
             strength_metrics=strength_metrics_dict,
             has_fft_data=has_fft_data,
             duration_s=time.monotonic() - t0,
+            analysis_time_range=snapshot.analysis_time_range,
         )

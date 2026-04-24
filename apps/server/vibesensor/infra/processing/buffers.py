@@ -13,6 +13,7 @@ import numpy as np
 
 from vibesensor.infra.processing.models import ClientMetrics, SpectrumByAxis
 from vibesensor.infra.processing.payload import SpectrumSeriesPayload
+from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.vibration_strength import VibrationStrengthMetrics, empty_vibration_strength_metrics
 
 
@@ -27,6 +28,7 @@ class ClientBuffer:
     count: int = 0
     sample_rate_hz: int = 0
     latest_metrics: ClientMetrics = field(default_factory=ClientMetrics)
+    latest_analysis_time_range: AnalysisTimeRange | None = None
     latest_spectrum: SpectrumByAxis = field(default_factory=dict)
     latest_strength_metrics: VibrationStrengthMetrics = field(
         default_factory=empty_vibration_strength_metrics
