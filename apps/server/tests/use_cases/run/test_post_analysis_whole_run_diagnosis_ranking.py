@@ -5,7 +5,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 from vibesensor.domain import DrivingPhase
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames import sensor_frames_from_mappings
-from vibesensor.shared.types.raw_capture import RawCaptureManifest
+from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
@@ -42,6 +42,10 @@ from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
     WHOLE_RUN_SPATIAL_COHERENCE_ARTIFACT_KEY,
     WholeRunSpatialCoherenceArtifactBundle,
 )
+from vibesensor.use_cases.diagnostics.whole_run_spectra import (
+    WholeRunSpectralBuildResult,
+    WholeRunSpectralCoverageSummary,
+)
 from vibesensor.use_cases.run.post_analysis_executor import execute_post_analysis
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.use_cases.run.post_analysis_outcomes import PostAnalysisExecutionSuccess
@@ -63,6 +67,36 @@ def _run_metadata(run_id: str):
 
 def _samples():
     return sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}])
+
+
+def _spectral_result(bundle) -> WholeRunSpectralBuildResult:
+    return WholeRunSpectralBuildResult(
+        bundle=bundle,
+        coverage_summary=WholeRunSpectralCoverageSummary(
+            total_sensor_window_count=0,
+            full_sensor_window_count=0,
+            partial_sensor_window_count=0,
+            missing_sensor_window_count=0,
+            empty_sensor_window_count=0,
+            gap_count=0,
+            overlap_count=0,
+            dropped_chunk_count=0,
+            queue_overflow_chunk_count=0,
+            invalid_chunk_count=0,
+            write_error_chunk_count=0,
+            sample_rate_mismatch_sensor_count=0,
+            unanchored_sensor_count=0,
+            legacy_sensor_count=0,
+            sync_unverified_sensor_count=0,
+            stale_sync_sensor_count=0,
+            high_rtt_sensor_count=0,
+            coverage_confidence="unavailable",
+        ),
+    )
+
+
+def _empty_raw_capture(manifest: RawCaptureManifest) -> RawRunCapture:
+    return RawRunCapture(manifest=manifest, sensors=())
 
 
 def test_execute_post_analysis_persists_whole_run_diagnosis_summaries() -> None:
@@ -377,16 +411,19 @@ def test_execute_post_analysis_persists_whole_run_diagnosis_summaries() -> None:
             total_sample_count=1,
             stride=1,
             context_samples=_samples(),
+            raw_capture=_empty_raw_capture(raw_capture_manifest),
             raw_capture_manifest=raw_capture_manifest,
         ),
-        whole_run_artifact_builder=lambda **_kwargs: type(
-            "Bundle",
-            (),
-            {
-                "manifest": spectral_manifest,
-                "artifact_contents": {"spectral-summary:sensor-a": b"{}\n"},
-            },
-        )(),
+        whole_run_artifact_builder=lambda **_kwargs: _spectral_result(
+            type(
+                "Bundle",
+                (),
+                {
+                    "manifest": spectral_manifest,
+                    "artifact_contents": {"spectral-summary:sensor-a": b"{}\n"},
+                },
+            )()
+        ),
         whole_run_context_builder=lambda **_kwargs: context_bundle,
         whole_run_order_trace_builder=lambda **_kwargs: order_trace_bundle,
         whole_run_order_trace_summary_builder=lambda **_kwargs: order_trace_summary_bundle,

@@ -7,16 +7,21 @@ import logging
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Protocol, cast
+from typing import Any, Protocol
 
 import aiosqlite
 from opentelemetry.trace import SpanKind
 
 from vibesensor.shared.ports import RunPersistence
+from vibesensor.shared.run_context_warning import (
+    RunContextWarningsInput,
+    normalize_run_context_warnings,
+)
 from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.tracing import mark_span_error, start_span
+from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawCaptureSensorRange
+from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 from vibesensor.use_cases.diagnostics.orders.whole_run_contracts import OrderTraceSummary
@@ -56,8 +61,11 @@ from vibesensor.use_cases.diagnostics.whole_run_spatial_coherence import (
 )
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunSpectralArtifactBundle,
+    WholeRunSpectralBuildResult,
+    WholeRunSpectralCoverageSummary,
     build_whole_run_spectral_artifact_bundle,
 )
+from vibesensor.use_cases.diagnostics.whole_run_windows import WholeRunWindowPlan
 from vibesensor.use_cases.run.post_analysis_input import (
     PostAnalysisRunInput,
     build_post_analysis_input,
@@ -133,9 +141,8 @@ class WholeRunArtifactBuilder(Protocol):
         *,
         run_id: str,
         metadata: RunMetadata,
-        raw_capture_manifest: RawCaptureManifest,
-        db: RunPersistence,
-    ) -> WholeRunSpectralArtifactBundle | None: ...
+        raw_capture: RawRunCapture,
+    ) -> WholeRunSpectralBuildResult: ...
 
 
 class WholeRunContextBuilder(Protocol):
@@ -145,7 +152,8 @@ class WholeRunContextBuilder(Protocol):
         self,
         *,
         run: PostAnalysisRunInput,
-        total_sample_count: int,
+        total_sample_count: int | None = None,
+        window_plan: WholeRunWindowPlan | None = None,
     ) -> WholeRunContextArtifactBundle | None: ...
 
 
@@ -337,22 +345,33 @@ def execute_post_analysis(
         try:
             run_input = build_post_analysis_input(loaded)
             stored_artifact_manifest: WholeRunArtifactManifest | None = None
+            spectral_result: WholeRunSpectralBuildResult | None = None
+            spectral_bundle: WholeRunSpectralArtifactBundle | None = None
             context_bundle: WholeRunContextArtifactBundle | None = None
             order_trace_bundle: WholeRunOrderTraceArtifactBundle | None = None
             order_trace_summary_bundle: WholeRunOrderTraceSummaryArtifactBundle | None = None
             order_family_summary_bundle: WholeRunOrderFamilySummaryArtifactBundle | None = None
             spatial_coherence_bundle: WholeRunSpatialCoherenceArtifactBundle | None = None
-            if loaded.raw_capture_manifest is not None:
-                spectral_bundle = resolved_whole_run_artifact_builder(
+            if loaded.raw_capture is not None:
+                spectral_result = resolved_whole_run_artifact_builder(
                     run_id=loaded.run_id,
                     metadata=loaded.metadata,
-                    raw_capture_manifest=loaded.raw_capture_manifest,
-                    db=db,
+                    raw_capture=loaded.raw_capture,
                 )
-                context_bundle = resolved_whole_run_context_builder(
-                    run=run_input,
-                    total_sample_count=_whole_run_total_sample_count(loaded.raw_capture_manifest),
-                )
+                spectral_bundle = spectral_result.bundle
+            if loaded.raw_capture_manifest is not None:
+                if spectral_result is not None and spectral_result.window_plan is not None:
+                    context_bundle = resolved_whole_run_context_builder(
+                        run=run_input,
+                        window_plan=spectral_result.window_plan,
+                    )
+                else:
+                    context_bundle = resolved_whole_run_context_builder(
+                        run=run_input,
+                        total_sample_count=_whole_run_total_sample_count(
+                            loaded.raw_capture_manifest
+                        ),
+                    )
                 if spectral_bundle is not None and context_bundle is not None:
                     order_trace_bundle = resolved_whole_run_order_trace_builder(
                         run=run_input,
@@ -407,6 +426,16 @@ def execute_post_analysis(
                         )
             span.set_attribute("vibesensor.sample_count", len(run_input.samples))
             summary = _coerce_persisted_analysis(analysis_runner(run_input))
+            if spectral_result is not None:
+                summary = _append_whole_run_spectral_metadata(
+                    summary,
+                    spectral_result.coverage_summary,
+                    spectral_bundle=spectral_bundle,
+                )
+                summary = _append_run_context_warnings(
+                    summary,
+                    spectral_result.coverage_summary.warnings,
+                )
             if context_bundle is not None:
                 summary = _append_whole_run_context(summary, context_bundle)
             analysis_payload = summary.to_json_object()
@@ -612,47 +641,29 @@ def _build_whole_run_artifacts(
     *,
     run_id: str,
     metadata: RunMetadata,
-    raw_capture_manifest: RawCaptureManifest,
-    db: RunPersistence,
-) -> WholeRunSpectralArtifactBundle | None:
-    def load_sensor_range(
-        *,
-        client_id: str,
-        sample_start: int,
-        sample_count: int,
-    ) -> RawCaptureSensorRange | None:
-        return cast(
-            RawCaptureSensorRange | None,
-            _sync_call(
-                db,
-                "aload_raw_capture_sensor_range",
-                run_id,
-                client_id,
-                sample_start=sample_start,
-                sample_count=sample_count,
-            ),
-        )
-
+    raw_capture: RawRunCapture,
+) -> WholeRunSpectralBuildResult:
     return build_whole_run_spectral_artifact_bundle(
         run_id=run_id,
         metadata=metadata,
-        raw_capture_manifest=raw_capture_manifest,
-        load_sensor_range=load_sensor_range,
+        raw_capture=raw_capture,
     )
 
 
 def _build_whole_run_context_artifacts(
     *,
     run: PostAnalysisRunInput,
-    total_sample_count: int,
+    total_sample_count: int | None = None,
+    window_plan: WholeRunWindowPlan | None = None,
 ) -> WholeRunContextArtifactBundle | None:
-    if total_sample_count < 0:
+    if total_sample_count is not None and total_sample_count < 0:
         raise ValueError("whole-run context builder requires total_sample_count >= 0")
     return build_whole_run_context_artifact_bundle(
         run_id=run.run_id,
         metadata=run.context,
         samples=run.context_samples,
         total_sample_count=total_sample_count,
+        window_plan=window_plan,
     )
 
 
@@ -791,6 +802,98 @@ def _append_whole_run_analysis_metadata(
     analysis_metadata["whole_run_window_count"] = int(manifest.total_window_count)
     analysis_metadata["whole_run_sensor_count"] = len(sensor_ids)
     analysis_metadata["whole_run_artifact_count"] = len(manifest.artifacts)
+    return PersistedAnalysis.from_json_object(payload)
+
+
+def _append_whole_run_spectral_metadata(
+    summary: PersistedAnalysis,
+    coverage_summary: WholeRunSpectralCoverageSummary,
+    *,
+    spectral_bundle: WholeRunSpectralArtifactBundle | None,
+) -> PersistedAnalysis:
+    payload = summary.to_json_object()
+    analysis_metadata = payload.get("analysis_metadata")
+    if not isinstance(analysis_metadata, dict):
+        analysis_metadata = {}
+        payload["analysis_metadata"] = analysis_metadata
+    analysis_metadata["whole_run_spectral_available"] = spectral_bundle is not None
+    analysis_metadata["whole_run_spectral_window_count"] = (
+        spectral_bundle.manifest.total_window_count if spectral_bundle is not None else 0
+    )
+    analysis_metadata["whole_run_spectral_sensor_window_count"] = (
+        coverage_summary.total_sensor_window_count
+    )
+    analysis_metadata["whole_run_spectral_full_sensor_window_count"] = (
+        coverage_summary.full_sensor_window_count
+    )
+    analysis_metadata["whole_run_spectral_partial_sensor_window_count"] = (
+        coverage_summary.partial_sensor_window_count
+    )
+    analysis_metadata["whole_run_spectral_missing_sensor_window_count"] = (
+        coverage_summary.missing_sensor_window_count
+    )
+    analysis_metadata["whole_run_spectral_empty_sensor_window_count"] = (
+        coverage_summary.empty_sensor_window_count
+    )
+    analysis_metadata["whole_run_spectral_gap_count"] = coverage_summary.gap_count
+    analysis_metadata["whole_run_spectral_overlap_count"] = coverage_summary.overlap_count
+    analysis_metadata["whole_run_spectral_dropped_chunk_count"] = (
+        coverage_summary.dropped_chunk_count
+    )
+    analysis_metadata["whole_run_spectral_queue_overflow_chunk_count"] = (
+        coverage_summary.queue_overflow_chunk_count
+    )
+    analysis_metadata["whole_run_spectral_invalid_chunk_count"] = (
+        coverage_summary.invalid_chunk_count
+    )
+    analysis_metadata["whole_run_spectral_write_error_chunk_count"] = (
+        coverage_summary.write_error_chunk_count
+    )
+    analysis_metadata["whole_run_spectral_sample_rate_mismatch_sensor_count"] = (
+        coverage_summary.sample_rate_mismatch_sensor_count
+    )
+    analysis_metadata["whole_run_spectral_unanchored_sensor_count"] = (
+        coverage_summary.unanchored_sensor_count
+    )
+    analysis_metadata["whole_run_spectral_legacy_sensor_count"] = (
+        coverage_summary.legacy_sensor_count
+    )
+    analysis_metadata["whole_run_spectral_sync_unverified_sensor_count"] = (
+        coverage_summary.sync_unverified_sensor_count
+    )
+    analysis_metadata["whole_run_spectral_stale_sync_sensor_count"] = (
+        coverage_summary.stale_sync_sensor_count
+    )
+    analysis_metadata["whole_run_spectral_high_rtt_sensor_count"] = (
+        coverage_summary.high_rtt_sensor_count
+    )
+    analysis_metadata["whole_run_spectral_coverage_confidence"] = (
+        coverage_summary.coverage_confidence
+    )
+    return PersistedAnalysis.from_json_object(payload)
+
+
+def _append_run_context_warnings(
+    summary: PersistedAnalysis,
+    warnings: RunContextWarningsInput,
+) -> PersistedAnalysis:
+    if not warnings:
+        return summary
+    payload = summary.to_json_object()
+    existing = payload.get("warnings")
+    warnings_payload: list[JsonValue] = []
+    if isinstance(existing, list):
+        warnings_payload.extend(item for item in existing if is_json_object(item))
+    for warning in normalize_run_context_warnings(warnings):
+        warning_payload: JsonObject = {
+            "code": warning.code,
+            "severity": warning.severity,
+            "applies_to": warning.applies_to,
+            "title": warning.title,
+            "detail": warning.detail,
+        }
+        warnings_payload.append(warning_payload)
+    payload["warnings"] = warnings_payload
     return PersistedAnalysis.from_json_object(payload)
 
 
