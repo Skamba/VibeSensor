@@ -4,4 +4,4 @@ from __future__ import annotations
 
 __all__ = ["ReportPdfCacheKey"]
 
-ReportPdfCacheKey = tuple[str, str, str | None, int, str, str]
+ReportPdfCacheKey = tuple[str, str, str | None, int, str, str, str]
