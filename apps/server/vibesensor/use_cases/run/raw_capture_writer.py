@@ -7,7 +7,7 @@ import queue
 import threading
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import numpy as np
 
@@ -20,9 +20,31 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorClockSync,
 )
 
-__all__ = ["RunRawCaptureWriter"]
+__all__ = ["RawCaptureFinalizeResult", "RunRawCaptureWriter"]
 
 _QUEUE_MAXSIZE = 2048
+_FINALIZE_WAIT_TIMEOUT_S = 5.0
+_CONTROL_REQUEST_ENQUEUE_TIMEOUT_S = 1.0
+
+type RawCaptureFinalizeStatus = Literal[
+    "completed",
+    "not_configured",
+    "enqueue_timeout",
+    "timeout",
+    "failed",
+]
+
+
+@dataclass(frozen=True, slots=True)
+class RawCaptureFinalizeResult:
+    status: RawCaptureFinalizeStatus
+    manifest: RawCaptureManifest | None = None
+    error: str | None = None
+    queue_depth: int | None = None
+
+    @property
+    def completed(self) -> bool:
+        return self.status == "completed"
 
 
 def _sync_call(db: Any, coro: Any) -> object:
@@ -224,9 +246,10 @@ class RunRawCaptureWriter:
         run_id: str,
         *,
         sensor_losses: Mapping[str, RawCaptureLossStats] | None = None,
-    ) -> RawCaptureManifest | None:
+        timeout_s: float = _FINALIZE_WAIT_TIMEOUT_S,
+    ) -> RawCaptureFinalizeResult:
         if self._history_db is None or self._thread is None:
-            return None
+            return RawCaptureFinalizeResult(status="not_configured")
         with self._lock:
             if self._active_run_id == run_id:
                 self._active_run_id = None
@@ -250,13 +273,50 @@ class RunRawCaptureWriter:
             sensor_losses=run_stats,
             extra_sensor_losses=sensor_losses,
         )
-        self._queue.put(request)
+        try:
+            self._queue.put(
+                request,
+                timeout=_bounded_wait_timeout(_CONTROL_REQUEST_ENQUEUE_TIMEOUT_S),
+            )
+        except queue.Full:
+            queue_depth = self._queue.qsize()
+            self._logger.error(
+                "Timed out queueing raw capture finalize for run %s; queue depth=%s",
+                run_id,
+                queue_depth,
+            )
+            return RawCaptureFinalizeResult(
+                status="enqueue_timeout",
+                error=f"raw capture finalize enqueue timed out for {run_id}",
+                queue_depth=queue_depth,
+            )
         if self._ingest_diagnostics is not None:
             self._ingest_diagnostics.note_raw_capture_queue_depth(self._queue.qsize())
-        request.done.wait()
+        finished = request.done.wait(timeout=_bounded_wait_timeout(timeout_s))
+        if not finished:
+            queue_depth = self._queue.qsize()
+            self._logger.error(
+                "Timed out waiting %.2fs for raw capture finalize for run %s; queue depth=%s",
+                max(0.0, float(timeout_s)),
+                run_id,
+                queue_depth,
+            )
+            return RawCaptureFinalizeResult(
+                status="timeout",
+                error=f"raw capture finalize timed out for {run_id}",
+                queue_depth=queue_depth,
+            )
         if request.error is not None:
-            raise RuntimeError(f"raw capture finalize failed for {run_id}") from request.error
-        return request.manifest
+            return RawCaptureFinalizeResult(
+                status="failed",
+                error=f"raw capture finalize failed for {run_id}: {request.error}",
+                queue_depth=self._queue.qsize(),
+            )
+        return RawCaptureFinalizeResult(
+            status="completed",
+            manifest=request.manifest,
+            queue_depth=self._queue.qsize(),
+        )
 
     def note_late_packet_loss(self, *, client_id: str) -> None:
         with self._lock:
@@ -271,13 +331,29 @@ class RunRawCaptureWriter:
         if thread is None:
             return True
         request = _ShutdownRequest()
-        self._queue.put(request)
+        try:
+            self._queue.put(
+                request,
+                timeout=_bounded_wait_timeout(min(timeout_s, _CONTROL_REQUEST_ENQUEUE_TIMEOUT_S)),
+            )
+        except queue.Full:
+            self._logger.error(
+                "Timed out queueing raw capture shutdown; queue depth=%s",
+                self._queue.qsize(),
+            )
+            return False
         if self._ingest_diagnostics is not None:
             self._ingest_diagnostics.note_raw_capture_queue_depth(self._queue.qsize())
-        finished = request.done.wait(timeout=max(0.1, timeout_s))
-        thread.join(timeout=max(0.1, timeout_s))
-        self._thread = None
-        return finished and not thread.is_alive()
+        finished = request.done.wait(timeout=_bounded_wait_timeout(timeout_s))
+        thread.join(timeout=_bounded_wait_timeout(timeout_s))
+        if not thread.is_alive():
+            self._thread = None
+            return finished
+        self._logger.error(
+            "Raw capture worker did not exit within %.2fs during shutdown",
+            max(0.0, float(timeout_s)),
+        )
+        return False
 
     def _worker_loop(self) -> None:
         history_db = self._history_db
@@ -355,3 +431,7 @@ def _merge_sensor_losses(
             continue
         merged[client_id] = losses
     return merged or None
+
+
+def _bounded_wait_timeout(timeout_s: float) -> float:
+    return max(0.1, float(timeout_s))

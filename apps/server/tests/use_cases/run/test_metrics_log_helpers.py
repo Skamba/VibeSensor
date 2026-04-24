@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import threading
 import time
 from pathlib import Path
@@ -591,6 +592,39 @@ def test_shutdown_report_exposes_timeout_state(
     assert report.analysis_queue_depth == 2
     assert report.analysis_active_run_id == "run-slow"
     assert report.final_status.enabled is False
+
+
+def test_stop_recording_continues_when_raw_capture_finalize_degrades(
+    make_logger,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    from vibesensor.use_cases.run.raw_capture_writer import RawCaptureFinalizeResult
+
+    logger = make_logger()
+    logger.start_recording()
+    finalized_run_ids: list[str] = []
+    logger._raw_capture = SimpleNamespace(
+        finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
+            status="timeout",
+            error="raw capture finalize timed out",
+            queue_depth=3,
+        ),
+        shutdown=lambda timeout_s=5.0: True,
+    )
+    monkeypatch.setattr(
+        logger._persistence,
+        "finalize_run",
+        lambda run_id, start_time_utc, end_time_utc: finalized_run_ids.append(run_id) or True,
+    )
+    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+
+    with caplog.at_level(logging.WARNING, logger="vibesensor.use_cases.run.logger"):
+        status = logger.stop_recording()
+
+    assert status.enabled is False
+    assert finalized_run_ids
+    assert "raw_capture_finalize_degraded" in caplog.text
 
 
 def test_post_analysis_uses_run_language_from_metadata(
