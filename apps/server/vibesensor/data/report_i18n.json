@@ -1700,8 +1700,8 @@
     "nl": "De whole-run raw-uitlijning was onvolledig"
   },
   "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_DETAIL": {
-    "en": "Whole-run raw coverage was incomplete for some time-aligned windows; affected order and spatial diagnostics used only fully covered windows. Partial windows: {partial}, missing windows: {missing}, timing gaps: {gaps}, overlaps: {overlaps}, dropped chunks: {dropped}, sample-rate mismatches: {mismatches}, unanchored sensors: {unanchored}, sync-unverified sensors: {sync_unverified}.",
-    "nl": "De whole-run raw-dekking was onvolledig voor sommige tijd-uitgelijnde vensters; getroffen orde- en ruimtelijke diagnostiek gebruikte alleen volledig gedekte vensters. Gedeeltelijke vensters: {partial}, ontbrekende vensters: {missing}, timinggaten: {gaps}, overlappen: {overlaps}, verloren chunks: {dropped}, samplefrequentiemismatches: {mismatches}, niet-verankerde sensoren: {unanchored}, sensoren zonder bewezen sync: {sync_unverified}."
+    "en": "Whole-run raw coverage was incomplete for some time-aligned windows; affected order and spatial diagnostics used only fully covered windows. Partial windows: {partial}, missing windows: {missing}, timing gaps: {gaps}, overlaps: {overlaps}, dropped chunks: {dropped}, UDP ingest queue drops: {udp_ingest}, raw-capture queue overflows: {queue_overflow}, invalid chunks: {invalid}, write errors: {write_errors}, sample-rate mismatches: {mismatches}, unanchored sensors: {unanchored}, sync-unverified sensors: {sync_unverified}.",
+    "nl": "De whole-run raw-dekking was onvolledig voor sommige tijd-uitgelijnde vensters; getroffen orde- en ruimtelijke diagnostiek gebruikte alleen volledig gedekte vensters. Gedeeltelijke vensters: {partial}, ontbrekende vensters: {missing}, timinggaten: {gaps}, overlappen: {overlaps}, verloren chunks: {dropped}, UDP-ingestwachtrij-drops: {udp_ingest}, raw-capture-wachtrijoverlopen: {queue_overflow}, ongeldige chunks: {invalid}, schrijffouten: {write_errors}, samplefrequentiemismatches: {mismatches}, niet-verankerde sensoren: {unanchored}, sensoren zonder bewezen sync: {sync_unverified}."
   },
   "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_UNAVAILABLE_DETAIL": {
     "en": "Whole-run raw timing could not be proven for the recorded sensors, so time-aligned order and spatial diagnostics were skipped. Legacy sensors: {legacy}, unanchored sensors: {unanchored}, sync-unverified sensors: {sync_unverified}, missing sync proof: {missing_sync}, stale sync snapshots: {stale}, high-RTT sync snapshots: {high_rtt}, sample-rate mismatches: {mismatches}.",
@@ -1720,8 +1720,8 @@
     "nl": "Raw capture verloor chunks voor persistente opslag"
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_DETAIL": {
-    "en": "Raw capture dropped {count} chunk(s) before persistence ({queue_overflow} queue overflows, {invalid} invalid chunks, {write_errors} write errors); affected metrics used persisted summary samples where needed.",
-    "nl": "Raw capture verloor {count} chunk(s) voor persistente opslag ({queue_overflow} wachtrijoverlopen, {invalid} ongeldige chunks, {write_errors} schrijffouten); getroffen metrieken gebruikten waar nodig persistente samenvattingssamples."
+    "en": "Raw capture dropped {count} chunk(s) before persistence ({udp_ingest} UDP ingest queue drops, {queue_overflow} raw-capture queue overflows, {invalid} invalid chunks, {write_errors} write errors); affected metrics used persisted summary samples where needed.",
+    "nl": "Raw capture verloor {count} chunk(s) voor persistente opslag ({udp_ingest} UDP-ingestwachtrij-drops, {queue_overflow} raw-capture-wachtrijoverlopen, {invalid} ongeldige chunks, {write_errors} schrijffouten); getroffen metrieken gebruikten waar nodig persistente samenvattingssamples."
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_TITLE": {
     "en": "Raw replay used persisted sample timing for some windows",
