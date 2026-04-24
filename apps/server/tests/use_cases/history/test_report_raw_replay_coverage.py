@@ -184,6 +184,7 @@ def test_prepare_persisted_report_input_surfaces_dropped_raw_chunk_warning() -> 
                     "raw_backed_sample_count": 4,
                     "raw_capture_mode": "partial_raw_backed",
                     "raw_replay_dropped_chunk_count": 4,
+                    "raw_replay_late_packet_chunk_count": 1,
                     "raw_replay_udp_ingest_queue_drop_count": 1,
                     "raw_replay_queue_overflow_chunk_count": 2,
                     "raw_replay_invalid_chunk_count": 1,
@@ -197,7 +198,8 @@ def test_prepare_persisted_report_input_surfaces_dropped_raw_chunk_warning() -> 
                         "title": i18n_ref("RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_TITLE"),
                         "detail": i18n_ref(
                             "RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_DETAIL",
-                            count="4",
+                            count="5",
+                            late="1",
                             udp_ingest="1",
                             queue_overflow="2",
                             invalid="1",
@@ -214,7 +216,10 @@ def test_prepare_persisted_report_input_surfaces_dropped_raw_chunk_warning() -> 
     assert WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS in [
         warning.code for warning in prepared.report_facts.decision.warnings
     ]
-    assert any("UDP ingest queue drops" in (row.detail or "") for row in document.data_trust)
+    assert any(
+        "late or out-of-order packets quarantined from live processing" in (row.detail or "")
+        for row in document.data_trust
+    )
 
 
 def test_prepare_persisted_report_input_surfaces_sync_unverified_warning() -> None:
@@ -322,6 +327,7 @@ def test_prepare_persisted_report_input_surfaces_whole_run_alignment_warning() -
                             gaps="1",
                             overlaps="0",
                             dropped="0",
+                            late="0",
                             udp_ingest="0",
                             queue_overflow="0",
                             invalid="0",

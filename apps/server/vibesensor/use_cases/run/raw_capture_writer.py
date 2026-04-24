@@ -52,12 +52,14 @@ class _ShutdownRequest:
 
 @dataclass(slots=True)
 class _MutableLossStats:
+    late_packet_chunk_count: int = 0
     queue_overflow_chunk_count: int = 0
     invalid_chunk_count: int = 0
     write_error_chunk_count: int = 0
 
     def freeze(self) -> RawCaptureLossStats:
         return RawCaptureLossStats(
+            late_packet_chunk_count=self.late_packet_chunk_count,
             queue_overflow_chunk_count=self.queue_overflow_chunk_count,
             invalid_chunk_count=self.invalid_chunk_count,
             write_error_chunk_count=self.write_error_chunk_count,
@@ -76,6 +78,10 @@ class _RunCaptureStats:
         self.seen_client_ids.add(client_id)
         self._sensor(client_id).queue_overflow_chunk_count += 1
 
+    def record_late_packet(self, client_id: str) -> None:
+        self.seen_client_ids.add(client_id)
+        self._sensor(client_id).late_packet_chunk_count += 1
+
     def record_invalid_chunk(self, client_id: str) -> None:
         self.seen_client_ids.add(client_id)
         self._sensor(client_id).invalid_chunk_count += 1
@@ -91,7 +97,7 @@ class _RunCaptureStats:
         frozen: dict[str, RawCaptureLossStats] = {}
         for client_id, stats in self.by_client.items():
             loss_stats = stats.freeze()
-            if loss_stats.total_dropped_chunk_count <= 0:
+            if loss_stats.total_loss_event_count <= 0:
                 continue
             frozen[client_id] = loss_stats
         return frozen
@@ -242,6 +248,14 @@ class RunRawCaptureWriter:
             raise RuntimeError(f"raw capture finalize failed for {run_id}") from request.error
         return request.manifest
 
+    def note_late_packet_loss(self, *, client_id: str) -> None:
+        with self._lock:
+            run_stats = self._run_stats
+            run_id = self._active_run_id
+        if run_id is None or run_stats is None:
+            return
+        run_stats.record_late_packet(client_id)
+
     def shutdown(self, timeout_s: float = 5.0) -> bool:
         thread = self._thread
         if thread is None:
@@ -321,7 +335,7 @@ def _merge_sensor_losses(
             losses = losses.merged(primary.get(client_id, RawCaptureLossStats()))
         if secondary is not None:
             losses = losses.merged(secondary.get(client_id, RawCaptureLossStats()))
-        if losses.total_dropped_chunk_count <= 0:
+        if losses.total_loss_event_count <= 0:
             continue
         merged[client_id] = losses
     return merged or None

@@ -141,6 +141,7 @@ def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(tmp_pat
         sensor_losses={
             "sensor-a": RawCaptureLossStats(
                 udp_ingest_queue_drop_count=1,
+                late_packet_chunk_count=1,
                 queue_overflow_chunk_count=2,
             ),
             "sensor-b": RawCaptureLossStats(
@@ -152,12 +153,15 @@ def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(tmp_pat
 
     assert manifest is not None
     assert manifest.total_dropped_chunk_count == 5
+    assert manifest.total_late_packet_chunk_count == 1
     assert manifest.losses.udp_ingest_queue_drop_count == 1
+    assert manifest.losses.late_packet_chunk_count == 1
     assert manifest.losses.queue_overflow_chunk_count == 2
     assert manifest.losses.invalid_chunk_count == 1
     assert manifest.losses.write_error_chunk_count == 1
     assert manifest.sensor_loss("sensor-a") is not None
     assert manifest.sensor_loss("sensor-a").losses.udp_ingest_queue_drop_count == 1
+    assert manifest.sensor_loss("sensor-a").losses.late_packet_chunk_count == 1
     assert manifest.sensor_loss("sensor-a").losses.queue_overflow_chunk_count == 2
     assert manifest.sensor_loss("sensor-b") is not None
     assert manifest.sensor_loss("sensor-b").losses.write_error_chunk_count == 1
@@ -169,7 +173,9 @@ def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(tmp_pat
     assert stored is not None
     assert stored.raw_capture_manifest is not None
     assert stored.raw_capture_manifest.total_dropped_chunk_count == 5
+    assert stored.raw_capture_manifest.total_late_packet_chunk_count == 1
     assert stored.raw_capture_manifest.losses.udp_ingest_queue_drop_count == 1
+    assert stored.raw_capture_manifest.losses.late_packet_chunk_count == 1
     assert stored.raw_capture_manifest.losses.invalid_chunk_count == 1
     assert stored.raw_capture_manifest.sensor_loss("sensor-b") is not None
     assert stored.raw_capture_manifest.sensor_loss("sensor-b").losses.invalid_chunk_count == 1

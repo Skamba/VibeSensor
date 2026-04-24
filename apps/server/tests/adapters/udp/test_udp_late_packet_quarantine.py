@@ -77,6 +77,7 @@ def test_late_packet_is_quarantined_to_raw_capture_only(fake_transport) -> None:
     assert latest_before == latest_after
     assert ingest_spy.call_count == 2
     assert raw_capture_sink.capture_raw_samples.call_count == 3
+    raw_capture_sink.note_late_packet_loss.assert_called_once_with(client_id="aabbccddeeff")
     assert [parse_data_ack(data).last_seq_received for data, _addr in fake_transport.sent] == [
         0,
         2,

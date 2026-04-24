@@ -305,6 +305,9 @@ class RunRecorder:
             samples=samples,
         )
 
+    def note_late_packet_loss(self, *, client_id: str) -> None:
+        self._raw_capture.note_late_packet_loss(client_id=client_id)
+
     def status(self) -> RunRecorderStatusSnapshot:
         with self._lock:
             enabled = self._lifecycle.enabled
