@@ -237,7 +237,7 @@ def _build_coverage_summary(
         tuple(
             row.location
             for row in sensor_intensity
-            if row.partial_coverage or row.sample_coverage_warning
+            if row.partial_coverage or row.diagnostic_sample_coverage_warning
         ),
     )
     missing_locations = tuple(

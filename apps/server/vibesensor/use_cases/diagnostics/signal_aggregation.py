@@ -137,7 +137,8 @@ def _sensor_intensity_by_location(
 ) -> list[LocationIntensitySummary]:
     """Compute per-location vibration intensity statistics."""
     grouped_amp: dict[str, list[float]] = defaultdict(list)
-    sample_counts: dict[str, int] = defaultdict(int)
+    observed_sample_counts: dict[str, int] = defaultdict(int)
+    usable_sample_counts: dict[str, int] = defaultdict(int)
     dropped_totals: dict[str, list[tuple[float | None, float]]] = defaultdict(list)
     overflow_totals: dict[str, list[tuple[float | None, float]]] = defaultdict(list)
     strength_bucket_counts: dict[str, dict[str, int]] = defaultdict(_EMPTY_BUCKET_COUNTS.copy)
@@ -154,9 +155,10 @@ def _sensor_intensity_by_location(
             continue
         if include_locations is not None and location not in include_locations:
             continue
-        sample_counts[location] += 1
+        observed_sample_counts[location] += 1
         amp = _vib_db(sample)
         if amp is not None:
+            usable_sample_counts[location] += 1
             grouped_amp[location].append(amp)
             if has_phases and per_sample_phases is not None:
                 phase_obj = per_sample_phases[i]
@@ -180,11 +182,15 @@ def _sensor_intensity_by_location(
             strength_bucket_totals[location] += 1
 
     rows: list[LocationIntensitySummary] = []
-    target_locations = set(sample_counts.keys())
+    target_locations = set(observed_sample_counts.keys())
     if include_locations is not None:
         target_locations |= set(include_locations)
-    max_sample_count = max(
-        (sample_counts.get(location, 0) for location in target_locations),
+    max_observed_sample_count = max(
+        (observed_sample_counts.get(location, 0) for location in target_locations),
+        default=0,
+    )
+    max_usable_sample_count = max(
+        (usable_sample_counts.get(location, 0) for location in target_locations),
         default=0,
     )
 
@@ -219,9 +225,18 @@ def _sensor_intensity_by_location(
             if bucket_total > 0
             else 0.0,
         )
-        sample_count = int(sample_counts.get(location, 0))
-        sample_coverage_ratio = (sample_count / max_sample_count) if max_sample_count > 0 else 1.0
-        sample_coverage_warning = max_sample_count >= 5 and sample_coverage_ratio <= 0.20
+        sample_count = int(observed_sample_counts.get(location, 0))
+        sample_coverage_ratio = (
+            sample_count / max_observed_sample_count if max_observed_sample_count > 0 else 1.0
+        )
+        sample_coverage_warning = max_observed_sample_count >= 5 and sample_coverage_ratio <= 0.20
+        usable_sample_count = int(usable_sample_counts.get(location, 0))
+        usable_sample_coverage_ratio = (
+            usable_sample_count / max_usable_sample_count if max_usable_sample_count > 0 else 0.0
+        )
+        usable_sample_coverage_warning = (
+            max_usable_sample_count >= 5 and usable_sample_coverage_ratio <= 0.20
+        )
         partial_coverage = bool(
             connected_locations is not None and location not in connected_locations,
         )
@@ -244,6 +259,9 @@ def _sensor_intensity_by_location(
                 sample_count=sample_count,
                 sample_coverage_ratio=sample_coverage_ratio,
                 sample_coverage_warning=sample_coverage_warning,
+                usable_sample_count=usable_sample_count,
+                usable_sample_coverage_ratio=usable_sample_coverage_ratio,
+                usable_sample_coverage_warning=usable_sample_coverage_warning,
                 mean_intensity_db=_mean(values) if values else None,
                 p50_intensity_db=percentile(values_sorted, 0.50) if values else None,
                 p95_intensity_db=percentile(values_sorted, 0.95) if values else None,
@@ -257,7 +275,7 @@ def _sensor_intensity_by_location(
     rows.sort(
         key=lambda row: (
             0 if row.partial_coverage else 1,
-            0 if row.sample_coverage_warning else 1,
+            0 if row.diagnostic_sample_coverage_warning else 1,
             row.p95_intensity_db if isinstance(row.p95_intensity_db, (int, float)) else 0.0,
             row.max_intensity_db if isinstance(row.max_intensity_db, (int, float)) else 0.0,
         ),

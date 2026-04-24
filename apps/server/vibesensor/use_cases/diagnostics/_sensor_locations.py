@@ -8,6 +8,7 @@ from collections.abc import Sequence
 from vibesensor.shared.locations import label_for_code as _label_for_code
 from vibesensor.shared.types.run_schema import RunMetadata, RunSensorMetadata
 
+from ._sample_metrics import _primary_vibration_strength_db
 from ._types import Sample
 
 
@@ -89,6 +90,8 @@ def _locations_connected_throughout_run(
     for sample in samples:
         location = _location_label(sample, metadata=metadata, lang=lang)
         if not location:
+            continue
+        if _primary_vibration_strength_db(sample) is None:
             continue
         t_s = sample.t_s
         if t_s is None:

@@ -159,6 +159,8 @@ class TestLocationIntensitySummary:
             location="front_left",
             sample_count=100,
             sample_coverage_ratio=0.95,
+            usable_sample_count=80,
+            usable_sample_coverage_ratio=0.80,
             mean_intensity_db=12.5,
             p95_intensity_db=18.0,
             max_intensity_db=22.0,
@@ -172,6 +174,7 @@ class TestLocationIntensitySummary:
         )
         assert summary.location == "front_left"
         assert summary.sample_count == 100
+        assert summary.diagnostic_sample_count == 80
         assert summary.mean_intensity_db == 12.5
 
     def test_frozen(self) -> None:
@@ -189,6 +192,10 @@ class TestLocationIntensitySummary:
     def test_invalid_coverage_ratio_rejected(self) -> None:
         with pytest.raises(ValueError, match="sample_coverage_ratio"):
             LocationIntensitySummary(location="x", sample_coverage_ratio=1.5)
+
+    def test_invalid_usable_coverage_ratio_rejected(self) -> None:
+        with pytest.raises(ValueError, match="usable_sample_coverage_ratio"):
+            LocationIntensitySummary(location="x", usable_sample_coverage_ratio=1.5)
 
     def test_boundary_codec_from_mapping(self) -> None:
         raw = {
