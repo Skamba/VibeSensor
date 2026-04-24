@@ -32,9 +32,8 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
     summary_payload = analysis_result_to_summary(result)
     prepared = getattr(result, "prepared", None)
     if prepared is not None and hasattr(prepared, "per_sample_phases"):
-        source_samples = run.summary_samples if run.summary_samples else run.samples
         sensor_locations, connected_locations, sensor_intensity = build_sensor_analysis(
-            samples=source_samples,
+            samples=run.samples,
             language=run.language,
             per_sample_phases=list(prepared.per_sample_phases),
         )
