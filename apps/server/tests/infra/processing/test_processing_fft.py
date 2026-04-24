@@ -428,7 +428,9 @@ class TestComputeFftSpectrum:
             "freq_slice",
             "spectrum_by_axis",
             "combined_amp",
+            "has_valid_analysis_bins",
             "strength_metrics",
+            "strength_metrics_analytically_valid",
             "axis_peaks",
         }
         assert freq_slice.dtype == np.float32
@@ -443,6 +445,8 @@ class TestComputeFftSpectrum:
         if expect_empty:
             assert freq_slice.size == 0
             assert result["combined_amp"].size == 0
+            assert result["has_valid_analysis_bins"] is False
+            assert result["strength_metrics_analytically_valid"] is False
             assert result["strength_metrics"]["vibration_strength_db"] == 0.0
             assert result["strength_metrics"]["top_peaks"] == []
             for axis in ("x", "y", "z"):
@@ -452,10 +456,38 @@ class TestComputeFftSpectrum:
 
         assert np.all(np.diff(freq_slice) >= 0.0)
         assert result["combined_amp"].shape == freq_slice.shape
+        assert result["has_valid_analysis_bins"] is True
+        assert result["strength_metrics_analytically_valid"] is True
         assert np.isfinite(result["strength_metrics"]["vibration_strength_db"])
         assert isinstance(result["strength_metrics"]["top_peaks"], list)
         for axis in ("x", "y", "z"):
             assert result["spectrum_by_axis"][axis]["amp"].shape == freq_slice.shape
+
+    def test_spectral_analysis_marks_no_valid_bin_slice_as_invalid(self) -> None:
+        sample_rate_hz = 8
+        fft_n = 64
+        t = np.arange(fft_n, dtype=np.float32) / sample_rate_hz
+        block = np.stack(
+            [
+                0.1 * np.sin(2 * np.pi * 2 * t),
+                np.zeros_like(t),
+                np.zeros_like(t),
+            ],
+            axis=0,
+        )
+        computer = SpectralAnalysisComputer(
+            fft_n=fft_n,
+            spectrum_min_hz=5.0,
+            spectrum_max_hz=200.0,
+        )
+
+        result = computer.compute_fft_spectrum(block, sample_rate_hz)
+
+        assert result["freq_slice"].size == 0
+        assert result["has_valid_analysis_bins"] is False
+        assert result["strength_metrics_analytically_valid"] is False
+        assert result["strength_metrics"]["vibration_strength_db"] == 0.0
+        assert result["strength_metrics"]["top_peaks"] == []
 
     def test_combined_spectrum_reports_multiple_axis_tones(self) -> None:
         sr = 512

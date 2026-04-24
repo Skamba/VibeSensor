@@ -56,7 +56,9 @@ class FftSpectrumResult(TypedDict):
     freq_slice: FloatArray
     spectrum_by_axis: SpectrumByAxis
     combined_amp: FloatArray
+    has_valid_analysis_bins: bool
     strength_metrics: VibrationStrengthMetrics
+    strength_metrics_analytically_valid: bool
     axis_peaks: dict[Axis, list[AxisPeak]]
 
 
@@ -127,7 +129,9 @@ def _empty_fft_spectrum_result(freq_slice: FloatArray) -> FftSpectrumResult:
         "freq_slice": freq_slice,
         "spectrum_by_axis": spectrum_by_axis,
         "combined_amp": empty_amp,
+        "has_valid_analysis_bins": False,
         "strength_metrics": empty_vibration_strength_metrics(),
+        "strength_metrics_analytically_valid": False,
         "axis_peaks": axis_peaks,
     }
 
@@ -255,6 +259,7 @@ def compute_fft_spectrum(
 
     combined_amp: FloatArray = np.empty(0, dtype=np.float32)
     strength_metrics: VibrationStrengthMetrics = empty_vibration_strength_metrics()
+    has_valid_analysis_bins = freq_slice.size > 0
     if spectrum_by_axis:
         amp_slices = [spectrum_by_axis[axis]["amp"] for axis in spectrum_by_axis]
         combined_amp = _combined_spectrum_amp_g_array(
@@ -276,7 +281,9 @@ def compute_fft_spectrum(
         "freq_slice": freq_slice,
         "spectrum_by_axis": spectrum_by_axis,
         "combined_amp": combined_amp,
+        "has_valid_analysis_bins": has_valid_analysis_bins,
         "strength_metrics": strength_metrics,
+        "strength_metrics_analytically_valid": has_valid_analysis_bins,
         "axis_peaks": axis_peaks,
     }
 

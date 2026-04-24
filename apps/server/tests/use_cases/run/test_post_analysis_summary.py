@@ -289,6 +289,7 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
         "raw_replay_write_error_chunk_count": 0,
         "raw_replay_timing_fallback_count": 0,
         "raw_replay_sample_rate_mismatch_count": 0,
+        "raw_replay_fft_unusable_window_count": 0,
         "raw_replay_sample_rate_unverified_sensor_count": 0,
         "raw_replay_unanchored_sensor_count": 0,
         "raw_replay_legacy_sensor_count": 0,
