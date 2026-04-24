@@ -11,12 +11,38 @@ from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityChe
 from vibesensor.shared.types.json_types import JsonValue
 
 
+def _check_details_from_payload(payload: Mapping[str, object]) -> tuple[tuple[str, int], ...]:
+    explanation = payload.get("explanation")
+    if not isinstance(explanation, Mapping):
+        return ()
+    details: list[tuple[str, int]] = []
+    for key, value in explanation.items():
+        if key == "_i18n_key":
+            continue
+        if isinstance(value, bool):
+            details.append((str(key), int(value)))
+            continue
+        if isinstance(value, int):
+            details.append((str(key), value))
+            continue
+        if isinstance(value, float) and value.is_integer():
+            details.append((str(key), int(value)))
+            continue
+        if isinstance(value, str):
+            try:
+                details.append((str(key), int(value)))
+            except ValueError:
+                continue
+    return tuple(details)
+
+
 def run_suitability_from_payload(checks: Sequence[Mapping[str, object]]) -> RunSuitability:
     """Decode persisted checklist payloads into the domain RunSuitability shape."""
     domain_checks = tuple(
         SuitabilityCheck(
             check_key=str(c.get("check_key", "")),
             state=str(c.get("state", "pass")),
+            details=_check_details_from_payload(c),
         )
         for c in checks
         if isinstance(c, Mapping)
