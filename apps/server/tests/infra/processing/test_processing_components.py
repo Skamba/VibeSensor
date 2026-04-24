@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from vibesensor.infra.processing.buffer_store import SignalBufferStore
 from vibesensor.infra.processing.compute import SignalMetricsComputer
@@ -136,6 +137,24 @@ def test_buffer_store_warns_and_truncates_oversized_ingest(caplog) -> None:
         assert buf is not None
         latest = store._buffer_mutator.copy_latest(buf, 4).T
     np.testing.assert_array_equal(latest, samples[-4:])
+
+
+def test_buffer_store_adjusts_t0_us_for_oversized_ingest() -> None:
+    store = SignalBufferStore(_config(sample_rate_hz=4, waveform_seconds=1))
+    client_id = "client-oversized-t0"
+    samples = np.arange(18, dtype=np.float32).reshape(6, 3)
+
+    store.ingest(client_id, samples, sample_rate_hz=4, t0_us=1_000_000)
+
+    with store.locked_client_buffer(client_id) as buf:
+        assert buf is not None
+        assert buf.last_t0_us == 1_500_000
+        assert buf.samples_since_t0 == 4
+    plan = store.snapshot_for_compute(client_id, sample_rate_hz=4)
+    assert isinstance(plan, MetricsSnapshot)
+    assert plan.analysis_time_range is not None
+    assert plan.analysis_time_range.start_s == pytest.approx(1.5)
+    assert plan.analysis_time_range.end_s == pytest.approx(2.5)
 
 
 def test_fft_params_uses_lru_eviction(monkeypatch) -> None:
