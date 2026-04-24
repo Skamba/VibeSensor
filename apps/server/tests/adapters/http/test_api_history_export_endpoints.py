@@ -4,23 +4,14 @@ import csv
 import io
 import json
 import zipfile
-from dataclasses import dataclass, replace
 
 import pytest
 from _history_endpoint_helpers import (
-    FakeHistoryDB,
-    FakeState,
-    FakeWsHub,
-    make_metadata,
     make_router_and_state,
     read_streaming_body,
     route_endpoint,
-    sample,
 )
 from fastapi import HTTPException
-
-from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.adapters.http import create_router
 
 
 @pytest.mark.asyncio
@@ -131,43 +122,6 @@ async def test_history_export_strips_internal_analysis_fields_from_json() -> Non
     with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
         metadata = json.loads(archive.read("run-1.json").decode("utf-8"))
     assert "_internal" not in metadata.get("analysis", {})
-
-
-@pytest.mark.asyncio
-async def test_history_export_sanitizes_filename_from_run_id() -> None:
-    run_id = "../bad:name*id"
-    metadata = make_metadata(run_id=run_id)
-    samples = [sample(i) for i in range(2)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-
-    @dataclass
-    class NamedRunDB(FakeHistoryDB):
-        accepted_run_id: str = run_id
-
-        async def aget_run(self, queried_run_id: str):
-            if queried_run_id != self.accepted_run_id:
-                return None
-            result = await super().aget_run("run-1")
-            assert result is not None
-            return replace(result, run_id=queried_run_id)
-
-        async def aiter_run_samples(
-            self, queried_run_id: str, batch_size: int = 1000, *, stride: int = 1
-        ):
-            if queried_run_id != self.accepted_run_id:
-                return
-            async for batch in super().aiter_run_samples(
-                "run-1", batch_size=batch_size, stride=stride
-            ):
-                yield batch
-
-    db = NamedRunDB(metadata, samples, analysis)
-    router = create_router(FakeState(db, FakeWsHub()))
-    endpoint = route_endpoint(router, "/api/history/{run_id}/export")
-    response = await endpoint(run_id)
-    body = await read_streaming_body(response)
-    with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
-        assert set(archive.namelist()) == {"_bad_name_id.json", "_bad_name_id_raw.csv"}
 
 
 @pytest.mark.asyncio

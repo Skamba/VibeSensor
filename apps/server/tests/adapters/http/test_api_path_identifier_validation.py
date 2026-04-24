@@ -88,21 +88,24 @@ def _settings_test_client() -> tuple[TestClient, MagicMock]:
     return TestClient(app), settings_store
 
 
+@pytest.mark.parametrize("invalid_run_id", ["bad%20id", "..%5csecret"])
 @pytest.mark.parametrize(
-    ("method", "path"),
+    ("method", "path_template"),
     [
-        ("GET", "/api/history/bad%20id"),
-        ("GET", "/api/history/bad%20id/insights"),
-        ("DELETE", "/api/history/bad%20id"),
-        ("GET", "/api/history/bad%20id/report.pdf"),
-        ("GET", "/api/history/bad%20id/export"),
+        ("GET", "/api/history/{run_id}"),
+        ("GET", "/api/history/{run_id}/insights"),
+        ("DELETE", "/api/history/{run_id}"),
+        ("GET", "/api/history/{run_id}/report.pdf"),
+        ("GET", "/api/history/{run_id}/export"),
     ],
 )
 def test_history_routes_reject_invalid_run_ids_before_reaching_services(
+    invalid_run_id: str,
     method: str,
-    path: str,
+    path_template: str,
 ) -> None:
     client, run_service, report_service, export_service = _history_test_client()
+    path = path_template.format(run_id=invalid_run_id)
 
     response = client.request(method, path)
 
