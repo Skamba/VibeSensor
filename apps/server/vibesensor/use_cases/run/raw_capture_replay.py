@@ -20,7 +20,7 @@ from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
     RunContextWarning,
 )
-from vibesensor.shared.types.raw_capture import RawRunCapture
+from vibesensor.shared.types.raw_capture import RawCaptureSensorData, RawRunCapture
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -88,6 +88,8 @@ class _TimelineInterval:
 
 @dataclass(frozen=True, slots=True)
 class _TimelineChunk:
+    """Chronological chunk timing plus append-order raw-buffer offsets."""
+
     sample_start: int
     sample_end: int
     start_us: float
@@ -114,8 +116,14 @@ class _SensorTimeline:
 class _ResolvedWindow:
     coverage_state: RawReplayCoverageState
     reason: str | None
-    sample_end: int | None = None
+    segments: tuple[_WindowSegment, ...] = ()
     timing_source: str = "explicit_window"
+
+
+@dataclass(frozen=True, slots=True)
+class _WindowSegment:
+    sample_start: int
+    sample_end: int
 
 
 def build_raw_backed_samples(
@@ -350,7 +358,7 @@ def _rebuild_sample(
             ),
         )
     window = _resolve_window(timeline=timeline, sample=sample, fft_n=fft_n)
-    if window.coverage_state != "complete" or window.sample_end is None:
+    if window.coverage_state != "complete" or not window.segments:
         coverage_reason = (
             "timing_fallback" if window.timing_source == "legacy_t_s" else window.reason
         )
@@ -364,7 +372,7 @@ def _rebuild_sample(
                 reason=coverage_reason,
             ),
         )
-    window_i16 = sensor_data.samples_i16[window.sample_end - fft_n : window.sample_end]
+    window_i16 = _assemble_window_samples(sensor_data=sensor_data, segments=window.segments)
     if window_i16.shape[0] != fft_n:
         return (
             sample,
@@ -520,16 +528,17 @@ def _resolve_window(
         return _ResolvedWindow(coverage_state="missing", reason="window_before_capture")
     if requested_end_us > (last_chunk.end_us + timeline.timing_tolerance_us):
         return _ResolvedWindow(coverage_state="missing", reason="window_after_capture")
-    sample_end = _sample_end_for_time(
+    segments = _window_segments_for_time(
         timeline=timeline,
         requested_end_us=requested_end_us,
+        sample_count=fft_n,
     )
-    if sample_end is None or sample_end < fft_n:
+    if not segments:
         return _ResolvedWindow(coverage_state="missing", reason="window_after_capture")
     return _ResolvedWindow(
         coverage_state="complete",
         reason=None,
-        sample_end=sample_end,
+        segments=segments,
         timing_source=timing_source,
     )
 
@@ -548,23 +557,74 @@ def _requested_end_us(
     return run_start_monotonic_us + (float(sample.t_s) * 1_000_000.0), "legacy_t_s"
 
 
-def _sample_end_for_time(
+def _window_segments_for_time(
     *,
     timeline: _SensorTimeline,
     requested_end_us: float,
-) -> int | None:
+    sample_count: int,
+) -> tuple[_WindowSegment, ...]:
     tolerance_us = timeline.timing_tolerance_us
-    for chunk in timeline.chunks:
+    for chunk_index, chunk in enumerate(timeline.chunks):
         if requested_end_us < (chunk.start_us - tolerance_us):
             break
         if requested_end_us <= (chunk.end_us + tolerance_us):
-            relative_samples = int(
-                round((requested_end_us - chunk.start_us) / timeline.sample_period_us)
+            relative_samples = max(
+                0,
+                int(round((requested_end_us - chunk.start_us) / timeline.sample_period_us)),
             )
-            return max(
-                chunk.sample_start, min(chunk.sample_end, chunk.sample_start + relative_samples)
+            return _collect_window_segments(
+                timeline=timeline,
+                end_chunk_index=chunk_index,
+                end_offset=relative_samples,
+                sample_count=sample_count,
             )
-    return None
+    return ()
+
+
+def _collect_window_segments(
+    *,
+    timeline: _SensorTimeline,
+    end_chunk_index: int,
+    end_offset: int,
+    sample_count: int,
+) -> tuple[_WindowSegment, ...]:
+    remaining = max(0, sample_count)
+    chunk_index = end_chunk_index
+    local_end = max(0, end_offset)
+    segments: list[_WindowSegment] = []
+    while remaining > 0 and chunk_index >= 0:
+        chunk = timeline.chunks[chunk_index]
+        chunk_length = max(0, chunk.sample_end - chunk.sample_start)
+        clamped_end = min(chunk_length, local_end)
+        if clamped_end > 0:
+            take = min(remaining, clamped_end)
+            raw_end = chunk.sample_start + clamped_end
+            raw_start = raw_end - take
+            segments.append(_WindowSegment(sample_start=raw_start, sample_end=raw_end))
+            remaining -= take
+        chunk_index -= 1
+        if chunk_index >= 0:
+            previous = timeline.chunks[chunk_index]
+            local_end = max(0, previous.sample_end - previous.sample_start)
+    if remaining > 0:
+        return ()
+    segments.reverse()
+    return tuple(segments)
+
+
+def _assemble_window_samples(
+    *,
+    sensor_data: RawCaptureSensorData,
+    segments: tuple[_WindowSegment, ...],
+) -> np.ndarray:
+    if not segments:
+        return np.empty((0, 3), dtype=np.int16)
+    if len(segments) == 1:
+        segment = segments[0]
+        return sensor_data.samples_i16[segment.sample_start : segment.sample_end]
+    return np.vstack(
+        [sensor_data.samples_i16[segment.sample_start : segment.sample_end] for segment in segments]
+    )
 
 
 def _intersects_intervals(
