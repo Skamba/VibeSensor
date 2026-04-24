@@ -1364,8 +1364,8 @@
     "nl": "Sterkste snelheidsband"
   },
   "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING": {
-    "en": "Long run analyzed with stride {stride}. Brief intermittent events may be underrepresented.",
-    "nl": "Lange run geanalyseerd met stride {stride}. Korte, intermitterende events kunnen ondervertegenwoordigd zijn."
+    "en": "Long run analyzed with event-preserving reduction using base stride {stride}. High-energy brief events were retained where possible.",
+    "nl": "Lange run geanalyseerd met event-behoudende reductie met basis-stride {stride}. Korte events met hoge energie zijn waar mogelijk behouden."
   },
   "SUITABILITY_CHECK_ANALYSIS_SAMPLING": {
     "en": "Analysis sampling",

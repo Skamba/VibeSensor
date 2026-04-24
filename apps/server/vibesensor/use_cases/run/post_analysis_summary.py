@@ -65,7 +65,7 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
     analysis_metadata: JsonObject = {
         "analyzed_sample_count": len(run.samples),
         "total_sample_count": run.total_sample_count,
-        "sampling_method": "full" if run.stride == 1 else f"stride_{run.stride}",
+        "sampling_method": run.sampling_method,
         "raw_capture_available": run.raw_replay.raw_capture_available,
         "raw_backed_sample_count": run.raw_replay.raw_backed_sample_count,
         "raw_capture_mode": run.raw_replay.raw_capture_mode,
@@ -88,6 +88,10 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "raw_replay_high_rtt_sensor_count": run.raw_replay.high_rtt_sensor_count,
         "raw_replay_confidence": run.raw_replay.replay_confidence,
     }
+    if run.sampling_method != "full":
+        analysis_metadata["sampling_base_stride"] = run.stride
+        analysis_metadata["sampling_evenly_spaced_sample_count"] = run.evenly_spaced_sample_count
+        analysis_metadata["sampling_event_sample_count"] = run.event_sample_count
     summary_payload["analysis_metadata"] = payload_object_from_json(analysis_metadata)
     if run.raw_replay.warnings:
         existing_warnings = summary_payload.get("warnings")
@@ -111,7 +115,7 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
             explanation=explanation,
         )
 
-    if run.stride > 1:
+    if run.sampling_method != "full":
         stride_check = SuitabilityCheck(
             check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
             state="warn",
