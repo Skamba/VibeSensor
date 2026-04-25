@@ -96,15 +96,23 @@ Each provenance entry stores:
 
 ### Source ID prefixes
 
-`source_id` stays lightweight and links back to the existing research trail:
+`source_id` now resolves through
+`apps/server/vibesensor/data/car_library_evidence.json`.
 
-- `ratio_sources:<CAR_KEY>:<SOURCE_GROUP>` points at a source group in
-  `apps/server/vibesensor/data/car_library_ratio_sources.json`
-- `variant_sources:<CAR_KEY>:<VARIANT_NAME>` points at the variant table in
-  `apps/server/vibesensor/data/CAR_VARIANT_SOURCES.md`
+That evidence ledger is the machine-checkable owner for exact-row provenance:
 
-That keeps the old research notes intact instead of copying them into the exact
-rows.
+1. Each evidence entry keeps the canonical `source_id` string used by
+   `VehicleFieldProvenance`.
+2. Each evidence entry points at one or more structured source-pack records
+   under `apps/server/vibesensor/data/car_sources/*.json`.
+3. Legacy human-readable research ledgers such as
+   `car_library_ratio_sources.json` and `CAR_VARIANT_SOURCES.md` may still be
+   linked from the evidence entry for historical traceability, but they are not
+   the machine-checkable source of truth for exact-row evidence anymore.
+
+The current migrated BMW subset keeps the older `ratio_sources:` and
+`variant_sources:` prefixes as stable evidence IDs, but those IDs now resolve
+through the evidence ledger instead of pointing directly at ad hoc note files.
 
 ### Validation and analysis-confidence policy
 
@@ -118,10 +126,15 @@ Issue #3234 expands loader validation beyond schema checks:
 - the legacy `car_library.json` rows and resolved
   `vehicle_configurations.json` rows both run through that validator before the
   cached library snapshot is accepted
+- `apps/server/vibesensor/adapters/persistence/car_library_source_evidence.py`
+  is the one owner for exact-row source-pack and evidence resolution checks
 - documented exceptions live in
   `apps/server/vibesensor/data/car_library_validation_allowlist.json`, so
   temporary carve-outs stay explicit and machine-readable instead of hiding in
   scattered tests
+- trusted exact-row provenance now also fails closed when `source_id` is
+  missing for source-backed confidence levels or when the referenced evidence
+  entry does not resolve through the source-pack registry
 
 The confidence levels are the source data for future analysis-confidence
 policies:

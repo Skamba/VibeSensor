@@ -1,0 +1,19 @@
+{
+  "pack_id": "secondary_technical_sources",
+  "sources": [
+    {
+      "id": "secondary_technical_sources:f45-220i-dct-autodata",
+      "url": "https://www.auto-data.net/en/bmw-2-series-active-tourer-f45-lci-facelift-2018-220i-192hp-dct-32491",
+      "title": "Auto-Data F45 220i DCT specification entry",
+      "note": "Reputable secondary source used for the F45 220i DCT numeric final-drive and top-gear pair after official BMW sources confirmed transmission type only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:f45-220i-dct-carfolio",
+      "url": "https://www.carfolio.com/bmw-220i-active-tourer-543939",
+      "title": "Carfolio F45 220i Active Tourer specification entry",
+      "note": "Independent secondary cross-check for the F45 220i DCT ratio pair used in the exact-row override.",
+      "confidence": "medium"
+    }
+  ]
+}

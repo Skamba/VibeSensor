@@ -1,0 +1,33 @@
+{
+  "pack_id": "bmw_market_pages",
+  "sources": [
+    {
+      "id": "bmw_market_pages:g22-4-series-technical-data-de",
+      "url": "https://www.bmw.de/de/neufahrzeuge/4er/coupe/bmw-4er-coupe-technische-daten.html",
+      "title": "BMW Germany 4 Series Coupe technical data page",
+      "note": "Official BMW Germany technical-data page used for the supported G22 EU variant naming and drivetrain slice.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g22-4-series-technical-data-ie",
+      "url": "https://www.bmw.ie/en/all-models/4-series/4-series-coupe/bmw-4-series-coupe-technical-data.html",
+      "title": "BMW Ireland 4 Series Coupe technical data page",
+      "note": "Official BMW Ireland page used as a second EU-market cross-check for the supported G22 variant context.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g20-3-series-uk-listing",
+      "url": "https://www.bmw.co.uk/en/all-models.html?series=3",
+      "title": "BMW UK 3 Series model listing",
+      "note": "Official BMW UK listing used for the G20 variant and drivetrain context around the supported 330i xDrive row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "bmw_market_pages:g20-3-series-de-overview",
+      "url": "https://www.bmw.de/de/neufahrzeuge/3er.html",
+      "title": "BMW Germany 3 Series overview page",
+      "note": "Official BMW Germany overview used as a market cross-check for the supported G20 variant context.",
+      "confidence": "medium"
+    }
+  ]
+}

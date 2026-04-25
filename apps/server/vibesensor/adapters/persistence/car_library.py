@@ -24,6 +24,9 @@ from vibesensor.domain import (
 )
 from vibesensor.shared._data_files import resolve_static_data_file
 
+from .car_library_source_evidence import (
+    ensure_valid_vehicle_configuration_source_evidence,
+)
 from .car_library_validation import (
     ensure_valid_car_library_rows,
     ensure_valid_vehicle_configurations,
@@ -556,6 +559,7 @@ def _load_vehicle_configurations_snapshot() -> list[VehicleConfiguration]:
         rows = _VEHICLE_CONFIGURATION_ADAPTER.validate_python(data)
         configs = [_configuration_from_row(row) for row in rows]
         ensure_valid_vehicle_configurations(configs)
+        ensure_valid_vehicle_configuration_source_evidence(configs)
         return configs
     except (
         FileNotFoundError,
