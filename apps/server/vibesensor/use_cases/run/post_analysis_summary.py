@@ -13,6 +13,7 @@ from vibesensor.shared.boundaries.summary_serialization._location_intensity impo
 )
 from vibesensor.shared.json_utils import i18n_ref, payload_object_from_json
 from vibesensor.shared.run_context_warning import (
+    WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED,
     WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE,
     RunContextWarning,
 )
@@ -109,6 +110,15 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "raw_replay_high_rtt_sensor_count": run.raw_replay.high_rtt_sensor_count,
         "raw_replay_confidence": run.raw_replay.replay_confidence,
     }
+    raw_capture_finalize = run.context.raw_capture_finalize
+    if raw_capture_finalize is not None:
+        analysis_metadata["raw_capture_finalize_status"] = raw_capture_finalize.status
+        if raw_capture_finalize.queue_depth is not None:
+            analysis_metadata["raw_capture_finalize_queue_depth"] = raw_capture_finalize.queue_depth
+        if raw_capture_finalize.error_summary is not None:
+            analysis_metadata["raw_capture_finalize_error_summary"] = (
+                raw_capture_finalize.error_summary
+            )
     if run.context.strength_algorithm_version is not None:
         analysis_metadata["strength_algorithm_version"] = run.context.strength_algorithm_version
     if run.context.peak_detector_version is not None:
@@ -150,6 +160,9 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         analysis_metadata["sampling_event_row_count"] = run.event_sample_count
     summary_payload["analysis_metadata"] = payload_object_from_json(analysis_metadata)
     summary_warnings: list[RunContextWarning] = list(run.raw_replay.warnings)
+    finalize_warning = _raw_capture_finalize_warning(raw_capture_finalize)
+    if finalize_warning is not None:
+        summary_warnings.append(finalize_warning)
     if unaligned_speed_sample_count > 0 or unaligned_rpm_sample_count > 0:
         summary_warnings.append(
             RunContextWarning(
@@ -201,6 +214,35 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         )
 
     return PersistedAnalysis.from_json_object(summary_payload)
+
+
+def _raw_capture_finalize_warning(
+    finalize: object,
+) -> RunContextWarning | None:
+    from vibesensor.shared.types.run_schema import RunRawCaptureFinalize
+
+    if not isinstance(finalize, RunRawCaptureFinalize) or not finalize.degraded:
+        return None
+    detail_key = {
+        "enqueue_timeout": "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_ENQUEUE_TIMEOUT_DETAIL",
+        "timeout": "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_TIMEOUT_DETAIL",
+        "failed": "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_FAILED_DETAIL",
+    }[finalize.status]
+    return RunContextWarning(
+        code=WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED,
+        severity="warn",
+        applies_to="raw_capture",
+        title=i18n_ref("RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_TITLE"),
+        detail=i18n_ref(
+            detail_key,
+            queue_depth=(
+                str(max(0, int(finalize.queue_depth)))
+                if finalize.queue_depth is not None
+                else "unknown"
+            ),
+            error_summary=finalize.error_summary or "not reported",
+        ),
+    )
 
 
 def _post_analysis_sample_rate_hz(run: PostAnalysisRunInput) -> int | None:

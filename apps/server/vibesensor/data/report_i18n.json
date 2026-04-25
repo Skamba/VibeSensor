@@ -1779,6 +1779,22 @@
     "en": "Raw capture timing could not be proven against the recorder clock for {sensors} sensor(s), so affected metrics used persisted summary samples. Missing sync proof: {missing_sync}, stale sync snapshots: {stale}, high-RTT sync snapshots: {high_rtt}.",
     "nl": "Raw-capturetiming kon voor {sensors} sensor(en) niet tegen de recorderklok worden bewezen, dus getroffen metrieken gebruikten persistente samenvattingssamples. Ontbrekend sync-bewijs: {missing_sync}, verouderde sync-snapshots: {stale}, sync-snapshots met hoge RTT: {high_rtt}."
   },
+  "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_TITLE": {
+    "en": "Raw capture finalization degraded before the run closed",
+    "nl": "De raw-capturefinalisatie degradeerde voordat de run werd gesloten"
+  },
+  "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_ENQUEUE_TIMEOUT_DETAIL": {
+    "en": "Raw capture finalization could not be queued before stop completed. Queue depth at failure: {queue_depth}. Error: {error_summary}.",
+    "nl": "De raw-capturefinalisatie kon niet meer in de wachtrij worden gezet voordat stoppen was voltooid. Wachtrijdiepte bij falen: {queue_depth}. Fout: {error_summary}."
+  },
+  "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_TIMEOUT_DETAIL": {
+    "en": "Raw capture finalization did not finish before the bounded stop timeout. Queue depth at failure: {queue_depth}. Error: {error_summary}.",
+    "nl": "De raw-capturefinalisatie werd niet voltooid voordat de begrensde stop-time-out afliep. Wachtrijdiepte bij falen: {queue_depth}. Fout: {error_summary}."
+  },
+  "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_FAILED_DETAIL": {
+    "en": "Raw capture finalization failed before the run closed. Queue depth at failure: {queue_depth}. Error: {error_summary}.",
+    "nl": "De raw-capturefinalisatie faalde voordat de run werd gesloten. Wachtrijdiepte bij falen: {queue_depth}. Fout: {error_summary}."
+  },
   "WORKSHOP_SUMMARY": {
     "en": "Workshop Summary",
     "nl": "Werkplaatsoverzicht"

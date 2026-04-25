@@ -65,6 +65,8 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
         payload["error_message"] = run.error_message
     if run.artifact_availability is not None:
         payload["artifact_availability"] = run.artifact_availability.to_json_object()
+    if run.raw_capture_finalize is not None:
+        payload["raw_capture_finalize"] = run.raw_capture_finalize.to_json_object()
     if run.analysis is not None:
         payload["analysis"] = _project_persisted_history_analysis(
             run.analysis,

@@ -178,14 +178,40 @@ function buildArtifactWarnings(
   run: HistoryEntry,
   t: PresenterParams["t"],
 ): HistoryWarningBannerViewModel[] {
-  if (run.artifact_availability?.raw_capture !== "missing") {
+  if (run.artifact_availability?.raw_capture === "missing") {
+    return [
+      {
+        severity: "warn",
+        title: t("history.raw_capture_missing_title"),
+        detail: t("history.raw_capture_missing_detail"),
+      },
+    ];
+  }
+  if (run.artifact_availability?.raw_capture !== "degraded" || run.raw_capture_finalize == null) {
     return [];
+  }
+  let detailKey: string | null = null;
+  switch (run.raw_capture_finalize.status) {
+    case "enqueue_timeout":
+      detailKey = "history.raw_capture_degraded_enqueue_timeout_detail";
+      break;
+    case "timeout":
+      detailKey = "history.raw_capture_degraded_timeout_detail";
+      break;
+    case "failed":
+      detailKey = "history.raw_capture_degraded_failed_detail";
+      break;
+    default:
+      return [];
   }
   return [
     {
       severity: "warn",
-      title: t("history.raw_capture_missing_title"),
-      detail: t("history.raw_capture_missing_detail"),
+      title: t("history.raw_capture_degraded_title"),
+      detail: t(detailKey, {
+        queueDepth: run.raw_capture_finalize.queue_depth ?? "unknown",
+        errorSummary: run.raw_capture_finalize.error_summary ?? t("history.not_reported"),
+      }),
     },
   ];
 }

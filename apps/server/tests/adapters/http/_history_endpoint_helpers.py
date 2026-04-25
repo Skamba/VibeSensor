@@ -36,7 +36,11 @@ from vibesensor.shared.boundaries.sensor_frames import (
 )
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
-from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
+from vibesensor.shared.types.history_records import (
+    HistoryArtifactAvailability,
+    HistoryRunListEntry,
+    StoredHistoryRun,
+)
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
@@ -131,12 +135,19 @@ class FakeHistoryDB:
         if run_id != "run-1":
             return None
         metadata = _coerce_metadata(self.metadata)
+        artifact_availability = (
+            HistoryArtifactAvailability(raw_capture="degraded")
+            if metadata.raw_capture_finalize is not None and metadata.raw_capture_finalize.degraded
+            else None
+        )
         return StoredHistoryRun(
             run_id=run_id,
             status=RunStatus.COMPLETE,
             start_time_utc=metadata.start_time_utc,
             end_time_utc=metadata.end_time_utc,
             metadata=metadata,
+            raw_capture_finalize=metadata.raw_capture_finalize,
+            artifact_availability=artifact_availability,
             analysis=_coerce_analysis(metadata, self.samples, self.analysis),
             created_at=metadata.start_time_utc,
             sample_count=len(self.samples),
@@ -163,6 +174,11 @@ class FakeHistoryDB:
 
     async def alist_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         metadata = _coerce_metadata(self.metadata)
+        artifact_availability = (
+            HistoryArtifactAvailability(raw_capture="degraded")
+            if metadata.raw_capture_finalize is not None and metadata.raw_capture_finalize.degraded
+            else None
+        )
         return [
             HistoryRunListEntry(
                 run_id=metadata.run_id or "run-1",
@@ -172,6 +188,8 @@ class FakeHistoryDB:
                 created_at=metadata.start_time_utc,
                 sample_count=len(self.samples),
                 car_name=metadata.car_name,
+                artifact_availability=artifact_availability,
+                raw_capture_finalize=metadata.raw_capture_finalize,
             )
         ]
 

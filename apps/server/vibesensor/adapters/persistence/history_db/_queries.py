@@ -36,7 +36,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorRange,
     RawRunCapture,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata, RunRawCaptureFinalize
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 
 LOGGER = logging.getLogger(__name__)
@@ -60,6 +60,7 @@ class _HistoryDBQueryMixin:
         run_id: str,
         has_raw_capture_manifest: bool,
         has_whole_run_artifact_manifest: bool,
+        raw_capture_finalize: RunRawCaptureFinalize | None = None,
     ) -> HistoryArtifactAvailability:
         return HistoryArtifactAvailability(
             raw_capture=(
@@ -67,6 +68,8 @@ class _HistoryDBQueryMixin:
                 if has_raw_capture_manifest and self._raw_capture_store.has_run_artifacts(run_id)
                 else "missing"
                 if has_raw_capture_manifest
+                else "degraded"
+                if raw_capture_finalize is not None and raw_capture_finalize.degraded
                 else "not_recorded"
             ),
             whole_run_artifacts=(
@@ -171,6 +174,23 @@ class _HistoryDBQueryMixin:
             return None
         return WholeRunArtifactManifest.from_mapping(parsed)
 
+    def _coerce_raw_capture_finalize(
+        self,
+        *,
+        run_id: str,
+        metadata_json: str | None,
+        source: str,
+    ) -> RunRawCaptureFinalize | None:
+        metadata = self._coerce_run_metadata(
+            run_id=run_id,
+            start_time_utc="",
+            end_time_utc=None,
+            metadata_json=metadata_json,
+            source=source,
+            allow_fallback=False,
+        )
+        return None if metadata is None else metadata.raw_capture_finalize
+
     def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         return self._run_sync(self.alist_runs(limit))
 
@@ -181,7 +201,8 @@ class _HistoryDBQueryMixin:
                 await cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
                     "r.created_at, r.error_message, r.sample_count, r.car_name, "
-                    "r.raw_capture_manifest_json, r.whole_run_artifact_manifest_json "
+                    "r.metadata_json, r.raw_capture_manifest_json, "
+                    "r.whole_run_artifact_manifest_json "
                     "FROM runs r ORDER BY r.created_at DESC LIMIT ?",
                     (limit,),
                 )
@@ -189,7 +210,8 @@ class _HistoryDBQueryMixin:
                 await cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
                     "r.created_at, r.error_message, r.sample_count, r.car_name, "
-                    "r.raw_capture_manifest_json, r.whole_run_artifact_manifest_json "
+                    "r.metadata_json, r.raw_capture_manifest_json, "
+                    "r.whole_run_artifact_manifest_json "
                     "FROM runs r ORDER BY r.created_at DESC",
                 )
             rows = await cur.fetchall()
@@ -204,12 +226,18 @@ class _HistoryDBQueryMixin:
                 error,
                 sample_count,
                 car_name,
+                metadata_json,
                 raw_capture_manifest_json,
                 whole_run_artifact_manifest_json,
             ) = row
             normalized_run_id = str(run_id)
             normalized_start = str(start)
             normalized_end = str(end) if end is not None else None
+            raw_capture_finalize = self._coerce_raw_capture_finalize(
+                run_id=normalized_run_id,
+                metadata_json=str(metadata_json) if metadata_json is not None else None,
+                source="list_runs",
+            )
             result.append(
                 HistoryRunListEntry(
                     run_id=normalized_run_id,
@@ -225,7 +253,9 @@ class _HistoryDBQueryMixin:
                         has_raw_capture_manifest=raw_capture_manifest_json is not None,
                         has_whole_run_artifact_manifest=whole_run_artifact_manifest_json
                         is not None,
+                        raw_capture_finalize=raw_capture_finalize,
                     ),
+                    raw_capture_finalize=raw_capture_finalize,
                 )
             )
         return result
@@ -320,7 +350,9 @@ class _HistoryDBQueryMixin:
                 run_id=normalized_run_id,
                 has_raw_capture_manifest=has_raw_capture_manifest,
                 has_whole_run_artifact_manifest=has_whole_run_artifact_manifest,
+                raw_capture_finalize=metadata.raw_capture_finalize,
             ),
+            raw_capture_finalize=metadata.raw_capture_finalize,
             analysis_corrupt=analysis_corrupt,
             error_message=str(error) if error else None,
             created_at=str(created),

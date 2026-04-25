@@ -596,14 +596,19 @@ def test_shutdown_report_exposes_timeout_state(
 
 def test_stop_recording_continues_when_raw_capture_finalize_degrades(
     make_logger,
+    fake_history_db,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     from vibesensor.use_cases.run.raw_capture_writer import RawCaptureFinalizeResult
 
-    logger = make_logger()
-    logger.start_recording()
-    finalized_run_ids: list[str] = []
+    logger = make_logger(history_db=fake_history_db)
+    snapshot = _started_snapshot(logger)
+    logger._sample_flush.append_records(
+        snapshot.run_id,
+        snapshot.start_time_utc,
+        snapshot.start_mono_s,
+    )
     logger._raw_capture = SimpleNamespace(
         finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
             status="timeout",
@@ -612,18 +617,19 @@ def test_stop_recording_continues_when_raw_capture_finalize_degrades(
         ),
         shutdown=lambda timeout_s=5.0: True,
     )
-    monkeypatch.setattr(
-        logger._persistence,
-        "finalize_run",
-        lambda run_id, start_time_utc, end_time_utc: finalized_run_ids.append(run_id) or True,
-    )
     monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
 
     with caplog.at_level(logging.WARNING, logger="vibesensor.use_cases.run.logger"):
         status = logger.stop_recording()
 
     assert status.enabled is False
-    assert finalized_run_ids
+    assert fake_history_db.finalize_calls == [snapshot.run_id]
+    updated_run_id, metadata = fake_history_db.updated_metadata[-1]
+    assert updated_run_id == snapshot.run_id
+    assert metadata.raw_capture_finalize is not None
+    assert metadata.raw_capture_finalize.status == "timeout"
+    assert metadata.raw_capture_finalize.queue_depth == 3
+    assert metadata.raw_capture_finalize.error_summary == "raw capture finalize timed out"
     assert "raw_capture_finalize_degraded" in caplog.text
 
 
