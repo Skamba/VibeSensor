@@ -128,6 +128,40 @@ def test_analysis_settings_update_marks_manual_ratio_overrides_user_confirmed() 
     assert snapshot.order_reference_status.requires_manual_confirmation is False
 
 
+def test_analysis_settings_tire_override_clears_staggered_axle_setup() -> None:
+    services = build_settings_services()
+    created = services.car_settings.add_car(
+        {
+            "name": "Staggered",
+            "aspects": {
+                "tire_width_mm": 315.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 22.0,
+                "front_tire_width_mm": 275.0,
+                "front_tire_aspect_pct": 35.0,
+                "front_rim_in": 22.0,
+                "rear_tire_width_mm": 315.0,
+                "rear_tire_aspect_pct": 30.0,
+                "rear_rim_in": 22.0,
+                "default_axle_for_speed": "rear",
+            },
+        }
+    )
+    car_id = created.cars[0]["id"]
+    services.car_settings.set_active_car(car_id)
+
+    updated = services.analysis_settings.update_active_car_aspects(
+        {"tire_width_mm": 285.0, "tire_aspect_pct": 35.0, "rim_in": 21.0}
+    )
+
+    assert updated["tire_width_mm"] == 285.0
+    assert updated["tire_aspect_pct"] == 35.0
+    assert updated["rim_in"] == 21.0
+    assert "front_tire_width_mm" not in updated
+    assert "rear_tire_width_mm" not in updated
+    assert "default_axle_for_speed" not in updated
+
+
 def test_analysis_settings_update_active_car_aspects() -> None:
     services = build_settings_services()
     created = services.car_settings.add_car({"name": "Editable"})

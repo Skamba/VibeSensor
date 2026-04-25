@@ -5,6 +5,7 @@ import type {
   CarLibraryVariant,
 } from "../../api";
 import type { WizardSummaryData } from "../views/car_wizard_view";
+import { formatCarLibraryTireOption } from "./cars_tire_setup";
 
 export type WizardSpecBranch = "library" | "manual" | null;
 
@@ -174,7 +175,10 @@ function formatWizardTireLabel(
   if (!tire) {
     return null;
   }
-  const size = `${tire.tire_width_mm}/${tire.tire_aspect_pct}R${formatWizardRimSize(tire.rim_in, fmt)}`;
+  const size = formatCarLibraryTireOption(tire, fmt);
+  if (!size) {
+    return null;
+  }
   return tire.name ? `${tire.name} · ${size}` : size;
 }
 

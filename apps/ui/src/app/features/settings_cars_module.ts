@@ -69,7 +69,7 @@ export interface SettingsCarsModule {
   addCarFromWizard(
     name: string,
     carType: string,
-    aspects: Record<string, number>,
+    aspects: Record<string, number | string>,
     orderReferenceStatus?: CarOrderReferenceStatus,
     variant?: string,
   ): Promise<void>;
@@ -189,7 +189,7 @@ export function createSettingsCarsModule(
   async function addCarFromWizard(
     name: string,
     carType: string,
-    aspects: Record<string, number>,
+    aspects: Record<string, number | string>,
     orderReferenceStatus?: CarOrderReferenceStatus,
     variant?: string,
   ): Promise<void> {

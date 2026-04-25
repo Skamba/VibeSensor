@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from vibesensor.domain.tire_spec import TireSpec
+from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
 
 __all__ = ["OrderReferenceSpec", "order_reference_mapping_from_spec"]
 
@@ -16,7 +16,7 @@ _KMH_TO_MPS = 1.0 / 3.6
 class OrderReferenceSpec:
     """Typed owner of tire geometry and driveline/reference-order math."""
 
-    tire_spec: TireSpec
+    tire_setup: AxleTireSetup
     final_drive_ratio: float
     current_gear_ratio: float
     wheel_bandwidth_pct: float
@@ -30,9 +30,19 @@ class OrderReferenceSpec:
     max_band_half_width_pct: float
 
     @property
+    def tire_spec(self) -> TireSpec:
+        """Compatibility tire spec for flat boundary consumers."""
+
+        return self.tire_setup.boundary_tire_spec
+
+    @property
+    def default_axle_for_speed(self) -> str:
+        return self.tire_setup.default_axle_for_speed
+
+    @property
     def tire_circumference_m(self) -> float:
-        """Tire circumference in metres (deflection-adjusted)."""
-        return self.tire_spec.circumference_m
+        """Resolved tire circumference in metres for order-analysis math."""
+        return self.tire_setup.effective_tire_circumference_m
 
     @property
     def has_engine_reference(self) -> bool:
@@ -179,13 +189,14 @@ def _combined_relative_uncertainty(*parts: float) -> float:
     return math.sqrt(sum_sq)
 
 
-def order_reference_mapping_from_spec(spec: OrderReferenceSpec) -> dict[str, float]:
+def order_reference_mapping_from_spec(spec: OrderReferenceSpec) -> dict[str, float | str]:
     """Project an order-reference spec into the flat settings mapping boundary."""
 
-    return {
-        "tire_width_mm": spec.tire_spec.width_mm,
-        "tire_aspect_pct": spec.tire_spec.aspect_pct,
-        "rim_in": spec.tire_spec.rim_in,
+    boundary_tire = spec.tire_spec
+    payload: dict[str, float | str] = {
+        "tire_width_mm": boundary_tire.width_mm,
+        "tire_aspect_pct": boundary_tire.aspect_pct,
+        "rim_in": boundary_tire.rim_in,
         "final_drive_ratio": spec.final_drive_ratio,
         "current_gear_ratio": spec.current_gear_ratio,
         "wheel_bandwidth_pct": spec.wheel_bandwidth_pct,
@@ -197,5 +208,19 @@ def order_reference_mapping_from_spec(spec: OrderReferenceSpec) -> dict[str, flo
         "gear_uncertainty_pct": spec.gear_uncertainty_pct,
         "min_abs_band_hz": spec.min_abs_band_hz,
         "max_band_half_width_pct": spec.max_band_half_width_pct,
-        "tire_deflection_factor": spec.tire_spec.deflection_factor,
+        "tire_deflection_factor": boundary_tire.deflection_factor,
     }
+    setup = spec.tire_setup
+    if setup.is_staggered or setup.default_axle_for_speed != "rear":
+        payload.update(
+            {
+                "front_tire_width_mm": setup.front.width_mm,
+                "front_tire_aspect_pct": setup.front.aspect_pct,
+                "front_rim_in": setup.front.rim_in,
+                "rear_tire_width_mm": setup.rear.width_mm,
+                "rear_tire_aspect_pct": setup.rear.aspect_pct,
+                "rear_rim_in": setup.rear.rim_in,
+                "default_axle_for_speed": setup.default_axle_for_speed,
+            }
+        )
+    return payload

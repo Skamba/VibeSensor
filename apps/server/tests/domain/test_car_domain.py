@@ -5,6 +5,7 @@ from __future__ import annotations
 from types import MappingProxyType
 
 from vibesensor.domain import Car, CarSnapshot
+from vibesensor.domain.tire_spec import AxleTireSetup
 from vibesensor.shared.order_reference_settings import (
     order_reference_mapping_from_spec,
     order_reference_spec_from_mapping,
@@ -64,6 +65,41 @@ class TestOrderReferenceSpecFromSettings:
         assert spec is not None
         assert spec.tire_circumference_m > 0
         assert spec.tire_circumference_m == spec.tire_spec.circumference_m
+
+    def test_staggered_tire_setup_prefers_rear_axle_when_selected(self) -> None:
+        spec = order_reference_spec_from_mapping(
+            {
+                "front_tire_width_mm": 245.0,
+                "front_tire_aspect_pct": 40.0,
+                "front_rim_in": 21.0,
+                "rear_tire_width_mm": 275.0,
+                "rear_tire_aspect_pct": 35.0,
+                "rear_rim_in": 21.0,
+                "default_axle_for_speed": "rear",
+            }
+        )
+        assert spec is not None
+        assert spec.tire_setup.is_staggered is True
+        assert spec.tire_spec.width_mm == 275.0
+        assert spec.tire_circumference_m == spec.tire_setup.rear.circumference_m
+
+    def test_staggered_tire_setup_supports_average_effective_circumference(self) -> None:
+        spec = order_reference_spec_from_mapping(
+            {
+                "front_tire_width_mm": 245.0,
+                "front_tire_aspect_pct": 40.0,
+                "front_rim_in": 21.0,
+                "rear_tire_width_mm": 275.0,
+                "rear_tire_aspect_pct": 35.0,
+                "rear_rim_in": 21.0,
+                "default_axle_for_speed": "average",
+            }
+        )
+        assert spec is not None
+        expected = (
+            spec.tire_setup.front.circumference_m + spec.tire_setup.rear.circumference_m
+        ) / 2.0
+        assert spec.tire_circumference_m == expected
 
     def test_has_engine_reference(self) -> None:
         settings = _order_settings(current_gear_ratio=0.64)
@@ -136,6 +172,53 @@ class TestCarOrderReferenceSpec:
         assert car.tire_width_mm == 245.0
         assert car.tire_aspect_pct == 40.0
         assert car.rim_in == 18.0
+
+    def test_car_projects_staggered_tire_setup_into_boundary_and_axle_fields(self) -> None:
+        spec = order_reference_spec_from_mapping(
+            {
+                "front_tire_width_mm": 245.0,
+                "front_tire_aspect_pct": 40.0,
+                "front_rim_in": 21.0,
+                "rear_tire_width_mm": 275.0,
+                "rear_tire_aspect_pct": 35.0,
+                "rear_rim_in": 21.0,
+                "default_axle_for_speed": "rear",
+            }
+        )
+        assert spec is not None
+
+        car = Car(order_reference_spec=spec)
+
+        assert car.tire_setup == AxleTireSetup(
+            front=spec.tire_setup.front,
+            rear=spec.tire_setup.rear,
+            default_axle_for_speed="rear",
+            source_confidence=None,
+        )
+        assert dict(car.aspects) == {
+            "tire_width_mm": 275.0,
+            "tire_aspect_pct": 35.0,
+            "rim_in": 21.0,
+            "final_drive_ratio": 0.0,
+            "current_gear_ratio": 0.0,
+            "wheel_bandwidth_pct": 0.0,
+            "driveshaft_bandwidth_pct": 0.0,
+            "engine_bandwidth_pct": 0.0,
+            "speed_uncertainty_pct": 0.0,
+            "tire_diameter_uncertainty_pct": 0.0,
+            "final_drive_uncertainty_pct": 0.0,
+            "gear_uncertainty_pct": 0.0,
+            "min_abs_band_hz": 0.0,
+            "max_band_half_width_pct": 0.0,
+            "tire_deflection_factor": 1.0,
+            "front_tire_width_mm": 245.0,
+            "front_tire_aspect_pct": 40.0,
+            "front_rim_in": 21.0,
+            "rear_tire_width_mm": 275.0,
+            "rear_tire_aspect_pct": 35.0,
+            "rear_rim_in": 21.0,
+            "default_axle_for_speed": "rear",
+        }
 
     def test_car_order_reference_properties_do_not_fall_back_to_aspects(self) -> None:
         car = Car(

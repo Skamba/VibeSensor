@@ -19,7 +19,7 @@ def analysis_settings_snapshot_from_aspects(
     aspects: Mapping[str, object] | None,
 ) -> AnalysisSettingsSnapshot:
     """Build the current typed analysis snapshot from active-car aspects."""
-    values = dict(AnalysisSettingsSnapshot.DEFAULTS)
+    values: dict[str, object] = dict(AnalysisSettingsSnapshot.DEFAULTS)
     if aspects:
         values.update(sanitize_analysis_settings(aspects))
     return analysis_settings_snapshot_from_mapping(values)

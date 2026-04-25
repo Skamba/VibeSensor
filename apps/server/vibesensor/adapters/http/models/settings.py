@@ -23,6 +23,13 @@ class AnalysisSettingsRequest(_FrozenBase):
     tire_width_mm: float | None = Field(default=None, gt=0)
     tire_aspect_pct: float | None = Field(default=None, gt=0)
     rim_in: float | None = Field(default=None, gt=0)
+    front_tire_width_mm: float | None = Field(default=None, gt=0)
+    front_tire_aspect_pct: float | None = Field(default=None, gt=0)
+    front_rim_in: float | None = Field(default=None, gt=0)
+    rear_tire_width_mm: float | None = Field(default=None, gt=0)
+    rear_tire_aspect_pct: float | None = Field(default=None, gt=0)
+    rear_rim_in: float | None = Field(default=None, gt=0)
+    default_axle_for_speed: Literal["front", "rear", "average"] | None = None
     final_drive_ratio: float | None = Field(default=None, gt=0)
     current_gear_ratio: float | None = Field(default=None, gt=0)
     wheel_bandwidth_pct: float | None = Field(default=None, gt=0)
@@ -217,6 +224,13 @@ class AnalysisSettingsResponse(BaseModel):
     tire_width_mm: float
     tire_aspect_pct: float
     rim_in: float
+    front_tire_width_mm: float | None = None
+    front_tire_aspect_pct: float | None = None
+    front_rim_in: float | None = None
+    rear_tire_width_mm: float | None = None
+    rear_tire_aspect_pct: float | None = None
+    rear_rim_in: float | None = None
+    default_axle_for_speed: Literal["front", "rear", "average"] = "rear"
     final_drive_ratio: float
     current_gear_ratio: float
     wheel_bandwidth_pct: float

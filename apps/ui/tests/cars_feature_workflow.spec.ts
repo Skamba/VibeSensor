@@ -77,8 +77,16 @@ function makeGearbox(overrides: Partial<CarLibraryGearbox> = {}): CarLibraryGear
 
 function makeTireOption(overrides: Partial<CarLibraryTireOption> = {}): CarLibraryTireOption {
   return {
+    default_axle_for_speed: "rear",
+    front: {
+      width_mm: 275,
+      aspect_pct: 40,
+      rim_in: 21,
+    },
     name: "Factory staggered",
+    rear: null,
     rim_in: 21,
+    source_confidence: "official_exact",
     tire_aspect_pct: 40,
     tire_width_mm: 275,
     ...overrides,
@@ -127,7 +135,7 @@ describe("createCarsFeatureWorkflow", () => {
   test("finishes the manual branch without DOM fixtures and closes the wizard", async () => {
     const harness = createHarness();
     const addCalls: Array<{
-      aspects: Record<string, number>;
+      aspects: Record<string, number | string>;
       carType: string;
       name: string;
       orderReferenceStatus?: CarOrderReferenceStatus;
@@ -222,9 +230,20 @@ describe("createCarsFeatureWorkflow", () => {
   test("keeps manual gearbox inputs when tire autofill updates only tire fields", async () => {
     const harness = createHarness();
     const tire = makeTireOption({
-      rim_in: 20,
+      front: {
+        width_mm: 275,
+        aspect_pct: 40,
+        rim_in: 21,
+      },
+      rear: {
+        width_mm: 315,
+        aspect_pct: 35,
+        rim_in: 21,
+      },
+      default_axle_for_speed: "rear",
+      rim_in: 21,
       tire_aspect_pct: 35,
-      tire_width_mm: 285,
+      tire_width_mm: 315,
     });
     const workflow = createCarsFeatureWorkflow({
       addCarFromWizard: async () => undefined,
@@ -258,9 +277,9 @@ describe("createCarsFeatureWorkflow", () => {
 
     expect(workflow.getRenderState().manualInputs).toEqual({
       finalDrive: "4.10",
-      rim: "20",
-      tireAspect: "35",
-      tireWidth: "285",
+      rim: "21",
+      tireAspect: "40",
+      tireWidth: "275",
       topGear: "0.71",
     });
   });
@@ -390,13 +409,26 @@ describe("createCarsFeatureWorkflow", () => {
   test("keeps the library branch disabled until a gearbox is chosen and then submits the selected specs", async () => {
     const harness = createHarness();
     const addCalls: Array<{
-      aspects: Record<string, number>;
+      aspects: Record<string, number | string>;
       carType: string;
       name: string;
       orderReferenceStatus?: CarOrderReferenceStatus;
       variant?: string;
     }> = [];
-    const tire = makeTireOption();
+    const tire = makeTireOption({
+      front: {
+        width_mm: 245,
+        aspect_pct: 40,
+        rim_in: 21,
+      },
+      rear: {
+        width_mm: 275,
+        aspect_pct: 35,
+        rim_in: 21,
+      },
+      tire_aspect_pct: 35,
+      tire_width_mm: 275,
+    });
     const gearbox = makeGearbox();
     const workflow = createCarsFeatureWorkflow({
       addCarFromWizard: async (name, carType, aspects, orderReferenceStatus, variant) => {
@@ -441,9 +473,16 @@ describe("createCarsFeatureWorkflow", () => {
     expect(addCalls).toEqual([{
       aspects: {
         current_gear_ratio: 0.67,
+        default_axle_for_speed: "rear",
         final_drive_ratio: 3.15,
+        front_rim_in: 21,
+        front_tire_aspect_pct: 40,
+        front_tire_width_mm: 245,
+        rear_rim_in: 21,
+        rear_tire_aspect_pct: 35,
+        rear_tire_width_mm: 275,
         rim_in: 21,
-        tire_aspect_pct: 40,
+        tire_aspect_pct: 35,
         tire_width_mm: 275,
       },
       carType: "SUV",
