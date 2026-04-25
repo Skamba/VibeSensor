@@ -1097,7 +1097,35 @@
       {
         "name": "520i",
         "engine": "B48 2.0L I4 Turbo",
-        "drivetrain": "RWD"
+        "drivetrain": "RWD",
+        "gearboxes": [
+          {
+            "name": "8-speed Steptronic transmission",
+            "final_drive_ratio": 3.077,
+            "top_gear_ratio": 0.64,
+            "gear_ratios": [
+              5.25,
+              3.36,
+              2.172,
+              1.72,
+              1.316,
+              1.0,
+              0.822,
+              0.64
+            ]
+          }
+        ],
+        "tire_options": [
+          {
+            "name": "Standard 18\"",
+            "tire_width_mm": 225.0,
+            "tire_aspect_pct": 55.0,
+            "rim_in": 18.0
+          }
+        ],
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 55.0,
+        "rim_in": 18.0
       },
       {
         "name": "i5 eDrive40",
@@ -1274,7 +1302,14 @@
       {
         "name": "640i xDrive",
         "engine": "B58 3.0L I6 Turbo",
-        "drivetrain": "AWD"
+        "drivetrain": "AWD",
+        "gearboxes": [
+          {
+            "name": "8-speed Steptronic transmission",
+            "final_drive_ratio": 3.077,
+            "top_gear_ratio": 0.64
+          }
+        ]
       },
       {
         "name": "630i xDrive",

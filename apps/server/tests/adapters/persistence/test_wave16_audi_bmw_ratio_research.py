@@ -137,4 +137,7 @@ def test_wave16_variant_source_doc_tracks_g30_and_g60_updates() -> None:
         "| 540i | B58 3.0L I6 Turbo | RWD | 8-speed Steptronic transmission FD 2.929 TG 0.640 | BMW PressClub technical data | High |"
         in text
     )
-    assert "| i5 eDrive40 | Electric Single Motor | RWD | BMW technical data / DE price list | High |" in text
+    assert (
+        "| i5 eDrive40 | Electric Single Motor | RWD | Single-speed fixed gear (EV) overall 11.115 | BMW technical data / DE price list | High |"
+        in text
+    )

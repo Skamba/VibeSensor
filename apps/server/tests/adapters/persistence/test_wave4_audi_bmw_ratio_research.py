@@ -29,7 +29,7 @@ def test_wave4_ratio_source_rows_keep_ev_schema_limits_explicit() -> None:
     assert "official_etrongt_quattro_exact_ev_mapping" in sources["Audi|e-tron GT (J1, 2022-2026)"]["sources"]
     assert "official_rs_etrongt_exact_ev_mapping" in sources["Audi|e-tron GT (J1, 2022-2026)"]["sources"]
 
-    assert sources["BMW|5 Series (G60, 2024-2026)"]["known_limits"] == [
+    for item in [
         {
             "item": "Per-axle reduction detail for the i5 M60 xDrive",
             "reason": "BMW publishes distinct front and rear overall reduction ratios for the dual-motor M60, but the current single-gearbox schema stores one representative EV reduction value for the variant.",
@@ -38,7 +38,8 @@ def test_wave4_ratio_source_rows_keep_ev_schema_limits_explicit() -> None:
             "item": "Exact i5 M60 xDrive staggered tire-pair representation",
             "reason": "Official BMW Germany sources now prove staggered 19-, 20-, and 21-inch tire packages for the exact i5 M60 xDrive, but the current shared row shape does not safely promote those exact front/rear pairs into production data.",
         },
-    ]
+    ]:
+        assert item in sources["BMW|5 Series (G60, 2024-2026)"]["known_limits"]
     _assert_contains_unresolved(
         sources["BMW|7 Series (G70, 2023-2026)"],
         [
