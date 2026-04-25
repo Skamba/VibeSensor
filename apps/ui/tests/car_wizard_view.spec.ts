@@ -45,8 +45,16 @@ function makeGearbox(overrides: Partial<CarLibraryGearbox> = {}): CarLibraryGear
 
 function makeTireOption(overrides: Partial<CarLibraryTireOption> = {}): CarLibraryTireOption {
   return {
+    default_axle_for_speed: "rear",
+    front: {
+      width_mm: 245,
+      aspect_pct: 40,
+      rim_in: 18,
+    },
     name: "Sport",
+    rear: null,
     rim_in: 18,
+    source_confidence: "official_exact",
     tire_aspect_pct: 40,
     tire_width_mm: 245,
     ...overrides,
@@ -216,5 +224,38 @@ describe("car wizard view helpers", () => {
       labelText: "settings.car.wizard_summary_gearbox",
       valueText: "6-speed",
     });
+  });
+
+  test("buildCarsWizardRenderModel shows front and rear sizes for staggered tire options", () => {
+    const tire = makeTireOption({
+      front: {
+        width_mm: 245,
+        aspect_pct: 40,
+        rim_in: 19,
+      },
+      rear: {
+        width_mm: 275,
+        aspect_pct: 35,
+        rim_in: 19,
+      },
+      rim_in: 19,
+      tire_aspect_pct: 35,
+      tire_width_mm: 275,
+    });
+
+    const model = buildCarsWizardRenderModel(createRenderState({
+      selectedTire: tire,
+      tireOptions: [tire],
+    }), {
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      t: createTranslator(),
+    });
+
+    expect(model.tireOptions.options).toEqual([{
+      detailText: "Front 245/40R19 · Rear 275/35R19",
+      labelText: "Sport",
+      selected: true,
+      value: "0",
+    }]);
   });
 });

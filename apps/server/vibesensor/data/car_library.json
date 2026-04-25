@@ -1332,15 +1332,39 @@
       },
       {
         "name": "Sport Line 21\"",
-        "tire_width_mm": 255.0,
+        "tire_width_mm": 275.0,
         "tire_aspect_pct": 30.0,
-        "rim_in": 21.0
+        "rim_in": 21.0,
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 21.0
+        },
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 30.0,
+          "rim_in": 21.0
+        },
+        "default_axle_for_speed": "rear",
+        "source_confidence": "reputable_secondary_crosschecked"
       },
       {
         "name": "M Sport 22\"",
-        "tire_width_mm": 265.0,
+        "tire_width_mm": 275.0,
         "tire_aspect_pct": 25.0,
-        "rim_in": 22.0
+        "rim_in": 22.0,
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 30.0,
+          "rim_in": 22.0
+        },
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 25.0,
+          "rim_in": 22.0
+        },
+        "default_axle_for_speed": "rear",
+        "source_confidence": "reputable_secondary_crosschecked"
       }
     ],
     "tire_width_mm": 245.0,
@@ -2093,15 +2117,39 @@
       },
       {
         "name": "Sport Line 21\"",
-        "tire_width_mm": 285.0,
+        "tire_width_mm": 315.0,
         "tire_aspect_pct": 35.0,
-        "rim_in": 21.0
+        "rim_in": 21.0,
+        "front": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 21.0
+        },
+        "rear": {
+          "width_mm": 315.0,
+          "aspect_pct": 35.0,
+          "rim_in": 21.0
+        },
+        "default_axle_for_speed": "rear",
+        "source_confidence": "reputable_secondary_crosschecked"
       },
       {
         "name": "M Sport 22\"",
-        "tire_width_mm": 295.0,
+        "tire_width_mm": 315.0,
         "tire_aspect_pct": 30.0,
-        "rim_in": 22.0
+        "rim_in": 22.0,
+        "front": {
+          "width_mm": 275.0,
+          "aspect_pct": 35.0,
+          "rim_in": 22.0
+        },
+        "rear": {
+          "width_mm": 315.0,
+          "aspect_pct": 30.0,
+          "rim_in": 22.0
+        },
+        "default_axle_for_speed": "rear",
+        "source_confidence": "reputable_secondary_crosschecked"
       }
     ],
     "tire_width_mm": 275.0,
@@ -2192,15 +2240,39 @@
       },
       {
         "name": "Sport Line 21\"",
-        "tire_width_mm": 285.0,
+        "tire_width_mm": 315.0,
         "tire_aspect_pct": 35.0,
-        "rim_in": 21.0
+        "rim_in": 21.0,
+        "front": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 21.0
+        },
+        "rear": {
+          "width_mm": 315.0,
+          "aspect_pct": 35.0,
+          "rim_in": 21.0
+        },
+        "default_axle_for_speed": "rear",
+        "source_confidence": "reputable_secondary_crosschecked"
       },
       {
         "name": "M Sport 22\"",
-        "tire_width_mm": 295.0,
+        "tire_width_mm": 315.0,
         "tire_aspect_pct": 30.0,
-        "rim_in": 22.0
+        "rim_in": 22.0,
+        "front": {
+          "width_mm": 275.0,
+          "aspect_pct": 35.0,
+          "rim_in": 22.0
+        },
+        "rear": {
+          "width_mm": 315.0,
+          "aspect_pct": 30.0,
+          "rim_in": 22.0
+        },
+        "default_axle_for_speed": "rear",
+        "source_confidence": "reputable_secondary_crosschecked"
       }
     ],
     "tire_width_mm": 275.0,

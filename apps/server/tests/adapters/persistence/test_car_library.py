@@ -186,6 +186,27 @@ def test_variant_gearboxes_include_exact_vs_projected_confidence_metadata() -> N
     assert projected_gearbox["requires_manual_confirmation"] is True
 
 
+def test_migrated_staggered_tire_option_exposes_front_rear_setup() -> None:
+    suvs = get_models_for_brand_type("BMW", "SUV")
+    x5 = next(model for model in suvs if model["model"] == "X5 (G05, 2019-2026)")
+    staggered = next(option for option in x5["tire_options"] if option["name"] == 'M Sport 22"')
+
+    assert staggered["default_axle_for_speed"] == "rear"
+    assert staggered["source_confidence"] == "reputable_secondary_crosschecked"
+    assert staggered["front"] == {
+        "width_mm": pytest.approx(275.0),
+        "aspect_pct": pytest.approx(35.0),
+        "rim_in": pytest.approx(22.0),
+    }
+    assert staggered["rear"] == {
+        "width_mm": pytest.approx(315.0),
+        "aspect_pct": pytest.approx(30.0),
+        "rim_in": pytest.approx(22.0),
+    }
+    assert staggered["tire_width_mm"] == pytest.approx(315.0)
+    assert staggered["tire_aspect_pct"] == pytest.approx(30.0)
+
+
 def _make_bad_data_file(tmp_path: Path, kind: str) -> Path:
     """Return a path to a missing or malformed JSON data file."""
     if kind == "missing":

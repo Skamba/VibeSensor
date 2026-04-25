@@ -4,8 +4,8 @@ from math import inf, nan, pi
 
 import pytest
 
+from vibesensor.domain import AxleTireSetup, OrderReferenceSpec, TireSpec
 from vibesensor.domain import Car as _Car
-from vibesensor.domain import OrderReferenceSpec, TireSpec
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.analysis_settings_schema import sanitize_analysis_settings
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_mapping
@@ -294,7 +294,7 @@ def test_engine_hz_returns_none_without_gear() -> None:
     """engine_hz returns None when gear ratio is zero."""
     tire = TireSpec(width_mm=285.0, aspect_pct=30.0, rim_in=21.0)
     spec = OrderReferenceSpec(
-        tire_spec=tire,
+        tire_setup=AxleTireSetup.square(tire),
         final_drive_ratio=3.08,
         current_gear_ratio=0.0,
         wheel_bandwidth_pct=5.0,

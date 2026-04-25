@@ -77,7 +77,7 @@ from .speed_source import SpeedSource, SpeedSourceKind
 from .strength_metrics import StrengthMetrics, StrengthPeak
 from .test_plan import RecommendedAction, TestPlan, plan_test_actions
 from .test_run import TestRun
-from .tire_spec import TireSpec
+from .tire_spec import AxleTireSetup, TireSpec, TireSpeedAxle
 from .vehicle_configuration import (
     VehicleConfiguration,
     VehicleConfigurationField,
@@ -102,9 +102,11 @@ __all__ = [
     "Run",
     "TestRun",
     # Value objects — car and context
+    "AxleTireSetup",
     "CarSnapshot",
     "OrderReferenceSpec",
     "TireSpec",
+    "TireSpeedAxle",
     "VehicleConfiguration",
     "VehicleConfigurationField",
     "VehicleConfigurationSourceStatus",

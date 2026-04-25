@@ -211,6 +211,42 @@ test("buildSettingsCarListRenderModel surfaces approximate drivetrain guidance f
   });
 });
 
+test("buildSettingsCarListRenderModel shows staggered front and rear tire sizes when present", () => {
+  const model = buildSettingsCarListRenderModel({
+    cars: [
+      makeCar({
+        id: "car-staggered",
+        aspects: {
+          tire_width_mm: 315,
+          tire_aspect_pct: 30,
+          rim_in: 22,
+          front_tire_width_mm: 275,
+          front_tire_aspect_pct: 35,
+          front_rim_in: 22,
+          rear_tire_width_mm: 315,
+          rear_tire_aspect_pct: 30,
+          rear_rim_in: 22,
+          final_drive_ratio: 3.08,
+          current_gear_ratio: 0.64,
+        },
+      }),
+    ],
+    activeCarId: null,
+    t,
+    fmt,
+  });
+
+  expect(model.kind).toBe("rows");
+  if (model.kind !== "rows") {
+    throw new Error("Expected staggered car rows");
+  }
+  expect(model.rows[0].setupMetrics[0]).toEqual({
+    isCode: true,
+    labelText: "Tires",
+    valueText: "Front 275/35R22 · Rear 315/30R22",
+  });
+});
+
 test("buildSettingsCarListRenderModel produces the actionable empty state when no cars exist", () => {
   const model = buildSettingsCarListRenderModel({
     cars: [],

@@ -62,7 +62,7 @@ export interface SettingsFeature {
   addCarFromWizard(
     name: string,
     carType: string,
-    aspects: Record<string, number>,
+    aspects: Record<string, number | string>,
     orderReferenceStatus?: CarOrderReferenceStatus,
     variant?: string,
   ): Promise<void>;

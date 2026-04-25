@@ -12,17 +12,25 @@ from vibesensor.shared.analysis_settings_schema import (
 )
 from vibesensor.shared.boundaries.codecs.scalars import float_or
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.settings_types import analysis_settings_axle_from_mapping
 
 type ScalarSettingValue = int | float | bool | str
 type ScalarSettings = tuple[tuple[str, ScalarSettingValue], ...]
 
 _ANALYSIS_SETTINGS_PAIRS: tuple[
-    tuple[str, Callable[[AnalysisSettingsSnapshot], float]],
+    tuple[str, Callable[[AnalysisSettingsSnapshot], float | str]],
     ...,
 ] = (
     ("tire_width_mm", lambda snapshot: snapshot.tire_width_mm),
     ("tire_aspect_pct", lambda snapshot: snapshot.tire_aspect_pct),
     ("rim_in", lambda snapshot: snapshot.rim_in),
+    ("front_tire_width_mm", lambda snapshot: snapshot.front_tire_width_mm),
+    ("front_tire_aspect_pct", lambda snapshot: snapshot.front_tire_aspect_pct),
+    ("front_rim_in", lambda snapshot: snapshot.front_rim_in),
+    ("rear_tire_width_mm", lambda snapshot: snapshot.rear_tire_width_mm),
+    ("rear_tire_aspect_pct", lambda snapshot: snapshot.rear_tire_aspect_pct),
+    ("rear_rim_in", lambda snapshot: snapshot.rear_rim_in),
+    ("default_axle_for_speed", lambda snapshot: snapshot.default_axle_for_speed),
     ("final_drive_ratio", lambda snapshot: snapshot.final_drive_ratio),
     ("current_gear_ratio", lambda snapshot: snapshot.current_gear_ratio),
     ("wheel_bandwidth_pct", lambda snapshot: snapshot.wheel_bandwidth_pct),
@@ -53,6 +61,16 @@ def analysis_settings_snapshot_from_mapping(payload: object) -> AnalysisSettings
         tire_width_mm=float_or(payload.get("tire_width_mm")),
         tire_aspect_pct=float_or(payload.get("tire_aspect_pct")),
         rim_in=float_or(payload.get("rim_in")),
+        front_tire_width_mm=float_or(payload.get("front_tire_width_mm")),
+        front_tire_aspect_pct=float_or(payload.get("front_tire_aspect_pct")),
+        front_rim_in=float_or(payload.get("front_rim_in")),
+        rear_tire_width_mm=float_or(payload.get("rear_tire_width_mm")),
+        rear_tire_aspect_pct=float_or(payload.get("rear_tire_aspect_pct")),
+        rear_rim_in=float_or(payload.get("rear_rim_in")),
+        default_axle_for_speed=analysis_settings_axle_from_mapping(
+            payload.get("default_axle_for_speed")
+        )
+        or "rear",
         final_drive_ratio=float_or(payload.get("final_drive_ratio")),
         current_gear_ratio=float_or(payload.get("current_gear_ratio")),
         wheel_bandwidth_pct=float_or(payload.get("wheel_bandwidth_pct")),
@@ -72,7 +90,35 @@ def analysis_settings_snapshot_to_metadata(snapshot: AnalysisSettingsSnapshot) -
     """Project a typed snapshot into the canonical persisted metadata shape."""
 
     metadata: JsonObject = {}
+    has_axle_specific_tire_setup = any(
+        value > 0.0
+        for value in (
+            snapshot.front_tire_width_mm,
+            snapshot.front_tire_aspect_pct,
+            snapshot.front_rim_in,
+            snapshot.rear_tire_width_mm,
+            snapshot.rear_tire_aspect_pct,
+            snapshot.rear_rim_in,
+        )
+    )
     for key, value in _analysis_settings_values(snapshot):
+        if isinstance(value, str):
+            if has_axle_specific_tire_setup:
+                metadata[key] = value
+            continue
+        if (
+            key
+            in {
+                "front_tire_width_mm",
+                "front_tire_aspect_pct",
+                "front_rim_in",
+                "rear_tire_width_mm",
+                "rear_tire_aspect_pct",
+                "rear_rim_in",
+            }
+            and value <= 0.0
+        ):
+            continue
         if math.isfinite(float(value)):
             metadata[key] = value
     return metadata
@@ -92,7 +138,7 @@ def analysis_settings_snapshot_items(snapshot: AnalysisSettingsSnapshot) -> Scal
 
 def _analysis_settings_values(
     snapshot: AnalysisSettingsSnapshot,
-) -> tuple[tuple[str, float], ...]:
+) -> tuple[tuple[str, float | str], ...]:
     return tuple((key, read_value(snapshot)) for key, read_value in _ANALYSIS_SETTINGS_PAIRS)
 
 
