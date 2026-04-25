@@ -66,7 +66,7 @@ def test_wave11_ratio_source_rows_capture_g42_g02_a5_q3_q5_context() -> None:
                 "reason": "Checked exact late-B9 Germany Coupé and Sportback PDFs resolve the 150 kW 40 TFSI mapping, but official 2020 launch material still shows an earlier 140 kW 40 TFSI state and this pass did not recover the early exact technical-data sheets needed to prove one unchanged 2019-2024 package.",  # noqa: E501
             },
             {
-                "item": "Audi A5 B9 40 TFSI transmission-code and optional tire-matrix confirmation",
+                "item": "Audi A5 B9 40 TFSI transmission-code and optional tire-matrix confirmation",  # noqa: E501
                 "reason": "Official Audi exact material now proves the late-B9 40 TFSI drivetrain, full ratio set, reverse ratio, final drive 4.234, and the 225/50 R17 basic tire, but it does not publish the gearbox-family code or a full optional wheel/tire matrix for the exact 40 TFSI target.",  # noqa: E501
             },
         ],
@@ -79,7 +79,7 @@ def test_wave11_ratio_source_rows_capture_g42_g02_a5_q3_q5_context() -> None:
                 "reason": "Checked exact Germany-market 05.06.2025 Q3 and Q3 Sportback technical-data PDFs resolve the old-generation 40 TDI quattro mapping, but this pass did not recover year-by-year official sheets proving one unchanged diesel package across the full represented span.",  # noqa: E501
             },
             {
-                "item": "Schema-safe encoding of exact Audi Q3 40 TDI quattro split final-drive values",
+                "item": "Schema-safe encoding of exact Audi Q3 40 TDI quattro split final-drive values",  # noqa: E501
                 "reason": "The checked official 40 TDI quattro technical-data PDFs publish two final-drive values 4.813 / 3.667 for the target, but the current row stores only one final_drive_ratio field and the exact old-generation optional tire matrix still remains unresolved.",  # noqa: E501
             },
         ],

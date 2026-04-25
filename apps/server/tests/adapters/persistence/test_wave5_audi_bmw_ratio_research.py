@@ -46,7 +46,7 @@ def test_wave5_q5_45tfsi_quattro_uses_exact_official_top_gear_and_ratio_set() ->
     ]
 
 
-def test_wave5_ratio_source_rows_capture_exact_g70_q7_q4_context_without_overwriting_broad_rows() -> (
+def test_wave5_ratio_source_rows_capture_exact_g70_q7_q4_context_without_overwriting_broad_rows() -> (  # noqa: E501
     None
 ):  # noqa: E501
     sources = _ratio_sources()

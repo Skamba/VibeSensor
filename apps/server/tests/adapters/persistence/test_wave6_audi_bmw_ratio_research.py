@@ -20,7 +20,7 @@ def _assert_contains_unresolved(entry: dict[str, object], expected: list[dict[st
         assert item in unresolved
 
 
-def test_wave6_ratio_source_rows_capture_exact_audi_and_z4_context_without_overwriting_broad_rows() -> (
+def test_wave6_ratio_source_rows_capture_exact_audi_and_z4_context_without_overwriting_broad_rows() -> (  # noqa: E501
     None
 ):  # noqa: E501
     sources = _ratio_sources()

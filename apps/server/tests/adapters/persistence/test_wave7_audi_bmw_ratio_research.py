@@ -14,7 +14,7 @@ def _ratio_sources() -> dict[str, dict[str, object]]:
         return json.load(fh)["cars"]
 
 
-def test_wave7_ratio_source_rows_capture_exact_tt_rs_q7_x5_context_without_overwriting_broad_rows() -> (
+def test_wave7_ratio_source_rows_capture_exact_tt_rs_q7_x5_context_without_overwriting_broad_rows() -> (  # noqa: E501
     None
 ):  # noqa: E501
     sources = _ratio_sources()
