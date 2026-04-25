@@ -540,7 +540,7 @@ describe("createCarsFeatureWorkflow", () => {
     workflow.selectGearbox(0);
 
     expect(workflow.getRenderState().actionHint).toBe(
-      "settings.car.finish_library_approximate",
+      "settings.car.confidence.part_drive · settings.car.confidence.part_gear · settings.car.confidence.part_transmission. settings.car.confidence.review_detail",
     );
   });
 });
