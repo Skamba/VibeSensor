@@ -70,7 +70,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
 | 220i | B48 2.0L I4 Turbo | RWD | 8-speed Steptronic transmission FD 2.813 TG 0.640 | BMW PressClub technical data / DE price lists | High |
-| 230i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
+| 230i | B48 2.0L I4 Turbo | RWD | 8-speed Steptronic transmission FD 2.813 TG 0.640 | BMW PressClub technical data / DE price lists | High |
 | 230i xDrive | B48 2.0L I4 Turbo | AWD | – | BMW press release | High |
 
 ### 2 Series Active Tourer (F45, 2014-2021)
