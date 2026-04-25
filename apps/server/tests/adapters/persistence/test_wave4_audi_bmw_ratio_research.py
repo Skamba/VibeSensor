@@ -26,17 +26,17 @@ def test_wave4_ratio_source_rows_keep_ev_schema_limits_explicit() -> None:
     assert "official_i5_m60_tire_context" in sources["BMW|5 Series (G60, 2024-2026)"]["sources"]
     assert "issue_1034_i7_ratio_reference" in sources["BMW|7 Series (G70, 2023-2026)"]["sources"]
     assert "official_ix1_xdrive30_exact_ev_mapping" in sources["BMW|X1 (U11, 2023-2026)"]["sources"]
-    assert "official_etrongt_quattro_exact_ev_mapping" in sources["Audi|e-tron GT (J1, 2022-2026)"]["sources"]
-    assert "official_rs_etrongt_exact_ev_mapping" in sources["Audi|e-tron GT (J1, 2022-2026)"]["sources"]
+    assert "official_etrongt_quattro_exact_ev_mapping" in sources["Audi|e-tron GT (J1, 2022-2026)"]["sources"]  # noqa: E501
+    assert "official_rs_etrongt_exact_ev_mapping" in sources["Audi|e-tron GT (J1, 2022-2026)"]["sources"]  # noqa: E501
 
     for item in [
         {
             "item": "Per-axle reduction detail for the i5 M60 xDrive",
-            "reason": "BMW publishes distinct front and rear overall reduction ratios for the dual-motor M60, but the current single-gearbox schema stores one representative EV reduction value for the variant.",
+            "reason": "BMW publishes distinct front and rear overall reduction ratios for the dual-motor M60, but the current single-gearbox schema stores one representative EV reduction value for the variant.",  # noqa: E501
         },
         {
             "item": "Exact i5 M60 xDrive staggered tire-pair representation",
-            "reason": "Official BMW Germany sources now prove staggered 19-, 20-, and 21-inch tire packages for the exact i5 M60 xDrive, but the current shared row shape does not safely promote those exact front/rear pairs into production data.",
+            "reason": "Official BMW Germany sources now prove staggered 19-, 20-, and 21-inch tire packages for the exact i5 M60 xDrive, but the current shared row shape does not safely promote those exact front/rear pairs into production data.",  # noqa: E501
         },
     ]:
         assert item in sources["BMW|5 Series (G60, 2024-2026)"]["known_limits"]
@@ -44,36 +44,36 @@ def test_wave4_ratio_source_rows_keep_ev_schema_limits_explicit() -> None:
         sources["BMW|7 Series (G70, 2023-2026)"],
         [
             {
-                "item": "Variant-level final_drive_ratio and top_gear_ratio confirmation for the EU combustion/PHEV variants",
-                "reason": "The official BMW launch material used for issue #1034 confirms the EU-supported 740d xDrive, 750e xDrive, and M760e xDrive variants, but it does not publish extractable numeric ratio fields for those entries.",
+                "item": "Variant-level final_drive_ratio and top_gear_ratio confirmation for the EU combustion/PHEV variants",  # noqa: E501
+                "reason": "The official BMW launch material used for issue #1034 confirms the EU-supported 740d xDrive, 750e xDrive, and M760e xDrive variants, but it does not publish extractable numeric ratio fields for those entries.",  # noqa: E501
             },
             {
-                "item": "Schema-safe encoding of axle-split EV reduction ratios and top-gear data for the i7 M70 xDrive",
-                "reason": "Official BMW technical-data PDFs now publish exact front and rear reduction ratios for the i7 M70 xDrive, but the current schema stores only one final_drive_ratio and one top_gear_ratio field and cannot safely encode the axle split.",
+                "item": "Schema-safe encoding of axle-split EV reduction ratios and top-gear data for the i7 M70 xDrive",  # noqa: E501
+                "reason": "Official BMW technical-data PDFs now publish exact front and rear reduction ratios for the i7 M70 xDrive, but the current schema stores only one final_drive_ratio and one top_gear_ratio field and cannot safely encode the axle split.",  # noqa: E501
             },
             {
                 "item": "Exact i7 M70 xDrive staggered tire-pair promotion into the broad G70 row",
-                "reason": "Official BMW Germany sources now prove staggered 21-inch standard tires and a 20-inch staggered option for the exact i7 M70 xDrive, but the broad G70 row mixes combustion, PHEV, and EV variants and should not absorb one exact EV tire package without a safer row shape.",
+                "reason": "Official BMW Germany sources now prove staggered 21-inch standard tires and a 20-inch staggered option for the exact i7 M70 xDrive, but the broad G70 row mixes combustion, PHEV, and EV variants and should not absorb one exact EV tire package without a safer row shape.",  # noqa: E501
             },
         ],
     )
     assert sources["BMW|X1 (U11, 2023-2026)"]["unresolved"] == [
         {
             "item": "Schema-safe encoding of iX1 xDrive30 axle-split EV reduction ratios",
-            "reason": "Official BMW sources now publish exact front 11.190 and rear 10.050 fixed reductions for the iX1 xDrive30, but the current row shape stores only one gearbox and one final_drive_ratio value.",
+            "reason": "Official BMW sources now publish exact front 11.190 and rear 10.050 fixed reductions for the iX1 xDrive30, but the current row shape stores only one gearbox and one final_drive_ratio value.",  # noqa: E501
         },
         {
             "item": "Mixed ICE/EV row applicability for U11 tire and gearbox data",
-            "reason": "The broad U11 row still mixes ICE and EV variants, so the exact iX1 xDrive30 single-speed gearbox and 17/18/19/20-inch EV tire matrix should remain source-ledger-only until the row shape is split or extended safely.",
+            "reason": "The broad U11 row still mixes ICE and EV variants, so the exact iX1 xDrive30 single-speed gearbox and 17/18/19/20-inch EV tire matrix should remain source-ledger-only until the row shape is split or extended safely.",  # noqa: E501
         },
     ]
     assert sources["Audi|e-tron GT (J1, 2022-2026)"]["unresolved"] == [
         {
-            "item": "Audi e-tron GT quattro exact axle reduction ratios and schema-safe top-gear mapping",
-            "reason": "Exact Germany-market base-car technical sheets confirm AWD, 2-speed automatic wording, top speed, and staggered tires, but the checked official sources did not publish a schema-safe single reduction-ratio or top-gear value for the base e-tron GT quattro.",
+            "item": "Audi e-tron GT quattro exact axle reduction ratios and schema-safe top-gear mapping",  # noqa: E501
+            "reason": "Exact Germany-market base-car technical sheets confirm AWD, 2-speed automatic wording, top speed, and staggered tires, but the checked official sources did not publish a schema-safe single reduction-ratio or top-gear value for the base e-tron GT quattro.",  # noqa: E501
         },
         {
-            "item": "Audi RS e-tron GT axle-split ratio continuity and exact optional tire dimensions",
-            "reason": "Official Audi sources show the RS e-tron GT uses axle-split and rear-two-speed hardware, but the checked facelift/current technical sheets do not publish the same reduction-ratio detail as the 2022 launch material, and this pass did not recover exact official 21-inch tire dimensions.",
+            "item": "Audi RS e-tron GT axle-split ratio continuity and exact optional tire dimensions",  # noqa: E501
+            "reason": "Official Audi sources show the RS e-tron GT uses axle-split and rear-two-speed hardware, but the checked facelift/current technical sheets do not publish the same reduction-ratio detail as the 2022 launch material, and this pass did not recover exact official 21-inch tire dimensions.",  # noqa: E501
         },
     ]

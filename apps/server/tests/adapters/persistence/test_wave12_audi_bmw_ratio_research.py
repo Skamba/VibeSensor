@@ -153,11 +153,11 @@ def test_wave12_ratio_source_rows_capture_g22_g42_a3_a4_q5_context() -> None:
         [
             {
                 "item": "Whether BMW 230i xDrive belongs in the G42 row at all",
-                "reason": "Checked official BMW Germany/EU sources now consistently show 230i as rear-wheel drive and reserve xDrive for M240i xDrive, but this pass did not recover enough official non-Germany market evidence to prove whether the existing AWD 230i variant is an intentional non-EU/global carry-over or simply unsupported library data.",
+                "reason": "Checked official BMW Germany/EU sources now consistently show 230i as rear-wheel drive and reserve xDrive for M240i xDrive, but this pass did not recover enough official non-Germany market evidence to prove whether the existing AWD 230i variant is an intentional non-EU/global carry-over or simply unsupported library data.",  # noqa: E501
             },
             {
-                "item": "BMW M240i xDrive production-data applicability across the full G42 row span",
-                "reason": "Wave 13 now proves the exact launch M240i xDrive ratio set, reverse ratio 3.712, final drive 2.813, and standard staggered 225/40 R19 front + 255/35 R19 rear tires, but the checked current Germany market material is already a later 48V mild-hybrid state and this pass did not recover a current exact numeric ratio table proving one unchanged 2022-2026 package.",
+                "item": "BMW M240i xDrive production-data applicability across the full G42 row span",  # noqa: E501
+                "reason": "Wave 13 now proves the exact launch M240i xDrive ratio set, reverse ratio 3.712, final drive 2.813, and standard staggered 225/40 R19 front + 255/35 R19 rear tires, but the checked current Germany market material is already a later 48V mild-hybrid state and this pass did not recover a current exact numeric ratio table proving one unchanged 2022-2026 package.",  # noqa: E501
             },
         ],
     )
@@ -166,11 +166,11 @@ def test_wave12_ratio_source_rows_capture_g22_g42_a3_a4_q5_context() -> None:
         [
             {
                 "item": "BMW 420i production-data applicability across the full G22 row span",
-                "reason": "Checked official 03/2021 and 01/2024 EU-market technical-data PDFs agree on the exact 420i ratio set, reverse ratio 3.712, final drive 2.813, and standard 225/50 R17 tire, but this pass did not recover an official 2025-2026 exact table or one full year-spanning optional wheel matrix proving the same package across the full represented row.",
+                "reason": "Checked official 03/2021 and 01/2024 EU-market technical-data PDFs agree on the exact 420i ratio set, reverse ratio 3.712, final drive 2.813, and standard 225/50 R17 tire, but this pass did not recover an official 2025-2026 exact table or one full year-spanning optional wheel matrix proving the same package across the full represented row.",  # noqa: E501
             },
             {
-                "item": "BMW 430i xDrive exact numeric ratios and production-data applicability across the full G22 row span",
-                "reason": "Official BMW sources now prove the current Germany-market 430i xDrive naming, model code 51HB, drivetrain, transmission wording, and current 17/18/19-inch tire matrix, but the checked 03/2021 launch technical-data PDF does not list 430i xDrive and this pass did not recover any official exact 430i xDrive final-drive, top-gear, forward-ratio, or reverse-ratio table.",
+                "item": "BMW 430i xDrive exact numeric ratios and production-data applicability across the full G22 row span",  # noqa: E501
+                "reason": "Official BMW sources now prove the current Germany-market 430i xDrive naming, model code 51HB, drivetrain, transmission wording, and current 17/18/19-inch tire matrix, but the checked 03/2021 launch technical-data PDF does not list 430i xDrive and this pass did not recover any official exact 430i xDrive final-drive, top-gear, forward-ratio, or reverse-ratio table.",  # noqa: E501
             },
         ],
     )
@@ -178,12 +178,12 @@ def test_wave12_ratio_source_rows_capture_g22_g42_a3_a4_q5_context() -> None:
         sources["Audi|A3 (8Y, 2021-2026)"],
         [
             {
-                "item": "Broad-row Audi A3 8Y 35 TFSI production-data applicability across the represented span",
-                "reason": "Checked exact Germany-market MY2026 35 TFSI Limousine sources now prove both manual and S tronic ratio packages, but this pass did not recover year-by-year official sheets proving one unchanged 2021-2026 production mapping.",
+                "item": "Broad-row Audi A3 8Y 35 TFSI production-data applicability across the represented span",  # noqa: E501
+                "reason": "Checked exact Germany-market MY2026 35 TFSI Limousine sources now prove both manual and S tronic ratio packages, but this pass did not recover year-by-year official sheets proving one unchanged 2021-2026 production mapping.",  # noqa: E501
             },
             {
-                "item": "Schema-safe encoding of Audi A3 8Y 35 TFSI transmission-specific final drives",
-                "reason": "The checked official 35 TFSI manuals publish 4.235 / 4.235 final drives and the S tronic PDFs publish 4.800 / 3.429, but the current broad row only stores one final_drive_ratio per gearbox entry and cannot safely represent both exact transmission-specific packages without a variant split.",
+                "item": "Schema-safe encoding of Audi A3 8Y 35 TFSI transmission-specific final drives",  # noqa: E501
+                "reason": "The checked official 35 TFSI manuals publish 4.235 / 4.235 final drives and the S tronic PDFs publish 4.800 / 3.429, but the current broad row only stores one final_drive_ratio per gearbox entry and cannot safely represent both exact transmission-specific packages without a variant split.",  # noqa: E501
             },
         ],
     )
@@ -191,12 +191,12 @@ def test_wave12_ratio_source_rows_capture_g22_g42_a3_a4_q5_context() -> None:
         sources["Audi|A4 (B9, 2016-2025)"],
         [
             {
-                "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-                "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
+                "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",  # noqa: E501
+                "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",  # noqa: E501
             },
             {
-                "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-                "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
+                "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",  # noqa: E501
+                "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",  # noqa: E501
             },
         ],
     )
@@ -205,11 +205,11 @@ def test_wave12_ratio_source_rows_capture_g22_g42_a3_a4_q5_context() -> None:
         [
             {
                 "item": "Whether Audi Q5 FY 35 TDI quattro belongs in the broad row at all",
-                "reason": "Checked official Germany-market FY 35 TDI technical-data sheets from 2019 and 2024 both describe front-wheel-drive Q5 35 TDI S tronic states and this pass did not recover any official Germany evidence for a 35 TDI quattro configuration.",
+                "reason": "Checked official Germany-market FY 35 TDI technical-data sheets from 2019 and 2024 both describe front-wheel-drive Q5 35 TDI S tronic states and this pass did not recover any official Germany evidence for a 35 TDI quattro configuration.",  # noqa: E501
             },
             {
-                "item": "Broad-row Audi Q5 FY 35 TDI production-data applicability, final-drive continuity, and tire-matrix scope",
-                "reason": "Official Audi exact material now proves two front-wheel-drive 35 TDI FY states with the same forward ratio set, reverse ratio, and 235/65 R17 basic tire but different final drives 5.302 and 4.885, while Audi's own model page still scopes FY Q5 only 'bis 2024'; no safe broad production mapping or full optional wheel/tire matrix is closed yet.",
+                "item": "Broad-row Audi Q5 FY 35 TDI production-data applicability, final-drive continuity, and tire-matrix scope",  # noqa: E501
+                "reason": "Official Audi exact material now proves two front-wheel-drive 35 TDI FY states with the same forward ratio set, reverse ratio, and 235/65 R17 basic tire but different final drives 5.302 and 4.885, while Audi's own model page still scopes FY Q5 only 'bis 2024'; no safe broad production mapping or full optional wheel/tire matrix is closed yet.",  # noqa: E501
             },
         ],
     )
@@ -217,6 +217,6 @@ def test_wave12_ratio_source_rows_capture_g22_g42_a3_a4_q5_context() -> None:
 
 def test_wave12_variant_source_doc_tracks_g42_220i_override() -> None:
     assert (
-        "| 220i | B48 2.0L I4 Turbo | RWD | 8-speed Steptronic transmission FD 2.813 TG 0.640 | BMW PressClub technical data / DE price lists | High |"
+        "| 220i | B48 2.0L I4 Turbo | RWD | 8-speed Steptronic transmission FD 2.813 TG 0.640 | BMW PressClub technical data / DE price lists | High |"  # noqa: E501
         in _VARIANT_SOURCES_FILE.read_text(encoding="utf-8")
     )
