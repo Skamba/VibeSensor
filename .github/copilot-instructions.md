@@ -26,6 +26,7 @@ Architectural constraints
 - Offline-first hotspot boot: hotspot provisioning must not depend on internet connectivity. Required packages are baked into the image build stage.
 - Deterministic image outputs: custom pi-gen stage must export uniquely suffixed artifacts and self-validate rootfs contents.
 - Internal shared logic belongs in the server package (`apps/server/vibesensor/vibration_strength.py`, `apps/server/vibesensor/strength_bands.py`), not in separate packages. Generated shared TS constants are emitted to `apps/ui/src/constants.ts` from backend sources under the `vibesensor.shared.*` Python import namespace.
+- `vibesensor.shared` is for stable cross-layer contracts, ports, codecs, constants, and pure helper language. App/runtime bootstrap or subprocess orchestration belongs in `apps/server/vibesensor/app/` or the owning `use_cases/**` module, not in `vibesensor.shared`.
 - Do not create runtime file-loading mechanisms for static configuration data. Use Python constants for values that don't change between deployments.
 
 Domain model (scope: behavioral rules only; see `docs/domain-model.md` for the full domain object catalog and relationship map)

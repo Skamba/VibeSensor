@@ -384,15 +384,15 @@ def _patch_release_smoke_process(
         "validate_packaged_static_assets",
         lambda: tmp_path / "index.html",
     )
-    import vibesensor.shared.subprocess_server as _subprocess_server
+    import vibesensor.use_cases.isolated_server_runtime as _isolated_server_runtime
 
     monkeypatch.setattr(
-        _subprocess_server,
+        _isolated_server_runtime,
         "start_server_subprocess",
         fake_start_server_subprocess,
     )
     monkeypatch.setattr(
-        _subprocess_server,
+        _isolated_server_runtime,
         "terminate_subprocess",
         lambda process: (process.terminate(), process.wait(timeout=10.0)),
     )

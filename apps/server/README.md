@@ -31,6 +31,19 @@ surfaces must stay off post-run diagnosis/report conclusion modules. When one of
 those fails, move the dependency behind the documented shared port or report
 boundary seam instead of widening the outer import.
 
+## Shared layer ownership
+
+`vibesensor.shared` is for stable cross-layer boundary language: ports and
+protocols, typed contracts, boundary codecs/projection helpers, shared
+constants/units, and pure helpers that multiple inner layers can reuse without
+pulling in runtime orchestration. Cross-cutting runtime helpers that are still
+owned by backend coordination, such as isolated server subprocess orchestration,
+belong in a focused `use_cases/**` module instead of the shared layer, while
+feature-local orchestration belongs in the owning `use_cases/**` package. The
+backend static guards keep `vibesensor.use_cases.isolated_server_runtime` as
+the owner of that runtime helper and keep `shared/subprocess_server.py`
+removed.
+
 ## State and configuration scopes
 
 Several issue reports have described the backend as one pool of global mutable

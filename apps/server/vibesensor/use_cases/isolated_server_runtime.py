@@ -1,4 +1,4 @@
-"""Helpers for isolated local server subprocess runs."""
+"""Helpers for isolated local server runtime subprocess runs."""
 
 from __future__ import annotations
 
