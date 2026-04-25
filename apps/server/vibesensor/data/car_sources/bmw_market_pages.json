@@ -28,6 +28,27 @@
       "title": "BMW Germany 3 Series overview page",
       "note": "Official BMW Germany overview used as a market cross-check for the supported G20 variant context.",
       "confidence": "medium"
+    },
+    {
+      "id": "bmw_market_pages:g42-2-series-technical-data-de",
+      "url": "https://www.bmw.de/de/neufahrzeuge/2er/2-series-coupe/bmw-2er-coupe-technische-daten.html",
+      "title": "BMW Germany 2 Series Coupe technical data page",
+      "note": "Official BMW Germany technical-data page used for the current G42 220i drivetrain and automatic-only market context.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g42-2-series-price-list-2024",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/2-series/coupe/2024/preisliste-bmw2er.pdf.coredownload.pdf",
+      "title": "BMW Germany 2 Series Coupe 2024 price list",
+      "note": "Official BMW Germany 2024 price list used for the G42 220i wheel and tire matrix.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g42-2-series-price-list-current",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw2er.pdf.coredownload.inline.pdf",
+      "title": "BMW Germany 2 Series Coupe current inline price list",
+      "note": "Official BMW Germany current price list used as a current-market cross-check for the G42 220i automatic-only context and tire matrix.",
+      "confidence": "high"
     }
   ]
 }

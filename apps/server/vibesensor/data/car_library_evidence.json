@@ -13,6 +13,34 @@
       ]
     },
     {
+      "id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_220i_exact_ratios",
+      "summary": "Official BMW G42 220i exact technical-data and Germany price-list evidence used for the exact-row ratios, transmission, drivetrain, and tire dimensions.",
+      "source_refs": [
+        "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+        "bmw_market_pages:g42-2-series-technical-data-de",
+        "bmw_market_pages:g42-2-series-price-list-2024",
+        "bmw_market_pages:g42-2-series-price-list-current"
+      ],
+      "legacy_refs": [
+        "car_library_ratio_sources.json:cars.BMW|2 Series Coupe (G42, 2022-2026).sources.official_220i_exact_ratios",
+        "CAR_VARIANT_SOURCES.md#2-series-coupe-g42-2022-2026"
+      ]
+    },
+    {
+      "id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_230i_exact_ratios",
+      "summary": "Official BMW G42 230i exact technical-data and Germany price-list evidence used for the exact-row ratios, transmission, drivetrain, and tire dimensions.",
+      "source_refs": [
+        "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+        "bmw_market_pages:g42-2-series-technical-data-de",
+        "bmw_market_pages:g42-2-series-price-list-2024",
+        "bmw_market_pages:g42-2-series-price-list-current"
+      ],
+      "legacy_refs": [
+        "car_library_ratio_sources.json:cars.BMW|2 Series Coupe (G42, 2022-2026).sources.official_230i_exact_ratios",
+        "CAR_VARIANT_SOURCES.md#2-series-coupe-g42-2022-2026"
+      ]
+    },
+    {
       "id": "ratio_sources:BMW|2 Series Active Tourer (F45, 2014-2021):issue_1034_220i_ratio_reference",
       "summary": "Cross-checked F45 220i DCT ratio evidence combining official BMW transmission-type context with reputable secondary numeric ratio references.",
       "source_refs": [

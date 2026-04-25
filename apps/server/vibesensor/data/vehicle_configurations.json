@@ -73,6 +73,133 @@
   },
   {
     "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G42",
+    "body_code": "G42",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "2 Series Coupe (G42, 2022-2026)",
+    "variant_name": "230i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": "RWD",
+    "transmission_code": "ZF8HP",
+    "transmission_name": "8-speed Steptronic transmission",
+    "top_gear_ratio": 0.64,
+    "gear_ratios": [
+      5.25,
+      3.36,
+      2.172,
+      1.72,
+      1.316,
+      1.0,
+      0.822,
+      0.64
+    ],
+    "final_drive_rear": 2.813,
+    "tire_options": [
+      {
+        "name": "Standard 17\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 17.0
+      },
+      {
+        "name": "M Sport standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Optional staggered 18\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0,
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "rear": {
+          "width_mm": 255.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear",
+        "source_confidence": "official_exact"
+      },
+      {
+        "name": "Optional staggered 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0,
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 19.0
+        },
+        "rear": {
+          "width_mm": 255.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear",
+        "source_confidence": "official_exact"
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 50.0,
+    "rim_in": 17.0,
+    "field_provenance": [
+      {
+        "field_name": "final_drive_rear",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_230i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data confirms the G42 230i rear final-drive ratio at 2.813."
+      },
+      {
+        "field_name": "top_gear_ratio",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_230i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data confirms the G42 230i eighth-gear ratio at 0.640."
+      },
+      {
+        "field_name": "gear_ratios",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_230i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data confirms the full G42 230i forward-ratio set 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640."
+      },
+      {
+        "field_name": "transmission_name",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_230i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data and Germany market material confirm the G42 230i 8-speed Steptronic transmission wording and automatic-only context."
+      },
+      {
+        "field_name": "drivetrain",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_230i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data and Germany market material confirm the G42 230i as a rear-wheel-drive variant."
+      },
+      {
+        "field_name": "tire_dimensions",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_230i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data and Germany price lists confirm the G42 230i launch-standard 225/50 R17 tire and the documented 18/19-inch Germany option matrix."
+      }
+    ],
+    "source_status": "exact_row"
+  },
+  {
+    "brand": "BMW",
     "type": "Hatchback",
     "market": "EU",
     "model_code": "F45",
@@ -145,6 +272,151 @@
         "field_name": "tire_dimensions",
         "confidence": "family_default",
         "notes": "Tire option dimensions still follow the supported F45 family defaults until per-variant wheel sheets are captured."
+      }
+    ],
+    "source_status": "exact_row"
+  },
+  {
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G42",
+    "body_code": "G42",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "2 Series Coupe (G42, 2022-2026)",
+    "variant_name": "220i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": "RWD",
+    "transmission_code": "ZF8HP",
+    "transmission_name": "8-speed Steptronic transmission",
+    "top_gear_ratio": 0.64,
+    "gear_ratios": [
+      5.25,
+      3.36,
+      2.172,
+      1.72,
+      1.316,
+      1.0,
+      0.822,
+      0.64
+    ],
+    "final_drive_rear": 2.813,
+    "tire_options": [
+      {
+        "name": "Standard 17\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 17.0
+      },
+      {
+        "name": "M Sport standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Optional staggered 18\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0,
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "rear": {
+          "width_mm": 255.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear",
+        "source_confidence": "official_exact"
+      },
+      {
+        "name": "Optional staggered 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0,
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 19.0
+        },
+        "rear": {
+          "width_mm": 255.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear",
+        "source_confidence": "official_exact"
+      },
+      {
+        "name": "Optional staggered sport 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0,
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "rear": {
+          "width_mm": 255.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear",
+        "source_confidence": "official_exact"
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 50.0,
+    "rim_in": 17.0,
+    "field_provenance": [
+      {
+        "field_name": "final_drive_rear",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_220i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data confirms the G42 220i rear final-drive ratio at 2.813."
+      },
+      {
+        "field_name": "top_gear_ratio",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_220i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data confirms the G42 220i eighth-gear ratio at 0.640."
+      },
+      {
+        "field_name": "gear_ratios",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_220i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data confirms the full G42 220i forward-ratio set 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640."
+      },
+      {
+        "field_name": "transmission_name",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_220i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data and Germany market material confirm the G42 220i 8-speed Steptronic transmission wording and automatic-only context."
+      },
+      {
+        "field_name": "drivetrain",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_220i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data and Germany market material confirm the G42 220i as a rear-wheel-drive variant."
+      },
+      {
+        "field_name": "tire_dimensions",
+        "source_id": "ratio_sources:BMW|2 Series Coupe (G42, 2022-2026):official_220i_exact_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data and Germany price lists confirm the G42 220i launch-standard 225/50 R17 tire and the documented 18/19-inch Germany option matrix."
       }
     ],
     "source_status": "exact_row"
