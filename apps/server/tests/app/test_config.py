@@ -45,6 +45,7 @@ def test_logging_flags_allow_db_only_mode(cfg_path: Path) -> None:
     assert cfg.logging.app_log_path == cfg_path.parent / "logs/app.log"
     assert cfg.logging.no_data_timeout_s == 15.0
     assert cfg.logging.run_retention_days == 7
+    assert cfg.logging.raw_capture_retention_days == 7
     assert cfg.tracing.enabled is False
     assert cfg.tracing.output_path == cfg_path.parent / "data/traces.jsonl"
 
@@ -65,6 +66,13 @@ def test_logging_flags_allow_db_only_mode(cfg_path: Path) -> None:
             "run_retention_days",
             21,
             id="run-retention-override",
+        ),
+        pytest.param({}, "raw_capture_retention_days", 7, id="raw-retention-default"),
+        pytest.param(
+            {"logging": {"raw_capture_retention_days": 14}},
+            "raw_capture_retention_days",
+            14,
+            id="raw-retention-override",
         ),
     ],
 )

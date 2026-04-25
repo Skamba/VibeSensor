@@ -172,6 +172,8 @@
   "history.preview_unavailable": "Voorvertoning is niet beschikbaar voor deze run.",
   "history.preview_available": "Open diagnose en bewijs",
   "history.details_title": "Diagnostisch paneel",
+  "history.raw_capture_missing_title": "Ruwe opname is verwijderd",
+  "history.raw_capture_missing_detail": "De samenvatting van deze run is nog beschikbaar, maar de ruwe golfvormopname is door retentie-opruiming verwijderd en kan niet meer worden herladen.",
   "history.row_status.recording": "Opnemen",
   "history.row_status.analyzing": "Analyseren",
   "history.row_status.preview_ready": "Voorbeeld klaar",

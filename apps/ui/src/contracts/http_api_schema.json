@@ -3617,6 +3617,35 @@
         "title": "HealthWsPublishResponse",
         "type": "object"
       },
+      "HistoryArtifactAvailabilityResponse": {
+        "description": "Response body describing persisted artifact availability for a history run.",
+        "properties": {
+          "raw_capture": {
+            "enum": [
+              "not_recorded",
+              "available",
+              "missing"
+            ],
+            "title": "Raw Capture",
+            "type": "string"
+          },
+          "whole_run_artifacts": {
+            "enum": [
+              "not_recorded",
+              "available",
+              "missing"
+            ],
+            "title": "Whole Run Artifacts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "raw_capture",
+          "whole_run_artifacts"
+        ],
+        "title": "HistoryArtifactAvailabilityResponse",
+        "type": "object"
+      },
       "HistoryInsightWarningResponse": {
         "description": "Response body for a localized history/run trust warning.",
         "properties": {
@@ -4069,6 +4098,16 @@
       "HistoryListEntryResponse": {
         "description": "Response body for a single history-run list row.",
         "properties": {
+          "artifact_availability": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoryArtifactAvailabilityResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "car_name": {
             "anyOf": [
               {
@@ -4158,6 +4197,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/AnalysisSummaryResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "artifact_availability": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoryArtifactAvailabilityResponse"
               },
               {
                 "type": "null"

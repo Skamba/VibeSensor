@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sqlite3
 import threading
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TypeVar, cast
 
@@ -17,7 +19,7 @@ from vibesensor.adapters.persistence.history_db._schema import (
     SCHEMA_VERSION,
 )
 from vibesensor.shared.boundaries.codecs.scalars import text_or_none
-from vibesensor.shared.json_utils import safe_json_loads
+from vibesensor.shared.json_utils import json_text_dumps, safe_json_loads
 from vibesensor.shared.types.json_types import is_json_object
 
 LOGGER = logging.getLogger(__name__)
@@ -318,6 +320,129 @@ class SQLiteHistoryEngine:
         if self._corruption_reporter is not None:
             self._corruption_reporter(details)
 
+    async def _user_table_names(self) -> set[str]:
+        async with self._cursor(commit=False) as cur:
+            await cur.execute(
+                """
+                SELECT name FROM sqlite_master
+                WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+                """
+            )
+            return {str(row[0]) for row in await cur.fetchall()}
+
+    def _protect_incompatible_database(
+        self,
+        *,
+        version: int,
+        reason: str,
+    ) -> tuple[Path, Path | None]:
+        timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+        backup_dir = self.db_path.parent / "history-db-backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        stem = self.db_path.stem or "history"
+        backup_path = backup_dir / f"{stem}.incompatible-v{version}-{reason}-{timestamp}.db"
+        summary_export_path = (
+            backup_dir / f"{stem}.incompatible-v{version}-{reason}-{timestamp}.run-summaries.jsonl"
+        )
+
+        source_conn = sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True)
+        backup_conn = sqlite3.connect(str(backup_path))
+        try:
+            source_conn.backup(backup_conn)
+        finally:
+            backup_conn.close()
+            source_conn.close()
+
+        exported_summary = self._export_incompatible_run_summaries(
+            backup_path=backup_path,
+            summary_export_path=summary_export_path,
+        )
+        return backup_path, exported_summary
+
+    @staticmethod
+    def _export_incompatible_run_summaries(
+        *,
+        backup_path: Path,
+        summary_export_path: Path,
+    ) -> Path | None:
+        conn = sqlite3.connect(f"file:{backup_path}?mode=ro", uri=True)
+        try:
+            table_names = {
+                str(row[0])
+                for row in conn.execute(
+                    """
+                    SELECT name FROM sqlite_master
+                    WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+                    """
+                )
+            }
+            if "runs" not in table_names:
+                return None
+            columns = {str(row[1]) for row in conn.execute("PRAGMA table_info(runs)")}
+            export_columns = [
+                column
+                for column in (
+                    "run_id",
+                    "status",
+                    "start_time_utc",
+                    "end_time_utc",
+                    "created_at",
+                    "analysis_completed_at",
+                    "sample_count",
+                    "error_message",
+                    "metadata_json",
+                    "analysis_json",
+                )
+                if column in columns
+            ]
+            if "run_id" not in export_columns:
+                return None
+            order_column = next(
+                (
+                    column
+                    for column in ("analysis_completed_at", "end_time_utc", "created_at", "run_id")
+                    if column in columns
+                ),
+                "run_id",
+            )
+            rows = conn.execute(
+                f"SELECT {', '.join(export_columns)} FROM runs ORDER BY {order_column} DESC"
+            ).fetchall()
+        finally:
+            conn.close()
+
+        with summary_export_path.open("w", encoding="utf-8") as handle:
+            for row in rows:
+                payload = {column: row[index] for index, column in enumerate(export_columns)}
+                handle.write(json_text_dumps(payload, sort_keys=True))
+                handle.write("\n")
+        return summary_export_path
+
+    async def _raise_incompatible_database(
+        self,
+        *,
+        version: int,
+        reason: str,
+        message: str,
+    ) -> None:
+        try:
+            backup_path, summary_export_path = await asyncio.to_thread(
+                self._protect_incompatible_database,
+                version=version,
+                reason=reason,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"{message} Automatic backup before rejection failed for {self.db_path}: {exc}. "
+                "The database was left untouched; keep it and back it up manually before any reset."
+            ) from exc
+        export_note = (
+            f" Run-summary export written to {summary_export_path}."
+            if summary_export_path is not None
+            else " Run-summary export was not available for this schema."
+        )
+        raise RuntimeError(f"{message} Backup written to {backup_path}.{export_note}")
+
     async def _rollback_transaction(self, conn: aiosqlite.Connection, *, context: str) -> None:
         if not conn.in_transaction:
             return
@@ -327,54 +452,75 @@ class SQLiteHistoryEngine:
             LOGGER.critical("History DB rollback failed during %s", context, exc_info=True)
 
     async def _ensure_schema(self) -> None:
-        async with self._cursor() as cur:
-            await cur.executescript(SCHEMA_SQL)
-
         version = await self._schema_version()
 
         if version == 0:
-            async with self._cursor(commit=False) as cur:
-                await cur.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_meta'"
+            user_tables = await self._user_table_names()
+            if "schema_meta" in user_tables:
+                await self._raise_incompatible_database(
+                    version=version,
+                    reason="legacy-schema-meta",
+                    message=(
+                        f"Database at {self.db_path} uses a legacy schema_meta table "
+                        f"incompatible with the current v{SCHEMA_VERSION} format."
+                    ),
                 )
-                if await cur.fetchone() is not None:
-                    raise RuntimeError(
-                        f"Database at {self.db_path} uses a legacy "
-                        "schema_meta table incompatible with the current "
-                        f"v{SCHEMA_VERSION} format. Delete it to recreate."
-                    )
+            if user_tables:
+                await self._raise_incompatible_database(
+                    version=version,
+                    reason="unexpected-user-tables",
+                    message=(
+                        f"Database at {self.db_path} has user tables but no schema version and is "
+                        f"incompatible with the current v{SCHEMA_VERSION} format."
+                    ),
+                )
             async with self._cursor() as cur:
+                await cur.executescript(SCHEMA_SQL)
                 await cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
             return
 
         if version == SCHEMA_VERSION:
+            async with self._cursor() as cur:
+                await cur.executescript(SCHEMA_SQL)
             return
         if version == 11:
             await self._migrate_v11_to_v12()
             await self._migrate_v12_to_v13()
             await self._migrate_v13_to_v14()
             await self._migrate_v14_to_v15()
+            async with self._cursor() as cur:
+                await cur.executescript(SCHEMA_SQL)
             return
         if version == 12:
             await self._migrate_v12_to_v13()
             await self._migrate_v13_to_v14()
             await self._migrate_v14_to_v15()
+            async with self._cursor() as cur:
+                await cur.executescript(SCHEMA_SQL)
             return
         if version == 13:
             await self._migrate_v13_to_v14()
             await self._migrate_v14_to_v15()
+            async with self._cursor() as cur:
+                await cur.executescript(SCHEMA_SQL)
             return
         if version == 14:
             await self._migrate_v14_to_v15()
+            async with self._cursor() as cur:
+                await cur.executescript(SCHEMA_SQL)
             return
         if version > SCHEMA_VERSION:
-            raise RuntimeError(
-                f"History DB schema version {version} is newer than "
-                f"supported {SCHEMA_VERSION}. Delete {self.db_path} to recreate it.",
+            await self._raise_incompatible_database(
+                version=version,
+                reason="newer-schema",
+                message=(
+                    f"History DB schema version {version} is newer than supported {SCHEMA_VERSION}."
+                ),
             )
-        raise RuntimeError(
-            f"Database schema v{version} is incompatible with current v{SCHEMA_VERSION}. "
-            f"Delete the database file at {self.db_path} to recreate it."
+        await self._raise_incompatible_database(
+            version=version,
+            reason="unsupported-schema",
+            message=(f"Database schema v{version} is incompatible with current v{SCHEMA_VERSION}."),
         )
 
     async def _schema_version(self) -> int:

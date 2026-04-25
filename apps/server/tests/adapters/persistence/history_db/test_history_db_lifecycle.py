@@ -129,33 +129,6 @@ def test_close_uses_lock_and_clears_connection(tmp_path: Path) -> None:
     assert db.lifecycle._read_conn is None
 
 
-def test_schema_version_ancient_no_migration_fails_fast(tmp_path: Path) -> None:
-    """A DB with a very old version that has no migration path should raise."""
-    db_path = tmp_path / "history.db"
-    conn = sqlite3.connect(str(db_path))
-    conn.execute("PRAGMA user_version = 1")
-    conn.commit()
-    conn.close()
-
-    with pytest.raises(RuntimeError, match="incompatible"):
-        create_history_persistence_adapters(db_path)
-
-
-def test_schema_version_future_fails_fast(tmp_path: Path) -> None:
-    """A DB with a newer version than supported should raise (no downgrade)."""
-    db_path = tmp_path / "history.db"
-    # Create a valid current-version DB first so the physical schema is correct
-    db = create_history_persistence_adapters(db_path)
-    db.lifecycle.close()
-    conn = sqlite3.connect(str(db_path))
-    conn.execute("PRAGMA user_version = 99")
-    conn.commit()
-    conn.close()
-
-    with pytest.raises(RuntimeError, match="newer than supported"):
-        create_history_persistence_adapters(db_path)
-
-
 def test_iter_run_samples_batches(tmp_path: Path) -> None:
     db = create_history_persistence_adapters(tmp_path / "history.db")
     db.run_repository.create_run("run-3", "2026-01-01T00:00:00Z", _metadata("run-3"))

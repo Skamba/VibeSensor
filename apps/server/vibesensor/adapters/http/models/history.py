@@ -100,6 +100,13 @@ __all__ = [
 ]
 
 
+class HistoryArtifactAvailabilityResponse(BaseModel):
+    """Response body describing persisted artifact availability for a history run."""
+
+    raw_capture: Literal["not_recorded", "available", "missing"]
+    whole_run_artifacts: Literal["not_recorded", "available", "missing"]
+
+
 class HistoryListEntryResponse(BaseModel):
     """Response body for a single history-run list row."""
 
@@ -111,6 +118,7 @@ class HistoryListEntryResponse(BaseModel):
     sample_count: int
     car_name: str | None = None
     error_message: str | None = None
+    artifact_availability: HistoryArtifactAvailabilityResponse | None = None
 
 
 class HistoryListResponse(BaseModel):
@@ -134,6 +142,7 @@ class HistoryRunResponse(_StrictBase):
     error_message: str | None = None
     metadata: ApiPayloadObject = Field(default_factory=dict)
     analysis: _HistoryRunAnalysisResponse | None = None
+    artifact_availability: HistoryArtifactAvailabilityResponse | None = None
 
 
 class HistoryInsightWarningResponse(BaseModel):

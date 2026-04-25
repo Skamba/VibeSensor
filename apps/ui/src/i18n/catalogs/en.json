@@ -172,6 +172,8 @@
   "history.preview_unavailable": "Preview is unavailable for this run.",
   "history.preview_available": "Open diagnosis and evidence",
   "history.details_title": "Diagnostic panel",
+  "history.raw_capture_missing_title": "Raw capture was removed",
+  "history.raw_capture_missing_detail": "This run summary is still available, but the raw waveform capture was pruned by retention maintenance and cannot be replayed.",
   "history.row_status.recording": "Recording",
   "history.row_status.analyzing": "Analyzing",
   "history.row_status.preview_ready": "Preview ready",
