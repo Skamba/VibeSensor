@@ -36,7 +36,7 @@ def test_wave11_ratio_source_rows_capture_g42_g02_a5_q3_q5_context() -> None:
         },
         {
             "item": "EU applicability of the existing '6-speed manual' gearbox entry across 2022-2026 range",
-            "reason": "Checked official BMW Germany/EU launch and current-market material consistently points at 8-speed automatic/Steptronic-only support for the visible petrol lineup, but this pass still did not recover one full official transmission matrix proving when, where, or whether the broad-row 6-speed manual entry applies.",
+            "reason": "Checked official BMW Germany/EU launch and current-market material now resolves the visible 220i and 230i petrol lineup as automatic-only, but this pass still did not recover one official market-by-market transmission matrix proving when, where, or whether the retained broad-row 6-speed manual entry applies.",
         },
     ])
     _assert_contains_unresolved(sources["BMW|X4 (G02, 2019-2025)"], [

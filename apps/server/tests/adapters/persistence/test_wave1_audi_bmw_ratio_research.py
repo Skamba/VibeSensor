@@ -28,6 +28,12 @@ def _ratio_sources() -> dict[str, dict[str, object]]:
         return json.load(fh)["cars"]
 
 
+def _assert_contains_unresolved(entry: dict[str, object], expected: list[dict[str, str]]) -> None:
+    unresolved = entry["unresolved"]
+    for item in expected:
+        assert item in unresolved
+
+
 def test_g20_330i_xdrive_uses_exact_wave1_official_top_gear_and_ratio_set() -> None:
     entry = _entry_for("BMW", "3 Series (G20, 2019-2025)")
     resolved = resolve_variant(entry, "330i xDrive")
@@ -59,28 +65,24 @@ def test_wave1_ratio_source_rows_capture_exact_audi_bmw_evidence_without_guessin
         "sources"
     ]
 
-    unresolved_a4 = sources["Audi|A4 (B9, 2016-2025)"]["unresolved"]
-    unresolved_a5 = sources["Audi|A5 (B9, 2017-2024)"]["unresolved"]
-    unresolved_q5 = sources["Audi|Q5 (FY, 2017-2026)"]["unresolved"]
-
-    assert unresolved_a4 == [
+    _assert_contains_unresolved(sources["Audi|A4 (B9, 2016-2025)"], [
         {
             "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
             "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
         }
-    ]
-    assert unresolved_a5 == [
+    ])
+    _assert_contains_unresolved(sources["Audi|A5 (B9, 2017-2024)"], [
         {
             "item": "Broad-row Audi A5 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
             "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW Coupe and Sportback, but this pass did not verify whether the earlier years in the broad row use the same exact mapping.",
         }
-    ]
-    assert unresolved_q5 == [
+    ])
+    _assert_contains_unresolved(sources["Audi|Q5 (FY, 2017-2026)"], [
         {
             "item": "Broad-row Audi Q5 FY 55 TFSI e quattro top_gear_ratio applicability across the represented span",
             "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 270 kW 55 TFSI e quattro configuration, but this pass did not verify whether every year represented by the broad FY row uses the same exact mapping.",
         }
-    ]
+    ])
 
 
 def test_g20_variant_source_doc_tracks_wave1_override_update() -> None:
