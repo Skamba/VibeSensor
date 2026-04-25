@@ -6,7 +6,11 @@ import json
 
 import pytest
 
-from vibesensor.adapters.persistence.car_library import _DATA_FILE, load_car_library, resolve_variant  # noqa: E501
+from vibesensor.adapters.persistence.car_library import (
+    _DATA_FILE,
+    load_car_library,
+    resolve_variant,
+)
 
 _RATIO_SOURCES_FILE = _DATA_FILE.with_name("car_library_ratio_sources.json")
 _VARIANT_SOURCES_FILE = _DATA_FILE.with_name("CAR_VARIANT_SOURCES.md")
