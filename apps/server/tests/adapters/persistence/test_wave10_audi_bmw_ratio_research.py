@@ -35,7 +35,7 @@ def test_wave10_ratio_source_rows_capture_g22_g01_g02_q5_context() -> None:
         sources["BMW|4 Series (G22, 2021-2026)"],
         [
             {
-                "item": "Whether this row should later expand beyond the supported petrol-family slice",
+                "item": "Whether this row should later expand beyond the supported petrol-family slice",  # noqa: E501
                 "reason": "BMW Germany technical data confirms additional diesel xDrive variants, but issue #1034 stays narrowly focused on the confirmed petrol-family mismatch rather than broadening the supported row to every current market slice.",  # noqa: E501
             },
             {
@@ -43,7 +43,7 @@ def test_wave10_ratio_source_rows_capture_g22_g01_g02_q5_context() -> None:
                 "reason": "Official BMW sources now prove the current Germany-market 430i xDrive naming, model code 51HB, drivetrain, transmission wording, and current 17/18/19-inch tire matrix, but the checked 03/2021 launch technical-data PDF does not list 430i xDrive and this pass did not recover any official exact 430i xDrive final-drive, top-gear, forward-ratio, or reverse-ratio table.",  # noqa: E501
             },
             {
-                "item": "BMW M440i xDrive production-data applicability across the full G22 row span",
+                "item": "BMW M440i xDrive production-data applicability across the full G22 row span",  # noqa: E501
                 "reason": "The checked official 07/2021 ACEA sheet resolves the M440i xDrive launch ratios, final drive, top gear, and staggered base tires, but later official Germany-market pages already show a different published output state and this pass did not recover later exact ratio/tire tables proving one unchanged 2021-2026 package.",  # noqa: E501
             },
             {
@@ -60,7 +60,7 @@ def test_wave10_ratio_source_rows_capture_g22_g01_g02_q5_context() -> None:
                 "reason": "Official BMW DE sheets now prove final drive 3.385, top gear 0.640, and the Germany-market tire matrix for xDrive30i, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split.",  # noqa: E501
             },
             {
-                "item": "BMW X3 M40i production-data applicability across the full 2018-2024 row span",
+                "item": "BMW X3 M40i production-data applicability across the full 2018-2024 row span",  # noqa: E501
                 "reason": "The checked official 04/2020 ACEA M40i sheet resolves final drive 3.385, top gear 0.640, the full forward ratio set, reverse ratio 3.712, and the standard staggered 245/45 R20 front + 275/40 R20 rear fitment, but this pass did not recover launch-year or later-year official sheets proving one unchanged M40i package across the full represented row.",  # noqa: E501
             },
             {
@@ -93,7 +93,7 @@ def test_wave10_ratio_source_rows_capture_g22_g01_g02_q5_context() -> None:
                 "reason": "This pass resolves exact official xDrive20i, xDrive30i, and M40i source-ledger evidence, but it does not establish the full official ratio and tire matrix for every other G02 variant represented by the broad row.",  # noqa: E501
             },
             {
-                "item": "BMW X4 M40i exact optional wheel/tire matrix and transmission subtype code",
+                "item": "BMW X4 M40i exact optional wheel/tire matrix and transmission subtype code",  # noqa: E501
                 "reason": "Official BMW sources now prove the exact standard staggered 20-inch M40i fitment and the checked ratio sets, but they do not publish a gearbox subtype code or one exact full optional wheel/tire matrix that closes the broad row safely.",  # noqa: E501
             },
         ],
