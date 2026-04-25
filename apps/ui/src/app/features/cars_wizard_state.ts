@@ -5,6 +5,7 @@ import type {
   CarLibraryVariant,
 } from "../../api";
 import type { WizardSummaryData } from "../views/car_wizard_view";
+import { buildGearboxConfidenceHint } from "./car_confidence_summary";
 import { formatCarLibraryTireOption } from "./cars_tire_setup";
 
 export type WizardSpecBranch = "library" | "manual" | null;
@@ -215,9 +216,8 @@ export function getWizardActionHint(
     if (!canFinishWithLibrarySpecs(state)) {
       return t("settings.car.finish_choose_path");
     }
-    return state.selectedGearbox?.requires_manual_confirmation
-      ? t("settings.car.finish_library_approximate")
-      : t("settings.car.finish_library_ready");
+    return buildGearboxConfidenceHint(state.selectedGearbox, t)
+      ?? t("settings.car.finish_library_ready");
   }
   if (branch === "manual") {
     return canFinishWithManualSpecs(manualTire, manualGearbox)
