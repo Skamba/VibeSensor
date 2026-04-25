@@ -34,8 +34,9 @@ as `verification_backlog`, `verified`, `corrected`, or
   available. If a row cannot be safely verified at the represented
   granularity, that limitation is recorded in the ratio-source ledger
   instead of relying on broad fallback notes here.
-- Tire specifications are shared across variants within a model generation
-  and are not overridden at variant level (same factory options).
+- Tire specifications are usually shared across variants within a model
+  generation, but exact variant-level overrides are allowed when official
+  technical data proves a different baseline or variant-specific package.
 
 ---
 
@@ -67,11 +68,11 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### 2 Series Coupe (G42, 2022-2026)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| 220i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| 230i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| 230i xDrive | B48 2.0L I4 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| 220i | B48 2.0L I4 Turbo | RWD | 8-speed Steptronic transmission FD 2.813 TG 0.640 | BMW PressClub technical data / DE price lists | High |
+| 230i | B48 2.0L I4 Turbo | RWD | 8-speed Steptronic transmission FD 2.813 TG 0.640 | BMW PressClub technical data / DE price lists | High |
+| 230i xDrive | B48 2.0L I4 Turbo | AWD | – | BMW press release | High |
 
 ### 2 Series Active Tourer (F45, 2014-2021)
 
@@ -96,7 +97,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 |---------|--------|------------|------------------|--------|------------|
 | 320i | B48 2.0L I4 Turbo | RWD | – | BMW press release / technical data | High |
 | 330i | B48 2.0L I4 Turbo | RWD | – | BMW press release / technical data | High |
-| 330i xDrive | B48 2.0L I4 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 2.813 | BMW PressClub technical data | High |
+| 330i xDrive | B48 2.0L I4 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 2.813 TG 0.640 | BMW PressClub technical data (03/2021, 07/2022) | High |
 | 320e | 1.6L I4 Turbo | RWD | – | BMW press release / technical data | High |
 | 330e | 2.0L I4 Turbo | RWD | – | BMW press release / technical data | High |
 
@@ -127,22 +128,22 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### 5 Series (G30, 2017-2023)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| 520i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| 530i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| 530i xDrive | B48 2.0L I4 Turbo | AWD | BMW press release | High |
-| 540i | B58 3.0L I6 Turbo | RWD | BMW press release | High |
-| 540i xDrive | B58 3.0L I6 Turbo | AWD | BMW press release | High |
-| 545e xDrive | 3.0L I6 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| 520i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
+| 530i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
+| 530i xDrive | B48 2.0L I4 Turbo | AWD | – | BMW press release | High |
+| 540i | B58 3.0L I6 Turbo | RWD | 8-speed Steptronic transmission FD 2.929 TG 0.640 | BMW PressClub technical data | High |
+| 540i xDrive | B58 3.0L I6 Turbo | AWD | 8-speed Steptronic transmission FD 2.929 TG 0.640 | BMW PressClub technical data | High |
+| 545e xDrive | 3.0L I6 Turbo | AWD | 8-speed Steptronic transmission FD 3.231 TG 0.667 | BMW PressClub technical data / DE price list | High |
 
 ### 5 Series (G60, 2024-2026)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| 520i | B48 2.0L I4 Turbo | RWD | BMW press release / technical data | High |
-| i5 eDrive40 | Electric Single Motor | RWD | BMW technical data | High |
-| i5 M60 xDrive | Electric Dual Motor | AWD | BMW technical data / BMW M model page | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| 520i | B48 2.0L I4 Turbo | RWD | 8-speed Steptronic transmission FD 3.077 TG 0.640 | BMW press release / technical data | High |
+| i5 eDrive40 | Electric Single Motor | RWD | Single-speed fixed gear (EV) overall 11.115 | BMW technical data / DE price list | High |
+| i5 M60 xDrive | Electric Dual Motor | AWD | Single-speed fixed gear (EV) rear overall 9.374 representative | BMW technical data / BMW M model page | High |
 
 ### 6 Series Gran Coupe (F06, 2013-2018)
 
@@ -154,10 +155,10 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### 6 Series Gran Turismo (G32, 2018-2024)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| 630i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| 640i xDrive | B58 3.0L I6 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| 630i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
+| 640i xDrive | B58 3.0L I6 Turbo | AWD | 8-speed Steptronic transmission FD 3.077 TG 0.640 | BMW technical data / DE price list | High |
 
 ### 7 Series (F01, 2011-2015)
 
@@ -247,12 +248,12 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### X3 (G01, 2018-2024)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| sDrive20i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| xDrive20i | B48 2.0L I4 Turbo | AWD | BMW press release | High |
-| xDrive30i | B48 2.0L I4 Turbo | AWD | BMW press release | High |
-| M40i | B58 3.0L I6 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| sDrive20i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
+| xDrive20i | B48 2.0L I4 Turbo | AWD | – | BMW press release | High |
+| xDrive30i | B48 2.0L I4 Turbo | AWD | 8-speed Steptronic FD 3.385 TG 0.640 | BMW PressClub technical data / DE price list | High |
+| M40i | B58 3.0L I6 Turbo | AWD | – | BMW press release | High |
 
 ### X3 (G45, 2025-2026)
 
@@ -288,11 +289,11 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### X5 (G05, 2019-2026)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| xDrive40i | B58 3.0L I6 Turbo | AWD | BMW press release | High |
-| xDrive45e | B58 3.0L I6 Turbo PHEV | AWD | BMW press release | High |
-| M50i | N63 4.4L V8 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| xDrive40i | B58 3.0L I6 Turbo | AWD | 8-speed Steptronic FD 3.636 TG 0.640 | BMW PressClub technical data | High |
+| xDrive45e | B58 3.0L I6 Turbo PHEV | AWD | 8-speed Steptronic FD 3.636 | BMW DE technical data | High |
+| M50i | N63 4.4L V8 Turbo | AWD | – | BMW press release | High |
 
 ### X6 (F16, 2015-2019)
 
@@ -310,11 +311,11 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### X7 (G07, 2019-2026)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| xDrive40i | B58 3.0L I6 Turbo | AWD | BMW press release | High |
-| xDrive40d | B57 3.0L I6 Diesel | AWD | BMW press release | High |
-| M60i xDrive | S68 4.4L V8 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| xDrive40i | B58 3.0L I6 Turbo | AWD | – | BMW press release | High |
+| xDrive40d | B57 3.0L I6 Diesel | AWD | – | BMW press release | High |
+| M60i xDrive | S68 4.4L V8 Turbo | AWD | 8-speed Steptronic FD 3.385 TG 0.640 | BMW PressClub technical data | High |
 
 ### Z4 (G29, 2019-2026)
 
@@ -337,7 +338,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 |---------|--------|------------|------------------|--------|------------|
 | M3 | S58 3.0L I6 Turbo | RWD | 6-speed manual FD 3.846, 8-speed automatic (ZF 8HP) FD 3.154 | BMW press release / technical data | Medium |
 | M3 Competition | S58 3.0L I6 Turbo | RWD | 8-speed automatic (ZF 8HP) FD 3.154 | BMW press release / technical data | Medium |
-| M3 Competition xDrive | S58 3.0L I6 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 3.154 | BMW press release / technical data | Medium |
+| M3 Competition xDrive | S58 3.0L I6 Turbo | AWD | 8-speed M Steptronic FD 3.154 TG 0.640 | BMW PressClub technical data | High |
 
 ### M4 (F82, 2014-2020)
 
@@ -351,7 +352,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
 | M4 | S58 3.0L I6 Turbo | RWD | 6-speed manual FD 3.846, 8-speed automatic (ZF 8HP) FD 3.154 | BMW press release / technical data | Medium |
-| M4 Competition xDrive | S58 3.0L I6 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 3.154 | BMW press release / technical data | Medium |
+| M4 Competition xDrive | S58 3.0L I6 Turbo | AWD | 8-speed M Steptronic FD 3.154 TG 0.640 | BMW PressClub technical data | High |
 
 ### M5 (F90, 2018-2024)
 
@@ -534,7 +535,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
 | 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 5.302 | Audi MediaCenter eTD technical data | High |
-| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 5.302 | Audi MediaCenter eTD / Audi UK technical data | High |
+| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 5.302 TG 0.433 | Audi MediaCenter eTD technical data (2019, 2024) | High |
 | 55 TFSI e quattro | 2.0L I4 TFSI Turbo PHEV | AWD | 7-speed S tronic FD 5.302 | Audi MediaCenter / technical data PDF | High |
 | 35 TDI quattro | 2.0L I4 TDI Diesel | AWD | – | Audi owner manual / technical data | Medium |
 | 40 TDI quattro | 2.0L I4 TDI Diesel | AWD | – | Audi owner manual / technical data | Medium |

@@ -112,6 +112,24 @@ def test_current_exact_vehicle_configurations_validate_cleanly() -> None:
     assert validate_vehicle_configurations(load_vehicle_configurations()) == ()
 
 
+def test_validate_car_library_rows_accepts_documented_ultra_overdrive_top_gear() -> None:
+    entry = _make_valid_legacy_entry()
+    entry["gearboxes"][0]["name"] = "7-speed S tronic"
+    entry["gearboxes"][0]["top_gear_ratio"] = 0.433
+
+    assert validate_car_library_rows([entry], allowlist={}) == ()
+
+
+def test_validate_vehicle_configurations_accepts_documented_ultra_overdrive_top_gear() -> None:
+    config = replace(  # noqa: E501
+        _make_valid_exact_configuration(),
+        transmission_name="7-speed S tronic",
+        top_gear_ratio=0.433,
+    )
+
+    assert validate_vehicle_configurations([config], allowlist={}) == ()
+
+
 def test_current_allowlist_matches_current_raw_legacy_ev_exceptions() -> None:
     with _DATA_FILE.open(encoding="utf-8") as fh:
         raw_rows = json.load(fh)
