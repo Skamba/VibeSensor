@@ -183,6 +183,7 @@ def test_build_whole_run_diagnosis_summaries_ranks_candidates_and_projects_exemp
                 ),
             ),
         ),
+        car_order_reference_status=None,
     )
 
     assert [summary.diagnosis_key for summary in summaries] == ["wheel_1x", "driveshaft_1x"]
@@ -310,6 +311,7 @@ def test_diagnosis_ranking_marks_context_gaps_and_weak_spatial_as_suspicious() -
                 ),
             ),
         ),
+        car_order_reference_status=None,
     )
 
     assert len(summaries) == 1

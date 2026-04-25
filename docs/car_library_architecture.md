@@ -205,6 +205,22 @@ The source of truth is the resolved `VehicleConfiguration`:
 - UI consumers should use `requires_manual_confirmation` to keep approximate
   drivetrain values visibly approximate until the user confirms them.
 
+Issue #3239 extends that same provenance policy into whole-run diagnosis
+confidence:
+
+- wheel-order matches use tire confidence only
+- driveshaft/driveline matches use the weakest of tire and final-drive
+  confidence
+- speed-derived engine-order matches use the weakest of tire, final-drive, and
+  current-gear confidence
+- direct engine references that do not depend on speed-derived car data (for
+  example OBD2-backed RPM) do not inherit saved-car confidence penalties
+
+That policy feeds the canonical diagnosis assessment, so persisted diagnosis
+factor rows and report wording now surface when a match depended on
+`user_confirmed`, `reputable_secondary_crosschecked`, `family_default`, or
+`unverified` vehicle data.
+
 ## Axle-aware tire setups
 
 Issue #3233 extends the same one-owner rule to tire data.

@@ -50,6 +50,8 @@ class DiagnosisAssessmentFactorDetails:
     speed_gap_window_count: int | None = None
     rpm_gap_window_count: int | None = None
     fallback_reason: str | None = None
+    car_data_reference_scope: str | None = None
+    car_data_confidence: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,6 +90,8 @@ class DiagnosisAssessmentInputs:
     context_source: str
     speed_gap_window_count: int
     rpm_gap_window_count: int
+    car_data_reference_scope: str | None = None
+    car_data_confidence: str | None = None
     confidence_gap_to_alternative: float | None = None
 
 
@@ -114,6 +118,8 @@ class DiagnosisAssessment:
     has_reference_gap: bool
     speed_gap_window_count: int
     rpm_gap_window_count: int
+    car_data_reference_scope: str | None
+    car_data_confidence: str | None
     uses_summary_fallback: bool
     fallback_reason: str | None
     signal_keys: tuple[str, ...]
@@ -227,6 +233,18 @@ def score_diagnosis_assessment_inputs(inputs: DiagnosisAssessmentInputs) -> Diag
     if inputs.has_reference_gap:
         score -= 0.06
         caveat_keys.append("incomplete_reference")
+    if inputs.car_data_confidence == "user_confirmed":
+        score += 0.03
+        signal_keys.append("user_confirmed_vehicle_data")
+    elif inputs.car_data_confidence == "reputable_secondary_crosschecked":
+        score -= 0.05
+        caveat_keys.append("secondary_vehicle_data")
+    elif inputs.car_data_confidence == "family_default":
+        score -= 0.10
+        caveat_keys.append("approximate_vehicle_data")
+    elif inputs.car_data_confidence == "unverified":
+        score -= 0.15
+        caveat_keys.append("unverified_vehicle_data")
 
     return _assessment_from_keys(
         score_0_to_1=_rounded_score(score),
@@ -245,6 +263,8 @@ def score_diagnosis_assessment_inputs(inputs: DiagnosisAssessmentInputs) -> Diag
         has_reference_gap=inputs.has_reference_gap,
         speed_gap_window_count=inputs.speed_gap_window_count,
         rpm_gap_window_count=inputs.rpm_gap_window_count,
+        car_data_reference_scope=inputs.car_data_reference_scope,
+        car_data_confidence=inputs.car_data_confidence,
         uses_summary_fallback=False,
         fallback_reason=None,
         signal_keys=tuple(dict.fromkeys(signal_keys)),
@@ -282,6 +302,8 @@ def apply_diagnosis_assessment_fallback(
         has_reference_gap=assessment.has_reference_gap,
         speed_gap_window_count=assessment.speed_gap_window_count,
         rpm_gap_window_count=assessment.rpm_gap_window_count,
+        car_data_reference_scope=assessment.car_data_reference_scope,
+        car_data_confidence=assessment.car_data_confidence,
         uses_summary_fallback=True,
         fallback_reason=fallback_reason,
         signal_keys=assessment.signal_keys,
@@ -310,6 +332,8 @@ def diagnosis_assessment_from_components(
     has_reference_gap: bool,
     speed_gap_window_count: int,
     rpm_gap_window_count: int,
+    car_data_reference_scope: str | None,
+    car_data_confidence: str | None,
     uses_summary_fallback: bool,
     fallback_reason: str | None,
     support_factors: tuple[DiagnosisAssessmentFactor, ...],
@@ -354,6 +378,8 @@ def diagnosis_assessment_from_components(
         has_reference_gap=has_reference_gap,
         speed_gap_window_count=speed_gap_window_count,
         rpm_gap_window_count=rpm_gap_window_count,
+        car_data_reference_scope=car_data_reference_scope,
+        car_data_confidence=car_data_confidence,
         uses_summary_fallback=uses_summary_fallback,
         fallback_reason=fallback_reason,
         signal_keys=signal_keys,
@@ -386,6 +412,8 @@ def _assessment_from_keys(
     has_reference_gap: bool,
     speed_gap_window_count: int,
     rpm_gap_window_count: int,
+    car_data_reference_scope: str | None,
+    car_data_confidence: str | None,
     uses_summary_fallback: bool,
     fallback_reason: str | None,
     signal_keys: tuple[str, ...],
@@ -418,6 +446,8 @@ def _assessment_from_keys(
         has_reference_gap=has_reference_gap,
         speed_gap_window_count=speed_gap_window_count,
         rpm_gap_window_count=rpm_gap_window_count,
+        car_data_reference_scope=car_data_reference_scope,
+        car_data_confidence=car_data_confidence,
         uses_summary_fallback=uses_summary_fallback,
         fallback_reason=fallback_reason,
         signal_keys=signal_keys,
@@ -445,6 +475,8 @@ def _assessment_from_keys(
         has_reference_gap=has_reference_gap,
         speed_gap_window_count=speed_gap_window_count,
         rpm_gap_window_count=rpm_gap_window_count,
+        car_data_reference_scope=car_data_reference_scope,
+        car_data_confidence=car_data_confidence,
         uses_summary_fallback=uses_summary_fallback,
         fallback_reason=fallback_reason,
         support_factors=support_factors,
@@ -519,6 +551,8 @@ def _support_factor_weight(factor_key: str, assessment: DiagnosisAssessment) -> 
         return 0.08
     if factor_key == "clean_signal":
         return 0.05
+    if factor_key == "user_confirmed_vehicle_data":
+        return 0.03
     raise ValueError(f"unsupported support factor key: {factor_key}")
 
 
@@ -527,6 +561,8 @@ def _counter_factor_weight(factor_key: str) -> float:
         return 0.05
     if factor_key in {"speed_context_gaps", "rpm_context_gaps"}:
         return 0.04
+    if factor_key == "secondary_vehicle_data":
+        return 0.05
     if factor_key in {
         "brief_support",
         "drifting_frequency",
@@ -540,8 +576,11 @@ def _counter_factor_weight(factor_key: str) -> float:
         "mixed_support_locations",
         "weak_spatial",
         "close_alternative",
+        "approximate_vehicle_data",
     }:
         return 0.10 if factor_key != "loose_order_lock" else 0.08
+    if factor_key == "unverified_vehicle_data":
+        return 0.15
     raise ValueError(f"unsupported counterevidence factor key: {factor_key}")
 
 
@@ -577,6 +616,17 @@ def _factor_details(
         )
     if factor_key in {"clean_signal", "noisy_signal"}:
         return replace(details, snr_db=assessment.snr_db)
+    if factor_key in {
+        "user_confirmed_vehicle_data",
+        "secondary_vehicle_data",
+        "approximate_vehicle_data",
+        "unverified_vehicle_data",
+    }:
+        return replace(
+            details,
+            car_data_reference_scope=assessment.car_data_reference_scope,
+            car_data_confidence=assessment.car_data_confidence,
+        )
     if factor_key == "close_alternative":
         return replace(details, alternative_source=assessment.alternative_source)
     if factor_key == "speed_context_gaps":
@@ -620,6 +670,9 @@ def _tier_for_score(*, label_key: str, score_0_to_1: float, caveat_keys: tuple[s
             "speed_context_gaps",
             "rpm_context_gaps",
             "noisy_signal",
+            "secondary_vehicle_data",
+            "approximate_vehicle_data",
+            "unverified_vehicle_data",
         }
     ):
         return "B"

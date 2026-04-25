@@ -141,6 +141,8 @@ def report_confidence_from_diagnosis_summary(
         has_reference_gap=diagnosis_summary.has_reference_gap,
         speed_gap_window_count=_speed_gap_window_count(diagnosis_summary),
         rpm_gap_window_count=_rpm_gap_window_count(diagnosis_summary),
+        car_data_reference_scope=_car_data_reference_scope(diagnosis_summary),
+        car_data_confidence=_car_data_confidence(diagnosis_summary),
         uses_summary_fallback=diagnosis_summary.uses_summary_fallback,
         fallback_reason=diagnosis_summary.fallback_reason,
         support_factors=tuple(
@@ -251,6 +253,8 @@ def _summary_fallback_confidence(
         has_reference_gap=evidence_facts.has_reference_gap,
         speed_gap_window_count=0,
         rpm_gap_window_count=0,
+        car_data_reference_scope=None,
+        car_data_confidence=None,
         uses_summary_fallback=True,
         fallback_reason=(assessment.reason if assessment is not None else "") or None,
         signal_keys=(),
@@ -323,6 +327,10 @@ def _factor_details_payload(
         payload["rpm_gap_window_count"] = details.rpm_gap_window_count
     if details.fallback_reason is not None:
         payload["fallback_reason"] = details.fallback_reason
+    if details.car_data_reference_scope is not None:
+        payload["car_data_reference_scope"] = details.car_data_reference_scope
+    if details.car_data_confidence is not None:
+        payload["car_data_confidence"] = details.car_data_confidence
     return payload
 
 
@@ -351,6 +359,8 @@ def _assessment_factor_from_summary_factor(
         speed_gap_window_count=raw_details.speed_gap_window_count,
         rpm_gap_window_count=raw_details.rpm_gap_window_count,
         fallback_reason=raw_details.fallback_reason,
+        car_data_reference_scope=raw_details.car_data_reference_scope,
+        car_data_confidence=raw_details.car_data_confidence,
     )
     return DiagnosisAssessmentFactor(
         factor_key=factor_key,
@@ -448,6 +458,26 @@ def _rpm_gap_window_count(diagnosis_summary: ReportWholeRunDiagnosisSummary) -> 
         if isinstance(value, int | float):
             return int(value)
     return 0
+
+
+def _car_data_reference_scope(
+    diagnosis_summary: ReportWholeRunDiagnosisSummary,
+) -> str | None:
+    for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
+        value = factor.details.car_data_reference_scope
+        if isinstance(value, str) and value.strip():
+            return value
+    return None
+
+
+def _car_data_confidence(
+    diagnosis_summary: ReportWholeRunDiagnosisSummary,
+) -> str | None:
+    for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
+        value = factor.details.car_data_confidence
+        if isinstance(value, str) and value.strip():
+            return value
+    return None
 
 
 def _label_key_for_score(score: float) -> str:

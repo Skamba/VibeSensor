@@ -251,6 +251,18 @@
     "en": "the signal stayed close to the noise floor",
     "nl": "het signaal bleef dicht bij de ruisvloer"
   },
+  "REPORT_CONFIDENCE_CAVEAT_SECONDARY_VEHICLE_DATA": {
+    "en": "this {scope} reference depends on secondary vehicle data",
+    "nl": "deze {scope}-referentie steunt op secundaire voertuigdata"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_APPROXIMATE_VEHICLE_DATA": {
+    "en": "this {scope} reference depends on approximate vehicle data",
+    "nl": "deze {scope}-referentie steunt op benaderde voertuigdata"
+  },
+  "REPORT_CONFIDENCE_CAVEAT_UNVERIFIED_VEHICLE_DATA": {
+    "en": "this {scope} reference depends on unverifiable vehicle data",
+    "nl": "deze {scope}-referentie steunt op niet-geverifieerde voertuigdata"
+  },
   "REPORT_CONFIDENCE_CAVEAT_REFERENCE_GAP": {
     "en": "reference data was incomplete for this path",
     "nl": "referentiedata was onvolledig voor dit pad"
@@ -295,9 +307,25 @@
     "en": "the matched signal stood clear of the noise floor",
     "nl": "het gematchte signaal stond duidelijk boven de ruisvloer"
   },
+  "REPORT_CONFIDENCE_SIGNAL_USER_CONFIRMED_VEHICLE_DATA": {
+    "en": "user-confirmed vehicle data backs this {scope} reference",
+    "nl": "door de gebruiker bevestigde voertuigdata ondersteunt deze {scope}-referentie"
+  },
   "REPORT_CONFIDENCE_SIGNAL_LOCALIZED_SUPPORT": {
     "en": "support stayed concentrated at {location}",
     "nl": "de steun bleef geconcentreerd bij {location}"
+  },
+  "REPORT_CONFIDENCE_CAR_SCOPE_TIRE": {
+    "en": "wheel-speed",
+    "nl": "wielsnelheids"
+  },
+  "REPORT_CONFIDENCE_CAR_SCOPE_DRIVELINE": {
+    "en": "driveline-speed",
+    "nl": "aandrijflijnsnelheids"
+  },
+  "REPORT_CONFIDENCE_CAR_SCOPE_ENGINE_SPEED_DERIVED": {
+    "en": "speed-derived engine",
+    "nl": "uit snelheid afgeleide motor"
   },
   "REPORT_CONFIDENCE_SIGNAL_RAW_BACKED": {
     "en": "raw-backed replay confirmed the match from {samples} retained samples",

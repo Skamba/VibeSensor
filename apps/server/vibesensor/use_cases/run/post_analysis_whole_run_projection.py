@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from vibesensor.domain import CarOrderReferenceStatus
 from vibesensor.shared.run_context_warning import (
     RunContextWarningsInput,
     normalize_run_context_warnings,
@@ -331,12 +332,14 @@ def build_diagnosis_summary_rows(
     context_bundle: WholeRunContextArtifactBundle,
     order_summaries: tuple[OrderTraceSummary, ...],
     spatial_summaries: tuple[SpatialEvidenceSummary, ...],
+    car_order_reference_status: CarOrderReferenceStatus | None,
 ) -> tuple[WholeRunDiagnosisSummary, ...]:
     return build_whole_run_diagnosis_summaries(
         analysis_metadata=analysis_metadata,
         context_intervals=context_bundle.intervals,
         order_summaries=order_summaries,
         spatial_summaries=spatial_summaries,
+        car_order_reference_status=car_order_reference_status,
     )
 
 

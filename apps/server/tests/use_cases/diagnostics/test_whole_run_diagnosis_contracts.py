@@ -127,6 +127,8 @@ def test_history_diagnosis_response_contracts_expose_named_summary_fields() -> N
         "speed_gap_window_count",
         "rpm_gap_window_count",
         "fallback_reason",
+        "car_data_reference_scope",
+        "car_data_confidence",
     }
     assert set(DiagnosisFactorResponse.__annotations__) == {
         "factor_key",
