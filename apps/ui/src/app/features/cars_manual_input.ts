@@ -1,4 +1,5 @@
 import type { CarLibraryTireOption } from "../../api/types";
+import { tireOptionFront } from "./cars_tire_setup";
 import {
   DEFAULT_CARS_WIZARD_MANUAL_INPUTS,
   readWizardManualGearboxValues,
@@ -64,11 +65,15 @@ export function tireInputsFromOption(
   option: CarLibraryTireOption,
   current: CarsFeatureManualInputState,
 ): CarsFeatureManualInputState {
+  const front = tireOptionFront(option);
+  if (!front) {
+    return current;
+  }
   return {
     ...current,
-    rim: String(option.rim_in),
-    tireAspect: String(option.tire_aspect_pct),
-    tireWidth: String(option.tire_width_mm),
+    rim: String(front.rim_in),
+    tireAspect: String(front.aspect_pct),
+    tireWidth: String(front.width_mm),
   };
 }
 

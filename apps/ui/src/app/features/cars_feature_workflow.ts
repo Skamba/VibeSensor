@@ -13,6 +13,7 @@ import {
   tireInputsFromOption,
   type CarsFeatureManualInputState,
 } from "./cars_manual_input";
+import { tireSetupAspectsFromOption } from "./cars_tire_setup";
 import {
   createErrorOptionsState,
   createIdleOptionsState,
@@ -113,7 +114,7 @@ export interface CarsFeatureWorkflowDeps {
   addCarFromWizard(
     name: string,
     carType: string,
-    aspects: Record<string, number>,
+    aspects: Record<string, number | string>,
     orderReferenceStatus?: CarOrderReferenceStatus,
     variant?: string,
   ): Promise<void>;
@@ -491,9 +492,7 @@ export function createCarsFeatureWorkflow(
           {
             current_gear_ratio: gearbox.top_gear_ratio,
             final_drive_ratio: gearbox.final_drive_ratio,
-            rim_in: tire.rim_in,
-            tire_aspect_pct: tire.tire_aspect_pct,
-            tire_width_mm: tire.tire_width_mm,
+            ...tireSetupAspectsFromOption(tire),
           },
           {
             current_gear_ratio_confidence: gearbox.top_gear_ratio_confidence ?? "unverified",

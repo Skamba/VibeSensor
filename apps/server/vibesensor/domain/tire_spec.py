@@ -1,14 +1,19 @@
-"""Tire geometry value object for vehicle order analysis."""
+"""Tire geometry value objects for vehicle order analysis."""
 
 from __future__ import annotations
 
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Literal
 
 __all__ = [
+    "AxleTireSetup",
+    "TireSpeedAxle",
     "TireSpec",
 ]
+
+type TireSpeedAxle = Literal["front", "rear", "average"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,3 +61,50 @@ class TireSpec:
     def circumference_m(self) -> float:
         """Tire circumference in metres (deflection-adjusted)."""
         return self.diameter_mm / 1000.0 * math.pi * self.deflection_factor
+
+
+@dataclass(frozen=True, slots=True)
+class AxleTireSetup:
+    """Canonical tire setup that can represent square or staggered axles."""
+
+    front: TireSpec
+    rear: TireSpec
+    default_axle_for_speed: TireSpeedAxle = "rear"
+    source_confidence: str | None = None
+
+    @classmethod
+    def square(
+        cls,
+        spec: TireSpec,
+        *,
+        default_axle_for_speed: TireSpeedAxle = "rear",
+        source_confidence: str | None = None,
+    ) -> AxleTireSetup:
+        return cls(
+            front=spec,
+            rear=spec,
+            default_axle_for_speed=default_axle_for_speed,
+            source_confidence=source_confidence,
+        )
+
+    @property
+    def is_staggered(self) -> bool:
+        return self.front != self.rear
+
+    @property
+    def boundary_tire_spec(self) -> TireSpec:
+        """Compatibility tire spec for flat boundary projections."""
+
+        if self.default_axle_for_speed == "rear":
+            return self.rear
+        return self.front
+
+    @property
+    def effective_tire_circumference_m(self) -> float:
+        """Resolved tire circumference used by order-analysis math."""
+
+        if self.default_axle_for_speed == "front":
+            return self.front.circumference_m
+        if self.default_axle_for_speed == "rear":
+            return self.rear.circumference_m
+        return (self.front.circumference_m + self.rear.circumference_m) / 2.0

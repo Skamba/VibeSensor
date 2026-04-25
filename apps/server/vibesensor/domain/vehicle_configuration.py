@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from .tire_spec import TireSpec
+from .tire_spec import AxleTireSetup, TireSpec
 
 __all__ = [
     "VehicleConfigurationField",
@@ -45,7 +45,7 @@ class VehicleConfigurationTireOption:
     """Named tire option attached to one exact or projected vehicle configuration."""
 
     name: str
-    spec: TireSpec
+    tire_setup: AxleTireSetup
 
 
 @dataclass(frozen=True, slots=True)

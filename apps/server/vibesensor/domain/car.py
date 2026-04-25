@@ -21,10 +21,11 @@ from vibesensor.domain._order_reference_helpers import (
     order_reference_spec_from_mapping,
 )
 from vibesensor.domain.order_reference import OrderReferenceSpec
-from vibesensor.domain.tire_spec import TireSpec
+from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
 from vibesensor.domain.vehicle_configuration import VehicleFieldConfidence
 
 __all__ = [
+    "AxleTireSetup",
     "Car",
     "CarOrderReferenceStatus",
     "CarOrderReferenceSourceStatus",
@@ -97,7 +98,7 @@ class CarSnapshot:
     name: str | None = None
     car_type: str | None = None
     variant: str | None = None
-    aspects: Mapping[str, float] = field(default_factory=dict)
+    aspects: Mapping[str, float | str] = field(default_factory=dict)
     order_reference_status: CarOrderReferenceStatus | None = None
 
     def __post_init__(self) -> None:
@@ -119,7 +120,7 @@ class Car:
     variant: str | None = None
     order_reference_status: CarOrderReferenceStatus | None = None
     order_reference_spec: OrderReferenceSpec | None = field(default=None, repr=False)
-    _aspects: Mapping[str, float] = field(
+    _aspects: Mapping[str, float | str] = field(
         init=False,
         repr=False,
     )
@@ -130,7 +131,7 @@ class Car:
         id: str | None = None,
         name: str = "Unnamed Car",
         car_type: str = "sedan",
-        aspects: Mapping[str, float] | None = None,
+        aspects: Mapping[str, object] | None = None,
         variant: str | None = None,
         order_reference_status: CarOrderReferenceStatus | None = None,
         order_reference_spec: OrderReferenceSpec | None = None,
@@ -146,7 +147,7 @@ class Car:
 
     def _normalize_order_reference_state(
         self,
-        aspects: Mapping[str, float] | None,
+        aspects: Mapping[str, object] | None,
     ) -> None:
         if not self.name or not self.name.strip():
             object.__setattr__(self, "name", "Unnamed Car")
@@ -158,7 +159,7 @@ class Car:
         object.__setattr__(self, "_aspects", MappingProxyType(normalized_aspects))
 
     @property
-    def aspects(self) -> Mapping[str, float]:
+    def aspects(self) -> Mapping[str, float | str]:
         return self._aspects
 
     # -- queries -----------------------------------------------------------
@@ -169,6 +170,11 @@ class Car:
         if self.car_type:
             return f"{self.name} ({self.car_type})"
         return self.name
+
+    @property
+    def tire_setup(self) -> AxleTireSetup | None:
+        spec = self.order_reference_spec
+        return spec.tire_setup if spec is not None else None
 
     @property
     def tire_spec(self) -> TireSpec | None:

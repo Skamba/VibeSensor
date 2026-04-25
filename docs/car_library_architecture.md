@@ -144,3 +144,32 @@ The source of truth is the resolved `VehicleConfiguration`:
   wizard saves a car profile.
 - UI consumers should use `requires_manual_confirmation` to keep approximate
   drivetrain values visibly approximate until the user confirms them.
+
+## Axle-aware tire setups
+
+Issue #3233 extends the same one-owner rule to tire data.
+
+Car-library tire options may now be:
+
+- square, with the legacy flat `tire_width_mm` / `tire_aspect_pct` / `rim_in`
+  fields only
+- staggered, with explicit `front` and `rear` tire dimensions plus
+  `default_axle_for_speed`
+
+Rules:
+
+1. The canonical tire truth is the front/rear axle setup, not the legacy flat
+   projection.
+2. Legacy flat tire rows still load through one compatibility path by treating
+   them as square axle setups.
+3. Order-reference math resolves rolling circumference from the configured axle
+   rule: `front`, `rear`, or `average`.
+4. Saved-car aspects persist the axle-aware fields when present so staggered
+   selections do not silently flatten during save/load.
+5. Manual flat tire overrides intentionally clear any persisted axle-specific
+   tire fields so an explicit user override becomes the new square setup.
+
+The flat top-level tire fields remain in API/settings payloads only as a
+compatibility projection for callers that still expect one boundary tire size.
+When a staggered setup is present, that projection follows the selected
+`default_axle_for_speed`.

@@ -45,10 +45,11 @@ async function resolveHandlerResult<T extends JsonBodyType>(
 export function makeAnalysisSettingsPayload(
   overrides: Partial<AnalysisSettingsPayload> = {},
 ): AnalysisSettingsPayload {
-  return {
+  const payload = {
     tire_width_mm: 225,
     tire_aspect_pct: 45,
     rim_in: 18,
+    default_axle_for_speed: "rear" as const,
     final_drive_ratio: 3.08,
     current_gear_ratio: 0.64,
     driveshaft_bandwidth_pct: 10,
@@ -63,6 +64,16 @@ export function makeAnalysisSettingsPayload(
     min_abs_band_hz: 0.2,
     ...overrides,
   };
+  return {
+    ...payload,
+    default_axle_for_speed: payload.default_axle_for_speed ?? "rear",
+    front_tire_width_mm: payload.front_tire_width_mm ?? undefined,
+    front_tire_aspect_pct: payload.front_tire_aspect_pct ?? undefined,
+    front_rim_in: payload.front_rim_in ?? undefined,
+    rear_tire_width_mm: payload.rear_tire_width_mm ?? undefined,
+    rear_tire_aspect_pct: payload.rear_tire_aspect_pct ?? undefined,
+    rear_rim_in: payload.rear_rim_in ?? undefined,
+  };
 }
 
 export function makeCarRecord(overrides: Partial<CarRecord> = {}): CarRecord {
@@ -71,8 +82,57 @@ export function makeCarRecord(overrides: Partial<CarRecord> = {}): CarRecord {
     name: "Track Demo",
     type: "Coupe",
     variant: null,
-    aspects: makeAnalysisSettingsPayload(),
+    aspects: makeCarAspects(),
     ...overrides,
+  };
+}
+
+function makeCarAspects(
+  overrides: Partial<CarRecord["aspects"]> = {},
+): CarRecord["aspects"] {
+  const payload = {
+    tire_width_mm: 225,
+    tire_aspect_pct: 45,
+    rim_in: 18,
+    default_axle_for_speed: "rear" as const,
+    final_drive_ratio: 3.08,
+    current_gear_ratio: 0.64,
+    driveshaft_bandwidth_pct: 10,
+    engine_bandwidth_pct: 10,
+    final_drive_uncertainty_pct: 1,
+    gear_uncertainty_pct: 1,
+    max_band_half_width_pct: 20,
+    tire_deflection_factor: 0.95,
+    tire_diameter_uncertainty_pct: 1,
+    wheel_bandwidth_pct: 5,
+    speed_uncertainty_pct: 1,
+    min_abs_band_hz: 0.2,
+    ...overrides,
+  };
+  return {
+    ...payload,
+    current_gear_ratio: payload.current_gear_ratio ?? undefined,
+    default_axle_for_speed: payload.default_axle_for_speed ?? undefined,
+    driveshaft_bandwidth_pct: payload.driveshaft_bandwidth_pct ?? undefined,
+    engine_bandwidth_pct: payload.engine_bandwidth_pct ?? undefined,
+    final_drive_ratio: payload.final_drive_ratio ?? undefined,
+    final_drive_uncertainty_pct: payload.final_drive_uncertainty_pct ?? undefined,
+    front_tire_width_mm: payload.front_tire_width_mm ?? undefined,
+    front_tire_aspect_pct: payload.front_tire_aspect_pct ?? undefined,
+    front_rim_in: payload.front_rim_in ?? undefined,
+    gear_uncertainty_pct: payload.gear_uncertainty_pct ?? undefined,
+    max_band_half_width_pct: payload.max_band_half_width_pct ?? undefined,
+    min_abs_band_hz: payload.min_abs_band_hz ?? undefined,
+    rear_tire_width_mm: payload.rear_tire_width_mm ?? undefined,
+    rear_tire_aspect_pct: payload.rear_tire_aspect_pct ?? undefined,
+    rear_rim_in: payload.rear_rim_in ?? undefined,
+    rim_in: payload.rim_in ?? undefined,
+    speed_uncertainty_pct: payload.speed_uncertainty_pct ?? undefined,
+    tire_aspect_pct: payload.tire_aspect_pct ?? undefined,
+    tire_deflection_factor: payload.tire_deflection_factor ?? undefined,
+    tire_diameter_uncertainty_pct: payload.tire_diameter_uncertainty_pct ?? undefined,
+    tire_width_mm: payload.tire_width_mm ?? undefined,
+    wheel_bandwidth_pct: payload.wheel_bandwidth_pct ?? undefined,
   };
 }
 

@@ -15,6 +15,7 @@ from typing import Any, Literal, NotRequired, TypedDict, cast
 from pydantic import ConfigDict, TypeAdapter, ValidationError
 
 from vibesensor.domain import (
+    AxleTireSetup,
     TireSpec,
     VehicleConfiguration,
     VehicleConfigurationTireOption,
@@ -58,8 +59,18 @@ class CarLibraryGearbox(TypedDict):
 
 class CarLibraryTireOption(TypedDict):
     name: str
-    tire_width_mm: float
-    tire_aspect_pct: float
+    tire_width_mm: NotRequired[float]
+    tire_aspect_pct: NotRequired[float]
+    rim_in: NotRequired[float]
+    front: NotRequired[CarLibraryTireDimensions]
+    rear: NotRequired[CarLibraryTireDimensions]
+    default_axle_for_speed: NotRequired[Literal["front", "rear", "average"]]
+    source_confidence: NotRequired[str]
+
+
+class CarLibraryTireDimensions(TypedDict):
+    width_mm: float
+    aspect_pct: float
     rim_in: float
 
 
@@ -140,6 +151,7 @@ class VehicleConfigurationFieldProvenanceRow(TypedDict):
 
 for _typed_dict in (
     CarLibraryGearbox,
+    CarLibraryTireDimensions,
     CarLibraryTireOption,
     CarLibraryVariant,
     CarLibraryEntry,
@@ -214,13 +226,51 @@ def _tire_options_from_rows(
     return tuple(
         VehicleConfigurationTireOption(
             name=row["name"],
-            spec=_tire_spec_from_dimensions(
-                tire_width_mm=row["tire_width_mm"],
-                tire_aspect_pct=row["tire_aspect_pct"],
-                rim_in=row["rim_in"],
-            ),
+            tire_setup=_tire_setup_from_row(row),
         )
         for row in rows
+    )
+
+
+def _tire_dimensions_from_row(
+    row: CarLibraryTireOption,
+    *,
+    side: Literal["front", "rear"],
+) -> TireSpec | None:
+    nested = row.get(side)
+    if isinstance(nested, dict):
+        return _tire_spec_from_dimensions(
+            tire_width_mm=float(nested["width_mm"]),
+            tire_aspect_pct=float(nested["aspect_pct"]),
+            rim_in=float(nested["rim_in"]),
+        )
+    if side == "front":
+        width = row.get("tire_width_mm")
+        aspect = row.get("tire_aspect_pct")
+        rim = row.get("rim_in")
+        if width is None or aspect is None or rim is None:
+            return None
+        return _tire_spec_from_dimensions(
+            tire_width_mm=float(width),
+            tire_aspect_pct=float(aspect),
+            rim_in=float(rim),
+        )
+    return None
+
+
+def _tire_setup_from_row(row: CarLibraryTireOption) -> AxleTireSetup:
+    front = _tire_dimensions_from_row(row, side="front")
+    rear = _tire_dimensions_from_row(row, side="rear") or front
+    if front is None or rear is None:
+        raise ValueError(f"Invalid tire option row without usable dimensions: {row!r}")
+    default_axle_for_speed = row.get("default_axle_for_speed")
+    if default_axle_for_speed not in {"front", "rear", "average"}:
+        default_axle_for_speed = "rear"
+    return AxleTireSetup(
+        front=front,
+        rear=rear,
+        default_axle_for_speed=default_axle_for_speed,
+        source_confidence=row.get("source_confidence"),
     )
 
 
@@ -390,14 +440,36 @@ def _car_library_tire_options_from_configuration(
     config: VehicleConfiguration,
 ) -> list[CarLibraryTireOption]:
     return [
-        {
-            "name": option.name,
-            "tire_width_mm": option.spec.width_mm,
-            "tire_aspect_pct": option.spec.aspect_pct,
-            "rim_in": option.spec.rim_in,
-        }
+        _car_library_tire_option_from_setup(option.name, option.tire_setup)
         for option in config.tire_options
     ]
+
+
+def _car_library_tire_option_from_setup(
+    name: str,
+    setup: AxleTireSetup,
+) -> CarLibraryTireOption:
+    payload: CarLibraryTireOption = {
+        "name": name,
+        "tire_width_mm": setup.boundary_tire_spec.width_mm,
+        "tire_aspect_pct": setup.boundary_tire_spec.aspect_pct,
+        "rim_in": setup.boundary_tire_spec.rim_in,
+        "front": {
+            "width_mm": setup.front.width_mm,
+            "aspect_pct": setup.front.aspect_pct,
+            "rim_in": setup.front.rim_in,
+        },
+        "default_axle_for_speed": setup.default_axle_for_speed,
+    }
+    if setup.is_staggered:
+        payload["rear"] = {
+            "width_mm": setup.rear.width_mm,
+            "aspect_pct": setup.rear.aspect_pct,
+            "rim_in": setup.rear.rim_in,
+        }
+    if setup.source_confidence is not None:
+        payload["source_confidence"] = setup.source_confidence
+    return payload
 
 
 def _gearbox_row_from_configuration(config: VehicleConfiguration) -> CarLibraryGearbox | None:
@@ -452,9 +524,20 @@ def _enrich_variant_with_vehicle_configurations(
 
 def _response_entry_for_model(entry: CarLibraryEntry) -> CarLibraryEntry:
     response_entry = _deep_copy_entry(entry)
-    response_entry["variants"] = [
-        _enrich_variant_with_vehicle_configurations(entry, variant) for variant in entry["variants"]
+    response_entry["tire_options"] = [
+        _car_library_tire_option_from_setup(row["name"], _tire_setup_from_row(row))
+        for row in entry["tire_options"]
     ]
+    response_entry["variants"] = []
+    for variant in entry["variants"]:
+        enriched = _enrich_variant_with_vehicle_configurations(entry, variant)
+        tire_options = enriched.get("tire_options")
+        if tire_options:
+            enriched["tire_options"] = [
+                _car_library_tire_option_from_setup(row["name"], _tire_setup_from_row(row))
+                for row in tire_options
+            ]
+        response_entry["variants"].append(enriched)
     return response_entry
 
 
