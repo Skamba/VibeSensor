@@ -6,6 +6,7 @@ from vibesensor.adapters.http.models.settings import CarResponse, CarUpsertReque
 from vibesensor.domain import AnalysisSettingsSnapshot
 from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.infra.config.car_settings import CarSettingsService
+from vibesensor.shared.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
 from vibesensor.shared.types.settings_types import (
     AnalysisSettingsPayload,
     analysis_settings_payload_from_mapping,
@@ -14,7 +15,7 @@ from vibesensor.shared.types.settings_types import (
 
 def test_analysis_settings_payload_keys_match_snapshot_defaults() -> None:
     assert AnalysisSettingsPayload.__required_keys__ == frozenset()
-    assert AnalysisSettingsPayload.__optional_keys__ == frozenset(AnalysisSettingsSnapshot.DEFAULTS)
+    assert AnalysisSettingsPayload.__optional_keys__ == frozenset(ANALYSIS_SETTINGS_FIELDS)
 
 
 def test_analysis_settings_payload_projection_keeps_only_supported_keys() -> None:

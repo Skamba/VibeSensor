@@ -115,6 +115,9 @@
             "title": "Current Gear Ratio",
             "type": "number"
           },
+          "default_axle_for_speed": {
+            "$ref": "#/components/schemas/TireSpeedAxle"
+          },
           "driveshaft_bandwidth_pct": {
             "title": "Driveshaft Bandwidth Pct",
             "type": "number"
@@ -131,6 +134,18 @@
             "title": "Final Drive Uncertainty Pct",
             "type": "number"
           },
+          "front_rim_in": {
+            "title": "Front Rim In",
+            "type": "number"
+          },
+          "front_tire_aspect_pct": {
+            "title": "Front Tire Aspect Pct",
+            "type": "number"
+          },
+          "front_tire_width_mm": {
+            "title": "Front Tire Width Mm",
+            "type": "number"
+          },
           "gear_uncertainty_pct": {
             "title": "Gear Uncertainty Pct",
             "type": "number"
@@ -141,6 +156,18 @@
           },
           "min_abs_band_hz": {
             "title": "Min Abs Band Hz",
+            "type": "number"
+          },
+          "rear_rim_in": {
+            "title": "Rear Rim In",
+            "type": "number"
+          },
+          "rear_tire_aspect_pct": {
+            "title": "Rear Tire Aspect Pct",
+            "type": "number"
+          },
+          "rear_tire_width_mm": {
+            "title": "Rear Tire Width Mm",
             "type": "number"
           },
           "rim_in": {
@@ -190,6 +217,22 @@
             ],
             "title": "Current Gear Ratio"
           },
+          "default_axle_for_speed": {
+            "anyOf": [
+              {
+                "enum": [
+                  "front",
+                  "rear",
+                  "average"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Axle For Speed"
+          },
           "driveshaft_bandwidth_pct": {
             "anyOf": [
               {
@@ -238,6 +281,42 @@
             ],
             "title": "Final Drive Uncertainty Pct"
           },
+          "front_rim_in": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Rim In"
+          },
+          "front_tire_aspect_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Tire Aspect Pct"
+          },
+          "front_tire_width_mm": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Tire Width Mm"
+          },
           "gear_uncertainty_pct": {
             "anyOf": [
               {
@@ -273,6 +352,42 @@
               }
             ],
             "title": "Min Abs Band Hz"
+          },
+          "rear_rim_in": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Rim In"
+          },
+          "rear_tire_aspect_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Tire Aspect Pct"
+          },
+          "rear_tire_width_mm": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Tire Width Mm"
           },
           "rim_in": {
             "anyOf": [
@@ -370,6 +485,16 @@
             "title": "Current Gear Ratio",
             "type": "number"
           },
+          "default_axle_for_speed": {
+            "default": "rear",
+            "enum": [
+              "front",
+              "rear",
+              "average"
+            ],
+            "title": "Default Axle For Speed",
+            "type": "string"
+          },
           "driveshaft_bandwidth_pct": {
             "title": "Driveshaft Bandwidth Pct",
             "type": "number"
@@ -386,6 +511,39 @@
             "title": "Final Drive Uncertainty Pct",
             "type": "number"
           },
+          "front_rim_in": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Rim In"
+          },
+          "front_tire_aspect_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Tire Aspect Pct"
+          },
+          "front_tire_width_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Tire Width Mm"
+          },
           "gear_uncertainty_pct": {
             "title": "Gear Uncertainty Pct",
             "type": "number"
@@ -397,6 +555,39 @@
           "min_abs_band_hz": {
             "title": "Min Abs Band Hz",
             "type": "number"
+          },
+          "rear_rim_in": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Rim In"
+          },
+          "rear_tire_aspect_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Tire Aspect Pct"
+          },
+          "rear_tire_width_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Tire Width Mm"
           },
           "rim_in": {
             "title": "Rim In",
@@ -1092,19 +1283,81 @@
         "title": "CarLibraryModelsResponse",
         "type": "object"
       },
-      "CarLibraryTireOptionEntry": {
+      "CarLibraryTireDimensionsEntry": {
         "additionalProperties": false,
-        "description": "A tire size option from the car library.",
+        "description": "One axle's tire dimensions.",
         "properties": {
-          "name": {
-            "minLength": 1,
-            "title": "Name",
-            "type": "string"
+          "aspect_pct": {
+            "exclusiveMinimum": 0.0,
+            "title": "Aspect Pct",
+            "type": "number"
           },
           "rim_in": {
             "exclusiveMinimum": 0.0,
             "title": "Rim In",
             "type": "number"
+          },
+          "width_mm": {
+            "exclusiveMinimum": 0.0,
+            "title": "Width Mm",
+            "type": "number"
+          }
+        },
+        "required": [
+          "width_mm",
+          "aspect_pct",
+          "rim_in"
+        ],
+        "title": "CarLibraryTireDimensionsEntry",
+        "type": "object"
+      },
+      "CarLibraryTireOptionEntry": {
+        "additionalProperties": false,
+        "description": "A tire size option from the car library.",
+        "properties": {
+          "default_axle_for_speed": {
+            "default": "rear",
+            "enum": [
+              "front",
+              "rear",
+              "average"
+            ],
+            "title": "Default Axle For Speed",
+            "type": "string"
+          },
+          "front": {
+            "$ref": "#/components/schemas/CarLibraryTireDimensionsEntry"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "rear": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CarLibraryTireDimensionsEntry"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rim_in": {
+            "exclusiveMinimum": 0.0,
+            "title": "Rim In",
+            "type": "number"
+          },
+          "source_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Confidence"
           },
           "tire_aspect_pct": {
             "exclusiveMinimum": 0.0,
@@ -1121,7 +1374,8 @@
           "name",
           "tire_width_mm",
           "tire_aspect_pct",
-          "rim_in"
+          "rim_in",
+          "front"
         ],
         "title": "CarLibraryTireOptionEntry",
         "type": "object"
@@ -7969,6 +8223,14 @@
         ],
         "title": "TestPlanStepResponse",
         "type": "object"
+      },
+      "TireSpeedAxle": {
+        "enum": [
+          "front",
+          "rear",
+          "average"
+        ],
+        "type": "string"
       },
       "UpdateCancelResponse": {
         "description": "Response body confirming whether an OTA update job was cancelled.",

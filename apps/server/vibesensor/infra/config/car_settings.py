@@ -28,6 +28,18 @@ LOGGER = logging.getLogger(__name__)
 _CarSettingsSnapshotT = TypeVar("_CarSettingsSnapshotT")
 _CarSettingsResultT = TypeVar("_CarSettingsResultT")
 _ORDER_REFERENCE_ASPECT_KEYS = frozenset({"current_gear_ratio", "final_drive_ratio"})
+_FLAT_TIRE_ASPECT_KEYS = frozenset({"tire_width_mm", "tire_aspect_pct", "rim_in"})
+_AXLE_TIRE_ASPECT_KEYS = frozenset(
+    {
+        "front_tire_width_mm",
+        "front_tire_aspect_pct",
+        "front_rim_in",
+        "rear_tire_width_mm",
+        "rear_tire_aspect_pct",
+        "rear_rim_in",
+        "default_axle_for_speed",
+    }
+)
 
 
 class _UpdateWithRollback(Protocol):
@@ -188,9 +200,14 @@ class CarSettingsService:
                     clamped = _clamp_str(raw_type, 32)
                     if clamped:
                         new_car_type = clamped
-            new_aspects = dict(car.aspects)
+            new_aspects: AnalysisSettingsPayload = analysis_settings_payload_from_mapping(
+                car.aspects
+            )
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
-                new_aspects.update(sanitize_analysis_settings(car_data["aspects"]))
+                new_aspects = _merge_aspects_with_tire_setup(
+                    current=new_aspects,
+                    updates=sanitize_analysis_settings(car_data["aspects"]),
+                )
             new_variant = car.variant
             if "variant" in car_data:
                 raw_variant = car_data["variant"]
@@ -242,7 +259,10 @@ class CarSettingsService:
                 id=car.id,
                 name=car.name,
                 car_type=car.car_type,
-                aspects={**car.aspects, **sanitize_analysis_settings(aspects)},
+                aspects=_merge_aspects_with_tire_setup(
+                    current=car.aspects,
+                    updates=sanitize_analysis_settings(aspects),
+                ),
                 variant=car.variant,
                 order_reference_status=_updated_order_reference_status(
                     car.order_reference_status,
@@ -327,3 +347,23 @@ def _updated_order_reference_status(
         current_gear_ratio="current_gear_ratio" in touched_keys,
         final_drive_ratio="final_drive_ratio" in touched_keys,
     )
+
+
+def _merge_aspects_with_tire_setup(
+    *,
+    current: Mapping[str, object],
+    updates: Mapping[str, object],
+) -> AnalysisSettingsPayload:
+    merged = analysis_settings_payload_from_mapping(current)
+    if _FLAT_TIRE_ASPECT_KEYS.intersection(updates) and not _AXLE_TIRE_ASPECT_KEYS.intersection(
+        updates
+    ):
+        merged.pop("front_tire_width_mm", None)
+        merged.pop("front_tire_aspect_pct", None)
+        merged.pop("front_rim_in", None)
+        merged.pop("rear_tire_width_mm", None)
+        merged.pop("rear_tire_aspect_pct", None)
+        merged.pop("rear_rim_in", None)
+        merged.pop("default_axle_for_speed", None)
+    merged.update(analysis_settings_payload_from_mapping(updates))
+    return merged

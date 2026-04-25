@@ -90,14 +90,18 @@ def _build_car_settings_changed_warning(
     )
 
 
-def _normalized_recorded_order_reference(metadata: RunMetadata) -> tuple[tuple[str, float], ...]:
+def _normalized_recorded_order_reference(
+    metadata: RunMetadata,
+) -> tuple[tuple[str, float | str], ...]:
     spec = metadata.order_reference_spec
     if spec is None:
         return ()
     return tuple(sorted(order_reference_mapping_from_spec(spec).items()))
 
 
-def _normalized_current_car_settings(snapshot: CarSnapshot) -> tuple[tuple[str, float], ...]:
+def _normalized_current_car_settings(
+    snapshot: CarSnapshot,
+) -> tuple[tuple[str, float | str], ...]:
     spec = order_reference_spec_from_mapping(snapshot.aspects)
     if spec is None:
         return ()

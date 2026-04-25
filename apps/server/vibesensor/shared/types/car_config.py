@@ -88,9 +88,11 @@ def car_from_persistence_dict(payload: Mapping[str, object]) -> Car:
     from vibesensor.domain import Car
 
     raw_aspects = payload.get("aspects")
-    aspects: dict[str, float] = dict(ANALYSIS_SETTINGS_DEFAULTS)
+    aspects: dict[str, float | str] = dict(ANALYSIS_SETTINGS_DEFAULTS)
     if isinstance(raw_aspects, Mapping):
-        aspects.update(sanitize_analysis_settings(raw_aspects))
+        for key, value in sanitize_analysis_settings(raw_aspects).items():
+            if isinstance(value, float | str):
+                aspects[key] = value
     raw_order_reference_status = payload.get("order_reference_status")
     return Car(
         id=_text_or_default(payload.get("id"), default=new_car_id(), max_length=128),

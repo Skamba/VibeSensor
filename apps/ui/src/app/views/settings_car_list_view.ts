@@ -1,5 +1,6 @@
 import type { CarRecord } from "../../api/types";
 import { type CarSelectionState, getCarCompleteness } from "../car_selection_state";
+import { formatSavedCarTireSummary } from "../features/cars_tire_setup";
 
 export interface CarsListHighlightedFeedback {
   carId: string;
@@ -153,17 +154,10 @@ function hasConfiguredNumber(value: unknown): value is number {
 
 function formatTireSummary(
   car: CarRecord,
+  fmt: SettingsCarListViewParams["fmt"],
   t: SettingsCarListViewParams["t"],
 ): string {
-  const aspects = car.aspects || {};
-  if (
-    hasConfiguredNumber(aspects.tire_width_mm)
-    && hasConfiguredNumber(aspects.tire_aspect_pct)
-    && hasConfiguredNumber(aspects.rim_in)
-  ) {
-    return `${aspects.tire_width_mm}/${aspects.tire_aspect_pct}R${aspects.rim_in}`;
-  }
-  return t("settings.car.tires_missing");
+  return formatSavedCarTireSummary(car.aspects, fmt, t("settings.car.tires_missing"));
 }
 
 function formatRatioValue(
@@ -297,7 +291,7 @@ export function buildSettingsCarListRenderModel(
           {
             isCode: true,
             labelText: t("settings.car.col_tires"),
-            valueText: formatTireSummary(car, t),
+            valueText: formatTireSummary(car, fmt, t),
           },
           {
             labelText: t("settings.car.col_drive"),

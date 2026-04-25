@@ -36,6 +36,14 @@ class CarLibraryGearboxEntry(_StrictBase):
     requires_manual_confirmation: bool | None = None
 
 
+class CarLibraryTireDimensionsEntry(_StrictBase):
+    """One axle's tire dimensions."""
+
+    width_mm: float = Field(gt=0)
+    aspect_pct: float = Field(gt=0)
+    rim_in: float = Field(gt=0)
+
+
 class CarLibraryTireOptionEntry(_StrictBase):
     """A tire size option from the car library."""
 
@@ -43,6 +51,10 @@ class CarLibraryTireOptionEntry(_StrictBase):
     tire_width_mm: float = Field(gt=0)
     tire_aspect_pct: float = Field(gt=0)
     rim_in: float = Field(gt=0)
+    front: CarLibraryTireDimensionsEntry
+    rear: CarLibraryTireDimensionsEntry | None = None
+    default_axle_for_speed: Literal["front", "rear", "average"] = "rear"
+    source_confidence: str | None = None
 
 
 class CarLibraryVariantEntry(_StrictBase):

@@ -8,6 +8,7 @@ import type {
 } from "../features/cars_feature_workflow";
 import type { CarsFeatureOptionsState } from "../features/cars_option_state";
 import { DEFAULT_CARS_WIZARD_MANUAL_INPUTS } from "../features/cars_wizard_state";
+import { formatCarLibraryTireOption } from "../features/cars_tire_setup";
 
 type FormatNumber = (value: number, digits?: number) => string;
 type Translate = (key: string, vars?: Record<string, unknown>) => string;
@@ -159,13 +160,14 @@ function buildVariantOptionsModel(
 function buildTireOptionsModel(
   tireOptions: readonly CarLibraryTireOption[],
   selectedTire: CarLibraryTireOption | null,
+  fmt: FormatNumber,
 ): CarsWizardOptionsRenderModel {
   return {
     attribute: "data-tire-idx",
     layout: "chips",
     messageText: null,
     options: tireOptions.map((tireOption, index) => ({
-      detailText: `${tireOption.tire_width_mm}/${tireOption.tire_aspect_pct}R${tireOption.rim_in}`,
+      detailText: formatCarLibraryTireOption(tireOption, fmt),
       labelText: tireOption.name,
       selected: tireOption === selectedTire,
       value: String(index),
@@ -273,7 +275,7 @@ export function buildCarsWizardRenderModel(
       profileNameValueText: state.summaryData.profileName ?? pending,
       rows: buildSummaryRows(state.summaryData, t),
     },
-    tireOptions: buildTireOptionsModel(state.tireOptions, state.selectedTire),
+    tireOptions: buildTireOptionsModel(state.tireOptions, state.selectedTire, fmt),
     typeOptions: buildOptionsModel(
       state.typeOptions,
       "data-value",
