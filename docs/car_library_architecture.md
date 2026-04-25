@@ -114,7 +114,7 @@ The current migrated BMW subset keeps the older `ratio_sources:` and
 `variant_sources:` prefixes as stable evidence IDs, but those IDs now resolve
 through the evidence ledger instead of pointing directly at ad hoc note files.
 
-### Validation and analysis-confidence policy
+### Validation and coverage policy
 
 Rows marked `official_exact` must include a `source_id`; loader validation
 rejects exact-row data that breaks that rule.
@@ -136,14 +136,48 @@ Issue #3234 expands loader validation beyond schema checks:
   missing for source-backed confidence levels or when the referenced evidence
   entry does not resolve through the source-pack registry
 
-The confidence levels are the source data for future analysis-confidence
-policies:
+`VehicleConfiguration.coverage_policy_classification` is now the canonical
+runtime owner for depth-over-breadth coverage policy. It classifies each
+resolved configuration as:
 
-- `official_exact` and `official_derived` are the highest-confidence rows
-- `reputable_secondary_crosschecked` is usable but should rank below official
-  evidence
-- `family_default` and `unverified` are compatibility data and should lower
-  downstream confidence when order-analysis logic consumes them
+- `trusted`: the config is an `exact_row` and every order-analysis-critical
+  field (`drivetrain`, `tire_dimensions`, `transmission_name`,
+  `top_gear_ratio`, and whichever final-drive fields actually apply) is backed
+  by `official_exact`, `official_derived`,
+  `reputable_secondary_crosschecked`, or `user_confirmed` provenance
+- `approximate`: the config is still usable for rough matching, but at least one
+  critical field is still `family_default` or the config is only a
+  `compat_projection`
+- `backlog_unverified`: at least one critical field is still `unverified`, so
+  the row stays in the research/backlog bucket instead of counting as trusted
+  library coverage
+
+Minimum trusted-row rule:
+
+1. exact-row identity (`source_status="exact_row"`)
+2. usable tire dimensions
+3. confirmed drivetrain layout
+4. confirmed transmission identity
+5. confirmed top-gear ratio
+6. confirmed driven final-drive ratio(s)
+
+This is the "depth over breadth" guardrail for new additions. A row can exist
+before it is trusted, but shallow rows must stay visibly approximate or
+backlog-grade until the missing evidence is captured.
+
+Current examples from the live dataset:
+
+- the current migrated BMW exact rows are still `approximate`, not `trusted`,
+  because tire dimensions remain `family_default` across the current subset
+- `2 Series Active Tourer (F45, 2014-2021) / 220i` is also `approximate`
+  because its drivetrain ratios are cross-checked but not official
+- `3 Series (G20, 2019-2025) / 330i xDrive` is `approximate` because its
+  top-gear ratio still follows a `family_default` baseline
+- `4 Series (G22, 2021-2026) / 420i` is explicitly
+  `backlog_unverified` because key drivetrain fields are still unverified
+
+This is intentional. One source-backed exact row is more valuable than many
+model-label matches that still rely on inherited or unverified drivetrain data.
 
 Issue #3231 starts this provenance path with representative BMW exact rows for:
 

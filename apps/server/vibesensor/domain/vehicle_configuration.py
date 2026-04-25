@@ -9,6 +9,7 @@ from .tire_spec import AxleTireSetup, TireSpec
 
 __all__ = [
     "VehicleConfigurationField",
+    "VehicleCoverageClassification",
     "VehicleFieldConfidence",
     "VehicleFieldProvenance",
     "VehicleConfiguration",
@@ -38,6 +39,7 @@ VehicleConfigurationField = Literal[
     "tire_dimensions",
     "transmission_name",
 ]
+VehicleCoverageClassification = Literal["trusted", "approximate", "backlog_unverified"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,6 +142,62 @@ class VehicleConfiguration:
         if self.source_status == "compat_projection":
             return "family_default"
         return "unverified"
+
+    @property
+    def coverage_policy_fields(self) -> tuple[VehicleConfigurationField, ...]:
+        """Return the minimum field set required to trust this config for order analysis."""
+
+        fields: list[VehicleConfigurationField] = [
+            "drivetrain",
+            "tire_dimensions",
+            "transmission_name",
+            "top_gear_ratio",
+        ]
+        if self.final_drive_front is not None:
+            fields.append("final_drive_front")
+        if self.final_drive_rear is not None:
+            fields.append("final_drive_rear")
+        return tuple(fields)
+
+    def coverage_policy_confidence(
+        self,
+        field_name: VehicleConfigurationField,
+    ) -> VehicleFieldConfidence:
+        """Return the policy-driving confidence for one order-analysis-critical field."""
+
+        if field_name == "top_gear_ratio":
+            return self.order_reference_confidence("current_gear_ratio")
+        if field_name == "transmission_name":
+            return self.order_reference_confidence("transmission_name")
+        if field_name in {"final_drive_front", "final_drive_rear"}:
+            entry = self.provenance_for(field_name)
+            if entry is not None:
+                return entry.confidence
+            if self.source_status == "compat_projection":
+                return "family_default"
+            return "unverified"
+        entry = self.provenance_for(field_name)
+        if entry is not None:
+            return entry.confidence
+        if self.source_status == "compat_projection":
+            return "family_default"
+        return "unverified"
+
+    @property
+    def coverage_policy_classification(self) -> VehicleCoverageClassification:
+        """Classify whether this config is trusted, approximate, or backlog-grade."""
+
+        confidences = tuple(
+            self.coverage_policy_confidence(field_name)
+            for field_name in self.coverage_policy_fields
+        )
+        if any(confidence == "unverified" for confidence in confidences):
+            return "backlog_unverified"
+        if self.source_status == "compat_projection" or any(
+            confidence == "family_default" for confidence in confidences
+        ):
+            return "approximate"
+        return "trusted"
 
     @property
     def requires_manual_drivetrain_confirmation(self) -> bool:
