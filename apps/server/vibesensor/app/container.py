@@ -245,14 +245,39 @@ def create_history_db(
         raise
     if recovered_runs:
         LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
+    raw_capture_retention_days = config.logging.raw_capture_retention_days
+    summary_retention_days = config.logging.run_retention_days
+    if raw_capture_retention_days < summary_retention_days:
+        try:
+            pruned_raw_captures = (
+                history.run_repository.prune_raw_capture_artifacts_older_than_days(
+                    raw_capture_retention_days,
+                )
+            )
+        except (aiosqlite.Error, OSError):
+            LOGGER.warning(
+                "Failed to prune raw capture artifacts older than %d day(s) during "
+                "startup maintenance",
+                raw_capture_retention_days,
+                exc_info=True,
+            )
+        else:
+            if pruned_raw_captures:
+                LOGGER.info(
+                    "Pruned raw capture artifacts for %d terminal run(s) older than %d "
+                    "day(s); summary retention remains %d day(s)",
+                    pruned_raw_captures,
+                    raw_capture_retention_days,
+                    summary_retention_days,
+                )
     try:
         pruned_runs = history.run_repository.prune_terminal_runs_older_than_days(
-            config.logging.run_retention_days,
+            summary_retention_days,
         )
     except (aiosqlite.Error, OSError):
         LOGGER.warning(
             "Failed to prune terminal runs older than %d day(s) during startup maintenance",
-            config.logging.run_retention_days,
+            summary_retention_days,
             exc_info=True,
         )
     else:
@@ -260,7 +285,7 @@ def create_history_db(
             LOGGER.info(
                 "Pruned %d terminal run(s) older than %d day(s) during startup maintenance",
                 pruned_runs,
-                config.logging.run_retention_days,
+                summary_retention_days,
             )
     return history
 

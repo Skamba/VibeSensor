@@ -272,6 +272,9 @@ class HistoryRawCaptureStore:
                 stream.index_handle.close()
         shutil.rmtree(self.run_dir(run_id), ignore_errors=True)
 
+    def has_run_artifacts(self, run_id: str) -> bool:
+        return self.run_dir(run_id).exists()
+
     def run_dir(self, run_id: str) -> Path:
         return self._base_dir / run_id
 

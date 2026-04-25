@@ -195,7 +195,10 @@ traffic.
 
 For persisted run history on Pi-class devices, `logging.run_retention_days`
 controls how many days of terminal (`complete` / `error`) runs are kept before
-startup maintenance prunes them automatically. The default is `7`.
+startup maintenance prunes them automatically. The default is `7`. If raw
+waveform sidecars should expire earlier than the compact run summaries, lower
+`logging.raw_capture_retention_days`; startup maintenance will prune raw capture
+first while leaving the summary row available in history.
 
 ## Environment variables
 
