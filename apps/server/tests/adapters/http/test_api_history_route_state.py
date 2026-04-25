@@ -212,6 +212,36 @@ async def test_history_list_includes_recorded_car_name() -> None:
 
 
 @pytest.mark.asyncio
+async def test_history_endpoints_include_degraded_raw_capture_finalize_state() -> None:
+    metadata = make_metadata(
+        raw_capture_finalize={
+            "status": "timeout",
+            "queue_depth": 4,
+            "error_summary": "raw capture finalize timed out",
+        }
+    )
+    samples = [sample(i) for i in range(3)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+
+    list_payload = response_payload(await route_endpoint(router, "/api/history")())
+    run_payload = response_payload(await route_endpoint(router, "/api/history/{run_id}")("run-1"))
+
+    assert list_payload["runs"][0]["artifact_availability"]["raw_capture"] == "degraded"
+    assert list_payload["runs"][0]["raw_capture_finalize"] == {
+        "status": "timeout",
+        "queue_depth": 4,
+        "error_summary": "raw capture finalize timed out",
+    }
+    assert run_payload["artifact_availability"]["raw_capture"] == "degraded"
+    assert run_payload["raw_capture_finalize"] == {
+        "status": "timeout",
+        "queue_depth": 4,
+        "error_summary": "raw capture finalize timed out",
+    }
+
+
+@pytest.mark.asyncio
 async def test_history_list_uses_nested_active_car_snapshot_name() -> None:
     metadata = make_metadata(
         active_car_snapshot={

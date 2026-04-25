@@ -65,6 +65,7 @@ def _build_run_metadata_record(
         accel_scale_g_per_lsb=recorder.accel_scale_g_per_lsb,
         active_car_snapshot=run_context.car,
         raw_capture_manifest=recorder._raw_capture_manifest_for_run(run_id),
+        raw_capture_finalize=recorder._raw_capture_finalize_for_run(run_id),
         language_reader=recorder._language_reader,
         recorded_utc_offset_seconds=current_utc_offset_seconds(),
         sensor_snapshots=recorder._run_sensor_snapshots_for_run(run_id),

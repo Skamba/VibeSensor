@@ -3,19 +3,23 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
+from typing import Literal
 
 from vibesensor.domain import AnalysisSettingsSnapshot, OrderReferenceSpec, Symptom
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 
+from .json_types import JsonObject
 from .sensor_frame import SensorFrame
 
 __all__ = [
     "FFT_WINDOW_TYPE",
     "PEAK_PICKER_METHOD",
+    "RawCaptureFinalizeStatus",
     "RUN_END_TYPE",
     "RUN_METADATA_TYPE",
     "RUN_SAMPLE_TYPE",
     "RUN_SCHEMA_VERSION",
+    "RunRawCaptureFinalize",
     "RunMetadata",
     "RunCarMetadata",
     "RunSensorMetadata",
@@ -27,6 +31,16 @@ RUN_SAMPLE_TYPE = "sample"
 RUN_END_TYPE = "run_end"
 FFT_WINDOW_TYPE = "hann"
 PEAK_PICKER_METHOD = "canonical_strength_metrics_module"
+
+type RawCaptureFinalizeStatus = Literal[
+    "completed",
+    "not_configured",
+    "enqueue_timeout",
+    "timeout",
+    "failed",
+]
+
+_DEGRADED_RAW_CAPTURE_FINALIZE_STATUSES = frozenset({"enqueue_timeout", "timeout", "failed"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +63,27 @@ class RunSensorMetadata:
     mount_orientation: str | None = None
     sample_rate_hz: int | None = None
     firmware_version: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class RunRawCaptureFinalize:
+    """Persisted per-run raw-capture finalization outcome."""
+
+    status: RawCaptureFinalizeStatus
+    queue_depth: int | None = None
+    error_summary: str | None = None
+
+    @property
+    def degraded(self) -> bool:
+        return self.status in _DEGRADED_RAW_CAPTURE_FINALIZE_STATUSES
+
+    def to_json_object(self) -> JsonObject:
+        payload: JsonObject = {"status": self.status}
+        if self.queue_depth is not None:
+            payload["queue_depth"] = self.queue_depth
+        if self.error_summary is not None:
+            payload["error_summary"] = self.error_summary
+        return payload
 
 
 @dataclass(slots=True)
@@ -77,6 +112,7 @@ class RunMetadata:
     analysis_settings: AnalysisSettingsSnapshot = field(default_factory=AnalysisSettingsSnapshot)
     car: RunCarMetadata | None = None
     sensor_snapshots: tuple[RunSensorMetadata, ...] = field(default_factory=tuple)
+    raw_capture_finalize: RunRawCaptureFinalize | None = None
     case_id: str = ""
     sensor_mac: str | None = None
     symptom: Symptom | None = None
@@ -107,6 +143,7 @@ class RunMetadata:
         analysis_settings: AnalysisSettingsSnapshot | None = None,
         car: RunCarMetadata | None = None,
         sensor_snapshots: tuple[RunSensorMetadata, ...] = (),
+        raw_capture_finalize: RunRawCaptureFinalize | None = None,
         case_id: str = "",
         sensor_mac: str | None = None,
         symptom: Symptom | None = None,
@@ -141,6 +178,7 @@ class RunMetadata:
             ),
             car=car,
             sensor_snapshots=tuple(sensor_snapshots),
+            raw_capture_finalize=raw_capture_finalize,
             case_id=case_id.strip(),
             sensor_mac=sensor_mac,
             symptom=symptom,

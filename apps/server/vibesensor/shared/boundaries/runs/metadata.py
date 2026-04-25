@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping
+from typing import cast
 
 import msgspec
 
@@ -24,7 +25,9 @@ from vibesensor.shared.types.run_schema import (
     PEAK_PICKER_METHOD,
     RUN_METADATA_TYPE,
     RUN_SCHEMA_VERSION,
+    RawCaptureFinalizeStatus,
     RunMetadata,
+    RunRawCaptureFinalize,
     RunSensorMetadata,
 )
 
@@ -63,6 +66,7 @@ class _RunMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
     analysis_settings_snapshot: object = None
     active_car_snapshot: object = None
     sensor_snapshots: object = None
+    raw_capture_finalize: object = None
     case_id: object = ""
     sensor_mac: object = None
     symptom: object = None
@@ -115,6 +119,9 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         ),
         car=run_car_metadata_from_mapping(data.get("active_car_snapshot")),
         sensor_snapshots=_run_sensor_snapshots_from_payload(data.get("sensor_snapshots")),
+        raw_capture_finalize=_run_raw_capture_finalize_from_payload(
+            data.get("raw_capture_finalize")
+        ),
         case_id=text_or_none(data.get("case_id")) or "",
         sensor_mac=text_or_none(data.get("sensor_mac")),
         symptom=_symptom_from_payload(data.get("symptom")),
@@ -164,6 +171,8 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
         payload["sensor_snapshots"] = [
             _run_sensor_snapshot_to_json_object(snapshot) for snapshot in metadata.sensor_snapshots
         ]
+    if metadata.raw_capture_finalize is not None:
+        payload["raw_capture_finalize"] = metadata.raw_capture_finalize.to_json_object()
     if metadata.symptom is not None and not metadata.symptom.is_unspecified:
         payload["symptom"] = _symptom_to_json_object(metadata.symptom)
     if metadata.wheel_circumference_m is not None:
@@ -276,3 +285,16 @@ def _run_sensor_snapshot_to_json_object(snapshot: RunSensorMetadata) -> JsonObje
     if snapshot.firmware_version is not None:
         payload["firmware_version"] = snapshot.firmware_version
     return payload
+
+
+def _run_raw_capture_finalize_from_payload(payload: object) -> RunRawCaptureFinalize | None:
+    if not isinstance(payload, Mapping):
+        return None
+    status = text_or_none(payload.get("status"))
+    if status not in {"completed", "not_configured", "enqueue_timeout", "timeout", "failed"}:
+        return None
+    return RunRawCaptureFinalize(
+        status=cast(RawCaptureFinalizeStatus, status),
+        queue_depth=as_int_or_none(payload.get("queue_depth")),
+        error_summary=text_or_none(payload.get("error_summary")),
+    )

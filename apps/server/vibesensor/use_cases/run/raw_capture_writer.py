@@ -7,7 +7,7 @@ import queue
 import threading
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 import numpy as np
 
@@ -19,20 +19,13 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureManifest,
     RawCaptureSensorClockSync,
 )
+from vibesensor.shared.types.run_schema import RawCaptureFinalizeStatus
 
 __all__ = ["RawCaptureFinalizeResult", "RunRawCaptureWriter"]
 
 _QUEUE_MAXSIZE = 2048
 _FINALIZE_WAIT_TIMEOUT_S = 5.0
 _CONTROL_REQUEST_ENQUEUE_TIMEOUT_S = 1.0
-
-type RawCaptureFinalizeStatus = Literal[
-    "completed",
-    "not_configured",
-    "enqueue_timeout",
-    "timeout",
-    "failed",
-]
 
 
 @dataclass(frozen=True, slots=True)

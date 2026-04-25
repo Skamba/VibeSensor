@@ -7,7 +7,12 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.ports import ClientTracker, LanguageReader
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
 from vibesensor.shared.types.raw_capture import RawCaptureManifest
-from vibesensor.shared.types.run_schema import RunCarMetadata, RunMetadata, RunSensorMetadata
+from vibesensor.shared.types.run_schema import (
+    RunCarMetadata,
+    RunMetadata,
+    RunRawCaptureFinalize,
+    RunSensorMetadata,
+)
 from vibesensor.vibration_strength import (
     CALIBRATION_PROFILE_ID,
     PEAK_DETECTOR_VERSION,
@@ -53,6 +58,7 @@ def create_run_metadata(
     configured_raw_sample_rate_hz: int | None = None,
     recorded_utc_offset_seconds: int | None = None,
     sensor_snapshots: tuple[RunSensorMetadata, ...] = (),
+    raw_capture_finalize: RunRawCaptureFinalize | None = None,
 ) -> RunMetadata:
     """Build and return typed run metadata from the supplied fields."""
     normalized_offset = coerce_utc_offset_seconds(recorded_utc_offset_seconds)
@@ -74,6 +80,7 @@ def create_run_metadata(
         incomplete_for_order_analysis=incomplete_for_order_analysis,
         recorded_utc_offset_seconds=normalized_offset,
         sensor_snapshots=sensor_snapshots,
+        raw_capture_finalize=raw_capture_finalize,
     )
 
 
@@ -90,6 +97,7 @@ def build_run_metadata(
     accel_scale_g_per_lsb: float | None,
     active_car_snapshot: CarSnapshot | None = None,
     raw_capture_manifest: RawCaptureManifest | None = None,
+    raw_capture_finalize: RunRawCaptureFinalize | None = None,
     language_reader: LanguageReader | None = None,
     recorded_utc_offset_seconds: int | None = None,
     sensor_snapshots: tuple[RunSensorMetadata, ...] = (),
@@ -120,6 +128,7 @@ def build_run_metadata(
         incomplete_for_order_analysis=incomplete,
         recorded_utc_offset_seconds=recorded_utc_offset_seconds,
         sensor_snapshots=sensor_snapshots,
+        raw_capture_finalize=raw_capture_finalize,
     )
     metadata.analysis_settings = analysis_settings_snapshot
     metadata.car = run_car_metadata

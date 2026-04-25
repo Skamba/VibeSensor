@@ -3624,7 +3624,8 @@
             "enum": [
               "not_recorded",
               "available",
-              "missing"
+              "missing",
+              "degraded"
             ],
             "title": "Raw Capture",
             "type": "string"
@@ -4145,6 +4146,16 @@
             ],
             "title": "Error Message"
           },
+          "raw_capture_finalize": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoryRawCaptureFinalizeResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "run_id": {
             "title": "Run Id",
             "type": "string"
@@ -4189,6 +4200,49 @@
         "title": "HistoryListResponse",
         "type": "object"
       },
+      "HistoryRawCaptureFinalizeResponse": {
+        "description": "Response body describing the persisted raw-capture finalization outcome.",
+        "properties": {
+          "error_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Summary"
+          },
+          "queue_depth": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Depth"
+          },
+          "status": {
+            "enum": [
+              "completed",
+              "not_configured",
+              "enqueue_timeout",
+              "timeout",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "HistoryRawCaptureFinalizeResponse",
+        "type": "object"
+      },
       "HistoryRunResponse": {
         "additionalProperties": false,
         "description": "Response body for a single history run with metadata and optional analysis.",
@@ -4226,6 +4280,16 @@
           },
           "metadata": {
             "$ref": "#/components/schemas/ApiPayloadObject"
+          },
+          "raw_capture_finalize": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoryRawCaptureFinalizeResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "run_id": {
             "title": "Run Id",

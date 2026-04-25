@@ -128,3 +128,56 @@ def test_update_run_metadata_refreshes_list_run_car_name(tmp_path: Path) -> None
 
     assert updated is True
     assert listed_run.car_name == "Updated Car"
+
+
+def test_list_runs_projects_degraded_raw_capture_finalize_state(tmp_path: Path) -> None:
+    db = build_history_db(tmp_path)
+    db.run_repository.create_run(
+        "run-degraded",
+        "2026-01-01T00:00:00Z",
+        _metadata(
+            "run-degraded",
+            raw_capture_finalize={
+                "status": "timeout",
+                "queue_depth": 3,
+                "error_summary": "raw capture finalize timed out",
+            },
+        ),
+    )
+
+    run = db.run_repository.list_runs()[0]
+
+    assert run.artifact_availability is not None
+    assert run.artifact_availability.raw_capture == "degraded"
+    assert run.raw_capture_finalize is not None
+    assert run.raw_capture_finalize.status == "timeout"
+    assert run.raw_capture_finalize.queue_depth == 3
+    assert run.raw_capture_finalize.error_summary == "raw capture finalize timed out"
+
+
+def test_get_run_projects_raw_capture_finalize_state(tmp_path: Path) -> None:
+    db = build_history_db(tmp_path)
+    db.run_repository.create_run(
+        "run-degraded",
+        "2026-01-01T00:00:00Z",
+        _metadata(
+            "run-degraded",
+            raw_capture_finalize={
+                "status": "failed",
+                "queue_depth": 1,
+                "error_summary": "write worker crashed",
+            },
+        ),
+    )
+
+    run = db.run_repository.get_run("run-degraded")
+
+    assert run is not None
+    assert run.artifact_availability is not None
+    assert run.artifact_availability.raw_capture == "degraded"
+    assert run.raw_capture_finalize is not None
+    assert run.raw_capture_finalize.status == "failed"
+    assert run.raw_capture_finalize.queue_depth == 1
+    assert run.raw_capture_finalize.error_summary == "write worker crashed"
+    assert run.metadata.raw_capture_finalize is not None
+    assert run.metadata.raw_capture_finalize.status == "failed"
