@@ -1,4 +1,4 @@
-# History DB Schema (v12)
+# History DB Schema (v15)
 
 The VibeSensor server stores run history, samples, analysis results,
 application settings and client names in a single SQLite file located at
@@ -18,7 +18,8 @@ application settings and client names in a single SQLite file located at
 repositories over the same database file:
 
 - `_engine.py`: shared SQLite connection/lock/cursor ownership, schema
-  initialization/migrations, migration backup/restore, and corruption detection.
+  initialization/migrations, incompatible-schema backup/export protection, and
+  corruption detection.
 - `_run_repository.py`: run persistence composed from `_run_lifecycle.py`,
   `_sample_io.py`, and `_queries.py` over the shared engine.
 - `_settings_repository.py`: `settings_snapshot` table persistence only.
@@ -48,6 +49,8 @@ One row per recording session.
 | `end_time_utc` | TEXT | ISO-8601 end time (set on finalize) |
 | `metadata_json` | TEXT | Run-level metadata (car config, language, sensor model, etc.) |
 | `car_name` | TEXT | Denormalized active car name used by the history list path |
+| `raw_capture_manifest_json` | TEXT | Raw waveform sidecar manifest; may remain after raw files are pruned so history can report missing raw capture explicitly |
+| `whole_run_artifact_manifest_json` | TEXT | Whole-run sidecar manifest for dense post-analysis artifacts |
 | `analysis_json` | TEXT | Post-run analysis summary |
 | `error_message` | TEXT | Error description when status = `error` |
 | `sample_count` | INTEGER | Running count of appended samples |
@@ -128,19 +131,24 @@ integer version:
 
 | Stored version | Action |
 |----------------|--------|
-| `0` on a fresh DB | Create all tables, stamp `user_version = 12` |
-| `0` with a legacy `schema_meta` table present | Raise `RuntimeError` directing the user to delete the incompatible DB |
-| `12` | No action needed |
-| `11` | Add the denormalized `runs.car_name` column, backfill it from `metadata_json`, then stamp `user_version = 12` |
-| Older unsupported values (for example `1`, `4`, `8`, `9`, or `10`) | Raise `RuntimeError` directing the user to delete the database file |
-| Newer than `12` | Raise `RuntimeError` (downgrade not supported) |
+| `0` on a fresh DB with no user tables | Create all tables, stamp `user_version = 15` |
+| `0` with a legacy `schema_meta` table present | Back up the DB, attempt a best-effort run-summary export, then raise `RuntimeError` without requiring destructive deletion |
+| `0` with unexpected user tables | Back up the DB, attempt a best-effort run-summary export, then raise `RuntimeError` |
+| `15` | No action needed beyond ensuring current tables/indexes exist |
+| `14` | Add `runs.whole_run_artifact_manifest_json`, then stamp `user_version = 15` |
+| `13` | Add `runs.raw_capture_manifest_json`, add `runs.whole_run_artifact_manifest_json`, then stamp `user_version = 15` |
+| `12` | Add raw-capture and whole-run manifest columns, then stamp `user_version = 15` |
+| `11` | Add `runs.car_name`, raw-capture manifest, and whole-run manifest columns, then stamp `user_version = 15` |
+| Older unsupported values (for example `1`, `4`, `8`, `9`, or `10`) | Back up the DB, attempt a best-effort run-summary export, then raise `RuntimeError` |
+| Newer than `15` | Back up the DB, attempt a best-effort run-summary export, then raise `RuntimeError` (downgrade not supported) |
 
 ### Schema versioning policy
 
-Older incompatible database versions are not migrated — the server raises
-a clear error message telling the operator to delete the database file and
-let it be recreated. This avoids maintaining migration infrastructure for
-a system that is redeployed via full image rebuilds.
+Older incompatible database versions are not migrated. Before rejecting them,
+the engine writes a backup copy under `history-db-backups/` next to the live
+database and, when a readable `runs` table exists, exports a best-effort JSONL
+summary of stored runs. The server then raises a clear error without requiring
+destructive deletion.
 
 ## Performance settings
 
@@ -166,9 +174,17 @@ For a 30-minute run at 4 Hz × 4 sensors (~28,800 samples):
 ## Startup retention policy
 
 On startup, the container builds the shared history engine and run repository,
-first recovers stale `recording` rows into `error`, then prunes `complete` and
-`error` runs older than `logging.run_retention_days` (default `7`). The prune
-cutoff uses the run's terminal timestamp (`analysis_completed_at`, then
+first recovers stale `recording` rows into `error`, then applies retention in
+two stages:
+
+1. If `logging.raw_capture_retention_days` is lower than
+   `logging.run_retention_days`, raw waveform sidecars older than the raw-capture
+   cutoff are pruned first while the run summary row stays in the DB.
+2. `complete` and `error` runs older than `logging.run_retention_days` (default
+   `7`) are deleted entirely.
+
+Both cutoffs use the run's terminal timestamp (`analysis_completed_at`, then
 `end_time_utc`, then `created_at`) so active `recording` / `analyzing` runs are
-never deleted by the automatic policy. Sample rows are removed automatically
-through the existing `ON DELETE CASCADE` foreign key on `samples_v2`.
+never deleted by the automatic policy. Full run deletion still removes sample
+rows through the existing `ON DELETE CASCADE` foreign key on `samples_v2`, plus
+raw/whole-run sidecar directories.

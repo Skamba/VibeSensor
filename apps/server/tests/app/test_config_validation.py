@@ -185,6 +185,7 @@ class TestLoggingConfigValidation:
             "history_db_path": Path("/tmp/history.db"),
             "persist_history_db": True,
             "run_retention_days": 7,
+            "raw_capture_retention_days": 7,
             "shutdown_analysis_timeout_s": 30.0,
             "app_log_path": Path("/tmp/app.log"),
         }
@@ -211,6 +212,10 @@ class TestLoggingConfigValidation:
     def test_non_positive_run_retention_days_clamped(self) -> None:
         cfg = self._make(run_retention_days=0)
         assert cfg.run_retention_days >= 1
+
+    def test_non_positive_raw_capture_retention_days_clamped(self) -> None:
+        cfg = self._make(raw_capture_retention_days=0)
+        assert cfg.raw_capture_retention_days >= 1
 
 
 class TestTracingConfigValidation:

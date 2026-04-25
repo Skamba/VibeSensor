@@ -69,6 +69,28 @@ class _HistoryDBRunLifecycleMixin:
     def _car_name_from_metadata(metadata: RunMetadata) -> str | None:
         return metadata.car_name
 
+    async def _terminal_run_ids_older_than(
+        self,
+        *,
+        cutoff_utc: str,
+        require_raw_capture_manifest: bool = False,
+    ) -> list[str]:
+        where_clauses = [
+            "status IN ('complete', 'error')",
+            "COALESCE(analysis_completed_at, end_time_utc, created_at) < ?",
+        ]
+        if require_raw_capture_manifest:
+            where_clauses.append("raw_capture_manifest_json IS NOT NULL")
+        async with self._cursor(commit=False) as cur:
+            await cur.execute(
+                f"""
+                SELECT run_id FROM runs
+                WHERE {" AND ".join(where_clauses)}
+                """,
+                (cutoff_utc,),
+            )
+            return [str(row[0]) for row in await cur.fetchall()]
+
     def create_run(
         self,
         run_id: str,
@@ -411,18 +433,15 @@ class _HistoryDBRunLifecycleMixin:
         if retention_days < 1:
             raise ValueError("retention_days must be at least 1")
         cutoff_utc = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
+        run_ids = await self._terminal_run_ids_older_than(cutoff_utc=cutoff_utc)
+        if not run_ids:
+            return 0
+        LOGGER.warning(
+            "Pruning %d terminal run(s) older than %d day(s) during startup retention maintenance",
+            len(run_ids),
+            retention_days,
+        )
         async with self.write_transaction_cursor() as cur:
-            await cur.execute(
-                """
-                SELECT run_id FROM runs
-                WHERE status IN ('complete', 'error')
-                  AND COALESCE(analysis_completed_at, end_time_utc, created_at) < ?
-                """,
-                (cutoff_utc,),
-            )
-            run_ids = [str(row[0]) for row in await cur.fetchall()]
-            if not run_ids:
-                return 0
             await cur.executemany(
                 "DELETE FROM runs WHERE run_id = ?",
                 [(run_id,) for run_id in run_ids],
@@ -430,6 +449,34 @@ class _HistoryDBRunLifecycleMixin:
         for run_id in run_ids:
             await asyncio.to_thread(self._raw_capture_store.delete_run_artifacts, run_id)
             await asyncio.to_thread(self._whole_run_artifact_store.delete_run_artifacts, run_id)
+        return len(run_ids)
+
+    def prune_raw_capture_artifacts_older_than_days(self, retention_days: int) -> int:
+        return self._run_sync(self.aprune_raw_capture_artifacts_older_than_days(retention_days))
+
+    async def aprune_raw_capture_artifacts_older_than_days(self, retention_days: int) -> int:
+        if retention_days < 1:
+            raise ValueError("retention_days must be at least 1")
+        cutoff_utc = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
+        candidate_run_ids = await self._terminal_run_ids_older_than(
+            cutoff_utc=cutoff_utc,
+            require_raw_capture_manifest=True,
+        )
+        run_ids = [
+            run_id
+            for run_id in candidate_run_ids
+            if await asyncio.to_thread(self._raw_capture_store.has_run_artifacts, run_id)
+        ]
+        if not run_ids:
+            return 0
+        LOGGER.warning(
+            "Pruning raw capture artifacts for %d terminal run(s) older than %d day(s) "
+            "while keeping run summaries",
+            len(run_ids),
+            retention_days,
+        )
+        for run_id in run_ids:
+            await asyncio.to_thread(self._raw_capture_store.delete_run_artifacts, run_id)
         return len(run_ids)
 
 

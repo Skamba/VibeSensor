@@ -81,7 +81,8 @@ For local development examples, see `apps/server/config.dev.yaml`,
 | `logging.metrics_log_hz` | `4` | Live metrics logging cadence. Invalid values clamp up to at least `1`. |
 | `logging.no_data_timeout_s` | `15.0` | Auto-stop timeout when recording stops seeing new data. Invalid values clamp to `15.0`. |
 | `logging.persist_history_db` | `true` | Enable/disable writing run history to the DB. |
-| `logging.run_retention_days` | `7` | Startup maintenance retention window for terminal runs (`complete` / `error`). Invalid values clamp up to at least `1`. |
+| `logging.run_retention_days` | `7` | Startup maintenance retention window for terminal runs (`complete` / `error`). Full run deletion still removes samples plus raw/whole-run sidecars. Invalid values clamp up to at least `1`. |
+| `logging.raw_capture_retention_days` | `7` | Optional shorter retention window for raw waveform sidecars while keeping compact run summaries. Only applied when lower than `logging.run_retention_days`. Invalid values clamp up to at least `1`. |
 | `logging.shutdown_analysis_timeout_s` | `30` | How long shutdown waits for post-analysis cleanup before giving up. Invalid values clamp to `30.0`. |
 | `logging.app_log_path` | `data/app.log` | Structured JSON application-log output path. Set to `null` if file logging is not wanted. |
 
@@ -116,6 +117,7 @@ gps:
 # retain run history longer on a device with more storage
 logging:
   run_retention_days: 30
+  raw_capture_retention_days: 7
 ```
 
 Use `apps/server/config.pi.yaml` as the starting point for Pi installs and the

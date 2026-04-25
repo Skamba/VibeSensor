@@ -383,3 +383,9 @@ def test_legacy_schema_meta_table_fails_fast_with_clear_guidance(tmp_path: Path)
 
     with pytest.raises(RuntimeError, match="legacy schema_meta table incompatible"):
         create_history_persistence_adapters(db_path)
+    backups = list(
+        (tmp_path / "history-db-backups").glob(
+            "history-schema-meta.incompatible-v0-legacy-schema-meta-*.db"
+        )
+    )
+    assert len(backups) == 1
