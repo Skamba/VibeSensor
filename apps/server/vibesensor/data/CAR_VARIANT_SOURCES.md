@@ -188,10 +188,13 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### 8 Series Coupe (G15, 2019-2025)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| 840i | B58 3.0L I6 Turbo | RWD | BMW press release | High |
-| M850i xDrive | N63 4.4L V8 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| 840i | B58 3.0L I6 Turbo | RWD | – | BMW press release | High |
+| 840i xDrive | B58 3.0L I6 Turbo | AWD | – | BMW press release | High |
+| M850i xDrive | N63 4.4L V8 Turbo | AWD | 8-speed automatic (ZF 8HP76 Sport) FD 2.813 TG 0.640 | BMW technical data (G15) | High |
+| M8 | 4.4L V8 Turbo | AWD | – | BMW M technical data | High |
+| M8 Competition | 4.4L V8 Turbo | AWD | – | BMW M technical data | High |
 
 ### 8 Series Convertible (G14, 2019-2025)
 
@@ -327,10 +330,10 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### M3 (F80, 2014-2018)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| M3 | S55 3.0L I6 Turbo | RWD | BMW press release | High |
-| M3 Competition | S55 3.0L I6 Turbo | RWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| M3 | S55 3.0L I6 Turbo | RWD | 7-speed M-DCT TG 0.671 / 6-speed manual TG 0.846 | BMW technical data (MY18) | High |
+| M3 Competition | S55 3.0L I6 Turbo | RWD | 7-speed M-DCT TG 0.671 / 6-speed manual TG 0.846 | BMW technical data (MY18) | High |
 
 ### M3 (G80, 2021-2026)
 
@@ -342,10 +345,10 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### M4 (F82, 2014-2020)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| M4 | S55 3.0L I6 Turbo | RWD | BMW press release | High |
-| M4 Competition | S55 3.0L I6 Turbo | RWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| M4 | S55 3.0L I6 Turbo | RWD | 7-speed M-DCT TG 0.671 / 6-speed manual TG 0.846 | BMW technical data (09/2018) | High |
+| M4 Competition | S55 3.0L I6 Turbo | RWD | 7-speed M-DCT TG 0.671 / 6-speed manual TG 0.846 | BMW technical data (09/2018) | High |
 
 ### M4 (G82, 2021-2026)
 
@@ -356,10 +359,10 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### M5 (F90, 2018-2024)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| M5 | S63 4.4L V8 Turbo | AWD | BMW press release | High |
-| M5 Competition | S63 4.4L V8 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| M5 | S63 4.4L V8 Turbo | AWD | 8-speed M Steptronic FD 3.154 TG 0.640 | BMW technical data (06/2020) | High |
+| M5 Competition | S63 4.4L V8 Turbo | AWD | 8-speed M Steptronic FD 3.154 TG 0.640 | BMW technical data (06/2020) | High |
 
 ### iX (I20, 2022-2026)
 
