@@ -31,7 +31,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureManifest,
     RawCaptureSensorClockSync,
 )
-from vibesensor.shared.types.run_schema import RunSensorMetadata
+from vibesensor.shared.types.run_schema import RunRawCaptureFinalize, RunSensorMetadata
 from vibesensor.shared.types.sensor_config import SensorConfigPayload
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
 from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
@@ -173,6 +173,7 @@ class RunRecorder:
             self._persistence.reset()
         self._run_ingest_drop_baseline: dict[str, int] | None = None
         self._finalized_raw_capture_manifests: dict[str, RawCaptureManifest] = {}
+        self._raw_capture_finalize_results: dict[str, RunRawCaptureFinalize] = {}
 
     @property
     def enabled(self) -> bool:
@@ -199,6 +200,9 @@ class RunRecorder:
 
     def _raw_capture_manifest_for_run(self, run_id: str) -> RawCaptureManifest | None:
         return self._finalized_raw_capture_manifests.get(run_id)
+
+    def _raw_capture_finalize_for_run(self, run_id: str) -> RunRawCaptureFinalize | None:
+        return self._raw_capture_finalize_results.get(run_id)
 
     def _live_run_context_snapshot(self) -> RunContextSnapshot:
         active_car_snapshot = (
@@ -596,6 +600,11 @@ class RunRecorder:
         run_id: str,
         result: RawCaptureFinalizeResult,
     ) -> None:
+        self._raw_capture_finalize_results[run_id] = RunRawCaptureFinalize(
+            status=result.status,
+            queue_depth=result.queue_depth,
+            error_summary=result.error,
+        )
         if result.manifest is not None:
             self._finalized_raw_capture_manifests[run_id] = result.manifest
         if result.completed or result.status == "not_configured":

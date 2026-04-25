@@ -219,3 +219,36 @@ test("history table presenter keeps PDF pending until analysis completes", () =>
     pdfLoading: false,
   });
 });
+
+test("history table presenter shows degraded raw capture warning details", () => {
+  const run = historyListRun("run-004");
+  run.artifact_availability = {
+    raw_capture: "degraded",
+    whole_run_artifacts: "available",
+  };
+  run.raw_capture_finalize = {
+    status: "timeout",
+    queue_depth: 3,
+    error_summary: "raw capture finalize timed out",
+  };
+  const rows = buildHistoryTableRowsViewModel({
+    runs: [run],
+    expandedRunId: "run-004",
+    runDetailsById: {
+      "run-004": defaultDetail({
+        preview: populatedInsights("run-004") as RunDetail["preview"],
+      }),
+    },
+    t: testTranslation,
+    fmt: (value, digits = 0) => Number(value).toFixed(digits),
+    fmtTs: (iso) => iso,
+    formatInt: (value) => String(value),
+  });
+
+  expect(rows[0].details?.warnings?.[0]).toEqual({
+    severity: "warn",
+    title: "history.raw_capture_degraded_title",
+    detail:
+      'history.raw_capture_degraded_timeout_detail:{"queueDepth":3,"errorSummary":"raw capture finalize timed out"}',
+  });
+});
