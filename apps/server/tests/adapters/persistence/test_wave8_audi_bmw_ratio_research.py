@@ -62,8 +62,16 @@ def test_wave8_x7_xdrive40i_uses_exact_official_variant_override() -> None:
             "tire_width_mm": pytest.approx(315.0),
             "tire_aspect_pct": pytest.approx(35.0),
             "rim_in": pytest.approx(22.0),
-            "front": {"width_mm": pytest.approx(275.0), "aspect_pct": pytest.approx(40.0), "rim_in": pytest.approx(22.0)},  # noqa: E501
-            "rear": {"width_mm": pytest.approx(315.0), "aspect_pct": pytest.approx(35.0), "rim_in": pytest.approx(22.0)},  # noqa: E501
+            "front": {
+                "width_mm": pytest.approx(275.0),
+                "aspect_pct": pytest.approx(40.0),
+                "rim_in": pytest.approx(22.0),
+            },  # noqa: E501
+            "rear": {
+                "width_mm": pytest.approx(315.0),
+                "aspect_pct": pytest.approx(35.0),
+                "rim_in": pytest.approx(22.0),
+            },  # noqa: E501
             "default_axle_for_speed": "rear",
             "source_confidence": "official_exact",
         },
@@ -72,8 +80,16 @@ def test_wave8_x7_xdrive40i_uses_exact_official_variant_override() -> None:
             "tire_width_mm": pytest.approx(315.0),
             "tire_aspect_pct": pytest.approx(30.0),
             "rim_in": pytest.approx(23.0),
-            "front": {"width_mm": pytest.approx(275.0), "aspect_pct": pytest.approx(35.0), "rim_in": pytest.approx(23.0)},  # noqa: E501
-            "rear": {"width_mm": pytest.approx(315.0), "aspect_pct": pytest.approx(30.0), "rim_in": pytest.approx(23.0)},  # noqa: E501
+            "front": {
+                "width_mm": pytest.approx(275.0),
+                "aspect_pct": pytest.approx(35.0),
+                "rim_in": pytest.approx(23.0),
+            },  # noqa: E501
+            "rear": {
+                "width_mm": pytest.approx(315.0),
+                "aspect_pct": pytest.approx(30.0),
+                "rim_in": pytest.approx(23.0),
+            },  # noqa: E501
             "default_axle_for_speed": "rear",
             "source_confidence": "official_exact",
         },
@@ -83,7 +99,10 @@ def test_wave8_x7_xdrive40i_uses_exact_official_variant_override() -> None:
 def test_wave8_ratio_source_rows_capture_a7_a8_r8_x7_context() -> None:
     sources = _ratio_sources()
 
-    assert "official_55tfsi_quattro_exact_ratios" in sources["Audi|A7 Sportback (C8, 2019-2026)"]["sources"]  # noqa: E501
+    assert (
+        "official_55tfsi_quattro_exact_ratios"
+        in sources["Audi|A7 Sportback (C8, 2019-2026)"]["sources"]
+    )  # noqa: E501
     assert "official_55tfsi_quattro_exact_ratios" in sources["Audi|A8 (D5, 2018-2026)"]["sources"]
     assert "official_v10_quattro_exact_mapping" in sources["Audi|R8 (4S, 2015-2024)"]["sources"]
     assert "official_xdrive40i_exact_ratios" in sources["BMW|X7 (G07, 2019-2026)"]["sources"]

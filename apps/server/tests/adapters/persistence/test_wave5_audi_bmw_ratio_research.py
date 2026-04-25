@@ -46,7 +46,9 @@ def test_wave5_q5_45tfsi_quattro_uses_exact_official_top_gear_and_ratio_set() ->
     ]
 
 
-def test_wave5_ratio_source_rows_capture_exact_g70_q7_q4_context_without_overwriting_broad_rows() -> None:  # noqa: E501
+def test_wave5_ratio_source_rows_capture_exact_g70_q7_q4_context_without_overwriting_broad_rows() -> (
+    None
+):  # noqa: E501
     sources = _ratio_sources()
 
     assert "exact_45tfsi_quattro_official_ratios" in sources["Audi|Q5 (FY, 2017-2026)"]["sources"]

@@ -52,37 +52,40 @@ def test_wave1_ratio_source_rows_capture_exact_audi_bmw_evidence_without_guessin
     sources = _ratio_sources()
 
     assert "m135i_xdrive_8at_ratios" in sources["BMW|1 Series (F40, 2019-2025)"]["sources"]
-    assert "official_330i_xdrive_exact_ratios" in sources["BMW|3 Series (G20, 2019-2025)"][
-        "sources"
-    ]
-    assert "exact_45tfsi_quattro_late_b9_ratios" in sources["Audi|A4 (B9, 2016-2025)"][
-        "sources"
-    ]
-    assert "exact_45tfsi_quattro_late_b9_ratios" in sources["Audi|A5 (B9, 2017-2024)"][
-        "sources"
-    ]
-    assert "exact_55tfsi_e_quattro_late_fy_ratios" in sources["Audi|Q5 (FY, 2017-2026)"][
-        "sources"
-    ]
+    assert (
+        "official_330i_xdrive_exact_ratios" in sources["BMW|3 Series (G20, 2019-2025)"]["sources"]
+    )
+    assert "exact_45tfsi_quattro_late_b9_ratios" in sources["Audi|A4 (B9, 2016-2025)"]["sources"]
+    assert "exact_45tfsi_quattro_late_b9_ratios" in sources["Audi|A5 (B9, 2017-2024)"]["sources"]
+    assert "exact_55tfsi_e_quattro_late_fy_ratios" in sources["Audi|Q5 (FY, 2017-2026)"]["sources"]
 
-    _assert_contains_unresolved(sources["Audi|A4 (B9, 2016-2025)"], [
-        {
-            "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",  # noqa: E501
-            "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",  # noqa: E501
-        }
-    ])
-    _assert_contains_unresolved(sources["Audi|A5 (B9, 2017-2024)"], [
-        {
-            "item": "Broad-row Audi A5 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",  # noqa: E501
-            "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW Coupe and Sportback, but this pass did not verify whether the earlier years in the broad row use the same exact mapping.",  # noqa: E501
-        }
-    ])
-    _assert_contains_unresolved(sources["Audi|Q5 (FY, 2017-2026)"], [
-        {
-            "item": "Broad-row Audi Q5 FY 55 TFSI e quattro top_gear_ratio applicability across the represented span",  # noqa: E501
-            "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 270 kW 55 TFSI e quattro configuration, but this pass did not verify whether every year represented by the broad FY row uses the same exact mapping.",  # noqa: E501
-        }
-    ])
+    _assert_contains_unresolved(
+        sources["Audi|A4 (B9, 2016-2025)"],
+        [
+            {
+                "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",  # noqa: E501
+                "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",  # noqa: E501
+            }
+        ],
+    )
+    _assert_contains_unresolved(
+        sources["Audi|A5 (B9, 2017-2024)"],
+        [
+            {
+                "item": "Broad-row Audi A5 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",  # noqa: E501
+                "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW Coupe and Sportback, but this pass did not verify whether the earlier years in the broad row use the same exact mapping.",  # noqa: E501
+            }
+        ],
+    )
+    _assert_contains_unresolved(
+        sources["Audi|Q5 (FY, 2017-2026)"],
+        [
+            {
+                "item": "Broad-row Audi Q5 FY 55 TFSI e quattro top_gear_ratio applicability across the represented span",  # noqa: E501
+                "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 270 kW 55 TFSI e quattro configuration, but this pass did not verify whether every year represented by the broad FY row uses the same exact mapping.",  # noqa: E501
+            }
+        ],
+    )
 
 
 def test_g20_variant_source_doc_tracks_wave1_override_update() -> None:

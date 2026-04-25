@@ -26,8 +26,14 @@ def test_wave4_ratio_source_rows_keep_ev_schema_limits_explicit() -> None:
     assert "official_i5_m60_tire_context" in sources["BMW|5 Series (G60, 2024-2026)"]["sources"]
     assert "issue_1034_i7_ratio_reference" in sources["BMW|7 Series (G70, 2023-2026)"]["sources"]
     assert "official_ix1_xdrive30_exact_ev_mapping" in sources["BMW|X1 (U11, 2023-2026)"]["sources"]
-    assert "official_etrongt_quattro_exact_ev_mapping" in sources["Audi|e-tron GT (J1, 2022-2026)"]["sources"]  # noqa: E501
-    assert "official_rs_etrongt_exact_ev_mapping" in sources["Audi|e-tron GT (J1, 2022-2026)"]["sources"]  # noqa: E501
+    assert (
+        "official_etrongt_quattro_exact_ev_mapping"
+        in sources["Audi|e-tron GT (J1, 2022-2026)"]["sources"]
+    )  # noqa: E501
+    assert (
+        "official_rs_etrongt_exact_ev_mapping"
+        in sources["Audi|e-tron GT (J1, 2022-2026)"]["sources"]
+    )  # noqa: E501
 
     for item in [
         {

@@ -26,8 +26,14 @@ def test_wave14_ratio_source_rows_capture_g20_g30_a8_q7_context() -> None:
     assert "official_320i_exact_ratios" in sources["BMW|3 Series (G20, 2019-2025)"]["sources"]
     assert "official_330i_rwd_exact_context" in sources["BMW|3 Series (G20, 2019-2025)"]["sources"]
     assert "official_530i_de_launch_context" in sources["BMW|5 Series (G30, 2017-2023)"]["sources"]
-    assert "official_50tfsi_quattro_scope_contradiction" in sources["Audi|A8 (D5, 2018-2026)"]["sources"]  # noqa: E501
-    assert "official_45tfsi_quattro_scope_contradiction" in sources["Audi|Q7 (4M, 2016-2026)"]["sources"]  # noqa: E501
+    assert (
+        "official_50tfsi_quattro_scope_contradiction"
+        in sources["Audi|A8 (D5, 2018-2026)"]["sources"]
+    )  # noqa: E501
+    assert (
+        "official_45tfsi_quattro_scope_contradiction"
+        in sources["Audi|Q7 (4M, 2016-2026)"]["sources"]
+    )  # noqa: E501
 
     _assert_contains_unresolved(
         sources["BMW|3 Series (G20, 2019-2025)"],

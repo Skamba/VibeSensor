@@ -96,10 +96,16 @@ def test_wave15_g70_i7_edrive50_uses_exact_standard_tire_override() -> None:
 def test_wave15_ratio_source_rows_capture_g30_g70_a8_q8_context() -> None:
     sources = _ratio_sources()
 
-    assert "official_540i_xdrive_exact_context" in sources["BMW|5 Series (G30, 2017-2023)"]["sources"]  # noqa: E501
-    assert "official_545e_xdrive_exact_ratios" in sources["BMW|5 Series (G30, 2017-2023)"]["sources"]  # noqa: E501
+    assert (
+        "official_540i_xdrive_exact_context" in sources["BMW|5 Series (G30, 2017-2023)"]["sources"]
+    )  # noqa: E501
+    assert (
+        "official_545e_xdrive_exact_ratios" in sources["BMW|5 Series (G30, 2017-2023)"]["sources"]
+    )  # noqa: E501
     assert "official_i7_edrive50_de_context" in sources["BMW|7 Series (G70, 2023-2026)"]["sources"]
-    assert "official_60tfsie_quattro_exact_late_cycle" in sources["Audi|A8 (D5, 2018-2026)"]["sources"]  # noqa: E501
+    assert (
+        "official_60tfsie_quattro_exact_late_cycle" in sources["Audi|A8 (D5, 2018-2026)"]["sources"]
+    )  # noqa: E501
     assert "official_60tfsie_quattro_exact_ratios" in sources["Audi|Q8 (4M8, 2019-2026)"]["sources"]
 
     _assert_contains_unresolved(

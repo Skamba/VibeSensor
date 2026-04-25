@@ -41,7 +41,9 @@ def test_wave17_g60_520i_uses_exact_variant_override() -> None:
     assert gearbox["name"] == "8-speed Steptronic transmission"
     assert gearbox["final_drive_ratio"] == pytest.approx(3.077)
     assert gearbox["top_gear_ratio"] == pytest.approx(0.64)
-    assert gearbox["gear_ratios"] == pytest.approx([5.25, 3.36, 2.172, 1.72, 1.316, 1.0, 0.822, 0.64])  # noqa: E501
+    assert gearbox["gear_ratios"] == pytest.approx(
+        [5.25, 3.36, 2.172, 1.72, 1.316, 1.0, 0.822, 0.64]
+    )  # noqa: E501
 
     assert sedan["tire_options"] == [
         {
@@ -57,7 +59,9 @@ def test_wave17_g60_520i_uses_exact_variant_override() -> None:
 
 
 def test_wave17_g32_640i_xdrive_uses_exact_variant_gearbox_override() -> None:
-    fastback = resolve_variant(_entry_for("BMW", "6 Series Gran Turismo (G32, 2018-2024)"), "640i xDrive")  # noqa: E501
+    fastback = resolve_variant(
+        _entry_for("BMW", "6 Series Gran Turismo (G32, 2018-2024)"), "640i xDrive"
+    )  # noqa: E501
 
     assert fastback["gearboxes"] == [
         {
@@ -73,9 +77,17 @@ def test_wave17_ratio_source_rows_capture_bmw_and_audi_context() -> None:
 
     assert "official_520i_exact_context" in sources["BMW|5 Series (G30, 2017-2023)"]["sources"]
     assert "official_520i_exact_context" in sources["BMW|5 Series (G60, 2024-2026)"]["sources"]
-    assert "official_640i_xdrive_exact_context" in sources["BMW|6 Series Gran Turismo (G32, 2018-2024)"]["sources"]  # noqa: E501
-    assert "official_30tfsi_quattro_early_0b5_context" in sources["Audi|A6 (C7, 2011-2018)"]["sources"]  # noqa: E501
-    assert "official_30tdi_quattro_launch_context" in sources["Audi|A7 Sportback (C7, 2011-2018)"]["sources"]  # noqa: E501
+    assert (
+        "official_640i_xdrive_exact_context"
+        in sources["BMW|6 Series Gran Turismo (G32, 2018-2024)"]["sources"]
+    )  # noqa: E501
+    assert (
+        "official_30tfsi_quattro_early_0b5_context" in sources["Audi|A6 (C7, 2011-2018)"]["sources"]
+    )  # noqa: E501
+    assert (
+        "official_30tdi_quattro_launch_context"
+        in sources["Audi|A7 Sportback (C7, 2011-2018)"]["sources"]
+    )  # noqa: E501
 
     _assert_contains_unresolved(
         sources["BMW|5 Series (G30, 2017-2023)"],

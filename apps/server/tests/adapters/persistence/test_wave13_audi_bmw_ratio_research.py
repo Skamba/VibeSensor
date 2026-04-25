@@ -125,7 +125,10 @@ def test_wave13_ratio_source_rows_capture_g42_a3_a5_q3_context() -> None:
     sources = _ratio_sources()
 
     assert "official_230i_exact_ratios" in sources["BMW|2 Series Coupe (G42, 2022-2026)"]["sources"]
-    assert "official_m240i_xdrive_launch_exact_ratios" in sources["BMW|2 Series Coupe (G42, 2022-2026)"]["sources"]  # noqa: E501
+    assert (
+        "official_m240i_xdrive_launch_exact_ratios"
+        in sources["BMW|2 Series Coupe (G42, 2022-2026)"]["sources"]
+    )  # noqa: E501
     assert "official_35tdi_limousine_exact_ratios" in sources["Audi|A3 (8Y, 2021-2026)"]["sources"]
     assert "exact_35tdi_late_b9_ratios" in sources["Audi|A5 (B9, 2017-2024)"]["sources"]
     assert "official_35tfsi_exact_states" in sources["Audi|Q3 (F3, 2019-2026)"]["sources"]
