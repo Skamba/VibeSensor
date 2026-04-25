@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from vibesensor.domain import (
     DIAGNOSIS_CLOSE_ALTERNATIVE_REEVALUATION_GAP,
+    CarOrderReferenceStatus,
     DiagnosisAssessment,
     DiagnosisAssessmentFactor,
     DiagnosisAssessmentInputs,
@@ -39,6 +40,7 @@ def build_whole_run_diagnosis_summaries(
     context_intervals: tuple[WholeRunContextInterval, ...],
     order_summaries: tuple[OrderTraceSummary, ...],
     spatial_summaries: tuple[SpatialEvidenceSummary, ...],
+    car_order_reference_status: CarOrderReferenceStatus | None,
 ) -> tuple[WholeRunDiagnosisSummary, ...]:
     """Rank persisted whole-run candidates into compact diagnosis summaries."""
 
@@ -50,13 +52,20 @@ def build_whole_run_diagnosis_summaries(
             analysis_metadata=analysis_metadata,
             order_summary=order_summary,
             spatial_summary=spatial_by_key.get(order_summary.hypothesis_key),
+            car_order_reference_status=car_order_reference_status,
             alternative_source=None,
             confidence_gap_to_alternative=None,
         )
         for order_summary in order_summaries
     )
     final = tuple(
-        _reevaluate_with_alternative(candidate, initial, analysis_metadata) for candidate in initial
+        _reevaluate_with_alternative(
+            candidate,
+            initial,
+            analysis_metadata,
+            car_order_reference_status,
+        )
+        for candidate in initial
     )
     ranked = sorted(
         final,
@@ -159,6 +168,7 @@ def _reevaluate_with_alternative(
     candidate: _CandidateEvaluation,
     initial: tuple[_CandidateEvaluation, ...],
     analysis_metadata: Mapping[str, object],
+    car_order_reference_status: CarOrderReferenceStatus | None,
 ) -> _CandidateEvaluation:
     alternative = _closest_alternative_candidate(candidate, initial)
     if alternative is None:
@@ -170,6 +180,7 @@ def _reevaluate_with_alternative(
         analysis_metadata=analysis_metadata,
         order_summary=candidate.order_summary,
         spatial_summary=candidate.spatial_summary,
+        car_order_reference_status=car_order_reference_status,
         alternative_source=alternative.order_summary.suspected_source,
         confidence_gap_to_alternative=round(score_gap, 2),
     )
@@ -202,9 +213,18 @@ def _evaluate_candidate(
     analysis_metadata: Mapping[str, object],
     order_summary: OrderTraceSummary,
     spatial_summary: SpatialEvidenceSummary | None,
+    car_order_reference_status: CarOrderReferenceStatus | None,
     alternative_source: str | None,
     confidence_gap_to_alternative: float | None,
 ) -> _CandidateEvaluation:
+    order_analysis_car_data = (
+        car_order_reference_status.order_analysis_car_data_confidence(
+            ref_sources=order_summary.ref_sources,
+            suspected_source=order_summary.suspected_source,
+        )
+        if car_order_reference_status is not None
+        else None
+    )
     assessment = score_diagnosis_assessment_inputs(
         DiagnosisAssessmentInputs(
             base_confidence=_base_confidence(order_summary, spatial_summary),
@@ -232,6 +252,12 @@ def _evaluate_candidate(
                 analysis_metadata.get("whole_run_context_missing_rpm_window_count")
             )
             + _count(analysis_metadata.get("whole_run_context_stale_rpm_window_count")),
+            car_data_reference_scope=(
+                order_analysis_car_data.scope if order_analysis_car_data is not None else None
+            ),
+            car_data_confidence=(
+                order_analysis_car_data.confidence if order_analysis_car_data is not None else None
+            ),
             confidence_gap_to_alternative=confidence_gap_to_alternative,
         )
     )
@@ -362,6 +388,8 @@ def _diagnosis_factor_from_assessment_factor(factor: DiagnosisAssessmentFactor) 
             speed_gap_window_count=factor.details.speed_gap_window_count,
             rpm_gap_window_count=factor.details.rpm_gap_window_count,
             fallback_reason=factor.details.fallback_reason,
+            car_data_reference_scope=factor.details.car_data_reference_scope,
+            car_data_confidence=factor.details.car_data_confidence,
         ),
     )
 

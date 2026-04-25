@@ -96,6 +96,7 @@ type DiagnosisFactorKey = Literal[
     "tight_order_lock",
     "localized_support",
     "clean_signal",
+    "user_confirmed_vehicle_data",
     "summary_only",
     "raw_replay_incomplete",
     "legacy_context",
@@ -110,6 +111,9 @@ type DiagnosisFactorKey = Literal[
     "weak_spatial",
     "close_alternative",
     "incomplete_reference",
+    "secondary_vehicle_data",
+    "approximate_vehicle_data",
+    "unverified_vehicle_data",
 ]
 type DiagnosisFactorPolarity = Literal["support", "counterevidence"]
 type DiagnosisFactorSeverity = Literal["low", "medium", "high"]
@@ -335,6 +339,8 @@ class DiagnosisFactorDetailsResponse(TypedDict, total=False):
     speed_gap_window_count: int | None
     rpm_gap_window_count: int | None
     fallback_reason: str | None
+    car_data_reference_scope: str | None
+    car_data_confidence: str | None
 
 
 class DiagnosisFactorResponse(TypedDict, total=False):
