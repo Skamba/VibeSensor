@@ -186,19 +186,19 @@
     "BMW|2 Series Coupe (G42, 2022-2026)": {
       "car_index": 3,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains under the current evidence: eU official BMW sources confirm a drivetrain split (core RWD lineup vs M240i xDrive AWD) and 8-speed Steptronic presence, but they do not provide extractable, model-specific numeric final-drive/top-gear values in the fetched content; existing ratio fields are therefore preserved without changes.",
+      "decision_summary": "Wave 11 validation sharpens the official Germany/EU picture for the G42 230i target: the current BMW Germany technical-data page and the checked 2024/2025 Germany price lists list 230i as rear-wheel drive with 8-Gang automatic/Steptronic Sport wording, while the 07/2021 official launch press kit describes the four-cylinder models as rear-wheel drive and reserves xDrive for M240i xDrive. No checked official Germany/EU source supports an exact 230i xDrive configuration, so the current AWD variant is now recorded as a market-scope contradiction but left unchanged in production until the row's intended market coverage is clarified.",
       "unresolved": [
         {
-          "item": "Model-specific numeric final drive ratios for EU G42 variants",
-          "reason": "Not present in reliably extractable form from fetched official BMW EU pages/documents in this run."
+          "item": "Whether BMW 230i xDrive belongs in the G42 row at all",
+          "reason": "Checked official BMW Germany/EU sources now consistently show 230i as rear-wheel drive and reserve xDrive for M240i xDrive, but this pass did not recover enough official non-Germany market evidence to prove whether the existing AWD 230i variant is an intentional non-EU/global carry-over or simply unsupported library data."
         },
         {
-          "item": "Model-specific top gear ratios for EU G42 variants",
-          "reason": "Not present in reliably extractable form from fetched official BMW EU pages/documents in this run."
+          "item": "Model-specific numeric final drive and top-gear ratios for the supported EU G42 petrol variants",
+          "reason": "Checked official BMW Germany/EU sources resolved the current RWD-vs-xDrive variant lineup and tire context, but they still did not provide extractable numeric final-drive or top-gear tables for the supported 220i/230i/M240i xDrive variants."
         },
         {
           "item": "EU applicability of the existing '6-speed manual' gearbox entry across 2022-2026 range",
-          "reason": "Fetched official BMW EU pages here confirmed 8-speed Steptronic references but did not provide a complete transmission matrix by model-year/market in extractable form."
+          "reason": "Checked official BMW Germany/EU launch and current-market material consistently points at 8-speed automatic/Steptronic-only support for the visible petrol lineup, but this pass still did not recover one full official transmission matrix proving when, where, or whether the broad-row 6-speed manual entry applies."
         }
       ],
       "sources": {
@@ -233,6 +233,28 @@
             "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw2er.pdf.coredownload.pdf",
             "note": "Official BMW Germany price-list PDF endpoint was identified from BMW pages, but text extraction failed in this run, so no numeric ratio confirmation was possible.",
             "confidence": "low"
+          }
+        ],
+        "official_230i_market_scope_contradiction": [
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/2er/2-series-coupe/bmw-2er-coupe-technische-daten.html",
+            "note": "Official BMW Germany technical-data page lists 230i as rear-wheel drive with 8-Gang automatic wording and shows xDrive only on M240i xDrive, not on 230i.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/2-series/coupe/2024/preisliste-bmw2er.pdf.coredownload.pdf",
+            "note": "Official BMW Germany 2024 price list lists 230i M Sport with 8-Gang Steptronic Sport and no 230i xDrive entry.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw2er.pdf.coredownload.inline.pdf",
+            "note": "Official BMW Germany 2025/2026 price list again lists 230i M Sport as rear-wheel-drive market context only, with no 230i xDrive entry and a 225/45 R18 standard / 225/40 R19 front + 255/35 R19 rear optional tire matrix.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0336854EN/the-all-new-bmw-2-series-coup%C3%A9",
+            "note": "Official BMW global launch press kit states that the new coupe launches with rear-wheel-driven four-cylinder models and M240i xDrive, with the 230i Coup\u00e9 joining in summer 2022 as part of the rear-wheel-drive core lineup.",
+            "confidence": "high"
           }
         ],
         "official_lookup_attempts": [
@@ -1626,8 +1648,16 @@
     "BMW|X4 (G02, 2019-2025)": {
       "car_index": 28,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official BMW exact technical-data documents now confirm two checked G02 X4 M40i states for Germany/ACEA markets: 08/2018 with 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires; and 04/2020 with 8-Gang Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, the same final drive 3.385, and the same standard staggered 20-inch fitment. Wave 10 validation now also adds exact xDrive30i context: the checked 09/2018 and 03/2021 official sheets agree on final drive 3.385, top gear 0.640, and standard 225/60 R18 tires but disagree on the full forward and reverse ratios, while the current Germany price list confirms standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments. The broad row remains unchanged because BMW's own exact xDrive30i and M40i ratio sheets conflict across the represented span and this pass did not recover one official year-split-safe package that closes the full 2019-2025 row.",
+      "decision_summary": "Official BMW exact technical-data documents now confirm two checked G02 X4 M40i states for Germany/ACEA markets: 08/2018 with 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires; and 04/2020 with 8-Gang Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, the same final drive 3.385, and the same standard staggered 20-inch fitment. Wave 10 validation now also adds exact xDrive30i context: the checked 09/2018 and 03/2021 official sheets agree on final drive 3.385, top gear 0.640, and standard 225/60 R18 tires but disagree on the full forward and reverse ratios, while the current Germany price list confirms standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments. Wave 11 adds the parallel xDrive20i result: the checked 04/2018 and 03/2021 official sheets likewise agree on final drive 3.385, top gear 0.640, and standard 225/60 R18 tires but publish conflicting full forward and reverse ratios, and the current Germany price list confirms the same 18/19/20/21-inch tire matrix. The broad row remains unchanged because BMW's own exact xDrive20i, xDrive30i, and M40i ratio sheets conflict across the represented span and this pass still does not close the full 2019-2025 row with one year-split-safe production package.",
       "unresolved": [
+        {
+          "item": "BMW X4 xDrive20i exact gear-ratio and reverse-ratio applicability across the full G02 row span",
+          "reason": "Official BMW xDrive20i technical-data sheets now prove final drive 3.385, top gear 0.640, and the standard 225/60 R18 fitment, but the full forward and reverse ratios differ between the checked 04/2018 and 03/2021 documents, so one shared production mapping would be inaccurate without a year split."
+        },
+        {
+          "item": "BMW X4 xDrive20i current optional wheel/tire matrix applicability and transmission subtype code",
+          "reason": "Official BMW sources now prove the current Germany-market xDrive20i tire matrix and 8-Gang Steptronic wording, but they do not publish a gearbox subtype code or one exact official matrix proving unchanged 19/20/21-inch applicability across the full represented row."
+        },
         {
           "item": "BMW X4 xDrive30i exact gear-ratio and reverse-ratio applicability across the full G02 row span",
           "reason": "Official BMW xDrive30i technical-data sheets now prove final drive 3.385, top gear 0.640, and the standard 225/60 R18 fitment, but the full forward and reverse ratios differ between the checked 09/2018 and 03/2021 documents, so one shared production mapping would be inaccurate without a year split."
@@ -1641,8 +1671,8 @@
           "reason": "Official BMW M40i technical-data sheets now prove two exact ratio packages within the represented 2019-2025 span, but the launch 08/2018 and 04/2020 exact sheets disagree on the full forward and reverse ratios, so one shared production mapping would be inaccurate without a year split."
         },
         {
-          "item": "BMW X4 (G02, 2019-2025) full EU variant matrix beyond the exact xDrive30i and M40i mappings",
-          "reason": "This pass resolves exact official xDrive30i and M40i source-ledger evidence, but it does not establish the full official ratio and tire matrix for every other G02 variant represented by the broad row."
+          "item": "BMW X4 (G02, 2019-2025) full EU variant matrix beyond the exact xDrive20i, xDrive30i, and M40i mappings",
+          "reason": "This pass resolves exact official xDrive20i, xDrive30i, and M40i source-ledger evidence, but it does not establish the full official ratio and tire matrix for every other G02 variant represented by the broad row."
         },
         {
           "item": "BMW X4 M40i exact optional wheel/tire matrix and transmission subtype code",
@@ -1676,6 +1706,23 @@
           {
             "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmwx4.pdf.asset.1749047582909.pdf",
             "note": "Official BMW Germany price-list PDF confirming the current xDrive30i tire matrix and gearbox wording: 8-Gang Steptronic Sport, standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments.",
+            "confidence": "high"
+          }
+        ],
+        "official_xdrive20i_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0280350EN/406525",
+            "note": "Official BMW technical-data PDF valid from 04/2018 for the exact X4 xDrive20i: xDrive AWD, 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard 225/60 R18 tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329599EN/476188",
+            "note": "Official BMW technical-data PDF valid from 03/2021 for the exact X4 xDrive20i: 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard 225/60 R18 tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmwx4.pdf.asset.1749047582909.pdf",
+            "note": "Official BMW Germany price-list PDF confirming the current xDrive20i tire matrix and gearbox wording: 8-Gang Steptronic, standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments.",
             "confidence": "high"
           }
         ],
@@ -2829,11 +2876,19 @@
     "Audi|A5 (B9, 2017-2024)": {
       "car_index": 49,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verified Audi A5 B9 S tronic final-drive ratios from official Audi UK and Audi MediaCenter technical PDFs. Later exact 45 TFSI quattro Coupe and Sportback sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW MHEV configuration, but the broad 2017-2024 row remains unchanged until the earlier span is proven at the same granularity.",
+      "decision_summary": "Verified Audi A5 B9 S tronic final-drive ratios from official Audi UK and Audi MediaCenter technical PDFs. Later exact 45 TFSI quattro Coupe and Sportback sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW MHEV configuration. Wave 11 validation now adds exact late-B9 Germany 40 TFSI evidence from the 03/20/2024 A5 Coup\u00e9 and 06/13/2024 A5 Sportback technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.234, and basic tire 225/50 R17. The broad 2017-2024 row remains unchanged because official 2020 launch material still shows an earlier 140 kW 40 TFSI state and this pass did not recover year-spanning evidence proving one unchanged package across the whole row.",
       "unresolved": [
+        {
+          "item": "Broad-row Audi A5 B9 40 TFSI production-data applicability across the full represented span",
+          "reason": "Checked exact late-B9 Germany Coup\u00e9 and Sportback PDFs resolve the 150 kW 40 TFSI mapping, but official 2020 launch material still shows an earlier 140 kW 40 TFSI state and this pass did not recover the early exact technical-data sheets needed to prove one unchanged 2019-2024 package."
+        },
         {
           "item": "Broad-row Audi A5 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
           "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW Coupe and Sportback, but this pass did not verify whether the earlier years in the broad row use the same exact mapping."
+        },
+        {
+          "item": "Audi A5 B9 40 TFSI transmission-code and optional tire-matrix confirmation",
+          "reason": "Official Audi exact material now proves the late-B9 40 TFSI drivetrain, full ratio set, reverse ratio, final drive 4.234, and the 225/50 R17 basic tire, but it does not publish the gearbox-family code or a full optional wheel/tire matrix for the exact 40 TFSI target."
         }
       ],
       "sources": {
@@ -2868,6 +2923,23 @@
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1073/file_en/5b4b65c8ae72cd8942fa0df105e4c3743645d7ab/eTD-Audi-A5-Sportback-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf?disposition=attachment",
             "note": "Official Audi MediaCenter cross-check PDF for the exact A5 Sportback 45 TFSI quattro 195 kW with the same ratio block, final drive 4.410, and 225/50 R17 basic tire fitment.",
+            "confidence": "high"
+          }
+        ],
+        "exact_40tfsi_late_b9_ratios": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/970/file_de/3929d8c79ac5796cab7777c7f0cf691d95d6ec56/TD-Audi-A5-Coupe-40-TFSI-S_tronic-150kW-MHEV_240320.pdf?1711380887",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A5 Coup\u00e9 40 TFSI S tronic 150 kW MHEV: Frontantrieb, 7-stufige S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.234, and basic tire 225/50 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/964/file_de/1efb854a2a376cbaeaba745c036c20e5805ecd0a/TD-Audi-A5-Sportback-40-TFSI-S_tronic-150kW-MHEV_240613.pdf?1718361368",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A5 Sportback 40 TFSI S tronic 150 kW MHEV confirming the same Frontantrieb mapping, ratio block, reverse ratio 2.750, final drive 4.234, and basic tire 225/50 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/en/press-releases/the-audi-a5-new-look-and-new-technologies-2020-12342",
+            "note": "Official Audi launch material showing that the early Germany/Europe 40 TFSI state was still a 140 kW configuration, which keeps broad-row production promotion unsafe without an early exact technical-data sheet.",
             "confidence": "high"
           }
         ]
@@ -3350,7 +3422,7 @@
     "Audi|Q3 (F3, 2019-2026)": {
       "car_index": 58,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official Audi Germany exact technical-data PDFs now confirm the old-generation Q3 40 TFSI quattro mapping through 05.06.2025: 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17 for both the Q3 and Q3 Sportback. The broad row remains unchanged because the current schema cannot safely encode split final drives, the exact optional tire matrix was not recovered, and Audi's own 2025 launch material shows that the current `2019-2026` row crosses the old-generation to new-generation boundary.",
+      "decision_summary": "Official Audi Germany exact technical-data PDFs now confirm the old-generation Q3 40 TFSI quattro mapping through 05.06.2025: 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17 for both the Q3 and Q3 Sportback. Wave 11 validation now adds the parallel exact old-generation Q3 40 TDI quattro mapping through the same 05.06.2025 Germany sheets: 7-speed S tronic, forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17 for both Q3 and Q3 Sportback. The broad row remains unchanged because the current schema cannot safely encode split final drives, the exact optional tire matrix was not recovered, and Audi's own 2025 launch material shows that the current `2019-2026` row crosses the old-generation to new-generation boundary.",
       "unresolved": [
         {
           "item": "Audi Q3 40 TFSI quattro production-data applicability across the represented old-generation row span",
@@ -3363,6 +3435,14 @@
         {
           "item": "Audi Q3 (F3, 2019-2026) model-year boundary, transmission-code, and optional tire-matrix confirmation",
           "reason": "Official Audi sources now prove the old-generation exact ratio block, reverse ratio, and basic tire, and they also show the new third-generation Q3 arrives in summer 2025, but this pass did not recover a full old-generation optional wheel/tire matrix or an official gearbox-family code."
+        },
+        {
+          "item": "Audi Q3 40 TDI quattro production-data applicability across the represented old-generation row span",
+          "reason": "Checked exact Germany-market 05.06.2025 Q3 and Q3 Sportback technical-data PDFs resolve the old-generation 40 TDI quattro mapping, but this pass did not recover year-by-year official sheets proving one unchanged diesel package across the full represented span."
+        },
+        {
+          "item": "Schema-safe encoding of exact Audi Q3 40 TDI quattro split final-drive values",
+          "reason": "The checked official 40 TDI quattro technical-data PDFs publish two final-drive values 4.813 / 3.667 for the target, but the current row stores only one final_drive_ratio field and the exact old-generation optional tire matrix still remains unresolved."
         }
       ],
       "sources": {
@@ -3375,6 +3455,23 @@
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1245/file_de/eeac1506a8560e5cd2dda924150f9ed6334fb84f/TD-Audi-Q3-Sportback-40-TFSI-quattro-S_tronic-140kW_250605.pdf?1749195589",
             "note": "Official Audi MediaCenter Germany cross-check PDF for the exact Q3 Sportback 40 TFSI quattro S tronic 140 kW with the same ratio block, reverse ratio 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/en/press-releases/versatile-sporty-and-digitally-connected-the-new-audi-q3-16771",
+            "note": "Official Audi MediaCenter launch release for the new third-generation Q3 confirming the old-generation boundary and why the current `2019-2026` row now spans more than one official model state.",
+            "confidence": "high"
+          }
+        ],
+        "official_40tdi_quattro_exact_ratios": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/761/file_de/920cf84b13a26d902c0818dc1cf31aadb18b8ad2/TD-Audi-Q3-40-TDI-quattro-S_tronic-142kW_250605.pdf?1749195008",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact Q3 40 TDI quattro S tronic 142 kW: bedarfsgerechter Allradantrieb quattro mit elektronisch geregelter Lamellenkupplung, 7-stufige S tronic, forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1122/file_de/8dd1e8796e0f7b353960c88ebcd343fbde5c38d9/TD-Audi-Q3-Sportback-40-TDI-quattro-S_tronic-142kW_250605.pdf?1749195587",
+            "note": "Official Audi MediaCenter Germany cross-check PDF for the exact Q3 Sportback 40 TDI quattro S tronic 142 kW with the same ratio block, reverse ratio 2.900, split final drives 4.813 / 3.667, and the same 215/65 R17 basic tire context.",
             "confidence": "high"
           },
           {
@@ -3449,7 +3546,7 @@
     "Audi|Q5 (FY, 2017-2026)": {
       "car_index": 60,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verified Audi Q5 FY S tronic final-drive ratios from official Audi MediaCenter and Audi technical data PDFs. Exact Germany-market technical-data sheets for the Q5 45 TFSI quattro now confirm top gear 0.433, full forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17 across checked 2019 and 2024 documents, which is sufficient to correct the variant-scoped production top gear and add the exact ratio set. Wave 10 validation now also confirms the late-FY exact Q5 40 TFSI quattro mapping from the 06/04/2024 Germany technical-data PDF: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17. The existing 03/27/2025 front-wheel-drive 150 kW Q5 SUV source is retained only as evidence that a newer-generation Q5 state exists and must not be treated as FY 40 TFSI evidence. Later exact 55 TFSI e quattro sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 235/60 R18 basic tire for the 270 kW PHEV configuration, but the broad FY row remains unchanged until the represented production span is proven at the same granularity.",
+      "decision_summary": "Verified Audi Q5 FY S tronic final-drive ratios from official Audi MediaCenter and Audi technical data PDFs. Exact Germany-market technical-data sheets for the Q5 45 TFSI quattro now confirm top gear 0.433, full forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17 across checked 2019 and 2024 documents, which is sufficient to correct the variant-scoped production top gear and add the exact ratio set. Wave 10 validation now also confirms the late-FY exact Q5 40 TFSI quattro mapping from the 06/04/2024 Germany technical-data PDF: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17. Wave 11 validation adds exact 40 TDI quattro context across two contradictory official FY-era Germany states: the 09/27/2019 sheet proves AWD, 6-speed manual, forward ratios 3.778 / 1.957 / 1.241 / 0.912 / 0.692 / 0.571, reverse 3.333, final drive 2.647, and basic tire 235/65 R17; the 06/04/2024 sheet proves quattro ultra AWD, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, and the same 235/65 R17 basic tire. The existing 03/27/2025 front-wheel-drive 150 kW Q5 SUV source is retained only as evidence that a newer-generation Q5 state exists and must not be treated as FY 40 TFSI evidence. Later exact 55 TFSI e quattro sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 235/60 R18 basic tire for the 270 kW PHEV configuration, but the broad FY row remains unchanged until the represented production span is proven at the same granularity.",
       "unresolved": [
         {
           "item": "Broad-row Audi Q5 FY 40 TFSI production-data applicability across the represented span",
@@ -3462,6 +3559,14 @@
         {
           "item": "Broad-row Audi Q5 FY 55 TFSI e quattro top_gear_ratio applicability across the represented span",
           "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 270 kW 55 TFSI e quattro configuration, but this pass did not verify whether every year represented by the broad FY row uses the same exact mapping."
+        },
+        {
+          "item": "Broad-row Audi Q5 FY 40 TDI quattro production-data applicability across the represented span",
+          "reason": "Checked official Germany-market FY evidence now proves at least two contradictory 40 TDI quattro states within the represented row: a 2019 6-speed manual package with final drive 2.647 and a 2024 7-speed S tronic package with final drive 5.302, so no single production mapping is safe without a year split."
+        },
+        {
+          "item": "Audi Q5 FY 40 TDI quattro exact optional tire matrix, gearbox-family code, and FY boundary",
+          "reason": "Official Audi exact material now proves both the 2019 manual and 2024 S tronic 40 TDI quattro ratio packages and the shared 235/65 R17 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or any FY continuity beyond Audi's own 'bis 2024' boundary."
         }
       ],
       "sources": {
@@ -3508,6 +3613,23 @@
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1452/file_en/1f20ec6b2a7e7f74193b6d77c5513468059560e8/eTD-Audi-Q5-SUV-TFSI-S_tronic-150kW_250327.pdf?1743428500",
             "note": "Official Audi MediaCenter 03/27/2025 technical-data PDF for the newer-generation Q5 SUV TFSI S tronic 150 kW front-wheel-drive state; it is retained as boundary evidence showing that the current 2025 front-drive source is not FY Q5 40 TFSI evidence.",
+            "confidence": "high"
+          }
+        ],
+        "exact_40tdi_quattro_fy_states": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/951/file_de/882a1ba9c0e910a31233ea47216745dd30ebd89b/td_Q5_40_TDI_quattro_140_kW.pdf",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 09/27/2019 Q5 40 TDI quattro 140 kW: AWD, 6-speed manual, forward ratios 3.778 / 1.957 / 1.241 / 0.912 / 0.692 / 0.571, reverse 3.333, final drive 2.647, and basic tire 235/65 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1027/file_en/2cbcea158f0fd003e5a1519697c726fc3e844d8b/eTD-Audi-Q5-40-TDI-quattro-S_tronic-150kW-MHEV_240604.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 06/04/2024 FY Q5 40 TDI quattro 150 kW MHEV: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, and basic tire 235/65 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/audi-q5-bis-2024-16219",
+            "note": "Official Audi MediaCenter model page confirming that FY Q5 is explicitly scoped 'bis 2024', which is why the current broad `2017-2026` row cannot safely absorb one exact 40 TDI quattro production mapping.",
             "confidence": "high"
           }
         ],
