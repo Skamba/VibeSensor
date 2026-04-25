@@ -1,0 +1,14 @@
+{
+  "allowances": [
+    {
+      "rule": "pure_ev_requires_single_speed",
+      "entity": "BMW|X1 (U11, 2023-2026)|iX1 xDrive30",
+      "reason": "Legacy row still inherits shared non-EV gearbox data until an exact EV drivetrain row is captured."
+    },
+    {
+      "rule": "pure_ev_requires_single_speed",
+      "entity": "BMW|X2 (U10, 2024-2026)|iX2 xDrive30",
+      "reason": "Legacy row still inherits shared non-EV gearbox data until an exact EV drivetrain row is captured."
+    }
+  ]
+}
