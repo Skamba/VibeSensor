@@ -18,6 +18,7 @@ from vibesensor.domain import (
     TireSpec,
     VehicleConfiguration,
     VehicleConfigurationTireOption,
+    VehicleFieldConfidence,
     VehicleFieldProvenance,
 )
 from vibesensor.shared._data_files import resolve_static_data_file
@@ -47,6 +48,12 @@ class CarLibraryGearbox(TypedDict):
     final_drive_ratio: float
     top_gear_ratio: float
     gear_ratios: NotRequired[list[float]]
+    source_status: NotRequired[Literal["compat_projection", "exact_row"]]
+    final_drive_ratio_confidence: NotRequired[VehicleFieldConfidence]
+    top_gear_ratio_confidence: NotRequired[VehicleFieldConfidence]
+    gear_ratios_confidence: NotRequired[VehicleFieldConfidence]
+    transmission_confidence: NotRequired[VehicleFieldConfidence]
+    requires_manual_confirmation: NotRequired[bool]
 
 
 class CarLibraryTireOption(TypedDict):
@@ -116,6 +123,7 @@ class VehicleConfigurationFieldProvenanceRow(TypedDict):
         "gear_ratios",
         "drivetrain",
         "tire_dimensions",
+        "transmission_name",
     ]
     confidence: Literal[
         "official_exact",
@@ -311,8 +319,48 @@ def _project_legacy_variant_rows(
     engine_name = selected_variant.get("engine")
     drivetrain = selected_variant["drivetrain"]
     configs: list[VehicleConfiguration] = []
+    projection_note = (
+        "Projected from legacy model/variant gearbox data; treat as family-default until "
+        "an exact configuration row proves variant applicability."
+    )
     for gearbox in resolved["gearboxes"]:
         final_drive_ratio = gearbox["final_drive_ratio"]
+        field_provenance = [
+            VehicleFieldProvenance(
+                field_name="top_gear_ratio",
+                confidence="family_default",
+                notes=projection_note,
+            ),
+            VehicleFieldProvenance(
+                field_name="transmission_name",
+                confidence="family_default",
+                notes=projection_note,
+            ),
+        ]
+        if "gear_ratios" in gearbox:
+            field_provenance.append(
+                VehicleFieldProvenance(
+                    field_name="gear_ratios",
+                    confidence="family_default",
+                    notes=projection_note,
+                )
+            )
+        if drivetrain in {"FWD", "AWD"}:
+            field_provenance.append(
+                VehicleFieldProvenance(
+                    field_name="final_drive_front",
+                    confidence="family_default",
+                    notes=projection_note,
+                )
+            )
+        if drivetrain in {"RWD", "AWD"}:
+            field_provenance.append(
+                VehicleFieldProvenance(
+                    field_name="final_drive_rear",
+                    confidence="family_default",
+                    notes=projection_note,
+                )
+            )
         configs.append(
             VehicleConfiguration(
                 brand=base_entry["brand"],
@@ -332,9 +380,82 @@ def _project_legacy_variant_rows(
                 final_drive_rear=final_drive_ratio if drivetrain in {"RWD", "AWD"} else None,
                 transfer_case_ratio=1.0 if drivetrain == "AWD" else None,
                 source_status="compat_projection",
+                field_provenance=tuple(field_provenance),
             )
         )
     return tuple(configs)
+
+
+def _car_library_tire_options_from_configuration(
+    config: VehicleConfiguration,
+) -> list[CarLibraryTireOption]:
+    return [
+        {
+            "name": option.name,
+            "tire_width_mm": option.spec.width_mm,
+            "tire_aspect_pct": option.spec.aspect_pct,
+            "rim_in": option.spec.rim_in,
+        }
+        for option in config.tire_options
+    ]
+
+
+def _gearbox_row_from_configuration(config: VehicleConfiguration) -> CarLibraryGearbox | None:
+    final_drive_ratio = config.driven_final_drive_ratio
+    if final_drive_ratio is None:
+        return None
+    row: CarLibraryGearbox = {
+        "name": config.transmission_name,
+        "final_drive_ratio": final_drive_ratio,
+        "top_gear_ratio": config.top_gear_ratio,
+        "source_status": config.source_status,
+        "final_drive_ratio_confidence": config.order_reference_confidence("final_drive_ratio"),
+        "top_gear_ratio_confidence": config.order_reference_confidence("current_gear_ratio"),
+        "transmission_confidence": config.order_reference_confidence("transmission_name"),
+        "requires_manual_confirmation": config.requires_manual_drivetrain_confirmation,
+    }
+    if config.gear_ratios is not None:
+        gear_ratios_provenance = config.provenance_for("gear_ratios")
+        row["gear_ratios"] = list(config.gear_ratios)
+        row["gear_ratios_confidence"] = (
+            gear_ratios_provenance.confidence
+            if gear_ratios_provenance is not None
+            else config.order_reference_confidence("current_gear_ratio")
+        )
+    return row
+
+
+def _enrich_variant_with_vehicle_configurations(
+    base_entry: CarLibraryEntry,
+    variant: CarLibraryVariant,
+) -> CarLibraryVariant:
+    configs = resolve_vehicle_configurations(base_entry, variant["name"])
+    if not configs:
+        return variant
+    first_config = configs[0]
+    enriched = copy.deepcopy(variant)
+    gearboxes = [
+        gearbox
+        for gearbox in (_gearbox_row_from_configuration(config) for config in configs)
+        if gearbox is not None
+    ]
+    if gearboxes:
+        enriched["gearboxes"] = gearboxes
+    tire_options = _car_library_tire_options_from_configuration(first_config)
+    if tire_options:
+        enriched["tire_options"] = tire_options
+    enriched["tire_width_mm"] = first_config.default_tire.width_mm
+    enriched["tire_aspect_pct"] = first_config.default_tire.aspect_pct
+    enriched["rim_in"] = first_config.default_tire.rim_in
+    return enriched
+
+
+def _response_entry_for_model(entry: CarLibraryEntry) -> CarLibraryEntry:
+    response_entry = _deep_copy_entry(entry)
+    response_entry["variants"] = [
+        _enrich_variant_with_vehicle_configurations(entry, variant) for variant in entry["variants"]
+    ]
+    return response_entry
 
 
 def _load_vehicle_configurations_snapshot() -> list[VehicleConfiguration]:
@@ -393,7 +514,7 @@ def get_models_for_brand_type(brand: str, car_type: str) -> list[CarLibraryEntry
     Returns deep copies so callers cannot corrupt the cached library.
     """
     return [
-        _deep_copy_entry(entry)
+        _response_entry_for_model(entry)
         for entry in _CAR_LIBRARY
         if entry["brand"] == brand and entry["type"] == car_type
     ]

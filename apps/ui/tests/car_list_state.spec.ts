@@ -38,6 +38,7 @@ const labels: Record<string, string> = {
   "settings.car.value_missing": "Not set",
   "settings.car.tires_missing": "Tire size not set",
   "settings.car.incomplete_detail": "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
+  "settings.car.approximate_detail": "Approximate drivetrain ratios need review.",
   "settings.car.created_title": "Car added",
   "settings.car.created_body": "{name} was added and selected for this setup.",
   "settings.car.created_detail": "Review the highlighted row below or open Analysis to confirm the setup before the next run.",
@@ -147,6 +148,7 @@ test("buildSettingsCarListRenderModel produces typed row state for readiness, hi
     labelText: "Activate",
     type: "activate",
   });
+  expect(model.rows[1].completionDetailText).toBeNull();
   expect(model.rows[2]).toMatchObject({
     activeState: "inactive",
     carId: "car-new",
@@ -168,6 +170,45 @@ test("buildSettingsCarListRenderModel produces typed row state for readiness, hi
     { labelText: "Drive", valueText: "Not set" },
     { labelText: "Top Gear", valueText: "Not set" },
   ]);
+});
+
+test("buildSettingsCarListRenderModel surfaces approximate drivetrain guidance for ready cars", () => {
+  const model = buildSettingsCarListRenderModel({
+    cars: [
+      makeCar({
+        id: "car-approx",
+        name: "Approximate Car",
+        aspects: {
+          tire_width_mm: 225,
+          tire_aspect_pct: 45,
+          rim_in: 18,
+          final_drive_ratio: 3.08,
+          current_gear_ratio: 0.64,
+        },
+        order_reference_status: {
+          selection_source_status: "compat_projection",
+          final_drive_ratio_confidence: "family_default",
+          current_gear_ratio_confidence: "family_default",
+          transmission_name: "8-speed automatic",
+          transmission_confidence: "family_default",
+          requires_manual_confirmation: true,
+        },
+      }),
+    ],
+    activeCarId: null,
+    t,
+    fmt,
+  });
+
+  expect(model.kind).toBe("rows");
+  if (model.kind !== "rows") {
+    throw new Error("Expected car rows");
+  }
+  expect(model.rows[0]).toMatchObject({
+    completionDetailText: "Approximate drivetrain ratios need review.",
+    isComplete: true,
+    readinessState: "ready",
+  });
 });
 
 test("buildSettingsCarListRenderModel produces the actionable empty state when no cars exist", () => {

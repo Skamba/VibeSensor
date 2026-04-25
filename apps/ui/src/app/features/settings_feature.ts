@@ -1,10 +1,10 @@
 import type { QueryClient } from "@tanstack/query-core";
 
+import type { CarOrderReferenceStatus, CarsPayload } from "../../api/types";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import { createCarSelectionDerivedState } from "../car_selection_state";
 import type { SettingsState, ShellState } from "../ui_app_state";
 import { effectOnChange, untracked, type ReadonlySignal } from "../ui_signals";
-import type { CarsPayload } from "../../api/types";
 import {
   createSettingsAnalysisModule,
   type SettingsAnalysisModule,
@@ -63,6 +63,7 @@ export interface SettingsFeature {
     name: string,
     carType: string,
     aspects: Record<string, number>,
+    orderReferenceStatus?: CarOrderReferenceStatus,
     variant?: string,
   ): Promise<void>;
   bindHandlers(): void;

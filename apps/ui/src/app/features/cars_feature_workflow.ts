@@ -3,6 +3,7 @@ import type { QueryClient } from "@tanstack/query-core";
 import type {
   CarLibraryGearbox,
   CarLibraryModel,
+  CarOrderReferenceStatus,
   CarLibraryTireOption,
   CarLibraryVariant,
 } from "../../api/types";
@@ -113,6 +114,7 @@ export interface CarsFeatureWorkflowDeps {
     name: string,
     carType: string,
     aspects: Record<string, number>,
+    orderReferenceStatus?: CarOrderReferenceStatus,
     variant?: string,
   ): Promise<void>;
   fmt: (value: number, digits?: number) => string;
@@ -493,6 +495,14 @@ export function createCarsFeatureWorkflow(
             tire_aspect_pct: tire.tire_aspect_pct,
             tire_width_mm: tire.tire_width_mm,
           },
+          {
+            current_gear_ratio_confidence: gearbox.top_gear_ratio_confidence ?? "unverified",
+            final_drive_ratio_confidence: gearbox.final_drive_ratio_confidence ?? "unverified",
+            requires_manual_confirmation: gearbox.requires_manual_confirmation ?? true,
+            selection_source_status: gearbox.source_status ?? "compat_projection",
+            transmission_confidence: gearbox.transmission_confidence ?? "unverified",
+            transmission_name: gearbox.name,
+          },
           state.selectedVariant?.name,
         );
         isOpen.value = false;
@@ -514,6 +524,12 @@ export function createCarsFeatureWorkflow(
           rim_in: Number(inputs.rim),
           tire_aspect_pct: Number(inputs.tireAspect),
           tire_width_mm: Number(inputs.tireWidth),
+        },
+        {
+          current_gear_ratio_confidence: "user_confirmed",
+          final_drive_ratio_confidence: "user_confirmed",
+          requires_manual_confirmation: false,
+          selection_source_status: "manual_entry",
         },
         state.selectedVariant?.name,
       );

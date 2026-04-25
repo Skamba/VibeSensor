@@ -74,6 +74,60 @@ def test_car_settings_update_car_aspects() -> None:
     assert aspects["rim_in"] == DEFAULT_CAR_ASPECTS["rim_in"]
 
 
+def test_car_settings_update_car_decodes_order_reference_status_payload() -> None:
+    services = build_settings_services()
+    created = services.car_settings.add_car({"name": "Library Car"})
+    car_id = created.cars[0]["id"]
+
+    updated = services.car_settings.update_car(
+        car_id,
+        {
+            "order_reference_status": {
+                "selection_source_status": "compat_projection",
+                "final_drive_ratio_confidence": "family_default",
+                "current_gear_ratio_confidence": "family_default",
+                "transmission_name": "8-speed automatic",
+                "transmission_confidence": "family_default",
+            }
+        },
+    )
+
+    persisted = next(car for car in updated.cars if car["id"] == car_id)["order_reference_status"]
+    assert persisted["selection_source_status"] == "compat_projection"
+    assert persisted["requires_manual_confirmation"] is True
+    assert persisted["transmission_name"] == "8-speed automatic"
+
+
+def test_analysis_settings_update_marks_manual_ratio_overrides_user_confirmed() -> None:
+    services = build_settings_services()
+    created = services.car_settings.add_car(
+        {
+            "name": "Approximate",
+            "order_reference_status": {
+                "selection_source_status": "exact_row",
+                "final_drive_ratio_confidence": "family_default",
+                "current_gear_ratio_confidence": "family_default",
+                "transmission_name": "8-speed automatic",
+                "transmission_confidence": "official_exact",
+            },
+        }
+    )
+    car_id = created.cars[0]["id"]
+    services.car_settings.set_active_car(car_id)
+
+    services.analysis_settings.update_active_car_aspects(
+        {"final_drive_ratio": 3.91, "current_gear_ratio": 0.82}
+    )
+
+    snapshot = services.car_settings.active_car_snapshot()
+    assert snapshot is not None
+    assert snapshot.order_reference_status is not None
+    assert snapshot.order_reference_status.final_drive_ratio_confidence == "user_confirmed"
+    assert snapshot.order_reference_status.current_gear_ratio_confidence == "user_confirmed"
+    assert snapshot.order_reference_status.transmission_confidence == "official_exact"
+    assert snapshot.order_reference_status.requires_manual_confirmation is False
+
+
 def test_analysis_settings_update_active_car_aspects() -> None:
     services = build_settings_services()
     created = services.car_settings.add_car({"name": "Editable"})

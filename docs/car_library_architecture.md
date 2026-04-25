@@ -33,6 +33,19 @@ Current migration policy:
 4. Keep provenance inline with the exact row so values and source/confidence
    metadata cannot drift into separate ledgers.
 
+Issue #3232 tightens the consumer contract on top of that migration:
+
+- `/api/car-library/models` still returns the legacy numeric gearbox fields for
+  picker compatibility.
+- Variant gearbox entries now also include source/confidence metadata so the UI
+  can tell exact rows from compatibility projection.
+- Saved car profiles persist that same drivetrain-selection status under
+  `order_reference_status`, so approximate inherited ratios do not silently turn
+  into exact-looking saved settings.
+- Manual ratio edits on saved cars promote the touched ratio fields to
+  `user_confirmed`, but untouched approximate fields remain approximate until
+  the user confirms or replaces them.
+
 Issue #3229 starts this migration with a small BMW subset:
 
 - `4 Series (G22, 2021-2026) / 420i` for an exact ICE RWD row
@@ -56,6 +69,7 @@ for the fields that most directly affect order analysis:
 - `gear_ratios`
 - `drivetrain`
 - `tire_dimensions`
+- `transmission_name`
 
 Each provenance entry stores:
 
@@ -112,3 +126,21 @@ Issue #3231 starts this provenance path with representative BMW exact rows for:
 - `2 Series Active Tourer (F45, 2014-2021) / 225xe`
 - `3 Series (G20, 2019-2025) / 330i xDrive`
 - `5 Series (G60, 2024-2026) / i5 eDrive40`
+
+## No silent exact inheritance
+
+The UI and saved-car path must not present compatibility-projected drivetrain
+ratios as if they were exact just because the picker already has concrete
+numbers.
+
+The source of truth is the resolved `VehicleConfiguration`:
+
+- `source_status` tells callers whether the selected variant came from an exact
+  row or a compatibility projection.
+- `final_drive_ratio_confidence`, `top_gear_ratio_confidence`, and
+  `transmission_confidence` stay attached to the selected gearbox row in the
+  car-library API.
+- `Car.order_reference_status` persists the same selection metadata after the
+  wizard saves a car profile.
+- UI consumers should use `requires_manual_confirmation` to keep approximate
+  drivetrain values visibly approximate until the user confirms them.

@@ -52,6 +52,11 @@
         "notes": "Current exact row keeps the inherited ZF 8HP top-gear value until a G22-specific official table is linked."
       },
       {
+        "field_name": "transmission_name",
+        "confidence": "unverified",
+        "notes": "Current exact row still uses the inherited G22 8HP transmission label until a variant-specific transmission source is linked."
+      },
+      {
         "field_name": "drivetrain",
         "source_id": "variant_sources:BMW|4 Series (G22, 2021-2026):420i",
         "confidence": "official_exact",
@@ -123,6 +128,13 @@
         "notes": "Top-gear ratio follows the same cross-checked 220i DCT reference pair."
       },
       {
+        "field_name": "transmission_name",
+        "source_id": "ratio_sources:BMW|2 Series Active Tourer (F45, 2014-2021):issue_1034_220i_ratio_reference",
+        "confidence": "reputable_secondary_crosschecked",
+        "verified_at": "2026-04-25",
+        "notes": "The 220i DCT transmission label follows the same cross-checked issue #1034 reference pair."
+      },
+      {
         "field_name": "drivetrain",
         "source_id": "variant_sources:BMW|2 Series Active Tourer (F45, 2014-2021):220i",
         "confidence": "official_exact",
@@ -192,6 +204,13 @@
         "confidence": "official_exact",
         "verified_at": "2026-04-25",
         "notes": "Official BMW 225xe technical data attachment confirms the 0.672 top-gear ratio."
+      },
+      {
+        "field_name": "transmission_name",
+        "source_id": "ratio_sources:BMW|2 Series Active Tourer (F45, 2014-2021):225xe_drivetrain_and_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW 225xe technical data attachment confirms the dedicated 6-speed hybrid transmission."
       },
       {
         "field_name": "drivetrain",
@@ -270,6 +289,13 @@
         "field_name": "top_gear_ratio",
         "confidence": "family_default",
         "notes": "The current 0.667 top-gear value still follows the ZF 8HP family default until a retrievable variant-specific G20 gear-ratio table is linked."
+      },
+      {
+        "field_name": "transmission_name",
+        "source_id": "variant_sources:BMW|3 Series (G20, 2019-2025):330i xDrive",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW variant coverage confirms the G20 330i xDrive automatic transmission row."
       },
       {
         "field_name": "drivetrain",
@@ -351,6 +377,13 @@
         "confidence": "official_derived",
         "verified_at": "2026-04-25",
         "notes": "Single-speed EV transmission projects to a one-entry gear ratio list `[1.0]`."
+      },
+      {
+        "field_name": "transmission_name",
+        "source_id": "ratio_sources:BMW|5 Series (G60, 2024-2026):ev_layout_confirmed_ratio_mapping_unresolved",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW i5 drivetrain material confirms the single-speed fixed-gear transmission layout."
       },
       {
         "field_name": "drivetrain",
