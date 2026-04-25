@@ -151,7 +151,7 @@ def test_resolve_variant_g20_330i_xdrive_uses_verified_automatic_ratio() -> None
                     "name": "8-speed automatic (ZF 8HP)",
                     "final_drive_ratio": pytest.approx(2.813),
                     "top_gear_ratio": pytest.approx(0.64),
-                    "gear_ratios": pytest.approx([5.25, 3.36, 2.172, 1.72, 1.316, 1.0, 0.822, 0.64]),
+                    "gear_ratios": pytest.approx([5.25, 3.36, 2.172, 1.72, 1.316, 1.0, 0.822, 0.64]),  # noqa: E501
                 }
             ]
             break
