@@ -139,11 +139,11 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### 5 Series (G60, 2024-2026)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| 520i | B48 2.0L I4 Turbo | RWD | BMW press release / technical data | High |
-| i5 eDrive40 | Electric Single Motor | RWD | BMW technical data / DE price list | High |
-| i5 M60 xDrive | Electric Dual Motor | AWD | BMW technical data / BMW M model page | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| 520i | B48 2.0L I4 Turbo | RWD | 8-speed Steptronic transmission FD 3.077 TG 0.640 | BMW press release / technical data | High |
+| i5 eDrive40 | Electric Single Motor | RWD | Single-speed fixed gear (EV) overall 11.115 | BMW technical data / DE price list | High |
+| i5 M60 xDrive | Electric Dual Motor | AWD | Single-speed fixed gear (EV) rear overall 9.374 representative | BMW technical data / BMW M model page | High |
 
 ### 6 Series Gran Coupe (F06, 2013-2018)
 
@@ -155,10 +155,10 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### 6 Series Gran Turismo (G32, 2018-2024)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| 630i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| 640i xDrive | B58 3.0L I6 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| 630i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
+| 640i xDrive | B58 3.0L I6 Turbo | AWD | 8-speed Steptronic transmission FD 3.077 TG 0.640 | BMW technical data / DE price list | High |
 
 ### 7 Series (F01, 2011-2015)
 
