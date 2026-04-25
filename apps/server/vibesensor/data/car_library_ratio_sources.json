@@ -67,7 +67,7 @@
     "BMW|1 Series (F40, 2019-2025)": {
       "car_index": 1,
       "verification_status": "verification_backlog",
-      "decision_summary": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; left unconfirmed fields unchanged.",
+      "decision_summary": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
       "unresolved": [
         {
           "item": "7-speed DCT top_gear_ratio",
@@ -76,6 +76,10 @@
         {
           "item": "Per-variant transmission mapping for 118i",
           "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied."
+        },
+        {
+          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations."
         }
       ],
       "sources": {
@@ -94,12 +98,12 @@
         "m135i_xdrive_8at_ratios": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0327030EN/473056",
-            "note": "Official PDF: M135i xDrive shows 8-speed Steptronic Sport transmission, VIII gear ratio 0.673 and final drive 3.075.",
+            "note": "Official PDF: M135i xDrive shows Eight-speed Steptronic Sport transmission, full forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, reverse 4.221, final drive 3.075, and standard 225/40 R18 92Y XL tires on 8J x 18 wheels.",
             "confidence": "high"
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0322640EN/468211",
-            "note": "Cross-check PDF (11/2020): M135i xDrive 8-speed Steptronic Sport with final drive 3.075.",
+            "note": "Cross-check PDF (11/2020): same M135i xDrive 8-speed Steptronic Sport ratio set, final drive 3.075, and standard 225/40 R18 tire fitment.",
             "confidence": "high"
           }
         ],
@@ -394,22 +398,39 @@
     "BMW|3 Series (G20, 2019-2025)": {
       "car_index": 6,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official BMW Group PressClub technical data now confirms the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813:1, so the current car-library override was corrected and the xDrive verification TODO was resolved. Broader G20 transmission-availability and top-gear coverage remains limited to the separate unresolved notes below, while M340i xDrive remains source-note context only because it is not represented in the current JSON entry.",
+      "decision_summary": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Broader G20 transmission-availability coverage and exact public gearbox-code details remain unresolved.",
       "unresolved": [
         {
-          "item": "Variant-level confirmed top-gear ratios for EU G20 petrol variants",
-          "reason": "Official EU pages found did not publish per-variant transmission gear-ratio tables in retrievable form."
+          "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
+          "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability."
         },
         {
-          "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-          "reason": "Accessible official pages confirmed model/drivetrain context but did not conclusively provide complete historical transmission availability by variant for 2019-2025 in one authoritative document."
+          "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
+          "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant."
         }
       ],
       "sources": {
-        "official_xdrive_ratio_verification": [
+        "official_330i_xdrive_exact_ratios": [
           {
-            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0285128EN/425813",
-            "note": "Official BMW Group PressClub technical data attachment used in the verification pass; it is the authoritative source cited for the G20 330i xDrive automatic final-drive ratio of 2.813:1.",
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325531EN/471537",
+            "note": "Official BMW PressClub 03/2021 technical-data PDF for the exact BMW 330i xDrive Sedan: Eight-speed Steptronic transmission, full forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 225/50 R17 98Y XL tires on 7.5J x 17 wheels.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0388273EN/555363",
+            "note": "Official BMW PressClub 07/2022 technical-data PDF cross-check for the exact BMW 330i xDrive Sedan: same Eight-speed Steptronic ratio set, final drive 2.813, and standard 225/50 R17 98Y XL tire fitment.",
+            "confidence": "high"
+          }
+        ],
+        "g20_eu_exact_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0325531EN",
+            "note": "Official BMW PressClub article for 3 Series Sedan technical data valid from 03/2021; German-market context for the exact 330i xDrive PDF attachment.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0388273EN",
+            "note": "Official BMW PressClub article for 3 Series Sedan technical data valid from 07/2022; German-market context for the exact 330i xDrive PDF attachment.",
             "confidence": "high"
           }
         ],
@@ -423,23 +444,6 @@
             "url": "https://www.bmw.de/de/neufahrzeuge/3er.html",
             "note": "Official BMW Germany 3 Series page exposes market-specific 3er variants and links to technical data and price-list documents (for 3er family context).",
             "confidence": "medium"
-          }
-        ],
-        "official_ratio_source_attempts_unresolved": [
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search/category:11",
-            "note": "Official BMW PressClub Fact & Figures index confirms technical-data publication channel, but no directly retrievable G20 3 Series Sedan ratio table was located in accessible results.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/search/tag:G20/category:11",
-            "note": "Attempted official G20-filtered technical-data lookup; accessible output did not provide a direct 3 Series Sedan gearing/final-drive table.",
-            "confidence": "low"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global/article/detail/T0442765EN/technical-data-bmw-3-series-sedan-valid-as-of-july-2024",
-            "note": "Direct official-style URL probe for G20 sedan technical data returned not found; no ratio values could be safely extracted.",
-            "confidence": "low"
           }
         ],
         "official_lookup_attempts": [
@@ -2325,11 +2329,11 @@
     "Audi|A4 (B9, 2016-2025)": {
       "car_index": 47,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. The shared FWD S tronic entry and the 35/40 TFSI variant overrides now use 4.234, while the 45 TFSI quattro override now uses the officially documented 4.410.",
+      "decision_summary": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan, but the broad 2019-2025 row remains unchanged until the earlier 180 kW span is proven at the same granularity.",
       "unresolved": [
         {
-          "item": "Audi A4 (B9, 2016-2024) top_gear_ratio confirmation",
-          "reason": "This pass re-verified final_drive_ratio only; existing top_gear_ratio values were left unchanged."
+          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping."
         }
       ],
       "sources": {
@@ -2347,6 +2351,18 @@
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/930/file_en/b54efbc79b4cb52e6b91dffee6593c055c5d0e8c/eTD-Audi-A4-Sedan-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf?1718355094&disposition=attachment",
             "note": "Official Audi MediaCenter eTD confirming A4 Sedan 45 TFSI quattro S tronic final-drive ratio 4.410.",
+            "confidence": "high"
+          }
+        ],
+        "exact_45tfsi_quattro_late_b9_ratios": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/930/file_en/b54efbc79b4cb52e6b91dffee6593c055c5d0e8c/eTD-Audi-A4-Sedan-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter eTD for the exact DE A4 Sedan 45 TFSI quattro 195 kW: 7-speed S tronic, quattro ultra AWD, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and basic tire 225/50 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/930/file_en/b54efbc79b4cb52e6b91dffee6593c055c5d0e8c/eTD-Audi-A4-Sedan-45-TFSI-quattro-S_tronic-195kW-MHEV_240320.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter cross-check PDF with the same exact 45 TFSI quattro sedan 195 kW ratio block, final drive 4.410, and 225/50 R17 basic tire fitment.",
             "confidence": "high"
           }
         ]
@@ -2399,11 +2415,11 @@
     "Audi|A5 (B9, 2017-2024)": {
       "car_index": 49,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verified Audi A5 B9 S tronic final-drive ratios from official Audi UK and Audi MediaCenter technical PDFs. The shared FWD S tronic entry now uses 4.234, and the 45 TFSI quattro variant now carries the officially documented 4.410 override.",
+      "decision_summary": "Verified Audi A5 B9 S tronic final-drive ratios from official Audi UK and Audi MediaCenter technical PDFs. Later exact 45 TFSI quattro Coupe and Sportback sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW MHEV configuration, but the broad 2017-2024 row remains unchanged until the earlier span is proven at the same granularity.",
       "unresolved": [
         {
-          "item": "Audi A5 (B9, 2017-2024) top_gear_ratio confirmation",
-          "reason": "This pass re-verified final_drive_ratio only; existing top_gear_ratio values were left unchanged."
+          "item": "Broad-row Audi A5 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW Coupe and Sportback, but this pass did not verify whether the earlier years in the broad row use the same exact mapping."
         }
       ],
       "sources": {
@@ -2426,6 +2442,18 @@
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1073/file_en/5b4b65c8ae72cd8942fa0df105e4c3743645d7ab/eTD-Audi-A5-Sportback-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf?disposition=attachment",
             "note": "Official Audi MediaCenter eTD confirming A5 Sportback 45 TFSI quattro S tronic final-drive ratio 4.410.",
+            "confidence": "high"
+          }
+        ],
+        "exact_45tfsi_quattro_late_b9_ratios": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1076/file_en/be71d58f33a992b656581fe5b38cb3e4bb830973/eTD-Audi-A5-Coupe-45-TFSI-quattro-S_tronic-195kW-MHEV_240320.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter eTD for the exact A5 Coupe 45 TFSI quattro 195 kW: 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and basic tire 225/50 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1073/file_en/5b4b65c8ae72cd8942fa0df105e4c3743645d7ab/eTD-Audi-A5-Sportback-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter cross-check PDF for the exact A5 Sportback 45 TFSI quattro 195 kW with the same ratio block, final drive 4.410, and 225/50 R17 basic tire fitment.",
             "confidence": "high"
           }
         ]
@@ -2919,11 +2947,11 @@
     "Audi|Q5 (FY, 2017-2026)": {
       "car_index": 60,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verified Audi Q5 FY S tronic final-drive ratios from official Audi MediaCenter and Audi technical data PDFs. The shared Q5 FY S tronic entry now uses 5.302, and the stored 45 TFSI quattro override was corrected to the same officially documented value.",
+      "decision_summary": "Verified Audi Q5 FY S tronic final-drive ratios from official Audi MediaCenter and Audi technical data PDFs. Later exact 55 TFSI e quattro sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 235/60 R18 basic tire for the 270 kW PHEV configuration, but the broad FY row remains unchanged until the represented production span is proven at the same granularity.",
       "unresolved": [
         {
-          "item": "Audi Q5 (FY, 2017-2026) top_gear_ratio confirmation",
-          "reason": "This pass re-verified final_drive_ratio only; existing top_gear_ratio values were left unchanged."
+          "item": "Broad-row Audi Q5 FY 55 TFSI e quattro top_gear_ratio applicability across the represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 270 kW 55 TFSI e quattro configuration, but this pass did not verify whether every year represented by the broad FY row uses the same exact mapping."
         }
       ],
       "sources": {
@@ -2941,6 +2969,18 @@
           {
             "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline_info_Q5_TFSI_e.pdf",
             "note": "Official Audi technical data confirming Q5 55 TFSI e quattro S tronic final-drive ratio 5.302.",
+            "confidence": "high"
+          }
+        ],
+        "exact_55tfsi_e_quattro_late_fy_ratios": [
+          {
+            "url": "https://www.audi-mediacenter.com/en/audi-q5-tfsi-e-until-2025-11628",
+            "note": "Official Audi MediaCenter model page used to map the exact Q5 55 TFSI e quattro technical-data PDF for the EU/DE PHEV configuration.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/933/file_en/1c194a48ecee337757e5f1e0933a8111196df7f6/eTD-Audi-Q5-55-TFSIe-quattro-S_tronic-270kW_240604.pdf",
+            "note": "Official Audi MediaCenter eTD for the exact Q5 55 TFSI e quattro 270 kW: 7-speed S tronic, quattro ultra AWD, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/60 R18.",
             "confidence": "high"
           }
         ]

@@ -96,7 +96,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 |---------|--------|------------|------------------|--------|------------|
 | 320i | B48 2.0L I4 Turbo | RWD | – | BMW press release / technical data | High |
 | 330i | B48 2.0L I4 Turbo | RWD | – | BMW press release / technical data | High |
-| 330i xDrive | B48 2.0L I4 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 2.813 | BMW PressClub technical data | High |
+| 330i xDrive | B48 2.0L I4 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 2.813 TG 0.640 | BMW PressClub technical data (03/2021, 07/2022) | High |
 | 320e | 1.6L I4 Turbo | RWD | – | BMW press release / technical data | High |
 | 330e | 2.0L I4 Turbo | RWD | – | BMW press release / technical data | High |
 
