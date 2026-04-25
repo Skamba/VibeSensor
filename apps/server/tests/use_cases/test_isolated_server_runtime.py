@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 from _paths import SERVER_ROOT
 
-from vibesensor.shared.subprocess_server import (
+from vibesensor.use_cases.isolated_server_runtime import (
     build_isolated_server_config,
     build_isolated_server_env,
     build_server_subprocess_cmd,

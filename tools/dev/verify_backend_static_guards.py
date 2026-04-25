@@ -1516,6 +1516,31 @@ def _check_run_context_split_owners() -> list[str]:
     return failures
 
 
+def _check_isolated_server_runtime_owner() -> list[str]:
+    failures: list[str] = []
+    old_file = VIBESENSOR_DIR / "shared" / "subprocess_server.py"
+    new_file = VIBESENSOR_DIR / "use_cases" / "isolated_server_runtime.py"
+    if old_file.exists():
+        failures.append(
+            f"{old_file.relative_to(REPO_ROOT)} should not exist; isolated server subprocess orchestration belongs in use_cases/isolated_server_runtime.py"
+        )
+    if not new_file.exists():
+        failures.append(
+            f"Missing isolated server runtime owner: {new_file.relative_to(REPO_ROOT)}"
+        )
+    scan_dirs = [VIBESENSOR_DIR, REPO_ROOT / "tools" / "tests"]
+    for scan_dir in scan_dirs:
+        for path in _python_files(scan_dir):
+            source = _read_text(path)
+            if "from vibesensor.shared.subprocess_server import" in source or (
+                "import vibesensor.shared.subprocess_server" in source
+            ):
+                failures.append(
+                    f"{path.relative_to(REPO_ROOT)} imports removed shared/subprocess_server.py; use vibesensor.use_cases.isolated_server_runtime instead"
+                )
+    return failures
+
+
 def _check_settings_snapshot_boundary_location() -> list[str]:
     failures: list[str] = []
     legacy_files = (
@@ -2429,6 +2454,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "Run-context helpers stay split between shared warnings and use_cases/run",
         _check_run_context_split_owners,
+    ),
+    (
+        "Isolated server runtime stays out of shared",
+        _check_isolated_server_runtime_owner,
     ),
     (
         "Settings snapshot codec keeps a distinct filename",
