@@ -78,6 +78,13 @@ from .strength_metrics import StrengthMetrics, StrengthPeak
 from .test_plan import RecommendedAction, TestPlan, plan_test_actions
 from .test_run import TestRun
 from .tire_spec import TireSpec
+from .vehicle_configuration import (
+    VehicleConfiguration,
+    VehicleConfigurationSourceStatus,
+    VehicleConfigurationTireOption,
+    VehicleDrivetrain,
+    VehicleFuelType,
+)
 from .vibration_origin import VibrationOrigin
 
 __all__ = [
@@ -93,6 +100,11 @@ __all__ = [
     "CarSnapshot",
     "OrderReferenceSpec",
     "TireSpec",
+    "VehicleConfiguration",
+    "VehicleConfigurationSourceStatus",
+    "VehicleConfigurationTireOption",
+    "VehicleDrivetrain",
+    "VehicleFuelType",
     # Value objects — snapshots
     "AnalysisSettingsSnapshot",
     "DrivingPhaseSummary",
