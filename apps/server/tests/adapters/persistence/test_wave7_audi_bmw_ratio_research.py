@@ -14,7 +14,9 @@ def _ratio_sources() -> dict[str, dict[str, object]]:
         return json.load(fh)["cars"]
 
 
-def test_wave7_ratio_source_rows_capture_exact_tt_rs_q7_x5_context_without_overwriting_broad_rows() -> None:  # noqa: E501
+def test_wave7_ratio_source_rows_capture_exact_tt_rs_q7_x5_context_without_overwriting_broad_rows() -> (
+    None
+):  # noqa: E501
     sources = _ratio_sources()
 
     assert "official_45tfsi_quattro_exact_ratios" in sources["Audi|TT (8S, 2015-2023)"]["sources"]

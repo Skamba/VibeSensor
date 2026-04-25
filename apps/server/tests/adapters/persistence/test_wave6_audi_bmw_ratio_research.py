@@ -20,12 +20,17 @@ def _assert_contains_unresolved(entry: dict[str, object], expected: list[dict[st
         assert item in unresolved
 
 
-def test_wave6_ratio_source_rows_capture_exact_audi_and_z4_context_without_overwriting_broad_rows() -> None:  # noqa: E501
+def test_wave6_ratio_source_rows_capture_exact_audi_and_z4_context_without_overwriting_broad_rows() -> (
+    None
+):  # noqa: E501
     sources = _ratio_sources()
 
     assert "official_45tfsi_quattro_exact_ratios" in sources["Audi|A6 (C8, 2019-2026)"]["sources"]
     assert "official_55tfsi_quattro_exact_ratios" in sources["Audi|A6 (C8, 2019-2026)"]["sources"]
-    assert "official_45tfsi_quattro_exact_ratios" in sources["Audi|A7 Sportback (C8, 2019-2026)"]["sources"]  # noqa: E501
+    assert (
+        "official_45tfsi_quattro_exact_ratios"
+        in sources["Audi|A7 Sportback (C8, 2019-2026)"]["sources"]
+    )  # noqa: E501
     assert "official_55tfsi_quattro_exact_ratios" in sources["Audi|Q8 (4M8, 2019-2026)"]["sources"]
     assert "official_m40i_automatic_exact_ratios" in sources["BMW|Z4 (G29, 2019-2026)"]["sources"]
     assert "official_m40i_manual_context" in sources["BMW|Z4 (G29, 2019-2026)"]["sources"]

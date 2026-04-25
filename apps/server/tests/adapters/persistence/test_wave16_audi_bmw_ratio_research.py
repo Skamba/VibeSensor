@@ -95,10 +95,17 @@ def test_wave16_g60_i5_edrive40_uses_exact_tire_context() -> None:
 def test_wave16_ratio_source_rows_capture_g30_g60_a7_a8_context() -> None:
     sources = _ratio_sources()
 
-    assert "official_530i_xdrive_exact_context" in sources["BMW|5 Series (G30, 2017-2023)"]["sources"]  # noqa: E501
+    assert (
+        "official_530i_xdrive_exact_context" in sources["BMW|5 Series (G30, 2017-2023)"]["sources"]
+    )  # noqa: E501
     assert "official_540i_exact_context" in sources["BMW|5 Series (G30, 2017-2023)"]["sources"]
-    assert "official_i5_edrive40_tire_context" in sources["BMW|5 Series (G60, 2024-2026)"]["sources"]  # noqa: E501
-    assert "official_us_service_mapping_contradiction" in sources["Audi|A7 Sportback (C7, 2011-2018)"]["sources"]  # noqa: E501
+    assert (
+        "official_i5_edrive40_tire_context" in sources["BMW|5 Series (G60, 2024-2026)"]["sources"]
+    )  # noqa: E501
+    assert (
+        "official_us_service_mapping_contradiction"
+        in sources["Audi|A7 Sportback (C7, 2011-2018)"]["sources"]
+    )  # noqa: E501
     assert "secondary_exact_40tfsi_quattro_context" in sources["Audi|A8 (D4, 2011-2017)"]["sources"]
 
     _assert_contains_unresolved(

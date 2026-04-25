@@ -50,8 +50,16 @@ def test_wave3_exact_bmw_variant_overrides_resolve_official_values() -> None:
             "tire_width_mm": pytest.approx(315.0),
             "tire_aspect_pct": pytest.approx(35.0),
             "rim_in": pytest.approx(22.0),
-            "front": {"width_mm": pytest.approx(275.0), "aspect_pct": pytest.approx(40.0), "rim_in": pytest.approx(22.0)},  # noqa: E501
-            "rear": {"width_mm": pytest.approx(315.0), "aspect_pct": pytest.approx(35.0), "rim_in": pytest.approx(22.0)},  # noqa: E501
+            "front": {
+                "width_mm": pytest.approx(275.0),
+                "aspect_pct": pytest.approx(40.0),
+                "rim_in": pytest.approx(22.0),
+            },  # noqa: E501
+            "rear": {
+                "width_mm": pytest.approx(315.0),
+                "aspect_pct": pytest.approx(35.0),
+                "rim_in": pytest.approx(22.0),
+            },  # noqa: E501
             "default_axle_for_speed": "rear",
             "source_confidence": "official_exact",
         },
@@ -60,8 +68,16 @@ def test_wave3_exact_bmw_variant_overrides_resolve_official_values() -> None:
             "tire_width_mm": pytest.approx(315.0),
             "tire_aspect_pct": pytest.approx(30.0),
             "rim_in": pytest.approx(23.0),
-            "front": {"width_mm": pytest.approx(275.0), "aspect_pct": pytest.approx(35.0), "rim_in": pytest.approx(23.0)},  # noqa: E501
-            "rear": {"width_mm": pytest.approx(315.0), "aspect_pct": pytest.approx(30.0), "rim_in": pytest.approx(23.0)},  # noqa: E501
+            "front": {
+                "width_mm": pytest.approx(275.0),
+                "aspect_pct": pytest.approx(35.0),
+                "rim_in": pytest.approx(23.0),
+            },  # noqa: E501
+            "rear": {
+                "width_mm": pytest.approx(315.0),
+                "aspect_pct": pytest.approx(30.0),
+                "rim_in": pytest.approx(23.0),
+            },  # noqa: E501
             "default_axle_for_speed": "rear",
             "source_confidence": "official_exact",
         },
@@ -82,8 +98,16 @@ def test_wave3_exact_bmw_variant_overrides_resolve_official_values() -> None:
             "tire_width_mm": pytest.approx(285.0),
             "tire_aspect_pct": pytest.approx(30.0),
             "rim_in": pytest.approx(20.0),
-            "front": {"width_mm": pytest.approx(275.0), "aspect_pct": pytest.approx(35.0), "rim_in": pytest.approx(19.0)},  # noqa: E501
-            "rear": {"width_mm": pytest.approx(285.0), "aspect_pct": pytest.approx(30.0), "rim_in": pytest.approx(20.0)},  # noqa: E501
+            "front": {
+                "width_mm": pytest.approx(275.0),
+                "aspect_pct": pytest.approx(35.0),
+                "rim_in": pytest.approx(19.0),
+            },  # noqa: E501
+            "rear": {
+                "width_mm": pytest.approx(285.0),
+                "aspect_pct": pytest.approx(30.0),
+                "rim_in": pytest.approx(20.0),
+            },  # noqa: E501
             "default_axle_for_speed": "rear",
             "source_confidence": "official_exact",
         }
