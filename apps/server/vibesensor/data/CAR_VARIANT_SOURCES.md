@@ -290,7 +290,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
-| xDrive40i | B58 3.0L I6 Turbo | AWD | – | BMW press release | High |
+| xDrive40i | B58 3.0L I6 Turbo | AWD | 8-speed Steptronic FD 3.636 TG 0.640 | BMW PressClub technical data | High |
 | xDrive45e | B58 3.0L I6 Turbo PHEV | AWD | 8-speed Steptronic FD 3.636 | BMW DE technical data | High |
 | M50i | N63 4.4L V8 Turbo | AWD | – | BMW press release | High |
 
