@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING
 
+from vibesensor.domain import normalize_sensor_id
 from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.types.run_schema import RunSensorMetadata
 from vibesensor.shared.types.sensor_config import SensorConfigPayload
@@ -30,10 +31,15 @@ def build_run_sensor_snapshot(
         fallback_name=fallback_name,
         fallback_location_code=fallback_location_code,
     )
+    mount_orientation = _mount_orientation_or_none(
+        sensor_id=sensor_id,
+        sensors_by_mac=sensors_by_mac,
+    )
     return RunSensorMetadata(
         sensor_id=sensor_id,
         display_name=display_name,
         location_code=location_code,
+        mount_orientation=mount_orientation,
         sample_rate_hz=sample_rate_hz,
         firmware_version=firmware_version,
     )
@@ -86,4 +92,20 @@ def _sample_rate_hz_or_none(value: object) -> int | None:
 
 def _text_or_none(value: object) -> str | None:
     text = str(value or "").strip()
+    return text or None
+
+
+def _mount_orientation_or_none(
+    *,
+    sensor_id: str,
+    sensors_by_mac: Mapping[str, SensorConfigPayload],
+) -> str | None:
+    try:
+        normalized_sensor_id = normalize_sensor_id(sensor_id)
+    except ValueError:
+        return None
+    sensor = sensors_by_mac.get(normalized_sensor_id)
+    if sensor is None:
+        return None
+    text = str(sensor.get("mount_orientation") or "").strip()
     return text or None

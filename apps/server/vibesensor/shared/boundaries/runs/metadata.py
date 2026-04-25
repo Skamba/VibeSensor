@@ -48,6 +48,10 @@ class _RunMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
     end_time_utc: object = None
     sensor_model: object = "unknown"
     firmware_version: object = None
+    strength_algorithm_version: object = None
+    peak_detector_version: object = None
+    calibration_profile_id: object = None
+    vehicle_baseline_profile_id: object = None
     raw_sample_rate_hz: object = None
     configured_raw_sample_rate_hz: object = None
     feature_interval_s: object = None
@@ -94,6 +98,10 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         end_time_utc=text_or_none(data.get("end_time_utc")),
         sensor_model=text_or_none(data.get("sensor_model")) or "unknown",
         firmware_version=text_or_none(data.get("firmware_version")),
+        strength_algorithm_version=text_or_none(data.get("strength_algorithm_version")),
+        peak_detector_version=text_or_none(data.get("peak_detector_version")),
+        calibration_profile_id=text_or_none(data.get("calibration_profile_id")),
+        vehicle_baseline_profile_id=text_or_none(data.get("vehicle_baseline_profile_id")),
         raw_sample_rate_hz=as_int_or_none(data.get("raw_sample_rate_hz")),
         configured_raw_sample_rate_hz=as_int_or_none(data.get("configured_raw_sample_rate_hz")),
         feature_interval_s=as_float_or_none(data.get("feature_interval_s")),
@@ -130,6 +138,10 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
         "end_time_utc": metadata.end_time_utc,
         "sensor_model": metadata.sensor_model,
         "firmware_version": metadata.firmware_version,
+        "strength_algorithm_version": metadata.strength_algorithm_version,
+        "peak_detector_version": metadata.peak_detector_version,
+        "calibration_profile_id": metadata.calibration_profile_id,
+        "vehicle_baseline_profile_id": metadata.vehicle_baseline_profile_id,
         "raw_sample_rate_hz": metadata.raw_sample_rate_hz,
         "configured_raw_sample_rate_hz": metadata.configured_raw_sample_rate_hz,
         "feature_interval_s": metadata.feature_interval_s,
@@ -245,6 +257,7 @@ def _run_sensor_snapshot_from_mapping(
         or text_or_none(payload.get("client_name"))
         or "",
         location_code=text_or_none(payload.get("location_code")) or "",
+        mount_orientation=text_or_none(payload.get("mount_orientation")),
         sample_rate_hz=as_int_or_none(payload.get("sample_rate_hz")),
         firmware_version=text_or_none(payload.get("firmware_version")),
     )
@@ -256,6 +269,8 @@ def _run_sensor_snapshot_to_json_object(snapshot: RunSensorMetadata) -> JsonObje
         "display_name": snapshot.display_name,
         "location_code": snapshot.location_code,
     }
+    if snapshot.mount_orientation is not None:
+        payload["mount_orientation"] = snapshot.mount_orientation
     if snapshot.sample_rate_hz is not None:
         payload["sample_rate_hz"] = snapshot.sample_rate_hz
     if snapshot.firmware_version is not None:

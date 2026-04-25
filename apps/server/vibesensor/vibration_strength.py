@@ -32,13 +32,16 @@ from scipy.signal import find_peaks
 from vibesensor.strength_bands import _buckets_for_strength_db_aligned, bucket_for_strength
 
 __all__ = [
+    "CALIBRATION_PROFILE_ID",
     "compute_db",
     "compute_db_or_none",
     "empty_vibration_strength_metrics",
     "PEAK_BANDWIDTH_HZ",
+    "PEAK_DETECTOR_VERSION",
     "PEAK_SEPARATION_HZ",
     "PEAK_THRESHOLD_FLOOR_RATIO",
     "StrengthPeak",
+    "STRENGTH_ALGORITHM_VERSION",
     "STRENGTH_EPSILON_FLOOR_RATIO",
     "STRENGTH_EPSILON_MIN_G",
     "combined_spectrum_amp_g",
@@ -58,6 +61,9 @@ PEAK_SEPARATION_HZ: Final[float] = 1.2
 STRENGTH_EPSILON_MIN_G: Final[float] = 1e-9
 STRENGTH_EPSILON_FLOOR_RATIO: Final[float] = 0.05
 PEAK_THRESHOLD_FLOOR_RATIO: Final[float] = 2.6
+STRENGTH_ALGORITHM_VERSION: Final[str] = "strength-db-scalar-v1"
+PEAK_DETECTOR_VERSION: Final[str] = "peak-band-rms-v1"
+CALIBRATION_PROFILE_ID: Final[str] = "noise-floor-p20-v1"
 
 ArrayLike = Sequence[float] | npt.NDArray[np.floating]
 
