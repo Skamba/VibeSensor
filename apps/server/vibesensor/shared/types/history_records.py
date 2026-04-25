@@ -10,6 +10,7 @@ from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_obje
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import RawCaptureManifest
+from vibesensor.shared.types.run_lifecycle import RunArtifactLifecycle
 from vibesensor.shared.types.run_schema import RunMetadata, RunRawCaptureFinalize
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 
@@ -21,7 +22,9 @@ __all__ = [
     "StoredHistoryRun",
 ]
 
-type ArtifactAvailabilityState = Literal["not_recorded", "available", "missing", "degraded"]
+type ArtifactAvailabilityState = Literal[
+    "not_recorded", "pending", "available", "missing", "degraded"
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,6 +53,7 @@ class HistoryRunListEntry:
     sample_count: int
     car_name: str | None = None
     error_message: str | None = None
+    lifecycle: RunArtifactLifecycle | None = None
     artifact_availability: HistoryArtifactAvailability | None = None
     raw_capture_finalize: RunRawCaptureFinalize | None = None
 
@@ -67,6 +71,8 @@ class HistoryRunListEntry:
             payload["car_name"] = self.car_name
         if self.error_message is not None:
             payload["error_message"] = self.error_message
+        if self.lifecycle is not None:
+            payload["lifecycle"] = self.lifecycle.to_json_object()
         if self.artifact_availability is not None:
             payload["artifact_availability"] = self.artifact_availability.to_json_object()
         if self.raw_capture_finalize is not None:
@@ -89,6 +95,7 @@ class StoredHistoryRun:
     analysis: PersistedAnalysis | None = None
     raw_capture_manifest: RawCaptureManifest | None = None
     whole_run_artifact_manifest: WholeRunArtifactManifest | None = None
+    lifecycle: RunArtifactLifecycle | None = None
     artifact_availability: HistoryArtifactAvailability | None = None
     raw_capture_finalize: RunRawCaptureFinalize | None = None
     analysis_corrupt: bool = False
@@ -117,6 +124,8 @@ class StoredHistoryRun:
             payload["whole_run_artifact_manifest"] = (
                 self.whole_run_artifact_manifest.to_json_object()
             )
+        if self.lifecycle is not None:
+            payload["lifecycle"] = self.lifecycle.to_json_object()
         if self.artifact_availability is not None:
             payload["artifact_availability"] = self.artifact_availability.to_json_object()
         if self.raw_capture_finalize is not None:

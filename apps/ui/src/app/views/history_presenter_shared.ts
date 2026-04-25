@@ -5,12 +5,21 @@ import type {
   HistoryInsightsPayload,
 } from "../../api/types";
 import type { RunDetail } from "../ui_app_state";
-import type { HistoryFindingTone, HistorySummaryChipTone } from "./history_table_models";
+import type {
+  HistoryFindingTone,
+  HistorySummaryChipTone,
+} from "./history_table_models";
 import type { HistoryTableViewParams } from "./history_table_view";
 
 export type PresenterParams = Pick<
   HistoryTableViewParams,
-  "expandedRunId" | "fmt" | "fmtTs" | "formatInt" | "runDetailsById" | "runs" | "t"
+  | "expandedRunId"
+  | "fmt"
+  | "fmtTs"
+  | "formatInt"
+  | "runDetailsById"
+  | "runs"
+  | "t"
 >;
 
 export type HistoryRowStatusBadge = {
@@ -45,7 +54,9 @@ export const EMPTY_RUN_DETAIL: RunDetail = {
   pdfError: "",
 };
 
-export function summarizeFindings(summary: HistoryInsightsPayload | null): FindingPayload[] {
+export function summarizeFindings(
+  summary: HistoryInsightsPayload | null,
+): FindingPayload[] {
   return summary?.findings?.slice(0, VISIBLE_FINDING_LIMIT) ?? [];
 }
 
@@ -56,7 +67,9 @@ export function summarizeWarnings(
 }
 
 function normalizedSourceKey(source: unknown): string {
-  return String(source ?? "").trim().toLowerCase();
+  return String(source ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 function humanizeSourceFallback(sourceKey: string): string {
@@ -67,7 +80,10 @@ function humanizeSourceFallback(sourceKey: string): string {
     .join(" ");
 }
 
-export function formatSourceLabel(source: unknown, t: PresenterParams["t"]): string {
+export function formatSourceLabel(
+  source: unknown,
+  t: PresenterParams["t"],
+): string {
   const raw = String(source ?? "").trim();
   const key = normalizedSourceKey(source);
   if (!key) {
@@ -97,13 +113,16 @@ export function confidenceText(
   const value =
     typeof finding.confidence_pct === "string" && finding.confidence_pct.trim()
       ? finding.confidence_pct
-      : typeof finding.confidence === "number" && Number.isFinite(finding.confidence)
+      : typeof finding.confidence === "number" &&
+          Number.isFinite(finding.confidence)
         ? fmt(finding.confidence, 2)
         : "--";
   return t("report.confidence", { value });
 }
 
-export function findingTone(finding: FindingPayload | null): HistoryFindingTone {
+export function findingTone(
+  finding: FindingPayload | null,
+): HistoryFindingTone {
   const tone = String(finding?.confidence_tone ?? "").toLowerCase();
   if (tone === "success" || tone === "warn") {
     return tone;
@@ -128,7 +147,11 @@ export function findingLocationText(
   summary: HistoryInsightsPayload | null,
   t: PresenterParams["t"],
 ): string {
-  return finding.strongest_location || summary?.most_likely_origin?.location || t("report.missing");
+  return (
+    finding.strongest_location ||
+    summary?.most_likely_origin?.location ||
+    t("report.missing")
+  );
 }
 
 export function findingSpeedBandText(
@@ -137,14 +160,38 @@ export function findingSpeedBandText(
   t: PresenterParams["t"],
 ): string {
   return (
-    finding.strongest_speed_band
-    || summary?.most_likely_origin?.speed_band
-    || t("report.missing")
+    finding.strongest_speed_band ||
+    summary?.most_likely_origin?.speed_band ||
+    t("report.missing")
   );
 }
 
-export function historyRowSummary(detail: RunDetail): HistoryInsightsPayload | null {
+export function historyRowSummary(
+  detail: RunDetail,
+): HistoryInsightsPayload | null {
   return detail.insights ?? detail.preview;
+}
+
+export function historyPostAnalysisReady(run: HistoryEntry): boolean {
+  return (
+    run.lifecycle?.post_analysis === "ready" ||
+    (run.lifecycle == null && run.status === "complete")
+  );
+}
+
+export function historyReportReady(run: HistoryEntry): boolean {
+  return (
+    run.lifecycle?.report === "ready" ||
+    (run.lifecycle == null && run.status === "complete")
+  );
+}
+
+export function historyRawCaptureState(run: HistoryEntry): string {
+  return (
+    run.lifecycle?.raw_capture ??
+    run.artifact_availability?.raw_capture ??
+    "not_recorded"
+  );
 }
 
 export function historyRowStatusBadge(
@@ -153,6 +200,19 @@ export function historyRowStatusBadge(
   t: PresenterParams["t"],
 ): HistoryRowStatusBadge {
   const summary = historyRowSummary(detail);
+  switch (run.lifecycle?.stage) {
+    case "recording":
+      return { label: t("history.row_status.recording"), tone: "warn" };
+    case "post_analysis_pending":
+    case "post_analysis_running":
+      return summary !== null
+        ? { label: t("history.row_status.preview_ready"), tone: "ok" }
+        : { label: t("history.row_status.analyzing"), tone: "warn" };
+    case "post_analysis_ready":
+      return { label: t("history.row_status.complete"), tone: "ok" };
+    case "post_analysis_degraded":
+      return { label: t("history.row_status.error"), tone: "bad" };
+  }
   switch (run.status) {
     case "complete":
       return { label: t("history.row_status.complete"), tone: "ok" };
@@ -169,7 +229,10 @@ export function historyRowStatusBadge(
   }
 }
 
-export function historyRowDurationSeconds(run: HistoryEntry, detail: RunDetail): number | null {
+export function historyRowDurationSeconds(
+  run: HistoryEntry,
+  detail: RunDetail,
+): number | null {
   const summary = historyRowSummary(detail);
   const summaryDuration = Number(summary?.duration_s);
   if (Number.isFinite(summaryDuration) && summaryDuration >= 0) {
@@ -184,12 +247,18 @@ export function historyRowDurationSeconds(run: HistoryEntry, detail: RunDetail):
   return (endMs - startMs) / 1000;
 }
 
-export function historyRowCarName(run: HistoryEntry, t: PresenterParams["t"]): string {
+export function historyRowCarName(
+  run: HistoryEntry,
+  t: PresenterParams["t"],
+): string {
   const value = typeof run.car_name === "string" ? run.car_name.trim() : "";
   return value || t("history.car_missing");
 }
 
-export function historyRunDisplayTitle(run: HistoryEntry, t: PresenterParams["t"]): string {
+export function historyRunDisplayTitle(
+  run: HistoryEntry,
+  t: PresenterParams["t"],
+): string {
   const carName = historyRowCarName(run, t);
   return carName === t("history.car_missing") ? run.run_id : carName;
 }

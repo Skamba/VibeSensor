@@ -91,6 +91,38 @@ If `finalize_run()` fails, `RunRecorder` still schedules post-analysis when the
 run was otherwise ready. The persistence layer handles that fallback path by
 storing the later analysis result or analysis error explicitly.
 
+## Canonical read-side lifecycle projection
+
+History/report/UI read paths do not infer readiness from ad hoc combinations of
+`run.status`, `analysis_started_at`, nullable analysis payloads, manifest
+presence, and raw-capture finalize metadata anymore. The one read-side owner is
+`RunArtifactLifecycle` in `apps/server/vibesensor/shared/types/run_lifecycle.py`.
+
+That model is **derived**, not stored in a separate table or column. It projects
+five fields:
+
+- `stage`: `recording`, `post_analysis_pending`, `post_analysis_running`,
+  `post_analysis_ready`, or `post_analysis_degraded`
+- `raw_capture`: `not_recorded`, `pending`, `ready`, `degraded`, or `missing`
+- `whole_run_artifacts`: `not_recorded`, `pending`, `ready`, `degraded`, or
+  `missing`
+- `post_analysis`: `pending`, `running`, `ready`, or `degraded`
+- `report`: `pending`, `ready`, or `degraded`
+
+Transition ownership stays split by subsystem, but projection ownership is now
+centralized:
+
+| Lifecycle fact | Source of truth | Transition owner |
+|----------------|-----------------|------------------|
+| recording vs stopped | in-memory `RunLifecycleState` while live; persisted `RunStatus` after handoff | `RunRecorder` + `RunPersistenceWriter` |
+| raw capture ready/degraded/missing | raw manifest/files plus `RunMetadata.raw_capture_finalize` | `RunRawCaptureWriter` + history raw-capture store |
+| post-analysis pending/ready/degraded | persisted `RunStatus` plus stored analysis/corruption state | `PostAnalysisWorker` + `execute_post_analysis()` + history DB lifecycle writes |
+| report ready/degraded | derived directly from post-analysis readiness | `RunArtifactLifecycle` projection only |
+
+History DB queries, history HTTP payloads, report loading, and history UI
+presenters should consume that derived lifecycle object instead of rebuilding
+their own readiness heuristics.
+
 ## Persistence and retry rules
 
 `RunPersistenceWriter.ensure_history_run()` creates the persisted run record

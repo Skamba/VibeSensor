@@ -7,7 +7,7 @@ import logging
 from collections.abc import Awaitable
 from contextlib import AbstractAsyncContextManager
 from datetime import UTC, datetime
-from typing import TypeVar
+from typing import TypeVar, cast
 
 import aiosqlite
 
@@ -25,6 +25,7 @@ from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.json_utils import safe_json_loads
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
+    ArtifactAvailabilityState,
     HistoryArtifactAvailability,
     HistoryRunListEntry,
     StoredHistoryRun,
@@ -35,6 +36,10 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureManifest,
     RawCaptureSensorRange,
     RawRunCapture,
+)
+from vibesensor.shared.types.run_lifecycle import (
+    RunArtifactLifecycle,
+    derive_run_artifact_lifecycle,
 )
 from vibesensor.shared.types.run_schema import RunMetadata, RunRawCaptureFinalize
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
@@ -54,34 +59,23 @@ class _HistoryDBQueryMixin:
     def _run_sync(self, coro: Awaitable[_T]) -> _T:
         raise NotImplementedError
 
+    @staticmethod
+    def _artifact_availability_state(
+        state: str,
+    ) -> ArtifactAvailabilityState:
+        return cast(
+            ArtifactAvailabilityState,
+            "available" if state == "ready" else state,
+        )
+
     def _artifact_availability(
         self,
         *,
-        run_id: str,
-        has_raw_capture_manifest: bool,
-        has_whole_run_artifact_manifest: bool,
-        raw_capture_finalize: RunRawCaptureFinalize | None = None,
+        lifecycle: RunArtifactLifecycle,
     ) -> HistoryArtifactAvailability:
         return HistoryArtifactAvailability(
-            raw_capture=(
-                "available"
-                if has_raw_capture_manifest and self._raw_capture_store.has_run_artifacts(run_id)
-                else "missing"
-                if has_raw_capture_manifest
-                else "degraded"
-                if raw_capture_finalize is not None and raw_capture_finalize.degraded
-                else "not_recorded"
-            ),
-            whole_run_artifacts=(
-                "available"
-                if (
-                    has_whole_run_artifact_manifest
-                    and self._whole_run_artifact_store.has_run_artifacts(run_id)
-                )
-                else "missing"
-                if has_whole_run_artifact_manifest
-                else "not_recorded"
-            ),
+            raw_capture=self._artifact_availability_state(lifecycle.raw_capture),
+            whole_run_artifacts=self._artifact_availability_state(lifecycle.whole_run_artifacts),
         )
 
     @staticmethod
@@ -191,6 +185,62 @@ class _HistoryDBQueryMixin:
         )
         return None if metadata is None else metadata.raw_capture_finalize
 
+    def _coerce_analysis(
+        self,
+        *,
+        run_id: str,
+        analysis_json: str | None,
+        source: str,
+    ) -> tuple[PersistedAnalysis | None, bool]:
+        if not analysis_json:
+            return None, False
+        parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
+        if not is_json_object(parsed_analysis):
+            LOGGER.warning(
+                "%s: run %s analysis_json parsed to %s, expected dict",
+                source,
+                run_id,
+                type(parsed_analysis).__name__,
+            )
+            return None, True
+        try:
+            return persisted_analysis_from_storage_json_object(parsed_analysis), False
+        except ValueError:
+            LOGGER.warning(
+                "%s: analysis for run %s used an unsupported storage schema version",
+                source,
+                run_id,
+                exc_info=True,
+            )
+            return None, True
+
+    def _run_lifecycle(
+        self,
+        *,
+        run_id: str,
+        status: RunStatus,
+        has_raw_capture_manifest: bool,
+        has_whole_run_artifact_manifest: bool,
+        raw_capture_finalize: RunRawCaptureFinalize | None,
+        has_analysis: bool,
+        analysis_corrupt: bool,
+    ) -> RunArtifactLifecycle:
+        return derive_run_artifact_lifecycle(
+            status=status,
+            has_raw_capture_manifest=has_raw_capture_manifest,
+            raw_capture_artifacts_present=(
+                has_raw_capture_manifest and self._raw_capture_store.has_run_artifacts(run_id)
+            ),
+            has_whole_run_artifact_manifest=has_whole_run_artifact_manifest,
+            whole_run_artifacts_present=(
+                has_whole_run_artifact_manifest
+                and self._whole_run_artifact_store.has_run_artifacts(run_id)
+            ),
+            raw_capture_finalize=raw_capture_finalize,
+            has_analysis=has_analysis,
+            analysis_corrupt=analysis_corrupt,
+        )
+
     def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         return self._run_sync(self.alist_runs(limit))
 
@@ -201,7 +251,7 @@ class _HistoryDBQueryMixin:
                 await cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
                     "r.created_at, r.error_message, r.sample_count, r.car_name, "
-                    "r.metadata_json, r.raw_capture_manifest_json, "
+                    "r.metadata_json, r.analysis_json, r.raw_capture_manifest_json, "
                     "r.whole_run_artifact_manifest_json "
                     "FROM runs r ORDER BY r.created_at DESC LIMIT ?",
                     (limit,),
@@ -210,7 +260,7 @@ class _HistoryDBQueryMixin:
                 await cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
                     "r.created_at, r.error_message, r.sample_count, r.car_name, "
-                    "r.metadata_json, r.raw_capture_manifest_json, "
+                    "r.metadata_json, r.analysis_json, r.raw_capture_manifest_json, "
                     "r.whole_run_artifact_manifest_json "
                     "FROM runs r ORDER BY r.created_at DESC",
                 )
@@ -227,6 +277,7 @@ class _HistoryDBQueryMixin:
                 sample_count,
                 car_name,
                 metadata_json,
+                analysis_json,
                 raw_capture_manifest_json,
                 whole_run_artifact_manifest_json,
             ) = row
@@ -238,23 +289,33 @@ class _HistoryDBQueryMixin:
                 metadata_json=str(metadata_json) if metadata_json is not None else None,
                 source="list_runs",
             )
+            status = RunStatus(status_raw)
+            analysis, analysis_corrupt = self._coerce_analysis(
+                run_id=normalized_run_id,
+                analysis_json=str(analysis_json) if analysis_json is not None else None,
+                source="list_runs",
+            )
+            lifecycle = self._run_lifecycle(
+                run_id=normalized_run_id,
+                status=status,
+                has_raw_capture_manifest=raw_capture_manifest_json is not None,
+                has_whole_run_artifact_manifest=whole_run_artifact_manifest_json is not None,
+                raw_capture_finalize=raw_capture_finalize,
+                has_analysis=analysis is not None,
+                analysis_corrupt=analysis_corrupt,
+            )
             result.append(
                 HistoryRunListEntry(
                     run_id=normalized_run_id,
-                    status=RunStatus(status_raw),
+                    status=status,
                     start_time_utc=normalized_start,
                     end_time_utc=normalized_end,
                     created_at=str(created),
                     sample_count=int(sample_count or 0),
                     car_name=str(car_name) if car_name else None,
                     error_message=str(error) if error else None,
-                    artifact_availability=self._artifact_availability(
-                        run_id=normalized_run_id,
-                        has_raw_capture_manifest=raw_capture_manifest_json is not None,
-                        has_whole_run_artifact_manifest=whole_run_artifact_manifest_json
-                        is not None,
-                        raw_capture_finalize=raw_capture_finalize,
-                    ),
+                    lifecycle=lifecycle,
+                    artifact_availability=self._artifact_availability(lifecycle=lifecycle),
                     raw_capture_finalize=raw_capture_finalize,
                 )
             )
@@ -320,22 +381,20 @@ class _HistoryDBQueryMixin:
             else None,
             source="get_run",
         )
-        analysis: PersistedAnalysis | None = None
-        analysis_corrupt = False
-        if analysis_json:
-            parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
-            if is_json_object(parsed_analysis):
-                try:
-                    analysis = persisted_analysis_from_storage_json_object(parsed_analysis)
-                except ValueError:
-                    LOGGER.warning(
-                        "get_run: analysis for run %s used an unsupported storage schema version",
-                        run_id,
-                        exc_info=True,
-                    )
-                    analysis_corrupt = True
-            else:
-                analysis_corrupt = True
+        analysis, analysis_corrupt = self._coerce_analysis(
+            run_id=normalized_run_id,
+            analysis_json=str(analysis_json) if analysis_json is not None else None,
+            source="get_run",
+        )
+        lifecycle = self._run_lifecycle(
+            run_id=normalized_run_id,
+            status=status,
+            has_raw_capture_manifest=has_raw_capture_manifest,
+            has_whole_run_artifact_manifest=has_whole_run_artifact_manifest,
+            raw_capture_finalize=metadata.raw_capture_finalize,
+            has_analysis=analysis is not None,
+            analysis_corrupt=analysis_corrupt,
+        )
         return StoredHistoryRun(
             run_id=normalized_run_id,
             case_id=str(case_id) if case_id is not None else None,
@@ -346,12 +405,8 @@ class _HistoryDBQueryMixin:
             analysis=analysis,
             raw_capture_manifest=raw_capture_manifest,
             whole_run_artifact_manifest=whole_run_artifact_manifest,
-            artifact_availability=self._artifact_availability(
-                run_id=normalized_run_id,
-                has_raw_capture_manifest=has_raw_capture_manifest,
-                has_whole_run_artifact_manifest=has_whole_run_artifact_manifest,
-                raw_capture_finalize=metadata.raw_capture_finalize,
-            ),
+            lifecycle=lifecycle,
+            artifact_availability=self._artifact_availability(lifecycle=lifecycle),
             raw_capture_finalize=metadata.raw_capture_finalize,
             analysis_corrupt=analysis_corrupt,
             error_message=str(error) if error else None,

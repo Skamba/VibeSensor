@@ -63,6 +63,8 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
     }
     if run.error_message is not None:
         payload["error_message"] = run.error_message
+    if run.lifecycle is not None:
+        payload["lifecycle"] = run.lifecycle.to_json_object()
     if run.artifact_availability is not None:
         payload["artifact_availability"] = run.artifact_availability.to_json_object()
     if run.raw_capture_finalize is not None:
