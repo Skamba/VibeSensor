@@ -526,19 +526,19 @@
     "BMW|4 Series (G22, 2021-2026)": {
       "car_index": 8,
       "verification_status": "verification_backlog",
-      "decision_summary": "Issue #1034 official-source review corrected the supported EU-facing petrol family to 420i, 430i xDrive, and M440i xDrive, removing the stale RWD-only 430i mapping from the supported row. Ratio fields remain unchanged because the official EU technical-data pages used for this fix still do not expose extractable final-drive or top-gear values.",
+      "decision_summary": "Issue #1034 official-source review corrected the supported EU-facing petrol family to 420i, 430i xDrive, and M440i xDrive, removing the stale RWD-only 430i mapping from the supported row. Official BMW PressClub DE 07/2021 ACEA technical-data now also confirms the exact M440i xDrive launch mapping: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard staggered 225/45 R18 front + 255/40 R18 rear tires. The broad 2021-2026 row remains unchanged because later official Germany-market pages already show a different published output state and this pass did not recover later exact ratio/tire sheets proving one unchanged M440i xDrive package across the full span.",
       "unresolved": [
         {
           "item": "Whether this row should later expand beyond the supported petrol-family slice",
           "reason": "BMW Germany technical data confirms additional diesel xDrive variants, but issue #1034 stays narrowly focused on the confirmed petrol-family mismatch rather than broadening the supported row to every current market slice."
         },
         {
-          "item": "Final drive ratio by variant",
-          "reason": "No official EU source retrieved for issue #1034 provided verifiable final-drive ratio numbers for the supported G22 variants."
+          "item": "BMW M440i xDrive production-data applicability across the full G22 row span",
+          "reason": "The checked official 07/2021 ACEA sheet resolves the M440i xDrive launch ratios, final drive, top gear, and staggered base tires, but later official Germany-market pages already show a different published output state and this pass did not recover later exact ratio/tire tables proving one unchanged 2021-2026 package."
         },
         {
-          "item": "Top gear ratio by variant",
-          "reason": "No official EU source retrieved for issue #1034 provided verifiable top-gear ratio numbers for the supported G22 variants."
+          "item": "BMW M440i xDrive official optional wheel/tire matrix and transmission subtype code",
+          "reason": "Official BMW sources now prove the exact launch ratio set and standard staggered 18-inch fitment, but they do not publish a gearbox subtype code beyond Steptronic wording or one exact optional wheel/tire matrix for the full represented row."
         }
       ],
       "sources": {
@@ -554,16 +554,16 @@
             "confidence": "high"
           }
         ],
-        "ratio_values_unavailable_from_official_eu_pages": [
+        "official_m440i_xdrive_launch_exact_ratios": [
           {
-            "url": "https://www.bmw.de/de/neufahrzeuge/4er/coupe/bmw-4er-coupe-technische-daten.html/bmw-420i-coupe.bmw",
-            "note": "Variant-specific technical-data endpoint is heavily script-rendered in fetch output and does not yield verifiable final-drive or top-gear ratio values.",
-            "confidence": "medium"
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0333558DE/480211",
+            "note": "Official BMW PressClub DE technical-data PDF valid for ACEA markets from 07/2021 for the exact M440i xDrive Coup\u00e9: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard staggered 225/45 R18 front + 255/40 R18 rear tires.",
+            "confidence": "high"
           },
           {
-            "url": "https://www.bmw.de/de/neufahrzeuge/4er/coupe/bmw-4er-coupe-technische-daten.html/bmw-430i-xdrive-coupe.bmw",
-            "note": "Variant-specific page confirms target model context but still does not expose machine-extractable gearing ratio rows in fetched content.",
-            "confidence": "medium"
+            "url": "https://www.bmw.de/de/neufahrzeuge/4er/coupe/bmw-4er-coupe-technische-daten.html",
+            "note": "Official BMW Germany technical-data page confirming current M440i xDrive Coup\u00e9 model continuity and showing the later public output state that keeps broad-row production promotion unsafe without a year split.",
+            "confidence": "high"
           }
         ],
         "official_lookup_attempts": [
@@ -1451,33 +1451,44 @@
     "BMW|X3 (G01, 2018-2024)": {
       "car_index": 25,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official BMW Germany technical-data and price-list material now confirms the exact G01 X3 xDrive30i mapping across checked launch and LCI documents: 8-Gang Steptronic Getriebe, final drive 3.385, top gear 0.640, standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments. Those exact final-drive, top-gear, and tire fields are now safe to land as a variant-scoped production override, while the broad row remains verification backlog because the full forward gear ratios and reverse ratio changed between the checked 09/2018 and 06/2021 official sheets.",
       "unresolved": [
         {
-          "item": "BMW X3 (G01, 2018-2024) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW X3 xDrive30i exact gear-ratio and reverse-ratio applicability across the full 2018-2024 row span",
+          "reason": "Official BMW DE sheets now prove final drive 3.385, top gear 0.640, and the Germany-market tire matrix for xDrive30i, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split."
         },
         {
-          "item": "BMW X3 (G01, 2018-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "BMW X3 (G01, 2018-2024) full EU variant matrix beyond the exact xDrive30i mapping",
+          "reason": "This pass resolves the exact xDrive30i final drive, top gear, and Germany-market tire fitments, but it does not establish the full official ratio and tire matrix for the other G01 variants represented by the broad row."
+        },
+        {
+          "item": "BMW X3 xDrive30i transmission subtype code",
+          "reason": "Official BMW sources prove 8-Gang Steptronic wording but do not publish a gearbox subtype code such as a ZF 8HP variant number."
         }
       ],
       "sources": {
+        "official_xdrive30i_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0284378DE/413521",
+            "note": "Official BMW PressClub DE technical-data PDF valid from 09/2018 for the exact X3 xDrive30i: Allrad, 8-Gang Steptronic Getriebe, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard 225/60 R18 tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0334392DE/483091",
+            "note": "Official BMW PressClub DE technical-data PDF for the LCI X3 xDrive30i: Allrad, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard 225/60 R18 tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0322780DE/634499",
+            "note": "Official BMW Germany price-list PDF confirming xDrive30i with Allrad and 8-Gang Steptronic, standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
             "note": "BMW global official portal entrypoint for model documentation paths.",
             "confidence": "medium"
-          },
-          {
-            "url": "https://www.press.bmwgroup.com/global",
-            "note": "BMW Group official press/media source used for EU technical documents and attachments.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X3+%28G01%2C+2018-2024%29+technical+data+Europe",
-            "note": "Targeted lookup for official BMW press documents for this model.",
-            "confidence": "low"
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G01+technical+data&language=en",
@@ -1583,18 +1594,30 @@
     "BMW|X4 (G02, 2019-2025)": {
       "car_index": 28,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official BMW exact technical-data documents now confirm two checked G02 X4 M40i states for Germany/ACEA markets: 08/2018 with 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires; and 04/2020 with 8-Gang Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, the same final drive 3.385, and the same standard staggered 20-inch fitment. The broad row remains unchanged because BMW's own exact M40i ratio sheets conflict across the represented span and this pass did not recover one current official ratio sheet that safely closes the full 2019-2025 package.",
       "unresolved": [
         {
-          "item": "BMW X4 (G02, 2019-2025) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW X4 M40i production-data applicability across the full G02 row span",
+          "reason": "Official BMW M40i technical-data sheets now prove two exact ratio packages within the represented 2019-2025 span, but the launch 08/2018 and 04/2020 exact sheets disagree on the full forward and reverse ratios, so one shared production mapping would be inaccurate without a year split."
         },
         {
-          "item": "BMW X4 (G02, 2019-2025) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "BMW X4 M40i exact optional wheel/tire matrix and transmission subtype code",
+          "reason": "Official BMW sources now prove the exact standard staggered 20-inch M40i fitment and the checked ratio sets, but they do not publish a gearbox subtype code or one exact full optional wheel/tire matrix that closes the broad row safely."
         }
       ],
       "sources": {
+        "official_m40i_launch_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0281798EN/410795",
+            "note": "Official BMW technical-data PDF valid from 08/2018 for the exact X4 M40i: AWD, 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0307290DE/449087",
+            "note": "Official BMW PressClub DE technical-data PDF from 04/2020 for the exact X4 M40i: AWD, 8-Gang Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -1605,11 +1628,6 @@
             "url": "https://www.press.bmwgroup.com/global",
             "note": "BMW Group official press/media source used for EU technical documents and attachments.",
             "confidence": "medium"
-          },
-          {
-            "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X4+%28G02%2C+2019-2025%29+technical+data+Europe",
-            "note": "Targeted lookup for official BMW press documents for this model.",
-            "confidence": "low"
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G02+technical+data&language=en",
@@ -3271,18 +3289,39 @@
     "Audi|Q3 (F3, 2019-2026)": {
       "car_index": 58,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official Audi Germany exact technical-data PDFs now confirm the old-generation Q3 40 TFSI quattro mapping through 05.06.2025: 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17 for both the Q3 and Q3 Sportback. The broad row remains unchanged because the current schema cannot safely encode split final drives, the exact optional tire matrix was not recovered, and Audi's own 2025 launch material shows that the current `2019-2026` row crosses the old-generation to new-generation boundary.",
       "unresolved": [
         {
-          "item": "Audi Q3 (F3, 2019-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Audi Q3 40 TFSI quattro production-data applicability across the represented old-generation row span",
+          "reason": "Checked exact Germany-market 05.06.2025 Q3 and Q3 Sportback technical-data PDFs resolve the old-generation 40 TFSI quattro mapping, but this pass did not recover year-by-year official sheets proving one unchanged package across the full represented span."
         },
         {
-          "item": "Audi Q3 (F3, 2019-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Schema-safe encoding of exact Audi Q3 40 TFSI quattro split final-drive values",
+          "reason": "The checked official technical-data PDFs publish two final-drive values 4.813 / 3.667 for the target, but the current row stores only one final_drive_ratio field."
+        },
+        {
+          "item": "Audi Q3 (F3, 2019-2026) model-year boundary, transmission-code, and optional tire-matrix confirmation",
+          "reason": "Official Audi sources now prove the old-generation exact ratio block, reverse ratio, and basic tire, and they also show the new third-generation Q3 arrives in summer 2025, but this pass did not recover a full old-generation optional wheel/tire matrix or an official gearbox-family code."
         }
       ],
       "sources": {
+        "official_40tfsi_quattro_exact_ratios": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1244/file_de/ceabc2b0fd48a749c10ea1fd2c8552b20f96e0c7/TD-Audi-Q3-40-TFSI-quattro-S_tronic-140kW_250605.pdf?1749195009",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact Q3 40 TFSI quattro S tronic 140 kW: AWD, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1245/file_de/eeac1506a8560e5cd2dda924150f9ed6334fb84f/TD-Audi-Q3-Sportback-40-TFSI-quattro-S_tronic-140kW_250605.pdf?1749195589",
+            "note": "Official Audi MediaCenter Germany cross-check PDF for the exact Q3 Sportback 40 TFSI quattro S tronic 140 kW with the same ratio block, reverse ratio 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/en/press-releases/versatile-sporty-and-digitally-connected-the-new-audi-q3-16771",
+            "note": "Official Audi MediaCenter launch release for the new third-generation Q3 confirming the old-generation boundary and why the current `2019-2026` row now spans more than one official model state.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",
@@ -3295,18 +3334,8 @@
             "confidence": "medium"
           },
           {
-            "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+Q3+%28F3%2C+2019-2026%29+technical+data+Europe",
-            "note": "Targeted lookup for official Audi media technical documents for this model.",
-            "confidence": "low"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=F3",
-            "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/models-4",
-            "note": "Audi MediaCenter official model hub (entry point for model-specific documents).",
+            "url": "https://www.audi-mediacenter.com/en/search?query=Q3+40+TFSI+quattro+technical+data",
+            "note": "Audi MediaCenter search page used to recover the exact old-generation Q3 40 TFSI quattro technical-data PDFs.",
             "confidence": "medium"
           }
         ]

@@ -247,12 +247,12 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### X3 (G01, 2018-2024)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| sDrive20i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| xDrive20i | B48 2.0L I4 Turbo | AWD | BMW press release | High |
-| xDrive30i | B48 2.0L I4 Turbo | AWD | BMW press release | High |
-| M40i | B58 3.0L I6 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| sDrive20i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
+| xDrive20i | B48 2.0L I4 Turbo | AWD | – | BMW press release | High |
+| xDrive30i | B48 2.0L I4 Turbo | AWD | 8-speed Steptronic FD 3.385 TG 0.640 | BMW PressClub technical data / DE price list | High |
+| M40i | B58 3.0L I6 Turbo | AWD | – | BMW press release | High |
 
 ### X3 (G45, 2025-2026)
 

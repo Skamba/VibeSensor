@@ -1890,7 +1890,67 @@
       {
         "name": "xDrive30i",
         "engine": "B48 2.0L I4 Turbo",
-        "drivetrain": "AWD"
+        "drivetrain": "AWD",
+        "gearboxes": [
+          {
+            "name": "8-speed Steptronic transmission",
+            "final_drive_ratio": 3.385,
+            "top_gear_ratio": 0.64
+          }
+        ],
+        "tire_options": [
+          {
+            "name": "Standard 18\"",
+            "tire_width_mm": 225.0,
+            "tire_aspect_pct": 60.0,
+            "rim_in": 18.0
+          },
+          {
+            "name": "Optional 19\"",
+            "tire_width_mm": 245.0,
+            "tire_aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          {
+            "name": "Optional staggered 20\"",
+            "tire_width_mm": 275.0,
+            "tire_aspect_pct": 40.0,
+            "rim_in": 20.0,
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "source_confidence": "official_exact"
+          },
+          {
+            "name": "Optional staggered 21\"",
+            "tire_width_mm": 275.0,
+            "tire_aspect_pct": 35.0,
+            "rim_in": 21.0,
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 21.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "source_confidence": "official_exact"
+          }
+        ],
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 60.0,
+        "rim_in": 18.0
       },
       {
         "name": "M40i",
