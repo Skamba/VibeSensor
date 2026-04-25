@@ -11,6 +11,7 @@ import {
 import { buildSettingsCarListRenderModel } from "../src/app/views/settings_car_list_view";
 
 const labels: Record<string, string> = {
+  "settings.car.confidence.part_tires": "Tires {value}",
   "settings.car.confidence.part_drive": "Drive {value}",
   "settings.car.confidence.part_gear": "Top gear {value}",
   "settings.car.confidence.part_transmission": "Transmission {value}",
@@ -56,6 +57,7 @@ function makeOrderStatus(
 ): CarOrderReferenceStatus {
   return {
     selection_source_status: "exact_row",
+    tire_dimensions_confidence: "official_exact",
     final_drive_ratio_confidence: "official_exact",
     current_gear_ratio_confidence: "official_exact",
     transmission_name: "8-speed automatic",
@@ -98,27 +100,29 @@ function makeCar(overrides: Partial<CarRecord> = {}): CarRecord {
 
 test("buildOrderReferenceConfidenceDetail distinguishes exact and approximate status", () => {
   expect(buildOrderReferenceConfidenceDetail(makeOrderStatus(), t)).toBe(
-    "Drive official source · Top gear official source · Transmission official source",
+    "Tires official source · Drive official source · Top gear official source · Transmission official source",
   );
   expect(buildOrderReferenceConfidenceDetail(makeOrderStatus({
+    tire_dimensions_confidence: "family_default",
     final_drive_ratio_confidence: "family_default",
     current_gear_ratio_confidence: "family_default",
     transmission_confidence: "family_default",
     requires_manual_confirmation: true,
   }), t)).toBe(
-    "Drive family default · Top gear family default · Transmission family default. Review or override in Analysis before trusting driveshaft or engine order results.",
+    "Tires family default · Drive family default · Top gear family default · Transmission family default. Review or override in Analysis before trusting driveshaft or engine order results.",
   );
 });
 
 test("buildOrderReferenceConfidenceDetail preserves user-confirmed manual values", () => {
   expect(buildOrderReferenceConfidenceDetail(makeOrderStatus({
     selection_source_status: "manual_entry",
+    tire_dimensions_confidence: "user_confirmed",
     final_drive_ratio_confidence: "user_confirmed",
     current_gear_ratio_confidence: "user_confirmed",
     transmission_name: null,
     transmission_confidence: null,
   }), t)).toBe(
-    "Drive user confirmed · Top gear user confirmed",
+    "Tires user confirmed · Drive user confirmed · Top gear user confirmed",
   );
 });
 
@@ -171,6 +175,6 @@ test("buildSettingsCarListRenderModel shows exact confidence detail for ready ca
     throw new Error("Expected rows");
   }
   expect(model.rows[0].completionDetailText).toBe(
-    "Drive official source · Top gear official source · Transmission official source",
+    "Tires official source · Drive official source · Top gear official source · Transmission official source",
   );
 });
