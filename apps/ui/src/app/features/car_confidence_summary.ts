@@ -40,6 +40,11 @@ export function describeOrderReferenceConfidence(
   }
   const parts = [
     buildConfidencePart(
+      "settings.car.confidence.part_tires",
+      status.tire_dimensions_confidence,
+      t,
+    ),
+    buildConfidencePart(
       "settings.car.confidence.part_drive",
       status.final_drive_ratio_confidence,
       t,

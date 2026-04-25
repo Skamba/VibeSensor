@@ -1536,6 +1536,17 @@
             "title": "Selection Source Status",
             "type": "string"
           },
+          "tire_dimensions_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Dimensions Confidence"
+          },
           "transmission_confidence": {
             "anyOf": [
               {

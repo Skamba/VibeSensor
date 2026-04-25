@@ -92,7 +92,8 @@ Each provenance entry stores:
   a variant-specific source is captured
 - `unverified`: the stored value is still present but should not be treated as a
   verified source-of-truth fact
-- `user_confirmed`: reserved for future locally confirmed overrides
+- `user_confirmed`: a locally edited saved-car field that the user explicitly
+  confirmed in Analysis
 
 ### Source ID prefixes
 

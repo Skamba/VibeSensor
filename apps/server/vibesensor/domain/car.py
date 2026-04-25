@@ -42,6 +42,7 @@ class CarOrderReferenceStatus:
     """Persisted confidence metadata for selected drivetrain order-reference values."""
 
     selection_source_status: CarOrderReferenceSourceStatus
+    tire_dimensions_confidence: VehicleFieldConfidence | None = None
     final_drive_ratio_confidence: VehicleFieldConfidence | None = None
     current_gear_ratio_confidence: VehicleFieldConfidence | None = None
     transmission_name: str | None = None
@@ -54,6 +55,7 @@ class CarOrderReferenceStatus:
         return any(
             confidence in {"family_default", "unverified"}
             for confidence in (
+                self.tire_dimensions_confidence,
                 self.final_drive_ratio_confidence,
                 self.current_gear_ratio_confidence,
                 self.transmission_confidence,
@@ -63,13 +65,21 @@ class CarOrderReferenceStatus:
     def with_user_confirmed_fields(
         self,
         *,
+        tire_dimensions: bool = False,
         current_gear_ratio: bool = False,
         final_drive_ratio: bool = False,
     ) -> CarOrderReferenceStatus:
         """Return a copy with the selected order-reference fields user-confirmed."""
 
         return CarOrderReferenceStatus(
-            selection_source_status=self.selection_source_status,
+            selection_source_status=(
+                "manual_entry"
+                if tire_dimensions or current_gear_ratio or final_drive_ratio
+                else self.selection_source_status
+            ),
+            tire_dimensions_confidence=(
+                "user_confirmed" if tire_dimensions else self.tire_dimensions_confidence
+            ),
             final_drive_ratio_confidence=(
                 "user_confirmed" if final_drive_ratio else self.final_drive_ratio_confidence
             ),

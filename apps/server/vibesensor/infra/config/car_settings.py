@@ -40,6 +40,7 @@ _AXLE_TIRE_ASPECT_KEYS = frozenset(
         "default_axle_for_speed",
     }
 )
+_TIRE_REFERENCE_ASPECT_KEYS = _FLAT_TIRE_ASPECT_KEYS | _AXLE_TIRE_ASPECT_KEYS
 
 
 class _UpdateWithRollback(Protocol):
@@ -331,11 +332,13 @@ def _updated_order_reference_status(
     aspects: AnalysisSettingsPayload,
 ) -> CarOrderReferenceStatus | None:
     touched_keys = _ORDER_REFERENCE_ASPECT_KEYS.intersection(aspects)
-    if not touched_keys:
+    touched_tire_keys = _TIRE_REFERENCE_ASPECT_KEYS.intersection(aspects)
+    if not touched_keys and not touched_tire_keys:
         return existing
     if existing is None:
         return CarOrderReferenceStatus(
             selection_source_status="manual_entry",
+            tire_dimensions_confidence="user_confirmed" if touched_tire_keys else None,
             current_gear_ratio_confidence=(
                 "user_confirmed" if "current_gear_ratio" in touched_keys else None
             ),
@@ -344,6 +347,7 @@ def _updated_order_reference_status(
             ),
         )
     return existing.with_user_confirmed_fields(
+        tire_dimensions=bool(touched_tire_keys),
         current_gear_ratio="current_gear_ratio" in touched_keys,
         final_drive_ratio="final_drive_ratio" in touched_keys,
     )
