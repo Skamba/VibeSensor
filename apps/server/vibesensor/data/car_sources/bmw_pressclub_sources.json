@@ -1,0 +1,61 @@
+{
+  "pack_id": "bmw_pressclub_sources",
+  "sources": [
+    {
+      "id": "bmw_pressclub_sources:f45-220i-2018-press-kit",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0277458EN/the-new-bmw-2-series-active-tourer-the-new-bmw-2-series-gran-tourer",
+      "title": "BMW PressClub F45 Active Tourer 2018 press kit",
+      "note": "Official BMW PressClub article used for the F45 220i transmission and drivetrain context.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f45-220i-2018-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0277458EN/401747",
+      "title": "BMW PressClub F45 Active Tourer 2018 specifications PDF",
+      "note": "Official BMW specifications PDF used to confirm the F45 transmission table context while the 220i numeric ratio mapping remained ambiguous in extracted text.",
+      "confidence": "medium"
+    },
+    {
+      "id": "bmw_pressclub_sources:f45-225xe-launch-release",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0299792EN/more-versatile-and-efficient-than-ever:-market-launch-of-the-new-bmw-225xe-active-tourer",
+      "title": "BMW PressClub 225xe Active Tourer launch release",
+      "note": "Official BMW release used for the 225xe drivetrain layout and transmission path.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0299792EN/436732",
+      "title": "BMW PressClub 225xe Active Tourer 2019 specifications PDF",
+      "note": "Official BMW 225xe specifications PDF with the documented top-gear and final-drive values used in the exact row.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f45-2018-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0277458EN/401747",
+      "title": "BMW PressClub F45 Active Tourer 2018 specifications PDF cross-check",
+      "note": "Official BMW PDF reused as a cross-check for the F45 225xe ratio pair and transmission naming.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-330i-xdrive-ratio-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0285128EN/425813",
+      "title": "BMW PressClub G20 3 Series technical data attachment",
+      "note": "Official BMW attachment used for the G20 330i xDrive automatic final-drive verification.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0416261EN/the-new-bmw-5-series-sedan",
+      "title": "BMW PressClub G60 5 Series launch press kit",
+      "note": "Official BMW launch press kit used for the EU variant scope and EV drivetrain layout context of the G60 range.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0443474EN/629035",
+      "title": "BMW PressClub G60 5 Series 2025 technical specifications PDF",
+      "note": "Official BMW technical specifications PDF used for the i5 eDrive40 overall ratio and single-speed transmission evidence.",
+      "confidence": "high"
+    }
+  ]
+}
