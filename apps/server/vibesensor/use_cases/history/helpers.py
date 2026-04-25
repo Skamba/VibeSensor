@@ -59,7 +59,6 @@ def require_analysis_ready(run: StoredHistoryRun) -> PersistedAnalysis:
     if run.status == RunStatus.RECORDING:
         raise AnalysisNotReadyError(
             "Analysis is not available while recording is still active",
-            status="active",
         )
     if run.status == RunStatus.ANALYZING:
         raise AnalysisNotReadyError("Analysis is still in progress", status="in_progress")
