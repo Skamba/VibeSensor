@@ -381,6 +381,81 @@ def _check_live_processing_does_not_import_analysis() -> list[str]:
     return failures
 
 
+def _check_canonical_dataflow_doc() -> list[str]:
+    path = REPO_ROOT / "docs" / "dataflows.md"
+    if not path.exists():
+        return [
+            f"{path.relative_to(REPO_ROOT)} must exist as the canonical four-flow map"
+        ]
+    source = _read_text(path)
+    required_markers = (
+        "# Canonical Dataflows",
+        "## Live dataflow",
+        "## Recording dataflow",
+        "## Raw capture dataflow",
+        "## Report dataflow",
+        "docs/intake_buffering.md",
+        "docs/run_lifecycle.md",
+        "docs/analysis_pipeline.md",
+        "docs/report_pipeline.md",
+        "degraded",
+        "missing",
+        "replayable",
+    )
+    failures: list[str] = []
+    for marker in required_markers:
+        if marker not in source:
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} must document the canonical flow map marker: {marker}"
+            )
+    return failures
+
+
+def _check_recording_flow_uses_flush_and_persistence_writer() -> list[str]:
+    logger_path = VIBESENSOR_DIR / "use_cases" / "run" / "logger.py"
+    sample_flush_path = VIBESENSOR_DIR / "use_cases" / "run" / "sample_flush.py"
+    persistence_writer_path = (
+        VIBESENSOR_DIR / "use_cases" / "run" / "persistence_writer.py"
+    )
+    logger_source = _read_text(logger_path)
+    sample_flush_source = _read_text(sample_flush_path)
+    persistence_writer_source = _read_text(persistence_writer_path)
+    failures: list[str] = []
+    required_logger_markers = (
+        "from vibesensor.use_cases.run.sample_flush import SampleFlushOrchestrator",
+        "self._sample_flush.append_records(",
+        "self._persistence.ready_for_analysis(",
+    )
+    for marker in required_logger_markers:
+        if marker not in logger_source:
+            failures.append(
+                f"{logger_path.relative_to(REPO_ROOT)} must keep the recording flow routed through sample_flush/persistence_writer ({marker})"
+            )
+    required_sample_flush_markers = (
+        "from vibesensor.use_cases.run.persistence_writer import RunPersistenceWriter",
+        "self._persistence.append_rows(",
+    )
+    for marker in required_sample_flush_markers:
+        if marker not in sample_flush_source:
+            failures.append(
+                f"{sample_flush_path.relative_to(REPO_ROOT)} must keep sample flush as the recording-to-persistence boundary ({marker})"
+            )
+    if "from vibesensor.adapters.persistence.history_db" in sample_flush_source:
+        failures.append(
+            f"{sample_flush_path.relative_to(REPO_ROOT)} must stay adapter-free; persistence_writer owns the history DB boundary"
+        )
+    required_writer_markers = (
+        "def ensure_history_run(",
+        "history_db.aappend_samples(run_id, rows)",
+    )
+    for marker in required_writer_markers:
+        if marker not in persistence_writer_source:
+            failures.append(
+                f"{persistence_writer_path.relative_to(REPO_ROOT)} must own the history DB append path for recorded rows ({marker})"
+            )
+    return failures
+
+
 def _check_metrics_log_reads_live_start_under_lock() -> list[str]:
     path = VIBESENSOR_DIR / "use_cases" / "run" / "_recorder_runtime.py"
     source = _read_text(path)
@@ -975,6 +1050,47 @@ def _check_report_pdf_entrypoint_renders_report_document() -> list[str]:
             f"{path.relative_to(REPO_ROOT)}: missing _build_pdf_bytes entrypoint"
         )
     return violations
+
+
+def _check_raw_capture_flow_stays_post_analysis_only() -> list[str]:
+    post_analysis_input_path = (
+        VIBESENSOR_DIR / "use_cases" / "run" / "post_analysis_input.py"
+    )
+    post_analysis_loader_path = (
+        VIBESENSOR_DIR / "use_cases" / "run" / "post_analysis_loader.py"
+    )
+    report_surfaces = [
+        *sorted(_python_files(VIBESENSOR_DIR / "use_cases" / "history")),
+        *sorted(_python_files(VIBESENSOR_DIR / "adapters" / "pdf")),
+    ]
+    post_analysis_input_source = _read_text(post_analysis_input_path)
+    post_analysis_loader_source = _read_text(post_analysis_loader_path)
+    failures: list[str] = []
+    if "from .raw_capture_replay import" not in post_analysis_input_source:
+        failures.append(
+            f"{post_analysis_input_path.relative_to(REPO_ROOT)} must keep raw replay assembly in the post-analysis input path"
+        )
+    for marker in (
+        'getattr(db, "aget_raw_capture_manifest", None)',
+        'getattr(db, "aload_raw_capture", None)',
+    ):
+        if marker not in post_analysis_loader_source:
+            failures.append(
+                f"{post_analysis_loader_path.relative_to(REPO_ROOT)} must load raw capture through RunPersistence ({marker})"
+            )
+    forbidden_prefixes = (
+        "vibesensor.use_cases.run.raw_capture_replay",
+        "vibesensor.use_cases.run.raw_capture_writer",
+        "vibesensor.adapters.persistence.history_db._raw_capture_store",
+    )
+    for path in report_surfaces:
+        violations = _imports_from_prefixes(path, forbidden_prefixes)
+        if violations:
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} must not bypass the post-analysis/raw persistence boundary:\n"
+                + "\n".join(violations)
+            )
+    return failures
 
 
 _FORBIDDEN_DOMAIN_IMPORTS = (
@@ -2112,6 +2228,11 @@ CHECKS: tuple[Check, ...] = (
         "Live processing stays analysis-free",
         _check_live_processing_does_not_import_analysis,
     ),
+    ("Canonical dataflow doc stays complete", _check_canonical_dataflow_doc),
+    (
+        "Recording flow uses sample flush and persistence writer",
+        _check_recording_flow_uses_flush_and_persistence_writer,
+    ),
     (
         "Recorder live-start snapshot stays under lock",
         _check_metrics_log_reads_live_start_under_lock,
@@ -2179,6 +2300,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "Report PDF entrypoint renders report document",
         _check_report_pdf_entrypoint_renders_report_document,
+    ),
+    (
+        "Raw capture flow stays in post-analysis boundaries",
+        _check_raw_capture_flow_stays_post_analysis_only,
     ),
     ("Domain modules avoid outer-layer imports", _collect_domain_import_violations),
     (
