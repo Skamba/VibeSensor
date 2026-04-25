@@ -103,8 +103,24 @@ __all__ = [
 class HistoryArtifactAvailabilityResponse(BaseModel):
     """Response body describing persisted artifact availability for a history run."""
 
-    raw_capture: Literal["not_recorded", "available", "missing", "degraded"]
-    whole_run_artifacts: Literal["not_recorded", "available", "missing"]
+    raw_capture: Literal["not_recorded", "pending", "available", "missing", "degraded"]
+    whole_run_artifacts: Literal["not_recorded", "pending", "available", "missing", "degraded"]
+
+
+class HistoryRunLifecycleResponse(BaseModel):
+    """Response body describing the canonical derived lifecycle for a history run."""
+
+    stage: Literal[
+        "recording",
+        "post_analysis_pending",
+        "post_analysis_running",
+        "post_analysis_ready",
+        "post_analysis_degraded",
+    ]
+    raw_capture: Literal["not_recorded", "pending", "ready", "degraded", "missing"]
+    whole_run_artifacts: Literal["not_recorded", "pending", "ready", "degraded", "missing"]
+    post_analysis: Literal["pending", "running", "ready", "degraded"]
+    report: Literal["pending", "ready", "degraded"]
 
 
 class HistoryRawCaptureFinalizeResponse(BaseModel):
@@ -126,6 +142,7 @@ class HistoryListEntryResponse(BaseModel):
     sample_count: int
     car_name: str | None = None
     error_message: str | None = None
+    lifecycle: HistoryRunLifecycleResponse | None = None
     artifact_availability: HistoryArtifactAvailabilityResponse | None = None
     raw_capture_finalize: HistoryRawCaptureFinalizeResponse | None = None
 
@@ -151,6 +168,7 @@ class HistoryRunResponse(_StrictBase):
     error_message: str | None = None
     metadata: ApiPayloadObject = Field(default_factory=dict)
     analysis: _HistoryRunAnalysisResponse | None = None
+    lifecycle: HistoryRunLifecycleResponse | None = None
     artifact_availability: HistoryArtifactAvailabilityResponse | None = None
     raw_capture_finalize: HistoryRawCaptureFinalizeResponse | None = None
 

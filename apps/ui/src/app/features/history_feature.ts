@@ -8,11 +8,7 @@ import {
   historyReportPdfUrl,
 } from "../../api";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
-import type {
-  HistoryState,
-  RunDetail,
-  ShellState,
-} from "../ui_app_state";
+import type { HistoryState, RunDetail, ShellState } from "../ui_app_state";
 import { computed, effectOnChange, untracked } from "../ui_signals";
 import type {
   HistoryPanelRenderModel,
@@ -23,6 +19,7 @@ import {
   buildHistoryRowsTableRenderModel,
   createHistoryTableRowsMemo,
 } from "../views/history_table_presenters";
+import { historyPostAnalysisReady } from "../views/history_presenter_shared";
 import { downloadBlobFile } from "./history_download";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 
@@ -109,10 +106,11 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     const runs = history.runs.value;
     const deleteAllRunsDisabled =
       history.deleteAllRunsInFlight.value || runs.length === 0;
-    const expandedRunId = history.expandedRunId.value
-      && runs.some((row) => row.run_id === history.expandedRunId.value)
-      ? history.expandedRunId.value
-      : null;
+    const expandedRunId =
+      history.expandedRunId.value &&
+      runs.some((row) => row.run_id === history.expandedRunId.value)
+        ? history.expandedRunId.value
+        : null;
     if (!runs.length) {
       return {
         historySummaryText: services.t("history.none"),
@@ -163,7 +161,10 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     try {
       const response = await ctx.queryClient.fetchQuery({
         queryFn: () => getHistoryInsights(runId, shell.lang.value),
-        queryKey: serverStateQueryKeys.history.insights(runId, shell.lang.value),
+        queryKey: serverStateQueryKeys.history.insights(
+          runId,
+          shell.lang.value,
+        ),
         staleTime: 0,
       });
       updateRunDetail(runId, (current) => ({
@@ -173,9 +174,10 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     } catch (err) {
       updateRunDetail(runId, (current) => ({
         ...current,
-        previewError: err instanceof Error
-          ? err.message
-          : services.t("report.unable_load_insights"),
+        previewError:
+          err instanceof Error
+            ? err.message
+            : services.t("report.unable_load_insights"),
       }));
     } finally {
       updateRunDetail(runId, (current) => ({
@@ -201,7 +203,10 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     try {
       const response = await ctx.queryClient.fetchQuery({
         queryFn: () => getHistoryInsights(runId, shell.lang.value),
-        queryKey: serverStateQueryKeys.history.insights(runId, shell.lang.value),
+        queryKey: serverStateQueryKeys.history.insights(
+          runId,
+          shell.lang.value,
+        ),
         staleTime: 0,
       });
       updateRunDetail(runId, (current) => ({
@@ -211,9 +216,10 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     } catch (err) {
       updateRunDetail(runId, (current) => ({
         ...current,
-        insightsError: err instanceof Error
-          ? err.message
-          : services.t("report.unable_load_insights"),
+        insightsError:
+          err instanceof Error
+            ? err.message
+            : services.t("report.unable_load_insights"),
       }));
     } finally {
       updateRunDetail(runId, (current) => ({
@@ -262,22 +268,22 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   function prefetchCollapsedRunContext(): void {
     const token = ++previewPrefetchToken;
     void (async () => {
-      const completedRuns = history.runs.value.filter((run) => run.status === "complete");
+      const readyRuns = history.runs.value.filter((run) =>
+        historyPostAnalysisReady(run),
+      );
       for (
         let index = 0;
-        index < completedRuns.length;
+        index < readyRuns.length;
         index += COLLAPSED_RUN_PREVIEW_PREFETCH_CONCURRENCY
       ) {
         if (token !== previewPrefetchToken) {
           return;
         }
-        const batch = completedRuns.slice(
+        const batch = readyRuns.slice(
           index,
           index + COLLAPSED_RUN_PREVIEW_PREFETCH_CONCURRENCY,
         );
-        await Promise.all(batch.map((run) =>
-          loadRunPreview(run.run_id)
-        ));
+        await Promise.all(batch.map((run) => loadRunPreview(run.run_id)));
       }
     })();
   }
@@ -310,14 +316,18 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       await deleteHistoryRunApi(runId);
     } catch (err) {
       services.showError(
-        err instanceof Error ? err.message : services.t("history.delete_failed"),
+        err instanceof Error
+          ? err.message
+          : services.t("history.delete_failed"),
       );
       return;
     }
     if (history.expandedRunId.value === runId) {
       collapseExpandedRun();
     }
-    await ctx.queryClient.invalidateQueries({ queryKey: serverStateQueryKeys.history.runs() });
+    await ctx.queryClient.invalidateQueries({
+      queryKey: serverStateQueryKeys.history.runs(),
+    });
     await refreshHistory();
   }
 
@@ -348,14 +358,17 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       } catch (err) {
         failed += 1;
         if (!firstError) {
-          firstError = err instanceof Error
-            ? err.message
-            : services.t("history.delete_failed");
+          firstError =
+            err instanceof Error
+              ? err.message
+              : services.t("history.delete_failed");
         }
       }
     }
     history.deleteAllRunsInFlight.value = false;
-    await ctx.queryClient.invalidateQueries({ queryKey: serverStateQueryKeys.history.runs() });
+    await ctx.queryClient.invalidateQueries({
+      queryKey: serverStateQueryKeys.history.runs(),
+    });
     await refreshHistory();
     if (failed > 0) {
       const summary = services.t("history.delete_all_partial", {
@@ -385,9 +398,8 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     } catch (err) {
       updateRunDetail(runId, (current) => ({
         ...current,
-        pdfError: err instanceof Error
-          ? err.message
-          : services.t("history.pdf_failed"),
+        pdfError:
+          err instanceof Error ? err.message : services.t("history.pdf_failed"),
       }));
     } finally {
       updateRunDetail(runId, (current) => ({

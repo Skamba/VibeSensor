@@ -12,6 +12,7 @@ import {
   findingSpeedBandText,
   findingTone,
   formatSourceLabel,
+  historyRawCaptureState,
   historyRunDisplayTitle,
   isInconclusiveFinding,
   summarizeFindings,
@@ -37,9 +38,9 @@ function shouldShowNextStep(finding: FindingPayload | null): boolean {
     return true;
   }
   return (
-    typeof finding.confidence === "number"
-    && Number.isFinite(finding.confidence)
-    && finding.confidence >= 0.85
+    typeof finding.confidence === "number" &&
+    Number.isFinite(finding.confidence) &&
+    finding.confidence >= 0.85
   );
 }
 
@@ -56,14 +57,15 @@ function buildPrimaryFinding(
   const inconclusive = isInconclusiveFinding(primary);
   const location = findingLocationText(primary, summary, t);
   const signature = findingSignatureText(primary, params);
-  const nextStep =
-    inconclusive
-      ? t("history.inconclusive_next_step")
-      : shouldShowNextStep(primary) && location !== t("report.missing")
-        ? t("history.findings_next_step", { location })
-        : null;
+  const nextStep = inconclusive
+    ? t("history.inconclusive_next_step")
+    : shouldShowNextStep(primary) && location !== t("report.missing")
+      ? t("history.findings_next_step", { location })
+      : null;
   return {
-    eyebrow: inconclusive ? t("history.capture_verdict") : t("history.primary_diagnosis"),
+    eyebrow: inconclusive
+      ? t("history.capture_verdict")
+      : t("history.primary_diagnosis"),
     headline: inconclusive
       ? t("history.inconclusive_title")
       : formatSourceLabel(primary.suspected_source, t),
@@ -71,9 +73,9 @@ function buildPrimaryFinding(
     confidence: confidenceText(primary, params),
     tone: findingTone(primary),
     explanation: String(
-      primary.evidence_summary
-        ?? summary.most_likely_origin?.explanation
-        ?? (inconclusive ? t("history.inconclusive_body") : ""),
+      primary.evidence_summary ??
+        summary.most_likely_origin?.explanation ??
+        (inconclusive ? t("history.inconclusive_body") : ""),
     ),
     chips: [
       { label: t("history.findings_location"), value: location },
@@ -117,11 +119,15 @@ function buildHistoryInsightsViewModel(
 ): HistoryInsightsViewModel {
   const { t } = params;
   const loadedInsights = detail.insights ?? detail.preview;
-  const loading = detail.insightsLoading || (detail.previewLoading && loadedInsights === null);
+  const loading =
+    detail.insightsLoading ||
+    (detail.previewLoading && loadedInsights === null);
   if (loadedInsights === null) {
     return {
       headerEyebrow: t("history.findings_title"),
-      stateMessage: loading ? t("history.loading_insights") : t("history.findings_pending"),
+      stateMessage: loading
+        ? t("history.loading_insights")
+        : t("history.findings_pending"),
       primary: null,
       secondaryTitle: null,
       visibleSecondary: [],
@@ -144,14 +150,16 @@ function buildHistoryInsightsViewModel(
     };
   }
   const secondaryFindings = findings.slice(1);
-  const hiddenSecondary = secondaryFindings.slice(2).map((finding) =>
-    buildSecondaryFinding(finding, loadedInsights, params),
-  );
+  const hiddenSecondary = secondaryFindings
+    .slice(2)
+    .map((finding) => buildSecondaryFinding(finding, loadedInsights, params));
   return {
     headerEyebrow: t("history.findings_title"),
     stateMessage: null,
     primary: buildPrimaryFinding(loadedInsights, params),
-    secondaryTitle: secondaryFindings.length ? t("history.secondary_candidates_title") : null,
+    secondaryTitle: secondaryFindings.length
+      ? t("history.secondary_candidates_title")
+      : null,
     visibleSecondary: secondaryFindings
       .slice(0, 2)
       .map((finding) => buildSecondaryFinding(finding, loadedInsights, params)),
@@ -163,10 +171,18 @@ function buildHistoryInsightsViewModel(
   };
 }
 
-function buildHistoryWarnings(detail: RunDetail): HistoryWarningBannerViewModel[] {
-  const warnings = summarizeWarnings(detail.preview).concat(summarizeWarnings(detail.insights));
+function buildHistoryWarnings(
+  detail: RunDetail,
+): HistoryWarningBannerViewModel[] {
+  const warnings = summarizeWarnings(detail.preview).concat(
+    summarizeWarnings(detail.insights),
+  );
   return warnings
-    .filter((warning, index) => warnings.findIndex((candidate) => candidate.code === warning.code) === index)
+    .filter(
+      (warning, index) =>
+        warnings.findIndex((candidate) => candidate.code === warning.code) ===
+        index,
+    )
     .map((warning) => ({
       severity: String(warning.severity),
       title: String(warning.title),
@@ -178,7 +194,8 @@ function buildArtifactWarnings(
   run: HistoryEntry,
   t: PresenterParams["t"],
 ): HistoryWarningBannerViewModel[] {
-  if (run.artifact_availability?.raw_capture === "missing") {
+  const rawCaptureState = historyRawCaptureState(run);
+  if (rawCaptureState === "missing") {
     return [
       {
         severity: "warn",
@@ -187,7 +204,7 @@ function buildArtifactWarnings(
       },
     ];
   }
-  if (run.artifact_availability?.raw_capture !== "degraded" || run.raw_capture_finalize == null) {
+  if (rawCaptureState !== "degraded" || run.raw_capture_finalize == null) {
     return [];
   }
   let detailKey: string | null = null;
@@ -210,7 +227,8 @@ function buildArtifactWarnings(
       title: t("history.raw_capture_degraded_title"),
       detail: t(detailKey, {
         queueDepth: run.raw_capture_finalize.queue_depth ?? "unknown",
-        errorSummary: run.raw_capture_finalize.error_summary ?? t("history.not_reported"),
+        errorSummary:
+          run.raw_capture_finalize.error_summary ?? t("history.not_reported"),
       }),
     },
   ];
@@ -225,7 +243,8 @@ export function buildHistoryDetailsViewModel(
   const summary = detail.insights ?? detail.preview;
   const hasDiagnosis = Boolean(detail.insights || detail.preview);
   const showReloadAction = hasDiagnosis || Boolean(detail.insightsError);
-  const showLoadingStatus = detail.insightsLoading || (detail.previewLoading && !hasDiagnosis);
+  const showLoadingStatus =
+    detail.insightsLoading || (detail.previewLoading && !hasDiagnosis);
   const runSummary = summary
     ? [
         `${t("report.run_id")}: ${run.run_id}`,
@@ -269,7 +288,9 @@ export function buildHistoryDetailsViewModel(
         ? t("history.loading_insights")
         : null,
     insightsError: detail.insightsError || null,
-    warnings: buildArtifactWarnings(run, t).concat(buildHistoryWarnings(detail)),
+    warnings: buildArtifactWarnings(run, t).concat(
+      buildHistoryWarnings(detail),
+    ),
     insights: buildHistoryInsightsViewModel(detail, params),
     heatmap,
     footerEyebrow: t("history.run_actions_title"),

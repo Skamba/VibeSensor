@@ -42,6 +42,7 @@ from vibesensor.shared.types.history_records import (
     StoredHistoryRun,
 )
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.run_lifecycle import derive_run_artifact_lifecycle
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService
@@ -131,14 +132,35 @@ class FakeHistoryDB:
     analysis: dict[str, Any] | AnalysisSummary | PersistedAnalysis
     analysis_completed_at: str | None = "2026-01-01T00:01:00Z"
 
+    @staticmethod
+    def _artifact_availability_from_lifecycle(
+        raw_capture: str,
+        whole_run_artifacts: str,
+    ) -> HistoryArtifactAvailability:
+        return HistoryArtifactAvailability(
+            raw_capture="available" if raw_capture == "ready" else raw_capture,
+            whole_run_artifacts=(
+                "available" if whole_run_artifacts == "ready" else whole_run_artifacts
+            ),
+        )
+
     async def aget_run(self, run_id: str) -> StoredHistoryRun | None:
         if run_id != "run-1":
             return None
         metadata = _coerce_metadata(self.metadata)
-        artifact_availability = (
-            HistoryArtifactAvailability(raw_capture="degraded")
-            if metadata.raw_capture_finalize is not None and metadata.raw_capture_finalize.degraded
-            else None
+        lifecycle = derive_run_artifact_lifecycle(
+            status=RunStatus.COMPLETE,
+            has_raw_capture_manifest=False,
+            raw_capture_artifacts_present=False,
+            has_whole_run_artifact_manifest=False,
+            whole_run_artifacts_present=False,
+            raw_capture_finalize=metadata.raw_capture_finalize,
+            has_analysis=True,
+            analysis_corrupt=False,
+        )
+        artifact_availability = self._artifact_availability_from_lifecycle(
+            lifecycle.raw_capture,
+            lifecycle.whole_run_artifacts,
         )
         return StoredHistoryRun(
             run_id=run_id,
@@ -146,6 +168,7 @@ class FakeHistoryDB:
             start_time_utc=metadata.start_time_utc,
             end_time_utc=metadata.end_time_utc,
             metadata=metadata,
+            lifecycle=lifecycle,
             raw_capture_finalize=metadata.raw_capture_finalize,
             artifact_availability=artifact_availability,
             analysis=_coerce_analysis(metadata, self.samples, self.analysis),
@@ -174,10 +197,19 @@ class FakeHistoryDB:
 
     async def alist_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         metadata = _coerce_metadata(self.metadata)
-        artifact_availability = (
-            HistoryArtifactAvailability(raw_capture="degraded")
-            if metadata.raw_capture_finalize is not None and metadata.raw_capture_finalize.degraded
-            else None
+        lifecycle = derive_run_artifact_lifecycle(
+            status=RunStatus.COMPLETE,
+            has_raw_capture_manifest=False,
+            raw_capture_artifacts_present=False,
+            has_whole_run_artifact_manifest=False,
+            whole_run_artifacts_present=False,
+            raw_capture_finalize=metadata.raw_capture_finalize,
+            has_analysis=True,
+            analysis_corrupt=False,
+        )
+        artifact_availability = self._artifact_availability_from_lifecycle(
+            lifecycle.raw_capture,
+            lifecycle.whole_run_artifacts,
         )
         return [
             HistoryRunListEntry(
@@ -188,6 +220,7 @@ class FakeHistoryDB:
                 created_at=metadata.start_time_utc,
                 sample_count=len(self.samples),
                 car_name=metadata.car_name,
+                lifecycle=lifecycle,
                 artifact_availability=artifact_availability,
                 raw_capture_finalize=metadata.raw_capture_finalize,
             )
