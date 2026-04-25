@@ -2264,6 +2264,28 @@
             ],
             "title": "Alternative Source"
           },
+          "car_data_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Car Data Confidence"
+          },
+          "car_data_reference_scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Car Data Reference Scope"
+          },
           "fallback_reason": {
             "anyOf": [
               {
@@ -2431,6 +2453,7 @@
           "tight_order_lock",
           "localized_support",
           "clean_signal",
+          "user_confirmed_vehicle_data",
           "summary_only",
           "raw_replay_incomplete",
           "legacy_context",
@@ -2444,7 +2467,10 @@
           "noisy_signal",
           "weak_spatial",
           "close_alternative",
-          "incomplete_reference"
+          "incomplete_reference",
+          "secondary_vehicle_data",
+          "approximate_vehicle_data",
+          "unverified_vehicle_data"
         ],
         "type": "string"
       },

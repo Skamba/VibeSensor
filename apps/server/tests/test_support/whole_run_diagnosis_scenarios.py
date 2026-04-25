@@ -47,6 +47,7 @@ class WholeRunDiagnosisScenario:
             context_intervals=self.context_intervals,
             order_summaries=self.order_summaries,
             spatial_summaries=self.spatial_summaries,
+            car_order_reference_status=None,
         )
 
     def build_report_summary(self) -> dict[str, object]:
