@@ -434,6 +434,8 @@ instead of controller-side variant class interpolation.
   `transport/live_models.ts`, `server_payload.ts`, `ws.ts`, and
   `ws_payload_validator.ts`; `app/**` code may import `transport/**` and
   `api/types.ts`, but not generated contract files directly.
+  `tools/dev/check_hygiene.py` enforces that boundary in the normal lint path
+  and its failure text now points at the exact replacement seam to use.
 - Normal UI rendering belongs in Preact owner surfaces. If code outside an
   island needs imperative DOM work, keep it narrowly scoped to non-render
   integrations such as download anchors, canvas/uPlot lifecycles, observers, or

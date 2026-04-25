@@ -511,6 +511,66 @@ def _imports_from_prefixes(path: Path, prefixes: tuple[str, ...]) -> list[str]:
     return violations
 
 
+def _check_use_cases_do_not_import_adapters_directly() -> list[str]:
+    failures: list[str] = []
+    for path in _python_files(VIBESENSOR_DIR / "use_cases"):
+        violations = _imports_from_prefixes(path, ("vibesensor.adapters",))
+        if violations:
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} must stay on shared/infra ports or adapter-local seams instead of importing adapters directly:\n"
+                + "\n".join(violations)
+            )
+    return failures
+
+
+def _check_analysis_and_history_core_do_not_import_pdf_adapter() -> list[str]:
+    roots = [
+        VIBESENSOR_DIR / "use_cases" / "diagnostics",
+        VIBESENSOR_DIR / "use_cases" / "history",
+        VIBESENSOR_DIR / "shared" / "boundaries" / "reporting",
+    ]
+    failures: list[str] = []
+    for root in roots:
+        for path in _python_files(root):
+            violations = _imports_from_prefixes(path, ("vibesensor.adapters.pdf",))
+            if violations:
+                failures.append(
+                    f"{path.relative_to(REPO_ROOT)} must not import the PDF adapter directly; keep report/analysis core on report-boundary seams such as PreparedReportInput or ReportDocument:\n"
+                    + "\n".join(violations)
+                )
+    return failures
+
+
+def _live_telemetry_surface_files() -> list[Path]:
+    files = _live_processing_files()
+    for path in (
+        VIBESENSOR_DIR / "infra" / "runtime" / "ws_payload_projection.py",
+        VIBESENSOR_DIR / "infra" / "runtime" / "ws_broadcast.py",
+        VIBESENSOR_DIR / "infra" / "runtime" / "processing_tick.py",
+    ):
+        if path.exists():
+            files.append(path)
+    return sorted(dict.fromkeys(files))
+
+
+def _check_live_surfaces_do_not_import_post_run_conclusions() -> list[str]:
+    forbidden_prefixes = (
+        "vibesensor.use_cases.diagnostics",
+        "vibesensor.use_cases.history",
+        "vibesensor.shared.boundaries.reporting",
+        "vibesensor.adapters.pdf",
+    )
+    failures: list[str] = []
+    for path in _live_telemetry_surface_files():
+        violations = _imports_from_prefixes(path, forbidden_prefixes)
+        if violations:
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)} must keep live telemetry on runtime/transport seams instead of importing post-run diagnosis/report conclusion modules:\n"
+                + "\n".join(violations)
+            )
+    return failures
+
+
 def _check_history_services_do_not_import_httpexception() -> list[str]:
     service_modules = [
         VIBESENSOR_DIR / "use_cases" / "history" / "helpers.py",
@@ -2239,6 +2299,18 @@ CHECKS: tuple[Check, ...] = (
     (
         "Live processing stays analysis-free",
         _check_live_processing_does_not_import_analysis,
+    ),
+    (
+        "Use cases avoid importing adapters directly",
+        _check_use_cases_do_not_import_adapters_directly,
+    ),
+    (
+        "Analysis/history core avoids direct PDF adapter imports",
+        _check_analysis_and_history_core_do_not_import_pdf_adapter,
+    ),
+    (
+        "Live telemetry avoids post-run conclusion modules",
+        _check_live_surfaces_do_not_import_post_run_conclusions,
     ),
     ("Canonical dataflow doc stays complete", _check_canonical_dataflow_doc),
     (
