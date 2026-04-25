@@ -812,19 +812,27 @@
     "BMW|5 Series (G30, 2017-2023)": {
       "car_index": 10,
       "verification_status": "verification_backlog",
-      "decision_summary": "Wave 14 improved the official Germany picture for the G30 530i without promoting any numeric production changes. Wave 15 adds exact BMW Germany technical-data evidence that the 540i xDrive and 545e xDrive do not belong on the broad-row defaults: 540i xDrive officially uses 8-Gang Steptronic with final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, while 545e xDrive officially uses 8-Gang Steptronic with forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.231, and the same 225/55 R17 baseline. The row remains verification_backlog because 530i and other G30 variants still lack one safe year-spanning Germany-market mapping, and the exact 540i xDrive full-ratio set changes between official pre-LCI and LCI documents.",
+      "decision_summary": "Wave 14 improved the official Germany picture for the G30 530i without promoting any numeric production changes. Wave 15 adds exact BMW Germany technical-data evidence that the 540i xDrive and 545e xDrive do not belong on the broad-row defaults: 540i xDrive officially uses 8-Gang Steptronic with final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, while 545e xDrive officially uses 8-Gang Steptronic with forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.231, and the same 225/55 R17 baseline. Wave 16 closes the stable exact fields for the rear-wheel-drive 540i in the same way and adds exact official 530i xDrive Germany-market tables proving AWD, 8-Gang Steptronic, top gear 0.640, and a 225/55 R17 baseline tire, but 530i xDrive still stays ledger-only because its final drive and full ratio set split between pre-LCI and LCI documents. The row remains verification_backlog because 520i, 530i, 530i xDrive, and M550i xDrive still lack one safe year-spanning Germany-market mapping.",
       "unresolved": [
         {
-          "item": "Per-variant final drive ratios for BMW 5 Series G30 EU-market 520i, 530i/530i xDrive, 540i, and M550i xDrive",
-          "reason": "Wave 15 closes the exact 540i xDrive and 545e xDrive targets, but no verifiable EU official G30 source retrieved in this run publishes explicit final-drive values for the remaining variants."
+          "item": "Per-variant final drive ratios for the remaining unresolved BMW 5 Series G30 EU-market variants",
+          "reason": "Wave 15 and Wave 16 close the exact 540i, 540i xDrive, and 545e xDrive targets, but this run still does not prove one safe year-spanning final-drive mapping for 520i, 530i, 530i xDrive, or M550i xDrive."
         },
         {
-          "item": "Per-variant top gear ratio differences across unresolved G30 gearbox calibrations",
-          "reason": "Wave 15 now proves exact top-gear values for 540i xDrive and 545e xDrive, but this run still did not recover authoritative EU G30 technical tables for 520i, 530i/530i xDrive, 540i, or M550i xDrive."
+          "item": "Per-variant top gear ratios for the remaining unresolved G30 variants",
+          "reason": "Wave 15 and Wave 16 now prove exact top-gear values for 540i, 540i xDrive, 545e xDrive, and 530i xDrive, but this run still did not recover authoritative EU G30 technical tables for 520i, 530i, or M550i xDrive."
         },
         {
           "item": "BMW G30 530i official tire baseline and later-year continuity",
           "reason": "The recovered official BMW Germany launch price list proves a 225/55 R17 baseline with 18/19/20-inch options for the 530i, contradicting the current broad-row tire defaults, but this pass did not recover later official archived price lists proving one year-spanning 2017-2023 530i wheel matrix safe enough for a production rewrite."
+        },
+        {
+          "item": "BMW G30 530i xDrive one exact final-drive and full-ratio set across the represented row span",
+          "reason": "Official BMW Germany technical-data sheets now prove 530i xDrive AWD, 8-Gang Steptronic wording, top gear 0.640, and a 225/55 R17 baseline tire, but the 11/2016 sheet publishes final drive 2.929 while the 05/2020, 11/2020, and 03/2021 sheets publish 2.813 and different forward-ratio sets."
+        },
+        {
+          "item": "BMW G30 540i one exact full-ratio set across the represented row span",
+          "reason": "Official BMW Germany 11/2016, 05/2020, and 11/2020 technical-data sheets agree on 540i RWD, 8-Gang Steptronic wording, final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, but they publish different forward and reverse ratio sets, so this pass promotes only the stable exact fields."
         },
         {
           "item": "BMW G30 540i xDrive one exact full-ratio set across the represented row span",
@@ -864,6 +872,55 @@
           {
             "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_G30_IV_1606.pdf",
             "note": "The same official BMW Germany launch price list documents the 530i tire matrix with 225/55 R17 standard tires plus 245/45 R18, 245/40 R19 + 275/35 R19, and 245/35 R20 + 275/30 R20 options.",
+            "confidence": "high"
+          }
+        ],
+        "official_530i_xdrive_exact_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0267657DE/technische-daten-der-neuen-bmw-5er-limousine-bmw-530i-bmw-530i-xdrive-gueltig-ab-11/2016",
+            "note": "Official BMW Germany PressClub article for the exact 530i / 530i xDrive technical-data attachment valid from 11/2016.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0267657DE/377424",
+            "note": "Official BMW Germany 11/2016 technical-data PDF for the exact 530i xDrive Limousine: AWD, 8-Gang Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 2.929, and 225/55 R17 baseline tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0314291DE/460630",
+            "note": "Official BMW Germany 05/2020 technical-data PDF for the exact 530i xDrive Limousine: 8-Gang Steptronic Getriebe, top gear 0.640, reverse 3.712, final drive 2.813, and 225/55 R17 101Y XL baseline tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0318749DE/463129",
+            "note": "Official BMW Germany 11/2020 technical-data PDF cross-check for the exact 530i xDrive Limousine with final drive 2.813, top gear 0.640, and 225/55 R17 101Y XL baseline tires plus an updated forward-ratio set.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0325537DE/471545",
+            "note": "Official BMW Germany 03/2021 technical-data PDF confirming the same exact 530i xDrive LCI package with final drive 2.813, top gear 0.640, and 225/55 R17 101Y XL baseline tires.",
+            "confidence": "high"
+          }
+        ],
+        "official_540i_exact_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0267658DE/technische-daten-der-neuen-bmw-5er-limousine-bmw-540i-bmw-540i-xdrive-gueltig-ab-11/2016?language=de",
+            "note": "Official BMW Germany PressClub article for the exact 540i / 540i xDrive technical-data attachment valid from 11/2016.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0267658DE/377421",
+            "note": "Official BMW Germany 11/2016 technical-data PDF for the exact 540i Limousine: RWD, 8-Gang Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 2.929, and 225/55 R17 baseline tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0314291DE/460630",
+            "note": "Official BMW Germany 05/2020 technical-data PDF for the exact 540i Limousine: 8-Gang Steptronic Getriebe, final drive 2.929, top gear 0.640, reverse 3.712, and 225/55 R17 101Y XL baseline tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0318749DE/463129",
+            "note": "Official BMW Germany 11/2020 technical-data PDF cross-check for the exact 540i Limousine with the same final drive 2.929, top gear 0.640, and 225/55 R17 101Y XL baseline tires plus an updated forward-ratio set.",
             "confidence": "high"
           }
         ],
@@ -940,7 +997,7 @@
     "BMW|5 Series (G60, 2024-2026)": {
       "car_index": 11,
       "verification_status": "corrected",
-      "decision_summary": "Issue #1034 official-source review kept the supported EU row narrow to 520i plus the i5 eDrive40 and i5 M60 xDrive BEVs, and moved the i5 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the 520i 8-speed automatic row. This pass adds exact official BMW Germany evidence that the i5 M60 xDrive uses single-stage fixed-ratio dual-motor AWD with front overall ratio 8.774, rear overall ratio 9.374, standard staggered 245/45 R19 front + 275/40 R19 rear tires, and DE 20/21-inch staggered options; production JSON remains unchanged because the current schema cannot safely encode axle-split EV reductions and staggered tire pairs.",
+      "decision_summary": "Issue #1034 official-source review kept the supported EU row narrow to 520i plus the i5 eDrive40 and i5 M60 xDrive BEVs, and moved the i5 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the 520i 8-speed automatic row. Wave 16 now adds exact official BMW Germany evidence that the i5 eDrive40 uses rear-wheel drive, a single-stage fixed-ratio transmission with published overall ratio 11.115, standard 245/45 R19 tires, and an official 21-inch staggered option 255/35 R21 front + 285/30 R21 rear, which is sufficient to correct the variant-level tire mapping while keeping the existing EV gearbox compatibility shape. Exact official BMW Germany evidence also confirms that the i5 M60 xDrive uses single-stage fixed-ratio dual-motor AWD with front overall ratio 8.774, rear overall ratio 9.374, standard staggered 245/45 R19 front + 275/40 R19 rear tires, and DE 20/21-inch staggered options; production JSON remains unchanged there because the current schema cannot safely encode axle-split EV reductions and all exact staggered tire pairs.",
       "unresolved": [],
       "sources": {
         "eu_scope_and_variant_filtering": [
@@ -971,6 +1028,23 @@
           {
             "url": "https://www.press.bmwgroup.com/global/article/detail/T0416261EN/the-new-bmw-5-series-sedan",
             "note": "Official press kit confirms i5 eDrive40 drives rear wheels and i5 M60 xDrive uses two drive units on front and rear axles.",
+            "confidence": "high"
+          }
+        ],
+        "official_i5_edrive40_tire_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0443474EN/629035",
+            "note": "Official 03/2025 BMW technical specifications PDF for the exact i5 eDrive40 Sedan confirms rear-wheel drive, single-stage fixed ratio with overall ratio 11.115, and 245/45 R19 standard tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw5er.pdf.coredownload.pdf",
+            "note": "Official BMW Germany price list confirms the exact i5 eDrive40 DE model as 1-Gang automatic rear-wheel drive and documents the 21-inch staggered option with 255/35 R21 front + 285/30 R21 rear tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0416261EN/the-new-bmw-5-series-sedan",
+            "note": "Official BMW press kit confirms the i5 eDrive40 drives the rear wheels and is distinct from the ICE 8-speed Steptronic variants.",
             "confidence": "high"
           }
         ],
@@ -3396,18 +3470,51 @@
     "Audi|A7 Sportback (C7, 2011-2018)": {
       "car_index": 52,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Wave 16 checked the exact A7 Sportback C7 3.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data or price-list sheet safe enough for production use. Official Audi OEM service books published via NHTSA do show a different MY2011 3.0 TFSI transmission mapping (0BK AWD with front ratio 2.848 and rear ratio 2.851) from the current broad-row 7-speed S tronic assumption, while reputable secondary exact pages consistently describe EU-style quattro S tronic states with 17- or 18-inch baseline tires instead of the current 20-inch default. Production JSON remains unchanged because the checked evidence is market-mixed and does not prove one exact EU-DE ratio package.",
       "unresolved": [
         {
-          "item": "Audi A7 Sportback (C7, 2011-2018) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Exact EU-DE official transmission mapping for Audi A7 Sportback C7 3.0 TFSI quattro",
+          "reason": "Official Audi OEM service books published via NHTSA show a MY2011 3.0 TFSI 0BK AWD automatic mapping, while reputable secondary EU-style pages describe 7-speed S tronic states, and this pass did not recover an exact Audi Germany-market technical-data or price-list document that resolves the market-specific transmission shape."
         },
         {
-          "item": "Audi A7 Sportback (C7, 2011-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Exact EU-DE final drive, top gear, and full ratio confirmation for Audi A7 Sportback C7 3.0 TFSI quattro",
+          "reason": "No checked Audi Germany-market official source in this pass published numeric final-drive, top-gear, or full-ratio fields for the exact 3.0 TFSI quattro target."
+        },
+        {
+          "item": "Audi A7 Sportback C7 3.0 TFSI quattro exact tire-baseline and year-split continuity",
+          "reason": "Reputable secondary exact pages point to 255/45 R18 and 235/55 R17 or 255/45 R18 baseline tires for pre-facelift and facelift states, which contradicts the current 255/35 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline."
         }
       ],
       "sources": {
+        "official_us_service_mapping_contradiction": [
+          {
+            "url": "https://static.nhtsa.gov/odi/tsbs/2012/MC-10073950-2280.pdf",
+            "note": "Official Audi OEM spec book published via NHTSA for A7 MY2011 3.0L TFSI 228 kW showing Automatic Transmission 0BK AWD with front ratio 2.848 and rear ratio 2.851, contradicting a generic one-size 7-speed S tronic assumption but not resolving the exact EU-DE market target.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://static.nhtsa.gov/odi/tsbs/2013/MC-10073841-2280.pdf",
+            "note": "Official Audi OEM service-book cross-check repeating the same MY2011 A7 3.0 TFSI 0BK AWD transmission mapping and axle ratios.",
+            "confidence": "high"
+          }
+        ],
+        "secondary_exact_30tfsi_quattro_context": [
+          {
+            "url": "https://www.auto-data.net/en/audi-a7-sportback-c7-3.0-tfsi-v6-310hp-quattro-s-tronic-19129",
+            "note": "Reputable secondary exact page for the pre-facelift A7 3.0 TFSI quattro S tronic showing AWD, 7-speed automatic, and 255/45 R18 tires.",
+            "confidence": "medium"
+          },
+          {
+            "url": "https://www.ultimatespecs.com/car-specs/Audi/12216/Audi-A7-Sportback-30-TFSI-quattro-S-tronic-7-sp.html",
+            "note": "Reputable secondary cross-check for the early 220 kW A7 3.0 TFSI quattro S tronic with AWD and 255/45 R18 tires.",
+            "confidence": "medium"
+          },
+          {
+            "url": "https://www.auto-data.net/en/audi-a7-sportback-c7-facelift-2014-3.0-tfsi-v6-333hp-quattro-s-tronic-22438",
+            "note": "Reputable secondary facelift exact page for the A7 3.0 TFSI quattro S tronic showing AWD, 7-speed automatic, and 235/55 R17 plus 255/45 R18 tire context.",
+            "confidence": "medium"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",
@@ -3526,18 +3633,52 @@
     "Audi|A8 (D4, 2011-2017)": {
       "car_index": 54,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Wave 16 checked the exact A8 D4 4.0 TFSI quattro target and still did not recover an exact EU-DE official technical-data sheet safe enough for production use. Official Audi source channels only confirmed broad A8 eight-speed tiptronic family context, while reputable secondary exact pages distinguish an early 420 PS state with 235/60 R17 tires from a later 435 PS state with 235/55 R18 tires, both contradicting the current 255/40 R20 default. Production JSON remains unchanged because no exact Audi Germany-market final-drive, top-gear, or full-ratio table was recovered.",
       "unresolved": [
         {
-          "item": "Audi A8 (D4, 2011-2017) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Exact EU-DE ratio mapping for Audi A8 D4 4.0 TFSI quattro",
+          "reason": "No checked Audi Germany-market official source in this pass published numeric final-drive, top-gear, or full-ratio fields for the exact 4.0 TFSI quattro target."
         },
         {
-          "item": "Audi A8 (D4, 2011-2017) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi A8 D4 4.0 TFSI quattro exact tire-baseline and year-split continuity",
+          "reason": "Reputable secondary exact pages distinguish at least two 4.0 TFSI quattro states with 235/60 R17 and 235/55 R18 baseline tires, contradicting the current 255/40 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline."
         }
       ],
       "sources": {
+        "official_family_context_only": [
+          {
+            "url": "https://www.audi-technology-portal.de/en/drivetrain/transmission-technologies/tiptronic_en",
+            "note": "Official Audi technology portal page confirming the eight-speed tiptronic family in the Audi A8, but without a D4 4.0 TFSI quattro exact ratio or tire table.",
+            "confidence": "medium"
+          },
+          {
+            "url": "https://ownersmanual.audi.com/home/",
+            "note": "Official Audi manual portal checked as an exact-document entrypoint, but no model-specific D4 4.0 TFSI extractable output was recovered in this run.",
+            "confidence": "low"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/en/search?query=A8%204.0%20TFSI%20tiptronic",
+            "note": "Official Audi MediaCenter search attempt used to look for D4 4.0 TFSI technical-data sheets; checked output resolved to newer D5 material instead.",
+            "confidence": "low"
+          }
+        ],
+        "secondary_exact_40tfsi_quattro_context": [
+          {
+            "url": "https://www.auto-data.net/en/audi-a8-d4-4h-4.0-tfsi-v8-420hp-quattro-tiptronic-20320",
+            "note": "Reputable secondary exact page for the pre-facelift D4 A8 4.0 TFSI quattro showing AWD, 8-speed tiptronic, and 235/60 R17 tires.",
+            "confidence": "medium"
+          },
+          {
+            "url": "https://www.auto-wiki.org/audi/a8/d4-4h/a8-4-0-tfsi-cod-quattro-tiptronic-320-kw-78912/",
+            "note": "Reputable secondary exact page for the later D4 A8 4.0 TFSI COD quattro state showing AWD, 8-speed automatic, Germany-oriented 10/2013-10/2017 context, and 235/55 R18 tires.",
+            "confidence": "medium"
+          },
+          {
+            "url": "https://www.autoplenum.de/auto/audi/a8/limousine-2009/4-0-tfsi-435-ps",
+            "note": "Reputable secondary cross-check confirming the later 435 PS D4 A8 4.0 TFSI quattro uses an 8-speed automatic transmission.",
+            "confidence": "medium"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",

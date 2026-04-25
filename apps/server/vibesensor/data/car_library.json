@@ -961,7 +961,25 @@
       {
         "name": "540i",
         "engine": "B58 3.0L I6 Turbo",
-        "drivetrain": "RWD"
+        "drivetrain": "RWD",
+        "gearboxes": [
+          {
+            "name": "8-speed Steptronic transmission",
+            "final_drive_ratio": 2.929,
+            "top_gear_ratio": 0.64
+          }
+        ],
+        "tire_options": [
+          {
+            "name": "Standard 17\"",
+            "tire_width_mm": 225.0,
+            "tire_aspect_pct": 55.0,
+            "rim_in": 17.0
+          }
+        ],
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 55.0,
+        "rim_in": 17.0
       },
       {
         "name": "540i xDrive",
@@ -1091,7 +1109,36 @@
             "final_drive_ratio": 11.115,
             "top_gear_ratio": 1.0
           }
-        ]
+        ],
+        "tire_options": [
+          {
+            "name": "Standard 19\"",
+            "tire_width_mm": 245.0,
+            "tire_aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          {
+            "name": "Optional staggered 21\"",
+            "tire_width_mm": 285.0,
+            "tire_aspect_pct": 30.0,
+            "rim_in": 21.0,
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 21.0
+            },
+            "rear": {
+              "width_mm": 285.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "source_confidence": "official_exact"
+          }
+        ],
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0
       },
       {
         "name": "i5 M60 xDrive",

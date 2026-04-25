@@ -133,7 +133,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 | 520i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
 | 530i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
 | 530i xDrive | B48 2.0L I4 Turbo | AWD | – | BMW press release | High |
-| 540i | B58 3.0L I6 Turbo | RWD | – | BMW press release | High |
+| 540i | B58 3.0L I6 Turbo | RWD | 8-speed Steptronic transmission FD 2.929 TG 0.640 | BMW PressClub technical data | High |
 | 540i xDrive | B58 3.0L I6 Turbo | AWD | 8-speed Steptronic transmission FD 2.929 TG 0.640 | BMW PressClub technical data | High |
 | 545e xDrive | 3.0L I6 Turbo | AWD | 8-speed Steptronic transmission FD 3.231 TG 0.667 | BMW PressClub technical data / DE price list | High |
 
@@ -142,7 +142,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
 | 520i | B48 2.0L I4 Turbo | RWD | BMW press release / technical data | High |
-| i5 eDrive40 | Electric Single Motor | RWD | BMW technical data | High |
+| i5 eDrive40 | Electric Single Motor | RWD | BMW technical data / DE price list | High |
 | i5 M60 xDrive | Electric Dual Motor | AWD | BMW technical data / BMW M model page | High |
 
 ### 6 Series Gran Coupe (F06, 2013-2018)
