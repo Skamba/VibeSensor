@@ -23,6 +23,7 @@ links onward to the scoped instruction files and repo map below.
 | File | Description |
 |------|-------------|
 | `docs/domain-model.md` | Domain object graph, modeling rules, and adapter inventory. |
+| `docs/dataflows.md` | Canonical four-flow map for live, recording, raw capture, and report paths. |
 | `docs/analysis_pipeline.md` | Post-stop diagnostics pipeline: steps, modules, and data flow. |
 | `docs/order_tracking.md` | Order-reference math, tolerance bands, and order-finding flow. |
 | `docs/report_pipeline.md` | Report generation flow from analysis to PDF. |
