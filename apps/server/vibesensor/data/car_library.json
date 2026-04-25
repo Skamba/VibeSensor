@@ -966,7 +966,25 @@
       {
         "name": "540i xDrive",
         "engine": "B58 3.0L I6 Turbo",
-        "drivetrain": "AWD"
+        "drivetrain": "AWD",
+        "gearboxes": [
+          {
+            "name": "8-speed Steptronic transmission",
+            "final_drive_ratio": 2.929,
+            "top_gear_ratio": 0.64
+          }
+        ],
+        "tire_options": [
+          {
+            "name": "Standard 17\"",
+            "tire_width_mm": 225.0,
+            "tire_aspect_pct": 55.0,
+            "rim_in": 17.0
+          }
+        ],
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 55.0,
+        "rim_in": 17.0
       },
       {
         "name": "520e",
@@ -981,7 +999,35 @@
       {
         "name": "545e xDrive",
         "engine": "3.0L I6 Turbo",
-        "drivetrain": "AWD"
+        "drivetrain": "AWD",
+        "gearboxes": [
+          {
+            "name": "8-speed Steptronic transmission",
+            "final_drive_ratio": 3.231,
+            "top_gear_ratio": 0.667,
+            "gear_ratios": [
+              4.714,
+              3.143,
+              2.106,
+              1.667,
+              1.285,
+              1.0,
+              0.839,
+              0.667
+            ]
+          }
+        ],
+        "tire_options": [
+          {
+            "name": "Standard 17\"",
+            "tire_width_mm": 225.0,
+            "tire_aspect_pct": 55.0,
+            "rim_in": 17.0
+          }
+        ],
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 55.0,
+        "rim_in": 17.0
       },
       {
         "name": "518d",
@@ -1464,7 +1510,18 @@
             "final_drive_ratio": 11.1,
             "top_gear_ratio": 1.0
           }
-        ]
+        ],
+        "tire_options": [
+          {
+            "name": "Standard 19\"",
+            "tire_width_mm": 245.0,
+            "tire_aspect_pct": 50.0,
+            "rim_in": 19.0
+          }
+        ],
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 19.0
       },
       {
         "name": "i7 M70 xDrive",

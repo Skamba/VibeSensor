@@ -34,8 +34,9 @@ as `verification_backlog`, `verified`, `corrected`, or
   available. If a row cannot be safely verified at the represented
   granularity, that limitation is recorded in the ratio-source ledger
   instead of relying on broad fallback notes here.
-- Tire specifications are shared across variants within a model generation
-  and are not overridden at variant level (same factory options).
+- Tire specifications are usually shared across variants within a model
+  generation, but exact variant-level overrides are allowed when official
+  technical data proves a different baseline or variant-specific package.
 
 ---
 
@@ -127,14 +128,14 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### 5 Series (G30, 2017-2023)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| 520i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| 530i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| 530i xDrive | B48 2.0L I4 Turbo | AWD | BMW press release | High |
-| 540i | B58 3.0L I6 Turbo | RWD | BMW press release | High |
-| 540i xDrive | B58 3.0L I6 Turbo | AWD | BMW press release | High |
-| 545e xDrive | 3.0L I6 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| 520i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
+| 530i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
+| 530i xDrive | B48 2.0L I4 Turbo | AWD | – | BMW press release | High |
+| 540i | B58 3.0L I6 Turbo | RWD | – | BMW press release | High |
+| 540i xDrive | B58 3.0L I6 Turbo | AWD | 8-speed Steptronic transmission FD 2.929 TG 0.640 | BMW PressClub technical data | High |
+| 545e xDrive | 3.0L I6 Turbo | AWD | 8-speed Steptronic transmission FD 3.231 TG 0.667 | BMW PressClub technical data / DE price list | High |
 
 ### 5 Series (G60, 2024-2026)
 

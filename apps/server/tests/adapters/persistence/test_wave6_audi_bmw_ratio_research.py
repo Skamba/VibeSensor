@@ -57,20 +57,23 @@ def test_wave6_ratio_source_rows_capture_exact_audi_and_z4_context_without_overw
             },
         ],
     )
-    assert sources["Audi|Q8 (4M8, 2019-2026)"]["unresolved"] == [
-        {
-            "item": "Schema-safe encoding of the official Audi Q8 final-drive expression",
-            "reason": "The checked exact Audi technical-data sheet prints the final-drive field as 3.504 / 1.000 rather than one scalar value, so the current single final_drive_ratio field cannot safely absorb it without a documented mapping rule.",
-        },
-        {
-            "item": "Audi Q8 exact tire-baseline and option continuity across the full 2019-2026 row span",
-            "reason": "The checked exact technical-data sheet proves a 265/55 R19 basic tire, while later official market material uses different base or option sizes, so this pass did not prove one representative tire baseline for the full row.",
-        },
-        {
-            "item": "Audi Q8 exact gearbox-family naming and early Germany-market continuity",
-            "reason": "Official Audi sources prove 8-speed tiptronic wording, top gear 0.640, and the exact forward ratio set, but this pass did not recover an early Germany-market ratio sheet or an explicit gearbox-family code such as ZF 8HP.",
-        },
-    ]
+    _assert_contains_unresolved(
+        sources["Audi|Q8 (4M8, 2019-2026)"],
+        [
+            {
+                "item": "Schema-safe encoding of the official Audi Q8 final-drive expression",
+                "reason": "The checked exact Audi technical-data sheet prints the final-drive field as 3.504 / 1.000 rather than one scalar value, so the current single final_drive_ratio field cannot safely absorb it without a documented mapping rule.",
+            },
+            {
+                "item": "Audi Q8 exact tire-baseline and option continuity across the full 2019-2026 row span",
+                "reason": "The checked exact technical-data sheet proves a 265/55 R19 basic tire, while later official market material uses different base or option sizes, so this pass did not prove one representative tire baseline for the full row.",
+            },
+            {
+                "item": "Audi Q8 exact gearbox-family naming and early Germany-market continuity",
+                "reason": "Official Audi sources prove 8-speed tiptronic wording, top gear 0.640, and the exact forward ratio set, but this pass did not recover an early Germany-market ratio sheet or an explicit gearbox-family code such as ZF 8HP.",
+            },
+        ],
+    )
     _assert_contains_unresolved(
         sources["BMW|Z4 (G29, 2019-2026)"],
         [
