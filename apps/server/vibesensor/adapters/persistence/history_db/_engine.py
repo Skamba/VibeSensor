@@ -579,6 +579,10 @@ class SQLiteHistoryEngine:
         async with self._cursor(commit=False) as cur:
             await cur.execute("PRAGMA table_info(samples_v2)")
             columns = {str(row[1]) for row in await cur.fetchall()}
+        if not columns:
+            async with self._cursor() as cur:
+                await cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+            return
         if "analysis_window_start_us" not in columns:
             async with self._cursor() as cur:
                 await cur.execute(
