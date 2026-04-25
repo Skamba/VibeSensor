@@ -161,6 +161,96 @@ def test_raw_capture_writer_finalize_timeout_returns_degraded_result() -> None:
     assert writer.shutdown(timeout_s=1.0) is True
 
 
+def test_raw_capture_writer_finalize_returns_enqueue_timeout_when_control_offer_stays_full(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("vibesensor.use_cases.run.raw_capture_writer._QUEUE_MAXSIZE", 1)
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run.raw_capture_writer._CONTROL_REQUEST_ENQUEUE_TIMEOUT_S",
+        0.05,
+    )
+
+    class SlowHistoryDb:
+        def __init__(self) -> None:
+            self.first_started = threading.Event()
+            self.block_append = threading.Event()
+
+        async def aappend_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
+            self.first_started.set()
+            await asyncio.to_thread(self.block_append.wait)
+
+        async def afinalize_raw_capture(
+            self,
+            _run_id: str,
+            *,
+            run_start_monotonic_us: int | None = None,
+            sensor_clock_sync=None,
+            sensor_losses=None,
+        ):
+            del run_start_monotonic_us, sensor_clock_sync, sensor_losses
+            return None
+
+    history_db = SlowHistoryDb()
+    writer = RunRawCaptureWriter(
+        history_db=history_db,
+        logger=logging.getLogger(__name__),
+    )
+    writer.start_run("run-enqueue-timeout")
+    writer.capture_raw_samples(
+        client_id="sensor-a",
+        sample_rate_hz=800,
+        t0_us=1000,
+        samples=_samples(),
+    )
+    assert history_db.first_started.wait(timeout=2.0)
+    writer.capture_raw_samples(
+        client_id="sensor-b",
+        sample_rate_hz=800,
+        t0_us=1100,
+        samples=_samples(),
+    )
+
+    result = writer.finalize_run("run-enqueue-timeout")
+
+    assert result.status == "enqueue_timeout"
+    assert result.manifest is None
+    assert result.queue_depth == 1
+    assert result.error is not None
+    history_db.block_append.set()
+    assert writer.shutdown(timeout_s=1.0) is True
+
+
+def test_raw_capture_writer_finalize_failure_returns_failed_result() -> None:
+    class FailingHistoryDb:
+        async def aappend_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
+            return None
+
+        async def afinalize_raw_capture(
+            self,
+            _run_id: str,
+            *,
+            run_start_monotonic_us: int | None = None,
+            sensor_clock_sync=None,
+            sensor_losses=None,
+        ):
+            del run_start_monotonic_us, sensor_clock_sync, sensor_losses
+            raise OSError("simulated finalize failure")
+
+    writer = RunRawCaptureWriter(
+        history_db=FailingHistoryDb(),
+        logger=logging.getLogger(__name__),
+    )
+    writer.start_run("run-failed")
+
+    result = writer.finalize_run("run-failed")
+
+    assert result.status == "failed"
+    assert result.manifest is None
+    assert result.error is not None
+    assert "simulated finalize failure" in result.error
+    assert writer.shutdown(timeout_s=1.0) is True
+
+
 def test_raw_capture_writer_shutdown_returns_false_when_queue_offer_stays_full(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

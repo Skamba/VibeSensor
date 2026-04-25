@@ -103,8 +103,16 @@ __all__ = [
 class HistoryArtifactAvailabilityResponse(BaseModel):
     """Response body describing persisted artifact availability for a history run."""
 
-    raw_capture: Literal["not_recorded", "available", "missing"]
+    raw_capture: Literal["not_recorded", "available", "missing", "degraded"]
     whole_run_artifacts: Literal["not_recorded", "available", "missing"]
+
+
+class HistoryRawCaptureFinalizeResponse(BaseModel):
+    """Response body describing the persisted raw-capture finalization outcome."""
+
+    status: Literal["completed", "not_configured", "enqueue_timeout", "timeout", "failed"]
+    queue_depth: int | None = None
+    error_summary: str | None = None
 
 
 class HistoryListEntryResponse(BaseModel):
@@ -119,6 +127,7 @@ class HistoryListEntryResponse(BaseModel):
     car_name: str | None = None
     error_message: str | None = None
     artifact_availability: HistoryArtifactAvailabilityResponse | None = None
+    raw_capture_finalize: HistoryRawCaptureFinalizeResponse | None = None
 
 
 class HistoryListResponse(BaseModel):
@@ -143,6 +152,7 @@ class HistoryRunResponse(_StrictBase):
     metadata: ApiPayloadObject = Field(default_factory=dict)
     analysis: _HistoryRunAnalysisResponse | None = None
     artifact_availability: HistoryArtifactAvailabilityResponse | None = None
+    raw_capture_finalize: HistoryRawCaptureFinalizeResponse | None = None
 
 
 class HistoryInsightWarningResponse(BaseModel):
