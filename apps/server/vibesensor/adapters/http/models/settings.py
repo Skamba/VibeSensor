@@ -56,6 +56,18 @@ class CarUpsertRequest(_FrozenBase):
     type: Annotated[str, Field(min_length=1, max_length=64)] | None = None
     aspects: AnalysisSettingsPayload | None = None
     variant: Annotated[str, Field(min_length=1, max_length=64)] | None = None
+    order_reference_status: CarOrderReferenceStatus | None = None
+
+
+class CarOrderReferenceStatus(BaseModel):
+    """Confidence metadata for saved drivetrain order-reference values."""
+
+    selection_source_status: Literal["compat_projection", "exact_row", "manual_entry"]
+    final_drive_ratio_confidence: str | None = None
+    current_gear_ratio_confidence: str | None = None
+    transmission_name: str | None = None
+    transmission_confidence: str | None = None
+    requires_manual_confirmation: bool
 
 
 class ActiveCarRequest(_FrozenBase):
@@ -82,6 +94,7 @@ class CarResponse(BaseModel):
     type: str
     aspects: AnalysisSettingsPayload
     variant: str | None = None
+    order_reference_status: CarOrderReferenceStatus | None = None
 
 
 class CarsResponse(BaseModel):

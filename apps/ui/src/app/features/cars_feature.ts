@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
+import type { CarOrderReferenceStatus } from "../../api/types";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
 import type {
   CarsFeatureInteraction,
@@ -14,6 +15,7 @@ export interface CarsFeatureDeps {
     name: string,
     carType: string,
     aspects: Record<string, number>,
+    orderReferenceStatus?: CarOrderReferenceStatus,
     variant?: string,
   ) => Promise<void>;
   panel: CarsWizardPanelBridge;

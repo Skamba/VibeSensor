@@ -160,6 +160,32 @@ def test_car_library_models_response_accepts_actual_data() -> None:
         assert m.rim_in > 0
 
 
+def test_variant_gearboxes_include_exact_vs_projected_confidence_metadata() -> None:
+    hatchbacks = get_models_for_brand_type("BMW", "Hatchback")
+    f45 = next(
+        model for model in hatchbacks if model["model"] == "2 Series Active Tourer (F45, 2014-2021)"
+    )
+    exact_variant = next(variant for variant in f45["variants"] if variant["name"] == "225xe")
+    exact_gearbox = exact_variant["gearboxes"][0]
+
+    assert exact_gearbox["source_status"] == "exact_row"
+    assert exact_gearbox["final_drive_ratio_confidence"] == "official_exact"
+    assert exact_gearbox["top_gear_ratio_confidence"] == "official_exact"
+    assert exact_gearbox["transmission_confidence"] == "official_exact"
+    assert exact_gearbox["requires_manual_confirmation"] is False
+
+    sedans = get_models_for_brand_type("BMW", "Sedan")
+    g20 = next(model for model in sedans if model["model"] == "3 Series (G20, 2019-2025)")
+    projected_variant = next(variant for variant in g20["variants"] if variant["name"] == "330i")
+    projected_gearbox = projected_variant["gearboxes"][0]
+
+    assert projected_gearbox["source_status"] == "compat_projection"
+    assert projected_gearbox["final_drive_ratio_confidence"] == "family_default"
+    assert projected_gearbox["top_gear_ratio_confidence"] == "family_default"
+    assert projected_gearbox["transmission_confidence"] == "family_default"
+    assert projected_gearbox["requires_manual_confirmation"] is True
+
+
 def _make_bad_data_file(tmp_path: Path, kind: str) -> Path:
     """Return a path to a missing or malformed JSON data file."""
     if kind == "missing":

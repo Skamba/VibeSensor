@@ -36,6 +36,7 @@ VehicleConfigurationField = Literal[
     "gear_ratios",
     "drivetrain",
     "tire_dimensions",
+    "transmission_name",
 ]
 
 
@@ -115,3 +116,40 @@ class VehicleConfiguration:
             if entry.field_name == field_name:
                 return entry
         return None
+
+    def order_reference_confidence(
+        self,
+        field_name: Literal["current_gear_ratio", "final_drive_ratio", "transmission_name"],
+    ) -> VehicleFieldConfidence:
+        """Return machine-readable confidence for one order-reference field."""
+
+        if field_name == "current_gear_ratio":
+            entry = self.provenance_for("top_gear_ratio")
+        elif field_name == "transmission_name":
+            entry = self.provenance_for("transmission_name")
+        elif self.drivetrain == "FWD":
+            entry = self.provenance_for("final_drive_front")
+        elif self.drivetrain == "RWD":
+            entry = self.provenance_for("final_drive_rear")
+        else:
+            entry = self.provenance_for("final_drive_rear") or self.provenance_for(
+                "final_drive_front"
+            )
+        if entry is not None:
+            return entry.confidence
+        if self.source_status == "compat_projection":
+            return "family_default"
+        return "unverified"
+
+    @property
+    def requires_manual_drivetrain_confirmation(self) -> bool:
+        """Whether selected drivetrain ratios should be treated as approximate."""
+
+        order_reference_fields: tuple[
+            Literal["current_gear_ratio", "final_drive_ratio", "transmission_name"],
+            ...,
+        ] = ("current_gear_ratio", "final_drive_ratio", "transmission_name")
+        return any(
+            self.order_reference_confidence(field_name) in {"family_default", "unverified"}
+            for field_name in order_reference_fields
+        )

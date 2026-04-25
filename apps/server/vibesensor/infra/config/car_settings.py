@@ -3,18 +3,19 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from threading import RLock
 from typing import Protocol, TypeVar
 
-from vibesensor.domain import Car, CarSnapshot
+from vibesensor.domain import Car, CarOrderReferenceStatus, CarSnapshot
 from vibesensor.infra.config.settings_transaction import log_settings_change
 from vibesensor.shared.analysis_settings_schema import sanitize_analysis_settings
 from vibesensor.shared.types.car_config import (
     CarConfigUpdatePayload,
     CarsSnapshot,
     car_from_persistence_dict,
+    car_order_reference_status_from_mapping,
     car_to_persistence_dict,
     new_car_id,
 )
@@ -26,6 +27,7 @@ from vibesensor.shared.types.settings_types import (
 LOGGER = logging.getLogger(__name__)
 _CarSettingsSnapshotT = TypeVar("_CarSettingsSnapshotT")
 _CarSettingsResultT = TypeVar("_CarSettingsResultT")
+_ORDER_REFERENCE_ASPECT_KEYS = frozenset({"current_gear_ratio", "final_drive_ratio"})
 
 
 class _UpdateWithRollback(Protocol):
@@ -111,6 +113,7 @@ class CarSettingsService:
                 car_type=car.car_type,
                 variant=car.variant,
                 aspects=dict(car.aspects),
+                order_reference_status=car.order_reference_status,
             )
 
     def _find_car(self, car_id: str | None) -> Car | None:
@@ -195,12 +198,20 @@ class CarSettingsService:
                     new_variant = _clamp_str(raw_variant, 64) or None
                 else:
                     new_variant = None
+            new_order_reference_status = car.order_reference_status
+            if "order_reference_status" in car_data:
+                raw_order_reference_status = car_data["order_reference_status"]
+                if isinstance(raw_order_reference_status, Mapping):
+                    new_order_reference_status = car_order_reference_status_from_mapping(
+                        raw_order_reference_status
+                    )
             self._state.cars[idx] = Car(
                 id=car.id,
                 name=new_name,
                 car_type=new_car_type,
                 aspects=new_aspects,
                 variant=new_variant,
+                order_reference_status=new_order_reference_status,
             )
             return True
 
@@ -233,6 +244,10 @@ class CarSettingsService:
                 car_type=car.car_type,
                 aspects={**car.aspects, **sanitize_analysis_settings(aspects)},
                 variant=car.variant,
+                order_reference_status=_updated_order_reference_status(
+                    car.order_reference_status,
+                    aspects,
+                ),
             )
             return True
 
@@ -289,3 +304,26 @@ class CarSettingsService:
             ),
             result=self.cars_snapshot_unlocked,
         )
+
+
+def _updated_order_reference_status(
+    existing: CarOrderReferenceStatus | None,
+    aspects: AnalysisSettingsPayload,
+) -> CarOrderReferenceStatus | None:
+    touched_keys = _ORDER_REFERENCE_ASPECT_KEYS.intersection(aspects)
+    if not touched_keys:
+        return existing
+    if existing is None:
+        return CarOrderReferenceStatus(
+            selection_source_status="manual_entry",
+            current_gear_ratio_confidence=(
+                "user_confirmed" if "current_gear_ratio" in touched_keys else None
+            ),
+            final_drive_ratio_confidence=(
+                "user_confirmed" if "final_drive_ratio" in touched_keys else None
+            ),
+        )
+    return existing.with_user_confirmed_fields(
+        current_gear_ratio="current_gear_ratio" in touched_keys,
+        final_drive_ratio="final_drive_ratio" in touched_keys,
+    )

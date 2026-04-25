@@ -8,6 +8,7 @@ import type { CarsFeatureManualInputState } from "../src/app/features/cars_manua
 import type {
   CarLibraryGearbox,
   CarLibraryModel,
+  CarOrderReferenceStatus,
   CarLibraryTireOption,
 } from "../src/api/types";
 import { createTestQueryClient } from "./query_client_test_support";
@@ -64,7 +65,12 @@ function makeGearbox(overrides: Partial<CarLibraryGearbox> = {}): CarLibraryGear
   return {
     final_drive_ratio: 3.15,
     name: "8-speed automatic",
+    final_drive_ratio_confidence: "official_exact",
+    requires_manual_confirmation: false,
+    source_status: "exact_row",
     top_gear_ratio: 0.67,
+    top_gear_ratio_confidence: "official_exact",
+    transmission_confidence: "official_exact",
     ...overrides,
   };
 }
@@ -124,11 +130,12 @@ describe("createCarsFeatureWorkflow", () => {
       aspects: Record<string, number>;
       carType: string;
       name: string;
+      orderReferenceStatus?: CarOrderReferenceStatus;
       variant?: string;
     }> = [];
     const workflow = createCarsFeatureWorkflow({
-      addCarFromWizard: async (name, carType, aspects, variant) => {
-        addCalls.push({ aspects, carType, name, variant });
+      addCarFromWizard: async (name, carType, aspects, orderReferenceStatus, variant) => {
+        addCalls.push({ aspects, carType, name, orderReferenceStatus, variant });
       },
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
       queryClient: createTestQueryClient(),
@@ -169,6 +176,12 @@ describe("createCarsFeatureWorkflow", () => {
       },
       carType: "SUV",
       name: "BMW X5 M60i",
+      orderReferenceStatus: {
+        current_gear_ratio_confidence: "user_confirmed",
+        final_drive_ratio_confidence: "user_confirmed",
+        requires_manual_confirmation: false,
+        selection_source_status: "manual_entry",
+      },
       variant: undefined,
     }]);
     expect(harness.focuses).toContain("manual-tire-width");
@@ -380,13 +393,14 @@ describe("createCarsFeatureWorkflow", () => {
       aspects: Record<string, number>;
       carType: string;
       name: string;
+      orderReferenceStatus?: CarOrderReferenceStatus;
       variant?: string;
     }> = [];
     const tire = makeTireOption();
     const gearbox = makeGearbox();
     const workflow = createCarsFeatureWorkflow({
-      addCarFromWizard: async (name, carType, aspects, variant) => {
-        addCalls.push({ aspects, carType, name, variant });
+      addCarFromWizard: async (name, carType, aspects, orderReferenceStatus, variant) => {
+        addCalls.push({ aspects, carType, name, orderReferenceStatus, variant });
       },
       fmt: (value, digits = 0) => Number(value).toFixed(digits),
       queryClient: createTestQueryClient(),
@@ -434,9 +448,60 @@ describe("createCarsFeatureWorkflow", () => {
       },
       carType: "SUV",
       name: "BMW X5",
+      orderReferenceStatus: {
+        current_gear_ratio_confidence: "official_exact",
+        final_drive_ratio_confidence: "official_exact",
+        requires_manual_confirmation: false,
+        selection_source_status: "exact_row",
+        transmission_confidence: "official_exact",
+        transmission_name: "8-speed automatic",
+      },
       variant: undefined,
     }]);
     expect(harness.focuses).toContain("finish");
     expect(workflow.getRenderState().isOpen).toBe(false);
+  });
+
+  test("shows the approximate library action hint when the selected gearbox is projected", async () => {
+    const harness = createHarness();
+    const workflow = createCarsFeatureWorkflow({
+      addCarFromWizard: async () => undefined,
+      fmt: (value, digits = 0) => Number(value).toFixed(digits),
+      queryClient: createTestQueryClient(),
+      t: createTranslator(),
+      transport: {
+        async loadBrands() {
+          return ["BMW"];
+        },
+        async loadModels() {
+          return [makeModel({
+            gearboxes: [
+              makeGearbox({
+                final_drive_ratio_confidence: "family_default",
+                requires_manual_confirmation: true,
+                source_status: "compat_projection",
+                top_gear_ratio_confidence: "family_default",
+                transmission_confidence: "family_default",
+              }),
+            ],
+            tire_options: [makeTireOption()],
+          })];
+        },
+        async loadTypes() {
+          return ["SUV"];
+        },
+      },
+      view: createViewPorts(harness),
+    });
+
+    await workflow.openWizard();
+    await workflow.selectBrand("BMW");
+    await workflow.selectType("SUV");
+    await workflow.selectModel(0);
+    workflow.selectGearbox(0);
+
+    expect(workflow.getRenderState().actionHint).toBe(
+      "settings.car.finish_library_approximate",
+    );
   });
 });

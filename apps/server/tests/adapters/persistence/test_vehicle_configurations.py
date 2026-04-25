@@ -52,6 +52,7 @@ def test_exact_vehicle_configurations_include_field_level_provenance_for_three_b
         config = configs[key]
         assert config.provenance_for("drivetrain") is not None
         assert config.provenance_for("tire_dimensions") is not None
+        assert config.provenance_for("transmission_name") is not None
         assert any(
             config.provenance_for(field_name) is not None
             for field_name in ("final_drive_front", "final_drive_rear")
@@ -96,6 +97,9 @@ def test_resolve_vehicle_configurations_uses_exact_row_for_f45_220i() -> None:
     assert config.provenance_for("final_drive_front") is not None
     assert config.provenance_for("top_gear_ratio") is not None
     assert config.provenance_for("drivetrain") is not None
+    assert (
+        config.order_reference_confidence("transmission_name") == "reputable_secondary_crosschecked"
+    )
     assert config.provenance_for("tire_dimensions") is not None
 
 
@@ -134,6 +138,7 @@ def test_resolve_vehicle_configurations_uses_exact_row_for_g60_i5_edrive40() -> 
     assert config.provenance_for("top_gear_ratio") is not None
     assert config.provenance_for("gear_ratios") is not None
     assert config.provenance_for("drivetrain") is not None
+    assert config.order_reference_confidence("transmission_name") == "official_exact"
     assert config.provenance_for("tire_dimensions") is not None
 
 
@@ -149,3 +154,8 @@ def test_resolve_vehicle_configurations_projects_unmigrated_variant_per_gearbox(
         "8-speed automatic (ZF 8HP)",
         "6-speed manual",
     }
+    assert all(
+        config.order_reference_confidence("transmission_name") == "family_default"
+        and config.requires_manual_drivetrain_confirmation
+        for config in configs
+    )
