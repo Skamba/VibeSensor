@@ -22,7 +22,7 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-from vibesensor.shared.subprocess_server import (
+from vibesensor.use_cases.isolated_server_runtime import (
     IsolatedRuntimePaths,
     build_isolated_server_config,
     build_isolated_server_env,

@@ -43,7 +43,7 @@ def build_release_smoke_config(
     host: str,
     port: int,
 ) -> Path:
-    from vibesensor.shared.subprocess_server import build_isolated_server_config
+    from vibesensor.use_cases.isolated_server_runtime import build_isolated_server_config
 
     udp_data_port = port + 1000
     udp_control_port = port + 1001
@@ -202,7 +202,7 @@ def run_server_smoke(
 ) -> None:
     from tenacity import Retrying, retry_if_exception_type, stop_after_delay, wait_fixed
 
-    from vibesensor.shared.subprocess_server import (
+    from vibesensor.use_cases.isolated_server_runtime import (
         build_isolated_server_env,
         start_server_subprocess,
         terminate_subprocess,
