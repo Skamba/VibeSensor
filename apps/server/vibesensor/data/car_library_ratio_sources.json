@@ -1581,18 +1581,42 @@
     "BMW|X5 (G05, 2019-2026)": {
       "car_index": 30,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official BMW DE technical-data sheets now confirm the exact G05 xDrive45e PHEV mapping: 8-speed Steptronic transmission, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.636, and standard 265/50 R19 tires. The broad G05 row remains verification backlog because the full EU variant matrix and exact optional wheel/tire coverage are still incomplete.",
       "unresolved": [
         {
-          "item": "BMW X5 (G05, 2019-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW X5 (G05, 2019-2026) full EU variant matrix beyond the exact xDrive45e PHEV mapping",
+          "reason": "This pass resolved the xDrive45e exact transmission, final drive, and standard tire, but it did not establish an official matrix for the other G05 variants represented by the broad row."
         },
         {
-          "item": "BMW X5 (G05, 2019-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "BMW xDrive45e transmission subtype code and optional wheel/tire matrix",
+          "reason": "Official BMW DE sources prove the transmission name, ratios, final drive, and the standard 19-inch fitment, but they do not publish a gearbox subtype code or the full optional wheel/tire matrix for the exact xDrive45e."
         }
       ],
       "sources": {
+        "official_xdrive45e_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0300314DE/440689",
+            "note": "Official BMW DE 08/2019 technical-data PDF for the exact X5 xDrive45e: 8-speed Steptronic transmission, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.636, and standard 265/50 R19 110W XL tires on 9J x 19 wheels.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0326836DE/472817",
+            "note": "Official BMW DE 03/2021 technical-data PDF cross-check for the exact X5 xDrive45e with the same 8-speed ratio set, reverse 3.317, final drive 3.636, and standard 265/50 R19 tire fitment.",
+            "confidence": "high"
+          }
+        ],
+        "official_xdrive45e_tire_context": [
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_G05_08_20.pdf",
+            "note": "Official BMW DE price list confirms the xDrive45e standard 19-inch wheel/tire setup (V-spoke style 734 with 265/50 R19).",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/G05_X5_09022023.pdf.asset.1675947955130.pdf",
+            "note": "Official BMW DE later brochure checked as a non-supporting reference; it documents facelift-era xDrive50e rather than the exact xDrive45e target.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -1845,18 +1869,42 @@
     "BMW|M3 (G80, 2021-2026)": {
       "car_index": 36,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official BMW exact technical-data sheets now confirm the G80 M3 Competition xDrive AWD mapping: Eight-speed M Steptronic transmission with Drivelogic, full forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.154, and staggered 275/35 ZR19 front + 285/30 ZR20 rear tires. The row remains verification backlog because the exact public gearbox subtype code and the broader G80 variant matrix are still incomplete.",
       "unresolved": [
         {
-          "item": "BMW M3 (G80, 2021-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW M3 (G80, 2021-2026) full EU variant matrix beyond the exact M3 Competition xDrive mapping",
+          "reason": "This pass resolved the exact M3 Competition xDrive ratios and staggered tire fitment, but it did not establish the full official matrix for every other G80 variant represented by the broad row."
         },
         {
-          "item": "BMW M3 (G80, 2021-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "BMW M3 Competition xDrive public gearbox subtype code and reverse-ratio storage",
+          "reason": "Official BMW sources confirm the transmission name, full forward ratios, final drive, and staggered tires, but they do not publish a gearbox subtype code, and the current schema has no dedicated reverse-ratio field for the official 3.478 value."
         }
       ],
       "sources": {
+        "official_m3_competition_xdrive_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329893EN/477739",
+            "note": "Official BMW PressClub 05/2021 technical-data PDF for the exact M3 Competition Sedan with M xDrive: Eight-speed M Steptronic transmission with Drivelogic, full forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.154, and staggered 275/35 ZR19 front + 285/30 ZR20 rear tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/ireland/article/attachment/T0442649EN/616886",
+            "note": "Official BMW PressClub 05/2024 technical-data PDF cross-check for the exact M3 Competition Sedan with M xDrive: same transmission ratio set, reverse 3.478, final drive 3.154, and staggered 275/35 ZR19 front + 285/30 ZR20 rear tire fitment for the German-market figures.",
+            "confidence": "high"
+          }
+        ],
+        "official_m3_competition_xdrive_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0329893EN/specifications-of-the-bmw-m3-sedan-and-bmw-m3-competition-sedan-valid-as-of-03/2021",
+            "note": "Official BMW PressClub launch context for the exact G80 M3 Competition xDrive technical-data attachment.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/m/m3-series/bmw-m3-limousine-technische-daten.html",
+            "note": "Official BMW Germany technical-data page confirms the current exact M3 Competition xDrive drivetrain layout and automatic transmission context.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -2065,18 +2113,49 @@
     "BMW|i4 (G26, 2022-2026)": {
       "car_index": 41,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official BMW launch and 2024 DE technical-data sheets now confirm that the exact i4 M50/M50 xDrive uses dual-motor AWD with axle-specific single-speed reduction ratios and staggered tire packages, but the published values differ between launch-era and later DE documents. The broad 2022-2026 row therefore stays unchanged because one exact M50 ratio/tire set would be unsafe to project across the full represented span, especially after BMW renamed the range-topper to M60 xDrive from July 2025.",
       "unresolved": [
         {
-          "item": "BMW i4 (G26, 2022-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW i4 M50 exact axle-ratio applicability across the represented 2022-2026 span",
+          "reason": "Official BMW launch specs show axle ratios 9.053 / 9.053 for the exact i4 M50, while official DE July 2024 technical data shows front 9.744 and rear 8.776 for the exact i4 M50 xDrive, so this pass did not choose one exact ratio set for the broad row."
         },
         {
-          "item": "BMW i4 (G26, 2022-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "BMW i4 M50 broad-row tire mapping and post-2025 naming continuity",
+          "reason": "Official BMW sources prove staggered M50 tire packages and also show that M60 xDrive replaces the predecessor from July 2025, so the current broad 2022-2026 M50 row should not absorb one exact tire or ratio set without a row split."
         }
       ],
       "sources": {
+        "official_m50_exact_ev_mapping": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0333329EN",
+            "note": "Official BMW PressClub launch article for the first BMW i4 and its technical-data attachment, covering the exact i4 M50 launch configuration.",
+            "confidence": "high"
+          }
+        ],
+        "official_m50_exact_axle_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0333329EN",
+            "note": "Official BMW launch technical-data PDF for the exact i4 M50: dual-motor AWD, stepless/single-speed EV drivetrain, axle ratios 9.053 / 9.053, and staggered tire packages 245/45 R18 + 255/45 R18, 245/40 R19 + 255/40 R19, and 245/35 R20 + 255/35 R20.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0442767DE/617123",
+            "note": "Official BMW DE 07/2024 technical-data PDF for the exact i4 M50 xDrive: single-speed EV mapping with front 9.744 and rear 8.776 axle ratios plus staggered 245/45 R18 + 255/45 R18 and 245/40 R19 + 255/40 R19 tires.",
+            "confidence": "high"
+          }
+        ],
+        "official_m50_lifecycle_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0441229EN",
+            "note": "Official BMW model-update article confirms the facelift-era naming `BMW i4 M50 xDrive`.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0450434DE",
+            "note": "Official BMW DE article states that the new BMW i4 M60 xDrive replaces the predecessor from July 2025, so the broad 2022-2026 row cannot safely treat M50 as one exact continuous variant through 2026.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -3209,18 +3288,37 @@
     "Audi|RS 3 (8V/8Y, 2017-2026)": {
       "car_index": 66,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official Audi MediaCenter technical-data sheets now confirm the exact 8Y RS 3 Sedan and Sportback drivetrain mapping, full 7-speed S tronic ratio set, final drive 4.059, top gear 0.630, and staggered 19-inch base tires for the Germany-market 8Y cars. The broad 8V/8Y row remains unchanged because those exact 8Y values cannot be safely projected back onto the mixed-generation row without splitting it.",
       "unresolved": [
         {
-          "item": "Audi RS 3 (8V/8Y, 2017-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Split the broad Audi RS 3 row into exact 8V/8Y body- and generation-specific entries",
+          "reason": "Official Audi now provides exact 8Y Sedan and Sportback technical-data sheets with body-specific ratio and tire evidence, but the current mixed 8V/8Y row cannot absorb those numbers safely without splitting the row."
         },
         {
-          "item": "Audi RS 3 (8V/8Y, 2017-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi RS 3 official transmission code and non-basic tire-option coverage",
+          "reason": "The checked exact Audi sources prove the 7-speed S tronic ratio set, final drive, top gear, and the basic staggered 19-inch setup, but they do not publish a transmission code or the full optional wheel/tire matrix."
         }
       ],
       "sources": {
+        "official_8y_rs3_exact_ratios": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1545/file_en/4fa19f9df51c551a54ddb969966dffefecb35555/eTD-Audi-RS3-Sedan_260306.pdf",
+            "note": "Official Audi MediaCenter technical-data PDF for the exact 8Y RS 3 Sedan (Germany): AWD with torque splitter, 7-speed S tronic, forward ratios 3.560 / 2.530 / 1.680 / 1.020 / 0.790 / 0.760 / 0.630, reverse 2.790, final drive 4.059, and basic staggered tires 265/30 ZR19 front + 245/35 ZR19 rear.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1498/file_en/743bfc0b0f620333a8f50632242fb1ea62fc003a/eTD-Audi-RS3-Sportback_260306.pdf",
+            "note": "Official Audi MediaCenter cross-check PDF for the exact 8Y RS 3 Sportback with the same ratio set, final drive 4.059, top gear 0.630, and the same staggered 19-inch base tire setup.",
+            "confidence": "high"
+          }
+        ],
+        "official_8y_rs3_context": [
+          {
+            "url": "https://www.audi-mediacenter.com/en/high-performance-redefined-audi-rs-3-sportback-and-rs-3-sedan-2021-14310/audi-rs-3-sportback-and-rs-3-sedan-the-epitome-of-sporty-driving-14312",
+            "note": "Official Audi MediaCenter launch article confirming the 2021 launch context and official body split between the 8Y RS 3 Sportback and 8Y RS 3 Sedan.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",
@@ -3469,11 +3567,15 @@
     "Audi|Q4 e-tron (FZ, 2022-2026)": {
       "car_index": 72,
       "verification_status": "verification_backlog",
-      "decision_summary": "Issue #975 official-source review confirmed the supported EU Q4 e-tron BEV variant mapping: `40 e-tron` is the single-motor RWD entry and `50 e-tron quattro` is the dual-motor AWD entry. The unsupported non-quattro `50 e-tron` alias was removed from the car library. Ratio fields remain unchanged because this issue verified variant naming and motor layout, not EV reduction-ratio mapping into the current schema.",
+      "decision_summary": "Issue #975 official-source review confirmed the supported EU Q4 e-tron BEV variant mapping, and this pass adds exact Audi official evidence that the launch-era 50 e-tron quattro uses axle-split one-speed reduction ratios (rear 11.5:1, front 10.0:1) plus mixed-size tires with a wider rear axle. The broad row remains unchanged because the current schema cannot safely encode the axle-split EV ratio mapping and the later official lineup renames the upper quattro variant away from the original 50 e-tron quattro naming.",
       "unresolved": [
         {
-          "item": "Audi Q4 e-tron (FZ, 2022-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official Audi sources confirmed the supported EU variant set plus single-motor RWD vs dual-motor AWD layouts, but this issue did not remap EV reduction data into the current final_drive_ratio/top_gear_ratio schema."
+          "item": "Encode axle-split EV reduction ratios for the exact Q4 50 e-tron quattro in repo schema",
+          "reason": "Official Audi sources now prove rear 11.5:1 and front 10.0:1 one-speed reduction ratios for the exact launch-era 50 e-tron quattro, but the current broad row stores only one final_drive_ratio field and cannot safely represent the axle split."
+        },
+        {
+          "item": "Exact official numeric tire sizes and post-2024 naming continuity for the broad Q4 e-tron row",
+          "reason": "Official Audi launch material confirms mixed-size tires with a wider rear axle, while later official updates rename the upper quattro variant to 55 e-tron quattro, so this pass did not project one exact tire or ratio package across the full 2022-2026 broad row."
         }
       ],
       "sources": {
@@ -3486,6 +3588,28 @@
           {
             "url": "https://www.audi-mediacenter.com/en/electric-suvs-in-the-premium-compact-segment-the-audi-q4-e-tron-and-the-q4-sportback-e-tron-13887/electric-motors-and-electric-all-wheel-drive-13900",
             "note": "Audi MediaCenter drivetrain page documents the Q4 e-tron launch mix and confirms there is no non-quattro `Q4 50 e-tron` RWD variant in the supported EU set.",
+            "confidence": "high"
+          }
+        ],
+        "official_50quattro_exact_axle_ratios": [
+          {
+            "url": "https://www.audi-mediacenter.com/en/electric-suvs-in-the-premium-compact-segment-the-audi-q4-e-tron-and-the-q4-sportback-e-tron-13887/electric-motors-and-electric-all-wheel-drive-13900",
+            "note": "Official Audi MediaCenter launch drivetrain page for the exact Q4 50 e-tron quattro: dual-motor AWD with one-speed reduction ratios rear 11.5:1 and front 10.0:1.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-technology-portal.de/en/drivetrain/electric-drives/audi-q4-e-tron-modular-electric-platform",
+            "note": "Official Audi Technology Portal cross-check for the exact Q4 50 e-tron quattro drivetrain layout and the launch-era dual-motor AWD position in the lineup.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/en/electric-suvs-in-the-premium-compact-segment-the-audi-q4-e-tron-and-the-q4-sportback-e-tron-13887/facts-and-figures-13891",
+            "note": "Official Audi MediaCenter facts page confirms 19- to 21-inch wheel coverage for the exact launch family and mixed-size tires with a wider rear axle for the quattro variants, though the fetched text did not expose the numeric tire sizes.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/en/press-releases/update-for-the-audi-q4-e-tron-more-range-more-efficiency-more-emotions-15594",
+            "note": "Official 2024 Audi update article shows later naming uses 45 e-tron / 45 e-tron quattro / 55 e-tron quattro rather than the original 50 e-tron quattro, so the broad 2022-2026 row should not absorb one exact launch-era ratio package without a split.",
             "confidence": "high"
           }
         ]

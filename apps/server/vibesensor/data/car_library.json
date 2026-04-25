@@ -2174,7 +2174,35 @@
       {
         "name": "xDrive45e",
         "engine": "B58 3.0L I6 Turbo PHEV",
-        "drivetrain": "AWD"
+        "drivetrain": "AWD",
+        "gearboxes": [
+          {
+            "name": "8-speed Steptronic transmission",
+            "final_drive_ratio": 3.636,
+            "top_gear_ratio": 0.667,
+            "gear_ratios": [
+              4.714,
+              3.143,
+              2.106,
+              1.667,
+              1.285,
+              1.0,
+              0.839,
+              0.667
+            ]
+          }
+        ],
+        "tire_options": [
+          {
+            "name": "Standard 19\"",
+            "tire_width_mm": 265.0,
+            "tire_aspect_pct": 50.0,
+            "rim_in": 19.0
+          }
+        ],
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 19.0
       },
       {
         "name": "M50i",
@@ -2525,11 +2553,44 @@
         "drivetrain": "AWD",
         "gearboxes": [
           {
-            "name": "8-speed automatic (ZF 8HP)",
+            "name": "8-speed M Steptronic transmission with Drivelogic",
             "final_drive_ratio": 3.154,
-            "top_gear_ratio": 0.667
+            "top_gear_ratio": 0.64,
+            "gear_ratios": [
+              5.0,
+              3.2,
+              2.143,
+              1.72,
+              1.313,
+              1.0,
+              0.823,
+              0.64
+            ]
           }
-        ]
+        ],
+        "tire_options": [
+          {
+            "name": "Standard staggered setup",
+            "tire_width_mm": 285.0,
+            "tire_aspect_pct": 30.0,
+            "rim_in": 20.0,
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "rear": {
+              "width_mm": 285.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "source_confidence": "official_exact"
+          }
+        ],
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
       }
     ]
   },
