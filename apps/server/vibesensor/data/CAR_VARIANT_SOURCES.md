@@ -534,7 +534,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
 | 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 5.302 | Audi MediaCenter eTD technical data | High |
-| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 5.302 | Audi MediaCenter eTD / Audi UK technical data | High |
+| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 5.302 TG 0.433 | Audi MediaCenter eTD technical data (2019, 2024) | High |
 | 55 TFSI e quattro | 2.0L I4 TFSI Turbo PHEV | AWD | 7-speed S tronic FD 5.302 | Audi MediaCenter / technical data PDF | High |
 | 35 TDI quattro | 2.0L I4 TDI Diesel | AWD | – | Audi owner manual / technical data | Medium |
 | 40 TDI quattro | 2.0L I4 TDI Diesel | AWD | – | Audi owner manual / technical data | Medium |
