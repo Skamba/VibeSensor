@@ -1,0 +1,222 @@
+[
+  {
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G22",
+    "body_code": "G22",
+    "production_start_year": 2021,
+    "production_end_year": 2026,
+    "model_name": "4 Series (G22, 2021-2026)",
+    "variant_name": "420i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": "RWD",
+    "transmission_code": "ZF8HP",
+    "transmission_name": "8-speed automatic (ZF 8HP)",
+    "top_gear_ratio": 0.667,
+    "final_drive_rear": 2.813,
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0,
+    "source_status": "exact_row"
+  },
+  {
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Active Tourer (F45, 2014-2021)",
+    "variant_name": "220i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": "FWD",
+    "transmission_code": "DCT7",
+    "transmission_name": "7-speed Steptronic dual-clutch transmission",
+    "top_gear_ratio": 0.698,
+    "final_drive_front": 3.231,
+    "tire_options": [
+      {
+        "name": "Standard 17\"",
+        "tire_width_mm": 205.0,
+        "tire_aspect_pct": 55.0,
+        "rim_in": 17.0
+      },
+      {
+        "name": "Sport Line 18\"",
+        "tire_width_mm": 215.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "M Sport 19\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0
+      }
+    ],
+    "tire_width_mm": 205.0,
+    "tire_aspect_pct": 55.0,
+    "rim_in": 17.0,
+    "source_status": "exact_row"
+  },
+  {
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Active Tourer (F45, 2014-2021)",
+    "variant_name": "225xe",
+    "engine_code": "B38",
+    "engine_name": "B38 1.5L I3 Turbo PHEV",
+    "fuel_type": "PHEV",
+    "drivetrain": "AWD",
+    "transmission_code": "AUTO6-PHEV",
+    "transmission_name": "6-speed Steptronic (225xe iPerformance)",
+    "top_gear_ratio": 0.672,
+    "final_drive_front": 3.944,
+    "tire_options": [
+      {
+        "name": "Standard 17\"",
+        "tire_width_mm": 205.0,
+        "tire_aspect_pct": 55.0,
+        "rim_in": 17.0
+      },
+      {
+        "name": "Sport Line 18\"",
+        "tire_width_mm": 215.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "M Sport 19\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0
+      }
+    ],
+    "tire_width_mm": 205.0,
+    "tire_aspect_pct": 55.0,
+    "rim_in": 17.0,
+    "source_status": "exact_row"
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G20",
+    "body_code": "G20",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "3 Series (G20, 2019-2025)",
+    "variant_name": "330i xDrive",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": "AWD",
+    "transmission_code": "ZF8HP",
+    "transmission_name": "8-speed automatic (ZF 8HP)",
+    "top_gear_ratio": 0.667,
+    "final_drive_front": 2.813,
+    "final_drive_rear": 2.813,
+    "transfer_case_ratio": 1.0,
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0,
+    "source_status": "exact_row"
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G60",
+    "body_code": "G60",
+    "production_start_year": 2024,
+    "production_end_year": 2026,
+    "model_name": "5 Series (G60, 2024-2026)",
+    "variant_name": "i5 eDrive40",
+    "engine_code": "GEN5_SINGLE_MOTOR",
+    "engine_name": "Electric Single Motor",
+    "fuel_type": "EV",
+    "drivetrain": "RWD",
+    "transmission_code": "EV-1SPEED",
+    "transmission_name": "Single-speed fixed gear (EV)",
+    "top_gear_ratio": 1.0,
+    "gear_ratios": [
+      1.0
+    ],
+    "final_drive_rear": 11.115,
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 19.0,
+    "source_status": "exact_row"
+  }
+]
