@@ -208,9 +208,12 @@ export function getWizardActionHint(
   const { t, manualTire, manualGearbox } = deps;
   const branch = getResolvedWizardSpecBranch(state);
   if (branch === "library") {
-    return canFinishWithLibrarySpecs(state)
-      ? t("settings.car.finish_library_ready")
-      : t("settings.car.finish_choose_path");
+    if (!canFinishWithLibrarySpecs(state)) {
+      return t("settings.car.finish_choose_path");
+    }
+    return state.selectedGearbox?.requires_manual_confirmation
+      ? t("settings.car.finish_library_approximate")
+      : t("settings.car.finish_library_ready");
   }
   if (branch === "manual") {
     return canFinishWithManualSpecs(manualTire, manualGearbox)

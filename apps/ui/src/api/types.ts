@@ -8,6 +8,7 @@ export type CarLibraryBrandsPayload = Schema<"CarLibraryBrandsResponse">;
 export type CarLibraryGearbox = Schema<"CarLibraryGearboxEntry">;
 export type CarLibraryModel = Schema<"CarLibraryModelEntry">;
 export type CarLibraryModelsPayload = Schema<"CarLibraryModelsResponse">;
+export type CarOrderReferenceStatus = Schema<"CarOrderReferenceStatus">;
 export type CarLibraryTireOption = Schema<"CarLibraryTireOptionEntry">;
 export type CarLibraryTypesPayload = Schema<"CarLibraryTypesResponse">;
 export type CarLibraryVariant = Schema<"CarLibraryVariantEntry">;

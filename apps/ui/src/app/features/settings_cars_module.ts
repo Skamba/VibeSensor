@@ -11,7 +11,12 @@ import {
   mergeCarAspectSettings,
   type SettingsState,
 } from "../ui_app_state";
-import type { CarRecord, CarsPayload, CarUpsertRequest } from "../../api/types";
+import type {
+  CarOrderReferenceStatus,
+  CarRecord,
+  CarsPayload,
+  CarUpsertRequest,
+} from "../../api/types";
 import type {
   CarsListPanelView,
   CarsListRenderModel,
@@ -65,6 +70,7 @@ export interface SettingsCarsModule {
     name: string,
     carType: string,
     aspects: Record<string, number>,
+    orderReferenceStatus?: CarOrderReferenceStatus,
     variant?: string,
   ): Promise<void>;
   bindHandlers(): void;
@@ -184,6 +190,7 @@ export function createSettingsCarsModule(
     name: string,
     carType: string,
     aspects: Record<string, number>,
+    orderReferenceStatus?: CarOrderReferenceStatus,
     variant?: string,
   ): Promise<void> {
     try {
@@ -198,6 +205,9 @@ export function createSettingsCarsModule(
         name,
         type: carType,
       };
+      if (orderReferenceStatus) {
+        payload.order_reference_status = orderReferenceStatus;
+      }
       if (variant) {
         payload.variant = variant;
       }

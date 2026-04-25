@@ -72,8 +72,14 @@ export function createAppFeatureSecondaryBundle(
       fmt: formatting.fmt,
     },
     queryClient: serverState.queryClient,
-    addCarFromWizard: (name, carType, aspects, variant) =>
-      settings.addCarFromWizard(name, carType, aspects, variant),
+    addCarFromWizard: (name, carType, aspects, orderReferenceStatus, variant) =>
+      settings.addCarFromWizard(
+        name,
+        carType,
+        aspects,
+        orderReferenceStatus,
+        variant,
+      ),
   });
   carsFeature = cars;
 
