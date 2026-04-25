@@ -1671,15 +1671,19 @@
     "BMW|X5 (G05, 2019-2026)": {
       "car_index": 30,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official BMW DE technical-data sheets now confirm the exact G05 xDrive45e PHEV mapping: 8-speed Steptronic transmission, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.636, and standard 265/50 R19 tires. The broad G05 row remains verification backlog because the full EU variant matrix and exact optional wheel/tire coverage are still incomplete.",
+      "decision_summary": "Official BMW DE and ACEA technical-data sources now confirm two exact G05 mappings: xDrive45e with 8-speed Steptronic, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.636, and standard 265/50 R19 tires; and launch-era xDrive40i with 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, and standard 255/55 R18 tires. The broad G05 row remains verification backlog because later Germany-market xDrive40i material changes gearbox wording and the standard tire baseline, so one undifferentiated 2019-2026 production mapping would be unsafe and the full EU variant matrix is still incomplete.",
       "unresolved": [
         {
-          "item": "BMW X5 (G05, 2019-2026) full EU variant matrix beyond the exact xDrive45e PHEV mapping",
-          "reason": "This pass resolved the xDrive45e exact transmission, final drive, and standard tire, but it did not establish an official matrix for the other G05 variants represented by the broad row."
+          "item": "BMW X5 xDrive40i production-data applicability across the full G05 row span",
+          "reason": "Official launch-era xDrive40i specs prove final drive 3.385, top gear 0.640, and a 255/55 R18 standard tire, while later Germany-market material changes the gearbox wording and the standard tire to 265/50 R19, so one undifferentiated 2019-2026 xDrive40i production mapping would be unsafe."
         },
         {
-          "item": "BMW xDrive45e transmission subtype code and optional wheel/tire matrix",
-          "reason": "Official BMW DE sources prove the transmission name, ratios, final drive, and the standard 19-inch fitment, but they do not publish a gearbox subtype code or the full optional wheel/tire matrix for the exact xDrive45e."
+          "item": "BMW X5 (G05, 2019-2026) full EU variant matrix beyond the exact xDrive45e and xDrive40i mappings",
+          "reason": "This pass now resolves exact official xDrive45e and launch-era xDrive40i mappings, but it does not establish the complete official matrix for the other G05 variants represented by the broad row."
+        },
+        {
+          "item": "BMW X5 transmission subtype code and full optional wheel/tire matrix",
+          "reason": "Official BMW sources prove transmission names, ratios, and standard or selected option tires for the checked exact variants, but they do not publish a gearbox subtype code or one complete optional wheel/tire matrix across the represented row."
         }
       ],
       "sources": {
@@ -1704,6 +1708,25 @@
           {
             "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/G05_X5_09022023.pdf.asset.1675947955130.pdf",
             "note": "Official BMW DE later brochure checked as a non-supporting reference; it documents facelift-era xDrive50e rather than the exact xDrive45e target.",
+            "confidence": "high"
+          }
+        ],
+        "official_xdrive40i_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0281455EN/416380",
+            "note": "Official BMW ACEA technical-data PDF for the exact launch-era X5 xDrive40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard 255/55 R18 tires.",
+            "confidence": "high"
+          }
+        ],
+        "official_xdrive40i_tire_context": [
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_G05_08_20.pdf",
+            "note": "Official BMW DE price list confirming the xDrive40i as an 8-Gang Steptronic model with a 255/55 R18 standard tire and official staggered 20-, 21-, and 22-inch wheel options.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/G05_X5_09022023.pdf.asset.1675947955130.pdf",
+            "note": "Official BMW DE facelift-era brochure confirming the xDrive40i remains in the range with 8-Gang Steptronic Sport wording and a 265/50 R19 standard tire, showing that one production-wide xDrive40i baseline would be unsafe.",
             "confidence": "high"
           }
         ],
@@ -3314,7 +3337,7 @@
     "Audi|Q7 (4M, 2016-2026)": {
       "car_index": 61,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official Audi Germany-market technical-data sheets now confirm the exact Q7 55 TFSI e quattro mapping for the current facelift-era configuration: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and base tire 255/55 R19. The broad Q7 row remains unchanged because this pass did not prove the same values across the full 2016-2026 span or recover the exact optional tire matrix for the variant.",
+      "decision_summary": "Official Audi Germany-market technical-data sheets now confirm the exact Q7 55 TFSI e quattro mapping for the current facelift-era configuration: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and base tire 255/55 R19. This pass also adds exact current non-PHEV Q7 55 TFSI quattro evidence from official Germany-market material: permanent quattro AWD, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, and a checked 5-seat basic tire 255/60 R18. The broad Q7 row remains unchanged because this pass did not prove the same values across the full 2016-2026 span or recover one production-safe tire baseline and gearbox-family mapping for all represented non-PHEV and PHEV variants.",
       "unresolved": [
         {
           "item": "Audi Q7 55 TFSI e quattro production-data applicability across the full 4M row span",
@@ -3323,6 +3346,10 @@
         {
           "item": "Audi Q7 55 TFSI e quattro exact optional tire matrix and gearbox-family naming",
           "reason": "Official Audi exact sources prove the base 255/55 R19 fitment and 8-speed tiptronic wording, but this pass did not recover the full optional tire matrix or explicit official ZF 8HP naming."
+        },
+        {
+          "item": "Audi Q7 55 TFSI quattro production-data applicability and tire-baseline continuity across the full 4M row span",
+          "reason": "Checked exact official current-generation 55 TFSI quattro evidence resolves the 250 kW ratio set, final drive 3.204, and a 5-seat 255/60 R18 basic tire, but this pass did not prove the same mapping across the full 2016-2026 non-PHEV row span or recover one uncontested production-safe tire baseline for all represented configurations."
         }
       ],
       "sources": {
@@ -3340,6 +3367,18 @@
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1381/file_de/9d5c2e27a7ed95f3f0aa43f733f600509d33d4a4/TD-Audi-Q7-SUV-TFSIe-quattro-tiptronic-290kW_251215.pdf?1769111238&disposition=attachment",
             "note": "Official Audi MediaCenter Germany technical-data PDF for the exact Q7 55 TFSI e quattro 290 kW: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and base tire 255/55 R19.",
+            "confidence": "high"
+          }
+        ],
+        "official_55tfsi_quattro_exact_ratios": [
+          {
+            "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/stark-in-design-komfort-und-technologieder-ueberarbeitete-audi-q7-15849",
+            "note": "Official Audi MediaCenter Germany press release confirming the current non-PHEV Q7 55 TFSI quattro badge and 250 kW output step in the facelift-era range.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/936/file_en/b9a2b988f92292c9fc34d688ac4ce69ed2ba412e/eTD-Audi-Q7-SUV-TFSI-quattro-tiptronic-250kW-MHEV-5-seats_260204.pdf?1770709676",
+            "note": "Official Audi MediaCenter technical-data PDF for the exact current Q7 SUV TFSI quattro tiptronic 250 kW MHEV 5-seat configuration: permanent quattro AWD with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, and a 255/60 R18 basic tire.",
             "confidence": "high"
           }
         ],
@@ -3479,18 +3518,34 @@
     "Audi|TT (8S, 2015-2023)": {
       "car_index": 64,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official Audi Germany-market material now confirms the exact late-cycle TT Coupé 45 TFSI quattro S tronic 180 kW mapping: quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. The broad TT row remains unchanged because the current schema stores only one final_drive_ratio, the checked exact evidence is late-cycle only, and this pass did not prove one production-safe mapping across the full 2015-2023 row.",
       "unresolved": [
         {
-          "item": "Audi TT (8S, 2015-2023) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Schema-safe encoding of the exact Audi TT 45 TFSI quattro dual final-drive values",
+          "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 for the target, but the current row stores only one final_drive_ratio field."
         },
         {
-          "item": "Audi TT (8S, 2015-2023) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi TT 45 TFSI quattro production-data applicability across the full 2015-2023 row span",
+          "reason": "The checked exact 2023 Germany-market technical-data PDF resolves the late-cycle 45 TFSI quattro mapping, but this pass did not recover enough year-specific official ratio sheets to prove one unchanged package across the full represented span."
+        },
+        {
+          "item": "Audi TT 45 TFSI quattro exact transmission-code and non-basic tire-option coverage",
+          "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire, but they do not publish the gearbox code or the full optional wheel/tire matrix for the exact target."
         }
       ],
       "sources": {
+        "official_45tfsi_quattro_exact_ratios": [
+          {
+            "url": "https://www.audi-mediacenter.com/en/audi-tt-coupe-68",
+            "note": "Official Audi MediaCenter model page for the TT Coupé linking the exact 45 TFSI quattro technical-data sheet.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1243/file_en/0963f4ffa97bc4da673e65ee635a8d8df16b1481/eTD_Audi_TT_Coupe_45_TFSI_quattro_S_tronic_180kW_230113.pdf?1698933948&disposition=attachment",
+            "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact TT Coupé 45 TFSI quattro S tronic 180 kW: quattro AWD with electronically controlled multi-plate clutch, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",
@@ -3630,18 +3685,30 @@
     "Audi|RS 4 Avant (B9, 2018-2024)": {
       "car_index": 67,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official Audi Germany technical-data material now confirms the exact later-cycle RS 4 Avant mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.204, and a basic square 265/35 R19 tire setup. The broad RS 4 row remains unchanged because this pass did not recover a launch-year 2018 Germany/EU technical-data sheet, and checked official sources do not prove the same optional wheel/tire matrix or gearbox-family naming across the full 2018-2024 span.",
       "unresolved": [
         {
-          "item": "Audi RS 4 Avant (B9, 2018-2024) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Audi RS 4 Avant exact production-data applicability across the full 2018-2024 row span",
+          "reason": "The checked official RS 4 Avant technical-data material resolves the later-cycle mapping, but this pass did not recover a launch-year 2018 Germany/EU sheet that proves the same ratio and tire package across the full represented span."
         },
         {
-          "item": "Audi RS 4 Avant (B9, 2018-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi RS 4 Avant exact transmission-code and non-basic tire-option coverage",
+          "reason": "Official Audi exact material proves 8-speed tiptronic wording, the full ratio set, final drive 3.204, and the 265/35 R19 basic tire, but it does not publish a gearbox-family code or a full optional wheel/tire matrix for the plain RS 4 Avant."
         }
       ],
       "sources": {
+        "official_rs4_exact_ratios": [
+          {
+            "url": "https://www.audi-mediacenter.com/en/audi-rs-4-avant-29",
+            "note": "Official Audi MediaCenter model page for the RS 4 Avant linking the exact technical-data sheet.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/642/file_en/41b7885f3881fe9b4d455e343aa2679df188bdbe/eTD-Audi-RS4-Avant-TFSI-331kW_241016.pdf?1729075481&disposition=attachment",
+            "note": "Official Audi MediaCenter technical-data PDF for the exact RS 4 Avant: permanent quattro AWD with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.204, and basic square 265/35 R19 tires.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",
@@ -3674,18 +3741,35 @@
     "Audi|RS 5 (B9, 2018-2024)": {
       "car_index": 68,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official Audi Germany technical-data PDFs from 2019 and 2024 now confirm the exact RS 5 Coupé mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.204, and a basic square 265/35 R19 tire setup. The broad RS 5 row remains unchanged because this pass still does not prove the same mapping for launch-year 2018 or recover an exact official optional wheel/tire matrix for the plain RS 5 Coupé.",
       "unresolved": [
         {
-          "item": "Audi RS 5 (B9, 2018-2024) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Audi RS 5 exact production-data applicability across the full 2018-2024 row span",
+          "reason": "Checked official 2019 and 2024 technical-data PDFs resolve the later B9 RS 5 Coupé mapping, but this pass did not recover a launch-year 2018 Germany/EU sheet that proves the same ratio and tire package across the full represented span."
         },
         {
-          "item": "Audi RS 5 (B9, 2018-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi RS 5 exact transmission-code and non-basic tire-option coverage",
+          "reason": "Official Audi exact material proves 8-speed tiptronic wording, the full ratio set, final drive 3.204, and the 265/35 R19 basic tire, but it does not publish a gearbox-family code or the exact optional 20-inch tire dimensions for the plain RS 5 Coupé."
         }
       ],
       "sources": {
+        "official_rs5_exact_ratios": [
+          {
+            "url": "https://www.audi-mediacenter.com/en/audi-rs-5-coupe-38",
+            "note": "Official Audi MediaCenter model page for the RS 5 Coupé linking the exact technical-data sheet.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/573/file_en/b055e6be3d938aecc8f0656a4554036d5b1479da/eTD-Audi-RS_5-Coupe-TFSI_240426.pdf?1714141018&disposition=attachment",
+            "note": "Official Audi MediaCenter 2024 technical-data PDF for the exact RS 5 Coupé: permanent quattro AWD with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.204, and basic square 265/35 R19 tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Audi_RS_5_Coupe_2_9_TFSI.pdf",
+            "note": "Official Audi 2019 Germany-market technical-data PDF cross-check for the exact RS 5 Coupé 2.9 TFSI quattro tiptronic 331 kW with the same ratio set, final drive 3.204, and basic 265/35 R19 tire setup.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",

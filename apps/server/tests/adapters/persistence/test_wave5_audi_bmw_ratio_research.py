@@ -58,6 +58,10 @@ def test_wave5_ratio_source_rows_capture_exact_g70_q7_q4_context_without_overwri
             "item": "Audi Q7 55 TFSI e quattro exact optional tire matrix and gearbox-family naming",
             "reason": "Official Audi exact sources prove the base 255/55 R19 fitment and 8-speed tiptronic wording, but this pass did not recover the full optional tire matrix or explicit official ZF 8HP naming.",
         },
+        {
+            "item": "Audi Q7 55 TFSI quattro production-data applicability and tire-baseline continuity across the full 4M row span",
+            "reason": "Checked exact official current-generation 55 TFSI quattro evidence resolves the 250 kW ratio set, final drive 3.204, and a 5-seat 255/60 R18 basic tire, but this pass did not prove the same mapping across the full 2016-2026 non-PHEV row span or recover one uncontested production-safe tire baseline for all represented configurations.",
+        },
     ]
 
 
