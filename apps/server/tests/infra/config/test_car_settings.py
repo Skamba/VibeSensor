@@ -84,6 +84,7 @@ def test_car_settings_update_car_decodes_order_reference_status_payload() -> Non
         {
             "order_reference_status": {
                 "selection_source_status": "compat_projection",
+                "tire_dimensions_confidence": "family_default",
                 "final_drive_ratio_confidence": "family_default",
                 "current_gear_ratio_confidence": "family_default",
                 "transmission_name": "8-speed automatic",
@@ -94,6 +95,7 @@ def test_car_settings_update_car_decodes_order_reference_status_payload() -> Non
 
     persisted = next(car for car in updated.cars if car["id"] == car_id)["order_reference_status"]
     assert persisted["selection_source_status"] == "compat_projection"
+    assert persisted["tire_dimensions_confidence"] == "family_default"
     assert persisted["requires_manual_confirmation"] is True
     assert persisted["transmission_name"] == "8-speed automatic"
 
@@ -105,6 +107,7 @@ def test_analysis_settings_update_marks_manual_ratio_overrides_user_confirmed() 
             "name": "Approximate",
             "order_reference_status": {
                 "selection_source_status": "exact_row",
+                "tire_dimensions_confidence": "official_exact",
                 "final_drive_ratio_confidence": "family_default",
                 "current_gear_ratio_confidence": "family_default",
                 "transmission_name": "8-speed automatic",
@@ -122,8 +125,41 @@ def test_analysis_settings_update_marks_manual_ratio_overrides_user_confirmed() 
     snapshot = services.car_settings.active_car_snapshot()
     assert snapshot is not None
     assert snapshot.order_reference_status is not None
+    assert snapshot.order_reference_status.selection_source_status == "manual_entry"
+    assert snapshot.order_reference_status.tire_dimensions_confidence == "official_exact"
     assert snapshot.order_reference_status.final_drive_ratio_confidence == "user_confirmed"
     assert snapshot.order_reference_status.current_gear_ratio_confidence == "user_confirmed"
+    assert snapshot.order_reference_status.transmission_confidence == "official_exact"
+    assert snapshot.order_reference_status.requires_manual_confirmation is False
+
+
+def test_analysis_settings_update_marks_manual_tire_overrides_user_confirmed() -> None:
+    services = build_settings_services()
+    created = services.car_settings.add_car(
+        {
+            "name": "Approximate",
+            "order_reference_status": {
+                "selection_source_status": "exact_row",
+                "tire_dimensions_confidence": "family_default",
+                "final_drive_ratio_confidence": "official_exact",
+                "current_gear_ratio_confidence": "official_exact",
+                "transmission_name": "8-speed automatic",
+                "transmission_confidence": "official_exact",
+            },
+        }
+    )
+    car_id = created.cars[0]["id"]
+    services.car_settings.set_active_car(car_id)
+
+    services.analysis_settings.update_active_car_aspects({"tire_width_mm": 245.0})
+
+    snapshot = services.car_settings.active_car_snapshot()
+    assert snapshot is not None
+    assert snapshot.order_reference_status is not None
+    assert snapshot.order_reference_status.selection_source_status == "manual_entry"
+    assert snapshot.order_reference_status.tire_dimensions_confidence == "user_confirmed"
+    assert snapshot.order_reference_status.final_drive_ratio_confidence == "official_exact"
+    assert snapshot.order_reference_status.current_gear_ratio_confidence == "official_exact"
     assert snapshot.order_reference_status.transmission_confidence == "official_exact"
     assert snapshot.order_reference_status.requires_manual_confirmation is False
 

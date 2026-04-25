@@ -495,6 +495,7 @@ export function createCarsFeatureWorkflow(
             ...tireSetupAspectsFromOption(tire),
           },
           {
+            tire_dimensions_confidence: tire.source_confidence ?? "unverified",
             current_gear_ratio_confidence: gearbox.top_gear_ratio_confidence ?? "unverified",
             final_drive_ratio_confidence: gearbox.final_drive_ratio_confidence ?? "unverified",
             requires_manual_confirmation: gearbox.requires_manual_confirmation ?? true,
@@ -514,20 +515,21 @@ export function createCarsFeatureWorkflow(
         return false;
       }
 
-      await deps.addCarFromWizard(
-        buildWizardCarName(state.brand, state.model, state.selectedVariant),
-        state.carType || "Custom",
+        await deps.addCarFromWizard(
+          buildWizardCarName(state.brand, state.model, state.selectedVariant),
+          state.carType || "Custom",
         {
           current_gear_ratio: Number(inputs.topGear),
           final_drive_ratio: Number(inputs.finalDrive),
           rim_in: Number(inputs.rim),
           tire_aspect_pct: Number(inputs.tireAspect),
           tire_width_mm: Number(inputs.tireWidth),
-        },
-        {
-          current_gear_ratio_confidence: "user_confirmed",
-          final_drive_ratio_confidence: "user_confirmed",
-          requires_manual_confirmation: false,
+          },
+          {
+            tire_dimensions_confidence: "user_confirmed",
+            current_gear_ratio_confidence: "user_confirmed",
+            final_drive_ratio_confidence: "user_confirmed",
+            requires_manual_confirmation: false,
           selection_source_status: "manual_entry",
         },
         state.selectedVariant?.name,

@@ -185,6 +185,7 @@ describe("createCarsFeatureWorkflow", () => {
       carType: "SUV",
       name: "BMW X5 M60i",
       orderReferenceStatus: {
+        tire_dimensions_confidence: "user_confirmed",
         current_gear_ratio_confidence: "user_confirmed",
         final_drive_ratio_confidence: "user_confirmed",
         requires_manual_confirmation: false,
@@ -492,6 +493,7 @@ describe("createCarsFeatureWorkflow", () => {
         final_drive_ratio_confidence: "official_exact",
         requires_manual_confirmation: false,
         selection_source_status: "exact_row",
+        tire_dimensions_confidence: "official_exact",
         transmission_confidence: "official_exact",
         transmission_name: "8-speed automatic",
       },

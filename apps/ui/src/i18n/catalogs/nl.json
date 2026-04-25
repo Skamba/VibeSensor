@@ -332,6 +332,7 @@
   "settings.car.finish_manual_ready": "Handmatige route gekozen. Auto toevoegen gebruikt de hieronder ingevulde waarden.",
   "settings.car.finish_manual_missing": "Voer positieve band- en overbrengingswaarden in om af te ronden.",
   "settings.car.approximate_detail": "Deze auto gebruikt nog benaderde aandrijflijnverhoudingen uit een family-default bibliotheekmatch. Controleer of overschrijf ze in Analyse voordat je driveshaft- of motorordes vertrouwt.",
+  "settings.car.confidence.part_tires": "Banden {value}",
   "settings.car.confidence.part_drive": "Aandrijving {value}",
   "settings.car.confidence.part_gear": "Hoogste versnelling {value}",
   "settings.car.confidence.part_transmission": "Versnellingsbak {value}",
