@@ -87,7 +87,7 @@ def _stored_run(run: dict[str, Any]) -> StoredHistoryRun:
                 "status": "recording",
                 "analysis": None,
             },
-            "active",
+            "unavailable",
             "Analysis is not available while recording is still active",
         ),
         (
