@@ -16,6 +16,10 @@ def build_traceability_rows(
     tire_spec_text: str | None,
     sensor_model: str | None,
     firmware_version: str | None,
+    strength_algorithm_version: str | None,
+    peak_detector_version: str | None,
+    calibration_profile_id: str | None,
+    vehicle_baseline_profile_id: str | None,
     sample_count: int,
     sample_rate_hz: str | None,
     tr: Callable[..., str],
@@ -31,6 +35,38 @@ def build_traceability_rows(
     firmware_version = str(firmware_version or "").strip()
     if firmware_version and firmware_version.casefold() not in {"none", tr("UNKNOWN").casefold()}:
         rows.append(ReportLabelValueRow(label=tr("FIRMWARE_VERSION"), value=firmware_version))
+    strength_algorithm_version = str(strength_algorithm_version or "").strip()
+    if strength_algorithm_version:
+        rows.append(
+            ReportLabelValueRow(
+                label=tr("STRENGTH_ALGORITHM_VERSION_LABEL"),
+                value=strength_algorithm_version,
+            )
+        )
+    peak_detector_version = str(peak_detector_version or "").strip()
+    if peak_detector_version:
+        rows.append(
+            ReportLabelValueRow(
+                label=tr("PEAK_DETECTOR_VERSION_LABEL"),
+                value=peak_detector_version,
+            )
+        )
+    calibration_profile_id = str(calibration_profile_id or "").strip()
+    if calibration_profile_id:
+        rows.append(
+            ReportLabelValueRow(
+                label=tr("CALIBRATION_PROFILE_LABEL"),
+                value=calibration_profile_id,
+            )
+        )
+    vehicle_baseline_profile_id = str(vehicle_baseline_profile_id or "").strip()
+    if vehicle_baseline_profile_id:
+        rows.append(
+            ReportLabelValueRow(
+                label=tr("VEHICLE_BASELINE_PROFILE_LABEL"),
+                value=vehicle_baseline_profile_id,
+            )
+        )
     rows.extend(
         [
             ReportLabelValueRow(

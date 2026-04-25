@@ -25,6 +25,7 @@ def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
         "aabbccddee01": {
             "name": "Configured front left",
             "location_code": "front_left_wheel",
+            "mount_orientation": "radial",
         }
     }
     sensor_metadata_reader = MagicMock()
@@ -69,6 +70,7 @@ def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
     assert sensor_snapshot.sensor_id == sensor_id
     assert sensor_snapshot.display_name == "Configured front left"
     assert sensor_snapshot.location_code == "front_left_wheel"
+    assert sensor_snapshot.mount_orientation == "radial"
 
 
 def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
@@ -90,6 +92,7 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
         "aabbccddee01": {
             "name": "Configured front left",
             "location_code": "front_left_wheel",
+            "mount_orientation": "radial",
         }
     }
     sensor_metadata_reader = MagicMock()
@@ -124,6 +127,7 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
     sensors_by_mac["aabbccddee02"] = {
         "name": "Configured rear left",
         "location_code": "rear_left_wheel",
+        "mount_orientation": "axial",
     }
 
     logger._sample_flush.append_records(
@@ -135,6 +139,7 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
     sensors_by_mac["aabbccddee02"] = {
         "name": "Configured moved later",
         "location_code": "front_right_wheel",
+        "mount_orientation": "rearward",
     }
     fake_registry._records[late_sensor_id].name = "Late joiner renamed live"
     fake_registry._records[late_sensor_id].location_code = "front_right_wheel"
@@ -151,6 +156,7 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
     assert late_snapshot is not None
     assert late_snapshot.display_name == "Configured rear left"
     assert late_snapshot.location_code == "rear_left_wheel"
+    assert late_snapshot.mount_orientation == "axial"
 
     stored_samples = history_db.run_repository.get_run_samples(snapshot.run_id)
     late_rows = [sample for sample in stored_samples if sample.client_id == late_sensor_id]

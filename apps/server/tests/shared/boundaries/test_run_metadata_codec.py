@@ -92,11 +92,16 @@ def test_run_metadata_codec_roundtrip_preserves_sensor_snapshots() -> None:
             "run_id": "run-sensors",
             "start_time_utc": "2026-01-01T00:00:00Z",
             "sensor_model": "ADXL345",
+            "strength_algorithm_version": "strength-db-scalar-v1",
+            "peak_detector_version": "peak-band-rms-v1",
+            "calibration_profile_id": "noise-floor-p20-v1",
+            "vehicle_baseline_profile_id": "car-profile-1",
             "sensor_snapshots": [
                 {
                     "sensor_id": "sensor-a",
                     "display_name": "Front left",
                     "location_code": "front_left_wheel",
+                    "mount_orientation": "radial",
                     "sample_rate_hz": 800,
                     "firmware_version": "1.2.3",
                 }
@@ -112,14 +117,41 @@ def test_run_metadata_codec_roundtrip_preserves_sensor_snapshots() -> None:
             "sensor_id": "sensor-a",
             "display_name": "Front left",
             "location_code": "front_left_wheel",
+            "mount_orientation": "radial",
             "sample_rate_hz": 800,
             "firmware_version": "1.2.3",
         }
     ]
+    assert payload["strength_algorithm_version"] == "strength-db-scalar-v1"
+    assert payload["peak_detector_version"] == "peak-band-rms-v1"
+    assert payload["calibration_profile_id"] == "noise-floor-p20-v1"
+    assert payload["vehicle_baseline_profile_id"] == "car-profile-1"
     assert len(decoded.sensor_snapshots) == 1
+    assert decoded.strength_algorithm_version == "strength-db-scalar-v1"
+    assert decoded.peak_detector_version == "peak-band-rms-v1"
+    assert decoded.calibration_profile_id == "noise-floor-p20-v1"
+    assert decoded.vehicle_baseline_profile_id == "car-profile-1"
     snapshot = decoded.sensor_snapshots[0]
     assert snapshot.sensor_id == "sensor-a"
     assert snapshot.display_name == "Front left"
     assert snapshot.location_code == "front_left_wheel"
+    assert snapshot.mount_orientation == "radial"
     assert snapshot.sample_rate_hz == 800
     assert snapshot.firmware_version == "1.2.3"
+
+
+def test_run_metadata_codec_tolerates_missing_calibration_metadata_for_legacy_runs() -> None:
+    metadata = run_metadata_from_mapping(
+        {
+            "run_id": "legacy-run",
+            "start_time_utc": "2026-01-01T00:00:00Z",
+            "sensor_model": "ADXL345",
+            "sensor_snapshots": [{"sensor_id": "sensor-a", "location_code": "front_left_wheel"}],
+        }
+    )
+
+    assert metadata.strength_algorithm_version is None
+    assert metadata.peak_detector_version is None
+    assert metadata.calibration_profile_id is None
+    assert metadata.vehicle_baseline_profile_id is None
+    assert metadata.sensor_snapshots[0].mount_orientation is None

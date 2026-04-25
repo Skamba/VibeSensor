@@ -91,6 +91,10 @@ class ReportRunFacts:
     sensor_count: int
     sensor_model: str | None
     firmware_version: str | None
+    strength_algorithm_version: str | None
+    peak_detector_version: str | None
+    calibration_profile_id: str | None
+    vehicle_baseline_profile_id: str | None
     car_name: str | None
     car_type: str | None
     timeline_intervals: tuple[ReportTimelineInterval, ...]
@@ -254,6 +258,10 @@ def prepare_report_facts(
             sensor_count=summary.sensor_count,
             sensor_model=config_snap.sensor_model,
             firmware_version=config_snap.firmware_version,
+            strength_algorithm_version=config_snap.strength_algorithm_version,
+            peak_detector_version=config_snap.peak_detector_version,
+            calibration_profile_id=config_snap.calibration_profile_id,
+            vehicle_baseline_profile_id=config_snap.vehicle_baseline_profile_id,
             car_name=summary.metadata.car_name if summary.metadata is not None else None,
             car_type=summary.metadata.car_type if summary.metadata is not None else None,
             timeline_intervals=summary.timeline_intervals,
