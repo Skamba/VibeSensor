@@ -24,6 +24,7 @@ links onward to the scoped instruction files and repo map below.
 |------|-------------|
 | `docs/domain-model.md` | Domain object graph, modeling rules, and adapter inventory. |
 | `docs/dataflows.md` | Canonical four-flow map for live, recording, raw capture, and report paths. |
+| `docs/car_library_architecture.md` | Exact vehicle-configuration rows, legacy picker compatibility, and car-library source-of-truth rules. |
 | `docs/analysis_pipeline.md` | Post-stop diagnostics pipeline: steps, modules, and data flow. |
 | `docs/order_tracking.md` | Order-reference math, tolerance bands, and order-finding flow. |
 | `docs/report_pipeline.md` | Report generation flow from analysis to PDF. |
