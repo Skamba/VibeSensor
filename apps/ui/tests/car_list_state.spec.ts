@@ -39,6 +39,16 @@ const labels: Record<string, string> = {
   "settings.car.tires_missing": "Tire size not set",
   "settings.car.incomplete_detail": "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
   "settings.car.approximate_detail": "Approximate drivetrain ratios need review.",
+  "settings.car.confidence.part_drive": "Drive {value}",
+  "settings.car.confidence.part_gear": "Top gear {value}",
+  "settings.car.confidence.part_transmission": "Transmission {value}",
+  "settings.car.confidence.official_exact": "official source",
+  "settings.car.confidence.official_derived": "officially derived",
+  "settings.car.confidence.reputable_secondary_crosschecked": "secondary cross-check",
+  "settings.car.confidence.family_default": "family default",
+  "settings.car.confidence.unverified": "unverified",
+  "settings.car.confidence.user_confirmed": "user confirmed",
+  "settings.car.confidence.review_detail": "Review or override in Analysis before trusting driveshaft or engine order results.",
   "settings.car.created_title": "Car added",
   "settings.car.created_body": "{name} was added and selected for this setup.",
   "settings.car.created_detail": "Review the highlighted row below or open Analysis to confirm the setup before the next run.",
@@ -50,6 +60,15 @@ const labels: Record<string, string> = {
 function t(key: string, vars?: Record<string, unknown>): string {
   if (key === "settings.car.created_body") {
     return `${vars?.name ?? "Unknown"} was added and selected for this setup.`;
+  }
+  if (key === "settings.car.confidence.part_drive") {
+    return `Drive ${vars?.value ?? ""}`.trim();
+  }
+  if (key === "settings.car.confidence.part_gear") {
+    return `Top gear ${vars?.value ?? ""}`.trim();
+  }
+  if (key === "settings.car.confidence.part_transmission") {
+    return `Transmission ${vars?.value ?? ""}`.trim();
   }
   return labels[key] ?? key;
 }
@@ -205,7 +224,7 @@ test("buildSettingsCarListRenderModel surfaces approximate drivetrain guidance f
     throw new Error("Expected car rows");
   }
   expect(model.rows[0]).toMatchObject({
-    completionDetailText: "Approximate drivetrain ratios need review.",
+    completionDetailText: "Drive family default · Top gear family default · Transmission family default. Review or override in Analysis before trusting driveshaft or engine order results.",
     isComplete: true,
     readinessState: "ready",
   });
