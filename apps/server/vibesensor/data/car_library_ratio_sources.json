@@ -1850,18 +1850,47 @@
     "BMW|X7 (G07, 2019-2026)": {
       "car_index": 33,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official BMW exact technical-data documents now confirm the G07 X7 M60i xDrive mapping for ACEA/DE markets: 8-speed Steptronic transmission, full forward ratios 5.501 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, final drive 3.385, standard 285/45 R21 tires, and optional staggered 275/40 R22 + 315/35 R22 or 275/35 R23 + 315/30 R23 fitments. The broad row remains verification backlog because the full G07 matrix outside the exact M60i xDrive mapping is still incomplete.",
+      "decision_summary": "Official BMW exact technical-data documents now confirm two G07 X7 mappings for ACEA/DE markets: xDrive40i with 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.636, standard 275/50 R20 tires, and optional 285/45 R21 or staggered 275/40 R22 + 315/35 R22 / 275/35 R23 + 315/30 R23 fitments; and M60i xDrive with 8-speed Steptronic transmission, full forward ratios 5.501 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, final drive 3.385, standard 285/45 R21 tires, and optional staggered 22/23-inch fitments. The broad row remains verification backlog because the full G07 matrix outside the exact xDrive40i and M60i xDrive mappings is still incomplete.",
       "unresolved": [
         {
-          "item": "BMW X7 (G07, 2019-2026) full EU variant matrix beyond the exact M60i xDrive mapping",
-          "reason": "This pass resolved the exact M60i xDrive transmission, final drive, and tire fitments, but it did not establish the full official matrix for every other G07 variant represented by the broad row."
+          "item": "BMW X7 (G07, 2019-2026) full EU variant matrix beyond the exact xDrive40i and M60i xDrive mappings",
+          "reason": "This pass resolved exact official xDrive40i and M60i xDrive transmissions, final drives, and tire fitments, but it did not establish the full official matrix for every other G07 variant represented by the broad row, especially xDrive40d."
         },
         {
-          "item": "BMW X7 M60i xDrive public gearbox naming/subtype consistency",
-          "reason": "Official BMW sources align on the numeric ratio set, but public wording varies between '8-speed Steptronic transmission' and 'eight-speed Steptronic Sport transmission'."
+          "item": "BMW X7 xDrive40i and M60i xDrive public gearbox naming/subtype consistency",
+          "reason": "Official BMW sources align on the numeric ratio sets, but public wording varies between '8-speed Steptronic transmission', '8-Gang Steptronic Getriebe', and later sport-oriented wording, and no checked official source publishes a subtype code."
         }
       ],
       "sources": {
+        "official_xdrive40i_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0285836EN/418428",
+            "note": "Official BMW ACEA technical-data PDF for the exact launch-era X7 xDrive40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.636, and standard 275/50 R20 tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0326838EN/472824",
+            "note": "Official BMW ACEA 03/2021 technical-data PDF cross-check for the exact X7 xDrive40i with the same ratio set, reverse 3.712, final drive 3.636, and standard 275/50 R20 tire fitment.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0378353DE/555258",
+            "note": "Official BMW DE facelift technical-data PDF for the exact X7 xDrive40i confirming 8-Gang Steptronic transmission, the same forward ratio set, reverse 3.712, final drive 3.636, and standard 275/50 R20 tires.",
+            "confidence": "high"
+          }
+        ],
+        "official_xdrive40i_tire_context": [
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmwx7.pdf.coredownload.pdf",
+            "note": "Official BMW DE price list confirming xDrive40i standard 275/50 R20 tires, optional 285/45 R21 tires, and optional staggered 275/40 R22 + 315/35 R22 or 275/35 R23 + 315/30 R23 fitments.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/x/x7/bmw-x7-technische-daten.html",
+            "note": "Official BMW DE technical-data page confirming the exact xDrive40i drivetrain and Germany-market model continuity for the current row family.",
+            "confidence": "high"
+          }
+        ],
         "official_m60i_xdrive_exact_ratios": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0378353EN/555263",
@@ -1918,22 +1947,41 @@
     "BMW|Z4 (G29, 2019-2026)": {
       "car_index": 34,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official BMW ACEA technical-data PDFs now confirm the exact G29 Z4 M40i automatic mapping for early EU markets: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.154, and standard staggered 255/40 ZR18 front + 275/40 ZR18 rear tires. Official 2024 BMW material also confirms the Pure Impulse edition reintroduced a 6-speed manual for the M40i. The broad Z4 row remains unchanged because it mixes lower B48 variants with the M40i and spans both automatic-only and later manual-capable eras without checked official manual ratio data.",
+      "decision_summary": "Official BMW ACEA technical-data PDFs now confirm exact G29 Z4 automatic mappings for both the sDrive30i and early M40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.154, with the sDrive30i carrying a standard staggered 225/50 R17 front + 255/45 R17 rear setup and the M40i carrying a standard staggered 255/40 ZR18 front + 275/40 ZR18 rear setup. Official current BMW DE material also confirms the sDrive30i remains an automatic RWD model, and official 2024 BMW material confirms the Pure Impulse edition reintroduced a 6-speed manual for the M40i. The broad Z4 row remains unchanged because it mixes sDrive20i, sDrive30i, and M40i variants and spans both automatic-only and later manual-capable eras without a safely unified exact row shape.",
       "unresolved": [
         {
           "item": "BMW Z4 M40i exact DE/EU manual final-drive and ratio confirmation",
           "reason": "Checked official BMW sources now prove that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i, but this pass did not recover an exact Germany or ACEA technical-data source with numeric manual ratios, top gear, or final drive."
         },
         {
-          "item": "Broad-row promotion of exact Z4 M40i automatic ratios",
-          "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact M40i automatic mapping should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved."
+          "item": "Broad-row promotion of exact Z4 sDrive30i and M40i automatic ratios",
+          "reason": "The current production row still mixes sDrive20i, sDrive30i, and M40i variants and also spans both automatic-only and later manual-capable M40i years, so the exact sDrive30i and M40i automatic mappings should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved."
         },
         {
-          "item": "BMW Z4 M40i official optional tire-matrix continuity across automatic and Pure Impulse eras",
-          "reason": "Official ACEA automatic specs prove the staggered 18-inch base setup, while the checked Pure Impulse material proves later mixed 19/20-inch wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage."
+          "item": "BMW Z4 sDrive30i later-year tire continuity and M40i optional tire-matrix coverage",
+          "reason": "Official ACEA automatic specs prove the exact sDrive30i 17-inch staggered base setup and the M40i 18-inch staggered base setup, while checked later BMW material confirms ongoing sDrive30i automatic continuity and Pure Impulse-era M40i wheel context, but this pass did not recover one official Germany-market matrix that safely unifies the full 2019-2026 tire coverage."
         }
       ],
       "sources": {
+        "official_sdrive30i_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329593EN/476180",
+            "note": "Official BMW ACEA 03/2021 technical-data PDF for the exact Z4 sDrive30i automatic: rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.154, and standard staggered 225/50 R17 front + 255/45 R17 rear tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0289704EN/442417",
+            "note": "Official BMW launch technical-data PDF cross-check for the exact Z4 sDrive30i automatic with the same 8-speed ratio set, reverse 3.712, and final drive 3.154; used as a launch-era cross-check because the publication predates the on-sale 2019 model year.",
+            "confidence": "medium"
+          }
+        ],
+        "official_sdrive30i_current_context": [
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/z4/z4-roadster/bmw-z4-technische-daten.html",
+            "note": "Official BMW DE technical-data page confirming the current Z4 sDrive30i remains a rear-wheel-drive 8-speed automatic model in Germany.",
+            "confidence": "high"
+          }
+        ],
         "official_m40i_automatic_exact_ratios": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0289704EN/442417",
@@ -2924,19 +2972,23 @@
     "Audi|A7 Sportback (C8, 2019-2026)": {
       "car_index": 53,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official Audi Germany-market technical-data material now confirms the late-cycle A7 Sportback 45 TFSI quattro mapping: quattro ultra AWD, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and basic tire 225/55 R18. The broad A7 row remains unchanged because the checked exact evidence does not prove the same mapping across the full 2019-2026 span or across the shared 45/55 TFSI row.",
+      "decision_summary": "Official Audi Germany-market technical-data material now confirms late-cycle exact A7 Sportback mappings for both quattro variants: 45 TFSI quattro with forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and basic tire 225/55 R18; and 55 TFSI quattro with forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.410, and the same 225/55 R18 basic tire. The broad A7 row remains unchanged because the checked exact evidence does not prove the same mappings across the full 2019-2026 span or across the shared 45/55 TFSI row.",
       "unresolved": [
         {
           "item": "Audi A7 Sportback 45 TFSI quattro production-data applicability across the full C8 row span",
           "reason": "Checked exact Germany-market evidence resolves the late-cycle 195 kW 45 TFSI quattro mapping, but this pass did not recover a launch-year or 2026 technical-data sheet that proves the same package across the full 2019-2026 row span."
         },
         {
-          "item": "Mixed 45/55 TFSI row applicability for exact A7 Sportback 45 TFSI quattro data",
-          "reason": "The broad production row still mixes 45 TFSI quattro and 55 TFSI quattro variants, so the checked exact 45 TFSI quattro ratio and tire package should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved."
+          "item": "Audi A7 Sportback 55 TFSI quattro production-data applicability across the full C8 row span",
+          "reason": "Checked exact Germany-market evidence resolves the late-cycle 250 kW 55 TFSI quattro mapping, but this pass did not recover an exact 2019-era technical-data sheet proving the same package across the full 2019-2026 row span."
+        },
+        {
+          "item": "Mixed 45/55 TFSI row applicability for exact A7 Sportback quattro data",
+          "reason": "The broad production row still mixes 45 TFSI quattro and 55 TFSI quattro variants, so the checked exact ratio and tire packages should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved."
         },
         {
           "item": "Audi A7 Sportback exact transmission-code and optional tire-matrix confirmation",
-          "reason": "Official Audi exact material proves the 7-speed S tronic wording, full ratio set, final drive 4.410, and the basic 225/55 R18 fitment, but it does not publish the transmission code or the full optional wheel and tire matrix."
+          "reason": "Official Audi exact material proves the 7-speed S tronic wording, full ratio sets, final drive 4.410, and the basic 225/55 R18 fitment, but it does not publish the transmission code or the full optional wheel and tire matrix."
         }
       ],
       "sources": {
@@ -2949,6 +3001,18 @@
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/47/file_de/19ed34485396a6c2b76e6c838da5a44dd57db7e8/TD-Audi-A7-Sportback-45-TFSI-quattro-S_tronic-195kW-MHEV_240906.pdf?1725886553&disposition=attachment",
             "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A7 Sportback 45 TFSI quattro S tronic 195 kW MHEV: quattro ultra AWD, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and base tire 225/55 R18.",
+            "confidence": "high"
+          }
+        ],
+        "official_55tfsi_quattro_exact_ratios": [
+          {
+            "url": "https://www.audi-mediacenter.com/de/audi-a7-sportback-47",
+            "note": "Official Audi MediaCenter Germany model page for the A7 Sportback linking the exact 55 TFSI quattro technical-data sheet.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/363/file_de/2d9ee07814bc8d0d429027ef04726da1bd796eef/TD-Audi-A7-Sportback-55-TFSI-quattro-S_tronic-250kW-MHEV_240911.pdf?1726134799&disposition=attachment",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A7 Sportback 55 TFSI quattro S tronic 250 kW MHEV: quattro ultra AWD, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.410, and base tire 225/55 R18.",
             "confidence": "high"
           }
         ],
@@ -3033,18 +3097,35 @@
     "Audi|A8 (D5, 2018-2026)": {
       "car_index": 55,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official Audi Germany-market material now confirms the late-cycle exact A8 55 TFSI quattro mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and a 235/55 R18 basic tire. The broad A8 row remains unchanged because the checked exact evidence only covers 2025-2026 Germany-market documents and does not prove the same package across the full 2018-2026 row span.",
       "unresolved": [
         {
-          "item": "Audi A8 (D5, 2018-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Audi A8 55 TFSI quattro production-data applicability across the full D5 row span",
+          "reason": "Checked exact Germany-market evidence resolves the late-cycle 55 TFSI quattro mapping for 2025-2026, but this pass did not recover official 2018-2024 technical-data sheets proving the same ratio and tire package across the full represented span."
         },
         {
-          "item": "Audi A8 (D5, 2018-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi A8 55 TFSI quattro exact transmission-code and non-basic tire-option coverage",
+          "reason": "Official Audi exact material proves 8-speed tiptronic wording, the full ratio set, final drive 3.076, and the 235/55 R18 basic tire, but it does not publish a gearbox-family code, an exact staggered setup, or a full optional wheel/tire matrix for the target."
         }
       ],
       "sources": {
+        "official_55tfsi_quattro_exact_ratios": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/632/file_de/b56e37f81d3658f0b63f12381a9429189ff5249d/TD-Audi-A8-55TFSI-quattro-tiptronic-250kW-MHEV_251023.pdf?1761641662",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A8 55 TFSI quattro tiptronic 250 kW MHEV: permanent quattro AWD with self-locking center differential, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and base tire 235/55 R18.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/publikationen/preislisten/preisliste-audi-a8-a8-l-audi-a8-a8-l-tfsi-e-audi-s8-modelljahr-2026-800/download",
+            "note": "Official Audi MediaCenter Germany MY2026 price list confirming the exact A8 55 TFSI quattro tiptronic 8-stufig model naming and wheel/tire family context for the current Germany-market car.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/en/press-releases/sharpened-design-and-innovative-technologies-for-the-flagship-the-enhanced-audi-a8-14357",
+            "note": "Official Audi MediaCenter press release confirming the 3.0 TFSI-powered A8 55 TFSI quattro and the 18-to-21-inch wheel range for the facelift-era D5 family.",
+            "confidence": "medium"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",
@@ -3578,18 +3659,35 @@
     "Audi|R8 (4S, 2015-2024)": {
       "car_index": 65,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official Audi Germany-market material now confirms the exact 2019+ R8 Coupé V10 quattro mapping: quattro AWD, 7-speed S tronic, a standard staggered 245/35 R19 front + 295/35 R19 rear tire setup, and Audi-form transmission data showing ratio values 13.969 / 9.287 / 6.746 / 5.080 / 4.003 / 3.171 / 2.343 with final-drive values 1.848 / 1.488. The broad R8 row remains unchanged because the exact V10 quattro badge is only cleanly evidenced from the 2019 facelift onward, accessible pre-facelift AWD documentation is contradictory, and the current schema cannot safely encode the dual final-drive and Audi-form ratio data.",
       "unresolved": [
         {
-          "item": "Audi R8 (4S, 2015-2024) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Audi R8 V10 quattro production-data applicability across the full 2015-2024 row span",
+          "reason": "Checked official material cleanly proves the V10 quattro naming and exact mapping from the 2019 facelift onward, but this pass did not recover a non-contradictory official pre-facelift AWD technical-data sheet proving the same package across the full represented span."
         },
         {
-          "item": "Audi R8 (4S, 2015-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Schema-safe encoding of exact Audi R8 V10 quattro final-drive and ratio data",
+          "reason": "The checked official 2019+ V10 quattro technical-data sheet publishes dual final-drive values 1.848 / 1.488 and Audi-form ratio data that do not map safely into the current single final_drive_ratio and top_gear_ratio fields without interpretation."
         }
       ],
       "sources": {
+        "official_v10_quattro_exact_mapping": [
+          {
+            "url": "https://www.audi-mediacenter.com/en/the-audi-r8-until-2024-updated-dynamics-for-the-high-performance-sports-car-11734/the-new-audi-r8-11735",
+            "note": "Official Audi MediaCenter article confirming the facelift-era naming change to R8 Coupé V10 quattro and European sales context from early 2019 onward.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/en/the-audi-r8-until-2024-updated-dynamics-for-the-high-performance-sports-car-11734/facts-and-figures-11736",
+            "note": "Official Audi MediaCenter facts-and-figures article confirming quattro drive, 7-speed S tronic, and 19-inch wheels as standard for the facelift-era R8 family.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/335/file_en/824cd6b831b620f3969a43e61549348b22b8d6e6/eTechnische_Daten_Audi_R8V10_Coupe_419kW.pdf?1698933709",
+            "note": "Official Audi Germany technical-data PDF for the exact 2019+ R8 V10 quattro Coupé: AWD, 7-speed S tronic, Audi-form ratio data 13.969 / 9.287 / 6.746 / 5.080 / 4.003 / 3.171 / 2.343, final-drive values 1.848 / 1.488, and basic staggered tires 245/35 R19 front + 295/35 R19 rear.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",
