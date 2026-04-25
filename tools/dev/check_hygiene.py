@@ -517,6 +517,24 @@ def _ui_boundary_allowed_description(target_rel: str) -> str:
     )
 
 
+def _ui_boundary_fix_hint(importer_rel: str, target_rel: str) -> str:
+    if importer_rel.startswith("apps/ui/src/app/"):
+        if target_rel == "apps/ui/src/generated/http_api_contracts.ts":
+            return (
+                "import HTTP contract aliases through apps/ui/src/api/types.ts instead"
+            )
+        if target_rel in {
+            "apps/ui/src/contracts/ws_payload_types.ts",
+            "apps/ui/src/contracts/ws_payload_schema.generated.ts",
+        }:
+            return (
+                "import WS contract data through apps/ui/src/transport/live_models.ts, "
+                "apps/ui/src/server_payload.ts, apps/ui/src/ws.ts, or "
+                "apps/ui/src/ws_payload_validator.ts instead"
+            )
+    return f"keep generated transport contracts behind {_ui_boundary_allowed_description(target_rel)}"
+
+
 def check_frontend_generated_contract_boundaries() -> list[str]:
     errors: list[str] = []
     for path in _ui_source_files():
@@ -530,8 +548,7 @@ def check_frontend_generated_contract_boundaries() -> list[str]:
             if _ui_boundary_import_allowed(rel, resolved_rel):
                 continue
             errors.append(
-                f"{rel} must not import {resolved_rel}; keep generated transport contracts behind "
-                f"{_ui_boundary_allowed_description(resolved_rel)}."
+                f"{rel} must not import {resolved_rel}; {_ui_boundary_fix_hint(rel, resolved_rel)}."
             )
     return errors
 
