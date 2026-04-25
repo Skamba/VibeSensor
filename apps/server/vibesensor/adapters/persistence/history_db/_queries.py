@@ -25,6 +25,7 @@ from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.json_utils import safe_json_loads
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
+    HistoryArtifactAvailability,
     HistoryRunListEntry,
     StoredHistoryRun,
 )
@@ -52,6 +53,33 @@ class _HistoryDBQueryMixin:
 
     def _run_sync(self, coro: Awaitable[_T]) -> _T:
         raise NotImplementedError
+
+    def _artifact_availability(
+        self,
+        *,
+        run_id: str,
+        has_raw_capture_manifest: bool,
+        has_whole_run_artifact_manifest: bool,
+    ) -> HistoryArtifactAvailability:
+        return HistoryArtifactAvailability(
+            raw_capture=(
+                "available"
+                if has_raw_capture_manifest and self._raw_capture_store.has_run_artifacts(run_id)
+                else "missing"
+                if has_raw_capture_manifest
+                else "not_recorded"
+            ),
+            whole_run_artifacts=(
+                "available"
+                if (
+                    has_whole_run_artifact_manifest
+                    and self._whole_run_artifact_store.has_run_artifacts(run_id)
+                )
+                else "missing"
+                if has_whole_run_artifact_manifest
+                else "not_recorded"
+            ),
+        )
 
     @staticmethod
     def _fallback_run_metadata(
@@ -152,20 +180,33 @@ class _HistoryDBQueryMixin:
             if limit > 0:
                 await cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                    "r.created_at, r.error_message, r.sample_count, r.car_name "
+                    "r.created_at, r.error_message, r.sample_count, r.car_name, "
+                    "r.raw_capture_manifest_json, r.whole_run_artifact_manifest_json "
                     "FROM runs r ORDER BY r.created_at DESC LIMIT ?",
                     (limit,),
                 )
             else:
                 await cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                    "r.created_at, r.error_message, r.sample_count, r.car_name "
+                    "r.created_at, r.error_message, r.sample_count, r.car_name, "
+                    "r.raw_capture_manifest_json, r.whole_run_artifact_manifest_json "
                     "FROM runs r ORDER BY r.created_at DESC",
                 )
             rows = await cur.fetchall()
         result: list[HistoryRunListEntry] = []
         for row in rows:
-            run_id, status_raw, start, end, created, error, sample_count, car_name = row
+            (
+                run_id,
+                status_raw,
+                start,
+                end,
+                created,
+                error,
+                sample_count,
+                car_name,
+                raw_capture_manifest_json,
+                whole_run_artifact_manifest_json,
+            ) = row
             normalized_run_id = str(run_id)
             normalized_start = str(start)
             normalized_end = str(end) if end is not None else None
@@ -179,6 +220,12 @@ class _HistoryDBQueryMixin:
                     sample_count=int(sample_count or 0),
                     car_name=str(car_name) if car_name else None,
                     error_message=str(error) if error else None,
+                    artifact_availability=self._artifact_availability(
+                        run_id=normalized_run_id,
+                        has_raw_capture_manifest=raw_capture_manifest_json is not None,
+                        has_whole_run_artifact_manifest=whole_run_artifact_manifest_json
+                        is not None,
+                    ),
                 )
             )
         return result
@@ -216,9 +263,10 @@ class _HistoryDBQueryMixin:
             analysis_started,
             analysis_completed,
         ) = row
+        normalized_run_id = str(rid)
         status = RunStatus(status_raw)
         metadata = self._coerce_run_metadata(
-            run_id=str(rid),
+            run_id=normalized_run_id,
             start_time_utc=str(start),
             end_time_utc=str(end) if end is not None else None,
             metadata_json=str(meta_json) if meta_json is not None else None,
@@ -226,15 +274,17 @@ class _HistoryDBQueryMixin:
             allow_fallback=True,
         )
         assert metadata is not None
+        has_raw_capture_manifest = raw_capture_manifest_json is not None
         raw_capture_manifest = self._coerce_raw_capture_manifest(
-            run_id=str(rid),
+            run_id=normalized_run_id,
             manifest_json=str(raw_capture_manifest_json)
             if raw_capture_manifest_json is not None
             else None,
             source="get_run",
         )
+        has_whole_run_artifact_manifest = whole_run_artifact_manifest_json is not None
         whole_run_artifact_manifest = self._coerce_whole_run_artifact_manifest(
-            run_id=str(rid),
+            run_id=normalized_run_id,
             manifest_json=str(whole_run_artifact_manifest_json)
             if whole_run_artifact_manifest_json is not None
             else None,
@@ -257,7 +307,7 @@ class _HistoryDBQueryMixin:
             else:
                 analysis_corrupt = True
         return StoredHistoryRun(
-            run_id=str(rid),
+            run_id=normalized_run_id,
             case_id=str(case_id) if case_id is not None else None,
             status=status,
             start_time_utc=str(start),
@@ -266,6 +316,11 @@ class _HistoryDBQueryMixin:
             analysis=analysis,
             raw_capture_manifest=raw_capture_manifest,
             whole_run_artifact_manifest=whole_run_artifact_manifest,
+            artifact_availability=self._artifact_availability(
+                run_id=normalized_run_id,
+                has_raw_capture_manifest=has_raw_capture_manifest,
+                has_whole_run_artifact_manifest=has_whole_run_artifact_manifest,
+            ),
             analysis_corrupt=analysis_corrupt,
             error_message=str(error) if error else None,
             created_at=str(created),
@@ -311,6 +366,8 @@ class _HistoryDBQueryMixin:
         manifest = await self.aget_raw_capture_manifest(run_id)
         if manifest is None:
             return None
+        if not await asyncio.to_thread(self._raw_capture_store.has_run_artifacts, run_id):
+            return None
         return await asyncio.to_thread(self._raw_capture_store.load_capture, manifest)
 
     async def aload_whole_run_artifact(
@@ -320,6 +377,8 @@ class _HistoryDBQueryMixin:
     ) -> bytes | None:
         manifest = await self.aget_whole_run_artifact_manifest(run_id)
         if manifest is None:
+            return None
+        if not await asyncio.to_thread(self._whole_run_artifact_store.has_run_artifacts, run_id):
             return None
         return await asyncio.to_thread(
             self._whole_run_artifact_store.load_artifact_bytes,
@@ -337,6 +396,8 @@ class _HistoryDBQueryMixin:
     ) -> RawCaptureSensorRange | None:
         manifest = await self.aget_raw_capture_manifest(run_id)
         if manifest is None:
+            return None
+        if not await asyncio.to_thread(self._raw_capture_store.has_run_artifacts, run_id):
             return None
         return await asyncio.to_thread(
             self._raw_capture_store.load_sensor_range,

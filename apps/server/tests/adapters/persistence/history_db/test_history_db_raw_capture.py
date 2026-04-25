@@ -198,6 +198,41 @@ def test_delete_run_removes_raw_capture_artifacts(tmp_path: Path) -> None:
     assert not raw_dir.exists()
 
 
+def test_prune_raw_capture_retention_removes_raw_files_but_keeps_run_summary(
+    tmp_path: Path,
+) -> None:
+    db = build_history_db(tmp_path)
+    create_completed_run(db, "run-prune-raw")
+    samples = np.asarray([[11, 12, 13]], dtype=np.int16)
+
+    _append_chunk(db, run_id="run-prune-raw", client_id="sensor-a", t0_us=1000, samples=samples)
+    manifest = _finalize_raw_capture(db, "run-prune-raw")
+
+    assert manifest is not None
+    raw_dir = tmp_path / "raw-runs" / "run-prune-raw"
+    assert raw_dir.exists()
+
+    old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
+    _execute_statements(
+        db.lifecycle,
+        (
+            "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
+            (old_timestamp, old_timestamp, "run-prune-raw"),
+        ),
+    )
+
+    pruned = db.run_repository.prune_raw_capture_artifacts_older_than_days(7)
+
+    assert pruned == 1
+    assert not raw_dir.exists()
+    stored = db.run_repository.get_run("run-prune-raw")
+    assert stored is not None
+    assert stored.raw_capture_manifest is not None
+    assert stored.artifact_availability is not None
+    assert stored.artifact_availability.raw_capture == "missing"
+    assert _load_raw_capture(db, "run-prune-raw") is None
+
+
 def test_raw_capture_range_read_spans_chunk_boundaries_without_loading_full_capture(
     tmp_path: Path,
 ) -> None:

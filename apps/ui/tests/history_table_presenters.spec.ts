@@ -103,6 +103,10 @@ function defaultDetail(detail: Partial<RunDetail>): RunDetail {
 
 test("history table presenter builds typed diagnosis models from raw insights", () => {
   const run = historyListRun("run-001");
+  run.artifact_availability = {
+    raw_capture: "missing",
+    whole_run_artifacts: "available",
+  };
   const rows = buildHistoryTableRowsViewModel({
     runs: [run],
     expandedRunId: "run-001",
@@ -134,6 +138,11 @@ test("history table presenter builds typed diagnosis models from raw insights", 
   expect(row.details?.insights.visibleSecondary).toHaveLength(2);
   expect(row.details?.insights.hiddenSecondary).toHaveLength(1);
   expect(row.details?.warnings).toEqual([
+    {
+      severity: "warn",
+      title: "history.raw_capture_missing_title",
+      detail: "history.raw_capture_missing_detail",
+    },
     {
       severity: "warn",
       title: "history.warning.speed_gap",

@@ -165,6 +165,7 @@ class LoggingConfig:
     history_db_path: Path
     persist_history_db: bool
     run_retention_days: int
+    raw_capture_retention_days: int
     shutdown_analysis_timeout_s: float
     app_log_path: Path | None
 
@@ -191,6 +192,17 @@ class LoggingConfig:
                 clamped,
             )
             object.__setattr__(self, "run_retention_days", clamped)
+        if (
+            not isinstance(self.raw_capture_retention_days, int)
+            or self.raw_capture_retention_days < 1
+        ):
+            clamped = max(1, int(self.raw_capture_retention_days or self.run_retention_days))
+            LOGGER.warning(
+                "logging.raw_capture_retention_days=%r is invalid — clamped to %s",
+                self.raw_capture_retention_days,
+                clamped,
+            )
+            object.__setattr__(self, "raw_capture_retention_days", clamped)
         if (
             not isinstance(self.shutdown_analysis_timeout_s, NUMERIC_TYPES)
             or self.shutdown_analysis_timeout_s < 0

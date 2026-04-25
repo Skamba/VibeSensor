@@ -174,6 +174,22 @@ function buildHistoryWarnings(detail: RunDetail): HistoryWarningBannerViewModel[
     }));
 }
 
+function buildArtifactWarnings(
+  run: HistoryEntry,
+  t: PresenterParams["t"],
+): HistoryWarningBannerViewModel[] {
+  if (run.artifact_availability?.raw_capture !== "missing") {
+    return [];
+  }
+  return [
+    {
+      severity: "warn",
+      title: t("history.raw_capture_missing_title"),
+      detail: t("history.raw_capture_missing_detail"),
+    },
+  ];
+}
+
 export function buildHistoryDetailsViewModel(
   run: HistoryEntry,
   detail: RunDetail,
@@ -227,7 +243,7 @@ export function buildHistoryDetailsViewModel(
         ? t("history.loading_insights")
         : null,
     insightsError: detail.insightsError || null,
-    warnings: buildHistoryWarnings(detail),
+    warnings: buildArtifactWarnings(run, t).concat(buildHistoryWarnings(detail)),
     insights: buildHistoryInsightsViewModel(detail, params),
     heatmap,
     footerEyebrow: t("history.run_actions_title"),

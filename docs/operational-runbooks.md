@@ -31,8 +31,10 @@ map. The response also includes operational metrics:
 
 Run-history retention is enforced during startup maintenance. By default the Pi
 prunes `complete` and `error` runs older than `logging.run_retention_days: 7`.
-Raise or lower that value in the server config when the device needs a longer
-or shorter local-history window.
+If raw waveform storage should expire earlier, set
+`logging.raw_capture_retention_days` lower than `logging.run_retention_days` so
+startup maintenance removes raw sidecars first while keeping the run summaries
+available in history.
 
 ## Enable and inspect backend traces
 

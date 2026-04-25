@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
@@ -13,10 +14,28 @@ from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 
 __all__ = [
+    "ArtifactAvailabilityState",
     "AnalyzingRunHealth",
+    "HistoryArtifactAvailability",
     "HistoryRunListEntry",
     "StoredHistoryRun",
 ]
+
+type ArtifactAvailabilityState = Literal["not_recorded", "available", "missing"]
+
+
+@dataclass(frozen=True, slots=True)
+class HistoryArtifactAvailability:
+    """Explicit persisted-artifact availability state projected to history consumers."""
+
+    raw_capture: ArtifactAvailabilityState = "not_recorded"
+    whole_run_artifacts: ArtifactAvailabilityState = "not_recorded"
+
+    def to_json_object(self) -> JsonObject:
+        return {
+            "raw_capture": self.raw_capture,
+            "whole_run_artifacts": self.whole_run_artifacts,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +50,7 @@ class HistoryRunListEntry:
     sample_count: int
     car_name: str | None = None
     error_message: str | None = None
+    artifact_availability: HistoryArtifactAvailability | None = None
 
     def to_json_object(self) -> JsonObject:
         """Serialize the list-entry record into a JSON-safe persistence payload."""
@@ -46,6 +66,8 @@ class HistoryRunListEntry:
             payload["car_name"] = self.car_name
         if self.error_message is not None:
             payload["error_message"] = self.error_message
+        if self.artifact_availability is not None:
+            payload["artifact_availability"] = self.artifact_availability.to_json_object()
         return payload
 
 
@@ -64,6 +86,7 @@ class StoredHistoryRun:
     analysis: PersistedAnalysis | None = None
     raw_capture_manifest: RawCaptureManifest | None = None
     whole_run_artifact_manifest: WholeRunArtifactManifest | None = None
+    artifact_availability: HistoryArtifactAvailability | None = None
     analysis_corrupt: bool = False
     error_message: str | None = None
     analysis_started_at: str | None = None
@@ -90,6 +113,8 @@ class StoredHistoryRun:
             payload["whole_run_artifact_manifest"] = (
                 self.whole_run_artifact_manifest.to_json_object()
             )
+        if self.artifact_availability is not None:
+            payload["artifact_availability"] = self.artifact_availability.to_json_object()
         if self.analysis_corrupt:
             payload["analysis_corrupt"] = True
         if self.error_message is not None:
