@@ -71,6 +71,12 @@ class HistoryRunService:
         ) as span:
             try:
                 run = await async_require_run(self._history_db, run_id)
+                if run.lifecycle is not None and run.lifecycle.post_analysis in {
+                    "pending",
+                    "running",
+                }:
+                    span.set_attribute("vibesensor.analysis_ready", False)
+                    return None
                 if run.status == RunStatus.ANALYZING:
                     span.set_attribute("vibesensor.analysis_ready", False)
                     return None

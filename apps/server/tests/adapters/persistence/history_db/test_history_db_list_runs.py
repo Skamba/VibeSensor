@@ -147,6 +147,9 @@ def test_list_runs_projects_degraded_raw_capture_finalize_state(tmp_path: Path) 
 
     run = db.run_repository.list_runs()[0]
 
+    assert run.lifecycle is not None
+    assert run.lifecycle.raw_capture == "degraded"
+    assert run.lifecycle.post_analysis == "pending"
     assert run.artifact_availability is not None
     assert run.artifact_availability.raw_capture == "degraded"
     assert run.raw_capture_finalize is not None
@@ -173,6 +176,9 @@ def test_get_run_projects_raw_capture_finalize_state(tmp_path: Path) -> None:
     run = db.run_repository.get_run("run-degraded")
 
     assert run is not None
+    assert run.lifecycle is not None
+    assert run.lifecycle.raw_capture == "degraded"
+    assert run.lifecycle.post_analysis == "pending"
     assert run.artifact_availability is not None
     assert run.artifact_availability.raw_capture == "degraded"
     assert run.raw_capture_finalize is not None

@@ -227,11 +227,25 @@ async def test_history_endpoints_include_degraded_raw_capture_finalize_state() -
     list_payload = response_payload(await route_endpoint(router, "/api/history")())
     run_payload = response_payload(await route_endpoint(router, "/api/history/{run_id}")("run-1"))
 
+    assert list_payload["runs"][0]["lifecycle"] == {
+        "stage": "post_analysis_ready",
+        "raw_capture": "degraded",
+        "whole_run_artifacts": "not_recorded",
+        "post_analysis": "ready",
+        "report": "ready",
+    }
     assert list_payload["runs"][0]["artifact_availability"]["raw_capture"] == "degraded"
     assert list_payload["runs"][0]["raw_capture_finalize"] == {
         "status": "timeout",
         "queue_depth": 4,
         "error_summary": "raw capture finalize timed out",
+    }
+    assert run_payload["lifecycle"] == {
+        "stage": "post_analysis_ready",
+        "raw_capture": "degraded",
+        "whole_run_artifacts": "not_recorded",
+        "post_analysis": "ready",
+        "report": "ready",
     }
     assert run_payload["artifact_availability"]["raw_capture"] == "degraded"
     assert run_payload["raw_capture_finalize"] == {
