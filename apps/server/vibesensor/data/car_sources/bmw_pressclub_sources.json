@@ -63,6 +63,13 @@
       "title": "BMW PressClub G42 220i 2021 technical specifications PDF",
       "note": "Official BMW technical-data PDF used for the exact G42 220i ratios, final drive, reverse ratio, and launch-standard tire.",
       "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0374753EN/529126",
+      "title": "BMW PressClub G42 230i 2022 technical specifications PDF",
+      "note": "Official BMW technical-data PDF used for the exact G42 230i ratios, final drive, reverse ratio, and launch-standard tire.",
+      "confidence": "high"
     }
   ]
 }

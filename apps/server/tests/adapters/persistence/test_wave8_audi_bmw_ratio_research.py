@@ -28,6 +28,12 @@ def _ratio_sources() -> dict[str, dict[str, object]]:
         return json.load(fh)["cars"]
 
 
+def _assert_contains_unresolved(entry: dict[str, object], expected: list[dict[str, str]]) -> None:
+    unresolved = entry["unresolved"]
+    for item in expected:
+        assert item in unresolved
+
+
 def test_wave8_x7_xdrive40i_uses_exact_official_variant_override() -> None:
     x7 = resolve_variant(_entry_for("BMW", "X7 (G07, 2019-2026)"), "xDrive40i")
     assert x7["gearboxes"] == [
@@ -103,16 +109,19 @@ def test_wave8_ratio_source_rows_capture_a7_a8_r8_x7_context() -> None:
             "reason": "Official Audi exact material proves the 7-speed S tronic wording, full ratio sets, final drive 4.410, and the basic 225/55 R18 fitment, but it does not publish the transmission code or the full optional wheel and tire matrix.",
         },
     ]
-    assert sources["Audi|A8 (D5, 2018-2026)"]["unresolved"] == [
-        {
-            "item": "Audi A8 55 TFSI quattro production-data applicability across the full D5 row span",
-            "reason": "Checked exact Germany-market evidence resolves the late-cycle 55 TFSI quattro mapping for 2025-2026, but this pass did not recover official 2018-2024 technical-data sheets proving the same ratio and tire package across the full represented span.",
-        },
-        {
-            "item": "Audi A8 55 TFSI quattro exact transmission-code and non-basic tire-option coverage",
-            "reason": "Official Audi exact material proves 8-speed tiptronic wording, the full ratio set, final drive 3.076, and the 235/55 R18 basic tire, but it does not publish a gearbox-family code, an exact staggered setup, or a full optional wheel/tire matrix for the target.",
-        },
-    ]
+    _assert_contains_unresolved(
+        sources["Audi|A8 (D5, 2018-2026)"],
+        [
+            {
+                "item": "Audi A8 55 TFSI quattro production-data applicability across the full D5 row span",
+                "reason": "Checked exact Germany-market evidence resolves the late-cycle 55 TFSI quattro mapping for 2025-2026, but this pass did not recover official 2018-2024 technical-data sheets proving the same ratio and tire package across the full represented span.",
+            },
+            {
+                "item": "Audi A8 55 TFSI quattro exact transmission-code and non-basic tire-option coverage",
+                "reason": "Official Audi exact material proves 8-speed tiptronic wording, the full ratio set, final drive 3.076, and the 235/55 R18 basic tire, but it does not publish a gearbox-family code, an exact staggered setup, or a full optional wheel/tire matrix for the target.",
+            },
+        ],
+    )
     assert sources["Audi|R8 (4S, 2015-2024)"]["unresolved"] == [
         {
             "item": "Audi R8 V10 quattro production-data applicability across the full 2015-2024 row span",

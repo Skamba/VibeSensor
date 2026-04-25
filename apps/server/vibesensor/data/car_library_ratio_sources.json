@@ -186,15 +186,19 @@
     "BMW|2 Series Coupe (G42, 2022-2026)": {
       "car_index": 3,
       "verification_status": "verification_backlog",
-      "decision_summary": "Wave 11 validation sharpened the official Germany/EU picture for the G42 230i target: the current BMW Germany technical-data page and the checked 2024/2025 Germany price lists list 230i as rear-wheel drive with 8-Gang automatic/Steptronic Sport wording, while the 07/2021 official launch press kit describes the four-cylinder models as rear-wheel drive and reserves xDrive for M240i xDrive. Wave 12 validation now also recovers exact 220i Coupé evidence: the official BMW PressClub technical-data PDF valid for ACEA markets provides 8-speed Steptronic wording, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and a 225/50 R17 launch-standard tire, while the checked Germany technical-data page and 2024/current price lists confirm the current automatic-only RWD 220i context plus 18/19-inch wheel options. That is sufficient for a variant-scoped 220i production override and exact-row update, while 230i xDrive remains recorded as a market-scope contradiction until the row's intended coverage is clarified.",
+      "decision_summary": "Wave 11 validation sharpened the official Germany/EU picture for the G42 230i target: the current BMW Germany technical-data page and the checked 2024/2025 Germany price lists list 230i as rear-wheel drive with 8-Gang automatic/Steptronic Sport wording, while the 07/2021 official launch press kit describes the four-cylinder models as rear-wheel drive and reserves xDrive for M240i xDrive. Wave 12 validation recovered exact 220i Coupé evidence, and Wave 13 now does the same for 230i: the official 03/2022 BMW technical-data PDF valid for ACEA markets provides rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and a 225/50 R17 launch-standard tire, while the checked Germany technical-data page and 2024/current price lists confirm the current automatic-only RWD 230i context plus 18/19-inch wheel options. That is sufficient for a variant-scoped 230i production override and exact-row update. Wave 13 also adds exact launch-ratio evidence for M240i xDrive plus current Germany market/tire context, but that variant remains source-ledger-only because the public current-market material is already a later 48V state and this pass did not recover one current exact ratio table proving one unchanged 2022-2026 package.",
       "unresolved": [
         {
           "item": "Whether BMW 230i xDrive belongs in the G42 row at all",
           "reason": "Checked official BMW Germany/EU sources now consistently show 230i as rear-wheel drive and reserve xDrive for M240i xDrive, but this pass did not recover enough official non-Germany market evidence to prove whether the existing AWD 230i variant is an intentional non-EU/global carry-over or simply unsupported library data."
         },
         {
-          "item": "BMW G42 230i and M240i xDrive numeric ratio evidence",
-          "reason": "Wave 12 resolves the exact 220i ratio package, but this pass still did not recover one official numeric final-drive, top-gear, and forward-ratio table for the remaining 230i and M240i xDrive variants represented by the broad row."
+          "item": "BMW M240i xDrive production-data applicability across the full G42 row span",
+          "reason": "Wave 13 now proves the exact launch M240i xDrive ratio set, reverse ratio 3.712, final drive 2.813, and standard staggered 225/40 R19 front + 255/35 R19 rear tires, but the checked current Germany market material is already a later 48V mild-hybrid state and this pass did not recover a current exact numeric ratio table proving one unchanged 2022-2026 package."
+        },
+        {
+          "item": "BMW M240i xDrive exact optional wheel/tire matrix and transmission subtype code",
+          "reason": "Official BMW sources now prove the launch standard 19-inch staggered fitment plus current Germany 18/19-inch options and automatic context, but they do not publish a gearbox subtype code beyond Steptronic wording or one current exact numeric table that closes the full represented row."
         },
         {
           "item": "EU applicability of the existing '6-speed manual' gearbox entry across 2022-2026 range",
@@ -276,6 +280,50 @@
           {
             "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw2er.pdf.coredownload.inline.pdf",
             "note": "Official BMW Germany current inline price list cross-checks the current 220i automatic-only context and the same 18/19-inch tire matrix.",
+            "confidence": "high"
+          }
+        ],
+        "official_230i_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0374753EN/529126",
+            "note": "Official BMW technical-data PDF valid for ACEA markets from 03/2022 for the exact 230i Coupé: rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard tire 225/50 R17 98Y XL.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/2er/2-series-coupe/bmw-2er-coupe-technische-daten.html",
+            "note": "Official BMW Germany technical-data page confirming the current 230i as a rear-wheel-drive automatic model in the supported G42 market slice.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/2-series/coupe/2024/preisliste-bmw2er.pdf.coredownload.pdf",
+            "note": "Official BMW Germany 2024 price list confirming current 230i M Sport wheel choices: standard 225/45 R18 and optional staggered 225/40 R19 front + 255/35 R19 rear and 225/45 R18 front + 255/40 R18 rear.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw2er.pdf.coredownload.inline.pdf",
+            "note": "Official BMW Germany current inline price list cross-checks the current 230i automatic-only context and the same 18/19-inch tire matrix.",
+            "confidence": "high"
+          }
+        ],
+        "official_m240i_xdrive_launch_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0336854EN/609768",
+            "note": "Official BMW technical-data PDF valid for ACEA markets from 07/2021 for the exact M240i xDrive Coupé: AWD, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard staggered tires 225/40 R19 front + 255/35 R19 rear.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/2er/2-series-coupe/bmw-2er-coupe-technische-daten.html",
+            "note": "Official BMW Germany technical-data page confirms the current M240i xDrive as an AWD 8-Gang automatic mild-hybrid variant, showing why the launch numeric package cannot be promoted across the full 2022-2026 row without a later exact ratio table.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/2-series/coupe/2024/preisliste-bmw2er.pdf.coredownload.pdf",
+            "note": "Official BMW Germany 2024 price list confirms current M240i xDrive transmission wording 8-Gang Steptronic Sport and wheel matrix: standard staggered 225/40 R19 front + 255/35 R19 rear, optional staggered 245/35 R19 front + 255/35 R19 rear, and optional staggered 225/45 R18 front + 255/40 R18 rear.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw2er.pdf.coredownload.inline.pdf",
+            "note": "Official BMW Germany current inline price list cross-checking the same M240i xDrive automatic and staggered 18/19-inch tire matrix.",
             "confidence": "high"
           }
         ],
@@ -442,7 +490,7 @@
     "BMW|3 Series (G20, 2019-2025)": {
       "car_index": 6,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Broader G20 transmission-availability coverage and exact public gearbox-code details remain unresolved.",
+      "decision_summary": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
       "unresolved": [
         {
           "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
@@ -451,6 +499,14 @@
         {
           "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
           "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant."
+        },
+        {
+          "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
+          "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span."
+        },
+        {
+          "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
+          "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span."
         }
       ],
       "sources": {
@@ -464,6 +520,50 @@
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0388273EN/555363",
             "note": "Official BMW PressClub 07/2022 technical-data PDF cross-check for the exact BMW 330i xDrive Sedan: same Eight-speed Steptronic ratio set, final drive 2.813, and standard 225/50 R17 98Y XL tire fitment.",
             "confidence": "high"
+          }
+        ],
+        "official_320i_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325531EN/471537",
+            "note": "Official BMW PressClub 03/2021 technical-data PDF for the exact BMW 320i Sedan: Eight-speed Steptronic transmission, full forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 205/60 R16 96W XL tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0388273EN/555363",
+            "note": "Official BMW PressClub 07/2022 technical-data PDF cross-check for the exact BMW 320i Sedan: same Eight-speed Steptronic ratio set, reverse 3.712, final drive 2.813, and standard 225/50 R17 98Y XL tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/3-series/sedan/2024/preisliste-bmw3er.pdf.coredownload.pdf",
+            "note": "Official BMW Germany 07/2024 price list confirming 320i remains a rear-wheel-drive 8-Gang Steptronic Sport model with a 225/50 R17 standard tire and 18/19-inch wheel options in the checked later Germany-market slice.",
+            "confidence": "high"
+          }
+        ],
+        "official_330i_rwd_exact_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325531EN/471537",
+            "note": "Official BMW PressClub 03/2021 technical-data PDF for the exact BMW 330i Sedan: Eight-speed Steptronic transmission, full forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 225/50 R17 98Y XL tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/3er/bmw-3-er-limousine/bmw-3er-limousine-technische-daten.html",
+            "note": "Official BMW Germany technical-data page metadata is keyed to 'BMW 330i Limousine', showing that plain 330i still appears in the checked current Germany technical-data interface.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/3er/bmw-3-er-limousine/bmw-3er-limousine.html",
+            "note": "Official BMW Germany overview page is keyed to 'BMW 330i xDrive Limousine', which keeps plain-RWD 330i Germany continuity unresolved without a later extracted price-list or technical-data table.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/3-series/sedan/2024/preisliste-bmw3er.pdf.coredownload.pdf",
+            "note": "Official BMW Germany 07/2024 price list URL recovered in this pass, but direct extraction did not complete here, so later plain-330i Germany continuity remains unresolved.",
+            "confidence": "medium"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw3er.pdf.coredownload.pdf",
+            "note": "Official BMW Germany 03/2026 price list URL recovered in this pass, but direct extraction did not complete here, so this run could not prove later plain-330i availability versus xDrive in the checked Germany scope.",
+            "confidence": "medium"
           }
         ],
         "g20_eu_exact_context": [
@@ -712,7 +812,7 @@
     "BMW|5 Series (G30, 2017-2023)": {
       "car_index": 10,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official sources found were either generation-mismatched (G60 current data), older-generation-mismatched (F10 brochure), or did not expose extractable G30 ratio tables in a verifiable way.",
+      "decision_summary": "Wave 14 improves the official Germany picture for the G30 530i without promoting any numeric production changes: the recovered BMW Germany launch price list lists 530i and 530i xDrive separately, confirms 8-Gang Steptronic wording for the 530i, and shows a 225/55 R17 standard tire with 18/19/20-inch options. The broad row remains unchanged because this pass still did not recover an official G30 technical-data table with final drive, top gear, reverse, or full forward ratios, and the checked single-source secondary numerics are insufficient for production use.",
       "unresolved": [
         {
           "item": "Per-variant final drive ratios for BMW 5 Series G30 EU-market 520i, 530i/530i xDrive, 540i/540i xDrive, M550i xDrive",
@@ -721,6 +821,10 @@
         {
           "item": "Per-variant top gear ratio differences across G30 gearbox calibrations",
           "reason": "No authoritative EU G30 technical table with confirmed top-gear ratios was retrieved; existing values left unchanged to avoid guessing."
+        },
+        {
+          "item": "BMW G30 530i official tire baseline and later-year continuity",
+          "reason": "The recovered official BMW Germany launch price list proves a 225/55 R17 baseline with 18/19/20-inch options for the 530i, contradicting the current broad-row tire defaults, but this pass did not recover later official archived price lists proving one year-spanning 2017-2023 530i wheel matrix safe enough for a production rewrite."
         }
       ],
       "sources": {
@@ -741,6 +845,18 @@
             "url": "https://www.press.bmwgroup.com/united-kingdom/article/attachment/T0125651EN_GB/186485",
             "note": "Official BMW PressClub attachment endpoint exists, but available extraction route did not provide stable G30-specific ratio-confirmable content in this run.",
             "confidence": "low"
+          }
+        ],
+        "official_530i_de_launch_context": [
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_G30_IV_1606.pdf",
+            "note": "Official BMW Germany launch price list listing 530i and 530i xDrive as separate rows, confirming the non-xDrive 530i as a rear-wheel-drive model with 8-Gang Steptronic wording.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_G30_IV_1606.pdf",
+            "note": "The same official BMW Germany launch price list documents the 530i tire matrix with 225/55 R17 standard tires plus 245/45 R18, 245/40 R19 + 275/35 R19, and 245/35 R20 + 275/30 R20 options.",
+            "confidence": "high"
           }
         ],
         "official_lookup_attempts": [
@@ -2740,7 +2856,7 @@
     "Audi|A3 (8Y, 2021-2026)": {
       "car_index": 45,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Wave 12 validation added exact Germany-market A3 Limousine 35 TFSI evidence from 2026 technical-data PDFs for both manual and S tronic states. Wave 13 now adds the parallel diesel evidence for the exact Germany-market A3 Limousine 35 TDI: the 04/02/2024 technical-data PDF proves Frontantrieb, 7-stufige S tronic, forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drives 4.167 / 3.125, and the 205/55 R16 basic tire, while the official MY2026 Germany price list keeps the Limousine 35 TDI S tronic alive and documents trim-linked 16/17/18/19-inch tire availability. The broad 2021-2026 row remains unchanged because the checked exact evidence covers only specific Germany model-year states and the current row shape cannot safely encode the target's split final drives and trim-specific standard tires.",
       "unresolved": [
         {
           "item": "Broad-row Audi A3 8Y 35 TFSI production-data applicability across the represented span",
@@ -2753,6 +2869,18 @@
         {
           "item": "Audi A3 8Y 35 TFSI gearbox-family code and full year-spanning tire continuity",
           "reason": "Official Audi exact material proves the 2026 Germany manual and S tronic wording plus the 205/55 R16 basic tire, but it does not publish a gearbox-family code such as DQ381, a recoverable current price-list PDF for the broader wheel matrix, or year-spanning tire continuity across the full represented span."
+        },
+        {
+          "item": "Broad-row Audi A3 8Y 35 TDI production-data applicability across the represented span",
+          "reason": "Checked exact Germany-market 2024 35 TDI Limousine evidence proves one S tronic ratio package and the MY2026 Germany price list confirms later market presence, but this pass did not recover year-by-year official sheets proving one unchanged 2021-2026 production mapping."
+        },
+        {
+          "item": "Schema-safe encoding of Audi A3 8Y 35 TDI split final drives and trim-linked tires",
+          "reason": "The checked official 35 TDI technical-data PDF publishes two final-drive values 4.167 / 3.125 and only the 205/55 R16 basic tire, while the current row shape cannot safely encode split final drives or the MY2026 price list's trim-specific standard tire progression."
+        },
+        {
+          "item": "Audi A3 8Y 35 TDI gearbox-family code and full exact tire matrix continuity",
+          "reason": "Official Audi exact material proves the 35 TDI S tronic wording, the 2024 ratio package, and later Germany-market price-list presence, but it does not publish a gearbox-family code and this pass did not recover a year-spanning official technical-data chain proving the full tire matrix across the represented span."
         }
       ],
       "sources": {
@@ -2792,6 +2920,23 @@
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1024/file_de/129200424e04a321f44f3b626ef24be02c1396f0/TD-Audi-A3-Limousine-TFSI-S_tronic-110kW-MHEV_260420.pdf?1776765556",
             "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 04/20/2026 A3 Limousine 35 TFSI S tronic MHEV state: Frontantrieb, 7-stufige S tronic, forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653, reverse 3.722, final drives 4.800 / 3.429, and basic tire 205/55 R16.",
+            "confidence": "high"
+          }
+        ],
+        "official_35tdi_limousine_exact_ratios": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1022/file_de/523cb3a37d000ddb8e1151e28d377fb6b8206fa7/TD-Audi-A3-Limousine-35-TDI-S_tronic-110kW_240402.pdf?1712048742&disposition=attachment",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 04/02/2024 A3 Limousine 35 TDI S tronic 110 kW: Frontantrieb, 7-stufige S tronic, forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drives 4.167 / 3.125, and basic tire 205/55 R16.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/publikationen/preislisten/preisliste-audi-a3-s3-sportback-audi-a3-sportback-tfsi-e-audi-a3-s3-limousine-audi-a3-allstreet-audi-a3-allstreet-tfsi-e-modelljahr-2026-886/download",
+            "note": "Official Audi Germany MY2026 price list confirming the A3 Limousine 35 TDI as a 7-Gang S tronic configuration and documenting trim-linked 205/55 R16, 225/45 ZR17, 225/45 R17, 225/40 R18, and 235/35 R19 tire availability.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/geschaerfter-dauerbrennerupgrade-fuer-den-audi-a3-15916",
+            "note": "Official Audi Germany 2024 facelift launch release confirming 35 TDI S tronic remains part of the Europe/Germany A3 update context.",
             "confidence": "high"
           }
         ]
@@ -2955,7 +3100,7 @@
     "Audi|A5 (B9, 2017-2024)": {
       "car_index": 49,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verified Audi A5 B9 S tronic final-drive ratios from official Audi UK and Audi MediaCenter technical PDFs. Later exact 45 TFSI quattro Coupe and Sportback sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW MHEV configuration. Wave 11 validation now adds exact late-B9 Germany 40 TFSI evidence from the 03/20/2024 A5 Coup\u00e9 and 06/13/2024 A5 Sportback technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.234, and basic tire 225/50 R17. The broad 2017-2024 row remains unchanged because official 2020 launch material still shows an earlier 140 kW 40 TFSI state and this pass did not recover year-spanning evidence proving one unchanged package across the whole row.",
+      "decision_summary": "Verified Audi A5 B9 S tronic final-drive ratios from official Audi UK and Audi MediaCenter technical PDFs. Later exact 45 TFSI quattro Coupe and Sportback sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW MHEV configuration. Wave 11 validation added exact late-B9 Germany 40 TFSI evidence from the 03/20/2024 A5 Coup\u00e9 and 06/13/2024 A5 Sportback technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.234, and basic tire 225/50 R17. Wave 13 now adds the parallel late-B9 Germany 35 TDI evidence from checked 03/20/2024 Coup\u00e9 and 06/13/2024 Sportback technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 225/50 R17. The broad 2017-2024 row remains unchanged because official 2020 launch material still shows earlier model states and this pass did not recover year-spanning evidence proving one unchanged package across the whole row.",
       "unresolved": [
         {
           "item": "Broad-row Audi A5 B9 40 TFSI production-data applicability across the full represented span",
@@ -2968,6 +3113,14 @@
         {
           "item": "Audi A5 B9 40 TFSI transmission-code and optional tire-matrix confirmation",
           "reason": "Official Audi exact material now proves the late-B9 40 TFSI drivetrain, full ratio set, reverse ratio, final drive 4.234, and the 225/50 R17 basic tire, but it does not publish the gearbox-family code or a full optional wheel/tire matrix for the exact 40 TFSI target."
+        },
+        {
+          "item": "Broad-row Audi A5 B9 35 TDI production-data applicability across the full represented span",
+          "reason": "Checked exact late-B9 Germany Coup\u00e9 and Sportback PDFs resolve the 120 kW 35 TDI mapping, but this pass did not recover a year-by-year official chain proving one unchanged 2019-2024 package."
+        },
+        {
+          "item": "Audi A5 B9 35 TDI gearbox-family code and optional tire-matrix confirmation",
+          "reason": "Official Audi exact material now proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 225/50 R17 basic tire, but it does not publish the gearbox-family code or a full optional wheel/tire matrix for the exact 35 TDI target."
         }
       ],
       "sources": {
@@ -3020,6 +3173,23 @@
             "url": "https://www.audi-mediacenter.com/en/press-releases/the-audi-a5-new-look-and-new-technologies-2020-12342",
             "note": "Official Audi launch material showing that the early Germany/Europe 40 TFSI state was still a 140 kW configuration, which keeps broad-row production promotion unsafe without an early exact technical-data sheet.",
             "confidence": "high"
+          }
+        ],
+        "exact_35tdi_late_b9_ratios": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/967/file_en/e8e700fc895abdee1d74cc95e4e1d15a0a91f700/eTD-Audi-A5-Coupe-35-TDI-S_tronic-120kW-MHEV_240320.pdf?1711380880",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 03/20/2024 A5 Coup\u00e9 35 TDI S tronic 120 kW MHEV: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 225/50 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/961/file_en/93d6c3bc2510ab51f06a949ecc7808b0434e8964/eTD-Audi-A5-Sportback-35-TDI-S_tronic-120kW-MHEV_240613.pdf?1718361362",
+            "note": "Official Audi MediaCenter Germany cross-check PDF for the exact 06/13/2024 A5 Sportback 35 TDI S tronic 120 kW MHEV with the same ratio set, reverse ratio, final drive 4.048, and basic tire 225/50 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/en/the-audi-a5-new-look-and-new-technologies-2020-12622/drive-system-and-suspension-12627",
+            "note": "Official Audi MediaCenter launch article confirming the A5 35 TDI front-wheel-drive automatic late-B9 context in the Germany/EU lineup.",
+            "confidence": "medium"
           }
         ]
       }
@@ -3327,7 +3497,7 @@
     "Audi|A8 (D5, 2018-2026)": {
       "car_index": 55,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official Audi Germany-market material now confirms the late-cycle exact A8 55 TFSI quattro mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and a 235/55 R18 basic tire. The broad A8 row remains unchanged because the checked exact evidence only covers 2025-2026 Germany-market documents and does not prove the same package across the full 2018-2026 row span.",
+      "decision_summary": "Official Audi Germany-market material now confirms the late-cycle exact A8 55 TFSI quattro mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and a 235/55 R18 basic tire. Wave 14 also checks the exact 50 TFSI quattro target and finds that Germany-market search and facelift material resolve the petrol A8 to 55 TFSI quattro, while Audi explicitly describes the lower-output 210 kW 3.0 TFSI variant as China-only. The broad A8 row remains unchanged because no exact Germany 50 TFSI quattro technical-data sheet was recovered, so the checked 55 TFSI data cannot be reused for a different badge or market state.",
       "unresolved": [
         {
           "item": "Audi A8 55 TFSI quattro production-data applicability across the full D5 row span",
@@ -3336,6 +3506,10 @@
         {
           "item": "Audi A8 55 TFSI quattro exact transmission-code and non-basic tire-option coverage",
           "reason": "Official Audi exact material proves 8-speed tiptronic wording, the full ratio set, final drive 3.076, and the 235/55 R18 basic tire, but it does not publish a gearbox-family code, an exact staggered setup, or a full optional wheel/tire matrix for the target."
+        },
+        {
+          "item": "Exact Germany-market Audi A8 50 TFSI quattro mapping",
+          "reason": "Checked official Germany search and facelift material resolve the petrol D5 A8 to 55 TFSI quattro, while Audi explicitly describes the lower-output 210 kW 3.0 TFSI variant as China-only, so this pass did not recover an official Germany 50 TFSI quattro technical-data sheet or price-list row."
         }
       ],
       "sources": {
@@ -3354,6 +3528,23 @@
             "url": "https://www.audi-mediacenter.com/en/press-releases/sharpened-design-and-innovative-technologies-for-the-flagship-the-enhanced-audi-a8-14357",
             "note": "Official Audi MediaCenter press release confirming the 3.0 TFSI-powered A8 55 TFSI quattro and the 18-to-21-inch wheel range for the facelift-era D5 family.",
             "confidence": "medium"
+          }
+        ],
+        "official_50tfsi_quattro_scope_contradiction": [
+          {
+            "url": "https://www.audi-mediacenter.com/de/search?query=A8%2050%20TFSI%20quattro",
+            "note": "Official Audi MediaCenter Germany search results resolve the checked D5 A8 petrol search toward 55 TFSI quattro and 50 TDI quattro, with no recovered exact Germany 50 TFSI quattro technical-data sheet.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/geschaerftes-design-und-innovative-technologien-fuer-das-flaggschiff-der-aufgewertete-audi-a8-14357",
+            "note": "Official Audi MediaCenter Germany facelift press release states the petrol D5 flagship as A8 55 TFSI quattro and describes the lower-output 210 kW 3.0 TFSI variant as China-only.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/632/file_de/b56e37f81d3658f0b63f12381a9429189ff5249d/TD-Audi-A8-55TFSI-quattro-tiptronic-250kW-MHEV_251023.pdf?1761641662",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the adjacent current-market A8 55 TFSI quattro used here only to show that the recovered Germany exact petrol sheet is the 55 TFSI quattro state, not a 50 TFSI quattro state.",
+            "confidence": "high"
           }
         ],
         "official_lookup_attempts": [
@@ -3501,7 +3692,7 @@
     "Audi|Q3 (F3, 2019-2026)": {
       "car_index": 58,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official Audi Germany exact technical-data PDFs now confirm the old-generation Q3 40 TFSI quattro mapping through 05.06.2025: 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17 for both the Q3 and Q3 Sportback. Wave 11 validation now adds the parallel exact old-generation Q3 40 TDI quattro mapping through the same 05.06.2025 Germany sheets: 7-speed S tronic, forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17 for both Q3 and Q3 Sportback. The broad row remains unchanged because the current schema cannot safely encode split final drives, the exact optional tire matrix was not recovered, and Audi's own 2025 launch material shows that the current `2019-2026` row crosses the old-generation to new-generation boundary.",
+      "decision_summary": "Official Audi Germany exact technical-data PDFs now confirm the old-generation Q3 40 TFSI quattro mapping through 05.06.2025: 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17 for both the Q3 and Q3 Sportback. Wave 11 validation adds the parallel exact old-generation Q3 40 TDI quattro mapping through the same 05.06.2025 Germany sheets: 7-speed S tronic, forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17 for both Q3 and Q3 Sportback. Wave 13 now adds the front-wheel-drive 35 TFSI states: an exact 01/08/2025 manual Q3 35 TFSI with ratios 3.750 / 2.100 / 1.357 / 1.026 / 0.810 / 0.652, reverse 3.583, final drives 4.563 / 4.563, and basic tire 215/65 R17, plus exact 06/05/2025 Q3 and Q3 Sportback 35 TFSI S tronic PDFs with ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661, reverse 2.900, split final drives 5.200 / 3.900, and the same basic tire. The broad row remains unchanged because the current schema cannot safely encode split final drives or both manual and S tronic exact states, the full optional tire matrix was not recovered, and Audi's own 2025 launch material shows that the current `2019-2026` row crosses the old-generation to new-generation boundary.",
       "unresolved": [
         {
           "item": "Audi Q3 40 TFSI quattro production-data applicability across the represented old-generation row span",
@@ -3522,6 +3713,14 @@
         {
           "item": "Schema-safe encoding of exact Audi Q3 40 TDI quattro split final-drive values",
           "reason": "The checked official 40 TDI quattro technical-data PDFs publish two final-drive values 4.813 / 3.667 for the target, but the current row stores only one final_drive_ratio field and the exact old-generation optional tire matrix still remains unresolved."
+        },
+        {
+          "item": "Audi Q3 35 TFSI production-data applicability across the represented old-generation row span",
+          "reason": "Checked exact Germany-market 2025 manual and S tronic Q3 35 TFSI technical-data PDFs resolve old-generation front-wheel-drive states, but this pass did not recover year-by-year official sheets proving one unchanged 2019-2025 package."
+        },
+        {
+          "item": "Schema-safe encoding of exact Audi Q3 35 TFSI manual and S tronic states",
+          "reason": "The checked official 35 TFSI manual PDF publishes final drives 4.563 / 4.563 while the 35 TFSI S tronic PDFs publish 5.200 / 3.900, and the current row cannot safely encode both transmission-specific exact states plus their split final drives."
         }
       ],
       "sources": {
@@ -3556,6 +3755,28 @@
           {
             "url": "https://www.audi-mediacenter.com/en/press-releases/versatile-sporty-and-digitally-connected-the-new-audi-q3-16771",
             "note": "Official Audi MediaCenter launch release for the new third-generation Q3 confirming the old-generation boundary and why the current `2019-2026` row now spans more than one official model state.",
+            "confidence": "high"
+          }
+        ],
+        "official_35tfsi_exact_states": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/625/file_de/f7bcd1948f855e702ae2b6b45a3c2f4166ac376a/TD-Audi-Q3-35-TFSI-110kW_250108.pdf?1736420080",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 01/08/2025 Q3 35 TFSI manual state: Frontantrieb, 6-stufiges Schaltgetriebe, forward ratios 3.750 / 2.100 / 1.357 / 1.026 / 0.810 / 0.652, reverse 3.583, final drives 4.563 / 4.563, and basic tire 215/65 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/13/file_de/503ea49630b63e45ee7457c82882dbe3e8d70c4e/TD-Audi-Q3-35-TFSI-S_tronic-110kW_250605.pdf?1749195006",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 06/05/2025 Q3 35 TFSI S tronic state: Frontantrieb, 7-stufige S tronic, forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661, reverse 2.900, final drives 5.200 / 3.900, and basic tire 215/65 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1019/file_de/dfb43be5a29e19b34cfb35f674cda892de58ae76/TD-Audi-Q3-Sportback-35-TFSI-S_tronic-110kW_250605.pdf?1749195586",
+            "note": "Official Audi MediaCenter Germany cross-check PDF for the exact 06/05/2025 Q3 Sportback 35 TFSI S tronic state with the same ratio set, reverse ratio, split final drives 5.200 / 3.900, and basic tire 215/65 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/en/search?query=Q3+35+TFSI+technical+data",
+            "note": "Official Audi search path showing these exact 35 TFSI PDFs under the old-generation Q3 'until 2025' context, which keeps the broad `2019-2026` row from absorbing one unsplit production mapping.",
             "confidence": "high"
           }
         ],
@@ -3754,7 +3975,7 @@
     "Audi|Q7 (4M, 2016-2026)": {
       "car_index": 61,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official Audi Germany-market technical-data sheets now confirm the exact Q7 55 TFSI e quattro mapping for the current facelift-era configuration: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and base tire 255/55 R19. This pass also adds exact current non-PHEV Q7 55 TFSI quattro evidence from official Germany-market material: permanent quattro AWD, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, and a checked 5-seat basic tire 255/60 R18. The broad Q7 row remains unchanged because this pass did not prove the same values across the full 2016-2026 span or recover one production-safe tire baseline and gearbox-family mapping for all represented non-PHEV and PHEV variants.",
+      "decision_summary": "Official Audi Germany-market technical-data sheets now confirm the exact Q7 55 TFSI e quattro mapping for the current facelift-era configuration: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and base tire 255/55 R19. This pass also adds exact current non-PHEV Q7 55 TFSI quattro evidence from official Germany-market material: permanent quattro AWD, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, and a checked 5-seat basic tire 255/60 R18. Wave 14 checks the exact 45 TFSI quattro target and finds that the sampled Germany-market launch/current Q7 material resolves the petrol SUV to 55 TFSI quattro / 250 kW instead, with no recovered exact Germany 45 TFSI quattro technical-data sheet. The broad Q7 row remains unchanged because this pass did not prove the same values across the full 2016-2026 span or recover one production-safe tire baseline and gearbox-family mapping for all represented non-PHEV and PHEV variants.",
       "unresolved": [
         {
           "item": "Audi Q7 55 TFSI e quattro production-data applicability across the full 4M row span",
@@ -3767,6 +3988,10 @@
         {
           "item": "Audi Q7 55 TFSI quattro production-data applicability and tire-baseline continuity across the full 4M row span",
           "reason": "Checked exact official current-generation 55 TFSI quattro evidence resolves the 250 kW ratio set, final drive 3.204, and a 5-seat 255/60 R18 basic tire, but this pass did not prove the same mapping across the full 2016-2026 non-PHEV row span or recover one uncontested production-safe tire baseline for all represented configurations."
+        },
+        {
+          "item": "Exact Germany-market Audi Q7 45 TFSI quattro mapping",
+          "reason": "Checked official Germany launch/current Q7 model pages, press releases, and 2020/2026 price-list material resolve the petrol SUV to 55 TFSI quattro / 250 kW instead, and this pass did not recover an official Germany 45 TFSI quattro technical-data sheet that would justify reusing the 55 TFSI data."
         }
       ],
       "sources": {
@@ -3796,6 +4021,28 @@
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/936/file_en/b9a2b988f92292c9fc34d688ac4ce69ed2ba412e/eTD-Audi-Q7-SUV-TFSI-quattro-tiptronic-250kW-MHEV-5-seats_260204.pdf?1770709676",
             "note": "Official Audi MediaCenter technical-data PDF for the exact current Q7 SUV TFSI quattro tiptronic 250 kW MHEV 5-seat configuration: permanent quattro AWD with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, and a 255/60 R18 basic tire.",
+            "confidence": "high"
+          }
+        ],
+        "official_45tfsi_quattro_scope_contradiction": [
+          {
+            "url": "https://www.audi-mediacenter.com/de/audi-q7-65",
+            "note": "Official Audi MediaCenter Germany Q7 model page links the checked current petrol technical-data material only as Q7 SUV TFSI quattro tiptronic 250 kW, not as an exact 45 TFSI quattro state.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/stark-in-design-komfort-und-technologieder-ueberarbeitete-audi-q7-15849",
+            "note": "Official Audi MediaCenter Germany facelift press release resolves the current non-PHEV petrol Q7 badge to 55 TFSI quattro / 250 kW and does not recover a Germany 45 TFSI quattro target state.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2020/preislisten/q7_sq7.pdf",
+            "note": "Official Audi Germany MY2020 price list sampled in this pass lists 55 TFSI quattro on the petrol side and does not expose an exact Germany 45 TFSI quattro row.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/publikationen/preislisten/preisliste-audi-q7-audi-q7-tfsi-e-audi-sq7-modelljahr-2026-293/download",
+            "note": "Official Audi MediaCenter Germany MY2026 price list sampled in this pass again resolves the petrol Q7 as SUV TFSI quattro 250 kW and does not recover an exact Germany 45 TFSI quattro technical-data row.",
             "confidence": "high"
           }
         ],
