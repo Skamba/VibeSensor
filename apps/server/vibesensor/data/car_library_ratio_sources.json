@@ -691,7 +691,7 @@
     "BMW|5 Series (G60, 2024-2026)": {
       "car_index": 11,
       "verification_status": "corrected",
-      "decision_summary": "Issue #1034 official-source review kept the supported EU row narrow to 520i plus the i5 eDrive40 and i5 M60 xDrive BEVs, and moved the i5 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the 520i 8-speed automatic row. The 520i 8-speed ratio pair remains the official 03/2025 BMW value.",
+      "decision_summary": "Issue #1034 official-source review kept the supported EU row narrow to 520i plus the i5 eDrive40 and i5 M60 xDrive BEVs, and moved the i5 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the 520i 8-speed automatic row. This pass adds exact official BMW Germany evidence that the i5 M60 xDrive uses single-stage fixed-ratio dual-motor AWD with front overall ratio 8.774, rear overall ratio 9.374, standard staggered 245/45 R19 front + 275/40 R19 rear tires, and DE 20/21-inch staggered options; production JSON remains unchanged because the current schema cannot safely encode axle-split EV reductions and staggered tire pairs.",
       "unresolved": [],
       "sources": {
         "eu_scope_and_variant_filtering": [
@@ -725,6 +725,18 @@
             "confidence": "high"
           }
         ],
+        "official_i5_m60_tire_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0443474EN/629035",
+            "note": "Official 03/2025 technical specifications PDF for the exact i5 M60 xDrive Sedan confirms standard staggered 245/45 R19 front + 275/40 R19 rear tires and Germany-market applicability.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw5er.pdf.coredownload.pdf",
+            "note": "Official BMW DE price list confirms i5 M60 xDrive staggered tire packages: 245/45 R19 front + 275/40 R19 rear standard, 245/40 front + 275/35 rear on 20-inch wheels, and 255/35 front + 285/30 rear on 21-inch wheels.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/search?query=G60+technical+data&language=en",
@@ -742,6 +754,10 @@
         {
           "item": "Per-axle reduction detail for the i5 M60 xDrive",
           "reason": "BMW publishes distinct front and rear overall reduction ratios for the dual-motor M60, but the current single-gearbox schema stores one representative EV reduction value for the variant."
+        },
+        {
+          "item": "Exact i5 M60 xDrive staggered tire-pair representation",
+          "reason": "Official BMW Germany sources now prove staggered 19-, 20-, and 21-inch tire packages for the exact i5 M60 xDrive, but the current shared row shape does not safely promote those exact front/rear pairs into production data."
         }
       ]
     },
@@ -946,15 +962,19 @@
     "BMW|7 Series (G70, 2023-2026)": {
       "car_index": 16,
       "verification_status": "verification_backlog",
-      "decision_summary": "Issue #1034 official-source review corrected the supported EU variant set to 740d xDrive, 750e xDrive, M760e xDrive, i7 eDrive50, and i7 M70 xDrive, removing the non-European petrol variants and moving the i7 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the shared 8-speed row.",
+      "decision_summary": "Issue #1034 official-source review corrected the supported EU variant set to 740d xDrive, 750e xDrive, M760e xDrive, i7 eDrive50, and i7 M70 xDrive, removing the non-European petrol variants and moving the i7 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the shared 8-speed row. This pass adds exact official BMW Germany-market evidence that the i7 M70 xDrive uses axle-split EV reductions front 8.774 and rear 8.765 plus staggered 255/40 R21 front + 285/35 R21 rear standard tires, with a DE 20-inch staggered option.",
       "unresolved": [
         {
           "item": "Variant-level final_drive_ratio and top_gear_ratio confirmation for the EU combustion/PHEV variants",
           "reason": "The official BMW launch material used for issue #1034 confirms the EU-supported 740d xDrive, 750e xDrive, and M760e xDrive variants, but it does not publish extractable numeric ratio fields for those entries."
         },
         {
-          "item": "Official BMW numerical publication of the i7 reduction ratio",
-          "reason": "BMW official public materials used for issue #1034 confirm the single-speed EV transmission layout for the i7 variants, but the public-facing documents do not expose an exact numerical reduction ratio; the stored EV ratio uses a reputable technical reference to avoid leaving the i7 on the shared 8-speed row."
+          "item": "Schema-safe encoding of axle-split EV reduction ratios and top-gear data for the i7 M70 xDrive",
+          "reason": "Official BMW technical-data PDFs now publish exact front and rear reduction ratios for the i7 M70 xDrive, but the current schema stores only one final_drive_ratio and one top_gear_ratio field and cannot safely encode the axle split."
+        },
+        {
+          "item": "Exact i7 M70 xDrive staggered tire-pair promotion into the broad G70 row",
+          "reason": "Official BMW Germany sources now prove staggered 21-inch standard tires and a 20-inch staggered option for the exact i7 M70 xDrive, but the broad G70 row mixes combustion, PHEV, and EV variants and should not absorb one exact EV tire package without a safer row shape."
         }
       ],
       "sources": {
@@ -972,9 +992,26 @@
         ],
         "issue_1034_i7_ratio_reference": [
           {
-            "url": "https://www.auto-data.net/en/bmw-i7-g70-105.7-kwh-455hp-edrive50-51756",
-            "note": "Reputable technical reference used to encode a representative single-speed EV reduction ratio for the i7 once official BMW sources confirmed the drivetrain layout but not the numeric ratio.",
-            "confidence": "medium"
+            "url": "https://www.press.bmwgroup.com/switzerland/article/attachment/T0413529DE/579757",
+            "note": "Official BMW technical-data PDF for the exact i7 M70 xDrive stating the technical data correspond to the offering on the German market: front overall ratio 8.774, rear overall ratio 8.765, and standard staggered 255/40 R21 front + 285/35 R21 rear tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/portugal/article/attachment/T0413166PT/579304",
+            "note": "Official BMW technical-data PDF cross-check for the exact i7 M70 xDrive with the same front 8.774 and rear 8.765 overall ratios plus standard staggered 21-inch tires.",
+            "confidence": "high"
+          }
+        ],
+        "official_i7_m70_tire_context": [
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/m/limousine/bmw-7er-limousine-m-modelle-technische-daten.html",
+            "note": "Official BMW DE technical-data page confirming the exact i7 M70 xDrive as AWD with 1-speed automatic EV drivetrain and Germany-market continuity.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw7er.pdf",
+            "note": "Official BMW DE price list confirming standard staggered 255/40 R21 front + 285/35 R21 rear tires and a 20-inch staggered 255/45 front + 285/40 rear package for the i7 M70 xDrive.",
+            "confidence": "high"
           }
         ],
         "official_lookup_attempts": [
@@ -1185,18 +1222,37 @@
     "BMW|X1 (U11, 2023-2026)": {
       "car_index": 21,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official BMW Germany-market documentation now confirms the exact iX1 xDrive30 mapping: dual-motor AWD, 1-speed fixed-ratio EV transmission, axle-split reductions front 11.190 and rear 10.050, top speed 180 km/h, and DE-market tire sizes from 205/65 R17 through 245/40 R20. The broad mixed ICE/EV U11 row remains unchanged because the current schema cannot safely encode the exact EV axle split or promote the EV tire matrix into the shared row.",
       "unresolved": [
         {
-          "item": "BMW X1 (U11, 2023-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Schema-safe encoding of iX1 xDrive30 axle-split EV reduction ratios",
+          "reason": "Official BMW sources now publish exact front 11.190 and rear 10.050 fixed reductions for the iX1 xDrive30, but the current row shape stores only one gearbox and one final_drive_ratio value."
         },
         {
-          "item": "BMW X1 (U11, 2023-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Mixed ICE/EV row applicability for U11 tire and gearbox data",
+          "reason": "The broad U11 row still mixes ICE and EV variants, so the exact iX1 xDrive30 single-speed gearbox and 17/18/19/20-inch EV tire matrix should remain source-ledger-only until the row shape is split or extended safely."
         }
       ],
       "sources": {
+        "official_ix1_xdrive30_exact_ev_mapping": [
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0404224DE/technische-daten-bmw-ix1-xdrive30-gueltig-ab-11/2022?language=de",
+            "note": "Official BMW Deutschland article for the exact iX1 xDrive30 technical-data sheet valid from 11/2022.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0404224DE/567438",
+            "note": "Official BMW Deutschland technical-data PDF for the exact iX1 xDrive30: AWD, single-speed automatic/fixed-ratio EV transmission, front reduction 11.190, rear reduction 10.050, top speed 180 km/h, and base 205/65 R17 tires.",
+            "confidence": "high"
+          }
+        ],
+        "official_ix1_xdrive30_tire_context": [
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmwx1.pdf.coredownload.inline.pdf",
+            "note": "Official BMW DE catalog confirming iX1 xDrive30 wheel and tire packages: 205/65 R17, 225/55 R18, 245/45 R19, and 245/40 R20.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -3657,11 +3713,15 @@
     "Audi|e-tron GT (J1, 2022-2026)": {
       "car_index": 71,
       "verification_status": "verification_backlog",
-      "decision_summary": "Issue #975 official-source review confirmed the EU BEV variant mapping for Audi e-tron GT J1: the supported base variant is `e-tron GT quattro`, and the standalone `e-tron GT` alias was removed from the car library. Ratio fields remain unchanged because this issue verified variant naming and motor layout, not EV reduction-ratio mapping into the current schema.",
+      "decision_summary": "Issue #975 official-source review confirmed the EU BEV variant mapping for Audi e-tron GT J1: the supported base variant is `e-tron GT quattro`, and the standalone `e-tron GT` alias was removed from the car library. This pass adds exact Germany-market technical-data evidence for both the base e-tron GT quattro and the RS e-tron GT: base-car documents confirm AWD, 2-speed automatic wording, top speed 245 km/h, and basic staggered 225/55 R19 front + 275/45 R19 rear tires; RS documents confirm AWD, rear 2-speed architecture context, top speed 250 km/h, and basic staggered 245/45 R20 front + 285/40 R20 rear tires. The broad row remains unchanged because exact EV ratio mapping is axle-split or year-split and the current schema cannot safely encode those details.",
       "unresolved": [
         {
-          "item": "Audi e-tron GT (J1, 2022-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official Audi sources confirmed the supported EU variant set and dual-motor AWD layout, but this issue did not remap EV reduction data into the current final_drive_ratio/top_gear_ratio schema."
+          "item": "Audi e-tron GT quattro exact axle reduction ratios and schema-safe top-gear mapping",
+          "reason": "Exact Germany-market base-car technical sheets confirm AWD, 2-speed automatic wording, top speed, and staggered tires, but the checked official sources did not publish a schema-safe single reduction-ratio or top-gear value for the base e-tron GT quattro."
+        },
+        {
+          "item": "Audi RS e-tron GT axle-split ratio continuity and exact optional tire dimensions",
+          "reason": "Official Audi sources show the RS e-tron GT uses axle-split and rear-two-speed hardware, but the checked facelift/current technical sheets do not publish the same reduction-ratio detail as the 2022 launch material, and this pass did not recover exact official 21-inch tire dimensions."
         }
       ],
       "sources": {
@@ -3679,6 +3739,40 @@
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1236/file_en/6d6ceb7f7cd108885f3c22d6922b5cad38407103/eTD_Audi_e-tron_GT_quattro_350kW_231016.pdf?1698933959",
             "note": "Official technical data PDF for `e-tron GT quattro` confirms all-wheel drive with two electric motors for the supported base variant.",
+            "confidence": "high"
+          }
+        ],
+        "official_etrongt_quattro_exact_ev_mapping": [
+          {
+            "url": "https://www.audi.de/de/neuwagen/e-tron-gt/e-tron-gt-quattro/",
+            "note": "Official Audi DE model page confirming the exact base variant name `e-tron GT quattro` on the Germany market.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1236/file_en/6d6ceb7f7cd108885f3c22d6922b5cad38407103/eTD_Audi_e-tron_GT_quattro_350kW_231016.pdf?1698933959",
+            "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact base e-tron GT quattro: AWD, 2-speed / automatic, top speed 245 km/h, and basic staggered 225/55 R19 front + 275/45 R19 rear tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1544/file_en/99b3ba2115bf1328f670ae087320f1022152ddcc/eTD-Audi-e-tron-GT-quattro-370kW_260202.pdf?1770133321&disposition=attachment",
+            "note": "Official Audi MediaCenter Germany-market technical-data PDF cross-check for the facelift-era exact e-tron GT quattro confirming AWD, front/rear motor layout, top speed 245 km/h, and the same basic staggered 19-inch tires.",
+            "confidence": "high"
+          }
+        ],
+        "official_rs_etrongt_exact_ev_mapping": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/uploaded_files/22693/file/26cc2c3ff6cc9d4d117beee0b97081276e44a8a9/221125_Presse-Information_Audi_etron-GT_Fahrveranstaltung_EN.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter press PDF for the 2022 RS e-tron GT Germany-market drive event: front ratio 8.1:1, rear second gear 8.2:1, rear first gear 15.6:1, rear two-speed transmission architecture, and top speed 250 km/h.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1237/file_en/1bc6c25d021edf80ecf5289e69fe15cc1e5351ec/eTD_Audi_RS_e-tron_GT_quattro_440kW_240502.pdf?1714651378",
+            "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact RS e-tron GT confirming AWD, 2-speed / automatic, top speed 250 km/h, and basic staggered 245/45 R20 front + 285/40 R20 rear tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1237/file_en/1bc6c25d021edf80ecf5289e69fe15cc1e5351ec/eTD-Audi-RS-e-tron-GT-500kW_251022.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter Germany-market technical-data PDF cross-check for the current exact RS e-tron GT with top speed 250 km/h and the same basic staggered 245/45 R20 front + 285/40 R20 rear tires.",
             "confidence": "high"
           }
         ]
