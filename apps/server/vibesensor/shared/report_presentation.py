@@ -402,6 +402,13 @@ def _confidence_signal_texts(
             )
         elif key == "clean_signal":
             parts.append(tr("REPORT_CONFIDENCE_SIGNAL_CLEAN_SIGNAL"))
+        elif key == "user_confirmed_vehicle_data":
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_SIGNAL_USER_CONFIRMED_VEHICLE_DATA",
+                    scope=_vehicle_data_scope_text(confidence_facts, tr=tr),
+                )
+            )
     return tuple(parts)
 
 
@@ -465,7 +472,40 @@ def _confidence_caveat_texts(
             parts.append(tr("REPORT_CONFIDENCE_CAVEAT_REFERENCE_GAP"))
         elif key == "noisy_signal":
             parts.append(tr("REPORT_CONFIDENCE_CAVEAT_NOISY_SIGNAL"))
+        elif key == "secondary_vehicle_data":
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_CAVEAT_SECONDARY_VEHICLE_DATA",
+                    scope=_vehicle_data_scope_text(confidence_facts, tr=tr),
+                )
+            )
+        elif key == "approximate_vehicle_data":
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_CAVEAT_APPROXIMATE_VEHICLE_DATA",
+                    scope=_vehicle_data_scope_text(confidence_facts, tr=tr),
+                )
+            )
+        elif key == "unverified_vehicle_data":
+            parts.append(
+                tr(
+                    "REPORT_CONFIDENCE_CAVEAT_UNVERIFIED_VEHICLE_DATA",
+                    scope=_vehicle_data_scope_text(confidence_facts, tr=tr),
+                )
+            )
     return tuple(parts)
+
+
+def _vehicle_data_scope_text(
+    confidence_facts: ReportConfidenceFacts,
+    *,
+    tr: Callable[..., str],
+) -> str:
+    if confidence_facts.car_data_reference_scope == "driveline":
+        return tr("REPORT_CONFIDENCE_CAR_SCOPE_DRIVELINE")
+    if confidence_facts.car_data_reference_scope == "engine_speed_derived":
+        return tr("REPORT_CONFIDENCE_CAR_SCOPE_ENGINE_SPEED_DERIVED")
+    return tr("REPORT_CONFIDENCE_CAR_SCOPE_TIRE")
 
 
 def append_unique_line(lines: list[str], text: object) -> None:

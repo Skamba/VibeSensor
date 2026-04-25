@@ -100,6 +100,8 @@ class DiagnosisFactorDetails:
     speed_gap_window_count: int | None = None
     rpm_gap_window_count: int | None = None
     fallback_reason: str | None = None
+    car_data_reference_scope: str | None = None
+    car_data_confidence: str | None = None
 
     def __post_init__(self) -> None:
         if self.raw_backed_sample_count is not None:
@@ -133,6 +135,8 @@ class DiagnosisFactorDetails:
         _set_optional(payload, "speed_gap_window_count", self.speed_gap_window_count)
         _set_optional(payload, "rpm_gap_window_count", self.rpm_gap_window_count)
         _set_optional(payload, "fallback_reason", self.fallback_reason)
+        _set_optional(payload, "car_data_reference_scope", self.car_data_reference_scope)
+        _set_optional(payload, "car_data_confidence", self.car_data_confidence)
         return payload
 
     @classmethod
@@ -153,6 +157,8 @@ class DiagnosisFactorDetails:
             speed_gap_window_count=_optional_int(data.get("speed_gap_window_count")),
             rpm_gap_window_count=_optional_int(data.get("rpm_gap_window_count")),
             fallback_reason=_optional_text(data.get("fallback_reason")),
+            car_data_reference_scope=_optional_text(data.get("car_data_reference_scope")),
+            car_data_confidence=_optional_text(data.get("car_data_confidence")),
         )
 
 
@@ -419,6 +425,7 @@ def _required_factor_key(value: object) -> DiagnosisFactorKey:
         "tight_order_lock",
         "localized_support",
         "clean_signal",
+        "user_confirmed_vehicle_data",
         "summary_only",
         "raw_replay_incomplete",
         "legacy_context",
@@ -433,6 +440,9 @@ def _required_factor_key(value: object) -> DiagnosisFactorKey:
         "weak_spatial",
         "close_alternative",
         "incomplete_reference",
+        "secondary_vehicle_data",
+        "approximate_vehicle_data",
+        "unverified_vehicle_data",
     }:
         raise ValueError("factor_key must be a supported diagnosis factor key")
     return cast(DiagnosisFactorKey, value)

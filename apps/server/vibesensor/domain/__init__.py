@@ -37,7 +37,14 @@ RunSuitability
 from ._numeric import coerce_float, coerce_int
 from .analysis_settings import AnalysisSettingsSnapshot
 from .capture_readiness import CaptureReadiness, CaptureReadinessCheck, CaptureReadinessPolicy
-from .car import Car, CarOrderReferenceSourceStatus, CarOrderReferenceStatus, CarSnapshot
+from .car import (
+    Car,
+    CarOrderReferenceSourceStatus,
+    CarOrderReferenceStatus,
+    CarSnapshot,
+    OrderAnalysisCarDataConfidence,
+    OrderAnalysisCarDataScope,
+)
 from .confidence_assessment import ConfidenceAssessment
 from .diagnosis_assessment import (
     DIAGNOSIS_AMBIGUOUS_SCORE_GAP,
@@ -105,6 +112,8 @@ __all__ = [
     # Value objects — car and context
     "AxleTireSetup",
     "CarSnapshot",
+    "OrderAnalysisCarDataConfidence",
+    "OrderAnalysisCarDataScope",
     "OrderReferenceSpec",
     "TireSpec",
     "TireSpeedAxle",

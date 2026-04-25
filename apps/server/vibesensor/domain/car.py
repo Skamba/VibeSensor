@@ -27,6 +27,8 @@ from vibesensor.domain.vehicle_configuration import VehicleFieldConfidence
 __all__ = [
     "AxleTireSetup",
     "Car",
+    "OrderAnalysisCarDataConfidence",
+    "OrderAnalysisCarDataScope",
     "CarOrderReferenceStatus",
     "CarOrderReferenceSourceStatus",
     "CarSnapshot",
@@ -35,6 +37,24 @@ __all__ = [
 ]
 
 CarOrderReferenceSourceStatus = Literal["compat_projection", "exact_row", "manual_entry"]
+OrderAnalysisCarDataScope = Literal["tire", "driveline", "engine_speed_derived"]
+
+_ORDER_ANALYSIS_CONFIDENCE_RANK = {
+    "official_exact": 0,
+    "official_derived": 1,
+    "user_confirmed": 2,
+    "reputable_secondary_crosschecked": 3,
+    "family_default": 4,
+    "unverified": 5,
+}
+
+
+@dataclass(frozen=True, slots=True)
+class OrderAnalysisCarDataConfidence:
+    """The saved-car confidence that backs one order-analysis reference path."""
+
+    scope: OrderAnalysisCarDataScope
+    confidence: VehicleFieldConfidence
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +110,36 @@ class CarOrderReferenceStatus:
             transmission_confidence=self.transmission_confidence,
         )
 
+    def order_analysis_car_data_confidence(
+        self,
+        *,
+        ref_sources: tuple[str, ...] = (),
+        suspected_source: str | None = None,
+    ) -> OrderAnalysisCarDataConfidence | None:
+        """Return the relevant saved-car confidence for one order-analysis path."""
+
+        scope = _order_analysis_scope(ref_sources=ref_sources, suspected_source=suspected_source)
+        if scope is None:
+            return None
+        confidences: tuple[VehicleFieldConfidence | None, ...]
+        if scope == "tire":
+            confidences = (self.tire_dimensions_confidence,)
+        elif scope == "driveline":
+            confidences = (
+                self.tire_dimensions_confidence,
+                self.final_drive_ratio_confidence,
+            )
+        else:
+            confidences = (
+                self.tire_dimensions_confidence,
+                self.final_drive_ratio_confidence,
+                self.current_gear_ratio_confidence,
+            )
+        return OrderAnalysisCarDataConfidence(
+            scope=scope,
+            confidence=_weakest_vehicle_field_confidence(confidences),
+        )
+
 
 # ---------------------------------------------------------------------------
 # CarSnapshot — typed internal car context attached to a run
@@ -114,6 +164,44 @@ class CarSnapshot:
     def __post_init__(self) -> None:
         if not isinstance(self.aspects, MappingProxyType):
             object.__setattr__(self, "aspects", MappingProxyType(dict(self.aspects)))
+
+
+def _order_analysis_scope(
+    *,
+    ref_sources: tuple[str, ...],
+    suspected_source: str | None,
+) -> OrderAnalysisCarDataScope | None:
+    normalized_sources = {
+        str(source).strip().lower() for source in ref_sources if str(source).strip()
+    }
+    if "speed+engine" in normalized_sources:
+        return "engine_speed_derived"
+    if "speed+tire+final_drive" in normalized_sources or "speed+driveshaft" in normalized_sources:
+        return "driveline"
+    if "speed+tire" in normalized_sources:
+        return "tire"
+    if normalized_sources:
+        return None
+    normalized_source = str(suspected_source or "").strip().lower()
+    if normalized_source == "wheel/tire":
+        return "tire"
+    if normalized_source in {"driveline", "driveshaft"}:
+        return "driveline"
+    if normalized_source == "engine":
+        return "engine_speed_derived"
+    return None
+
+
+def _weakest_vehicle_field_confidence(
+    confidences: tuple[VehicleFieldConfidence | None, ...],
+) -> VehicleFieldConfidence:
+    effective_confidences = [
+        confidence if confidence is not None else "unverified" for confidence in confidences
+    ]
+    return max(
+        effective_confidences,
+        key=lambda confidence: _ORDER_ANALYSIS_CONFIDENCE_RANK[confidence],
+    )
 
 
 @dataclass(frozen=True, slots=True, init=False)

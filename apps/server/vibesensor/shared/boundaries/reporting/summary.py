@@ -195,6 +195,8 @@ class ReportDiagnosisFactorDetails:
     speed_gap_window_count: int | None
     rpm_gap_window_count: int | None
     fallback_reason: str | None
+    car_data_reference_scope: str | None
+    car_data_confidence: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -813,6 +815,10 @@ class ReportSummaryNormalizer:
                             details_row.get("rpm_gap_window_count")
                         ),
                         fallback_reason=text_or_none(details_row.get("fallback_reason")),
+                        car_data_reference_scope=text_or_none(
+                            details_row.get("car_data_reference_scope")
+                        ),
+                        car_data_confidence=text_or_none(details_row.get("car_data_confidence")),
                     ),
                 )
             )

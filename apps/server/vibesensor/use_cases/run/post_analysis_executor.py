@@ -12,6 +12,7 @@ from typing import Any, Literal, NoReturn, Protocol
 import aiosqlite
 from opentelemetry.trace import SpanKind
 
+from vibesensor.domain import CarOrderReferenceStatus
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.tracing import mark_span_error, start_span
@@ -224,6 +225,7 @@ class WholeRunDiagnosisSummaryBuilder(Protocol):
         context_bundle: WholeRunContextArtifactBundle,
         order_summaries: tuple[OrderTraceSummary, ...],
         spatial_summaries: tuple[SpatialEvidenceSummary, ...],
+        car_order_reference_status: CarOrderReferenceStatus | None,
     ) -> tuple[WholeRunDiagnosisSummary, ...]: ...
 
 
@@ -957,6 +959,11 @@ def run_build_report_facts_stage(
                 ranked_whole_run_spatial_summaries(spatial_coherence_bundle.summaries)
                 if spatial_coherence_bundle is not None
                 else ()
+            ),
+            car_order_reference_status=(
+                run_input.context.car.order_reference_status
+                if run_input.context.car is not None
+                else None
             ),
         )
         if diagnosis_summaries:
