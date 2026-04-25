@@ -322,7 +322,7 @@ budget, attach the analyzer output to the PR review and explain the growth.
 | `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
 | `vehicle_math.ts` | Tire diameter, order tolerance, and uncertainty calculations |
 | `format.ts` | Number, byte, and timestamp formatting utilities |
-| `constants.ts` | Generated sensor location codes and shared strength field names from backend sources |
+| `constants.ts` | Generated backend-owned UI constants such as sensor location codes, analysis defaults, and live-analysis metadata |
 | `theme.ts` | Chart color palette and order band fill colors |
 | `styles/app.css` | Thin stylesheet aggregator that imports the UI style modules in cascade order |
 | `styles/{tokens,shell,components,maintenance-*,realtime-*,history-*,settings-*,adaptive,theme}.css` | Shared tokens/primitives plus feature-scoped and cross-cutting style ownership for shell, updater, realtime, history, settings, responsive, and theme overrides |

@@ -7,7 +7,7 @@ import type {
   SpectrumFrameData,
   SpectrumClientData,
 } from "../transport/live_models";
-import { defaultLocationCodes } from "../constants";
+import { defaultAnalysisSettings, defaultLocationCodes } from "../constants";
 import type {
   CarRecord,
   HistoryEntry,
@@ -42,30 +42,27 @@ export interface AnalysisTuningSettings {
 export interface VehicleSettings extends CarAspectSettings, AnalysisTuningSettings {}
 
 export const defaultCarAspectSettings: Readonly<CarAspectSettings> = {
-  tire_width_mm: 285.0,
-  tire_aspect_pct: 30.0,
-  rim_in: 21.0,
-  final_drive_ratio: 3.08,
-  current_gear_ratio: 0.64,
-  tire_deflection_factor: 0.97,
+  tire_width_mm: defaultAnalysisSettings.tire_width_mm,
+  tire_aspect_pct: defaultAnalysisSettings.tire_aspect_pct,
+  rim_in: defaultAnalysisSettings.rim_in,
+  final_drive_ratio: defaultAnalysisSettings.final_drive_ratio,
+  current_gear_ratio: defaultAnalysisSettings.current_gear_ratio,
+  tire_deflection_factor: defaultAnalysisSettings.tire_deflection_factor,
 };
 
 export const defaultAnalysisTuningSettings: Readonly<AnalysisTuningSettings> = {
-  wheel_bandwidth_pct: 5.0,
-  driveshaft_bandwidth_pct: 4.5,
-  engine_bandwidth_pct: 5.2,
-  speed_uncertainty_pct: 1.0,
-  tire_diameter_uncertainty_pct: 1.0,
-  final_drive_uncertainty_pct: 0.1,
-  gear_uncertainty_pct: 0.2,
-  min_abs_band_hz: 0.2,
-  max_band_half_width_pct: 6.0,
+  wheel_bandwidth_pct: defaultAnalysisSettings.wheel_bandwidth_pct,
+  driveshaft_bandwidth_pct: defaultAnalysisSettings.driveshaft_bandwidth_pct,
+  engine_bandwidth_pct: defaultAnalysisSettings.engine_bandwidth_pct,
+  speed_uncertainty_pct: defaultAnalysisSettings.speed_uncertainty_pct,
+  tire_diameter_uncertainty_pct: defaultAnalysisSettings.tire_diameter_uncertainty_pct,
+  final_drive_uncertainty_pct: defaultAnalysisSettings.final_drive_uncertainty_pct,
+  gear_uncertainty_pct: defaultAnalysisSettings.gear_uncertainty_pct,
+  min_abs_band_hz: defaultAnalysisSettings.min_abs_band_hz,
+  max_band_half_width_pct: defaultAnalysisSettings.max_band_half_width_pct,
 };
 
-export const defaultVehicleSettings: Readonly<VehicleSettings> = {
-  ...defaultCarAspectSettings,
-  ...defaultAnalysisTuningSettings,
-};
+export const defaultVehicleSettings: Readonly<VehicleSettings> = defaultAnalysisSettings;
 
 export const carAspectSettingKeys = [
   "tire_width_mm",
