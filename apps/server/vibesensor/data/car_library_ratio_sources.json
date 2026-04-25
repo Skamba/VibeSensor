@@ -812,19 +812,27 @@
     "BMW|5 Series (G30, 2017-2023)": {
       "car_index": 10,
       "verification_status": "verification_backlog",
-      "decision_summary": "Wave 14 improves the official Germany picture for the G30 530i without promoting any numeric production changes: the recovered BMW Germany launch price list lists 530i and 530i xDrive separately, confirms 8-Gang Steptronic wording for the 530i, and shows a 225/55 R17 standard tire with 18/19/20-inch options. The broad row remains unchanged because this pass still did not recover an official G30 technical-data table with final drive, top gear, reverse, or full forward ratios, and the checked single-source secondary numerics are insufficient for production use.",
+      "decision_summary": "Wave 14 improved the official Germany picture for the G30 530i without promoting any numeric production changes. Wave 15 adds exact BMW Germany technical-data evidence that the 540i xDrive and 545e xDrive do not belong on the broad-row defaults: 540i xDrive officially uses 8-Gang Steptronic with final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, while 545e xDrive officially uses 8-Gang Steptronic with forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.231, and the same 225/55 R17 baseline. The row remains verification_backlog because 530i and other G30 variants still lack one safe year-spanning Germany-market mapping, and the exact 540i xDrive full-ratio set changes between official pre-LCI and LCI documents.",
       "unresolved": [
         {
-          "item": "Per-variant final drive ratios for BMW 5 Series G30 EU-market 520i, 530i/530i xDrive, 540i/540i xDrive, M550i xDrive",
-          "reason": "No verifiable EU official G30 source retrieved in this run with explicit final drive values mapped to these variants."
+          "item": "Per-variant final drive ratios for BMW 5 Series G30 EU-market 520i, 530i/530i xDrive, 540i, and M550i xDrive",
+          "reason": "Wave 15 closes the exact 540i xDrive and 545e xDrive targets, but no verifiable EU official G30 source retrieved in this run publishes explicit final-drive values for the remaining variants."
         },
         {
-          "item": "Per-variant top gear ratio differences across G30 gearbox calibrations",
-          "reason": "No authoritative EU G30 technical table with confirmed top-gear ratios was retrieved; existing values left unchanged to avoid guessing."
+          "item": "Per-variant top gear ratio differences across unresolved G30 gearbox calibrations",
+          "reason": "Wave 15 now proves exact top-gear values for 540i xDrive and 545e xDrive, but this run still did not recover authoritative EU G30 technical tables for 520i, 530i/530i xDrive, 540i, or M550i xDrive."
         },
         {
           "item": "BMW G30 530i official tire baseline and later-year continuity",
           "reason": "The recovered official BMW Germany launch price list proves a 225/55 R17 baseline with 18/19/20-inch options for the 530i, contradicting the current broad-row tire defaults, but this pass did not recover later official archived price lists proving one year-spanning 2017-2023 530i wheel matrix safe enough for a production rewrite."
+        },
+        {
+          "item": "BMW G30 540i xDrive one exact full-ratio set across the represented row span",
+          "reason": "Official BMW Germany 11/2016 and 11/2020 technical-data sheets agree on 540i xDrive AWD, 8-Gang Steptronic wording, final drive 2.929, top gear 0.640, and a 225/55 R17 baseline tire, but they publish different forward and reverse ratio sets, so this pass promotes only the stable exact fields."
+        },
+        {
+          "item": "BMW G30 545e xDrive front-axle/transfer-case detail and full option tire matrix",
+          "reason": "Official BMW Germany 11/2020 technical data and the DE price list prove 545e xDrive AWD, 8-Gang Steptronic, the exact forward ratios, final drive 3.231, and a 225/55 R17 baseline tire, but the checked sources do not publish a separate front final drive, transfer-case ratio, or a full 545e-specific optional wheel/tire matrix."
         }
       ],
       "sources": {
@@ -856,6 +864,50 @@
           {
             "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_G30_IV_1606.pdf",
             "note": "The same official BMW Germany launch price list documents the 530i tire matrix with 225/55 R17 standard tires plus 245/45 R18, 245/40 R19 + 275/35 R19, and 245/35 R20 + 275/30 R20 options.",
+            "confidence": "high"
+          }
+        ],
+        "official_540i_xdrive_exact_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0267658DE/technische-daten-der-neuen-bmw-5er-limousine-bmw-540i-bmw-540i-xdrive-gueltig-ab-11/2016?language=de",
+            "note": "Official BMW Germany PressClub article for the exact 540i / 540i xDrive technical-data attachment valid from 11/2016.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0267658DE/377421",
+            "note": "Official BMW Germany technical-data PDF for the exact 540i xDrive Limousine: 8-Gang Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 2.929, and 225/55 R17 baseline tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0314291DE/460630",
+            "note": "Official BMW Germany 05/2020 technical-data PDF for the exact 540i xDrive Limousine: 8-Gang Steptronic Getriebe, final drive 2.929, top gear 0.640, reverse 3.712, and 225/55 R17 101Y XL baseline tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0318749DE/463129",
+            "note": "Official BMW Germany 11/2020 technical-data PDF cross-check for the exact 540i xDrive Limousine with the same final drive 2.929, top gear 0.640, and 225/55 R17 101Y XL baseline tires plus an updated forward-ratio set.",
+            "confidence": "high"
+          }
+        ],
+        "official_545e_xdrive_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0317777DE/technische-daten-bmw-5er-limousine-545e-xdrive-gueltig-ab-11/2020",
+            "note": "Official BMW Germany PressClub article for the exact 545e xDrive technical-data attachment valid from 11/2020.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0317777DE/461542",
+            "note": "Official BMW Germany technical-data PDF for the exact 545e xDrive: AWD plug-in hybrid with 8-Gang Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, rear-axle ratio 3.231, and 225/55 R17 baseline tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0313447EN/the-new-bmw-5-series-sedan-545e-xdrive",
+            "note": "Official BMW global launch article confirming the exact 545e xDrive hybrid layout with the electric motor integrated into the 8-speed Steptronic transmission and intelligent xDrive all-wheel drive.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0405048DE/634492",
+            "note": "Official BMW Germany price-list PDF confirming the exact 545e xDrive DE model naming, 8-Gang Steptronic wording, and grouped 225/55 R17 baseline tire package.",
             "confidence": "high"
           }
         ],
@@ -1159,7 +1211,7 @@
     "BMW|7 Series (G70, 2023-2026)": {
       "car_index": 16,
       "verification_status": "verification_backlog",
-      "decision_summary": "Issue #1034 official-source review corrected the supported EU variant set to 740d xDrive, 750e xDrive, M760e xDrive, i7 eDrive50, and i7 M70 xDrive, removing the non-European petrol variants and moving the i7 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the shared 8-speed row. This pass adds exact official BMW Germany-market evidence that the i7 M70 xDrive uses axle-split EV reductions front 8.774 and rear 8.765 plus staggered 255/40 R21 front + 285/35 R21 rear standard tires with a DE 20-inch staggered option, while the 750e xDrive and M760e xDrive officially use 8-Gang Steptronic Sport / 8-Gang, automatisch gearboxes plus exact Germany-market staggered tire packages. The broad G70 row remains unchanged because checked exact official PHEV sources still do not publish final-drive or per-gear ratio data.",
+      "decision_summary": "Issue #1034 official-source review corrected the supported EU variant set to 740d xDrive, 750e xDrive, M760e xDrive, i7 eDrive50, and i7 M70 xDrive, removing the non-European petrol variants and moving the i7 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the shared 8-speed row. Later work adds exact official BMW Germany-market evidence that the i7 M70 xDrive uses axle-split EV reductions front 8.774 and rear 8.765 plus staggered 255/40 R21 front + 285/35 R21 rear standard tires with a DE 20-inch staggered option, while the 750e xDrive and M760e xDrive officially use 8-Gang Steptronic Sport / 8-Gang, automatisch gearboxes plus exact Germany-market staggered tire packages. Wave 15 also adds exact BMW Germany catalog evidence that the i7 eDrive50 is the rear-wheel-drive 1-Gang automatic EV with a 245/50 R19 standard tire, correcting the row away from relying on adjacent M70 xDrive tire or ratio assumptions. The broad G70 row remains unchanged because checked exact official PHEV sources still do not publish final-drive or per-gear ratio data, and exact eDrive50 numeric reduction ratios are still unpublished.",
       "unresolved": [
         {
           "item": "Variant-level final_drive_ratio and top_gear_ratio confirmation for the EU combustion/PHEV variants",
@@ -1172,6 +1224,10 @@
         {
           "item": "Exact i7 M70 xDrive staggered tire-pair promotion into the broad G70 row",
           "reason": "Official BMW Germany sources now prove staggered 21-inch standard tires and a 20-inch staggered option for the exact i7 M70 xDrive, but the broad G70 row mixes combustion, PHEV, and EV variants and should not absorb one exact EV tire package without a safer row shape."
+        },
+        {
+          "item": "Exact i7 eDrive50 numeric reduction ratio and top-gear equivalent",
+          "reason": "Official BMW Germany catalogs now prove the i7 eDrive50 as the rear-wheel-drive 1-Gang automatic EV with a 245/50 R19 standard tire, but the checked exact sources still do not publish a numeric reduction ratio or overall-drive value for this variant."
         }
       ],
       "sources": {
@@ -1197,6 +1253,23 @@
             "url": "https://www.press.bmwgroup.com/portugal/article/attachment/T0413166PT/579304",
             "note": "Official BMW technical-data PDF cross-check for the exact i7 M70 xDrive with the same front 8.774 and rear 8.765 overall ratios plus standard staggered 21-inch tires.",
             "confidence": "high"
+          }
+        ],
+        "official_i7_edrive50_de_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0322774DE/643421",
+            "note": "Official BMW Germany catalog attachment confirming the exact i7 eDrive50 as Hinterradantrieb with 1-Gang, automatisch transmission and 245/50 R19 standard tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0438543DE/609591",
+            "note": "Official BMW Germany catalog cross-check confirming the same exact i7 eDrive50 drivetrain, 1-Gang automatic EV mapping, and 245/50 R19 standard tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0418860DE/bmw-modellpflege-massnahmen-zum-sommer-2023",
+            "note": "Official BMW Germany model-update article confirming the exact i7 eDrive50 in Germany-market scope.",
+            "confidence": "medium"
           }
         ],
         "official_i7_m70_tire_context": [
@@ -3497,7 +3570,7 @@
     "Audi|A8 (D5, 2018-2026)": {
       "car_index": 55,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official Audi Germany-market material now confirms the late-cycle exact A8 55 TFSI quattro mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and a 235/55 R18 basic tire. Wave 14 also checks the exact 50 TFSI quattro target and finds that Germany-market search and facelift material resolve the petrol A8 to 55 TFSI quattro, while Audi explicitly describes the lower-output 210 kW 3.0 TFSI variant as China-only. The broad A8 row remains unchanged because no exact Germany 50 TFSI quattro technical-data sheet was recovered, so the checked 55 TFSI data cannot be reused for a different badge or market state.",
+      "decision_summary": "Official Audi Germany-market material now confirms the late-cycle exact A8 55 TFSI quattro mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and a 235/55 R18 basic tire. Wave 14 also checks the exact 50 TFSI quattro target and finds that Germany-market search and facelift material resolve the petrol A8 to 55 TFSI quattro, while Audi explicitly describes the lower-output 210 kW 3.0 TFSI variant as China-only. Wave 15 adds exact official A8 60 TFSI e quattro facelift-era technical data showing AWD, 8-speed tiptronic, the same forward-ratio family, reverse 3.317, final drive 3.076, and a 255/45 R19 basic tire, but production JSON remains unchanged because this pass did not recover launch-era or year-spanning documents proving one exact 60 TFSI e mapping across the represented D5 row.",
       "unresolved": [
         {
           "item": "Audi A8 55 TFSI quattro production-data applicability across the full D5 row span",
@@ -3510,6 +3583,14 @@
         {
           "item": "Exact Germany-market Audi A8 50 TFSI quattro mapping",
           "reason": "Checked official Germany search and facelift material resolve the petrol D5 A8 to 55 TFSI quattro, while Audi explicitly describes the lower-output 210 kW 3.0 TFSI variant as China-only, so this pass did not recover an official Germany 50 TFSI quattro technical-data sheet or price-list row."
+        },
+        {
+          "item": "Audi A8 60 TFSI e quattro production-data applicability across the represented D5 row span",
+          "reason": "Official facelift-era Germany-market documents now prove exact A8 60 TFSI e quattro AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and a 255/45 R19 basic tire, but this pass did not recover launch-era or year-spanning sheets proving one unchanged mapping across the represented row."
+        },
+        {
+          "item": "Audi A8 60 TFSI e quattro exact hybrid-module detail and optional tire-matrix confirmation",
+          "reason": "Official Audi exact sources prove 8-speed tiptronic wording, the full forward-ratio set, final drive 3.076, and the 255/45 R19 basic tire, while the model page confirms a compact e-machine supports the 3.0 TFSI engine, but the checked material does not publish the exact hybrid-module layout, gearbox-family code, or a full optional wheel/tire matrix."
         }
       ],
       "sources": {
@@ -3544,6 +3625,28 @@
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/632/file_de/b56e37f81d3658f0b63f12381a9429189ff5249d/TD-Audi-A8-55TFSI-quattro-tiptronic-250kW-MHEV_251023.pdf?1761641662",
             "note": "Official Audi MediaCenter Germany technical-data PDF for the adjacent current-market A8 55 TFSI quattro used here only to show that the recovered Germany exact petrol sheet is the 55 TFSI quattro state, not a 50 TFSI quattro state.",
+            "confidence": "high"
+          }
+        ],
+        "official_60tfsie_quattro_exact_late_cycle": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1141/file_de/04c20499c359997cf95dd60eb22db309f783941f/TD-Audi-A8-60-TFSIe-quattro-tiptronic-340kW_251215.pdf?1769102879&disposition=attachment",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A8 60 TFSI e quattro: permanent quattro AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and 255/45 R19 base tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1141/file_en/04c20499c359997cf95dd60eb22db309f783941f/eTD-Audi-A8-60-TFSIe-quattro-tiptronic-250kW_340kW_240314.pdf?1711354488&disposition=attachment",
+            "note": "Official Audi MediaCenter English cross-check PDF for the exact A8 60 TFSI e quattro confirming the same full forward-ratio set, reverse 3.317, final drive 3.076, and 255/45 R19 base tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/audi-a8-tfsi-e-12167",
+            "note": "Official Audi MediaCenter Germany model page confirming the exact A8 60 TFSI e quattro target and compact e-machine hybrid context.",
+            "confidence": "medium"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/publikationen/preislisten/preisliste-audi-a8-a8-l-audi-a8-a8-l-tfsi-e-audi-s8-modelljahr-2026-800/download",
+            "note": "Official Audi MediaCenter Germany MY2026 price list confirming the exact A8 60 TFSI e quattro tiptronic 8-stufig model naming for the Germany market.",
             "confidence": "high"
           }
         ],
@@ -4078,7 +4181,7 @@
     "Audi|Q8 (4M8, 2019-2026)": {
       "car_index": 62,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official Audi technical-data sheets now confirm the exact Q8 55 TFSI quattro / 250 kW tiptronic mapping for the current row family: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, official final-drive expression 3.504 / 1.000, and basic tire 265/55 R19 in the checked technical sheet. The broad Q8 row remains unchanged because the repo stores one scalar final_drive_ratio and one representative tire baseline, while checked official sources did not prove one safe 2019-2026 mapping.",
+      "decision_summary": "Official Audi technical-data sheets now confirm the exact Q8 55 TFSI quattro / 250 kW tiptronic mapping for the current row family: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, official final-drive expression 3.504 / 1.000, and basic tire 265/55 R19 in the checked technical sheet. Wave 15 also adds exact official Q8 60 TFSI e quattro technical-data sheets showing permanent quattro AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and the same 265/55 R19 basic tire. Production JSON remains unchanged because the broad Q8 row mixes ICE and PHEV states and this pass still did not prove one safe 2019-2026 mapping.",
       "unresolved": [
         {
           "item": "Schema-safe encoding of the official Audi Q8 final-drive expression",
@@ -4091,6 +4194,14 @@
         {
           "item": "Audi Q8 exact gearbox-family naming and early Germany-market continuity",
           "reason": "Official Audi sources prove 8-speed tiptronic wording, top gear 0.640, and the exact forward ratio set, but this pass did not recover an early Germany-market ratio sheet or an explicit gearbox-family code such as ZF 8HP."
+        },
+        {
+          "item": "Audi Q8 60 TFSI e quattro production-data applicability across the full 2019-2026 row span",
+          "reason": "Official 2020 and current Audi technical-data sheets now agree on exact Q8 60 TFSI e quattro AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and a 265/55 R19 basic tire, but this pass did not recover year-spanning material proving one unchanged mapping across the represented row."
+        },
+        {
+          "item": "Schema-safe promotion of Audi Q8 60 TFSI e quattro exact gearbox and tire mapping",
+          "reason": "The checked exact PHEV sources now prove a different Q8 60 TFSI e quattro ratio and tire package than the adjacent 55 TFSI row-level mapping, but this pass did not prove a safer production shape for carrying exact PHEV-specific data across the mixed broad row and alias variants."
         }
       ],
       "sources": {
@@ -4104,6 +4215,28 @@
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/839/file_en/b5352391c2acb8ab92835f8662f8287ebdd45084/eTD-Audi-Q8-SUV-TFSI-quattro-tiptronic-250kW-MHEV_260204.pdf?1770654719&disposition=attachment",
             "note": "Official Audi MediaCenter technical-data PDF for the exact Q8 SUV TFSI quattro tiptronic 250 kW MHEV: permanent quattro AWD with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final-drive field 3.504 / 1.000, and base tire 265/55 R19.",
             "confidence": "high"
+          }
+        ],
+        "official_60tfsie_quattro_exact_ratios": [
+          {
+            "url": "https://www.audi-mediacenter.com/system/production/uploaded_files/18086/file/fae7d0829bc1fc3f99d57d9fb916c21f0a5e6da0/Technische_Daten_Audi_Q8_60_TFSI_e_quattro_tiptronic_340kW.pdf?1607015768&disposition=attachment",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 2020 Q8 60 TFSI e quattro: permanent quattro AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and 265/55 R19 basic tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1384/file_en/f1a954e2e03e2ebd1c566912e4a315facc470b08/eTD-Audi-Q8-SUV-TFSIe-quattro-tiptronic-360kW_251215.pdf?1769102323&disposition=attachment",
+            "note": "Official Audi MediaCenter current exact Q8 60 TFSI e quattro cross-check PDF confirming the same full forward-ratio set, reverse 3.317, final drive 3.204, and 265/55 R19 basic tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-technology-portal.de/en/drivetrain/hybrid-technologies/q8-tfsi-e-quattro-systemaufbau-fahrmodi-betriebsstrategie-en",
+            "note": "Official Audi technology portal explainer confirming the Q8 TFSI e electric motor is integrated in the 8-speed tiptronic housing as part of the hybrid module.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi.de/de/neuwagen/q8/q8-suv-tfsi-e/",
+            "note": "Official Audi Germany retail page confirming current Germany-market Q8 TFSI e availability in 290 kW and 360 kW states.",
+            "confidence": "medium"
           }
         ],
         "official_lookup_attempts": [

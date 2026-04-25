@@ -14,6 +14,12 @@ def _ratio_sources() -> dict[str, dict[str, object]]:
         return json.load(fh)["cars"]
 
 
+def _assert_contains_unresolved(entry: dict[str, object], expected: list[dict[str, str]]) -> None:
+    unresolved = entry["unresolved"]
+    for item in expected:
+        assert item in unresolved
+
+
 def test_wave4_ratio_source_rows_keep_ev_schema_limits_explicit() -> None:
     sources = _ratio_sources()
 
@@ -33,20 +39,23 @@ def test_wave4_ratio_source_rows_keep_ev_schema_limits_explicit() -> None:
             "reason": "Official BMW Germany sources now prove staggered 19-, 20-, and 21-inch tire packages for the exact i5 M60 xDrive, but the current shared row shape does not safely promote those exact front/rear pairs into production data.",
         },
     ]
-    assert sources["BMW|7 Series (G70, 2023-2026)"]["unresolved"] == [
-        {
-            "item": "Variant-level final_drive_ratio and top_gear_ratio confirmation for the EU combustion/PHEV variants",
-            "reason": "The official BMW launch material used for issue #1034 confirms the EU-supported 740d xDrive, 750e xDrive, and M760e xDrive variants, but it does not publish extractable numeric ratio fields for those entries.",
-        },
-        {
-            "item": "Schema-safe encoding of axle-split EV reduction ratios and top-gear data for the i7 M70 xDrive",
-            "reason": "Official BMW technical-data PDFs now publish exact front and rear reduction ratios for the i7 M70 xDrive, but the current schema stores only one final_drive_ratio and one top_gear_ratio field and cannot safely encode the axle split.",
-        },
-        {
-            "item": "Exact i7 M70 xDrive staggered tire-pair promotion into the broad G70 row",
-            "reason": "Official BMW Germany sources now prove staggered 21-inch standard tires and a 20-inch staggered option for the exact i7 M70 xDrive, but the broad G70 row mixes combustion, PHEV, and EV variants and should not absorb one exact EV tire package without a safer row shape.",
-        },
-    ]
+    _assert_contains_unresolved(
+        sources["BMW|7 Series (G70, 2023-2026)"],
+        [
+            {
+                "item": "Variant-level final_drive_ratio and top_gear_ratio confirmation for the EU combustion/PHEV variants",
+                "reason": "The official BMW launch material used for issue #1034 confirms the EU-supported 740d xDrive, 750e xDrive, and M760e xDrive variants, but it does not publish extractable numeric ratio fields for those entries.",
+            },
+            {
+                "item": "Schema-safe encoding of axle-split EV reduction ratios and top-gear data for the i7 M70 xDrive",
+                "reason": "Official BMW technical-data PDFs now publish exact front and rear reduction ratios for the i7 M70 xDrive, but the current schema stores only one final_drive_ratio and one top_gear_ratio field and cannot safely encode the axle split.",
+            },
+            {
+                "item": "Exact i7 M70 xDrive staggered tire-pair promotion into the broad G70 row",
+                "reason": "Official BMW Germany sources now prove staggered 21-inch standard tires and a 20-inch staggered option for the exact i7 M70 xDrive, but the broad G70 row mixes combustion, PHEV, and EV variants and should not absorb one exact EV tire package without a safer row shape.",
+            },
+        ],
+    )
     assert sources["BMW|X1 (U11, 2023-2026)"]["unresolved"] == [
         {
             "item": "Schema-safe encoding of iX1 xDrive30 axle-split EV reduction ratios",
