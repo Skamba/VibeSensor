@@ -88,6 +88,10 @@ class ConfigurationSnapshot:
 
     sensor_model: str | None = None
     firmware_version: str | None = None
+    strength_algorithm_version: str | None = None
+    peak_detector_version: str | None = None
+    calibration_profile_id: str | None = None
+    vehicle_baseline_profile_id: str | None = None
     raw_sample_rate_hz: float | None = None
     feature_interval_s: float | None = None
     final_drive_ratio: float | None = None

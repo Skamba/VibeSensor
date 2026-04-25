@@ -611,6 +611,22 @@
     "en": "Firmware Version",
     "nl": "Firmwareversie"
   },
+  "STRENGTH_ALGORITHM_VERSION_LABEL": {
+    "en": "Strength Algorithm Version",
+    "nl": "Sterkte-algoritmeversie"
+  },
+  "PEAK_DETECTOR_VERSION_LABEL": {
+    "en": "Peak Detector Version",
+    "nl": "Piekdetectieversie"
+  },
+  "CALIBRATION_PROFILE_LABEL": {
+    "en": "Calibration Profile",
+    "nl": "Kalibratieprofiel"
+  },
+  "VEHICLE_BASELINE_PROFILE_LABEL": {
+    "en": "Vehicle Baseline Profile",
+    "nl": "Voertuig-basisprofiel"
+  },
   "FREQUENCY": {
     "en": "Frequency",
     "nl": "Frequentie"

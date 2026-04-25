@@ -39,6 +39,12 @@ class ArtifactExpectation(TypedDict, total=False):
     peak_hz: float
     min_bins: int
     clients: list[str]
+    top_cause_key: str
+    top_cause_source: str
+    origin_source: str
+    first_action_id: str
+    no_top_cause: bool
+    metadata_fields: dict[str, object]
 
 
 class SavedFuzzArtifact(TypedDict):
@@ -268,6 +274,26 @@ def _assert_expected_outcome(artifact: SavedFuzzArtifact) -> None:
         assert int(summary["rows"]) == int(target_expect["rows"])
         assert summary["findings"] is not None
         assert summary["run_suitability"] is not None
+        top_causes = summary.get("top_causes")
+        assert isinstance(top_causes, list)
+        if bool(target_expect.get("no_top_cause")):
+            assert top_causes == []
+        elif target_expect.get("top_cause_key") is not None:
+            assert top_causes
+            first_top = cast(dict[str, object], top_causes[0])
+            assert str(first_top.get("finding_key")) == str(target_expect["top_cause_key"])
+            assert str(first_top.get("suspected_source")) == str(target_expect["top_cause_source"])
+        if target_expect.get("origin_source") is not None:
+            origin = cast(dict[str, object], summary["most_likely_origin"])
+            assert str(origin.get("suspected_source")) == str(target_expect["origin_source"])
+        if target_expect.get("first_action_id") is not None:
+            test_plan = cast(list[dict[str, object]], summary["test_plan"])
+            assert test_plan
+            assert str(test_plan[0].get("action_id")) == str(target_expect["first_action_id"])
+        if target_expect.get("metadata_fields") is not None:
+            metadata = cast(dict[str, object], summary["metadata"])
+            for key, expected in cast(dict[str, object], target_expect["metadata_fields"]).items():
+                assert metadata.get(key) == expected
         return
     raise AssertionError(f"Unknown fuzz artifact target: {target}")
 

@@ -27,6 +27,10 @@ def _summary() -> dict[str, object]:
             "car_info": {"tire_spec": "205/55R16"},
             "sensor_model": "VS-1",
             "firmware_version": "1.2.3",
+            "strength_algorithm_version": "strength-db-scalar-v1",
+            "peak_detector_version": "peak-band-rms-v1",
+            "calibration_profile_id": "noise-floor-p20-v1",
+            "vehicle_baseline_profile_id": "car-profile-1",
             "raw_sample_rate_hz": 400,
         },
         "report_date": "",
@@ -129,6 +133,20 @@ def test_prepare_report_facts_filters_to_active_sensor_locations() -> None:
     assert facts.run.sample_rate_hz == "400"
     assert facts.run.sensor_model == "VS-1"
     assert facts.run.firmware_version == "1.2.3"
+    assert facts.run.strength_algorithm_version == "strength-db-scalar-v1"
+    assert facts.run.peak_detector_version == "peak-band-rms-v1"
+    assert facts.run.calibration_profile_id == "noise-floor-p20-v1"
+    assert facts.run.vehicle_baseline_profile_id == "car-profile-1"
+
+
+def test_build_report_document_includes_calibration_traceability_rows() -> None:
+    document = _prepare_document(_summary())
+    rows = {row.label: row.value for row in document.traceability_rows}
+
+    assert rows["Strength Algorithm Version"] == "strength-db-scalar-v1"
+    assert rows["Peak Detector Version"] == "peak-band-rms-v1"
+    assert rows["Calibration Profile"] == "noise-floor-p20-v1"
+    assert rows["Vehicle Baseline Profile"] == "car-profile-1"
 
 
 def test_prepare_report_facts_prefers_supporting_window_location_proof() -> None:

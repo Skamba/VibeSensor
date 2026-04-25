@@ -38,6 +38,7 @@ def _run_metadata(
     language: str = "en",
     raw_sample_rate_hz: int = 800,
     feature_interval_s: float | None = 1.0,
+    extra_metadata: dict[str, object] | None = None,
 ) -> RunMetadata:
     payload: dict[str, object] = {
         "run_id": run_id,
@@ -51,6 +52,8 @@ def _run_metadata(
     }
     if feature_interval_s is not None:
         payload["feature_interval_s"] = feature_interval_s
+    if extra_metadata is not None:
+        payload.update(extra_metadata)
     return run_metadata_from_mapping(payload)
 
 
@@ -66,6 +69,7 @@ def _run_input(
     sampling_method: str = "full",
     evenly_spaced_sample_count: int = 0,
     event_sample_count: int = 0,
+    extra_metadata: dict[str, object] | None = None,
 ) -> PostAnalysisRunInput:
     return build_post_analysis_input(
         LoadedPostAnalysisRun(
@@ -75,6 +79,7 @@ def _run_input(
                 language=language,
                 raw_sample_rate_hz=raw_sample_rate_hz,
                 feature_interval_s=feature_interval_s,
+                extra_metadata=extra_metadata,
             ),
             language=language,
             samples=sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}]),
@@ -89,6 +94,42 @@ def _run_input(
             event_sample_count=event_sample_count,
         ),
     )
+
+
+def test_build_post_analysis_summary_surfaces_calibration_metadata_for_debugging() -> None:
+    summary = build_post_analysis_summary(
+        _run_input(
+            "run-calibration",
+            extra_metadata={
+                "strength_algorithm_version": "strength-db-scalar-v1",
+                "peak_detector_version": "peak-band-rms-v1",
+                "calibration_profile_id": "noise-floor-p20-v1",
+                "vehicle_baseline_profile_id": "car-profile-1",
+                "sensor_snapshots": [
+                    {
+                        "sensor_id": "sensor-a",
+                        "display_name": "Front Left",
+                        "location_code": "front_left_wheel",
+                        "mount_orientation": "radial",
+                    }
+                ],
+            },
+        )
+    )
+
+    analysis_metadata = summary["analysis_metadata"]
+
+    assert analysis_metadata["strength_algorithm_version"] == "strength-db-scalar-v1"
+    assert analysis_metadata["peak_detector_version"] == "peak-band-rms-v1"
+    assert analysis_metadata["calibration_profile_id"] == "noise-floor-p20-v1"
+    assert analysis_metadata["vehicle_baseline_profile_id"] == "car-profile-1"
+    assert analysis_metadata["sensor_mount_profiles"] == [
+        {
+            "sensor_id": "sensor-a",
+            "mount_location": "front_left_wheel",
+            "mount_orientation": "radial",
+        }
+    ]
 
 
 def _wave(freq_hz: float, sample_count: int, *, sample_rate_hz: int = 800) -> np.ndarray:
