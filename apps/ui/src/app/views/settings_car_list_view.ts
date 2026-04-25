@@ -1,5 +1,6 @@
 import type { CarRecord } from "../../api/types";
 import { type CarSelectionState, getCarCompleteness } from "../car_selection_state";
+import { buildOrderReferenceConfidenceDetail } from "../features/car_confidence_summary";
 import { formatSavedCarTireSummary } from "../features/cars_tire_setup";
 
 export interface CarsListHighlightedFeedback {
@@ -174,9 +175,7 @@ function carApproximationDetail(
   car: CarRecord,
   t: SettingsCarListViewParams["t"],
 ): string | null {
-  return car.order_reference_status?.requires_manual_confirmation
-    ? t("settings.car.approximate_detail")
-    : null;
+  return buildOrderReferenceConfidenceDetail(car.order_reference_status, t);
 }
 
 function buildPrimaryAction(options: {
