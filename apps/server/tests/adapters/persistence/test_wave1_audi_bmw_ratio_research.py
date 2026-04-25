@@ -67,26 +67,26 @@ def test_wave1_ratio_source_rows_capture_exact_audi_bmw_evidence_without_guessin
 
     _assert_contains_unresolved(sources["Audi|A4 (B9, 2016-2025)"], [
         {
-            "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-            "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
+            "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",  # noqa: E501
+            "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",  # noqa: E501
         }
     ])
     _assert_contains_unresolved(sources["Audi|A5 (B9, 2017-2024)"], [
         {
-            "item": "Broad-row Audi A5 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-            "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW Coupe and Sportback, but this pass did not verify whether the earlier years in the broad row use the same exact mapping.",
+            "item": "Broad-row Audi A5 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",  # noqa: E501
+            "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW Coupe and Sportback, but this pass did not verify whether the earlier years in the broad row use the same exact mapping.",  # noqa: E501
         }
     ])
     _assert_contains_unresolved(sources["Audi|Q5 (FY, 2017-2026)"], [
         {
-            "item": "Broad-row Audi Q5 FY 55 TFSI e quattro top_gear_ratio applicability across the represented span",
-            "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 270 kW 55 TFSI e quattro configuration, but this pass did not verify whether every year represented by the broad FY row uses the same exact mapping.",
+            "item": "Broad-row Audi Q5 FY 55 TFSI e quattro top_gear_ratio applicability across the represented span",  # noqa: E501
+            "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 270 kW 55 TFSI e quattro configuration, but this pass did not verify whether every year represented by the broad FY row uses the same exact mapping.",  # noqa: E501
         }
     ])
 
 
 def test_g20_variant_source_doc_tracks_wave1_override_update() -> None:
     assert (
-        "| 330i xDrive | B48 2.0L I4 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 2.813 TG 0.640 | BMW PressClub technical data (03/2021, 07/2022) | High |"
+        "| 330i xDrive | B48 2.0L I4 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 2.813 TG 0.640 | BMW PressClub technical data (03/2021, 07/2022) | High |"  # noqa: E501
         in _VARIANT_SOURCES_FILE.read_text(encoding="utf-8")
     )

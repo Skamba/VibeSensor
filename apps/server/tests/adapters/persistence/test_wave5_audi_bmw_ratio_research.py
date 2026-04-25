@@ -46,7 +46,7 @@ def test_wave5_q5_45tfsi_quattro_uses_exact_official_top_gear_and_ratio_set() ->
     ]
 
 
-def test_wave5_ratio_source_rows_capture_exact_g70_q7_q4_context_without_overwriting_broad_rows() -> None:
+def test_wave5_ratio_source_rows_capture_exact_g70_q7_q4_context_without_overwriting_broad_rows() -> None:  # noqa: E501
     sources = _ratio_sources()
 
     assert "exact_45tfsi_quattro_official_ratios" in sources["Audi|Q5 (FY, 2017-2026)"]["sources"]
@@ -59,16 +59,16 @@ def test_wave5_ratio_source_rows_capture_exact_g70_q7_q4_context_without_overwri
         sources["Audi|Q7 (4M, 2016-2026)"],
         [
             {
-                "item": "Audi Q7 55 TFSI e quattro production-data applicability across the full 4M row span",
-                "reason": "Checked exact official Germany-market evidence resolved the current facelift-era 55 TFSI e quattro values, but this pass did not prove the same ratio and final-drive mapping across the full 2016-2026 row span.",
+                "item": "Audi Q7 55 TFSI e quattro production-data applicability across the full 4M row span",  # noqa: E501
+                "reason": "Checked exact official Germany-market evidence resolved the current facelift-era 55 TFSI e quattro values, but this pass did not prove the same ratio and final-drive mapping across the full 2016-2026 row span.",  # noqa: E501
             },
             {
-                "item": "Audi Q7 55 TFSI e quattro exact optional tire matrix and gearbox-family naming",
-                "reason": "Official Audi exact sources prove the base 255/55 R19 fitment and 8-speed tiptronic wording, but this pass did not recover the full optional tire matrix or explicit official ZF 8HP naming.",
+                "item": "Audi Q7 55 TFSI e quattro exact optional tire matrix and gearbox-family naming",  # noqa: E501
+                "reason": "Official Audi exact sources prove the base 255/55 R19 fitment and 8-speed tiptronic wording, but this pass did not recover the full optional tire matrix or explicit official ZF 8HP naming.",  # noqa: E501
             },
             {
-                "item": "Audi Q7 55 TFSI quattro production-data applicability and tire-baseline continuity across the full 4M row span",
-                "reason": "Checked exact official current-generation 55 TFSI quattro evidence resolves the 250 kW ratio set, final drive 3.204, and a 5-seat 255/60 R18 basic tire, but this pass did not prove the same mapping across the full 2016-2026 non-PHEV row span or recover one uncontested production-safe tire baseline for all represented configurations.",
+                "item": "Audi Q7 55 TFSI quattro production-data applicability and tire-baseline continuity across the full 4M row span",  # noqa: E501
+                "reason": "Checked exact official current-generation 55 TFSI quattro evidence resolves the 250 kW ratio set, final drive 3.204, and a 5-seat 255/60 R18 basic tire, but this pass did not prove the same mapping across the full 2016-2026 non-PHEV row span or recover one uncontested production-safe tire baseline for all represented configurations.",  # noqa: E501
             },
         ],
     )
@@ -76,6 +76,6 @@ def test_wave5_ratio_source_rows_capture_exact_g70_q7_q4_context_without_overwri
 
 def test_wave5_variant_source_doc_tracks_q5_override_update() -> None:
     assert (
-        "| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 5.302 TG 0.433 | Audi MediaCenter eTD technical data (2019, 2024) | High |"
+        "| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 5.302 TG 0.433 | Audi MediaCenter eTD technical data (2019, 2024) | High |"  # noqa: E501
         in _VARIANT_SOURCES_FILE.read_text(encoding="utf-8")
     )
