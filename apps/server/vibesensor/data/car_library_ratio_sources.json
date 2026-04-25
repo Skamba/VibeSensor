@@ -962,7 +962,7 @@
     "BMW|7 Series (G70, 2023-2026)": {
       "car_index": 16,
       "verification_status": "verification_backlog",
-      "decision_summary": "Issue #1034 official-source review corrected the supported EU variant set to 740d xDrive, 750e xDrive, M760e xDrive, i7 eDrive50, and i7 M70 xDrive, removing the non-European petrol variants and moving the i7 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the shared 8-speed row. This pass adds exact official BMW Germany-market evidence that the i7 M70 xDrive uses axle-split EV reductions front 8.774 and rear 8.765 plus staggered 255/40 R21 front + 285/35 R21 rear standard tires, with a DE 20-inch staggered option.",
+      "decision_summary": "Issue #1034 official-source review corrected the supported EU variant set to 740d xDrive, 750e xDrive, M760e xDrive, i7 eDrive50, and i7 M70 xDrive, removing the non-European petrol variants and moving the i7 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the shared 8-speed row. This pass adds exact official BMW Germany-market evidence that the i7 M70 xDrive uses axle-split EV reductions front 8.774 and rear 8.765 plus staggered 255/40 R21 front + 285/35 R21 rear standard tires with a DE 20-inch staggered option, while the 750e xDrive and M760e xDrive officially use 8-Gang Steptronic Sport / 8-Gang, automatisch gearboxes plus exact Germany-market staggered tire packages. The broad G70 row remains unchanged because checked exact official PHEV sources still do not publish final-drive or per-gear ratio data.",
       "unresolved": [
         {
           "item": "Variant-level final_drive_ratio and top_gear_ratio confirmation for the EU combustion/PHEV variants",
@@ -1011,6 +1011,40 @@
           {
             "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw7er.pdf",
             "note": "Official BMW DE price list confirming standard staggered 255/40 R21 front + 285/35 R21 rear tires and a 20-inch staggered 255/45 front + 285/40 rear package for the i7 M70 xDrive.",
+            "confidence": "high"
+          }
+        ],
+        "official_750e_de_context": [
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/7er/limousine/bmw-7er-limousine-technische-daten.html",
+            "note": "Official BMW DE technical-data page confirming the exact 750e xDrive drivetrain as AWD with 8-Gang, automatisch gearbox wording and Germany-market model-code continuity.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw7er.pdf",
+            "note": "Official BMW DE price list confirming exact 750e xDrive gearbox wording 8-Gang Steptronic Sport plus standard 245/50 R19 tires, optional staggered 255/45 front + 285/40 rear 20-inch fitment, and optional staggered 255/40 R21 front + 285/35 R21 rear 21-inch fitment.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0404080EN/progress-and-efficiency-with-added-variety:-additional-drive-system-variants-and-innovations-for-the-new-bmw-7-series",
+            "note": "Official BMW PressClub article confirming the 750e xDrive for European markets with six-cylinder petrol engine plus electric motor integrated into the eight-speed Steptronic transmission and xDrive.",
+            "confidence": "high"
+          }
+        ],
+        "official_m760e_de_context": [
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/m/limousine/bmw-7er-limousine-m-modelle-technische-daten.html",
+            "note": "Official BMW DE technical-data page confirming the exact M760e xDrive as AWD plug-in hybrid with 8-Gang, automatisch gearbox wording on the Germany market.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw7er.pdf",
+            "note": "Official BMW DE price list confirming exact M760e xDrive gearbox wording 8-Gang Steptronic Sport and the official staggered 255/40 R21 front + 285/35 R21 rear tire packages.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0380173EN/the-new-bmw-7-series",
+            "note": "Official BMW PressClub launch article confirming spring-2023 debut context for the M760e xDrive in the G70 family.",
             "confidence": "high"
           }
         ],
@@ -3154,7 +3188,7 @@
     "Audi|Q5 (FY, 2017-2026)": {
       "car_index": 60,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verified Audi Q5 FY S tronic final-drive ratios from official Audi MediaCenter and Audi technical data PDFs. Later exact 55 TFSI e quattro sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 235/60 R18 basic tire for the 270 kW PHEV configuration, but the broad FY row remains unchanged until the represented production span is proven at the same granularity.",
+      "decision_summary": "Verified Audi Q5 FY S tronic final-drive ratios from official Audi MediaCenter and Audi technical data PDFs. Exact Germany-market technical-data sheets for the Q5 45 TFSI quattro now confirm top gear 0.433, full forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17 across checked 2019 and 2024 documents, which is sufficient to correct the variant-scoped production top gear and add the exact ratio set. Later exact 55 TFSI e quattro sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 235/60 R18 basic tire for the 270 kW PHEV configuration, but the broad FY row remains unchanged until the represented production span is proven at the same granularity.",
       "unresolved": [
         {
           "item": "Broad-row Audi Q5 FY 55 TFSI e quattro top_gear_ratio applicability across the represented span",
@@ -3179,6 +3213,23 @@
             "confidence": "high"
           }
         ],
+        "exact_45tfsi_quattro_official_ratios": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/953/file_de/0a4a8fa2a3274aecf30b11d6b8bd47624ac4bfd3/td_Q5_45_TFSI_quattro_S_tronic_180_kW.pdf?1698933816",
+            "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact Q5 45 TFSI quattro S tronic 180 kW: quattro ultra AWD, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1492/file_en/4a1e342f888aea17a9948fbe1277a50752c89d4b/eTD-Audi-Q5-45-TFSI-quattro-S_tronic-195kW-MHEV_240604.pdf?1741620897",
+            "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact Q5 45 TFSI quattro S tronic 195 kW MHEV confirming the same ratio set, reverse ratio, final drive 5.302, and basic tire 235/65 R17.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1120/file_en/cea98844230377952a6f24d0db8d613766f88572/eTD-Audi-Q5-45-TFSI-quattro-S_tronic-195kW-MHEV_240402.pdf?1712157036&disposition=attachment",
+            "note": "Official Audi MediaCenter Germany-market cross-check PDF for the exact Q5 45 TFSI quattro with the same top gear 0.433, full ratio set, final drive 5.302, and basic tire 235/65 R17.",
+            "confidence": "high"
+          }
+        ],
         "exact_55tfsi_e_quattro_late_fy_ratios": [
           {
             "url": "https://www.audi-mediacenter.com/en/audi-q5-tfsi-e-until-2025-11628",
@@ -3196,18 +3247,35 @@
     "Audi|Q7 (4M, 2016-2026)": {
       "car_index": 61,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official Audi Germany-market technical-data sheets now confirm the exact Q7 55 TFSI e quattro mapping for the current facelift-era configuration: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and base tire 255/55 R19. The broad Q7 row remains unchanged because this pass did not prove the same values across the full 2016-2026 span or recover the exact optional tire matrix for the variant.",
       "unresolved": [
         {
-          "item": "Audi Q7 (4M, 2016-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Audi Q7 55 TFSI e quattro production-data applicability across the full 4M row span",
+          "reason": "Checked exact official Germany-market evidence resolved the current facelift-era 55 TFSI e quattro values, but this pass did not prove the same ratio and final-drive mapping across the full 2016-2026 row span."
         },
         {
-          "item": "Audi Q7 (4M, 2016-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi Q7 55 TFSI e quattro exact optional tire matrix and gearbox-family naming",
+          "reason": "Official Audi exact sources prove the base 255/55 R19 fitment and 8-speed tiptronic wording, but this pass did not recover the full optional tire matrix or explicit official ZF 8HP naming."
         }
       ],
       "sources": {
+        "official_55tfsi_e_quattro_exact_ratios": [
+          {
+            "url": "https://www.audi-mediacenter.com/de/audi-q7-tfsi-e-quattro-15963",
+            "note": "Official Audi MediaCenter Germany model page confirming the exact Q7 55 TFSI e quattro and Q7 60 TFSI e quattro facelift-era naming and document path.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/maximale-effizienz-auf-grossem-raum-die-neuen-audi-q7-tfsi-e-quattro-und-q8-tfsi-e-quattro-16001",
+            "note": "Official Audi MediaCenter Germany press release confirming the exact 55 TFSI e quattro output step as the 290 kW / 600 Nm current Q7 PHEV configuration.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1381/file_de/9d5c2e27a7ed95f3f0aa43f733f600509d33d4a4/TD-Audi-Q7-SUV-TFSIe-quattro-tiptronic-290kW_251215.pdf?1769111238&disposition=attachment",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the exact Q7 55 TFSI e quattro 290 kW: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and base tire 255/55 R19.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",
@@ -3781,7 +3849,7 @@
     "Audi|Q4 e-tron (FZ, 2022-2026)": {
       "car_index": 72,
       "verification_status": "verification_backlog",
-      "decision_summary": "Issue #975 official-source review confirmed the supported EU Q4 e-tron BEV variant mapping, and this pass adds exact Audi official evidence that the launch-era 50 e-tron quattro uses axle-split one-speed reduction ratios (rear 11.5:1, front 10.0:1) plus mixed-size tires with a wider rear axle. The broad row remains unchanged because the current schema cannot safely encode the axle-split EV ratio mapping and the later official lineup renames the upper quattro variant away from the original 50 e-tron quattro naming.",
+      "decision_summary": "Issue #975 official-source review confirmed the supported EU Q4 e-tron BEV variant mapping, and this pass adds exact Audi official evidence that the launch-era 50 e-tron quattro uses axle-split one-speed reduction ratios (rear 11.5:1, front 10.0:1) plus mixed-size tires with a wider rear axle. It also adds exact official evidence that the launch-era rear-drive Q4 40 e-tron used a one-speed rear-drive ratio of 13:1 and that the later reintroduced Germany-market Q4 40 e-tron uses basic 235/55 R19 front + 255/50 R19 rear tires. The broad row remains unchanged because the current schema cannot safely encode the axle-split EV ratio mapping, the 40 e-tron name is reused across materially different sub-eras, and the later official lineup temporarily renames the upper quattro variant away from the original 50 e-tron quattro naming.",
       "unresolved": [
         {
           "item": "Encode axle-split EV reduction ratios for the exact Q4 50 e-tron quattro in repo schema",
@@ -3824,6 +3892,33 @@
           {
             "url": "https://www.audi-mediacenter.com/en/press-releases/update-for-the-audi-q4-e-tron-more-range-more-efficiency-more-emotions-15594",
             "note": "Official 2024 Audi update article shows later naming uses 45 e-tron / 45 e-tron quattro / 55 e-tron quattro rather than the original 50 e-tron quattro, so the broad 2022-2026 row should not absorb one exact launch-era ratio package without a split.",
+            "confidence": "high"
+          }
+        ],
+        "official_40e_exact_rear_ratio": [
+          {
+            "url": "https://www.audi-mediacenter.com/en/electric-suvs-in-the-premium-compact-segment-the-audi-q4-e-tron-and-the-q4-sportback-e-tron-13887/electric-motors-and-electric-all-wheel-drive-13900",
+            "note": "Official Audi MediaCenter launch drivetrain page for the exact Q4 40 e-tron: rear-wheel drive, one-speed transmission, rear-drive ratio 13:1, 150 kW, 310 Nm, and top speed 160 km/h.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-technology-portal.de/en/drivetrain/electric-drives/audi-q4-e-tron-modular-electric-platform",
+            "note": "Official Audi Technology Portal cross-check for the exact launch-era Q4 40 e-tron as a rear-wheel-drive single-motor EV with 150 kW and 310 Nm.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/update-fuer-den-audi-q4-e-tron-mehr-reichweite-mehr-effizienz-mehr-emotionen-15594",
+            "note": "Official Audi MediaCenter Germany update article showing the 2024 lineup rename to 45 e-tron / 45 e-tron quattro / 55 e-tron quattro, demonstrating that the original 40 e-tron name was not continuous through the full broad row span.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/gestaerkter-einstieg-in-die-elektromobilitaet-der-audi-q4-40-e-tron-16485",
+            "note": "Official Audi MediaCenter Germany article confirming the later reintroduced exact Q4 40 e-tron with rear-wheel drive, 150 kW, 310 Nm, and top speed 160 km/h.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1286/file_de/3ddc20106e5da2eabb39e0097cb8dc76c3739832/TD-Audi-Q4-40-e-tron-150kW_260202.pdf",
+            "note": "Official Audi MediaCenter Germany technical-data PDF for the reintroduced exact Q4 40 e-tron confirming RWD, 150 kW, 310 Nm, top speed 160 km/h, and basic staggered 235/55 R19 front + 255/50 R19 rear tires.",
             "confidence": "high"
           }
         ]
