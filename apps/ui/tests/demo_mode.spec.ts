@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import { defaultLiveAnalysisConfig } from "../src/constants";
 import { runDemoMode } from "../src/app/demo_mode";
 import { createAppState } from "../src/app/ui_app_state";
 import { adaptServerPayload } from "../src/server_payload";
@@ -28,6 +29,11 @@ describe("runDemoMode", () => {
     expect(state.transport.hasReceivedPayload.value).toBe(false);
     expect(state.transport.pendingPayload.value).toBeNull();
     expect(adaptedPayload.clients).toHaveLength(5);
+    expect(
+      adaptedPayload.clients.every(
+        (client) => client.sample_rate_hz === defaultLiveAnalysisConfig.sampleRateHz,
+      ),
+    ).toBe(true);
     expect(adaptedPayload.spectra?.clients[selectedClientId]).toMatchObject({
       freq: expect.any(Array),
       combined: expect.any(Array),
