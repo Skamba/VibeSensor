@@ -310,11 +310,11 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 ### X7 (G07, 2019-2026)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| xDrive40i | B58 3.0L I6 Turbo | AWD | BMW press release | High |
-| xDrive40d | B57 3.0L I6 Diesel | AWD | BMW press release | High |
-| M60i xDrive | S68 4.4L V8 Turbo | AWD | BMW press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| xDrive40i | B58 3.0L I6 Turbo | AWD | – | BMW press release | High |
+| xDrive40d | B57 3.0L I6 Diesel | AWD | – | BMW press release | High |
+| M60i xDrive | S68 4.4L V8 Turbo | AWD | 8-speed Steptronic FD 3.385 TG 0.640 | BMW PressClub technical data | High |
 
 ### Z4 (G29, 2019-2026)
 
@@ -351,7 +351,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
 | M4 | S58 3.0L I6 Turbo | RWD | 6-speed manual FD 3.846, 8-speed automatic (ZF 8HP) FD 3.154 | BMW press release / technical data | Medium |
-| M4 Competition xDrive | S58 3.0L I6 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 3.154 | BMW press release / technical data | Medium |
+| M4 Competition xDrive | S58 3.0L I6 Turbo | AWD | 8-speed M Steptronic FD 3.154 TG 0.640 | BMW PressClub technical data | High |
 
 ### M5 (F90, 2018-2024)
 
