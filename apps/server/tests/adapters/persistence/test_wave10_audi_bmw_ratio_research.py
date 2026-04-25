@@ -1,26 +1,12 @@
-"""Focused regressions for the ninth Audi/BMW ratio-research wave."""
+"""Focused regressions for the tenth Audi/BMW ratio-research wave."""
 
 from __future__ import annotations
 
 import json
 
-import pytest
-
-from vibesensor.adapters.persistence.car_library import (
-    _DATA_FILE,
-    load_car_library,
-    resolve_variant,
-)
+from vibesensor.adapters.persistence.car_library import _DATA_FILE
 
 _RATIO_SOURCES_FILE = _DATA_FILE.with_name("car_library_ratio_sources.json")
-_VARIANT_SOURCES_FILE = _DATA_FILE.with_name("CAR_VARIANT_SOURCES.md")
-
-
-def _entry_for(brand: str, model: str) -> dict[str, object]:
-    for entry in load_car_library():
-        if entry["brand"] == brand and entry["model"] == model:
-            return entry
-    raise AssertionError(f"Car-library entry not found: {brand} / {model}")
 
 
 def _ratio_sources() -> dict[str, dict[str, object]]:
@@ -28,58 +14,13 @@ def _ratio_sources() -> dict[str, dict[str, object]]:
         return json.load(fh)["cars"]
 
 
-def test_wave9_x3_xdrive30i_uses_exact_official_variant_override() -> None:
-    x3 = resolve_variant(_entry_for("BMW", "X3 (G01, 2018-2024)"), "xDrive30i")
-    assert x3["gearboxes"] == [
-        {
-            "name": "8-speed Steptronic transmission",
-            "final_drive_ratio": pytest.approx(3.385),
-            "top_gear_ratio": pytest.approx(0.64),
-        }
-    ]
-    assert x3["tire_options"] == [
-        {
-            "name": 'Standard 18"',
-            "tire_width_mm": pytest.approx(225.0),
-            "tire_aspect_pct": pytest.approx(60.0),
-            "rim_in": pytest.approx(18.0),
-        },
-        {
-            "name": 'Optional 19"',
-            "tire_width_mm": pytest.approx(245.0),
-            "tire_aspect_pct": pytest.approx(50.0),
-            "rim_in": pytest.approx(19.0),
-        },
-        {
-            "name": 'Optional staggered 20"',
-            "tire_width_mm": pytest.approx(275.0),
-            "tire_aspect_pct": pytest.approx(40.0),
-            "rim_in": pytest.approx(20.0),
-            "front": {"width_mm": pytest.approx(245.0), "aspect_pct": pytest.approx(45.0), "rim_in": pytest.approx(20.0)},
-            "rear": {"width_mm": pytest.approx(275.0), "aspect_pct": pytest.approx(40.0), "rim_in": pytest.approx(20.0)},
-            "default_axle_for_speed": "rear",
-            "source_confidence": "official_exact",
-        },
-        {
-            "name": 'Optional staggered 21"',
-            "tire_width_mm": pytest.approx(275.0),
-            "tire_aspect_pct": pytest.approx(35.0),
-            "rim_in": pytest.approx(21.0),
-            "front": {"width_mm": pytest.approx(245.0), "aspect_pct": pytest.approx(40.0), "rim_in": pytest.approx(21.0)},
-            "rear": {"width_mm": pytest.approx(275.0), "aspect_pct": pytest.approx(35.0), "rim_in": pytest.approx(21.0)},
-            "default_axle_for_speed": "rear",
-            "source_confidence": "official_exact",
-        },
-    ]
-
-
-def test_wave9_ratio_source_rows_capture_g22_g01_g02_q3_context() -> None:
+def test_wave10_ratio_source_rows_capture_g22_g01_g02_q5_context() -> None:
     sources = _ratio_sources()
 
-    assert "official_m440i_xdrive_launch_exact_ratios" in sources["BMW|4 Series (G22, 2021-2026)"]["sources"]
-    assert "official_xdrive30i_exact_ratios" in sources["BMW|X3 (G01, 2018-2024)"]["sources"]
-    assert "official_m40i_launch_exact_ratios" in sources["BMW|X4 (G02, 2019-2025)"]["sources"]
-    assert "official_40tfsi_quattro_exact_ratios" in sources["Audi|Q3 (F3, 2019-2026)"]["sources"]
+    assert "official_430i_xdrive_current_context" in sources["BMW|4 Series (G22, 2021-2026)"]["sources"]
+    assert "official_m40i_exact_ratios" in sources["BMW|X3 (G01, 2018-2024)"]["sources"]
+    assert "official_xdrive30i_exact_ratios" in sources["BMW|X4 (G02, 2019-2025)"]["sources"]
+    assert "exact_40tfsi_quattro_late_fy_ratios" in sources["Audi|Q5 (FY, 2017-2026)"]["sources"]
 
     assert sources["BMW|4 Series (G22, 2021-2026)"]["unresolved"] == [
         {
@@ -139,24 +80,17 @@ def test_wave9_ratio_source_rows_capture_g22_g01_g02_q3_context() -> None:
             "reason": "Official BMW sources now prove the exact standard staggered 20-inch M40i fitment and the checked ratio sets, but they do not publish a gearbox subtype code or one exact full optional wheel/tire matrix that closes the broad row safely.",
         },
     ]
-    assert sources["Audi|Q3 (F3, 2019-2026)"]["unresolved"] == [
+    assert sources["Audi|Q5 (FY, 2017-2026)"]["unresolved"] == [
         {
-            "item": "Audi Q3 40 TFSI quattro production-data applicability across the represented old-generation row span",
-            "reason": "Checked exact Germany-market 05.06.2025 Q3 and Q3 Sportback technical-data PDFs resolve the old-generation 40 TFSI quattro mapping, but this pass did not recover year-by-year official sheets proving one unchanged package across the full represented span.",
+            "item": "Broad-row Audi Q5 FY 40 TFSI production-data applicability across the represented span",
+            "reason": "The checked 06/04/2024 Germany FY sheet resolves a late-FY 40 TFSI quattro state, but this pass did not recover official earlier FY or later new-generation sheets proving one unchanged 40 TFSI package across the broad 2017-2026 row.",
         },
         {
-            "item": "Schema-safe encoding of exact Audi Q3 40 TFSI quattro split final-drive values",
-            "reason": "The checked official technical-data PDFs publish two final-drive values 4.813 / 3.667 for the target, but the current row stores only one final_drive_ratio field.",
+            "item": "Audi Q5 FY 40 TFSI exact optional tire matrix and row-shape continuity",
+            "reason": "Official Audi exact material now proves the FY 40 TFSI quattro drivetrain, full ratio set, reverse ratio, final drive 5.302, and the 235/65 R17 basic tire, but it does not close a full FY optional wheel/tire matrix or prove how the library's current front-drive 40 TFSI variant should be split from the later FY quattro state.",
         },
         {
-            "item": "Audi Q3 (F3, 2019-2026) model-year boundary, transmission-code, and optional tire-matrix confirmation",
-            "reason": "Official Audi sources now prove the old-generation exact ratio block, reverse ratio, and basic tire, and they also show the new third-generation Q3 arrives in summer 2025, but this pass did not recover a full old-generation optional wheel/tire matrix or an official gearbox-family code.",
+            "item": "Broad-row Audi Q5 FY 55 TFSI e quattro top_gear_ratio applicability across the represented span",
+            "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 270 kW 55 TFSI e quattro configuration, but this pass did not verify whether every year represented by the broad FY row uses the same exact mapping.",
         },
     ]
-
-
-def test_wave9_variant_source_doc_tracks_x3_override_update() -> None:
-    assert (
-        "| xDrive30i | B48 2.0L I4 Turbo | AWD | 8-speed Steptronic FD 3.385 TG 0.640 | BMW PressClub technical data / DE price list | High |"
-        in _VARIANT_SOURCES_FILE.read_text(encoding="utf-8")
-    )
