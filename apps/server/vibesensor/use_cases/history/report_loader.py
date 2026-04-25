@@ -7,13 +7,11 @@ from hashlib import sha256
 
 from opentelemetry.trace import SpanKind
 
-from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.reporting import (
     PreparedReportInput,
     prepare_persisted_report_input,
 )
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
-from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.filenames import safe_filename
 from vibesensor.shared.json_utils import json_text_dumps
 from vibesensor.shared.ports import RunPersistence
@@ -24,6 +22,7 @@ from vibesensor.shared.types.report_cache import ReportPdfCacheKey
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.helpers import (
     async_require_run,
+    require_analysis_ready,
     resolve_run_language,
 )
 
@@ -72,22 +71,7 @@ class HistoryReportRequestLoader:
         ) as span:
             try:
                 run = await async_require_run(self._history_db, run_id)
-                if run.status == RunStatus.ANALYZING:
-                    raise AnalysisNotReadyError(
-                        "Analysis is still in progress", status="in_progress"
-                    )
-                if run.status == RunStatus.ERROR:
-                    raise AnalysisNotReadyError(
-                        str(run.error_message or "Analysis failed"),
-                        status="error",
-                    )
-                if run.analysis_corrupt:
-                    raise AnalysisNotReadyError(
-                        "Report data unavailable for this run. Re-analyze to regenerate the PDF."
-                    )
-                analysis = run.analysis
-                if analysis is None:
-                    raise AnalysisNotReadyError("No analysis available for this run")
+                analysis = require_analysis_ready(run)
 
                 requested_lang = self._analysis_language(run, requested_lang)
                 report_language = self._report_pdf_cache_lang(run, requested_lang)

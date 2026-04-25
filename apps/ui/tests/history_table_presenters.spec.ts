@@ -16,6 +16,13 @@ function historyListRun(runId: string): HistoryEntry {
     status: "complete",
     car_name: "Track Car",
     error_message: null,
+    lifecycle: {
+      stage: "post_analysis_ready",
+      raw_capture: "not_recorded",
+      whole_run_artifacts: "ready",
+      post_analysis: "ready",
+      report: "ready",
+    },
   } as HistoryEntry;
 }
 
@@ -76,8 +83,18 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
       },
     ],
     warnings: [
-      { code: "speed-gap", severity: "warn", title: "history.warning.speed_gap", detail: "Gap" },
-      { code: "speed-gap", severity: "warn", title: "history.warning.speed_gap", detail: "Gap" },
+      {
+        code: "speed-gap",
+        severity: "warn",
+        title: "history.warning.speed_gap",
+        detail: "Gap",
+      },
+      {
+        code: "speed-gap",
+        severity: "warn",
+        title: "history.warning.speed_gap",
+        detail: "Gap",
+      },
     ],
     sensor_intensity_by_location: [
       { location: "front-right wheel", p95_intensity_db: 32 },
@@ -103,6 +120,10 @@ function defaultDetail(detail: Partial<RunDetail>): RunDetail {
 
 test("history table presenter builds typed diagnosis models from raw insights", () => {
   const run = historyListRun("run-001");
+  run.lifecycle = {
+    ...run.lifecycle,
+    raw_capture: "missing",
+  };
   run.artifact_availability = {
     raw_capture: "missing",
     whole_run_artifacts: "available",
@@ -124,7 +145,9 @@ test("history table presenter builds typed diagnosis models from raw insights", 
 
   expect(rows).toHaveLength(1);
   const row = rows[0];
-  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.complete");
+  expect(row.summaryChips.map((chip) => chip.text)).toContain(
+    "history.row_status.complete",
+  );
   expect(row.summaryHeadline).toBe("history.source.wheel_tire");
   expect(row.summaryMeta).toContain('report.confidence:{"value":"92%"}');
   expect(row.summaryMeta).toContain("history.summary_size: 12.3 s");
@@ -149,7 +172,9 @@ test("history table presenter builds typed diagnosis models from raw insights", 
       detail: "Gap",
     },
   ]);
-  const frontRightZone = row.details?.heatmap.zones.find((zone) => zone.key === "front-right wheel");
+  const frontRightZone = row.details?.heatmap.zones.find(
+    (zone) => zone.key === "front-right wheel",
+  );
   expect(frontRightZone).toMatchObject({
     label: "front-right wheel",
     valueLabel: "32.0 dB",
@@ -196,6 +221,13 @@ test("history table presenter keeps PDF pending until analysis completes", () =>
   const run = {
     ...historyListRun("run-003"),
     status: "analyzing" as const,
+    lifecycle: {
+      stage: "post_analysis_pending",
+      raw_capture: "not_recorded",
+      whole_run_artifacts: "pending",
+      post_analysis: "pending",
+      report: "pending",
+    },
   };
   const rows = buildHistoryTableRowsViewModel({
     runs: [run],
@@ -212,8 +244,41 @@ test("history table presenter keeps PDF pending until analysis completes", () =>
   });
 
   const row = rows[0];
-  expect(row.summaryChips.map((chip) => chip.text)).toContain("history.row_status.preview_ready");
+  expect(row.summaryChips.map((chip) => chip.text)).toContain(
+    "history.row_status.preview_ready",
+  );
   expect(row.collapsedAction).toEqual({
+    hintText: "history.quick_report_pending",
+    pdfLabel: null,
+    pdfLoading: false,
+  });
+});
+
+test("history table presenter keeps PDF pending from lifecycle even when run status is complete", () => {
+  const run = {
+    ...historyListRun("run-003b"),
+    lifecycle: {
+      stage: "post_analysis_degraded",
+      raw_capture: "not_recorded",
+      whole_run_artifacts: "degraded",
+      post_analysis: "degraded",
+      report: "degraded",
+    },
+  };
+  const rows = buildHistoryTableRowsViewModel({
+    runs: [run],
+    expandedRunId: null,
+    runDetailsById: {},
+    t: testTranslation,
+    fmt: (value, digits = 0) => Number(value).toFixed(digits),
+    fmtTs: (iso) => iso,
+    formatInt: (value) => String(value),
+  });
+
+  expect(rows[0]?.summaryChips.map((chip) => chip.text)).toContain(
+    "history.row_status.error",
+  );
+  expect(rows[0]?.collapsedAction).toEqual({
     hintText: "history.quick_report_pending",
     pdfLabel: null,
     pdfLoading: false,
@@ -222,6 +287,13 @@ test("history table presenter keeps PDF pending until analysis completes", () =>
 
 test("history table presenter shows degraded raw capture warning details", () => {
   const run = historyListRun("run-004");
+  run.lifecycle = {
+    stage: "post_analysis_ready",
+    raw_capture: "degraded",
+    whole_run_artifacts: "ready",
+    post_analysis: "ready",
+    report: "ready",
+  };
   run.artifact_availability = {
     raw_capture: "degraded",
     whole_run_artifacts: "available",

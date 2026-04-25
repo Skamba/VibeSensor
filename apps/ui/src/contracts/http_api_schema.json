@@ -3623,6 +3623,7 @@
           "raw_capture": {
             "enum": [
               "not_recorded",
+              "pending",
               "available",
               "missing",
               "degraded"
@@ -3633,8 +3634,10 @@
           "whole_run_artifacts": {
             "enum": [
               "not_recorded",
+              "pending",
               "available",
-              "missing"
+              "missing",
+              "degraded"
             ],
             "title": "Whole Run Artifacts",
             "type": "string"
@@ -4146,6 +4149,16 @@
             ],
             "title": "Error Message"
           },
+          "lifecycle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoryRunLifecycleResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "raw_capture_finalize": {
             "anyOf": [
               {
@@ -4243,6 +4256,72 @@
         "title": "HistoryRawCaptureFinalizeResponse",
         "type": "object"
       },
+      "HistoryRunLifecycleResponse": {
+        "description": "Response body describing the canonical derived lifecycle for a history run.",
+        "properties": {
+          "post_analysis": {
+            "enum": [
+              "pending",
+              "running",
+              "ready",
+              "degraded"
+            ],
+            "title": "Post Analysis",
+            "type": "string"
+          },
+          "raw_capture": {
+            "enum": [
+              "not_recorded",
+              "pending",
+              "ready",
+              "degraded",
+              "missing"
+            ],
+            "title": "Raw Capture",
+            "type": "string"
+          },
+          "report": {
+            "enum": [
+              "pending",
+              "ready",
+              "degraded"
+            ],
+            "title": "Report",
+            "type": "string"
+          },
+          "stage": {
+            "enum": [
+              "recording",
+              "post_analysis_pending",
+              "post_analysis_running",
+              "post_analysis_ready",
+              "post_analysis_degraded"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "whole_run_artifacts": {
+            "enum": [
+              "not_recorded",
+              "pending",
+              "ready",
+              "degraded",
+              "missing"
+            ],
+            "title": "Whole Run Artifacts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "raw_capture",
+          "whole_run_artifacts",
+          "post_analysis",
+          "report"
+        ],
+        "title": "HistoryRunLifecycleResponse",
+        "type": "object"
+      },
       "HistoryRunResponse": {
         "additionalProperties": false,
         "description": "Response body for a single history run with metadata and optional analysis.",
@@ -4277,6 +4356,16 @@
               }
             ],
             "title": "Error Message"
+          },
+          "lifecycle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoryRunLifecycleResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "metadata": {
             "$ref": "#/components/schemas/ApiPayloadObject"

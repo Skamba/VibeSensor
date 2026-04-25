@@ -49,12 +49,19 @@ def strip_internal_fields(analysis: Mapping[str, object]) -> JsonObject:
 
 def require_analysis_ready(run: StoredHistoryRun) -> PersistedAnalysis:
     """Return the internal persisted-analysis object or raise a domain exception."""
+    lifecycle = run.lifecycle
+    if lifecycle is not None and lifecycle.post_analysis in {"pending", "running"}:
+        raise AnalysisNotReadyError("Analysis is still in progress", status="in_progress")
     if run.status == RunStatus.ANALYZING:
         raise AnalysisNotReadyError("Analysis is still in progress", status="in_progress")
     if run.status == RunStatus.ERROR:
         raise AnalysisNotReadyError(
             str(run.error_message or "Analysis failed"),
             status="error",
+        )
+    if run.analysis_corrupt:
+        raise AnalysisNotReadyError(
+            "Report data unavailable for this run. Re-analyze to regenerate the PDF."
         )
     analysis = run.analysis
     if analysis is None:

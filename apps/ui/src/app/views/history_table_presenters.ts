@@ -7,7 +7,9 @@ import {
   formatSourceLabel,
   historyRowCarName,
   historyRowDurationSeconds,
+  historyReportReady,
   historyRowStatusBadge,
+  historyPostAnalysisReady,
   historyRowSummary,
   isInconclusiveFinding,
   summarizeFindings,
@@ -19,7 +21,10 @@ import type {
   HistoryRowViewModel,
   HistorySummaryChipViewModel,
 } from "./history_table_models";
-import type { HistoryPanelTableRenderModel, HistoryTableViewParams } from "./history_table_view";
+import type {
+  HistoryPanelTableRenderModel,
+  HistoryTableViewParams,
+} from "./history_table_view";
 
 function buildSummaryChips(
   run: HistoryEntry,
@@ -31,8 +36,16 @@ function buildSummaryChips(
   const chips: HistorySummaryChipViewModel[] = [
     { key: "status", text: statusBadge.label, tone: statusBadge.tone },
   ];
-  if (run.status === "error" && run.error_message) {
-    chips.push({ key: "error-message", text: run.error_message, tone: "muted" });
+  if (
+    (run.lifecycle?.stage === "post_analysis_degraded" ||
+      run.status === "error") &&
+    run.error_message
+  ) {
+    chips.push({
+      key: "error-message",
+      text: run.error_message,
+      tone: "muted",
+    });
   }
   return chips;
 }
@@ -45,17 +58,23 @@ function buildHistoryRowSummary(
   const { fmt, formatInt, t } = params;
   const summary = historyRowSummary(detail);
   const primaryFinding = summarizeFindings(summary)[0] ?? null;
-  const source = summary?.most_likely_origin?.suspected_source || primaryFinding?.suspected_source || "";
+  const source =
+    summary?.most_likely_origin?.suspected_source ||
+    primaryFinding?.suspected_source ||
+    "";
   const sourceLabel =
     primaryFinding && isInconclusiveFinding(primaryFinding)
       ? t("history.row_source_inconclusive")
       : source
         ? formatSourceLabel(source, t)
         : "";
-  const headline = sourceLabel
-    || (run.status === "complete" && (detail.previewLoading || detail.insightsLoading || summary === null)
+  const analysisReady = historyPostAnalysisReady(run);
+  const headline =
+    sourceLabel ||
+    (analysisReady &&
+    (detail.previewLoading || detail.insightsLoading || summary === null)
       ? t("history.row_summary_loading")
-      : run.status === "complete" && summary
+      : analysisReady && summary
         ? t("history.row_no_findings")
         : historyRowStatusBadge(run, detail, t).label);
   const metaParts: string[] = [];
@@ -64,11 +83,15 @@ function buildHistoryRowSummary(
   }
   const durationSeconds = historyRowDurationSeconds(run, detail);
   if (durationSeconds !== null) {
-    metaParts.push(`${t("history.summary_size")}: ${fmt(durationSeconds, 1)} s`);
+    metaParts.push(
+      `${t("history.summary_size")}: ${fmt(durationSeconds, 1)} s`,
+    );
   }
   const sensorCount = Number(summary?.sensor_count_used);
   if (Number.isFinite(sensorCount) && sensorCount > 0) {
-    metaParts.push(`${t("history.summary_sensor_count")}: ${formatInt(sensorCount)}`);
+    metaParts.push(
+      `${t("history.summary_sensor_count")}: ${formatInt(sensorCount)}`,
+    );
   }
   if (metaParts.length === 0 && run.status === "error" && run.error_message) {
     metaParts.push(run.error_message);
@@ -84,8 +107,7 @@ function buildCollapsedAction(
   detail: RunDetail,
   t: PresenterParams["t"],
 ): HistoryCollapsedActionViewModel {
-  const reportReady = run.status === "complete";
-  if (!reportReady) {
+  if (!historyReportReady(run)) {
     return {
       hintText: t("history.quick_report_pending"),
       pdfLabel: null,
@@ -94,12 +116,18 @@ function buildCollapsedAction(
   }
   return {
     hintText: null,
-    pdfLabel: detail.pdfLoading ? t("history.generating_pdf") : t("history.generate_pdf"),
+    pdfLabel: detail.pdfLoading
+      ? t("history.generating_pdf")
+      : t("history.generate_pdf"),
     pdfLoading: detail.pdfLoading,
   };
 }
 
-function buildRowViewModel(run: HistoryEntry, detail: RunDetail, params: PresenterParams): HistoryRowViewModel {
+function buildRowViewModel(
+  run: HistoryEntry,
+  detail: RunDetail,
+  params: PresenterParams,
+): HistoryRowViewModel {
   const { expandedRunId, formatInt, fmtTs, t } = params;
   const isExpanded = expandedRunId === run.run_id;
   const rowSummary = buildHistoryRowSummary(run, detail, params);
@@ -111,7 +139,9 @@ function buildRowViewModel(run: HistoryEntry, detail: RunDetail, params: Present
     summaryChips: buildSummaryChips(run, detail, params),
     summaryHeadline: rowSummary.headline,
     summaryMeta: rowSummary.meta,
-    toggleLabel: isExpanded ? t("history.close_diagnosis") : t("history.open_diagnosis"),
+    toggleLabel: isExpanded
+      ? t("history.close_diagnosis")
+      : t("history.open_diagnosis"),
     toggleTitle: isExpanded
       ? t("history.close_diagnosis_for_run", { runId: run.run_id })
       : t("history.open_diagnosis_for_run", { runId: run.run_id }),
@@ -122,13 +152,21 @@ function buildRowViewModel(run: HistoryEntry, detail: RunDetail, params: Present
     quickReportLabel: t("history.quick_report"),
     collapsedAction: buildCollapsedAction(run, detail, t),
     pdfError: detail.pdfError || null,
-    details: isExpanded ? buildHistoryDetailsViewModel(run, detail, params) : null,
+    details: isExpanded
+      ? buildHistoryDetailsViewModel(run, detail, params)
+      : null,
   };
 }
 
-export function buildHistoryTableRowsViewModel(params: PresenterParams): HistoryRowViewModel[] {
+export function buildHistoryTableRowsViewModel(
+  params: PresenterParams,
+): HistoryRowViewModel[] {
   return params.runs.map((run) =>
-    buildRowViewModel(run, params.runDetailsById[run.run_id] ?? EMPTY_RUN_DETAIL, params),
+    buildRowViewModel(
+      run,
+      params.runDetailsById[run.run_id] ?? EMPTY_RUN_DETAIL,
+      params,
+    ),
   );
 }
 
@@ -180,15 +218,18 @@ function buildHistoryRowsMemoKey(params: PresenterParams): HistoryRowsMemoKey {
     fmt: params.fmt,
     fmtTs: params.fmtTs,
     formatInt: params.formatInt,
-    runState: params.runs.map((run) => [
-      run,
-      run.run_id,
-      run.status,
-      run.error_message,
-      run.sample_count,
-      run.start_time_utc,
-      run.car_name,
-    ] as const),
+    runState: params.runs.map(
+      (run) =>
+        [
+          run,
+          run.run_id,
+          run.status,
+          run.error_message,
+          run.sample_count,
+          run.start_time_utc,
+          run.car_name,
+        ] as const,
+    ),
     detailState: params.runs.map((run) => {
       const detail = params.runDetailsById[run.run_id] ?? EMPTY_RUN_DETAIL;
       return [
@@ -206,7 +247,10 @@ function buildHistoryRowsMemoKey(params: PresenterParams): HistoryRowsMemoKey {
   };
 }
 
-function shallowTupleListEqual<T extends readonly unknown[]>(left: T[], right: T[]): boolean {
+function shallowTupleListEqual<T extends readonly unknown[]>(
+  left: T[],
+  right: T[],
+): boolean {
   if (left.length !== right.length) {
     return false;
   }
@@ -225,18 +269,25 @@ function shallowTupleListEqual<T extends readonly unknown[]>(left: T[], right: T
   return true;
 }
 
-function sameHistoryRowsMemoKey(left: HistoryRowsMemoKey | null, right: HistoryRowsMemoKey): boolean {
-  return left !== null
-    && left.expandedRunId === right.expandedRunId
-    && left.t === right.t
-    && left.fmt === right.fmt
-    && left.fmtTs === right.fmtTs
-    && left.formatInt === right.formatInt
-    && shallowTupleListEqual(left.runState, right.runState)
-    && shallowTupleListEqual(left.detailState, right.detailState);
+function sameHistoryRowsMemoKey(
+  left: HistoryRowsMemoKey | null,
+  right: HistoryRowsMemoKey,
+): boolean {
+  return (
+    left !== null &&
+    left.expandedRunId === right.expandedRunId &&
+    left.t === right.t &&
+    left.fmt === right.fmt &&
+    left.fmtTs === right.fmtTs &&
+    left.formatInt === right.formatInt &&
+    shallowTupleListEqual(left.runState, right.runState) &&
+    shallowTupleListEqual(left.detailState, right.detailState)
+  );
 }
 
-export function createHistoryTableRowsMemo(): (params: PresenterParams) => HistoryRowViewModel[] {
+export function createHistoryTableRowsMemo(): (
+  params: PresenterParams,
+) => HistoryRowViewModel[] {
   let previousKey: HistoryRowsMemoKey | null = null;
   let previousRows: HistoryRowViewModel[] = [];
 
