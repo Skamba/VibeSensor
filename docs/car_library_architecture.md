@@ -111,6 +111,18 @@ rows.
 Rows marked `official_exact` must include a `source_id`; loader validation
 rejects exact-row data that breaks that rule.
 
+Issue #3234 expands loader validation beyond schema checks:
+
+- `apps/server/vibesensor/adapters/persistence/car_library_validation.py`
+  is the one owner for bundled car-data plausibility checks
+- the legacy `car_library.json` rows and resolved
+  `vehicle_configurations.json` rows both run through that validator before the
+  cached library snapshot is accepted
+- documented exceptions live in
+  `apps/server/vibesensor/data/car_library_validation_allowlist.json`, so
+  temporary carve-outs stay explicit and machine-readable instead of hiding in
+  scattered tests
+
 The confidence levels are the source data for future analysis-confidence
 policies:
 
