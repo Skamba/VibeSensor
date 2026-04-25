@@ -24,6 +24,11 @@ from vibesensor.domain import (
 )
 from vibesensor.shared._data_files import resolve_static_data_file
 
+from .car_library_validation import (
+    ensure_valid_car_library_rows,
+    ensure_valid_vehicle_configurations,
+)
+
 LOGGER = logging.getLogger(__name__)
 
 __all__ = [
@@ -188,13 +193,16 @@ def _load_library() -> list[CarLibraryEntry]:
     try:
         with _DATA_FILE.open(encoding="utf-8") as fh:
             data = json.load(fh)
-        return _CAR_LIBRARY_ADAPTER.validate_python(data)
+        rows = _CAR_LIBRARY_ADAPTER.validate_python(data)
+        ensure_valid_car_library_rows(rows)
+        return rows
     except (
         FileNotFoundError,
         json.JSONDecodeError,
         PermissionError,
         OSError,
         ValidationError,
+        ValueError,
     ) as exc:
         LOGGER.warning("Could not load car library from %s: %s", _DATA_FILE, exc)
         return []
@@ -546,7 +554,9 @@ def _load_vehicle_configurations_snapshot() -> list[VehicleConfiguration]:
         with _VEHICLE_CONFIG_DATA_FILE.open(encoding="utf-8") as fh:
             data = json.load(fh)
         rows = _VEHICLE_CONFIGURATION_ADAPTER.validate_python(data)
-        return [_configuration_from_row(row) for row in rows]
+        configs = [_configuration_from_row(row) for row in rows]
+        ensure_valid_vehicle_configurations(configs)
+        return configs
     except (
         FileNotFoundError,
         json.JSONDecodeError,
