@@ -76,6 +76,7 @@ def _car_order_reference_status_payload_from_mapping(
             selection_source_status,
         )
     for key in (
+        "tire_dimensions_confidence",
         "current_gear_ratio_confidence",
         "final_drive_ratio_confidence",
         "transmission_confidence",

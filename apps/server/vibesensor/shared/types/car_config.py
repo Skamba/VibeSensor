@@ -16,6 +16,7 @@ from vibesensor.shared.analysis_settings_schema import (
     ANALYSIS_SETTINGS_DEFAULTS,
     sanitize_analysis_settings,
 )
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.settings_types import (
     AnalysisSettingsPayload,
     analysis_settings_payload_from_mapping,
@@ -30,6 +31,8 @@ __all__ = [
     "CarOrderReferenceStatusPayload",
     "CarsSnapshot",
     "car_from_persistence_dict",
+    "car_order_reference_status_json_object_from_domain",
+    "car_order_reference_status_payload_from_domain",
     "car_order_reference_status_from_mapping",
     "car_to_persistence_dict",
     "new_car_id",
@@ -51,6 +54,7 @@ class CarOrderReferenceStatusPayload(TypedDict, total=False):
     """Persisted confidence metadata for selected drivetrain order-reference values."""
 
     selection_source_status: CarOrderReferenceSourceStatus
+    tire_dimensions_confidence: VehicleFieldConfidence
     final_drive_ratio_confidence: VehicleFieldConfidence
     current_gear_ratio_confidence: VehicleFieldConfidence
     transmission_name: str
@@ -119,7 +123,7 @@ def car_to_persistence_dict(car: Car) -> CarConfigPayload:
     if car.variant:
         payload["variant"] = car.variant
     if car.order_reference_status is not None:
-        payload["order_reference_status"] = _car_order_reference_status_payload(
+        payload["order_reference_status"] = car_order_reference_status_payload_from_domain(
             car.order_reference_status
         )
     return payload
@@ -133,6 +137,7 @@ def car_order_reference_status_from_mapping(
         selection_source_status = "manual_entry"
     return CarOrderReferenceStatus(
         selection_source_status=cast(CarOrderReferenceSourceStatus, selection_source_status),
+        tire_dimensions_confidence=_optional_confidence(payload.get("tire_dimensions_confidence")),
         final_drive_ratio_confidence=_optional_confidence(
             payload.get("final_drive_ratio_confidence")
         ),
@@ -144,13 +149,15 @@ def car_order_reference_status_from_mapping(
     )
 
 
-def _car_order_reference_status_payload(
+def car_order_reference_status_payload_from_domain(
     status: CarOrderReferenceStatus,
 ) -> CarOrderReferenceStatusPayload:
     payload: CarOrderReferenceStatusPayload = {
         "selection_source_status": status.selection_source_status,
         "requires_manual_confirmation": status.requires_manual_confirmation,
     }
+    if status.tire_dimensions_confidence is not None:
+        payload["tire_dimensions_confidence"] = status.tire_dimensions_confidence
     if status.final_drive_ratio_confidence is not None:
         payload["final_drive_ratio_confidence"] = status.final_drive_ratio_confidence
     if status.current_gear_ratio_confidence is not None:
@@ -160,6 +167,27 @@ def _car_order_reference_status_payload(
     if status.transmission_confidence is not None:
         payload["transmission_confidence"] = status.transmission_confidence
     return payload
+
+
+def car_order_reference_status_json_object_from_domain(
+    status: CarOrderReferenceStatus,
+) -> JsonObject:
+    payload = car_order_reference_status_payload_from_domain(status)
+    json_payload: JsonObject = {
+        "selection_source_status": payload["selection_source_status"],
+        "requires_manual_confirmation": payload["requires_manual_confirmation"],
+    }
+    if "tire_dimensions_confidence" in payload:
+        json_payload["tire_dimensions_confidence"] = payload["tire_dimensions_confidence"]
+    if "final_drive_ratio_confidence" in payload:
+        json_payload["final_drive_ratio_confidence"] = payload["final_drive_ratio_confidence"]
+    if "current_gear_ratio_confidence" in payload:
+        json_payload["current_gear_ratio_confidence"] = payload["current_gear_ratio_confidence"]
+    if "transmission_name" in payload:
+        json_payload["transmission_name"] = payload["transmission_name"]
+    if "transmission_confidence" in payload:
+        json_payload["transmission_confidence"] = payload["transmission_confidence"]
+    return json_payload
 
 
 def _text_or_default(value: object, *, default: str, max_length: int) -> str:

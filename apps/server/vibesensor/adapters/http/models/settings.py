@@ -70,6 +70,7 @@ class CarOrderReferenceStatus(BaseModel):
     """Confidence metadata for saved drivetrain order-reference values."""
 
     selection_source_status: Literal["compat_projection", "exact_row", "manual_entry"]
+    tire_dimensions_confidence: str | None = None
     final_drive_ratio_confidence: str | None = None
     current_gear_ratio_confidence: str | None = None
     transmission_name: str | None = None

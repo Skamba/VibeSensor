@@ -5,7 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import Literal
 
-from vibesensor.domain import AnalysisSettingsSnapshot, OrderReferenceSpec, Symptom
+from vibesensor.domain import (
+    AnalysisSettingsSnapshot,
+    CarOrderReferenceStatus,
+    OrderReferenceSpec,
+    Symptom,
+)
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 
 from .json_types import JsonObject
@@ -51,6 +56,7 @@ class RunCarMetadata:
     name: str | None = None
     car_type: str | None = None
     variant: str | None = None
+    order_reference_status: CarOrderReferenceStatus | None = None
 
 
 @dataclass(frozen=True, slots=True)

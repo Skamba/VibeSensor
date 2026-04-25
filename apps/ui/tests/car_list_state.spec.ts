@@ -39,6 +39,7 @@ const labels: Record<string, string> = {
   "settings.car.tires_missing": "Tire size not set",
   "settings.car.incomplete_detail": "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
   "settings.car.approximate_detail": "Approximate drivetrain ratios need review.",
+  "settings.car.confidence.part_tires": "Tires {value}",
   "settings.car.confidence.part_drive": "Drive {value}",
   "settings.car.confidence.part_gear": "Top gear {value}",
   "settings.car.confidence.part_transmission": "Transmission {value}",
@@ -60,6 +61,9 @@ const labels: Record<string, string> = {
 function t(key: string, vars?: Record<string, unknown>): string {
   if (key === "settings.car.created_body") {
     return `${vars?.name ?? "Unknown"} was added and selected for this setup.`;
+  }
+  if (key === "settings.car.confidence.part_tires") {
+    return `Tires ${vars?.value ?? ""}`.trim();
   }
   if (key === "settings.car.confidence.part_drive") {
     return `Drive ${vars?.value ?? ""}`.trim();
