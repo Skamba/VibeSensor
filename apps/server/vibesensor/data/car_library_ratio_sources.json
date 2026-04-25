@@ -1737,18 +1737,42 @@
     "BMW|X7 (G07, 2019-2026)": {
       "car_index": 33,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official BMW exact technical-data documents now confirm the G07 X7 M60i xDrive mapping for ACEA/DE markets: 8-speed Steptronic transmission, full forward ratios 5.501 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, final drive 3.385, standard 285/45 R21 tires, and optional staggered 275/40 R22 + 315/35 R22 or 275/35 R23 + 315/30 R23 fitments. The broad row remains verification backlog because the full G07 matrix outside the exact M60i xDrive mapping is still incomplete.",
       "unresolved": [
         {
-          "item": "BMW X7 (G07, 2019-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW X7 (G07, 2019-2026) full EU variant matrix beyond the exact M60i xDrive mapping",
+          "reason": "This pass resolved the exact M60i xDrive transmission, final drive, and tire fitments, but it did not establish the full official matrix for every other G07 variant represented by the broad row."
         },
         {
-          "item": "BMW X7 (G07, 2019-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "BMW X7 M60i xDrive public gearbox naming/subtype consistency",
+          "reason": "Official BMW sources align on the numeric ratio set, but public wording varies between '8-speed Steptronic transmission' and 'eight-speed Steptronic Sport transmission'."
         }
       ],
       "sources": {
+        "official_m60i_xdrive_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0378353EN/555263",
+            "note": "Official BMW PressClub specifications PDF for the exact X7 M60i xDrive (ACEA markets, Germany-relevant): 8-speed Steptronic transmission, forward ratios 5.501 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, reverse 4.543, final drive 3.385, and standard 285/45 R21 tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/de/neufahrzeuge/x/x7/bmw-x7-technische-daten.html",
+            "note": "Official BMW DE technical-data page confirming the exact M60i xDrive drivetrain, 8-speed automatic transmission, and Germany-market model continuity.",
+            "confidence": "high"
+          }
+        ],
+        "official_m60i_xdrive_tire_context": [
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmwx7.pdf.coredownload.pdf",
+            "note": "Official BMW DE price list confirming M60i xDrive standard 285/45 R21 tires plus optional staggered 275/40 R22 + 315/35 R22 and 275/35 R23 + 315/30 R23 fitments.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0378353EN/the-new-bmw-x7?language=en",
+            "note": "Official BMW PressClub launch article providing launch context for the X7 M60i xDrive, standard 21-inch M wheels, and optional larger staggered wheel packages.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -1981,18 +2005,42 @@
     "BMW|M4 (G82, 2021-2026)": {
       "car_index": 38,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official BMW exact technical-data sheets now confirm the G82 M4 Competition xDrive mapping: eight-speed M Steptronic transmission with Drivelogic, full forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.154, and staggered 275/35 ZR19 front + 285/30 ZR20 rear tires. The row remains verification backlog because the full G82 matrix and optional same-size track-tire coverage are still incomplete.",
       "unresolved": [
         {
-          "item": "BMW M4 (G82, 2021-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW M4 (G82, 2021-2026) full EU variant matrix beyond the exact M4 Competition xDrive mapping",
+          "reason": "This pass resolved the exact M4 Competition xDrive gearbox, full ratios, and standard staggered tires, but it did not establish the full official matrix for every other G82 variant represented by the broad row."
         },
         {
-          "item": "BMW M4 (G82, 2021-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "BMW M4 Competition xDrive optional track-tire coverage and public gearbox subtype code",
+          "reason": "Official BMW sources confirm the exact standard staggered tires and full ratio set, but they do not provide a cleaner public subtype code, and the same-size optional track-tire packages were not promoted into production data in this pass."
         }
       ],
       "sources": {
+        "official_m4_competition_xdrive_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329893EN/477740",
+            "note": "Official BMW PressClub 05/2021 technical-data PDF for the exact M4 Competition Coupé with M xDrive: eight-speed M Steptronic transmission with Drivelogic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.154, and staggered 275/35 ZR19 front + 285/30 ZR20 rear tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0439308EN/611692",
+            "note": "Official BMW PressClub 01/2024 technical-data PDF cross-check for the facelift-era exact M4 Competition Coupé with M xDrive with the same ratio set, reverse 3.478, final drive 3.154, and standard staggered 19/20-inch tires.",
+            "confidence": "high"
+          }
+        ],
+        "official_m4_competition_xdrive_tire_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0329893EN/the-new-bmw-m4-competition-coup%C3%A9-with-m-xdrive-the-new-bmw-m3-competition-sedan-with-m-xdrive?language=en",
+            "note": "Official BMW PressClub launch article confirming the exact M4 Competition Coupé with M xDrive, standard staggered 19/20-inch wheels, and optional track tires in the same dimensions.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/bmw_m4_coupu_cabrio_katalog_morz_2024-new.pdf.coredownload.inline.pdf",
+            "note": "Official BMW DE catalog confirming the exact M4 Competition xDrive gearbox naming and standard DE-market 275/35 ZR19 front + 285/30 ZR20 rear tire setup.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -2069,18 +2117,42 @@
     "BMW|iX (I20, 2022-2026)": {
       "car_index": 40,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official BMW Germany launch-era documentation now confirms the exact iX M60 DE mapping for drivetrain context, single-speed wording, and tire fitment: AWD, 1-speed transmission wording, standard 255/50 R21 tires, and optional 275/40 R22 wheels. The broad iX row remains unchanged because the exact M60 front/rear ratio values and numeric top-gear data were not resolved from exact official sources in this pass.",
       "unresolved": [
         {
-          "item": "BMW iX (I20, 2022-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW iX M60 exact front/rear overall ratios or final-drive ratio values",
+          "reason": "Exact official M60 sources checked in this pass confirmed drivetrain context and tire sizes, but they did not yield machine-readable exact front/rear or overall reduction ratios for the M60."
         },
         {
-          "item": "BMW iX (I20, 2022-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "BMW iX M60 numeric top-gear ratio and broad-row applicability across 2022-2026",
+          "reason": "Exact official M60 sources use single-speed wording rather than a numeric top-gear ratio, and this pass did not prove one exact EV ratio package across the broad 2022-2026 row."
         }
       ],
       "sources": {
+        "official_m60_exact_tire_context": [
+          {
+            "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_i20_DS.pdf",
+            "note": "Official BMW DE brochure/price list for the exact iX M60 confirming AWD, 1-speed transmission wording, standard 255/50 R21 tires, and optional 275/40 R22 fitment for the Germany-market launch-era configuration.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0348394DE/der-neue-bmw-ix-m60",
+            "note": "Official BMW Deutschland launch article confirming exact iX M60 context, AWD positioning, 250 km/h top speed, and optional 22-inch wheels.",
+            "confidence": "high"
+          }
+        ],
+        "official_m60_ratio_attempts": [
+          {
+            "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0348394DE/559002",
+            "note": "Official BMW Deutschland technical-data attachment for the exact iX M60 checked in this pass, but the ratio text was not recoverable for exact axle-ratio extraction.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0447642EN/630684",
+            "note": "Official BMW iX family technical-data attachment showing axle-ratio style fields for later family variants; retained only as context because it is not an exact M60 source.",
+            "confidence": "medium"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -3439,18 +3511,42 @@
     "Audi|RS 6 Avant (C8, 2020-2026)": {
       "car_index": 69,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official Audi Germany technical-data sheets now confirm the exact RS 6 Avant drivetrain mapping, full gear ratios, final drive 3.204, basic 275/35 R21 tires, and optional 285/30 R22 tires for 2023-2025 Germany-market documents. The broad row remains unchanged because this pass did not prove the same mapping across the full 2020-2026 span represented in production data.",
       "unresolved": [
         {
-          "item": "Audi RS 6 Avant (C8, 2020-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Audi RS 6 Avant exact production-data applicability across the full 2020-2026 row span",
+          "reason": "This pass found exact Germany-market proof for 2023-2025 documents, but it did not retrieve matching official launch-year and full-span documents that prove one unchanged ratio and tire package across the entire row."
         },
         {
-          "item": "Audi RS 6 Avant (C8, 2020-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi RS 6 Avant public gearbox-family naming beyond '8-speed tiptronic'",
+          "reason": "Official Audi exact sources confirm the transmission as 8-speed tiptronic but do not explicitly name the gearbox family as ZF 8HP."
         }
       ],
       "sources": {
+        "official_rs6_exact_ratios": [
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1184/file_en/6124caef9007249169df603b05d8cb70b2982f3f/eTD-Audi-RS6-Avant-TFSI-441kW_240613.pdf?1718380177&disposition=attachment",
+            "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact RS 6 Avant: quattro permanent AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and basic 275/35 R21 tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1184/file_en/6124caef9007249169df603b05d8cb70b2982f3f/eTD-Audi-RS6-Avant-TFSI_231027.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter 10/2023 Germany-market cross-check PDF for the exact RS 6 Avant with the same full ratio set, final drive 3.204, and top gear 0.667.",
+            "confidence": "high"
+          }
+        ],
+        "official_rs6_tire_context": [
+          {
+            "url": "https://www.audi-mediacenter.com/system/production/uploaded_files/23921/file/fcdafb26ca0c8d5e8cab9bfc4c98d65a5df608c8/230607_BI_RS_6_Avant_EN.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter information PDF confirming RS 6 Avant standard 21-inch tires and optional 22-inch tires for the Germany-market car.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2025/preislisten/preisliste_rs-6-avant_rs-6-avant-performance.pdf",
+            "note": "Official Audi DE price list confirming 10.5Jx21 with 275/35 R21 and 10.5Jx22 with 285/30 R22 as the exact RS 6 Avant orderable wheel and tire fitments.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",
@@ -3488,18 +3584,42 @@
     "Audi|RS 7 Sportback (C8, 2020-2026)": {
       "car_index": 70,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Official Audi Germany technical-data sheets now confirm the exact RS 7 Sportback drivetrain mapping, full gear ratios, final drive 3.204, and standard 275/35 R21 tires from launch-era 2020 and later 2024 Germany-market documents. The broad row remains unchanged because exact official proof for the base RS 7 22-inch option and safe mapping across the full 2020-2026 span is still incomplete.",
       "unresolved": [
         {
-          "item": "Audi RS 7 Sportback (C8, 2020-2026) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "Audi RS 7 Sportback exact 22-inch base-variant tire-option proof",
+          "reason": "Checked official Audi family and supplier sources point to 285/30 R22, but this pass did not retrieve a base-RS7 Germany-market technical-data sheet that explicitly lists the optional 22-inch size."
         },
         {
-          "item": "Audi RS 7 Sportback (C8, 2020-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi RS 7 Sportback production-data applicability across the full 2020-2026 row span",
+          "reason": "This pass found matching launch-era 2020 and later 2024 Germany-market ratio documents, but the current Audi MediaCenter model hub labels the model family through 2025, so the repo's full 2020-2026 span still is not fully closed."
         }
       ],
       "sources": {
+        "official_rs7_exact_ratios": [
+          {
+            "url": "https://www.borgmann-krefeld.de/fileadmin/audi/audi-borgmann-Audi-RS7-Sportback-Technische-Daten.pdf",
+            "note": "Official Audi Germany technical-data PDF for the exact RS 7 Sportback dated 16.11.2020: quattro permanent AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and basic 275/35 R21 tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1185/file_en/8e06a44da501d26d1aa26806c124c1e4b90d507f/eTD-Audi-RS7-Sportback-TFSI-441kW_240613.pdf?1718375697",
+            "note": "Official Audi MediaCenter Germany-market technical-data PDF cross-check for the exact RS 7 Sportback with the same ratio set, final drive 3.204, top gear 0.667, and basic 275/35 ZR21 tires.",
+            "confidence": "high"
+          }
+        ],
+        "official_rs7_tire_context": [
+          {
+            "url": "https://www.audi-mediacenter.com/en/high-performance-at-its-most-beautiful-the-audi-rs-7-sportback-and-the-rs-7-sportback-performance-12082/dynamic-power-meets-expressive-design-the-rs-7-sportback-performance-12083",
+            "note": "Official Audi MediaCenter family article confirming standard 21-inch tires and 22-inch family wheel context for the RS 7 Sportback range.",
+            "confidence": "medium"
+          },
+          {
+            "url": "https://www.hankooktire.com/us/en/company/media-center/media-detail.68069.html",
+            "note": "OE supplier press release cross-check for RS 7 Sportback fitments showing 275/35 ZR21 standard and 285/30 R22 optional or winter-related sizes.",
+            "confidence": "medium"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",
