@@ -40,6 +40,30 @@
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 40.0,
     "rim_in": 18.0,
+    "field_provenance": [
+      {
+        "field_name": "final_drive_rear",
+        "confidence": "unverified",
+        "notes": "Current exact row still carries the inherited 2.813 rear final-drive value until an official G22 ratio document is linked."
+      },
+      {
+        "field_name": "top_gear_ratio",
+        "confidence": "unverified",
+        "notes": "Current exact row keeps the inherited ZF 8HP top-gear value until a G22-specific official table is linked."
+      },
+      {
+        "field_name": "drivetrain",
+        "source_id": "variant_sources:BMW|4 Series (G22, 2021-2026):420i",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW market variant table confirms the 420i as the RWD petrol row in the supported G22 slice."
+      },
+      {
+        "field_name": "tire_dimensions",
+        "confidence": "family_default",
+        "notes": "Tire option dimensions still follow the supported G22 family defaults until per-variant wheel sheets are captured."
+      }
+    ],
     "source_status": "exact_row"
   },
   {
@@ -83,6 +107,34 @@
     "tire_width_mm": 205.0,
     "tire_aspect_pct": 55.0,
     "rim_in": 17.0,
+    "field_provenance": [
+      {
+        "field_name": "final_drive_front",
+        "source_id": "ratio_sources:BMW|2 Series Active Tourer (F45, 2014-2021):issue_1034_220i_ratio_reference",
+        "confidence": "reputable_secondary_crosschecked",
+        "verified_at": "2026-04-25",
+        "notes": "Numeric 220i DCT final-drive ratio uses the cross-checked secondary references captured during issue #1034."
+      },
+      {
+        "field_name": "top_gear_ratio",
+        "source_id": "ratio_sources:BMW|2 Series Active Tourer (F45, 2014-2021):issue_1034_220i_ratio_reference",
+        "confidence": "reputable_secondary_crosschecked",
+        "verified_at": "2026-04-25",
+        "notes": "Top-gear ratio follows the same cross-checked 220i DCT reference pair."
+      },
+      {
+        "field_name": "drivetrain",
+        "source_id": "variant_sources:BMW|2 Series Active Tourer (F45, 2014-2021):220i",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW variant table confirms the F45 220i as a FWD row."
+      },
+      {
+        "field_name": "tire_dimensions",
+        "confidence": "family_default",
+        "notes": "Tire option dimensions still follow the supported F45 family defaults until per-variant wheel sheets are captured."
+      }
+    ],
     "source_status": "exact_row"
   },
   {
@@ -126,6 +178,34 @@
     "tire_width_mm": 205.0,
     "tire_aspect_pct": 55.0,
     "rim_in": 17.0,
+    "field_provenance": [
+      {
+        "field_name": "final_drive_front",
+        "source_id": "ratio_sources:BMW|2 Series Active Tourer (F45, 2014-2021):225xe_drivetrain_and_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW 225xe technical data attachment confirms the front-axle transmission ratio pair."
+      },
+      {
+        "field_name": "top_gear_ratio",
+        "source_id": "ratio_sources:BMW|2 Series Active Tourer (F45, 2014-2021):225xe_drivetrain_and_ratios",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW 225xe technical data attachment confirms the 0.672 top-gear ratio."
+      },
+      {
+        "field_name": "drivetrain",
+        "source_id": "variant_sources:BMW|2 Series Active Tourer (F45, 2014-2021):225xe",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW variant table confirms the 225xe AWD drivetrain layout."
+      },
+      {
+        "field_name": "tire_dimensions",
+        "confidence": "family_default",
+        "notes": "Tire option dimensions still follow the supported F45 family defaults until per-variant wheel sheets are captured."
+      }
+    ],
     "source_status": "exact_row"
   },
   {
@@ -171,6 +251,39 @@
     "tire_width_mm": 225.0,
     "tire_aspect_pct": 40.0,
     "rim_in": 18.0,
+    "field_provenance": [
+      {
+        "field_name": "final_drive_front",
+        "source_id": "ratio_sources:BMW|3 Series (G20, 2019-2025):official_xdrive_ratio_verification",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data confirms the xDrive front final-drive ratio at 2.813."
+      },
+      {
+        "field_name": "final_drive_rear",
+        "source_id": "ratio_sources:BMW|3 Series (G20, 2019-2025):official_xdrive_ratio_verification",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data confirms the xDrive rear final-drive ratio at 2.813."
+      },
+      {
+        "field_name": "top_gear_ratio",
+        "confidence": "family_default",
+        "notes": "The current 0.667 top-gear value still follows the ZF 8HP family default until a retrievable variant-specific G20 gear-ratio table is linked."
+      },
+      {
+        "field_name": "drivetrain",
+        "source_id": "variant_sources:BMW|3 Series (G20, 2019-2025):330i xDrive",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW variant table confirms the 330i xDrive AWD drivetrain."
+      },
+      {
+        "field_name": "tire_dimensions",
+        "confidence": "family_default",
+        "notes": "Tire option dimensions still follow the supported G20 family defaults until per-variant wheel sheets are captured."
+      }
+    ],
     "source_status": "exact_row"
   },
   {
@@ -217,6 +330,41 @@
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 40.0,
     "rim_in": 19.0,
+    "field_provenance": [
+      {
+        "field_name": "final_drive_rear",
+        "source_id": "ratio_sources:BMW|5 Series (G60, 2024-2026):ev_layout_confirmed_ratio_mapping_unresolved",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW technical data PDF lists the i5 eDrive40 overall reduction ratio at 11.115."
+      },
+      {
+        "field_name": "top_gear_ratio",
+        "source_id": "ratio_sources:BMW|5 Series (G60, 2024-2026):ev_layout_confirmed_ratio_mapping_unresolved",
+        "confidence": "official_derived",
+        "verified_at": "2026-04-25",
+        "notes": "Single-speed EV transmission implies a fixed top-gear ratio of 1.0 from the official overall reduction note."
+      },
+      {
+        "field_name": "gear_ratios",
+        "source_id": "ratio_sources:BMW|5 Series (G60, 2024-2026):ev_layout_confirmed_ratio_mapping_unresolved",
+        "confidence": "official_derived",
+        "verified_at": "2026-04-25",
+        "notes": "Single-speed EV transmission projects to a one-entry gear ratio list `[1.0]`."
+      },
+      {
+        "field_name": "drivetrain",
+        "source_id": "variant_sources:BMW|5 Series (G60, 2024-2026):i5 eDrive40",
+        "confidence": "official_exact",
+        "verified_at": "2026-04-25",
+        "notes": "Official BMW variant table confirms the i5 eDrive40 as the RWD BEV row."
+      },
+      {
+        "field_name": "tire_dimensions",
+        "confidence": "family_default",
+        "notes": "Tire option dimensions still follow the supported G60 family defaults until per-variant wheel sheets are captured."
+      }
+    ],
     "source_status": "exact_row"
   }
 ]

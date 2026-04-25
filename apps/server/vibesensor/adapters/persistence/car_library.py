@@ -14,7 +14,12 @@ from typing import Any, Literal, NotRequired, TypedDict, cast
 
 from pydantic import ConfigDict, TypeAdapter, ValidationError
 
-from vibesensor.domain import TireSpec, VehicleConfiguration, VehicleConfigurationTireOption
+from vibesensor.domain import (
+    TireSpec,
+    VehicleConfiguration,
+    VehicleConfigurationTireOption,
+    VehicleFieldProvenance,
+)
 from vibesensor.shared._data_files import resolve_static_data_file
 
 LOGGER = logging.getLogger(__name__)
@@ -100,6 +105,29 @@ class VehicleConfigurationRow(TypedDict):
     tire_aspect_pct: float
     rim_in: float
     source_status: Literal["exact_row"]
+    field_provenance: NotRequired[list[VehicleConfigurationFieldProvenanceRow]]
+
+
+class VehicleConfigurationFieldProvenanceRow(TypedDict):
+    field_name: Literal[
+        "final_drive_front",
+        "final_drive_rear",
+        "top_gear_ratio",
+        "gear_ratios",
+        "drivetrain",
+        "tire_dimensions",
+    ]
+    confidence: Literal[
+        "official_exact",
+        "official_derived",
+        "reputable_secondary_crosschecked",
+        "family_default",
+        "unverified",
+        "user_confirmed",
+    ]
+    source_id: NotRequired[str]
+    verified_at: NotRequired[str]
+    notes: NotRequired[str]
 
 
 for _typed_dict in (
@@ -108,6 +136,7 @@ for _typed_dict in (
     CarLibraryVariant,
     CarLibraryEntry,
     VehicleConfigurationRow,
+    VehicleConfigurationFieldProvenanceRow,
 ):
     cast(Any, _typed_dict).__pydantic_config__ = _STRICT_TYPEDDICT_CONFIG
 
@@ -188,7 +217,7 @@ def _tire_options_from_rows(
 
 
 def _configuration_from_row(row: VehicleConfigurationRow) -> VehicleConfiguration:
-    return VehicleConfiguration(
+    config = VehicleConfiguration(
         brand=row["brand"],
         car_type=row["type"],
         market=row["market"],
@@ -216,7 +245,41 @@ def _configuration_from_row(row: VehicleConfigurationRow) -> VehicleConfiguratio
             rim_in=row["rim_in"],
         ),
         source_status=row["source_status"],
+        field_provenance=_field_provenance_from_rows(row.get("field_provenance", [])),
     )
+    _validate_field_provenance(config)
+    return config
+
+
+def _field_provenance_from_rows(
+    rows: list[VehicleConfigurationFieldProvenanceRow],
+) -> tuple[VehicleFieldProvenance, ...]:
+    return tuple(
+        VehicleFieldProvenance(
+            field_name=row["field_name"],
+            confidence=row["confidence"],
+            source_id=row.get("source_id"),
+            verified_at=row.get("verified_at"),
+            notes=row.get("notes"),
+        )
+        for row in rows
+    )
+
+
+def _validate_field_provenance(config: VehicleConfiguration) -> None:
+    seen: set[str] = set()
+    for entry in config.field_provenance:
+        if entry.field_name in seen:
+            raise ValueError(
+                f"Duplicate field provenance {entry.field_name!r} for "
+                f"{config.brand} {config.model_name} / {config.variant_name}"
+            )
+        seen.add(entry.field_name)
+        if entry.requires_source_id and not entry.source_id:
+            raise ValueError(
+                f"{config.brand} {config.model_name} / {config.variant_name} "
+                f"marks {entry.field_name} as official_exact without a source_id"
+            )
 
 
 def _fuel_type_from_engine_name(engine_name: str | None) -> Literal["ICE", "PHEV", "EV"]:

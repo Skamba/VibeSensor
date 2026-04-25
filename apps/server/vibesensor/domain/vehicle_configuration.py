@@ -8,6 +8,9 @@ from typing import Literal
 from .tire_spec import TireSpec
 
 __all__ = [
+    "VehicleConfigurationField",
+    "VehicleFieldConfidence",
+    "VehicleFieldProvenance",
     "VehicleConfiguration",
     "VehicleConfigurationTireOption",
     "VehicleConfigurationSourceStatus",
@@ -18,6 +21,22 @@ __all__ = [
 VehicleFuelType = Literal["ICE", "PHEV", "EV"]
 VehicleDrivetrain = Literal["FWD", "RWD", "AWD"]
 VehicleConfigurationSourceStatus = Literal["exact_row", "compat_projection"]
+VehicleFieldConfidence = Literal[
+    "official_exact",
+    "official_derived",
+    "reputable_secondary_crosschecked",
+    "family_default",
+    "unverified",
+    "user_confirmed",
+]
+VehicleConfigurationField = Literal[
+    "final_drive_front",
+    "final_drive_rear",
+    "top_gear_ratio",
+    "gear_ratios",
+    "drivetrain",
+    "tire_dimensions",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +45,23 @@ class VehicleConfigurationTireOption:
 
     name: str
     spec: TireSpec
+
+
+@dataclass(frozen=True, slots=True)
+class VehicleFieldProvenance:
+    """Machine-readable source and confidence metadata for one config field."""
+
+    field_name: VehicleConfigurationField
+    confidence: VehicleFieldConfidence
+    source_id: str | None = None
+    verified_at: str | None = None
+    notes: str | None = None
+
+    @property
+    def requires_source_id(self) -> bool:
+        """Whether this provenance entry must include a source identifier."""
+
+        return self.confidence == "official_exact"
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +91,7 @@ class VehicleConfiguration:
     final_drive_rear: float | None = None
     transfer_case_ratio: float | None = None
     source_status: VehicleConfigurationSourceStatus = "exact_row"
+    field_provenance: tuple[VehicleFieldProvenance, ...] = ()
 
     @property
     def driven_final_drive_ratio(self) -> float | None:
@@ -67,3 +104,14 @@ class VehicleConfiguration:
         if self.final_drive_rear is not None:
             return self.final_drive_rear
         return self.final_drive_front
+
+    def provenance_for(
+        self,
+        field_name: VehicleConfigurationField,
+    ) -> VehicleFieldProvenance | None:
+        """Return provenance metadata for *field_name* when present."""
+
+        for entry in self.field_provenance:
+            if entry.field_name == field_name:
+                return entry
+        return None
