@@ -176,6 +176,15 @@ function formatRatioValue(
   return params.fmt(value, 2);
 }
 
+function carApproximationDetail(
+  car: CarRecord,
+  t: SettingsCarListViewParams["t"],
+): string | null {
+  return car.order_reference_status?.requires_manual_confirmation
+    ? t("settings.car.approximate_detail")
+    : null;
+}
+
 function buildPrimaryAction(options: {
     isActive: boolean;
     isComplete: boolean;
@@ -270,7 +279,7 @@ export function buildSettingsCarListRenderModel(
         ),
         carId: car.id,
         completionDetailText: isComplete
-          ? null
+          ? carApproximationDetail(car, t)
           : t("settings.car.incomplete_detail"),
         deleteLabelText: t("settings.car.delete"),
         displayName: car.name,

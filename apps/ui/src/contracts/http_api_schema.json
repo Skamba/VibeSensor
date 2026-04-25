@@ -903,6 +903,17 @@
             "title": "Final Drive Ratio",
             "type": "number"
           },
+          "final_drive_ratio_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Drive Ratio Confidence"
+          },
           "gear_ratios": {
             "anyOf": [
               {
@@ -918,15 +929,74 @@
             ],
             "title": "Gear Ratios"
           },
+          "gear_ratios_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gear Ratios Confidence"
+          },
           "name": {
             "minLength": 1,
             "title": "Name",
             "type": "string"
           },
+          "requires_manual_confirmation": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requires Manual Confirmation"
+          },
+          "source_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "compat_projection",
+                  "exact_row"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Status"
+          },
           "top_gear_ratio": {
             "exclusiveMinimum": 0.0,
             "title": "Top Gear Ratio",
             "type": "number"
+          },
+          "top_gear_ratio_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Gear Ratio Confidence"
+          },
+          "transmission_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transmission Confidence"
           }
         },
         "required": [
@@ -1174,6 +1244,74 @@
         "title": "CarLibraryVariantEntry",
         "type": "object"
       },
+      "CarOrderReferenceStatus": {
+        "description": "Confidence metadata for saved drivetrain order-reference values.",
+        "properties": {
+          "current_gear_ratio_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Gear Ratio Confidence"
+          },
+          "final_drive_ratio_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Drive Ratio Confidence"
+          },
+          "requires_manual_confirmation": {
+            "title": "Requires Manual Confirmation",
+            "type": "boolean"
+          },
+          "selection_source_status": {
+            "enum": [
+              "compat_projection",
+              "exact_row",
+              "manual_entry"
+            ],
+            "title": "Selection Source Status",
+            "type": "string"
+          },
+          "transmission_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transmission Confidence"
+          },
+          "transmission_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transmission Name"
+          }
+        },
+        "required": [
+          "selection_source_status",
+          "requires_manual_confirmation"
+        ],
+        "title": "CarOrderReferenceStatus",
+        "type": "object"
+      },
       "CarResponse": {
         "description": "Response body representing a single car profile.",
         "properties": {
@@ -1187,6 +1325,16 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "order_reference_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CarOrderReferenceStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "type": {
             "title": "Type",
@@ -1238,6 +1386,16 @@
               }
             ],
             "title": "Name"
+          },
+          "order_reference_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CarOrderReferenceStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "type": {
             "anyOf": [

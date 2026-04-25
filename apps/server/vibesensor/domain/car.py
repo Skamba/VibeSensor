@@ -13,6 +13,7 @@ import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
+from typing import Literal
 
 from vibesensor.domain._order_reference_helpers import (
     normalize_order_reference_mapping,
@@ -21,13 +22,62 @@ from vibesensor.domain._order_reference_helpers import (
 )
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.domain.tire_spec import TireSpec
+from vibesensor.domain.vehicle_configuration import VehicleFieldConfidence
 
 __all__ = [
     "Car",
+    "CarOrderReferenceStatus",
+    "CarOrderReferenceSourceStatus",
     "CarSnapshot",
     "OrderReferenceSpec",
     "TireSpec",
 ]
+
+CarOrderReferenceSourceStatus = Literal["compat_projection", "exact_row", "manual_entry"]
+
+
+@dataclass(frozen=True, slots=True)
+class CarOrderReferenceStatus:
+    """Persisted confidence metadata for selected drivetrain order-reference values."""
+
+    selection_source_status: CarOrderReferenceSourceStatus
+    final_drive_ratio_confidence: VehicleFieldConfidence | None = None
+    current_gear_ratio_confidence: VehicleFieldConfidence | None = None
+    transmission_name: str | None = None
+    transmission_confidence: VehicleFieldConfidence | None = None
+
+    @property
+    def requires_manual_confirmation(self) -> bool:
+        """Whether one selected drivetrain field should be confirmed manually."""
+
+        return any(
+            confidence in {"family_default", "unverified"}
+            for confidence in (
+                self.final_drive_ratio_confidence,
+                self.current_gear_ratio_confidence,
+                self.transmission_confidence,
+            )
+        )
+
+    def with_user_confirmed_fields(
+        self,
+        *,
+        current_gear_ratio: bool = False,
+        final_drive_ratio: bool = False,
+    ) -> CarOrderReferenceStatus:
+        """Return a copy with the selected order-reference fields user-confirmed."""
+
+        return CarOrderReferenceStatus(
+            selection_source_status=self.selection_source_status,
+            final_drive_ratio_confidence=(
+                "user_confirmed" if final_drive_ratio else self.final_drive_ratio_confidence
+            ),
+            current_gear_ratio_confidence=(
+                "user_confirmed" if current_gear_ratio else self.current_gear_ratio_confidence
+            ),
+            transmission_name=self.transmission_name,
+            transmission_confidence=self.transmission_confidence,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -48,6 +98,7 @@ class CarSnapshot:
     car_type: str | None = None
     variant: str | None = None
     aspects: Mapping[str, float] = field(default_factory=dict)
+    order_reference_status: CarOrderReferenceStatus | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.aspects, MappingProxyType):
@@ -66,6 +117,7 @@ class Car:
     name: str = "Unnamed Car"
     car_type: str = "sedan"
     variant: str | None = None
+    order_reference_status: CarOrderReferenceStatus | None = None
     order_reference_spec: OrderReferenceSpec | None = field(default=None, repr=False)
     _aspects: Mapping[str, float] = field(
         init=False,
@@ -80,12 +132,14 @@ class Car:
         car_type: str = "sedan",
         aspects: Mapping[str, float] | None = None,
         variant: str | None = None,
+        order_reference_status: CarOrderReferenceStatus | None = None,
         order_reference_spec: OrderReferenceSpec | None = None,
     ) -> None:
         object.__setattr__(self, "id", id or uuid.uuid4().hex)
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "car_type", car_type)
         object.__setattr__(self, "variant", variant)
+        object.__setattr__(self, "order_reference_status", order_reference_status)
         object.__setattr__(self, "order_reference_spec", order_reference_spec)
         object.__setattr__(self, "_aspects", MappingProxyType({}))
         self._normalize_order_reference_state(aspects)

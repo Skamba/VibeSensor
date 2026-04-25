@@ -325,6 +325,14 @@ test("settings cars module creates and activates wizard cars through the shared 
       final_drive_ratio: 9.1,
       current_gear_ratio: 0.71,
     },
+    {
+      selection_source_status: "compat_projection",
+      final_drive_ratio_confidence: "family_default",
+      current_gear_ratio_confidence: "family_default",
+      transmission_name: "Single-speed fixed gear",
+      transmission_confidence: "family_default",
+      requires_manual_confirmation: true,
+    },
     "Twin Motor",
   );
 
@@ -338,6 +346,14 @@ test("settings cars module creates and activates wizard cars through the shared 
         tire_width_mm: 235,
       }),
       name: "Volvo XC40 Recharge",
+      order_reference_status: {
+        current_gear_ratio_confidence: "family_default",
+        final_drive_ratio_confidence: "family_default",
+        requires_manual_confirmation: true,
+        selection_source_status: "compat_projection",
+        transmission_confidence: "family_default",
+        transmission_name: "Single-speed fixed gear",
+      },
       type: "SUV",
       variant: "Twin Motor",
     },

@@ -37,7 +37,7 @@ RunSuitability
 from ._numeric import coerce_float, coerce_int
 from .analysis_settings import AnalysisSettingsSnapshot
 from .capture_readiness import CaptureReadiness, CaptureReadinessCheck, CaptureReadinessPolicy
-from .car import Car, CarSnapshot
+from .car import Car, CarOrderReferenceSourceStatus, CarOrderReferenceStatus, CarSnapshot
 from .confidence_assessment import ConfidenceAssessment
 from .diagnosis_assessment import (
     DIAGNOSIS_AMBIGUOUS_SCORE_GAP,
@@ -93,6 +93,8 @@ from .vibration_origin import VibrationOrigin
 __all__ = [
     # Aggregates and entities
     "Car",
+    "CarOrderReferenceSourceStatus",
+    "CarOrderReferenceStatus",
     "CaptureReadiness",
     "CaptureReadinessCheck",
     "CaptureReadinessPolicy",
