@@ -417,19 +417,21 @@ def _check_recording_flow_uses_flush_and_persistence_writer() -> list[str]:
     persistence_writer_path = (
         VIBESENSOR_DIR / "use_cases" / "run" / "persistence_writer.py"
     )
+    finalize_stages_path = VIBESENSOR_DIR / "use_cases" / "run" / "finalize_stages.py"
     logger_source = _read_text(logger_path)
     sample_flush_source = _read_text(sample_flush_path)
     persistence_writer_source = _read_text(persistence_writer_path)
+    finalize_stages_source = _read_text(finalize_stages_path)
     failures: list[str] = []
     required_logger_markers = (
-        "from vibesensor.use_cases.run.sample_flush import SampleFlushOrchestrator",
-        "self._sample_flush.append_records(",
-        "self._persistence.ready_for_analysis(",
+        "from vibesensor.use_cases.run.finalize_stages import",
+        "def _finalize_active_run_locked(self, *, reason: str) -> ActiveRunFinalizeResult:",
+        "return finalize_active_run(",
     )
     for marker in required_logger_markers:
         if marker not in logger_source:
             failures.append(
-                f"{logger_path.relative_to(REPO_ROOT)} must keep the recording flow routed through sample_flush/persistence_writer ({marker})"
+                f"{logger_path.relative_to(REPO_ROOT)} must route recording finalization through the dedicated finalize helper ({marker})"
             )
     required_sample_flush_markers = (
         "from vibesensor.use_cases.run.persistence_writer import RunPersistenceWriter",
@@ -444,6 +446,16 @@ def _check_recording_flow_uses_flush_and_persistence_writer() -> list[str]:
         failures.append(
             f"{sample_flush_path.relative_to(REPO_ROOT)} must stay adapter-free; persistence_writer owns the history DB boundary"
         )
+    required_finalize_stage_markers = (
+        "sample_flush.append_records(",
+        "persistence.ready_for_analysis(run_id)",
+        "persistence.finalize_run(",
+    )
+    for marker in required_finalize_stage_markers:
+        if marker not in finalize_stages_source:
+            failures.append(
+                f"{finalize_stages_path.relative_to(REPO_ROOT)} must own the recorder finalize stages ({marker})"
+            )
     required_writer_markers = (
         "def ensure_history_run(",
         "history_db.aappend_samples(run_id, rows)",
