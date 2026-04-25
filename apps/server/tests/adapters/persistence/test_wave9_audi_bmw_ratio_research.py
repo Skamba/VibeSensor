@@ -112,7 +112,7 @@ def test_wave9_ratio_source_rows_capture_g22_g01_g02_q3_context() -> None:
         sources[g22_key],
         [
             {
-                "item": "Whether this row should later expand beyond the petrol-family slice",
+                "item": "Whether this row should later expand beyond the supported petrol-family slice",
                 "reason": (
                     "BMW Germany technical data confirms additional diesel xDrive "
                     "variants, but issue #1034 stays narrowly focused on the "
