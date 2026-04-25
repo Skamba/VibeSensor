@@ -463,7 +463,17 @@
           {
             "name": "8-speed automatic (ZF 8HP)",
             "final_drive_ratio": 2.813,
-            "top_gear_ratio": 0.667
+            "top_gear_ratio": 0.64,
+            "gear_ratios": [
+              5.25,
+              3.36,
+              2.172,
+              1.72,
+              1.316,
+              1.0,
+              0.822,
+              0.64
+            ]
           }
         ]
       },
