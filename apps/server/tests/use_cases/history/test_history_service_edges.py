@@ -84,6 +84,14 @@ def _stored_run(run: dict[str, Any]) -> StoredHistoryRun:
     [
         (
             {
+                "status": "recording",
+                "analysis": None,
+            },
+            "active",
+            "Analysis is not available while recording is still active",
+        ),
+        (
+            {
                 "status": "analyzing",
                 "analysis": {"lang": "en", "findings": []},
             },
