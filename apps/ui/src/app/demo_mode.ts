@@ -1,3 +1,4 @@
+import { defaultLiveAnalysisConfig } from "../constants";
 import { EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION } from "../transport/live_models";
 import { composeVehicleSettings, type AppState } from "./ui_app_state";
 import { batch } from "./ui_signals";
@@ -15,6 +16,8 @@ declare global {
 
 export function runDemoMode(deps: DemoDeps): void {
   const { state } = deps;
+  const demoSampleRateHz = defaultLiveAnalysisConfig.sampleRateHz;
+  const spectrumMaxHz = defaultLiveAnalysisConfig.spectrumMaxHz;
 
   const demoClients = [
     {
@@ -28,7 +31,7 @@ export function runDemoMode(deps: DemoDeps): void {
       frame_samples: 200,
       location_code: "front_left_wheel",
       firmware_version: "demo-1.0.0",
-      sample_rate_hz: 800,
+      sample_rate_hz: demoSampleRateHz,
     },
     {
       id: "aabbcc001133",
@@ -41,7 +44,7 @@ export function runDemoMode(deps: DemoDeps): void {
       frame_samples: 200,
       location_code: "front_right_wheel",
       firmware_version: "demo-1.0.0",
-      sample_rate_hz: 800,
+      sample_rate_hz: demoSampleRateHz,
     },
     {
       id: "aabbcc001144",
@@ -54,7 +57,7 @@ export function runDemoMode(deps: DemoDeps): void {
       frame_samples: 200,
       location_code: "rear_left_wheel",
       firmware_version: "demo-1.0.0",
-      sample_rate_hz: 800,
+      sample_rate_hz: demoSampleRateHz,
     },
     {
       id: "aabbcc001155",
@@ -67,7 +70,7 @@ export function runDemoMode(deps: DemoDeps): void {
       frame_samples: 200,
       location_code: "rear_right_wheel",
       firmware_version: "demo-1.0.0",
-      sample_rate_hz: 800,
+      sample_rate_hz: demoSampleRateHz,
     },
     {
       id: "aabbcc001166",
@@ -80,12 +83,12 @@ export function runDemoMode(deps: DemoDeps): void {
       frame_samples: 200,
       location_code: "engine_bay",
       firmware_version: "demo-1.0.0",
-      sample_rate_hz: 800,
+      sample_rate_hz: demoSampleRateHz,
     },
   ];
 
   const freqCount = 256;
-  const freqArr = Array.from({ length: freqCount }, (_, i) => (i / freqCount) * 250);
+  const freqArr = Array.from({ length: freqCount }, (_, i) => (i / freqCount) * spectrumMaxHz);
 
   function sineSpectrum(baseAmps: number[], peakHz: number, peakAmp: number): number[] {
     return freqArr.map((hz, i) => {

@@ -3,35 +3,45 @@
 from __future__ import annotations
 
 import re
+import subprocess
+import sys
 
 from tests._paths import REPO_ROOT
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
 _UI_APP_STATE_TS = REPO_ROOT / "apps" / "ui" / "src" / "app" / "ui_app_state.ts"
+_GENERATOR = REPO_ROOT / "tools" / "config" / "generate_ui_shared_constants.py"
 
 
-def _parse_ts_numeric_block(name: str, type_name: str) -> dict[str, float]:
-    """Extract a numeric object literal block from ui_app_state.ts."""
-    text = _UI_APP_STATE_TS.read_text()
+def _generated_constants_ts() -> str:
+    result = subprocess.run(
+        [sys.executable, str(_GENERATOR)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout
+
+
+def _parse_generated_numeric_export(name: str) -> dict[str, float]:
+    """Extract a numeric object literal export from generated constants output."""
+    text = _generated_constants_ts()
     match = re.search(
-        rf"{name}:\s*Readonly<{type_name}>\s*=\s*\{{([^}}]+)\}}",
+        rf"export const {name}\s*=\s*\{{([^}}]+)\}} as const;",
         text,
         re.DOTALL,
     )
-    assert match, f"Could not find {name} block in ui_app_state.ts"
+    assert match, f"Could not find {name} export in generated constants output"
     block = match.group(1)
     pairs: dict[str, float] = {}
-    for line_match in re.finditer(r"(\w+):\s*([0-9.]+)", block):
+    for line_match in re.finditer(r'"?(\w+)"?:\s*([0-9.]+)', block):
         pairs[line_match.group(1)] = float(line_match.group(2))
     return pairs
 
 
 def _parse_ui_vehicle_defaults() -> dict[str, float]:
-    """Extract the composed vehicle defaults from ui_app_state.ts."""
-    return {
-        **_parse_ts_numeric_block("defaultCarAspectSettings", "CarAspectSettings"),
-        **_parse_ts_numeric_block("defaultAnalysisTuningSettings", "AnalysisTuningSettings"),
-    }
+    """Extract the generated backend-owned vehicle defaults from constants.ts."""
+    return _parse_generated_numeric_export("defaultAnalysisSettings")
 
 
 def _parse_ts_string_array(name: str) -> list[str]:
