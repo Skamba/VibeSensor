@@ -35,6 +35,10 @@ from vibesensor.shared.types.run_schema import RunRawCaptureFinalize, RunSensorM
 from vibesensor.shared.types.sensor_config import SensorConfigPayload
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
 from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
+from vibesensor.use_cases.run.finalize_stages import (
+    ActiveRunFinalizeResult,
+    finalize_active_run,
+)
 from vibesensor.use_cases.run.lifecycle_state import RunLifecycleState
 from vibesensor.use_cases.run.persistence_writer import (
     _APPEND_RETRY_DELAYS_S,
@@ -378,6 +382,22 @@ class RunRecorder:
             extra["samples_dropped"] = samples_dropped
         LOGGER.info("run_lifecycle", extra=log_extra(**extra))
 
+    def _finalize_active_run_locked(self, *, reason: str) -> ActiveRunFinalizeResult:
+        return finalize_active_run(
+            run_id=self._run_id,
+            start_time_utc=self._lifecycle.start_time_utc,
+            stop_reason=reason,
+            ingest_drop_losses=_udp_ingest_drop_sensor_losses(
+                self.registry,
+                baseline=self._run_ingest_drop_baseline,
+            ),
+            sample_flush=self._sample_flush,
+            persistence=self._persistence,
+            raw_capture=self._raw_capture,
+            record_raw_capture_finalize_result=self._record_raw_capture_finalize_result,
+            logger=LOGGER,
+        )
+
     def start_recording(self) -> RunRecorderStatusSnapshot:
         with start_span(__name__, "run.recording.start", kind=SpanKind.INTERNAL) as span:
             completed_run_id: str | None = None
@@ -394,50 +414,23 @@ class RunRecorder:
                         span.set_attribute("vibesensor.ignored_shutdown", True)
                         return self.status()
                     if self.enabled and self._run_id:
-                        flush_snapshot = self._sample_flush.pending_flush_snapshot()
-                        if flush_snapshot is not None:
-                            self._sample_flush.append_records(
-                                flush_snapshot.run_id,
-                                flush_snapshot.start_time_utc,
-                                flush_snapshot.start_mono_s,
-                                refresh_metrics=True,
-                            )
-                    if self.enabled and self._run_id:
-                        run_id = self._run_id
-                        completed_run_id = self._persistence.ready_for_analysis(run_id)
-                        start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
-                        end_time_utc = utc_now_iso()
-                        persistence_snapshot = self._persistence.status_snapshot()
-                        ingest_drop_losses = _udp_ingest_drop_sensor_losses(
-                            self.registry,
-                            baseline=self._run_ingest_drop_baseline,
-                        )
-                        if run_id:
-                            finalize_result = self._raw_capture.finalize_run(
-                                run_id,
-                                sensor_losses=ingest_drop_losses,
-                            )
-                            self._record_raw_capture_finalize_result(run_id, finalize_result)
-                        if run_id and not self._persistence.finalize_run(
-                            run_id,
-                            start_time_utc,
-                            end_time_utc,
+                        finalize_result = self._finalize_active_run_locked(reason="restart")
+                        completed_run_id = finalize_result.run_id_to_analyze
+                        if (
+                            finalize_result.run_id is not None
+                            and finalize_result.persistence_snapshot is not None
                         ):
-                            LOGGER.warning(
-                                "finalize_run failed for %s; scheduling analysis anyway",
-                                run_id,
+                            lifecycle_events.append(
+                                (
+                                    "stopped",
+                                    finalize_result.run_id,
+                                    finalize_result.start_time_utc,
+                                    finalize_result.end_time_utc,
+                                    "restart",
+                                    finalize_result.persistence_snapshot.written_sample_count,
+                                    finalize_result.persistence_snapshot.dropped_sample_count,
+                                )
                             )
-                        lifecycle_events.append(
-                            (
-                                "stopped",
-                                run_id,
-                                start_time_utc,
-                                end_time_utc,
-                                "restart",
-                                persistence_snapshot.written_sample_count,
-                                persistence_snapshot.dropped_sample_count,
-                            )
-                        )
                     started_run = self._start_new_run_locked()
                     lifecycle_events.append(
                         (
@@ -498,50 +491,20 @@ class RunRecorder:
                     if _only_if_run_id is not None and self._run_id != _only_if_run_id:
                         span.set_attribute("vibesensor.skipped_run_id_guard", True)
                         return self.status()
-                    flush_snapshot = self._sample_flush.pending_flush_snapshot()
-                    if flush_snapshot is not None:
-                        self._sample_flush.append_records(
-                            flush_snapshot.run_id,
-                            flush_snapshot.start_time_utc,
-                            flush_snapshot.start_mono_s,
-                            refresh_metrics=True,
-                        )
-                    if _only_if_run_id is not None and self._run_id != _only_if_run_id:
-                        span.set_attribute("vibesensor.skipped_run_id_guard", True)
-                        return self.status()
-                    run_id = self._run_id
-                    run_id_to_analyze = self._persistence.ready_for_analysis(run_id)
-                    start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
-                    end_time_utc = utc_now_iso()
-                    persistence_snapshot = self._persistence.status_snapshot()
-                    ingest_drop_losses = _udp_ingest_drop_sensor_losses(
-                        self.registry,
-                        baseline=self._run_ingest_drop_baseline,
-                    )
-                    if run_id:
-                        finalize_result = self._raw_capture.finalize_run(
-                            run_id,
-                            sensor_losses=ingest_drop_losses,
-                        )
-                        self._record_raw_capture_finalize_result(run_id, finalize_result)
-                    if run_id and not self._persistence.finalize_run(
-                        run_id,
-                        start_time_utc,
-                        end_time_utc,
+                    finalize_result = self._finalize_active_run_locked(reason=reason)
+                    run_id_to_analyze = finalize_result.run_id_to_analyze
+                    if (
+                        finalize_result.run_id is not None
+                        and finalize_result.persistence_snapshot is not None
                     ):
-                        LOGGER.warning(
-                            "finalize_run failed for %s; scheduling analysis anyway",
-                            run_id,
-                        )
-                    if run_id is not None:
                         lifecycle_event = (
                             "stopped",
-                            run_id,
-                            start_time_utc,
-                            end_time_utc,
+                            finalize_result.run_id,
+                            finalize_result.start_time_utc,
+                            finalize_result.end_time_utc,
                             reason,
-                            persistence_snapshot.written_sample_count,
-                            persistence_snapshot.dropped_sample_count,
+                            finalize_result.persistence_snapshot.written_sample_count,
+                            finalize_result.persistence_snapshot.dropped_sample_count,
                         )
                     self._lifecycle.stop()
                     self._active_run_context = None
