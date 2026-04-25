@@ -186,7 +186,7 @@
     "BMW|2 Series Coupe (G42, 2022-2026)": {
       "car_index": 3,
       "verification_status": "verification_backlog",
-      "decision_summary": "Wave 11 validation sharpened the official Germany/EU picture for the G42 230i target: the current BMW Germany technical-data page and the checked 2024/2025 Germany price lists list 230i as rear-wheel drive with 8-Gang automatic/Steptronic Sport wording, while the 07/2021 official launch press kit describes the four-cylinder models as rear-wheel drive and reserves xDrive for M240i xDrive. Wave 12 validation recovered exact 220i Coupé evidence, and Wave 13 now does the same for 230i: the official 03/2022 BMW technical-data PDF valid for ACEA markets provides rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and a 225/50 R17 launch-standard tire, while the checked Germany technical-data page and 2024/current price lists confirm the current automatic-only RWD 230i context plus 18/19-inch wheel options. That is sufficient for a variant-scoped 230i production override and exact-row update. Wave 13 also adds exact launch-ratio evidence for M240i xDrive plus current Germany market/tire context, but that variant remains source-ledger-only because the public current-market material is already a later 48V state and this pass did not recover one current exact ratio table proving one unchanged 2022-2026 package.",
+      "decision_summary": "Wave 11 validation sharpened the official Germany/EU picture for the G42 230i target: the current BMW Germany technical-data page and the checked 2024/2025 Germany price lists list 230i as rear-wheel drive with 8-Gang automatic/Steptronic Sport wording, while the 07/2021 official launch press kit describes the four-cylinder models as rear-wheel drive and reserves xDrive for M240i xDrive. Wave 12 validation recovered exact 220i Coup\u00e9 evidence, and Wave 13 now does the same for 230i: the official 03/2022 BMW technical-data PDF valid for ACEA markets provides rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and a 225/50 R17 launch-standard tire, while the checked Germany technical-data page and 2024/current price lists confirm the current automatic-only RWD 230i context plus 18/19-inch wheel options. That is sufficient for a variant-scoped 230i production override and exact-row update. Wave 13 also adds exact launch-ratio evidence for M240i xDrive plus current Germany market/tire context, but that variant remains source-ledger-only because the public current-market material is already a later 48V state and this pass did not recover one current exact ratio table proving one unchanged 2022-2026 package.",
       "unresolved": [
         {
           "item": "Whether BMW 230i xDrive belongs in the G42 row at all",
@@ -264,7 +264,7 @@
         "official_220i_exact_ratios": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0336854EN/609768",
-            "note": "Official BMW PressClub technical-data PDF valid for ACEA markets for the exact 220i Coupé: rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard tire 225/50 R17 98Y XL.",
+            "note": "Official BMW PressClub technical-data PDF valid for ACEA markets for the exact 220i Coup\u00e9: rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard tire 225/50 R17 98Y XL.",
             "confidence": "high"
           },
           {
@@ -286,7 +286,7 @@
         "official_230i_exact_ratios": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0374753EN/529126",
-            "note": "Official BMW technical-data PDF valid for ACEA markets from 03/2022 for the exact 230i Coupé: rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard tire 225/50 R17 98Y XL.",
+            "note": "Official BMW technical-data PDF valid for ACEA markets from 03/2022 for the exact 230i Coup\u00e9: rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard tire 225/50 R17 98Y XL.",
             "confidence": "high"
           },
           {
@@ -308,7 +308,7 @@
         "official_m240i_xdrive_launch_exact_ratios": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0336854EN/609768",
-            "note": "Official BMW technical-data PDF valid for ACEA markets from 07/2021 for the exact M240i xDrive Coupé: AWD, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard staggered tires 225/40 R19 front + 255/35 R19 rear.",
+            "note": "Official BMW technical-data PDF valid for ACEA markets from 07/2021 for the exact M240i xDrive Coup\u00e9: AWD, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard staggered tires 225/40 R19 front + 255/35 R19 rear.",
             "confidence": "high"
           },
           {
@@ -1477,18 +1477,42 @@
     "BMW|8 Series Coupe (G15, 2019-2025)": {
       "car_index": 17,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Wave 18 added official BMW G15 and M8 technical-data evidence proving that M850i xDrive uses an 8HP76 Sport ratio set with top gear 0.640 and final drive 2.813, and that M8/M8 Competition Coupe are M xDrive all-wheel-drive configurations rather than rear-wheel-drive. Production now applies a variant-level gearbox override for M850i xDrive and corrects M8 drivetrain mapping to AWD.",
       "unresolved": [
         {
-          "item": "BMW 8 Series Coupe (G15, 2019-2025) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW G15 840i / 840i xDrive exact final drive and top-gear mapping across markets",
+          "reason": "Wave 18 official ratio sheet verifies 840d and M850i xDrive states plus M8 AWD context, but this pass did not recover one exact 840i/840i xDrive ratio table for the represented row."
         },
         {
-          "item": "BMW 8 Series Coupe (G15, 2019-2025) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "BMW G15 M8 Coupe final-drive numeric mapping in row schema",
+          "reason": "Wave 18 confirms M8 AWD drivetrain from official BMW M technical data, but this pass did not promote a separate M8 ratio override because one consistent year-spanning numeric table was not closed."
         }
       ],
       "sources": {
+        "official_g15_m850i_ratio_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0281744EN/the-all-new-bmw-8-series-coupe?language=en",
+            "note": "Official BMW G15 launch press kit hosting technical specifications attachment.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/united-kingdom/article/attachment/T0282168EN_GB/419879",
+            "note": "Official BMW technical data PDF showing 8HP76 Sport with top gear 0.640 and final drive 2.813 for M850i xDrive.",
+            "confidence": "high"
+          }
+        ],
+        "official_m8_awd_context": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0330570EN/specifications-of-the-bmw-m8-coupe-valid-from-03/2021?language=en",
+            "note": "Official BMW M8 technical-data page confirming M xDrive drivetrain context for M8 Coupe/M8 Competition Coupe.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0330570EN/477179",
+            "note": "Official BMW M8 technical-data PDF attachment used to validate AWD drivetrain mapping for M8 variants.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -2513,18 +2537,30 @@
     "BMW|M3 (F80, 2014-2018)": {
       "car_index": 35,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Wave 18 added official BMW MY2018 technical-data evidence that the F80 M3 manual and M-DCT top-gear values in production were inaccurate. The official sheet lists 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with shared final drive 3.462, so the row now promotes those exact top-gear values and full forward gear-ratio sets while keeping the drivetrain scope unchanged.",
       "unresolved": [
         {
-          "item": "BMW M3 (F80, 2014-2018) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW M3 (F80) EU-vs-US transmission calibration continuity across all model years",
+          "reason": "Wave 18 evidence is from official BMW MY2018 US technical data; this pass did not recover a parallel ACEA sheet proving no year/market calibration drift for every F80 state."
         },
         {
-          "item": "BMW M3 (F80, 2014-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "BMW M3 Competition-specific ratio deltas across production years",
+          "reason": "Checked official source provides one MY2018 M3/M3 DCT matrix but not a complete year-by-year competition-specific ratio timeline."
         }
       ],
       "sources": {
+        "official_m3_my18_tech_specs": [
+          {
+            "url": "https://www.press.bmwgroup.com/usa/article/detail/T0160684EN_US/the-all-new-bmw-m3-sedan-and-bmw-m4-coupe?language=en_US",
+            "note": "Official BMW PressClub article hosting MY18 technical attachments for F80 M3.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/usa/article/attachment/T0160684EN_US/391907",
+            "note": "Official BMW MY18 M3 technical PDF: manual VI 0.846, DCT VII 0.671, final drive 3.462, and full gear-ratio tables.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -2625,18 +2661,30 @@
     "BMW|M4 (F82, 2014-2020)": {
       "car_index": 37,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Wave 18 added official BMW 09/2018 technical-data evidence for the F82 M4 and M4 Competition showing 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with final drive 3.462. Production now promotes those exact top-gear values and full forward gear-ratio sets, replacing the prior mismatched top-gear defaults.",
       "unresolved": [
         {
-          "item": "BMW M4 (F82, 2014-2020) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
+          "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change."
         },
         {
-          "item": "BMW M4 (F82, 2014-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "M4 special-edition ratio variance handling",
+          "reason": "Official sources include additional derivatives (for example GTS states) and this row intentionally keeps only base M4/M4 Competition mapping."
         }
       ],
       "sources": {
+        "official_m4_2018_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0286585EN/specifications-of-the-bmw-m4-coupe-valid-from-09/2018",
+            "note": "Official BMW Fact & Figures page for F82 M4 technical data (ACEA context).",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286585EN/419605",
+            "note": "Official BMW PDF: manual VI 0.846, DCT VII 0.671, final drive 3.462, plus full forward gear-ratio tables.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -2684,19 +2732,19 @@
         "official_m4_competition_xdrive_exact_ratios": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329893EN/477740",
-            "note": "Official BMW PressClub 05/2021 technical-data PDF for the exact M4 Competition Coupé with M xDrive: eight-speed M Steptronic transmission with Drivelogic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.154, and staggered 275/35 ZR19 front + 285/30 ZR20 rear tires.",
+            "note": "Official BMW PressClub 05/2021 technical-data PDF for the exact M4 Competition Coup\u00e9 with M xDrive: eight-speed M Steptronic transmission with Drivelogic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.154, and staggered 275/35 ZR19 front + 285/30 ZR20 rear tires.",
             "confidence": "high"
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0439308EN/611692",
-            "note": "Official BMW PressClub 01/2024 technical-data PDF cross-check for the facelift-era exact M4 Competition Coupé with M xDrive with the same ratio set, reverse 3.478, final drive 3.154, and standard staggered 19/20-inch tires.",
+            "note": "Official BMW PressClub 01/2024 technical-data PDF cross-check for the facelift-era exact M4 Competition Coup\u00e9 with M xDrive with the same ratio set, reverse 3.478, final drive 3.154, and standard staggered 19/20-inch tires.",
             "confidence": "high"
           }
         ],
         "official_m4_competition_xdrive_tire_context": [
           {
             "url": "https://www.press.bmwgroup.com/global/article/detail/T0329893EN/the-new-bmw-m4-competition-coup%C3%A9-with-m-xdrive-the-new-bmw-m3-competition-sedan-with-m-xdrive?language=en",
-            "note": "Official BMW PressClub launch article confirming the exact M4 Competition Coupé with M xDrive, standard staggered 19/20-inch wheels, and optional track tires in the same dimensions.",
+            "note": "Official BMW PressClub launch article confirming the exact M4 Competition Coup\u00e9 with M xDrive, standard staggered 19/20-inch wheels, and optional track tires in the same dimensions.",
             "confidence": "high"
           },
           {
@@ -2737,18 +2785,30 @@
     "BMW|M5 (F90, 2018-2024)": {
       "car_index": 39,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Wave 18 added official BMW 06/2020 M5 technical-data evidence confirming Eight-speed M Steptronic ratios 5.000/3.200/2.143/1.720/1.313/1.000/0.823/0.640 and final drive 3.154 for M5 Competition with M xDrive context. Production now promotes the exact top-gear value 0.640 and full gear-ratio set for the row's 8-speed gearbox.",
       "unresolved": [
         {
-          "item": "BMW M5 (F90, 2018-2024) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "item": "BMW M5 (F90) non-Competition year-span ratio continuity",
+          "reason": "Wave 18 source is an official 06/2020 technical sheet; this pass did not recover a complete pre- and post-facelift matrix for every F90 model-year state."
         },
         {
-          "item": "BMW M5 (F90, 2018-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "BMW M5 tire baseline for non-EU markets",
+          "reason": "Official checked documents include EU/Germany homologation context; this pass did not map all regional wheel/tire defaults."
         }
       ],
       "sources": {
+        "official_m5_2020_exact_ratios": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0314287EN/specifications-of-the-bmw-m5-valid-from-06/2020",
+            "note": "Official BMW Fact & Figures page for F90 M5 technical data.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0314287EN/457877",
+            "note": "Official BMW PDF with 8-speed M Steptronic ratio table, top gear 0.640, and final drive 3.154.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.bmw.com/en/index.html",
@@ -4593,7 +4653,7 @@
     "Audi|TT (8S, 2015-2023)": {
       "car_index": 64,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official Audi Germany-market material now confirms the exact late-cycle TT Coupé 45 TFSI quattro S tronic 180 kW mapping: quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. The broad TT row remains unchanged because the current schema stores only one final_drive_ratio, the checked exact evidence is late-cycle only, and this pass did not prove one production-safe mapping across the full 2015-2023 row.",
+      "decision_summary": "Official Audi Germany-market material now confirms the exact late-cycle TT Coup\u00e9 45 TFSI quattro S tronic 180 kW mapping: quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. The broad TT row remains unchanged because the current schema stores only one final_drive_ratio, the checked exact evidence is late-cycle only, and this pass did not prove one production-safe mapping across the full 2015-2023 row.",
       "unresolved": [
         {
           "item": "Schema-safe encoding of the exact Audi TT 45 TFSI quattro dual final-drive values",
@@ -4612,12 +4672,12 @@
         "official_45tfsi_quattro_exact_ratios": [
           {
             "url": "https://www.audi-mediacenter.com/en/audi-tt-coupe-68",
-            "note": "Official Audi MediaCenter model page for the TT Coupé linking the exact 45 TFSI quattro technical-data sheet.",
+            "note": "Official Audi MediaCenter model page for the TT Coup\u00e9 linking the exact 45 TFSI quattro technical-data sheet.",
             "confidence": "high"
           },
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1243/file_en/0963f4ffa97bc4da673e65ee635a8d8df16b1481/eTD_Audi_TT_Coupe_45_TFSI_quattro_S_tronic_180kW_230113.pdf?1698933948&disposition=attachment",
-            "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact TT Coupé 45 TFSI quattro S tronic 180 kW: quattro AWD with electronically controlled multi-plate clutch, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
+            "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact TT Coup\u00e9 45 TFSI quattro S tronic 180 kW: quattro AWD with electronically controlled multi-plate clutch, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
             "confidence": "high"
           }
         ],
@@ -4653,7 +4713,7 @@
     "Audi|R8 (4S, 2015-2024)": {
       "car_index": 65,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official Audi Germany-market material now confirms the exact 2019+ R8 Coupé V10 quattro mapping: quattro AWD, 7-speed S tronic, a standard staggered 245/35 R19 front + 295/35 R19 rear tire setup, and Audi-form transmission data showing ratio values 13.969 / 9.287 / 6.746 / 5.080 / 4.003 / 3.171 / 2.343 with final-drive values 1.848 / 1.488. The broad R8 row remains unchanged because the exact V10 quattro badge is only cleanly evidenced from the 2019 facelift onward, accessible pre-facelift AWD documentation is contradictory, and the current schema cannot safely encode the dual final-drive and Audi-form ratio data.",
+      "decision_summary": "Official Audi Germany-market material now confirms the exact 2019+ R8 Coup\u00e9 V10 quattro mapping: quattro AWD, 7-speed S tronic, a standard staggered 245/35 R19 front + 295/35 R19 rear tire setup, and Audi-form transmission data showing ratio values 13.969 / 9.287 / 6.746 / 5.080 / 4.003 / 3.171 / 2.343 with final-drive values 1.848 / 1.488. The broad R8 row remains unchanged because the exact V10 quattro badge is only cleanly evidenced from the 2019 facelift onward, accessible pre-facelift AWD documentation is contradictory, and the current schema cannot safely encode the dual final-drive and Audi-form ratio data.",
       "unresolved": [
         {
           "item": "Audi R8 V10 quattro production-data applicability across the full 2015-2024 row span",
@@ -4668,7 +4728,7 @@
         "official_v10_quattro_exact_mapping": [
           {
             "url": "https://www.audi-mediacenter.com/en/the-audi-r8-until-2024-updated-dynamics-for-the-high-performance-sports-car-11734/the-new-audi-r8-11735",
-            "note": "Official Audi MediaCenter article confirming the facelift-era naming change to R8 Coupé V10 quattro and European sales context from early 2019 onward.",
+            "note": "Official Audi MediaCenter article confirming the facelift-era naming change to R8 Coup\u00e9 V10 quattro and European sales context from early 2019 onward.",
             "confidence": "high"
           },
           {
@@ -4678,7 +4738,7 @@
           },
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/335/file_en/824cd6b831b620f3969a43e61549348b22b8d6e6/eTechnische_Daten_Audi_R8V10_Coupe_419kW.pdf?1698933709",
-            "note": "Official Audi Germany technical-data PDF for the exact 2019+ R8 V10 quattro Coupé: AWD, 7-speed S tronic, Audi-form ratio data 13.969 / 9.287 / 6.746 / 5.080 / 4.003 / 3.171 / 2.343, final-drive values 1.848 / 1.488, and basic staggered tires 245/35 R19 front + 295/35 R19 rear.",
+            "note": "Official Audi Germany technical-data PDF for the exact 2019+ R8 V10 quattro Coup\u00e9: AWD, 7-speed S tronic, Audi-form ratio data 13.969 / 9.287 / 6.746 / 5.080 / 4.003 / 3.171 / 2.343, final-drive values 1.848 / 1.488, and basic staggered tires 245/35 R19 front + 295/35 R19 rear.",
             "confidence": "high"
           }
         ],
@@ -4833,32 +4893,32 @@
     "Audi|RS 5 (B9, 2018-2024)": {
       "car_index": 68,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official Audi Germany technical-data PDFs from 2019 and 2024 now confirm the exact RS 5 Coupé mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.204, and a basic square 265/35 R19 tire setup. The broad RS 5 row remains unchanged because this pass still does not prove the same mapping for launch-year 2018 or recover an exact official optional wheel/tire matrix for the plain RS 5 Coupé.",
+      "decision_summary": "Official Audi Germany technical-data PDFs from 2019 and 2024 now confirm the exact RS 5 Coup\u00e9 mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.204, and a basic square 265/35 R19 tire setup. The broad RS 5 row remains unchanged because this pass still does not prove the same mapping for launch-year 2018 or recover an exact official optional wheel/tire matrix for the plain RS 5 Coup\u00e9.",
       "unresolved": [
         {
           "item": "Audi RS 5 exact production-data applicability across the full 2018-2024 row span",
-          "reason": "Checked official 2019 and 2024 technical-data PDFs resolve the later B9 RS 5 Coupé mapping, but this pass did not recover a launch-year 2018 Germany/EU sheet that proves the same ratio and tire package across the full represented span."
+          "reason": "Checked official 2019 and 2024 technical-data PDFs resolve the later B9 RS 5 Coup\u00e9 mapping, but this pass did not recover a launch-year 2018 Germany/EU sheet that proves the same ratio and tire package across the full represented span."
         },
         {
           "item": "Audi RS 5 exact transmission-code and non-basic tire-option coverage",
-          "reason": "Official Audi exact material proves 8-speed tiptronic wording, the full ratio set, final drive 3.204, and the 265/35 R19 basic tire, but it does not publish a gearbox-family code or the exact optional 20-inch tire dimensions for the plain RS 5 Coupé."
+          "reason": "Official Audi exact material proves 8-speed tiptronic wording, the full ratio set, final drive 3.204, and the 265/35 R19 basic tire, but it does not publish a gearbox-family code or the exact optional 20-inch tire dimensions for the plain RS 5 Coup\u00e9."
         }
       ],
       "sources": {
         "official_rs5_exact_ratios": [
           {
             "url": "https://www.audi-mediacenter.com/en/audi-rs-5-coupe-38",
-            "note": "Official Audi MediaCenter model page for the RS 5 Coupé linking the exact technical-data sheet.",
+            "note": "Official Audi MediaCenter model page for the RS 5 Coup\u00e9 linking the exact technical-data sheet.",
             "confidence": "high"
           },
           {
             "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/573/file_en/b055e6be3d938aecc8f0656a4554036d5b1479da/eTD-Audi-RS_5-Coupe-TFSI_240426.pdf?1714141018&disposition=attachment",
-            "note": "Official Audi MediaCenter 2024 technical-data PDF for the exact RS 5 Coupé: permanent quattro AWD with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.204, and basic square 265/35 R19 tires.",
+            "note": "Official Audi MediaCenter 2024 technical-data PDF for the exact RS 5 Coup\u00e9: permanent quattro AWD with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.204, and basic square 265/35 R19 tires.",
             "confidence": "high"
           },
           {
             "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Audi_RS_5_Coupe_2_9_TFSI.pdf",
-            "note": "Official Audi 2019 Germany-market technical-data PDF cross-check for the exact RS 5 Coupé 2.9 TFSI quattro tiptronic 331 kW with the same ratio set, final drive 3.204, and basic 265/35 R19 tire setup.",
+            "note": "Official Audi 2019 Germany-market technical-data PDF cross-check for the exact RS 5 Coup\u00e9 2.9 TFSI quattro tiptronic 331 kW with the same ratio set, final drive 3.204, and basic 265/35 R19 tire setup.",
             "confidence": "high"
           }
         ],
