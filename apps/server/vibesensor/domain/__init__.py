@@ -80,9 +80,12 @@ from .test_run import TestRun
 from .tire_spec import TireSpec
 from .vehicle_configuration import (
     VehicleConfiguration,
+    VehicleConfigurationField,
     VehicleConfigurationSourceStatus,
     VehicleConfigurationTireOption,
     VehicleDrivetrain,
+    VehicleFieldConfidence,
+    VehicleFieldProvenance,
     VehicleFuelType,
 )
 from .vibration_origin import VibrationOrigin
@@ -101,9 +104,12 @@ __all__ = [
     "OrderReferenceSpec",
     "TireSpec",
     "VehicleConfiguration",
+    "VehicleConfigurationField",
     "VehicleConfigurationSourceStatus",
     "VehicleConfigurationTireOption",
     "VehicleDrivetrain",
+    "VehicleFieldConfidence",
+    "VehicleFieldProvenance",
     "VehicleFuelType",
     # Value objects — snapshots
     "AnalysisSettingsSnapshot",
