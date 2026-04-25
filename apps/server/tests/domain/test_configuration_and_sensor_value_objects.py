@@ -31,6 +31,10 @@ class TestConfigurationSnapshot:
         md = _metadata(
             sensor_model="MPU6050",
             firmware_version="1.2.3",
+            strength_algorithm_version="strength-db-scalar-v1",
+            peak_detector_version="peak-band-rms-v1",
+            calibration_profile_id="noise-floor-p20-v1",
+            vehicle_baseline_profile_id="car-profile-1",
             raw_sample_rate_hz=100.0,
             feature_interval_s=0.5,
             analysis_settings_snapshot={
@@ -43,6 +47,10 @@ class TestConfigurationSnapshot:
         snap = configuration_snapshot_from_metadata(run_metadata_from_mapping(md))
         assert snap.sensor_model == "MPU6050"
         assert snap.firmware_version == "1.2.3"
+        assert snap.strength_algorithm_version == "strength-db-scalar-v1"
+        assert snap.peak_detector_version == "peak-band-rms-v1"
+        assert snap.calibration_profile_id == "noise-floor-p20-v1"
+        assert snap.vehicle_baseline_profile_id == "car-profile-1"
         assert snap.raw_sample_rate_hz == 100.0
         assert snap.feature_interval_s == 0.5
         assert snap.final_drive_ratio == 3.73
@@ -52,6 +60,10 @@ class TestConfigurationSnapshot:
         snap = configuration_snapshot_from_metadata(run_metadata_from_mapping(_metadata()))
         assert snap.sensor_model is None
         assert snap.firmware_version is None
+        assert snap.strength_algorithm_version is None
+        assert snap.peak_detector_version is None
+        assert snap.calibration_profile_id is None
+        assert snap.vehicle_baseline_profile_id is None
         assert snap.raw_sample_rate_hz is None
         assert snap.feature_interval_s is None
         assert snap.final_drive_ratio is None

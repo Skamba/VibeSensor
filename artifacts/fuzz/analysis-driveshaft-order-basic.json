@@ -1,0 +1,539 @@
+{
+  "target": "analysis",
+  "notes": "Replay a driveshaft-order acceleration pattern and keep the driveline classification stable.",
+  "expect": {
+    "kind": "success",
+    "rows": 24,
+    "top_cause_key": "driveshaft_2x",
+    "top_cause_source": "driveline",
+    "origin_source": "driveline",
+    "first_action_id": "driveline_mounts_and_fasteners",
+    "metadata_fields": {
+      "strength_algorithm_version": "strength-db-scalar-v1",
+      "peak_detector_version": "peak-band-rms-v1",
+      "calibration_profile_id": "noise-floor-p20-v1",
+      "vehicle_baseline_profile_id": "car-profile-1"
+    }
+  },
+  "case": {
+    "metadata": {
+      "raw_sample_rate_hz": 800.0,
+      "sensor_model": "ADXL345",
+      "units": {
+        "accel_x_g": "g"
+      },
+      "language": "en",
+      "strength_algorithm_version": "strength-db-scalar-v1",
+      "peak_detector_version": "peak-band-rms-v1",
+      "calibration_profile_id": "noise-floor-p20-v1",
+      "vehicle_baseline_profile_id": "car-profile-1",
+      "analysis_settings_snapshot": {
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64
+      },
+      "reference_context": {
+        "tire_circumference_m": 2.1465497292329907
+      },
+      "active_car_snapshot": {
+        "id": "car-profile-1",
+        "name": "Replay Coupe",
+        "type": "coupe"
+      },
+      "run_id": "fuzz-analysis-driveshaft-order",
+      "start_time_utc": "2026-01-01T12:00:00Z",
+      "end_time_utc": "2026-01-01T12:00:30Z",
+      "sensor_snapshots": [
+        {
+          "sensor_id": "sensor-front-right",
+          "display_name": "Front Right",
+          "location_code": "front_right_wheel",
+          "mount_orientation": "radial"
+        }
+      ]
+    },
+    "lang": "en",
+    "include_samples": false,
+    "samples": [
+      {
+        "t_s": 0.0,
+        "speed_kmh": 55.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 46.223531979917055,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 1.0,
+        "speed_kmh": 57.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 47.904387688277666,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 2.0,
+        "speed_kmh": 59.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 49.5852433966383,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 3.0,
+        "speed_kmh": 61.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 51.26609910499891,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 4.0,
+        "speed_kmh": 63.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 52.946954813359525,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 5.0,
+        "speed_kmh": 65.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 54.62781052172015,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 6.0,
+        "speed_kmh": 67.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 56.30866623008077,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 7.0,
+        "speed_kmh": 69.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 57.98952193844139,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 8.0,
+        "speed_kmh": 71.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 59.67037764680201,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 9.0,
+        "speed_kmh": 73.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 61.351233355162634,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 10.0,
+        "speed_kmh": 75.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 63.03208906352326,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 11.0,
+        "speed_kmh": 77.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 64.71294477188387,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 12.0,
+        "speed_kmh": 79.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 66.3938004802445,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 13.0,
+        "speed_kmh": 81.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 68.07465618860512,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 14.0,
+        "speed_kmh": 83.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 69.75551189696573,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 15.0,
+        "speed_kmh": 85.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 71.43636760532634,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 16.0,
+        "speed_kmh": 87.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 73.11722331368696,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 17.0,
+        "speed_kmh": 89.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 74.7980790220476,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 18.0,
+        "speed_kmh": 91.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 76.47893473040821,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 19.0,
+        "speed_kmh": 93.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 78.15979043876884,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 20.0,
+        "speed_kmh": 95.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 79.84064614712945,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 21.0,
+        "speed_kmh": 97.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 81.52150185549007,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 22.0,
+        "speed_kmh": 99.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 83.2023575638507,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      },
+      {
+        "t_s": 23.0,
+        "speed_kmh": 101.0,
+        "accel_x_g": 0.02,
+        "accel_y_g": 0.02,
+        "accel_z_g": 0.1,
+        "vibration_strength_db": 20.0,
+        "strength_bucket": "l2",
+        "strength_floor_amp_g": 0.002,
+        "client_name": "front-right",
+        "client_id": "sensor-front-right",
+        "top_peaks": [
+          {
+            "hz": 84.88321327221132,
+            "amp": 0.04
+          }
+        ],
+        "frames_dropped_total": 0,
+        "queue_overflow_drops": 0
+      }
+    ]
+  }
+}

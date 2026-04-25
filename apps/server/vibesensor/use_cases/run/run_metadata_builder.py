@@ -8,6 +8,11 @@ from vibesensor.shared.ports import ClientTracker, LanguageReader
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
 from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_schema import RunCarMetadata, RunMetadata, RunSensorMetadata
+from vibesensor.vibration_strength import (
+    CALIBRATION_PROFILE_ID,
+    PEAK_DETECTOR_VERSION,
+    STRENGTH_ALGORITHM_VERSION,
+)
 
 from .run_context import order_reference_context_complete
 
@@ -42,6 +47,7 @@ def create_run_metadata(
     fft_window_size_samples: int | None,
     accel_scale_g_per_lsb: float | None,
     firmware_version: str | None = None,
+    vehicle_baseline_profile_id: str | None = None,
     end_time_utc: str | None = None,
     incomplete_for_order_analysis: bool = False,
     configured_raw_sample_rate_hz: int | None = None,
@@ -55,6 +61,10 @@ def create_run_metadata(
         start_time_utc=start_time_utc,
         sensor_model=sensor_model,
         firmware_version=firmware_version,
+        strength_algorithm_version=STRENGTH_ALGORITHM_VERSION,
+        peak_detector_version=PEAK_DETECTOR_VERSION,
+        calibration_profile_id=CALIBRATION_PROFILE_ID,
+        vehicle_baseline_profile_id=vehicle_baseline_profile_id,
         raw_sample_rate_hz=raw_sample_rate_hz,
         configured_raw_sample_rate_hz=configured_raw_sample_rate_hz,
         feature_interval_s=feature_interval_s,
@@ -101,6 +111,7 @@ def build_run_metadata(
         start_time_utc=start_time_utc,
         sensor_model=sensor_model,
         firmware_version=firmware_version,
+        vehicle_baseline_profile_id=active_car_snapshot.car_id if active_car_snapshot else None,
         raw_sample_rate_hz=raw_sample_rate_hz,
         configured_raw_sample_rate_hz=configured_raw_sample_rate_hz,
         feature_interval_s=feature_interval_s,

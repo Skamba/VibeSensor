@@ -11,6 +11,10 @@ def _configuration_snapshot_from_run_metadata(metadata: RunMetadata) -> Configur
     return ConfigurationSnapshot(
         sensor_model=_non_empty_text(metadata.sensor_model),
         firmware_version=_non_empty_text(metadata.firmware_version),
+        strength_algorithm_version=_non_empty_text(metadata.strength_algorithm_version),
+        peak_detector_version=_non_empty_text(metadata.peak_detector_version),
+        calibration_profile_id=_non_empty_text(metadata.calibration_profile_id),
+        vehicle_baseline_profile_id=_non_empty_text(metadata.vehicle_baseline_profile_id),
         raw_sample_rate_hz=(
             float(metadata.raw_sample_rate_hz) if metadata.raw_sample_rate_hz is not None else None
         ),

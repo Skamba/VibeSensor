@@ -17,7 +17,7 @@ from vibesensor.shared.run_context_warning import (
     RunContextWarning,
 )
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.json_types import JsonArray, JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.diagnostics.run_analysis_projection import build_sensor_analysis
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
@@ -109,6 +109,25 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "raw_replay_high_rtt_sensor_count": run.raw_replay.high_rtt_sensor_count,
         "raw_replay_confidence": run.raw_replay.replay_confidence,
     }
+    if run.context.strength_algorithm_version is not None:
+        analysis_metadata["strength_algorithm_version"] = run.context.strength_algorithm_version
+    if run.context.peak_detector_version is not None:
+        analysis_metadata["peak_detector_version"] = run.context.peak_detector_version
+    if run.context.calibration_profile_id is not None:
+        analysis_metadata["calibration_profile_id"] = run.context.calibration_profile_id
+    if run.context.vehicle_baseline_profile_id is not None:
+        analysis_metadata["vehicle_baseline_profile_id"] = run.context.vehicle_baseline_profile_id
+    sensor_mount_profiles: JsonArray = []
+    for snapshot in run.context.sensor_snapshots:
+        mount_profile: JsonObject = {"sensor_id": snapshot.sensor_id}
+        if snapshot.location_code:
+            mount_profile["mount_location"] = snapshot.location_code
+        if snapshot.mount_orientation is not None:
+            mount_profile["mount_orientation"] = snapshot.mount_orientation
+        if len(mount_profile) > 1:
+            sensor_mount_profiles.append(mount_profile)
+    if sensor_mount_profiles:
+        analysis_metadata["sensor_mount_profiles"] = sensor_mount_profiles
     if run.summary_duration_s is not None:
         analysis_metadata["summary_duration_s"] = round(run.summary_duration_s, 3)
     if run.raw_min_sensor_sample_count is not None:

@@ -128,25 +128,38 @@ class TestCarPersistedDict:
 
 class TestSensorConfig:
     def test_from_dict_basic(self) -> None:
-        sc = SensorConfig.from_dict("abc123", {"name": "FL", "location_code": "front-left"})
+        sc = SensorConfig.from_dict(
+            "abc123",
+            {
+                "name": "FL",
+                "location_code": "front-left",
+                "mount_orientation": "radial",
+            },
+        )
         assert sc.sensor_id == "abc123"
         assert sc.name == "FL"
         assert sc.location_code == "front-left"
+        assert sc.mount_orientation == "radial"
 
     def test_from_dict_defaults(self) -> None:
         sc = SensorConfig.from_dict("abc123", {})
         assert sc.name == "abc123"
         assert sc.location_code == ""
+        assert sc.mount_orientation is None
 
     def test_name_truncated(self) -> None:
         sc = SensorConfig.from_dict("id", {"name": "X" * 100})
         assert len(sc.name) <= 64
 
     def test_roundtrip(self) -> None:
-        sc = SensorConfig.from_dict("id1", {"name": "Test", "location_code": "rear"})
+        sc = SensorConfig.from_dict(
+            "id1",
+            {"name": "Test", "location_code": "rear", "mount_orientation": "axial"},
+        )
         d = sc.to_dict()
         assert d["name"] == "Test"
         assert d["location_code"] == "rear"
+        assert d["mount_orientation"] == "axial"
 
 
 # ---------------------------------------------------------------------------
@@ -257,6 +270,10 @@ class TestRunMetadata:
             run_id="r1",
             start_time_utc="2025-01-01T00:00:00Z",
             sensor_model="ADXL345",
+            strength_algorithm_version="strength-db-scalar-v1",
+            peak_detector_version="peak-band-rms-v1",
+            calibration_profile_id="noise-floor-p20-v1",
+            vehicle_baseline_profile_id="car-profile-1",
             raw_sample_rate_hz=800,
             feature_interval_s=1.0,
             fft_window_size_samples=1024,
@@ -265,6 +282,7 @@ class TestRunMetadata:
         assert rm.run_id == "r1"
         assert rm.sensor_model == "ADXL345"
         assert rm.accel_scale_g_per_lsb == 0.004
+        assert rm.calibration_profile_id == "noise-floor-p20-v1"
 
     def test_from_dict_minimal(self) -> None:
         rm = run_metadata_from_mapping({"run_id": "r2", "sensor_model": "TEST"})
@@ -288,6 +306,10 @@ class TestRunMetadata:
             run_id="r4",
             start_time_utc="2025-01-01T00:00:00Z",
             sensor_model="X",
+            strength_algorithm_version="strength-db-scalar-v1",
+            peak_detector_version="peak-band-rms-v1",
+            calibration_profile_id="noise-floor-p20-v1",
+            vehicle_baseline_profile_id="car-profile-1",
             raw_sample_rate_hz=400,
             feature_interval_s=0.5,
             fft_window_size_samples=512,
@@ -298,6 +320,10 @@ class TestRunMetadata:
         assert rm2.run_id == rm.run_id
         assert rm2.sensor_model == rm.sensor_model
         assert rm2.raw_sample_rate_hz == rm.raw_sample_rate_hz
+        assert rm2.strength_algorithm_version == "strength-db-scalar-v1"
+        assert rm2.peak_detector_version == "peak-band-rms-v1"
+        assert rm2.calibration_profile_id == "noise-floor-p20-v1"
+        assert rm2.vehicle_baseline_profile_id == "car-profile-1"
 
 
 # ---------------------------------------------------------------------------

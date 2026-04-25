@@ -46,6 +46,7 @@ class RunSensorMetadata:
     sensor_id: str
     display_name: str = ""
     location_code: str = ""
+    mount_orientation: str | None = None
     sample_rate_hz: int | None = None
     firmware_version: str | None = None
 
@@ -61,6 +62,10 @@ class RunMetadata:
     end_time_utc: str | None
     sensor_model: str
     firmware_version: str | None
+    strength_algorithm_version: str | None
+    peak_detector_version: str | None
+    calibration_profile_id: str | None
+    vehicle_baseline_profile_id: str | None
     raw_sample_rate_hz: int | None
     configured_raw_sample_rate_hz: int | None
     feature_interval_s: float | None
@@ -92,6 +97,10 @@ class RunMetadata:
         fft_window_size_samples: int | None,
         accel_scale_g_per_lsb: float | None,
         firmware_version: str | None = None,
+        strength_algorithm_version: str | None = None,
+        peak_detector_version: str | None = None,
+        calibration_profile_id: str | None = None,
+        vehicle_baseline_profile_id: str | None = None,
         end_time_utc: str | None = None,
         incomplete_for_order_analysis: bool = False,
         configured_raw_sample_rate_hz: int | None = None,
@@ -115,6 +124,10 @@ class RunMetadata:
             end_time_utc=end_time_utc,
             sensor_model=sensor_model,
             firmware_version=firmware_version,
+            strength_algorithm_version=strength_algorithm_version,
+            peak_detector_version=peak_detector_version,
+            calibration_profile_id=calibration_profile_id,
+            vehicle_baseline_profile_id=vehicle_baseline_profile_id,
             raw_sample_rate_hz=raw_sample_rate_hz,
             configured_raw_sample_rate_hz=configured_raw_sample_rate_hz,
             feature_interval_s=feature_interval_s,
