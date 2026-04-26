@@ -2273,11 +2273,10 @@ def _check_static_data_uses_packaged_tree_only() -> list[str]:
                 f"{resolver_path.relative_to(REPO_ROOT)} must not keep source-tree static-data fallback logic ({marker})"
             )
     for path in (
-        SERVER_ROOT / "data" / "car_library.json",
         SERVER_ROOT / "data" / "report_i18n.json",
+        SERVER_ROOT / "data" / "vehicle_configurations.json",
+        SERVER_ROOT / "data" / "car_sources",
         SERVER_ROOT / "data" / "scripted_scenarios",
-        SERVER_ROOT / "data" / "CAR_VARIANT_SOURCES.md",
-        SERVER_ROOT / "data" / "car_library_ratio_sources.json",
     ):
         if path.exists():
             failures.append(

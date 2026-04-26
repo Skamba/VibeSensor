@@ -28,7 +28,7 @@ class CarLibraryGearboxEntry(_StrictBase):
     final_drive_ratio: float = Field(gt=0)
     top_gear_ratio: float = Field(gt=0)
     gear_ratios: list[float] | None = Field(default=None, min_length=1)
-    source_status: Literal["compat_projection", "exact_row"] | None = None
+    source_status: Literal["exact_row"] | None = None
     final_drive_ratio_confidence: str | None = None
     top_gear_ratio_confidence: str | None = None
     gear_ratios_confidence: str | None = None

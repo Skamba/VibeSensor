@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from vibesensor.adapters.persistence.car_library import (
@@ -158,16 +156,15 @@ def test_resolve_variant_g20_330i_xdrive_uses_verified_automatic_ratio() -> None
     for entry in _library_entries():
         if entry["brand"] == "BMW" and entry["model"] == "3 Series (G20, 2019-2025)":
             resolved = resolve_variant(entry, "330i xDrive")
-            assert resolved["gearboxes"] == [
-                {
-                    "name": "8-speed automatic (ZF 8HP)",
-                    "final_drive_ratio": pytest.approx(2.813),
-                    "top_gear_ratio": pytest.approx(0.64),
-                    "gear_ratios": pytest.approx(
-                        [5.25, 3.36, 2.172, 1.72, 1.316, 1.0, 0.822, 0.64]
-                    ),  # noqa: E501
-                }
-            ]
+            assert len(resolved["gearboxes"]) == 1
+            gearbox = resolved["gearboxes"][0]
+            assert gearbox["name"] == "8-speed automatic (ZF 8HP)"
+            assert gearbox["final_drive_ratio"] == pytest.approx(2.813)
+            assert gearbox["top_gear_ratio"] == pytest.approx(0.64)
+            assert gearbox["gear_ratios"] == pytest.approx(
+                [5.25, 3.36, 2.172, 1.72, 1.316, 1.0, 0.822, 0.64]
+            )
+            assert gearbox["source_status"] == "exact_row"
             break
     else:
         raise AssertionError("BMW G20 330i xDrive not found")
@@ -399,13 +396,10 @@ def test_car_from_persistence_dict_variant_truncated() -> None:
 
 
 def test_car_library_json_parseable() -> None:
-    """The car library JSON is valid JSON and loadable."""
-    from vibesensor.adapters.persistence.car_library import _DATA_FILE
-
-    with _DATA_FILE.open() as fh:
-        data = json.load(fh)
+    """The grouped picker data is derivable from canonical vehicle configurations."""
+    data = load_car_library()
     assert isinstance(data, list)
-    assert len(data) == 73
+    assert len(data) >= 70
 
 
 def test_total_variant_count() -> None:

@@ -83,7 +83,7 @@ def test_car_settings_update_car_decodes_order_reference_status_payload() -> Non
         car_id,
         {
             "order_reference_status": {
-                "selection_source_status": "compat_projection",
+                "selection_source_status": "exact_row",
                 "tire_dimensions_confidence": "family_default",
                 "final_drive_ratio_confidence": "family_default",
                 "current_gear_ratio_confidence": "family_default",
@@ -94,7 +94,7 @@ def test_car_settings_update_car_decodes_order_reference_status_payload() -> Non
     )
 
     persisted = next(car for car in updated.cars if car["id"] == car_id)["order_reference_status"]
-    assert persisted["selection_source_status"] == "compat_projection"
+    assert persisted["selection_source_status"] == "exact_row"
     assert persisted["tire_dimensions_confidence"] == "family_default"
     assert persisted["requires_manual_confirmation"] is True
     assert persisted["transmission_name"] == "8-speed automatic"

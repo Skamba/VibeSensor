@@ -499,7 +499,7 @@ export function createCarsFeatureWorkflow(
             current_gear_ratio_confidence: gearbox.top_gear_ratio_confidence ?? "unverified",
             final_drive_ratio_confidence: gearbox.final_drive_ratio_confidence ?? "unverified",
             requires_manual_confirmation: gearbox.requires_manual_confirmation ?? true,
-            selection_source_status: gearbox.source_status ?? "compat_projection",
+            selection_source_status: gearbox.source_status ?? "exact_row",
             transmission_confidence: gearbox.transmission_confidence ?? "unverified",
             transmission_name: gearbox.name,
           },

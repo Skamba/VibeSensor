@@ -133,7 +133,7 @@ def car_order_reference_status_from_mapping(
     payload: Mapping[str, object],
 ) -> CarOrderReferenceStatus:
     selection_source_status = payload.get("selection_source_status")
-    if selection_source_status not in {"compat_projection", "exact_row", "manual_entry"}:
+    if selection_source_status not in {"exact_row", "manual_entry"}:
         selection_source_status = "manual_entry"
     return CarOrderReferenceStatus(
         selection_source_status=cast(CarOrderReferenceSourceStatus, selection_source_status),
