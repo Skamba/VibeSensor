@@ -326,7 +326,7 @@ test("settings cars module creates and activates wizard cars through the shared 
       current_gear_ratio: 0.71,
     },
     {
-      selection_source_status: "compat_projection",
+      selection_source_status: "exact_row",
       final_drive_ratio_confidence: "family_default",
       current_gear_ratio_confidence: "family_default",
       transmission_name: "Single-speed fixed gear",
@@ -350,7 +350,7 @@ test("settings cars module creates and activates wizard cars through the shared 
         current_gear_ratio_confidence: "family_default",
         final_drive_ratio_confidence: "family_default",
         requires_manual_confirmation: true,
-        selection_source_status: "compat_projection",
+        selection_source_status: "exact_row",
         transmission_confidence: "family_default",
         transmission_name: "Single-speed fixed gear",
       },

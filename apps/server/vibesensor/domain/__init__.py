@@ -87,14 +87,18 @@ from .test_run import TestRun
 from .tire_spec import AxleTireSetup, TireSpec, TireSpeedAxle
 from .vehicle_configuration import (
     VehicleConfiguration,
+    VehicleConfigurationConfidence,
     VehicleConfigurationField,
+    VehicleConfigurationIssue,
+    VehicleConfigurationNote,
     VehicleConfigurationSourceStatus,
     VehicleConfigurationTireOption,
     VehicleCoverageClassification,
     VehicleDrivetrain,
     VehicleFieldConfidence,
-    VehicleFieldProvenance,
+    VehicleFieldMetadata,
     VehicleFuelType,
+    VehicleOrderAnalysisPolicy,
 )
 from .vibration_origin import VibrationOrigin
 
@@ -118,14 +122,18 @@ __all__ = [
     "TireSpec",
     "TireSpeedAxle",
     "VehicleConfiguration",
+    "VehicleConfigurationConfidence",
     "VehicleConfigurationField",
+    "VehicleConfigurationIssue",
+    "VehicleConfigurationNote",
     "VehicleCoverageClassification",
     "VehicleConfigurationSourceStatus",
     "VehicleConfigurationTireOption",
     "VehicleDrivetrain",
     "VehicleFieldConfidence",
-    "VehicleFieldProvenance",
+    "VehicleFieldMetadata",
     "VehicleFuelType",
+    "VehicleOrderAnalysisPolicy",
     # Value objects — snapshots
     "AnalysisSettingsSnapshot",
     "DrivingPhaseSummary",

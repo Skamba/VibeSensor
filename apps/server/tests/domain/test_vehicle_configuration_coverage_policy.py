@@ -4,7 +4,7 @@ from vibesensor.domain import (
     TireSpec,
     VehicleConfiguration,
     VehicleFieldConfidence,
-    VehicleFieldProvenance,
+    VehicleFieldMetadata,
 )
 
 
@@ -18,6 +18,11 @@ def _default_tire() -> TireSpec:
     )
     assert tire is not None
     return tire
+
+
+def _metadata(confidence: VehicleFieldConfidence) -> VehicleFieldMetadata:
+    evidence_refs = ("test:source",) if confidence not in {"family_default", "unverified"} else ()
+    return VehicleFieldMetadata(confidence=confidence, evidence_refs=evidence_refs)
 
 
 def _make_exact_configuration(
@@ -39,34 +44,11 @@ def _make_exact_configuration(
         default_tire=_default_tire(),
         tire_options=(),
         final_drive_rear=2.81,
-        source_status="exact_row",
-        field_provenance=(
-            VehicleFieldProvenance(
-                "drivetrain",
-                drivetrain_confidence,
-                source_id="test:drivetrain",
-            ),
-            VehicleFieldProvenance(
-                "tire_dimensions",
-                tire_confidence,
-                source_id="test:tire",
-            ),
-            VehicleFieldProvenance(
-                "transmission_name",
-                transmission_confidence,
-                source_id="test:transmission",
-            ),
-            VehicleFieldProvenance(
-                "top_gear_ratio",
-                top_gear_confidence,
-                source_id="test:top-gear",
-            ),
-            VehicleFieldProvenance(
-                "final_drive_rear",
-                final_drive_confidence,
-                source_id="test:final-drive",
-            ),
-        ),
+        drivetrain_metadata=_metadata(drivetrain_confidence),
+        tire_metadata=_metadata(tire_confidence),
+        transmission_metadata=_metadata(transmission_confidence),
+        top_gear_ratio_metadata=_metadata(top_gear_confidence),
+        final_drive_rear_metadata=_metadata(final_drive_confidence),
     )
 
 
@@ -93,21 +75,3 @@ def test_unverified_critical_field_marks_exact_row_backlog_unverified() -> None:
     config = _make_exact_configuration(final_drive_confidence="unverified")
 
     assert config.coverage_policy_classification == "backlog_unverified"
-
-
-def test_compat_projection_is_always_approximate() -> None:
-    config = VehicleConfiguration(
-        brand="BMW",
-        car_type="Sedan",
-        model_name="3 Series (G20, 2019-2025)",
-        variant_name="330i",
-        drivetrain="RWD",
-        transmission_name="6-speed manual",
-        top_gear_ratio=0.85,
-        default_tire=_default_tire(),
-        tire_options=(),
-        final_drive_rear=3.23,
-        source_status="compat_projection",
-    )
-
-    assert config.coverage_policy_classification == "approximate"

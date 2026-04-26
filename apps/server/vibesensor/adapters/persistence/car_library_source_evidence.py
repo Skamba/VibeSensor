@@ -1,4 +1,4 @@
-"""Machine-checkable source packs and provenance evidence for exact car rows."""
+"""Machine-checkable source packs for canonical vehicle-configuration evidence."""
 
 from __future__ import annotations
 
@@ -7,11 +7,10 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.domain import VehicleConfiguration, VehicleFieldConfidence
+from vibesensor.domain import VehicleConfiguration, VehicleFieldMetadata
 from vibesensor.shared._data_files import resolve_static_data_file
 
 __all__ = [
-    "CarEvidenceRecord",
     "CarSourceDocument",
     "CarSourceEvidenceIssue",
     "CarSourceRegistry",
@@ -21,12 +20,6 @@ __all__ = [
 ]
 
 _SOURCE_PACKS_DIR = resolve_static_data_file("car_sources")
-_EVIDENCE_FILE = resolve_static_data_file("car_library_evidence.json")
-_EVIDENCE_REQUIRED_CONFIDENCES: set[VehicleFieldConfidence] = {
-    "official_exact",
-    "official_derived",
-    "reputable_secondary_crosschecked",
-}
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,40 +34,25 @@ class CarSourceDocument:
 
 
 @dataclass(frozen=True, slots=True)
-class CarEvidenceRecord:
-    """One provenance evidence entry keyed by ``VehicleFieldProvenance.source_id``."""
-
-    id: str
-    summary: str
-    source_refs: tuple[str, ...]
-    legacy_refs: tuple[str, ...] = ()
-
-
-@dataclass(frozen=True, slots=True)
 class CarSourceRegistry:
-    """Resolved source documents and evidence entries for exact vehicle rows."""
+    """Resolved reusable source documents for canonical vehicle rows."""
 
     sources: dict[str, CarSourceDocument]
-    evidence: dict[str, CarEvidenceRecord]
 
 
 @dataclass(frozen=True, slots=True)
 class CarSourceEvidenceIssue:
-    """One machine-readable provenance evidence validation failure."""
+    """One machine-readable canonical evidence validation failure."""
 
     rule: str
     entity: str
     message: str
 
 
-def load_car_source_registry(
-    source_packs_dir: Path | None = None,
-    evidence_file: Path | None = None,
-) -> CarSourceRegistry:
+def load_car_source_registry(source_packs_dir: Path | None = None) -> CarSourceRegistry:
     """Load and validate the machine-checkable source registry."""
 
     resolved_source_packs_dir = _SOURCE_PACKS_DIR if source_packs_dir is None else source_packs_dir
-    resolved_evidence_file = _EVIDENCE_FILE if evidence_file is None else evidence_file
     sources: dict[str, CarSourceDocument] = {}
     if not resolved_source_packs_dir.is_dir():
         raise ValueError(f"Car source pack directory is missing: {resolved_source_packs_dir}")
@@ -117,48 +95,7 @@ def load_car_source_registry(
                 ),
             )
 
-    payload = _load_json_object(resolved_evidence_file)
-    rows = payload.get("evidence")
-    if not isinstance(rows, list) or not rows:
-        raise ValueError(f"{resolved_evidence_file} must contain a non-empty 'evidence' list")
-
-    evidence: dict[str, CarEvidenceRecord] = {}
-    for index, row in enumerate(rows):
-        if not isinstance(row, Mapping):
-            raise ValueError(f"{resolved_evidence_file} evidence #{index} must be an object")
-        evidence_id = _required_non_empty_string(
-            row,
-            "id",
-            path=resolved_evidence_file,
-            index=index,
-        )
-        if evidence_id in evidence:
-            raise ValueError(f"{resolved_evidence_file} duplicates evidence id {evidence_id!r}")
-        source_refs = _required_string_list(
-            row,
-            "source_refs",
-            path=resolved_evidence_file,
-            index=index,
-        )
-        for source_ref in source_refs:
-            if source_ref not in sources:
-                raise ValueError(
-                    f"{resolved_evidence_file} evidence id={evidence_id!r} references unknown "
-                    f"source {source_ref!r}"
-                )
-        evidence[evidence_id] = CarEvidenceRecord(
-            id=evidence_id,
-            summary=_required_non_empty_string(
-                row,
-                "summary",
-                path=resolved_evidence_file,
-                index=index,
-            ),
-            source_refs=source_refs,
-            legacy_refs=_optional_string_list(row, "legacy_refs"),
-        )
-
-    return CarSourceRegistry(sources=sources, evidence=evidence)
+    return CarSourceRegistry(sources=sources)
 
 
 def ensure_valid_vehicle_configuration_source_evidence(
@@ -166,7 +103,7 @@ def ensure_valid_vehicle_configuration_source_evidence(
     *,
     registry: CarSourceRegistry | None = None,
 ) -> None:
-    """Raise ``ValueError`` when exact vehicle configurations lack resolvable evidence."""
+    """Raise ``ValueError`` when canonical vehicle configurations lack resolvable evidence."""
 
     issues = validate_vehicle_configuration_source_evidence(configs, registry=registry)
     if issues:
@@ -178,38 +115,97 @@ def validate_vehicle_configuration_source_evidence(
     *,
     registry: CarSourceRegistry | None = None,
 ) -> tuple[CarSourceEvidenceIssue, ...]:
-    """Return all provenance-evidence validation issues for exact vehicle rows."""
+    """Return all evidence-resolution validation issues for canonical vehicle rows."""
 
     resolved_registry = load_car_source_registry() if registry is None else registry
     issues: list[CarSourceEvidenceIssue] = []
     for config in configs:
         entity = f"{config.brand}|{config.model_name}|{config.variant_name}"
         label = f"{config.brand} {config.model_name} / {config.variant_name}"
-        for entry in config.field_provenance:
-            if entry.confidence in _EVIDENCE_REQUIRED_CONFIDENCES and not entry.source_id:
-                issues.append(
-                    CarSourceEvidenceIssue(
-                        rule="missing_required_source_id",
-                        entity=entity,
-                        message=(
-                            f"{label} field {entry.field_name!r} uses confidence "
-                            f"{entry.confidence!r} but has no source_id"
-                        ),
-                    )
-                )
+        for field_name in config.coverage_policy_fields:
+            metadata = config.metadata_for(field_name)
+            if metadata is None:
                 continue
-            if entry.source_id and entry.source_id not in resolved_registry.evidence:
-                issues.append(
-                    CarSourceEvidenceIssue(
-                        rule="missing_source_evidence",
-                        entity=entity,
-                        message=(
-                            f"{label} field {entry.field_name!r} references unknown "
-                            f"source_id {entry.source_id!r}"
-                        ),
-                    )
+            issues.extend(
+                _validate_metadata_refs(
+                    metadata,
+                    registry=resolved_registry,
+                    entity=entity,
+                    label=f"{label} field {field_name!r}",
                 )
+            )
+        if config.gear_ratios_metadata is not None:
+            issues.extend(
+                _validate_metadata_refs(
+                    config.gear_ratios_metadata,
+                    registry=resolved_registry,
+                    entity=entity,
+                    label=f"{label} field 'gear_ratios'",
+                )
+            )
+        for option in config.tire_options:
+            if option.metadata is None:
+                continue
+            issues.extend(
+                _validate_metadata_refs(
+                    option.metadata,
+                    registry=resolved_registry,
+                    entity=entity,
+                    label=f"{label} tire option {option.name!r}",
+                )
+            )
+        for note in config.verification_notes:
+            for ref in note.evidence_refs:
+                if ref not in resolved_registry.sources:
+                    issues.append(
+                        CarSourceEvidenceIssue(
+                            rule="missing_source_reference",
+                            entity=entity,
+                            message=f"{label} verification note references unknown source {ref!r}",
+                        )
+                    )
+        for issue in config.unresolved:
+            for ref in issue.evidence_refs:
+                if ref not in resolved_registry.sources:
+                    issues.append(
+                        CarSourceEvidenceIssue(
+                            rule="missing_source_reference",
+                            entity=entity,
+                            message=f"{label} unresolved item references unknown source {ref!r}",
+                        )
+                    )
     return tuple(issues)
+
+
+def _validate_metadata_refs(
+    metadata: VehicleFieldMetadata,
+    *,
+    registry: CarSourceRegistry,
+    entity: str,
+    label: str,
+) -> list[CarSourceEvidenceIssue]:
+    issues: list[CarSourceEvidenceIssue] = []
+    if metadata.requires_evidence_refs and not metadata.evidence_refs:
+        issues.append(
+            CarSourceEvidenceIssue(
+                rule="missing_required_evidence_refs",
+                entity=entity,
+                message=(
+                    f"{label} uses confidence {metadata.confidence!r} but has no evidence_refs"
+                ),
+            )
+        )
+        return issues
+    for ref in metadata.evidence_refs:
+        if ref not in registry.sources:
+            issues.append(
+                CarSourceEvidenceIssue(
+                    rule="missing_source_reference",
+                    entity=entity,
+                    message=f"{label} references unknown source {ref!r}",
+                )
+            )
+    return issues
 
 
 def _load_json_object(path: Path) -> Mapping[str, object]:
@@ -235,34 +231,6 @@ def _required_non_empty_string(
         return value.strip()
     location = f"{path} #{index}" if index is not None else str(path)
     raise ValueError(f"{location} missing non-empty {key!r}")
-
-
-def _required_string_list(
-    row: Mapping[str, object],
-    key: str,
-    *,
-    path: Path,
-    index: int,
-) -> tuple[str, ...]:
-    value = row.get(key)
-    if not isinstance(value, list) or not value:
-        raise ValueError(f"{path} #{index} must contain a non-empty {key!r} list")
-    items = tuple(item.strip() for item in value if isinstance(item, str) and item.strip())
-    if len(items) != len(value):
-        raise ValueError(f"{path} #{index} contains an invalid {key!r} entry")
-    return items
-
-
-def _optional_string_list(row: Mapping[str, object], key: str) -> tuple[str, ...]:
-    value = row.get(key)
-    if value is None:
-        return ()
-    if not isinstance(value, list):
-        raise ValueError(f"Optional field {key!r} must be a list when present")
-    items = tuple(item.strip() for item in value if isinstance(item, str) and item.strip())
-    if len(items) != len(value):
-        raise ValueError(f"Optional field {key!r} contains an invalid entry")
-    return items
 
 
 def _format_issue_summary(issues: Sequence[CarSourceEvidenceIssue]) -> str:

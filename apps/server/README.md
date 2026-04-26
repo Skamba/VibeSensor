@@ -121,7 +121,7 @@ apps/server/
 ```
 
 - `data/`: runtime state, history database, and local logs for native/dev flows.
-- `vibesensor/data/`: packaged static data such as report i18n JSON, the car library, and scripted scenarios.
+- `vibesensor/data/`: packaged static data such as report i18n JSON, canonical vehicle configurations, source-document metadata, and scripted scenarios.
 - `vibesensor/static/`: built UI assets served by FastAPI.
 - `scripts/` and `systemd/`: Pi deployment and hotspot support.
 - `tests/`: pytest suite, organized by backend ownership boundary.
@@ -266,7 +266,8 @@ Common runtime files under `apps/server/data/` include:
 - `clients.json`: persisted client metadata.
 
 Bundled static data ships under `apps/server/vibesensor/data/`, including
-`report_i18n.json`, `car_library.json`, and the scripted scenario resources.
+`report_i18n.json`, `vehicle_configurations.json`, `car_sources/*.json`, and the
+scripted scenario resources.
 
 ## Pi deployment & service operations
 
