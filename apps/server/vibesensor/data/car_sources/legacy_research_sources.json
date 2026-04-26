@@ -408,6 +408,27 @@
       "confidence": "high"
     },
     {
+      "id": "legacy_research_sources:27e3d1aa1f09",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286569EN/419611",
+      "title": "419611",
+      "note": "Official BMW 09/2018 technical-data PDF for the G32 6 Series Gran Turismo lineup. It includes exact pages for 630d xDrive Gran Turismo and 640d xDrive Gran Turismo with xDrive AWD, 8-speed Steptronic, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires; it does not list a 630i xDrive row.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:5c1b0ad4cf7e",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0314290EN/463145",
+      "title": "463145",
+      "note": "Official BMW 11/2020 technical-data PDF for the G32 6 Series Gran Turismo lineup. It includes exact pages for 630d xDrive Gran Turismo and 640d xDrive Gran Turismo; 630d keeps xDrive AWD, Eight-speed Steptronic, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires, while 640d keeps xDrive AWD, Eight-speed Steptronic, 0.640 top gear, 2.563 final drive, and moves to 245/50 R18 baseline tires. The PDF still does not list a 630i xDrive row.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:a1a7fdd8c2e4",
+      "url": "https://www.audi-mediacenter.com/system/production/car_motorizations/1327/file_en/334999a095b61a16bcf0870c83ac92abc2332835/eTD_Audi_R8_Coupe_V10performance_RWD_419_kW_230113.pdf?disposition=attachment",
+      "title": "eTD_Audi_R8_Coupe_V10performance_RWD_419_kW_230113.pdf",
+      "note": "Official Audi MediaCenter Germany 01/2023 technical-data PDF for the later R8 Coupé V10 performance RWD: rear-wheel drive, 7-speed S tronic wording, Audi-form transmission ratios ending with 0.653 top gear, final-drive values 4.458 / 3.588, and 245/35 R19 front plus 295/35 R19 rear base tires.",
+      "confidence": "high"
+    },
+    {
       "id": "legacy_research_sources:286bb3c2fefa",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0280350EN/406525",
       "title": "406525",
@@ -2828,6 +2849,20 @@
       "title": "Search",
       "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
       "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:6c2ebf019f9d",
+      "url": "https://press.audi.co.uk/assets/documents/original/20340-AudiUK00000079Q320TFSI170PSTechnical.pdf",
+      "title": "Q3 2 0 Tfsi 170Ps Technical",
+      "note": "Official Audi UK technical-data PDF for the exact Q3 2.0 TFSI quattro 170 PS manual state: quattro AWD, 6-speed manual transmission, top gear 0.813, grouped gearbox/final-drive values that do not map cleanly to the current front/rear schema, and basic 215/65 R16 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:9d7fc9f138f2",
+      "url": "https://press.audi.co.uk/assets/documents/original/20342-AudiUK00000091Q320TFSIquattroStronic.pdf",
+      "title": "Q3 2 0 Tfsi Quattro S Tronic",
+      "note": "Official Audi UK technical-data PDF for the exact Q3 2.0 TFSI quattro S tronic state: quattro AWD, 7-speed S tronic, top gear 0.667, final drives 4.769 and 3.444, and basic 235/55 R17 tires.",
+      "confidence": "high"
     }
   ]
 }

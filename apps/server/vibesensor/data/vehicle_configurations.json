@@ -11812,9 +11812,9 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "official_exact",
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 640d xDrive Gran Turismo.",
-        "value": 0.64
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.667
       },
       "final_drive_front": {
         "confidence": "family_default",
@@ -12337,9 +12337,9 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "official_exact",
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 640d xDrive Gran Turismo.",
-        "value": 0.64
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.667
       },
       "final_drive_front": {
         "confidence": "family_default",
@@ -40294,9 +40294,9 @@
         "value": 0.667
       },
       "final_drive_rear": {
-        "confidence": "official_exact",
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 640d xDrive Gran Turismo.",
-        "value": 2.563
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 2.813
       }
     },
     "tires": {
@@ -40607,14 +40607,14 @@
         "value": 0.667
       },
       "final_drive_front": {
-        "confidence": "official_exact",
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 640d xDrive Gran Turismo.",
-        "value": 2.563
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 2.813
       },
       "final_drive_rear": {
-        "confidence": "official_exact",
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 640d xDrive Gran Turismo.",
-        "value": 2.563
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 2.813
       }
     },
     "tires": {
@@ -41877,9 +41877,9 @@
         "value": 0.667
       },
       "final_drive_front": {
-        "confidence": "official_exact",
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 640d xDrive Gran Turismo.",
-        "value": 2.563
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 2.813
       },
       "final_drive_rear": {
         "confidence": "family_default",
