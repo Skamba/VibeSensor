@@ -69,7 +69,16 @@
       {
         "name": "7-speed Steptronic dual-clutch transmission",
         "final_drive_ratio": 3.684,
-        "top_gear_ratio": 0.71
+        "top_gear_ratio": 0.547,
+        "gear_ratios": [
+          4.154,
+          2.45,
+          1.556,
+          1.09,
+          0.844,
+          0.675,
+          0.547
+        ]
       }
     ],
     "tire_options": [
