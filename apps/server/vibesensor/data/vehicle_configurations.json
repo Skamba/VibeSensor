@@ -514,8 +514,8 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Exact pre-facelift Tiptronic evidence contradicts the broad-row 8-speed ZF8HP mapping, so treat the transmission code and gear count as unresolved until the row is split or later-year continuity is proven.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
@@ -630,6 +630,12 @@
         "evidence_refs": [
           "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-zf8hp-autodata"
         ]
+      },
+      {
+        "note": "Follow-up review found that the exact 2009-2011 Auto-Data coupe row identifies this pre-facelift Tiptronic configuration as 6-speed automatic, which conflicts with the broad-row 8-speed ZF8HP mapping and keeps the transmission field unresolved.",
+        "evidence_refs": [
+          "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-zf8hp-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -657,13 +663,13 @@
       },
       {
         "item": "Audi A5 Coupe 2.0 TFSI quattro Tiptronic pre-facelift evidence is not safe for the broad 2007-2016 row",
-        "reason": "The exact 2009-2011 Auto-Data coupe row supports AWD and 245/40 R18 tires, but without a second exact source or later-year continuity the evidence is insufficient for a safe ratio or year-range correction.",
+        "reason": "The exact 2009-2011 Auto-Data coupe row supports AWD and 245/40 R18 tires, but it also identifies the pre-facelift Tiptronic configuration as 6-speed automatic, so the broad 2007-2016 ZF8HP row likely conflates distinct transmission eras and is not safe for order analysis without a split or later-year proof.",
         "evidence_refs": [
           "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-zf8hp-autodata"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
@@ -855,8 +861,8 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Exact pre-facelift Tiptronic evidence contradicts the broad-row 8-speed ZF8HP mapping, so treat the transmission code and gear count as unresolved until the row is split or later-year continuity is proven.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
@@ -965,6 +971,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Follow-up review found that the exact 2007-2011 Auto-Data coupe row identifies this pre-facelift Tiptronic configuration as 6-speed automatic, and an independent Ultimate Specs page corroborates the 2007-2011 quattro Tiptronic identity, so the broad-row 8-speed ZF8HP mapping remains unresolved.",
+        "evidence_refs": [
+          "secondary_technical_sources:a5-b8-3-0-tdi-quattro-zf8hp-autodata",
+          "secondary_technical_sources:a5-b8-3-0-tdi-quattro-zf8hp-ultimatespecs"
+        ]
       }
     ],
     "unresolved": [
@@ -989,9 +1002,17 @@
           "legacy_research_sources:4b8ab423f879",
           "legacy_research_sources:5e252f7f436b"
         ]
+      },
+      {
+        "item": "Audi A5 Coupe 3.0 TDI quattro Tiptronic pre-facelift evidence conflicts with the broad 2007-2016 ZF8HP row",
+        "reason": "The exact 2007-2011 Auto-Data coupe row identifies the pre-facelift Tiptronic configuration as 6-speed automatic, and Ultimate Specs independently corroborates the 2007-2011 quattro Tiptronic identity, so the broad ZF8HP row likely conflates distinct transmission eras and is not safe for order analysis without a split or later-year proof.",
+        "evidence_refs": [
+          "secondary_technical_sources:a5-b8-3-0-tdi-quattro-zf8hp-autodata",
+          "secondary_technical_sources:a5-b8-3-0-tdi-quattro-zf8hp-ultimatespecs"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
@@ -20974,15 +20995,23 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "AWD"
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary A4 2.0 TFSI quattro sources agree on AWD, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "value": "AWD",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary A4 2.0 TFSI quattro sources agree on the 6-speed manual gearbox, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
       "code": "MT6",
-      "name": "6-speed manual"
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -21089,6 +21118,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Exact secondary manual sources agree on AWD and a 6-speed manual gearbox, but the pre-facelift Auto-Data row and the 2013 Carfolio row do not expose a cross-checked numeric ratio package or a safe full-row tire mapping.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -21112,6 +21148,14 @@
           "legacy_research_sources:4b8ab423f879",
           "legacy_research_sources:4d505818df53",
           "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 2.0 TFSI quattro manual exact secondary sources confirm identity but not a safe broad-row ratio package",
+        "reason": "The exact 2008-2011 Auto-Data row and the exact 2013 Carfolio row agree on AWD and the 6-speed manual transmission, but neither pair provides a cross-checked full-row ratio or tire package across the 2008-2016 span.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
         ]
       }
     ],
@@ -21138,15 +21182,23 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "value": "AWD"
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary facelift A4 2.0 TFSI quattro S tronic sources agree on AWD, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "value": "AWD",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
+      ]
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary facelift A4 2.0 TFSI quattro S tronic sources agree on the 7-speed S tronic gearbox, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
       "code": "DCT7",
-      "name": "7-speed S tronic (DL501)"
+      "name": "7-speed S tronic (DL501)",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
+      ]
     },
     "ratios": {
       "top_gear_ratio": {
@@ -21253,6 +21305,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Exact secondary S tronic sources agree on AWD and a 7-speed S tronic gearbox, but the available facelift-only evidence does not expose a cross-checked numeric ratio package or a safe full-row tire mapping.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -21276,6 +21335,14 @@
           "legacy_research_sources:4b8ab423f879",
           "legacy_research_sources:4d505818df53",
           "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 2.0 TFSI quattro S tronic exact secondary sources confirm identity but not a safe broad-row ratio package",
+        "reason": "The exact 2012-2015 Auto-Data row and the exact 2013 Carfolio row agree on AWD and the 7-speed S tronic transmission, but neither pair provides a cross-checked full-row ratio or tire package across the 2008-2016 span.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
         ]
       }
     ],
@@ -21307,8 +21374,8 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Exact pre-facelift Tiptronic evidence contradicts the broad-row 8-speed ZF8HP mapping, so treat the transmission code and gear count as unresolved until the row is split or later-year continuity is proven.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
@@ -21417,6 +21484,12 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Follow-up review found that the exact 2008-2011 Auto-Data sedan row identifies this pre-facelift Tiptronic configuration as 6-speed automatic, which conflicts with the broad-row 8-speed ZF8HP mapping and keeps the transmission field unresolved.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-zf8hp-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -21441,9 +21514,16 @@
           "legacy_research_sources:4d505818df53",
           "legacy_research_sources:5e252f7f436b"
         ]
+      },
+      {
+        "item": "Audi A4 2.0 TFSI quattro Tiptronic pre-facelift evidence conflicts with the broad 2008-2016 ZF8HP row",
+        "reason": "The exact 2008-2011 Auto-Data sedan row identifies the pre-facelift Tiptronic configuration as 6-speed automatic, so the broad ZF8HP row likely conflates distinct transmission eras and is not safe for order analysis without a split or later-year proof.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-zf8hp-autodata"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
