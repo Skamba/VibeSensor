@@ -448,8 +448,8 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
-| 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 4.234 | Audi UK technical data / MediaCenter eTD | High |
-| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 4.410 | Audi MediaCenter eTD technical data | High |
+| 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 4.234 TG 0.433 basic 225/50 R17 | Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) | High |
+| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 4.410 TG 0.433 basic 225/50 R17 | Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) | High |
 
 ### A6 (C7, 2011-2018)
 
@@ -464,7 +464,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
 | 40 TFSI | 2.0L I4 TFSI Turbo | FWD | Audi press release | High |
-| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | Audi press release | High |
+| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) | High |
 | 55 TFSI quattro | 3.0L V6 TFSI Turbo | AWD | Audi MediaCenter technical data (exact current 250 kW tiptronic state) | High |
 
 ### A7 Sportback (C7, 2011-2018)
@@ -494,7 +494,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 |---------|--------|------------|--------|------------|
 | 50 TFSI quattro | 3.0L V6 TFSI Turbo | AWD | Audi press release | High |
 | 55 TFSI quattro | 3.0L V6 TFSI Turbo | AWD | Audi press release | High |
-| 60 TFSI e quattro | 3.0L V6 TFSI Turbo PHEV | AWD | Audi press release | High |
+| 60 TFSI e quattro | 3.0L V6 TFSI Turbo PHEV | AWD | Audi MediaCenter technical data (exact 2020 + current 360 kW states) | High |
 
 ### Q2 (GA, 2017-2024)
 
@@ -610,8 +610,8 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
-| e-tron GT quattro | Electric Dual Motor | AWD | Audi MediaCenter technical data | High |
-| RS e-tron GT | Electric Dual Motor (Performance) | AWD | Audi MediaCenter technical data | High |
+| e-tron GT quattro | Electric Dual Motor | AWD | Audi MediaCenter Germany technical data (exact 2023 + 2026 states) | High |
+| RS e-tron GT | Electric Dual Motor (Performance) | AWD | Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) | High |
 
 ### Q4 e-tron (FZ, 2022-2026)
 
