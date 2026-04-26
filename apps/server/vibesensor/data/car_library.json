@@ -1700,17 +1700,34 @@
       {
         "name": "M850i xDrive",
         "engine": "N63 4.4L V8 Turbo",
-        "drivetrain": "AWD"
+        "drivetrain": "AWD",
+        "gearboxes": [
+          {
+            "name": "8-speed automatic (ZF 8HP76 Sport)",
+            "final_drive_ratio": 2.813,
+            "top_gear_ratio": 0.64,
+            "gear_ratios": [
+              5.5,
+              3.52,
+              2.2,
+              1.72,
+              1.317,
+              1.0,
+              0.823,
+              0.64
+            ]
+          }
+        ]
       },
       {
         "name": "M8",
         "engine": "4.4L V8 Turbo",
-        "drivetrain": "RWD"
+        "drivetrain": "AWD"
       },
       {
         "name": "M8 Competition",
         "engine": "4.4L V8 Turbo",
-        "drivetrain": "RWD"
+        "drivetrain": "AWD"
       }
     ]
   },
@@ -2946,12 +2963,29 @@
       {
         "name": "7-speed dual-clutch (M-DCT)",
         "final_drive_ratio": 3.154,
-        "top_gear_ratio": 0.714
+        "top_gear_ratio": 0.671,
+        "gear_ratios": [
+          4.806,
+          2.593,
+          1.701,
+          1.277,
+          1.0,
+          0.844,
+          0.671
+        ]
       },
       {
         "name": "6-speed manual",
         "final_drive_ratio": 3.462,
-        "top_gear_ratio": 0.793
+        "top_gear_ratio": 0.846,
+        "gear_ratios": [
+          4.11,
+          2.315,
+          1.542,
+          1.179,
+          1.0,
+          0.846
+        ]
       }
     ],
     "tire_options": [
@@ -3102,12 +3136,29 @@
       {
         "name": "7-speed dual-clutch (M-DCT)",
         "final_drive_ratio": 3.154,
-        "top_gear_ratio": 0.714
+        "top_gear_ratio": 0.671,
+        "gear_ratios": [
+          4.806,
+          2.593,
+          1.701,
+          1.277,
+          1.0,
+          0.844,
+          0.671
+        ]
       },
       {
         "name": "6-speed manual",
         "final_drive_ratio": 3.462,
-        "top_gear_ratio": 0.793
+        "top_gear_ratio": 0.846,
+        "gear_ratios": [
+          4.11,
+          2.315,
+          1.542,
+          1.179,
+          1.0,
+          0.846
+        ]
       }
     ],
     "tire_options": [
@@ -3251,7 +3302,17 @@
       {
         "name": "8-speed automatic (ZF 8HP)",
         "final_drive_ratio": 3.154,
-        "top_gear_ratio": 0.667
+        "top_gear_ratio": 0.64,
+        "gear_ratios": [
+          5.0,
+          3.2,
+          2.143,
+          1.72,
+          1.313,
+          1.0,
+          0.823,
+          0.64
+        ]
       }
     ],
     "tire_options": [
