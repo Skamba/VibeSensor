@@ -78,7 +78,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
-| 218i | B38 1.5L I3 Turbo | FWD | BMW press release | High |
+| 218i | B38 1.5L I3 Turbo | FWD | BMW 01/2018 specifications PDF / press release | Medium |
 | 220i | B48 2.0L I4 Turbo | FWD | BMW press release | High |
 | 225xe | B38 1.5L I3 Turbo PHEV | AWD | BMW press release | High |
 
@@ -251,9 +251,9 @@ as `verification_backlog`, `verified`, `corrected`, or
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
 | sDrive20i | B48 2.0L I4 Turbo | RWD | – | BMW press release | High |
-| xDrive20i | B48 2.0L I4 Turbo | AWD | – | BMW press release | High |
-| xDrive30i | B48 2.0L I4 Turbo | AWD | 8-speed Steptronic FD 3.385 TG 0.640 | BMW PressClub technical data / DE price list | High |
-| M40i | B58 3.0L I6 Turbo | AWD | – | BMW press release | High |
+| xDrive20i | B48 2.0L I4 Turbo | AWD | 8-speed Steptronic FD 3.385 TG 0.640 basic 225/60 R18 | BMW PressClub technical data (2018, 2021 exact states) | High |
+| xDrive30i | B48 2.0L I4 Turbo | AWD | 8-speed Steptronic FD 3.385 TG 0.640 | BMW DE price-list / technical-data context | Medium |
+| M40i | B58 3.0L I6 Turbo | AWD | basic staggered 245/45 R20 F + 275/40 R20 R | BMW PressClub 04/2020 technical data | High |
 
 ### X3 (G45, 2025-2026)
 
@@ -291,7 +291,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
-| xDrive40i | B58 3.0L I6 Turbo | AWD | 8-speed Steptronic FD 3.636 TG 0.640 | BMW PressClub technical data | High |
+| xDrive40i | B58 3.0L I6 Turbo | AWD | Launch-era 8-speed Steptronic FD 3.385 TG 0.640 | BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) | High |
 | xDrive45e | B58 3.0L I6 Turbo PHEV | AWD | 8-speed Steptronic FD 3.636 | BMW DE technical data | High |
 | M50i | N63 4.4L V8 Turbo | AWD | – | BMW press release | High |
 
@@ -391,14 +391,14 @@ as `verification_backlog`, `verified`, `corrected`, or
 |---------|--------|------------|--------|------------|
 | 25 TFSI | 1.0L I3 TFSI Turbo | FWD | Audi press release | High |
 | 30 TFSI | 1.0L I3 TFSI Turbo | FWD | Audi press release | High |
-| 35 TFSI | 1.5L I4 TFSI Turbo | FWD | Audi press release | High |
+| 35 TFSI | 1.5L I4 TFSI Turbo | FWD | Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) | High |
 
 ### A3 (8V, 2013-2020)
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
 | 30 TFSI | 1.0L I3 TFSI Turbo | FWD | Audi press release | High |
-| 35 TFSI | 1.5L I4 TFSI Turbo | FWD | Audi press release | High |
+| 35 TFSI | 1.5L I4 TFSI Turbo | FWD | Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) | High |
 | 40 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | Audi press release | High |
 | 1.6 TDI | 1.6L I4 TDI Diesel | FWD | Audi owner manual / brochure archive | Medium |
 | 2.0 TDI | 2.0L I4 TDI Diesel | FWD | Audi owner manual / brochure archive / ETKA Europe | Medium |
@@ -412,7 +412,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 | 35 TFSI | 1.5L I4 TFSI Turbo | FWD | Audi press release | High |
 | 40 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | Audi press release | High |
 | 30 TDI | 2.0L I4 TDI Diesel | FWD | Audi owner manual / ETKA Europe | Medium |
-| 35 TDI | 2.0L I4 TDI Diesel | FWD | Audi owner manual / ETKA Europe | Medium |
+| 35 TDI | 2.0L I4 TDI Diesel | FWD | Audi MediaCenter 2024 Germany technical data / MY2026 price list | High |
 
 ### A4 (B8, 2008-2016)
 
@@ -432,9 +432,9 @@ as `verification_backlog`, `verified`, `corrected`, or
 |---------|--------|------------|------------------|--------|------------|
 | 35 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 4.234 | Audi MediaCenter eTD technical data | High |
 | 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 4.234 | Audi MediaCenter eTD / Audi UK technical data | High |
-| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 4.410 | Audi MediaCenter eTD technical data | High |
+| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 4.410 TG 0.433 basic 225/50 R17 | Audi MediaCenter eTD technical data | High |
 | 30 TDI | 2.0L I4 TDI Diesel | FWD | – | Audi owner manual / ETKA Europe | Medium |
-| 35 TDI | 2.0L I4 TDI Diesel | FWD | – | Audi owner manual / ETKA Europe | Medium |
+| 35 TDI | 2.0L I4 TDI Diesel | FWD | 7-speed S tronic FD 4.048 basic 205/60 R16 | Audi MediaCenter eTD technical data | High |
 
 ### A5 (B8, 2007-2016)
 
@@ -465,7 +465,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 |---------|--------|------------|--------|------------|
 | 40 TFSI | 2.0L I4 TFSI Turbo | FWD | Audi press release | High |
 | 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | Audi press release | High |
-| 55 TFSI quattro | 3.0L V6 TFSI Turbo | AWD | Audi press release | High |
+| 55 TFSI quattro | 3.0L V6 TFSI Turbo | AWD | Audi MediaCenter technical data (exact current 250 kW tiptronic state) | High |
 
 ### A7 Sportback (C7, 2011-2018)
 
@@ -535,10 +535,10 @@ as `verification_backlog`, `verified`, `corrected`, or
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
 | 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 5.302 | Audi MediaCenter eTD technical data | High |
-| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 5.302 TG 0.433 | Audi MediaCenter eTD technical data (2019, 2024) | High |
+| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 5.302 TG 0.433 basic 235/65 R17 | Audi MediaCenter eTD technical data (2019, 2024) | High |
 | 55 TFSI e quattro | 2.0L I4 TFSI Turbo PHEV | AWD | 7-speed S tronic FD 5.302 | Audi MediaCenter / technical data PDF | High |
 | 35 TDI quattro | 2.0L I4 TDI Diesel | AWD | – | Audi owner manual / technical data | Medium |
-| 40 TDI quattro | 2.0L I4 TDI Diesel | AWD | – | Audi owner manual / technical data | Medium |
+| 40 TDI quattro | 2.0L I4 TDI Diesel | AWD | – | Audi MediaCenter technical data (conflicting 2019 6MT / 2024 7-speed S tronic exact states) | Medium |
 
 ### Q7 (4M, 2016-2026)
 
