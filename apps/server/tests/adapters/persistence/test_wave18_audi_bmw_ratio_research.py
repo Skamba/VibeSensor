@@ -106,6 +106,4 @@ def test_wave18_variant_source_doc_tracks_updated_m_rows() -> None:
     assert m3_row in text
     assert m4_row in text
     assert m5_row in text
-    assert (
-        "| M8 Competition | 4.4L V8 Turbo | AWD | – | BMW M technical data | High |" in text
-    )
+    assert "| M8 Competition | 4.4L V8 Turbo | AWD | – | BMW M technical data | High |" in text

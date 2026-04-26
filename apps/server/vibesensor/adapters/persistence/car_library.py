@@ -663,7 +663,7 @@ def resolve_variant(
     *variant_name* or ``None`` returns a deep copy of the base entry so
     callers cannot corrupt the cached library data.
     """
-    result: ResolvedCarLibraryEntry = _deep_copy_entry(base_entry)
+    result = cast(ResolvedCarLibraryEntry, _deep_copy_entry(base_entry))
     if not variant_name:
         return result
     for variant in base_entry["variants"]:
