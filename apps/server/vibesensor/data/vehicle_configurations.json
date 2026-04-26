@@ -333,7 +333,7 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. One exact secondary 2008-2011 coupe source confirms AWD, but a second independent exact source is still needed before upgrading the broad 2007-2016 row.",
       "value": "AWD"
     },
     "transmission": {
@@ -447,6 +447,12 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Exact secondary review found a 2008-2011 A5 Coupe 2.0 TFSI quattro S tronic page that supports AWD, 7-speed S tronic, and 225/50 R17 tires, but it does not safely cover the full 2007-2016 row and no second exact source resolved the ratio package in this pass.",
+        "evidence_refs": [
+          "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-dct7-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -470,6 +476,13 @@
           "legacy_research_sources:4b4b833b364a",
           "legacy_research_sources:4b8ab423f879",
           "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A5 Coupe 2.0 TFSI quattro S tronic pre-facelift evidence is not safe for the broad 2007-2016 row",
+        "reason": "The exact 2008-2011 Auto-Data coupe row supports AWD, S tronic, and 225/50 R17 tires, but without a second exact source or later-year continuity the evidence is insufficient for a safe ratio or tire correction.",
+        "evidence_refs": [
+          "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-dct7-autodata"
         ]
       }
     ],
@@ -497,7 +510,7 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. One exact secondary 2009-2011 coupe source confirms AWD, but a second independent exact source is still needed before upgrading the broad 2007-2016 row.",
       "value": "AWD"
     },
     "transmission": {
@@ -611,6 +624,12 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Exact secondary review found a 2009-2011 A5 Coupe 2.0 TFSI quattro Tiptronic page that supports AWD and 245/40 R18 baseline tires, but it does not safely cover the full 2007-2016 row and does not provide a cross-checked exact ratio package in this pass.",
+        "evidence_refs": [
+          "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-zf8hp-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -634,6 +653,13 @@
           "legacy_research_sources:4b4b833b364a",
           "legacy_research_sources:4b8ab423f879",
           "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A5 Coupe 2.0 TFSI quattro Tiptronic pre-facelift evidence is not safe for the broad 2007-2016 row",
+        "reason": "The exact 2009-2011 Auto-Data coupe row supports AWD and 245/40 R18 tires, but without a second exact source or later-year continuity the evidence is insufficient for a safe ratio or year-range correction.",
+        "evidence_refs": [
+          "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-zf8hp-autodata"
         ]
       }
     ],
@@ -6752,13 +6778,21 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "confidence": "reputable_secondary_crosschecked",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-autodata"
+      ],
+      "notes": "Independent exact secondary pre-facelift A4 2.0 TDI quattro manual sources agree on AWD, but the broader 2008-2016 row still lacks later-year exact ratio and tire continuity.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "confidence": "reputable_secondary_crosschecked",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-autodata"
+      ],
+      "notes": "Independent exact secondary pre-facelift A4 2.0 TDI quattro manual sources agree on the 6-speed manual gearbox, but later-year continuity is still missing for the broad 2008-2016 row.",
       "code": "MT6",
       "name": "6-speed manual"
     },
@@ -19566,6 +19600,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "Exact secondary pre-facelift manual sources agree on AWD, 6-speed manual transmission, and 225/55 R16 baseline tires, but those sources only cover 2008-2011 and do not safely justify correcting the full 2008-2016 row without a year split.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -19589,6 +19630,14 @@
           "legacy_research_sources:4b8ab423f879",
           "legacy_research_sources:4d505818df53",
           "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 2.0 TDI quattro manual pre-facelift evidence is not safe for the broad 2008-2016 row",
+        "reason": "Carfolio and Auto-Data exact manual rows agree on AWD, 6-speed manual transmission, and 225/55 R16 tires for 2008-2011, but that subset does not yet resolve whether later B8 years kept the same base tire or ratio package.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-autodata"
         ]
       }
     ],
@@ -20097,13 +20146,21 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "confidence": "reputable_secondary_crosschecked",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
+      ],
+      "notes": "Independent exact secondary facelift A4 2.0 TDI quattro S tronic sources agree on AWD, but they diverge on the baseline tire package and do not safely resolve the broad 2008-2016 row.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "confidence": "reputable_secondary_crosschecked",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
+      ],
+      "notes": "Independent exact secondary facelift A4 2.0 TDI quattro S tronic sources agree on the 7-speed S tronic gearbox, but ratio and tire continuity remain unresolved for the broad 2008-2016 row.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)"
     },
@@ -20212,6 +20269,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "Exact secondary facelift S tronic sources agree on AWD and 7-speed S tronic transmission, but Auto-Data reports 225/55 R16 tires while Carfolio reports 225/50 R17 and only Carfolio exposed a numeric top-gear/final-drive pair, so the broad row stays unresolved.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
+        ]
       }
     ],
     "unresolved": [
@@ -20235,6 +20299,14 @@
           "legacy_research_sources:4b8ab423f879",
           "legacy_research_sources:4d505818df53",
           "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 2.0 TDI quattro S tronic exact secondary sources disagree on the baseline tire package",
+        "reason": "The exact facelift Auto-Data row lists 225/55 R16 while the exact 2015 Carfolio row lists 225/50 R17 and 0.39 / 4.27 for top gear and final drive, so the broad 2008-2016 row cannot be safely corrected without a year-specific official source or an explicit split.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
         ]
       }
     ],
