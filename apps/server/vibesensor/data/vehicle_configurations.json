@@ -10261,8 +10261,8 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / technical data with Medium confidence.",
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Checked official Germany-market 2019 and 2024 35 TDI sheets remain front-wheel-drive S tronic states and do not support any exact 35 TDI quattro mapping, so treat the transmission field as unresolved until an exact quattro document is recovered.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL382)"
     },
@@ -10411,6 +10411,14 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / technical data with Medium confidence."
+      },
+      {
+        "note": "Batch 4 review keeps this row unsupported for order analysis: official Germany-market 2019 and 2024 Q5 35 TDI S tronic sheets both describe front-wheel-drive states, publish different final drives 5.302 and 4.885, and do not recover any exact 35 TDI quattro mapping for the broad FY row.",
+        "evidence_refs": [
+          "legacy_research_sources:0704ea887c86",
+          "legacy_research_sources:58f92c263343",
+          "legacy_research_sources:aaa1bd276e93"
+        ]
       }
     ],
     "unresolved": [
@@ -10548,7 +10556,7 @@
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
@@ -10571,13 +10579,17 @@
     "engine_name": "2.0L I4 TDI Diesel",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (conflicting 2019 6MT / 2024 7-speed S tronic exact states) with Medium confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:a6de0bcaa857",
+        "legacy_research_sources:b24b22157008"
+      ],
+      "notes": "Exact official Germany-market FY 40 TDI quattro technical-data sheets from 2019 and 2024 both confirm AWD, even though the broad row still spans conflicting manual and S tronic states.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (conflicting 2019 6MT / 2024 7-speed S tronic exact states) with Medium confidence.",
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Exact official FY 40 TDI quattro evidence conflicts between a 2019 6-speed manual state and a 2024 7-speed S tronic state, so treat the transmission field as unresolved until the row is split or exact year continuity is proven.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL382)"
     },
@@ -10726,6 +10738,14 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (conflicting 2019 6MT / 2024 7-speed S tronic exact states) with Medium confidence."
+      },
+      {
+        "note": "Batch 4 review lowers this broad FY row to no_confidence for order analysis: exact official Germany-market 40 TDI quattro sheets confirm AWD in both checked states, but they conflict on gearbox, top gear, and final drive between the 2019 6-speed manual package and the 2024 7-speed S tronic package.",
+        "evidence_refs": [
+          "legacy_research_sources:58f92c263343",
+          "legacy_research_sources:a6de0bcaa857",
+          "legacy_research_sources:b24b22157008"
+        ]
       }
     ],
     "unresolved": [
@@ -10863,7 +10883,7 @@
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
@@ -11472,13 +11492,21 @@
     "engine_name": "2.0L I4 TFSI Turbo PHEV",
     "fuel_type": "PHEV",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter / technical data PDF with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:54af60a9ddf0",
+        "legacy_research_sources:e6b28c39d7e6"
+      ],
+      "notes": "Exact official Audi MediaCenter Q5 TFSI e model-page and technical-data PDF evidence confirm quattro ultra AWD for the checked FY 55 TFSI e configuration, while broader ratio and tire continuity remain unresolved for the inherited row.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter / technical data PDF with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:54af60a9ddf0",
+        "legacy_research_sources:e6b28c39d7e6"
+      ],
+      "notes": "Exact official Audi MediaCenter Q5 TFSI e model-page and technical-data PDF evidence confirm the 7-speed S tronic gearbox for the checked FY 55 TFSI e configuration, while broader ratio and tire continuity remain unresolved for the inherited row.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL382)"
     },
@@ -11627,6 +11655,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter / technical data PDF with High confidence."
+      },
+      {
+        "note": "Batch 4 review upgrades the exact FY Q5 55 TFSI e quattro identity fields from inherited defaults: the official Audi MediaCenter model page scopes the Q5 TFSI e line until 2025 and states that the Q5 TFSI e quattro has been on the market since 2019, while the exact 270 kW technical-data PDF confirms quattro ultra AWD and 7-speed S tronic for the checked configuration. Numeric ratio, final-drive, and tire continuity are still left unresolved for the inherited broad row.",
+        "evidence_refs": [
+          "legacy_research_sources:54af60a9ddf0",
+          "legacy_research_sources:e6b28c39d7e6"
+        ]
       }
     ],
     "unresolved": [
@@ -22453,8 +22488,8 @@
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Exact secondary facelift 3.0 TFSI quattro sources identify the checked sedan state as 7-speed S tronic rather than tiptronic, so treat the transmission code and gear count as unresolved until the broad row is split or exact EU continuity is proven.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
@@ -22563,6 +22598,13 @@
       },
       {
         "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Follow-up review found that exact 2012-2014 and 2012 secondary A4 3.0 TFSI quattro sedan pages identify the checked configuration as AWD with a 7-speed S tronic gearbox, which conflicts with the broad-row 8-speed ZF8HP mapping and keeps this Tiptronic row unresolved.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
+        ]
       }
     ],
     "unresolved": [
@@ -22587,9 +22629,17 @@
           "legacy_research_sources:4d505818df53",
           "legacy_research_sources:5e252f7f436b"
         ]
+      },
+      {
+        "item": "Audi A4 3.0 TFSI quattro Tiptronic evidence conflicts with the broad 2008-2016 ZF8HP row",
+        "reason": "Exact 2012-2014 Auto-Data and 2012 Carfolio sedan pages identify the checked 3.0 TFSI quattro state as AWD with 7-speed S tronic, so the broad ZF8HP row likely conflates distinct transmission states and is not safe for order analysis without a split or exact later-year proof.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
+        ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
