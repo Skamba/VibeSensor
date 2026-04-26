@@ -154,6 +154,34 @@
       "title": "Auto-Data A4 B8 3.0 TFSI quattro S tronic specification entry",
       "note": "Exact secondary 2012-2014 facelift A4 3.0 TFSI 272 hp quattro S tronic sedan entry used to cross-check AWD and 7-speed S tronic transmission for the broad B8 row.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-q3-i-8u-2.0-tdi-177hp-quattro-19157",
+      "title": "Auto-Data Q3 8U 2.0 TDI quattro manual specification entry",
+      "note": "Exact secondary 2012-2014 Q3 2.0 TDI 177 hp quattro manual entry used to cross-check AWD, 6-speed manual transmission, and 235/55 R17 baseline tires for the broad 8U row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-car-specs",
+      "url": "https://www.car-specs.net/car/Audi-Q3-(8U)/2.0-TDI-(177-Hp)-quattro/5053",
+      "title": "Car-Specs Q3 8U 2.0 TDI quattro manual specification entry",
+      "note": "Independent secondary exact Q3 2.0 TDI 177 hp quattro manual page used to corroborate AWD, 6-speed manual transmission, and 235/55 R17 baseline tires for the broad 8U row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-q3-i-8u-2.0-tfsi-170hp-quattro-19150",
+      "title": "Auto-Data Q3 8U 2.0 TFSI quattro manual specification entry",
+      "note": "Exact secondary 2011-2014 Q3 2.0 TFSI 170 hp quattro manual entry used to corroborate AWD, 6-speed manual transmission, and 215/65 R16 baseline tires while the official UK sheet supplies the checked top-gear value.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-q3-i-8u-2.0-tfsi-211hp-quattro-s-tronic-19152",
+      "title": "Auto-Data Q3 8U 2.0 TFSI quattro S tronic specification entry",
+      "note": "Exact secondary 2011-2014 Q3 2.0 TFSI 211 hp quattro S tronic entry used to corroborate AWD, 7-speed S tronic transmission, and 235/55 R17 baseline tires while the official UK sheet supplies the checked top-gear and final-drive values.",
+      "confidence": "medium"
     }
   ]
 }
