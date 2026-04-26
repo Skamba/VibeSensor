@@ -209,7 +209,7 @@ test("buildSettingsCarListRenderModel surfaces approximate drivetrain guidance f
           current_gear_ratio: 0.64,
         },
         order_reference_status: {
-          selection_source_status: "compat_projection",
+          selection_source_status: "exact_row",
           final_drive_ratio_confidence: "family_default",
           current_gear_ratio_confidence: "family_default",
           transmission_name: "8-speed automatic",

@@ -121,7 +121,8 @@ async def test_models_known_brand_type_returns_entries(car_library_router) -> No
             gearbox["gear_ratios"] is None or len(gearbox["gear_ratios"]) >= 1
             for gearbox in m["gearboxes"]
         )
-        assert len(m["tire_options"]) >= 2
+        assert len(m["tire_options"]) >= 1
+        assert all(option["front"] is not None for option in m["tire_options"])
 
 
 @pytest.mark.asyncio

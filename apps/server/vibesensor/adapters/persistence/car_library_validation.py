@@ -116,7 +116,7 @@ def validate_car_library_rows(
     *,
     allowlist: Mapping[tuple[str, str], str] | None = None,
 ) -> tuple[CarLibraryValidationIssue, ...]:
-    """Return all validation issues for legacy ``car_library.json`` rows."""
+    """Return all validation issues for grouped car-picker rows."""
 
     issues: list[CarLibraryValidationIssue] = []
     for entry in rows:
@@ -288,8 +288,7 @@ def _validate_vehicle_configuration(
             label=f"{label} / {option.name}",
             issues=issues,
         )
-    if config.source_status == "exact_row":
-        _validate_exact_row_provenance(config, entity=entity, label=label, issues=issues)
+    _validate_exact_row_metadata(config, entity=entity, label=label, issues=issues)
 
 
 def _validate_gearboxes(
@@ -510,7 +509,7 @@ def _validate_final_drive_layout(
         )
 
 
-def _validate_exact_row_provenance(
+def _validate_exact_row_metadata(
     config: VehicleConfiguration,
     *,
     entity: str,
@@ -529,13 +528,13 @@ def _validate_exact_row_provenance(
         required_fields.add("final_drive_rear")
     if config.gear_ratios is not None:
         required_fields.add("gear_ratios")
-    missing = sorted(field for field in required_fields if config.provenance_for(field) is None)
+    missing = sorted(field for field in required_fields if config.metadata_for(field) is None)
     if missing:
         issues.append(
             CarLibraryValidationIssue(
-                rule="missing_field_provenance",
+                rule="missing_field_metadata",
                 entity=entity,
-                message=f"{label} exact row is missing field_provenance for {', '.join(missing)}",
+                message=f"{label} exact row is missing canonical metadata for {', '.join(missing)}",
             )
         )
 

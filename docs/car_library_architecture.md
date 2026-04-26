@@ -1,251 +1,65 @@
 # Car library architecture
 
-The legacy car library in `apps/server/vibesensor/data/car_library.json` is
-still the compatibility source for the current API/UI picker: brand, type,
-model, and variant selection continue to flow through the existing
-model-plus-variant shapes.
+`apps/server/vibesensor/data/vehicle_configurations.json` is the canonical
+runtime source for car ratio and tire data.
 
-For drivetrain and order-analysis accuracy, that legacy structure is **not**
-the source of truth anymore when an exact row exists. Broad model defaults plus
-optional variant overrides are convenient for the picker, but they can silently
-inherit a gearbox or final-drive assumption that does not belong to the exact
-configuration under analysis.
+Each row represents one exact vehicle configuration and keeps the qualified
+order-analysis fields inline with their own metadata:
 
-`apps/server/vibesensor/data/vehicle_configurations.json` is the new exact-row
-source of truth for the migrated subset. Each row names one exact drivetrain
-configuration with:
+- drivetrain, transmission, top-gear ratio, gear ratios, final-drive ratios,
+  and tire setup values live next to their confidence, evidence refs,
+  verification notes, and unresolved items
+- `configuration_confidence` summarizes whole-row confidence
+- `order_analysis_policy` states whether the row is usable for engine,
+  driveshaft, and wheel-order analysis and whether manual confirmation is still
+  required
 
-- vehicle identity fields such as market, model/body code, production range,
-  model name, and variant name
-- drivetrain, transmission, final-drive, and fuel-type facts
-- field-level provenance and confidence for the accuracy-critical fields that
-  drive order analysis
-- the default tire plus available tire options
-- `source_status` so callers can tell exact rows from compatibility projection
+`apps/server/vibesensor/data/car_sources/*.json` now contains only reusable
+source-document metadata. `evidence_refs` inside canonical rows resolve through
+those source packs.
 
-Current migration policy:
+## Runtime model
 
-1. Prefer exact configuration rows when they exist for the selected variant.
-2. Fall back to a compatibility projection from the legacy model/variant entry
-   only when no exact row exists yet.
-3. Keep the fallback explicit: one projected row per gearbox, so broad
-   inheritance does not stay hidden.
-4. Keep provenance inline with the exact row so values and source/confidence
-   metadata cannot drift into separate ledgers.
+Runtime code loads canonical rows through
+`vibesensor.adapters.persistence.vehicle_configurations.load_vehicle_configurations()`.
+Grouped picker payloads are derived at runtime in
+`vibesensor.adapters.persistence.car_library` by grouping exact configurations by
+brand, type, model, and variant.
 
-Issue #3232 tightens the consumer contract on top of that migration:
+That means:
 
-- `/api/car-library/models` still returns the legacy numeric gearbox fields for
-  picker compatibility.
-- Variant gearbox entries now also include source/confidence metadata so the UI
-  can tell exact rows from compatibility projection.
-- Saved car profiles persist that same drivetrain-selection status under
-  `order_reference_status`, so approximate inherited ratios do not silently turn
-  into exact-looking saved settings.
-- Manual ratio edits on saved cars promote the touched ratio fields to
-  `user_confirmed`, but untouched approximate fields remain approximate until
-  the user confirms or replaces them.
+1. no committed grouped-truth data file backs the picker
+2. no split provenance/evidence ledger backs ratio or tire fields
+3. numeric order-analysis consumers read normalized values from canonical exact
+   rows, not from model-family defaults
 
-Issue #3229 starts this migration with a small BMW subset:
+## Confidence vocabulary
 
-- `4 Series (G22, 2021-2026) / 420i` for an exact ICE RWD row
-- `2 Series Active Tourer (F45, 2014-2021) / 220i` and `225xe` for exact
-  FWD/PHEV override rows
-- `3 Series (G20, 2019-2025) / 330i xDrive` for an exact AWD/xDrive row
-- `5 Series (G60, 2024-2026) / i5 eDrive40` for an exact EV single-speed row
+Field-level confidence values:
 
-This is intentionally additive. The legacy picker payloads stay stable while
-diagnosis-facing code gains a typed exact-row path that can expand model by
-model without a full one-shot database rewrite.
+- `official_exact`
+- `official_derived`
+- `reputable_secondary_crosschecked`
+- `family_default`
+- `unverified`
+- `user_confirmed` for saved-car overrides
 
-## Field-level provenance and confidence
+Configuration-level confidence values:
 
-`VehicleConfiguration.field_provenance` is the machine-readable source metadata
-for the fields that most directly affect order analysis:
+- `high_confidence`
+- `medium_confidence`
+- `low_confidence`
+- `no_confidence`
+- `not_applicable`
 
-- `final_drive_front`
-- `final_drive_rear`
-- `top_gear_ratio`
-- `gear_ratios`
-- `drivetrain`
-- `tire_dimensions`
-- `transmission_name`
+## Validation
 
-Each provenance entry stores:
+Canonical validation lives in:
 
-- the field name
-- the confidence level
-- an optional `source_id`
-- an optional `verified_at`
-- optional notes
+- `vibesensor.adapters.persistence.car_library_validation` for structural and
+  plausibility checks on canonical configs and derived picker rows
+- `vibesensor.adapters.persistence.car_library_source_evidence` for
+  `evidence_refs` resolution against `car_sources/*.json`
 
-### Confidence levels
-
-- `official_exact`: official manufacturer source directly confirms the exact
-  stored field value
-- `official_derived`: the stored value is derived from official manufacturer
-  data (for example a fixed EV single-speed ratio projected to `1.0`)
-- `reputable_secondary_crosschecked`: non-official technical references were
-  cross-checked and kept because the official source only confirmed part of the
-  story
-- `family_default`: the field still follows the supported family baseline until
-  a variant-specific source is captured
-- `unverified`: the stored value is still present but should not be treated as a
-  verified source-of-truth fact
-- `user_confirmed`: a locally edited saved-car field that the user explicitly
-  confirmed in Analysis
-
-### Source ID prefixes
-
-`source_id` now resolves through
-`apps/server/vibesensor/data/car_library_evidence.json`.
-
-That evidence ledger is the machine-checkable owner for exact-row provenance:
-
-1. Each evidence entry keeps the canonical `source_id` string used by
-   `VehicleFieldProvenance`.
-2. Each evidence entry points at one or more structured source-pack records
-   under `apps/server/vibesensor/data/car_sources/*.json`.
-3. Legacy human-readable research ledgers such as
-   `car_library_ratio_sources.json` and `CAR_VARIANT_SOURCES.md` may still be
-   linked from the evidence entry for historical traceability, but they are not
-   the machine-checkable source of truth for exact-row evidence anymore.
-
-The current migrated BMW subset keeps the older `ratio_sources:` and
-`variant_sources:` prefixes as stable evidence IDs, but those IDs now resolve
-through the evidence ledger instead of pointing directly at ad hoc note files.
-
-### Validation and coverage policy
-
-Rows marked `official_exact` must include a `source_id`; loader validation
-rejects exact-row data that breaks that rule.
-
-Issue #3234 expands loader validation beyond schema checks:
-
-- `apps/server/vibesensor/adapters/persistence/car_library_validation.py`
-  is the one owner for bundled car-data plausibility checks
-- the legacy `car_library.json` rows and resolved
-  `vehicle_configurations.json` rows both run through that validator before the
-  cached library snapshot is accepted
-- `apps/server/vibesensor/adapters/persistence/car_library_source_evidence.py`
-  is the one owner for exact-row source-pack and evidence resolution checks
-- documented exceptions live in
-  `apps/server/vibesensor/data/car_library_validation_allowlist.json`, so
-  temporary carve-outs stay explicit and machine-readable instead of hiding in
-  scattered tests
-- trusted exact-row provenance now also fails closed when `source_id` is
-  missing for source-backed confidence levels or when the referenced evidence
-  entry does not resolve through the source-pack registry
-
-`VehicleConfiguration.coverage_policy_classification` is now the canonical
-runtime owner for depth-over-breadth coverage policy. It classifies each
-resolved configuration as:
-
-- `trusted`: the config is an `exact_row` and every order-analysis-critical
-  field (`drivetrain`, `tire_dimensions`, `transmission_name`,
-  `top_gear_ratio`, and whichever final-drive fields actually apply) is backed
-  by `official_exact`, `official_derived`,
-  `reputable_secondary_crosschecked`, or `user_confirmed` provenance
-- `approximate`: the config is still usable for rough matching, but at least one
-  critical field is still `family_default` or the config is only a
-  `compat_projection`
-- `backlog_unverified`: at least one critical field is still `unverified`, so
-  the row stays in the research/backlog bucket instead of counting as trusted
-  library coverage
-
-Minimum trusted-row rule:
-
-1. exact-row identity (`source_status="exact_row"`)
-2. usable tire dimensions
-3. confirmed drivetrain layout
-4. confirmed transmission identity
-5. confirmed top-gear ratio
-6. confirmed driven final-drive ratio(s)
-
-This is the "depth over breadth" guardrail for new additions. A row can exist
-before it is trusted, but shallow rows must stay visibly approximate or
-backlog-grade until the missing evidence is captured.
-
-Current examples from the live dataset:
-
-- the current migrated BMW exact rows are still `approximate`, not `trusted`,
-  because tire dimensions remain `family_default` across the current subset
-- `2 Series Active Tourer (F45, 2014-2021) / 220i` is also `approximate`
-  because its drivetrain ratios are cross-checked but not official
-- `3 Series (G20, 2019-2025) / 330i xDrive` is `approximate` because its
-  top-gear ratio still follows a `family_default` baseline
-- `4 Series (G22, 2021-2026) / 420i` is explicitly
-  `backlog_unverified` because key drivetrain fields are still unverified
-
-This is intentional. One source-backed exact row is more valuable than many
-model-label matches that still rely on inherited or unverified drivetrain data.
-
-Issue #3231 starts this provenance path with representative BMW exact rows for:
-
-- `2 Series Active Tourer (F45, 2014-2021) / 220i`
-- `2 Series Active Tourer (F45, 2014-2021) / 225xe`
-- `3 Series (G20, 2019-2025) / 330i xDrive`
-- `5 Series (G60, 2024-2026) / i5 eDrive40`
-
-## No silent exact inheritance
-
-The UI and saved-car path must not present compatibility-projected drivetrain
-ratios as if they were exact just because the picker already has concrete
-numbers.
-
-The source of truth is the resolved `VehicleConfiguration`:
-
-- `source_status` tells callers whether the selected variant came from an exact
-  row or a compatibility projection.
-- `final_drive_ratio_confidence`, `top_gear_ratio_confidence`, and
-  `transmission_confidence` stay attached to the selected gearbox row in the
-  car-library API.
-- `Car.order_reference_status` persists the same selection metadata after the
-  wizard saves a car profile.
-- UI consumers should use `requires_manual_confirmation` to keep approximate
-  drivetrain values visibly approximate until the user confirms them.
-
-Issue #3239 extends that same provenance policy into whole-run diagnosis
-confidence:
-
-- wheel-order matches use tire confidence only
-- driveshaft/driveline matches use the weakest of tire and final-drive
-  confidence
-- speed-derived engine-order matches use the weakest of tire, final-drive, and
-  current-gear confidence
-- direct engine references that do not depend on speed-derived car data (for
-  example OBD2-backed RPM) do not inherit saved-car confidence penalties
-
-That policy feeds the canonical diagnosis assessment, so persisted diagnosis
-factor rows and report wording now surface when a match depended on
-`user_confirmed`, `reputable_secondary_crosschecked`, `family_default`, or
-`unverified` vehicle data.
-
-## Axle-aware tire setups
-
-Issue #3233 extends the same one-owner rule to tire data.
-
-Car-library tire options may now be:
-
-- square, with the legacy flat `tire_width_mm` / `tire_aspect_pct` / `rim_in`
-  fields only
-- staggered, with explicit `front` and `rear` tire dimensions plus
-  `default_axle_for_speed`
-
-Rules:
-
-1. The canonical tire truth is the front/rear axle setup, not the legacy flat
-   projection.
-2. Legacy flat tire rows still load through one compatibility path by treating
-   them as square axle setups.
-3. Order-reference math resolves rolling circumference from the configured axle
-   rule: `front`, `rear`, or `average`.
-4. Saved-car aspects persist the axle-aware fields when present so staggered
-   selections do not silently flatten during save/load.
-5. Manual flat tire overrides intentionally clear any persisted axle-specific
-   tire fields so an explicit user override becomes the new square setup.
-
-The flat top-level tire fields remain in API/settings payloads only as a
-compatibility projection for callers that still expect one boundary tire size.
-When a staggered setup is present, that projection follows the selected
-`default_axle_for_speed`.
+The bundled grouped picker is a projection only. Canonical exact rows remain the
+single source of truth.

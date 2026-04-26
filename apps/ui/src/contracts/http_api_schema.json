@@ -1150,10 +1150,7 @@
           "source_status": {
             "anyOf": [
               {
-                "enum": [
-                  "compat_projection",
-                  "exact_row"
-                ],
+                "const": "exact_row",
                 "type": "string"
               },
               {
@@ -1529,7 +1526,6 @@
           },
           "selection_source_status": {
             "enum": [
-              "compat_projection",
               "exact_row",
               "manual_entry"
             ],

@@ -1,0 +1,2833 @@
+{
+  "pack_id": "legacy_research_sources",
+  "sources": [
+    {
+      "id": "legacy_research_sources:002d355a3a6c",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+TT+%288S%2C+2015-2023%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:01210c7a71f1",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0333329EN",
+      "title": "T0333329En",
+      "note": "Official BMW PressClub launch article for the first BMW i4 and its technical-data attachment, covering the exact i4 M50 launch configuration.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:016fe2ba6b0f",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X5+%28G05%2C+2019-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:01c00967f62a",
+      "url": "https://www.audi-mediacenter.com/de/audi-a6-40",
+      "title": "Audi A6 40",
+      "note": "Official Audi MediaCenter Germany model page for the A6 Sedan linking the exact 45 TFSI quattro technical-data sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:02178a0e9ad4",
+      "url": "https://www.auto-wiki.org/audi/a8/d4-4h/a8-4-0-tfsi-cod-quattro-tiptronic-320-kw-78912/",
+      "title": "A8 4 0 Tfsi Cod Quattro Tiptronic 320 Kw 78912",
+      "note": "Reputable secondary exact page for the later D4 A8 4.0 TFSI COD quattro state showing AWD, 8-speed automatic, Germany-oriented 10/2013-10/2017 context, and 235/55 R18 tires.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:0260d6f23394",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F16+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:02f80102b1fb",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/update-for-the-audi-q4-e-tron-more-range-more-efficiency-more-emotions-15594",
+      "title": "Update For The Audi Q4 E Tron More Range More Efficiency More Emotions 15594",
+      "note": "Official 2024 Audi update article shows later naming uses 45 e-tron / 45 e-tron quattro / 55 e-tron quattro rather than the original 50 e-tron quattro, so the broad 2022-2026 row should not absorb one exact launch-era ratio package without a split.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:037a64fa5220",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0447642EN/630684",
+      "title": "630684",
+      "note": "Official BMW iX family technical-data attachment showing axle-ratio style fields for later family variants; retained only as context because it is not an exact M60 source.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:03c433610239",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0333558DE/480211",
+      "title": "480211",
+      "note": "Official BMW PressClub DE technical-data PDF valid for ACEA markets from 07/2021 for the exact M440i xDrive Coup\u00e9: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard staggered 225/45 R18 front + 255/40 R18 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:03e33032d1fd",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/642/file_en/41b7885f3881fe9b4d455e343aa2679df188bdbe/eTD-Audi-RS4-Avant-TFSI-331kW_241016.pdf?1729075481&disposition=attachment",
+      "title": "Etd Audi Rs4 Avant Tfsi 331Kw 241016.Pdf",
+      "note": "Official Audi MediaCenter technical-data PDF for the exact RS 4 Avant: permanent quattro AWD with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.204, and basic square 265/35 R19 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:04b8c186810a",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G29+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:0500c1e63e86",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G60+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:063169ffdd07",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0267657DE/377424",
+      "title": "377424",
+      "note": "Official BMW Germany 11/2016 technical-data PDF for the exact 530i xDrive Limousine: AWD, 8-Gang Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 2.929, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:06c8901b4b10",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/816/file_en/cd22704fc6ea58ac2814dabc5a480bbf42a32691/eTD-Audi-A4-Sedan-35-TFSI-S_tronic-110kW-MHEV_240320.pdf?disposition=attachment",
+      "title": "Etd Audi A4 Sedan 35 Tfsi S Tronic 110Kw Mhev 240320.Pdf",
+      "note": "Official Audi MediaCenter eTD confirming A4 Sedan 35 TFSI S tronic final-drive ratio 4.234.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:06e51bca96e0",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1544/file_en/99b3ba2115bf1328f670ae087320f1022152ddcc/eTD-Audi-e-tron-GT-quattro-370kW_260202.pdf?1770133321&disposition=attachment",
+      "title": "Etd Audi E Tron Gt Quattro 370Kw 260202.Pdf",
+      "note": "Official Audi MediaCenter Germany-market technical-data PDF cross-check for the facelift-era exact e-tron GT quattro confirming AWD, front/rear motor layout, top speed 245 km/h, and the same basic staggered 19-inch tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:0704ea887c86",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1119/file_de/7f879fa689e6211fe8e08cf0057f508e5cdd9b5b/TD-Audi-Q5-35-TDI-S_tronic-120kW-MHEV_240604.pdf?disposition=attachment",
+      "title": "Td Audi Q5 35 Tdi S Tronic 120Kw Mhev 240604.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 06/04/2024 FY Q5 35 TDI S tronic 120 kW MHEV: Frontantrieb, 7-stufige S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.885, and basic tire 235/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:0763518f2893",
+      "url": "https://www.audi-mediacenter.com/de/publikationen/preislisten/preisliste-audi-a3-s3-sportback-audi-a3-sportback-tfsi-e-audi-a3-s3-limousine-audi-a3-allstreet-audi-a3-allstreet-tfsi-e-modelljahr-2026-886/download",
+      "title": "Download",
+      "note": "Official Audi Germany MY2026 price list confirming the A3 Limousine 35 TDI as a 7-Gang S tronic configuration and documenting trim-linked 205/55 R16, 225/45 ZR17, 225/45 R17, 225/40 R18, and 235/35 R19 tire availability.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:07cc5dc911b9",
+      "url": "https://www.audi-mediacenter.com/en/photos/detail/audi-a6-avant-c8-modern-efficient-ready-for-any-destination-127766",
+      "title": "Audi A6 Avant C8 Modern Efficient Ready For Any Destination 127766",
+      "note": "Audi MediaCenter official detail page discovered in second pass.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:07f701f57e44",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A6+%28C7%2C+2011-2018%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:091077d8a451",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0327030EN/specifications-of-the-bmw-1-series-valid-from-03/2021",
+      "title": "2021",
+      "note": "Official BMW PressClub F40 technical data update used to confirm transmission/drivetrain blocks for 118i, 120i and M135i xDrive.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:0a24f01e0a95",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1184/file_en/6124caef9007249169df603b05d8cb70b2982f3f/eTD-Audi-RS6-Avant-TFSI_231027.pdf?disposition=attachment",
+      "title": "Etd Audi Rs6 Avant Tfsi 231027.Pdf",
+      "note": "Official Audi MediaCenter 10/2023 Germany-market cross-check PDF for the exact RS 6 Avant with the same full ratio set, final drive 3.204, and top gear 0.667.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:0b510c0af2c9",
+      "url": "https://www.press.bmwgroup.com/austria/article/attachment/T0439325DE/613957",
+      "title": "613957",
+      "note": "Official BMW PressClub Austria 01/2024 technical-data PDF cross-checking the same exact 420i Coup\u00e9 ratio set, reverse ratio, final drive 2.813, and standard 225/50 R17 98Y XL tire.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:0b686d9345fd",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0326836DE/472817",
+      "title": "472817",
+      "note": "Official BMW DE 03/2021 technical-data PDF cross-check for the exact X5 xDrive45e with the same 8-speed ratio set, reverse 3.317, final drive 3.636, and standard 265/50 R19 tire fitment.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:0bfbe440deb6",
+      "url": "https://www.bmw.de/de/neufahrzeuge/3er/bmw-3-er-limousine/bmw-3er-limousine-technische-daten.html",
+      "title": "Bmw 3Er Limousine Technische Daten.Html",
+      "note": "Official BMW Germany technical-data page metadata is keyed to 'BMW 330i Limousine', showing that plain 330i still appears in the checked current Germany technical-data interface.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:0ccc83cfa474",
+      "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Audi_RS_5_Coupe_2_9_TFSI.pdf",
+      "title": "Audi Rs 5 Coupe 2 9 Tfsi.Pdf",
+      "note": "Official Audi 2019 Germany-market technical-data PDF cross-check for the exact RS 5 Coup\u00e9 2.9 TFSI quattro tiptronic 331 kW with the same ratio set, final drive 3.204, and basic 265/35 R19 tire setup.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:0ec6aab6f4c9",
+      "url": "https://www.auto-data.net/en/audi-a8-d4-4h-4.0-tfsi-v8-420hp-quattro-tiptronic-20320",
+      "title": "Audi A8 D4 4H 4.0 Tfsi V8 420Hp Quattro Tiptronic 20320",
+      "note": "Reputable secondary exact page for the pre-facelift D4 A8 4.0 TFSI quattro showing AWD, 8-speed tiptronic, and 235/60 R17 tires.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:0fcfffa568a6",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0380173EN/the-new-bmw-7-series",
+      "title": "The New Bmw 7 Series",
+      "note": "Official BMW launch article confirms the initial EU launch with only the i7, later EU additions 740d xDrive, 750e xDrive, and M760e xDrive, and states that 740i / 760i xDrive are not available in Europe.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:0fe428128ffa",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0147064EN/specifications-bmw-4-series-coupe-valid-from-11/2013",
+      "title": "2013",
+      "note": "Official BMW early F32 specs include xDrive coupe variant attachments, supporting EU-market drivetrain split as a long-running F32 configuration.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:113816cb96ee",
+      "url": "https://www.bmw.co.uk",
+      "title": "Www.Bmw.Co.Uk",
+      "note": "Official BMW UK site was checked as EU-market source; no publicly accessible historical F01 transmission/final-drive ratio table was found.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:11ce22adfeaa",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F15+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:1311432f8826",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0270585DE/technische-daten-der-neuen-bmw-5er-limousine-bmw-520i-bmw-525d-bmw-540d-xdrive-gueltig-ab-07/2017",
+      "title": "2017",
+      "note": "Official BMW Germany PressClub article for the exact 520i technical-data attachment valid from 07/2017.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:13ea013ef134",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0286585EN/specifications-of-the-bmw-m4-coupe-valid-from-09/2018",
+      "title": "BMW M4 Coupe specifications page",
+      "note": "Official BMW Fact & Figures page for F82 M4 technical data (09/2018 ACEA context).",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:1404f2cf2b28",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+8+Series+Gran+Coupe+%28G16%2C+2020-2025%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:142cdffd456d",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw5er.pdf.coredownload.pdf",
+      "title": "Preisliste Bmw5Er.Pdf.Coredownload.Pdf",
+      "note": "Official BMW Germany price list confirms the exact i5 eDrive40 DE model as 1-Gang automatic rear-wheel drive and documents the 21-inch staggered option with 255/35 R21 front + 285/30 R21 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:1497d4e055e8",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A1+%288X%2C+2011-2018%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:14edf445f865",
+      "url": "https://www.press.bmwgroup.com/united-kingdom/article/detail/T0125651EN_GB/the-bmw-5-series-saloon",
+      "title": "The Bmw 5 Series Saloon",
+      "note": "Official BMW UK PressClub page for F10-era 5 Series pricing documents; establishes UK/EU-market context and links official attachments.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:158e875cffde",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0284330DE/413474",
+      "title": "413474",
+      "note": "Official BMW Germany 09/2018 technical-data PDF for the exact 520i Limousine: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:1594dc9b0d47",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0122586EN/256226",
+      "title": "256226",
+      "note": "Official PDF attachment includes ratio tables for launch variants (e.g., 320d/328i/335i), including 8th gear 0.667 and model-dependent final drives; not directly mappable to listed 320i/330i/330i xDrive/340i without guessing.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:15a6aa30433c",
+      "url": "https://www.audi-technology-portal.de/en/drivetrain/transmission-technologies/tiptronic_en",
+      "title": "Tiptronic En",
+      "note": "Official Audi technology portal page confirming the eight-speed tiptronic family in the Audi A8, but without a D4 4.0 TFSI quattro exact ratio or tire table.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:16c091e6cfd6",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0297558EN/specifications-of-the-all-new-bmw-1-series-valid-from-05/2019",
+      "title": "2019",
+      "note": "Official BMW PressClub F40 technical data page for all-new 1 Series (EU/Germany context).",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:17bbee7ba639",
+      "url": "https://www.press.bmwgroup.com/global/article/search?q=BMW%201%20Series%20F20%20technical%20data",
+      "title": "Search",
+      "note": "Search result view did not yield usable F20 technical documents in this run (cookie/search extraction limitations).",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:18deedec2c15",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0327030EN/473056",
+      "title": "473056",
+      "note": "Official PDF: M135i xDrive shows Eight-speed Steptronic Sport transmission, full forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, reverse 4.221, final drive 3.075, and standard 225/40 R18 92Y XL tires on 8J x 18 wheels.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:1911b8fd62eb",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0439268EN/the-bmw-z4-pure-impulse-edition",
+      "title": "The Bmw Z4 Pure Impulse Edition",
+      "note": "Official BMW Group PressClub page confirming that the Pure Impulse edition reintroduced a 6-speed manual for the Z4 M40i from the 2024 model-year context.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:1a749424448c",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0314287EN/specifications-of-the-bmw-m5-valid-from-06/2020",
+      "title": "BMW M5 specifications page",
+      "note": "Official BMW Fact & Figures page for F90 M5 technical data (06/2020).",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:1af3f514e4a4",
+      "url": "https://www.bmw.de/de/neufahrzeuge/2er/coupe/2021/bmw-2er-coupe-ueberblick.html",
+      "title": "Bmw 2Er Coupe Ueberblick.Html",
+      "note": "Official BMW DE page is for newer G42 generation; confirms BMW model context but not F22 ratio data.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:1c24f5312261",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0122586EN/the-new-bmw-3-series-sedan",
+      "title": "The New Bmw 3 Series Sedan",
+      "note": "Official BMW PressClub launch press kit for F30; confirms 6-speed manual and optional 8-speed automatic architecture for EU-market launch context.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:1c565c59e754",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0284381DE/413526",
+      "title": "413526",
+      "note": "Official BMW PressClub DE technical-data PDF valid from 09/2018 for the exact X4 xDrive30i: Allrad, 8-Gang Steptronic Getriebe, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard 225/60 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:1f44c1eb95dd",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A5+%28B8%2C+2012-2016%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:1f64a70f7798",
+      "url": "https://press.audi.co.uk/assets/documents/original/4945-AudiA5Sportback40TFSIUKTechnicalDataDecember2020.pdf",
+      "title": "4945 Audia5Sportback40Tfsiuktechnicaldatadecember2020.Pdf",
+      "note": "Official Audi UK technical data confirming A5 Sportback 40 TFSI S tronic final-drive ratio 4.234.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:20f44bbf0284",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0314287EN/457877",
+      "title": "BMW M5 technical data PDF",
+      "note": "Official BMW PDF with 8-speed M Steptronic ratio table, top gear 0.640, and final drive 3.154.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:21e9bf67c7b7",
+      "url": "https://www.press.bmwgroup.com/usa/article/detail/T0160684EN_US/the-all-new-bmw-m3-sedan-and-bmw-m4-coupe?language=en_US",
+      "title": "BMW M3 sedan and M4 coupe press kit",
+      "note": "Official BMW PressClub article hosting MY2018 technical attachments for F80 M3 and F82 M4.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:2201c7bcf575",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G11+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:220ac7b59aa9",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0307290DE/449087",
+      "title": "449087",
+      "note": "Official BMW PressClub DE technical-data PDF from 04/2020 for the exact X4 M40i: AWD, 8-Gang Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:224120e311f3",
+      "url": "https://www.bmw.co.uk/content/dam/bmw/marketGB/bmw_co_uk/pricelists/bmw-2-series-coupe-pricelist.pdf",
+      "title": "Bmw 2 Series Coupe Pricelist.Pdf",
+      "note": "Official BMW UK PDF path candidate; content not extractable with available tooling, so ratio fields could not be validated.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:22498f3a74f1",
+      "url": "https://www.audi-mediacenter.com/en/search?query=8Y",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:252eccf99577",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1019/file_de/dfb43be5a29e19b34cfb35f674cda892de58ae76/TD-Audi-Q3-Sportback-35-TFSI-S_tronic-110kW_250605.pdf?1749195586",
+      "title": "Td Audi Q3 Sportback 35 Tfsi S Tronic 110Kw 250605.Pdf",
+      "note": "Official Audi MediaCenter Germany cross-check PDF for the exact 06/05/2025 Q3 Sportback 35 TFSI S tronic state with the same ratio set, reverse ratio, split final drives 5.200 / 3.900, and basic tire 215/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:27089d2ed61a",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G42+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:27b263e49b0d",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0314290EN/463145",
+      "title": "463145",
+      "note": "Official BMW 11/2020 technical-data PDF for the exact 640i xDrive Gran Turismo: Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.077, and 245/50 R18 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:286bb3c2fefa",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0280350EN/406525",
+      "title": "406525",
+      "note": "Official BMW technical-data PDF valid from 04/2018 for the exact X4 xDrive20i: xDrive AWD, 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard 225/60 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:28b59b0b3030",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0124299EN/183009",
+      "title": "183009",
+      "note": "Official PDF attachment supports engine/transmission availability context; still insufficient for exact ratio mapping to every listed variant.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:29114921acdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1381/file_de/9d5c2e27a7ed95f3f0aa43f733f600509d33d4a4/TD-Audi-Q7-SUV-TFSIe-quattro-tiptronic-290kW_251215.pdf?1769111238&disposition=attachment",
+      "title": "Td Audi Q7 Suv Tfsie Quattro Tiptronic 290Kw 251215.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact Q7 55 TFSI e quattro 290 kW: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and base tire 255/55 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:29a89fc89c3f",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G26+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:2a4116fbafbf",
+      "url": "https://www.audi-mediacenter.com/en/audi-e-tron-gt-13716",
+      "title": "Audi E Tron Gt 13716",
+      "note": "Audi MediaCenter model hub confirms the current e-tron GT family and treats `e-tron GT quattro` as the named base variant.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:2b258af30ac4",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G70+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:2b9d74e8ab56",
+      "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/maximale-effizienz-auf-grossem-raum-die-neuen-audi-q7-tfsi-e-quattro-und-q8-tfsi-e-quattro-16001",
+      "title": "Maximale Effizienz Auf Grossem Raum Die Neuen Audi Q7 Tfsi E Quattro Und Q8 Tfsi E Quattro 16001",
+      "note": "Official Audi MediaCenter Germany press release confirming the exact 55 TFSI e quattro output step as the 290 kW / 600 Nm current Q7 PHEV configuration.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:2c16041881ea",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X6+%28G06%2C+2020-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:2c76c716cf17",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/13/file_de/503ea49630b63e45ee7457c82882dbe3e8d70c4e/TD-Audi-Q3-35-TFSI-S_tronic-110kW_250605.pdf?1749195006",
+      "title": "Td Audi Q3 35 Tfsi S Tronic 110Kw 250605.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 06/05/2025 Q3 35 TFSI S tronic state: Frontantrieb, 7-stufige S tronic, forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661, reverse 2.900, final drives 5.200 / 3.900, and basic tire 215/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:2ced3d6e2dff",
+      "url": "https://www.press.bmwgroup.com/portugal/article/attachment/T0413166PT/579304",
+      "title": "579304",
+      "note": "Official BMW technical-data PDF cross-check for the exact i7 M70 xDrive with the same front 8.774 and rear 8.765 overall ratios plus standard staggered 21-inch tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:2d1d32db2857",
+      "url": "https://www.audi-technology-portal.de/en/drivetrain/electric-drives/audi-q4-e-tron-modular-electric-platform",
+      "title": "Audi Q4 E Tron Modular Electric Platform",
+      "note": "Official Audi Technology Portal page confirms Q4 40 e-tron as rear-wheel drive with one rear motor and Q4 50 e-tron quattro as dual-motor all-wheel drive.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:2eabd1ad6f42",
+      "url": "https://www.audi-mediacenter.com/en/the-audi-r8-until-2024-updated-dynamics-for-the-high-performance-sports-car-11734/facts-and-figures-11736",
+      "title": "Facts And Figures 11736",
+      "note": "Official Audi MediaCenter facts-and-figures article confirming quattro drive, 7-speed S tronic, and 19-inch wheels as standard for the facelift-era R8 family.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:2fa52b3f8806",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+M5+%28F90%2C+2018-2024%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:307b4bc397ba",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1244/file_de/ceabc2b0fd48a749c10ea1fd2c8552b20f96e0c7/TD-Audi-Q3-40-TFSI-quattro-S_tronic-140kW_250605.pdf?1749195009",
+      "title": "Td Audi Q3 40 Tfsi Quattro S Tronic 140Kw 250605.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact Q3 40 TFSI quattro S tronic 140 kW: AWD, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:314d8a95d8e2",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G45+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:32e8742ffbf1",
+      "url": "https://www.bmw.de/de/neufahrzeuge/3er/limousine/2011/technische-daten.html",
+      "title": "Technische Daten.Html",
+      "note": "Official BMW.de technical data page referenced in historical citations appears unavailable (not reliably retrievable now), preventing direct EU technical-table confirmation for this task.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:32f63bff9841",
+      "url": "https://www.hankooktire.com/us/en/company/media-center/media-detail.68069.html",
+      "title": "Media Detail.68069.Html",
+      "note": "OE supplier press release cross-check for RS 7 Sportback fitments showing 275/35 ZR21 standard and 285/30 R22 optional or winter-related sizes.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:344df30613de",
+      "url": "https://www.bmw.co.uk/en/all-models/5-series/saloon/bmw-5-series-saloon-technical-data.html",
+      "title": "Bmw 5 Series Saloon Technical Data.Html",
+      "note": "Official BMW UK mirror of technical data page; same generation mismatch (current 5 Series, not archived G30 ratio table).",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:349959b1860e",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0416261EN/587401",
+      "title": "587401",
+      "note": "Official BMW 05/2023 technical specifications PDF for the exact 520i Sedan: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.077, and 225/55 R18 102Y XL baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:355f6e5e52f0",
+      "url": "https://www.autoplenum.de/auto/audi/a8/limousine-2009/4-0-tfsi-435-ps",
+      "title": "4 0 Tfsi 435 Ps",
+      "note": "Reputable secondary cross-check confirming the later 435 PS D4 A8 4.0 TFSI quattro uses an 8-speed automatic transmission.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:3643687db38c",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X1+%28F48%2C+2016-2022%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:3687a455cefb",
+      "url": "https://www.bmw.de/de/neufahrzeuge/1er/3-tuerer/2017/technische-daten.html",
+      "title": "Technische Daten.Html",
+      "note": "Rendered content points to current-generation 1 Series technical data context, not F20-specific drivetrain/ratio details.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:386e9ba97f8b",
+      "url": "https://www.bmw.de/de/neufahrzeuge/7er/limousine/bmw-7er-limousine-technische-daten.html",
+      "title": "Bmw 7Er Limousine Technische Daten.Html",
+      "note": "Official BMW DE technical-data page confirming the exact 750e xDrive drivetrain as AWD with 8-Gang, automatisch gearbox wording and Germany-market model-code continuity.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:38987808b4bf",
+      "url": "https://www.bmw.de/sitemap.xml",
+      "title": "Sitemap.Xml",
+      "note": "Official BMW DE sitemap still lists legacy F20/F21 URL paths under /de/neufahrzeuge/1er/*/2017/, confirming where model-specific pages should reside.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:38a04165d331",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0284378DE/413521",
+      "title": "413521",
+      "note": "Official BMW PressClub DE technical-data PDF valid from 09/2018 for the exact X3 xDrive20i: Allrad, 8-Gang Steptronic Getriebe, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard 225/60 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:393d7682b19e",
+      "url": "https://www.bmw.com/en/index.html",
+      "title": "Index.Html",
+      "note": "BMW global official portal entrypoint for model documentation paths.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:39e9836c4406",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1141/file_de/04c20499c359997cf95dd60eb22db309f783941f/TD-Audi-A8-60-TFSIe-quattro-tiptronic-340kW_251215.pdf?1769102879&disposition=attachment",
+      "title": "Td Audi A8 60 Tfsie Quattro Tiptronic 340Kw 251215.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A8 60 TFSI e quattro: permanent quattro AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and 255/45 R19 base tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:3a6f114b8ee2",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X3+%28G45%2C+2025-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:3aa04686acb7",
+      "url": "https://www.auto-data.net/en/audi-a7-sportback-c7-facelift-2014-3.0-tdi-v6-clean-diesel-272hp-quattro-s-tronic-20688",
+      "title": "Audi A7 Sportback C7 Facelift 2014 3.0 Tdi V6 Clean Diesel 272Hp Quattro S Tronic 20688",
+      "note": "Reputable secondary exact facelift page for the A7 Sportback 3.0 TDI quattro showing AWD, 7-speed S tronic wording, and 255/45 R18 tires.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:3b7e4dcf4760",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A8+%28D5%2C+2018-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:3b8a9657b4b7",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+TT+%288J%2C+2011-2014%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:3bd8ca8fa320",
+      "url": "https://autodata24.com/audi/a6/a6-c7-restyling/30-amt-333hp-4x4/details",
+      "title": "Details",
+      "note": "Reputable secondary cross-check for the facelift A6 3.0 TFSI quattro sedan with 7-speed automatic/S tronic wording and 225/55 R17 baseline tires.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:3bf1daddf136",
+      "url": "https://www.press.bmwgroup.com/united-kingdom/article/attachment/T0282168EN_GB/419879",
+      "title": "BMW G15 technical data PDF",
+      "note": "Official BMW technical data PDF showing 8HP76 Sport with top gear 0.640 and final drive 2.813 for M850i xDrive.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:3c0c0aa886bf",
+      "url": "https://www.audi-mediacenter.com/en/search?query=GA",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:3c27d2c5b039",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1122/file_de/8dd1e8796e0f7b353960c88ebcd343fbde5c38d9/TD-Audi-Q3-Sportback-40-TDI-quattro-S_tronic-142kW_250605.pdf?1749195587",
+      "title": "Td Audi Q3 Sportback 40 Tdi Quattro S Tronic 142Kw 250605.Pdf",
+      "note": "Official Audi MediaCenter Germany cross-check PDF for the exact Q3 Sportback 40 TDI quattro S tronic 142 kW with the same ratio block, reverse ratio 2.900, split final drives 4.813 / 3.667, and the same 215/65 R17 basic tire context.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:3c7fce849237",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0388273EN",
+      "title": "T0388273En",
+      "note": "Official BMW PressClub article for 3 Series Sedan technical data valid from 07/2022; German-market context for the exact 330i xDrive PDF attachment.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:3cc96631762a",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+i4+%28G26%2C+2022-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:3d6342c4594f",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0333329EN",
+      "title": "T0333329En",
+      "note": "Official BMW launch technical-data PDF for the exact i4 M50: dual-motor AWD, stepless/single-speed EV drivetrain, axle ratios 9.053 / 9.053, and staggered tire packages 245/45 R18 + 255/45 R18, 245/40 R19 + 255/40 R19, and 245/35 R20 + 255/35 R20.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:3d68278cff53",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0300314DE/440689",
+      "title": "440689",
+      "note": "Official BMW DE 08/2019 technical-data PDF for the exact X5 xDrive45e: 8-speed Steptronic transmission, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.636, and standard 265/50 R19 110W XL tires on 9J x 19 wheels.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:3da53a121d0a",
+      "url": "https://www.audi-technology-portal.de/en/drivetrain/hybrid-technologies/q8-tfsi-e-quattro-systemaufbau-fahrmodi-betriebsstrategie-en",
+      "title": "Q8 Tfsi E Quattro Systemaufbau Fahrmodi Betriebsstrategie En",
+      "note": "Official Audi technology portal explainer confirming the Q8 TFSI e electric motor is integrated in the 8-speed tiptronic housing as part of the hybrid module.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:3ff9cb8ff793",
+      "url": "https://www.audi-mediacenter.com/en/photos/detail/audi-e-gas-plant-9865",
+      "title": "Audi E Gas Plant 9865",
+      "note": "Audi MediaCenter official detail page discovered in second pass.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:40902bf8de39",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/970/file_de/3929d8c79ac5796cab7777c7f0cf691d95d6ec56/TD-Audi-A5-Coupe-40-TFSI-S_tronic-150kW-MHEV_240320.pdf?1711380887",
+      "title": "Td Audi A5 Coupe 40 Tfsi S Tronic 150Kw Mhev 240320.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A5 Coup\u00e9 40 TFSI S tronic 150 kW MHEV: Frontantrieb, 7-stufige S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.234, and basic tire 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:40b7eea7495e",
+      "url": "https://www.audi-mediacenter.com/en/search?query=B9",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:40d6e1e8fc60",
+      "url": "https://www.audi-mediacenter.com/en/search?query=B8",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:41656ee717a8",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0404080EN/progress-and-efficiency-with-added-variety:-additional-drive-system-variants-and-innovations-for-the-new-bmw-7-series",
+      "title": "Progress And Efficiency With Added Variety: Additional Drive System Variants And Innovations For The New Bmw 7 Series",
+      "note": "Official BMW PressClub article confirming the 750e xDrive for European markets with six-cylinder petrol engine plus electric motor integrated into the eight-speed Steptronic transmission and xDrive.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:41ea423c2abb",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=f01",
+      "title": "Search",
+      "note": "Official PressClub search endpoint was checked for F01-specific documents; accessible output did not return F01 technical ratio documents.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:428937eb9fd6",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+Q5+%288R%2C+2011-2017%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:43771d65c9e5",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0322774DE/643421",
+      "title": "643421",
+      "note": "Official BMW Germany catalog attachment confirming the exact i7 eDrive50 as Hinterradantrieb with 1-Gang, automatisch transmission and 245/50 R19 standard tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:4395fed0b13e",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1120/file_en/cea98844230377952a6f24d0db8d613766f88572/eTD-Audi-Q5-45-TFSI-quattro-S_tronic-195kW-MHEV_240402.pdf?1712157036&disposition=attachment",
+      "title": "Etd Audi Q5 45 Tfsi Quattro S Tronic 195Kw Mhev 240402.Pdf",
+      "note": "Official Audi MediaCenter Germany-market cross-check PDF for the exact Q5 45 TFSI quattro with the same top gear 0.433, full ratio set, final drive 5.302, and basic tire 235/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:441dcae0f8b9",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/363/file_de/2d9ee07814bc8d0d429027ef04726da1bd796eef/TD-Audi-A7-Sportback-55-TFSI-quattro-S_tronic-250kW-MHEV_240911.pdf?1726134799&disposition=attachment",
+      "title": "Td Audi A7 Sportback 55 Tfsi Quattro S Tronic 250Kw Mhev 240911.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A7 Sportback 55 TFSI quattro S tronic 250 kW MHEV: quattro ultra AWD, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.410, and base tire 225/55 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:44937c13793f",
+      "url": "https://www.audi-mediacenter.com/en/videos/video/audi-a4-avant-g-tron-2015-with-audi-e-gas-2874",
+      "title": "Audi A4 Avant G Tron 2015 With Audi E Gas 2874",
+      "note": "Audi MediaCenter official detail page discovered in second pass.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:44aa64d36517",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0441229EN",
+      "title": "T0441229En",
+      "note": "Official BMW model-update article confirms the facelift-era naming `BMW i4 M50 xDrive`.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:450723bbeba5",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1245/file_de/eeac1506a8560e5cd2dda924150f9ed6334fb84f/TD-Audi-Q3-Sportback-40-TFSI-quattro-S_tronic-140kW_250605.pdf?1749195589",
+      "title": "Td Audi Q3 Sportback 40 Tfsi Quattro S Tronic 140Kw 250605.Pdf",
+      "note": "Official Audi MediaCenter Germany cross-check PDF for the exact Q3 Sportback 40 TFSI quattro S tronic 140 kW with the same ratio block, reverse ratio 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:45650dc1f28e",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329893EN/477740",
+      "title": "477740",
+      "note": "Official BMW PressClub 05/2021 technical-data PDF for the exact M4 Competition Coup\u00e9 with M xDrive: eight-speed M Steptronic transmission with Drivelogic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.154, and staggered 275/35 ZR19 front + 285/30 ZR20 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:4848a45fdcd1",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmwx4.pdf.asset.1749047582909.pdf",
+      "title": "Preisliste Bmwx4.Pdf.Asset.1749047582909.Pdf",
+      "note": "Official BMW Germany price-list PDF confirming the current xDrive30i tire matrix and gearbox wording: 8-Gang Steptronic Sport, standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:48491b2f1f4e",
+      "url": "https://www.audi.de/de/neuwagen/e-tron-gt/e-tron-gt-quattro/",
+      "title": "E Tron Gt Quattro",
+      "note": "Official Audi DE model page confirming the exact base variant name `e-tron GT quattro` on the Germany market.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:490c5b8fd0e9",
+      "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/stark-in-design-komfort-und-technologieder-ueberarbeitete-audi-q7-15849",
+      "title": "Stark In Design Komfort Und Technologieder Ueberarbeitete Audi Q7 15849",
+      "note": "Official Audi MediaCenter Germany press release confirming the current non-PHEV Q7 55 TFSI quattro badge and 250 kW output step in the facelift-era range.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:493533bb041f",
+      "url": "https://www.audi-mediacenter.com/en/search?query=8X",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:49e6110566bb",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F25+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:4b4b833b364a",
+      "url": "https://www.audi-mediacenter.com/en/models-4",
+      "title": "Models 4",
+      "note": "Audi MediaCenter official model hub (entry point for model-specific documents).",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:4b8ab423f879",
+      "url": "https://www.audi-mediacenter.com/en",
+      "title": "En",
+      "note": "Audi official media source used for technical releases/spec references.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:4bcbbab016e3",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0165875EN/specifications-of-the-new-bmw-2-series-active-tourer-02/2014",
+      "title": "2014",
+      "note": "Official early F45 technical baseline (218i/225i/218d) confirms model-family transmission architecture and ratio tables for early production period.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:4c0796b9f847",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0325537DE/471545",
+      "title": "471545",
+      "note": "Official BMW Germany 03/2021 technical-data PDF confirming the same exact 520i LCI package with final drive 2.929, top gear 0.640, and 225/55 R17 101Y XL baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:4c4a6ad675f8",
+      "url": "https://www.audi-mediacenter.com/de/publikationen/preislisten/preisliste-audi-a8-a8-l-audi-a8-a8-l-tfsi-e-audi-s8-modelljahr-2026-800/download",
+      "title": "Download",
+      "note": "Official Audi MediaCenter Germany MY2026 price list confirming the exact A8 55 TFSI quattro tiptronic 8-stufig model naming and wheel/tire family context for the current Germany-market car.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:4ca576983b84",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0252345EN/348117",
+      "title": "348117",
+      "note": "Official BMW spec PDF for 440i xDrive confirms another ratio set, reinforcing that a single global gearbox ratio per transmission type is insufficient.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:4d089475ce12",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/964/file_de/1efb854a2a376cbaeaba745c036c20e5805ecd0a/TD-Audi-A5-Sportback-40-TFSI-S_tronic-150kW-MHEV_240613.pdf?1718361368",
+      "title": "Td Audi A5 Sportback 40 Tfsi S Tronic 150Kw Mhev 240613.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A5 Sportback 40 TFSI S tronic 150 kW MHEV confirming the same Frontantrieb mapping, ratio block, reverse ratio 2.750, final drive 4.234, and basic tire 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:4d505818df53",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A4+%28B8%2C+2011-2016%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:4dfe6573fbd8",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1076/file_en/be71d58f33a992b656581fe5b38cb3e4bb830973/eTD-Audi-A5-Coupe-45-TFSI-quattro-S_tronic-195kW-MHEV_240320.pdf?1711380891&disposition=attachment",
+      "title": "Etd Audi A5 Coupe 45 Tfsi Quattro S Tronic 195Kw Mhev 240320.Pdf",
+      "note": "Official Audi MediaCenter eTD confirming A5 Coupe 45 TFSI quattro S tronic final-drive ratio 4.410.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:4e23ce55b301",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0348394DE/der-neue-bmw-ix-m60",
+      "title": "Der Neue Bmw Ix M60",
+      "note": "Official BMW Deutschland launch article confirming exact iX M60 context, AWD positioning, 250 km/h top speed, and optional 22-inch wheels.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:4ea362ce6a8e",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1286/file_de/3ddc20106e5da2eabb39e0097cb8dc76c3739832/TD-Audi-Q4-40-e-tron-150kW_260202.pdf",
+      "title": "Td Audi Q4 40 E Tron 150Kw 260202.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the reintroduced exact Q4 40 e-tron confirming RWD, 150 kW, 310 Nm, top speed 160 km/h, and basic staggered 235/55 R19 front + 255/50 R19 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:4f4a83d38242",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X4+%28F26%2C+2015-2018%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:50c07cf41408",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0329893EN/specifications-of-the-bmw-m3-sedan-and-bmw-m3-competition-sedan-valid-as-of-03/2021",
+      "title": "2021",
+      "note": "Official BMW PressClub launch context for the exact G80 M3 Competition xDrive technical-data attachment.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:50f644eb8086",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1236/file_en/6d6ceb7f7cd108885f3c22d6922b5cad38407103/eTD_Audi_e-tron_GT_quattro_350kW_231016.pdf?1698933959",
+      "title": "Etd Audi E Tron Gt Quattro 350Kw 231016.Pdf",
+      "note": "Official technical data PDF for `e-tron GT quattro` confirms all-wheel drive with two electric motors for the supported base variant.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:510dd2aed163",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X2+%28F39%2C+2018-2023%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:5141df8505c7",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G30+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:51439c900c55",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0442767DE/617123",
+      "title": "617123",
+      "note": "Official BMW DE 07/2024 technical-data PDF for the exact i4 M50 xDrive: single-speed EV mapping with front 9.744 and rear 8.776 axle ratios plus staggered 245/45 R18 + 255/45 R18 and 245/40 R19 + 255/40 R19 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:5153ab0b45c4",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0197450EN/the-new-bmw-6-series-model-range",
+      "title": "The New Bmw 6 Series Model Range",
+      "note": "Official BMW model-range press kit (12/2014) links technical data PDF for 6 Series lineup including Gran Coupe variants.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:51dc23420162",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G05+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:52e2ccf0b07d",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0330570EN/477179",
+      "title": "BMW M8 Coupe technical data PDF",
+      "note": "Official BMW M8 Coupe technical-data PDF confirming M xDrive drivetrain context for M8 Coupe and M8 Competition Coupe.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:53c036dd5c01",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G15+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:544adad583d5",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1024/file_de/129200424e04a321f44f3b626ef24be02c1396f0/TD-Audi-A3-Limousine-TFSI-S_tronic-110kW-MHEV_260420.pdf?1776765556",
+      "title": "Td Audi A3 Limousine Tfsi S Tronic 110Kw Mhev 260420.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 04/20/2026 A3 Limousine 35 TFSI S tronic MHEV state: Frontantrieb, 7-stufige S tronic, forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653, reverse 3.722, final drives 4.800 / 3.429, and basic tire 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:54af60a9ddf0",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/933/file_en/1c194a48ecee337757e5f1e0933a8111196df7f6/eTD-Audi-Q5-55-TFSIe-quattro-S_tronic-270kW_240604.pdf",
+      "title": "Etd Audi Q5 55 Tfsie Quattro S Tronic 270Kw 240604.Pdf",
+      "note": "Official Audi MediaCenter eTD for the exact Q5 55 TFSI e quattro 270 kW: 7-speed S tronic, quattro ultra AWD, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/60 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:54c09ca62bf2",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A8+%28D4%2C+2011-2017%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:55b25acf829a",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0270585DE/385160",
+      "title": "385160",
+      "note": "Official BMW Germany 07/2017 technical-data PDF for the exact 520i Limousine: 8-Gang Steptronic Getriebe, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 2.929, and 225/55 R17 baseline tires with 18/19/20-inch options.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:56f41caeb63b",
+      "url": "https://www.ultimatespecs.com/car-specs/Audi/12217/Audi-A7-Sportback-30-TDI-quattro-245HP-S-tronic-7-sp.html",
+      "title": "Audi A7 Sportback 30 Tdi Quattro 245Hp S Tronic 7 Sp.Html",
+      "note": "Reputable secondary exact cross-check for the early A7 Sportback 3.0 TDI quattro with AWD, 7-speed automatic/S tronic wording, and 255/45 R18 tires.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:58f92c263343",
+      "url": "https://www.audi-mediacenter.com/de/audi-q5-bis-2024-16219",
+      "title": "Audi Q5 Bis 2024 16219",
+      "note": "Official Audi MediaCenter model page confirming that FY Q5 is explicitly scoped 'bis 2024', which is why the current broad `2017-2026` row cannot safely absorb one exact 40 TDI quattro production mapping.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:59390d64c606",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+RS+5+%28B9%2C+2018-2024%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:593c29d5ab5f",
+      "url": "https://www.audi-mediacenter.com/en/search?query=8S",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:5a2c34af7aa2",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0252345EN/348118",
+      "title": "348118",
+      "note": "Official BMW spec PDF for 420i/430i shows engine-specific gear/final-drive values (e.g., differing differential ratios and top gears), so one generic manual+automatic pair is not uniquely derivable.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:5a588b230474",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=I20+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:5a5c196c955b",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0438543DE/609591",
+      "title": "609591",
+      "note": "Official BMW Germany catalog cross-check confirming the same exact i7 eDrive50 drivetrain, 1-Gang automatic EV mapping, and 245/50 R19 standard tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:5b75597267b1",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0314290EN/specifications-of-the-bmw-6-series-gran-turismo-valid-from-11/2020",
+      "title": "2020",
+      "note": "Official BMW global technical-data article for the exact 640i xDrive Gran Turismo attachment valid from 11/2020.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:5d6e9b9da00b",
+      "url": "https://www.bmw.de/de/neufahrzeuge/3er/bmw-3-er-limousine/bmw-3er-limousine.html",
+      "title": "Bmw 3Er Limousine.Html",
+      "note": "Official BMW Germany overview page is keyed to 'BMW 330i xDrive Limousine', which keeps plain-RWD 330i Germany continuity unresolved without a later extracted price-list or technical-data table.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:5e252f7f436b",
+      "url": "https://www.audi.com/en.html",
+      "title": "En.Html",
+      "note": "Audi global official portal entrypoint for model documentation paths.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:60f36b6f8878",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F22+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:61b9c053e1b0",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0267658DE/377421",
+      "title": "377421",
+      "note": "Official BMW Germany 11/2016 technical-data PDF for the exact 540i Limousine: RWD, 8-Gang Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 2.929, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:6236ede09312",
+      "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/gestaerkter-einstieg-in-die-elektromobilitaet-der-audi-q4-40-e-tron-16485",
+      "title": "Gestaerkter Einstieg In Die Elektromobilitaet Der Audi Q4 40 E Tron 16485",
+      "note": "Official Audi MediaCenter Germany article confirming the later reintroduced exact Q4 40 e-tron with rear-wheel drive, 150 kW, 310 Nm, and top speed 160 km/h.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:62c1bbb53e87",
+      "url": "https://www.audi-mediacenter.com/de/audi-q7-65",
+      "title": "Audi Q7 65",
+      "note": "Official Audi MediaCenter Germany Q7 model page links the checked current petrol technical-data material only as Q7 SUV TFSI quattro tiptronic 250 kW, not as an exact 45 TFSI quattro state.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:63fd9d7843ad",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+Q7+%284M%2C+2016-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:6454b4fe504c",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0329893EN/the-new-bmw-m4-competition-coup%C3%A9-with-m-xdrive-the-new-bmw-m3-competition-sedan-with-m-xdrive?language=en",
+      "title": "The New Bmw M4 Competition Coup%C3%A9 With M Xdrive The New Bmw M3 Competition Sedan With M Xdrive",
+      "note": "Official BMW PressClub launch article confirming the exact M4 Competition Coup\u00e9 with M xDrive, standard staggered 19/20-inch wheels, and optional track tires in the same dimensions.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:655c83e80527",
+      "url": "https://www.audi-mediacenter.com/system/production/uploaded_files/23921/file/fcdafb26ca0c8d5e8cab9bfc4c98d65a5df608c8/230607_BI_RS_6_Avant_EN.pdf?disposition=attachment",
+      "title": "230607 Bi Rs 6 Avant En.Pdf",
+      "note": "Official Audi MediaCenter information PDF confirming RS 6 Avant standard 21-inch tires and optional 22-inch tires for the Germany-market car.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:672d5c0fbe65",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/G05_X5_09022023.pdf.asset.1675947955130.pdf",
+      "title": "G05 X5 09022023.Pdf.Asset.1675947955130.Pdf",
+      "note": "Official BMW DE later brochure checked as a non-supporting reference; it documents facelift-era xDrive50e rather than the exact xDrive45e target.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:678bfbe9247b",
+      "url": "https://www.audi-mediacenter.com/en/the-audi-a4-major-upgrade-for-the-bestseller-2019-11884/drive-and-suspension-11894",
+      "title": "Drive And Suspension 11894",
+      "note": "Official Audi MediaCenter launch article confirming the four-cylinder 35 TDI late-B9 drivetrain context as a front-wheel-drive dual-clutch diesel configuration.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:6925daca8aa1",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0439308EN/611692",
+      "title": "611692",
+      "note": "Official BMW PressClub 01/2024 technical-data PDF cross-check for the facelift-era exact M4 Competition Coup\u00e9 with M xDrive with the same ratio set, reverse 3.478, final drive 3.154, and standard staggered 19/20-inch tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:69757924a78e",
+      "url": "https://www.bmw.de/de/neufahrzeuge/2er/2-series-coupe/bmw-2er-coupe.html#fahrdynamik",
+      "title": "Bmw 2Er Coupe.Html",
+      "note": "Official BMW Germany page explicitly mentions 8-Gang Steptronic Sport Getriebe for the featured M240i xDrive content.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:6a198c9d097d",
+      "url": "https://www.audi-mediacenter.com/en/search?query=8U",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:6a4b6af77c6c",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+RS+3+%288V%2F8Y%2C+2017-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:6b4f7c301842",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F26+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:6c3f77a91318",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_i20_DS.pdf",
+      "title": "Preisliste I20 Ds.Pdf",
+      "note": "Official BMW DE brochure/price list for the exact iX M60 confirming AWD, 1-speed transmission wording, standard 255/50 R21 tires, and optional 275/40 R22 fitment for the Germany-market launch-era configuration.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:6d0d993f5901",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=U11+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:6d6ebea17ecb",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X5+%28F15%2C+2014-2018%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:6db6eab4aafb",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1492/file_en/4a1e342f888aea17a9948fbe1277a50752c89d4b/eTD-Audi-Q5-45-TFSI-quattro-S_tronic-195kW-MHEV_240604.pdf?1741620897",
+      "title": "Etd Audi Q5 45 Tfsi Quattro S Tronic 195Kw Mhev 240604.Pdf",
+      "note": "Official Audi MediaCenter eTD confirming Q5 45 TFSI quattro S tronic final-drive ratio 5.302.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:6e8be3d590d9",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_G05_08_20.pdf",
+      "title": "Preisliste G05 08 20.Pdf",
+      "note": "Official BMW DE price list confirms the xDrive45e standard 19-inch wheel/tire setup (V-spoke style 734 with 265/50 R19).",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:6f2489b6d6b2",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/967/file_en/e8e700fc895abdee1d74cc95e4e1d15a0a91f700/eTD-Audi-A5-Coupe-35-TDI-S_tronic-120kW-MHEV_240320.pdf?1711380880",
+      "title": "Etd Audi A5 Coupe 35 Tdi S Tronic 120Kw Mhev 240320.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 03/20/2024 A5 Coup\u00e9 35 TDI S tronic 120 kW MHEV: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:6f5476f1d60e",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/versatile-sporty-and-digitally-connected-the-new-audi-q3-16771",
+      "title": "Versatile Sporty And Digitally Connected The New Audi Q3 16771",
+      "note": "Official Audi MediaCenter launch release for the new third-generation Q3 confirming the old-generation boundary and why the current `2019-2026` row now spans more than one official model state.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:6fb4574da9d1",
+      "url": "https://bmwbrochures.co.uk/5S-Saloon/files/inc/328e68b828.pdf",
+      "title": "328E68B828.Pdf",
+      "note": "UK brochure text resolves to F10 LCI-era model set (e.g., 528i/535i/550i and July 2013 context), not G30; cannot support G30 ratio updates.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:6fd93dc07e14",
+      "url": "https://www.bmw.de/de/neufahrzeuge/m/m3-series/bmw-m3-limousine-technische-daten.html",
+      "title": "Bmw M3 Limousine Technische Daten.Html",
+      "note": "Official BMW Germany technical-data page confirms the current exact M3 Competition xDrive drivetrain layout and automatic transmission context.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:7160abc38bb3",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1141/file_en/04c20499c359997cf95dd60eb22db309f783941f/eTD-Audi-A8-60-TFSIe-quattro-tiptronic-250kW_340kW_240314.pdf?1711354488&disposition=attachment",
+      "title": "Etd Audi A8 60 Tfsie Quattro Tiptronic 250Kw 340Kw 240314.Pdf",
+      "note": "Official Audi MediaCenter English cross-check PDF for the exact A8 60 TFSI e quattro confirming the same full forward-ratio set, reverse 3.317, final drive 3.076, and 255/45 R19 base tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:71623c45be65",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0267657DE/technische-daten-der-neuen-bmw-5er-limousine-bmw-530i-bmw-530i-xdrive-gueltig-ab-11/2016",
+      "title": "2016",
+      "note": "Official BMW Germany PressClub article for the exact 530i / 530i xDrive technical-data attachment valid from 11/2016.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:71b4da2d92a2",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F48+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:71e8284cbff9",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+R8+%284S%2C+2015-2024%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:720a93990098",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1505/file_en/f91d74de0d59ee22e945faf98ce0e60608bba1cc/eTD-Audi-A6-Sedan-TFSI-quattro-S_tronic-270kW_260203.pdf?1770304681",
+      "title": "Etd Audi A6 Sedan Tfsi Quattro S Tronic 270Kw 260203.Pdf",
+      "note": "Official Audi MediaCenter 2026-era sedan technical-data PDF used as a non-promoting cross-check: it keeps final drive 4.410 and base tire 225/55 R18 but changes the upper ratios, showing why one broad 55 TFSI quattro mapping is unsafe without a year split.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:72e9c147f482",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+8+Series+Coupe+%28G15%2C+2019-2025%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:744d8cf9ed79",
+      "url": "https://www.bmw.de",
+      "title": "Www.Bmw.De",
+      "note": "Official BMW Germany site was checked as EU-primary source; current site content does not provide historical F01 drivetrain ratio tables.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:7484e69ac570",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+M4+%28F82%2C+2014-2020%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:74a18a558949",
+      "url": "https://static.nhtsa.gov/odi/tsbs/2013/MC-10073841-2280.pdf",
+      "title": "Mc 10073841 2280.Pdf",
+      "note": "Official Audi OEM service-book cross-check repeating the same MY2011 A7 3.0 TFSI 0BK AWD transmission mapping and axle ratios.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:753cf52ddd21",
+      "url": "https://www.audi-mediacenter.com/en/search?query=8R",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:7688ab3c3d77",
+      "url": "https://www.audi-mediacenter.com/en/search?query=D4",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:7699086a1abd",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+7+Series+%28G11%2C+2016-2022%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:78b598b517e4",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmwx1.pdf.coredownload.inline.pdf",
+      "title": "Preisliste Bmwx1.Pdf.Coredownload.Inline.Pdf",
+      "note": "Official BMW DE catalog confirming iX1 xDrive30 wheel and tire packages: 205/65 R17, 225/55 R18, 245/45 R19, and 245/40 R20.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:7a80724d8596",
+      "url": "https://archive.org/download/audi-c-7-4-g-a-6-maintenance-edition-12.2018/Audi%20A6%20%28C7_4G%29%20-%20Wheel_Tyre%20Guide_djvu.txt",
+      "title": "Audi%20A6%20%28C7 4G%29%20 %20Wheel Tyre%20Guide Djvu.Txt",
+      "note": "Mirror of the official Audi wheel/tyre guide showing the 3.0 TFSI sedan sections for 220 kW, 228 kW, and 245 kW with 225/55 R17 baseline tires plus 245/45 R18, 255/40 R19, and 255/35 R20 options.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:7ac3af4db956",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/930/file_en/b54efbc79b4cb52e6b91dffee6593c055c5d0e8c/eTD-Audi-A4-Sedan-45-TFSI-quattro-S_tronic-195kW-MHEV_240320.pdf?disposition=attachment",
+      "title": "Etd Audi A4 Sedan 45 Tfsi Quattro S Tronic 195Kw Mhev 240320.Pdf",
+      "note": "Official Audi MediaCenter cross-check PDF with the same exact 45 TFSI quattro sedan 195 kW ratio block, final drive 4.410, and 225/50 R17 basic tire fitment.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:7ad6a45bf70a",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1023/file_de/a22048f880937d71ab725f0335eec0dfd9a2381d/TD-Audi-A3-Limousine-TFSI-110kW_260203.pdf?1770636723",
+      "title": "Td Audi A3 Limousine Tfsi 110Kw 260203.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 03/02/2026 A3 Limousine 35 TFSI manual state: Frontantrieb, 6-stufiges Schaltgetriebe, forward ratios 3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510, reverse 3.583, final drives 4.235 / 4.235, and basic tire 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:7be816632b85",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1022/file_de/523cb3a37d000ddb8e1151e28d377fb6b8206fa7/TD-Audi-A3-Limousine-35-TDI-S_tronic-110kW_240402.pdf?1712048742&disposition=attachment",
+      "title": "Td Audi A3 Limousine 35 Tdi S Tronic 110Kw 240402.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 04/02/2024 A3 Limousine 35 TDI S tronic 110 kW: Frontantrieb, 7-stufige S tronic, forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drives 4.167 / 3.125, and basic tire 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:7c0362f09174",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G06+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:7c9fbfb0e7d2",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0388273EN/555363",
+      "title": "555363",
+      "note": "Official BMW PressClub 07/2022 technical-data PDF cross-check for the exact BMW 330i xDrive Sedan: same Eight-speed Steptronic ratio set, final drive 2.813, and standard 225/50 R17 98Y XL tire fitment.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:7dcd6cc94ab9",
+      "url": "https://www.bmw.de/de/neufahrzeuge/1er/5-tuerer/2017/technische-daten.html",
+      "title": "Technische Daten.Html",
+      "note": "Returns HTTP 404 in this run; no extractable F20-specific ratio or drivetrain table.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:7de57732627a",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0329599DE/476187",
+      "title": "476187",
+      "note": "Official BMW PressClub DE technical-data PDF valid from 03/2021 for the exact X4 xDrive30i: Allrad, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard 225/60 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:7e0213853a41",
+      "url": "https://www.bmw.de/de/all-models/2-series/coupe/2017/at-a-glance.html",
+      "title": "At A Glance.Html",
+      "note": "Likely historical F22 path but currently returns 404 via fetch; no retrievable specs.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:7e39fc533470",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A7+Sportback+%28C7%2C+2011-2018%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:7e60864b72c3",
+      "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline_info_Q5_TFSI_e.pdf",
+      "title": "Tehniline Info Q5 Tfsi E.Pdf",
+      "note": "Official Audi technical data confirming Q5 55 TFSI e quattro S tronic final-drive ratio 5.302.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:814f63488d22",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/625/file_de/f7bcd1948f855e702ae2b6b45a3c2f4166ac376a/TD-Audi-Q3-35-TFSI-110kW_250108.pdf?1736420080",
+      "title": "Td Audi Q3 35 Tfsi 110Kw 250108.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 01/08/2025 Q3 35 TFSI manual state: Frontantrieb, 6-stufiges Schaltgetriebe, forward ratios 3.750 / 2.100 / 1.357 / 1.026 / 0.810 / 0.652, reverse 3.583, final drives 4.563 / 4.563, and basic tire 215/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:824f56c4f3a7",
+      "url": "https://www.vag-technique.fr/ext_files/ssp/vw/SSP_478_Audi_A7_Sportback_EN.pdf",
+      "title": "Ssp 478 Audi A7 Sportback En.Pdf",
+      "note": "Official Audi self-study program 478 for the A7 Sportback showing the 3.0 TDI 180 kW / 245 PS launch powertrain as S tronic quattro and stating that 17-inch wheels were standard with 18- to 20-inch wheels optional.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:82cbe3b6f231",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X2+%28U10%2C+2024-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:82e045fca148",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0322640EN/468211",
+      "title": "468211",
+      "note": "Cross-check PDF (11/2020): same M135i xDrive 8-speed Steptronic Sport ratio set, final drive 3.075, and standard 225/40 R18 tire fitment.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:834b58fa6ac6",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1384/file_en/f1a954e2e03e2ebd1c566912e4a315facc470b08/eTD-Audi-Q8-SUV-TFSIe-quattro-tiptronic-360kW_251215.pdf?1769102323&disposition=attachment",
+      "title": "Etd Audi Q8 Suv Tfsie Quattro Tiptronic 360Kw 251215.Pdf",
+      "note": "Official Audi MediaCenter current exact Q8 60 TFSI e quattro cross-check PDF confirming the same full forward-ratio set, reverse 3.317, final drive 3.204, and 265/55 R19 basic tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:83a17284711a",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=U10+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:84ab012d7125",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1452/file_en/1f20ec6b2a7e7f74193b6d77c5513468059560e8/eTD-Audi-Q5-SUV-TFSI-S_tronic-150kW_250327.pdf?1743428500",
+      "title": "Etd Audi Q5 Suv Tfsi S Tronic 150Kw 250327.Pdf",
+      "note": "Official Audi MediaCenter eTD confirming Q5 SUV TFSI S tronic 150 kW front-wheel-drive final-drive ratio 5.302.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:858568b097e7",
+      "url": "https://www.audi.de/de/neuwagen/q8/q8-suv-tfsi-e/",
+      "title": "Q8 Suv Tfsi E",
+      "note": "Official Audi Germany retail page confirming current Germany-market Q8 TFSI e availability in 290 kW and 360 kW states.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:874dcd3d22ad",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0124839EN/bmw-at-the-82nd-geneva-motor-show-2012",
+      "title": "Bmw At The 82Nd Geneva Motor Show 2012",
+      "note": "Official BMW press kit states F06 Gran Coupe launch engines 640i, 640d, 650i and notes 650i also available with xDrive.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:876c20c63603",
+      "url": "https://www.audi-mediacenter.com/en/search?query=C8",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:8821ef78e40f",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G16+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:891a3906d052",
+      "url": "https://www.audi-mediacenter.com/en/audi-at-the-chhatrapati-sambhajinagar-site-5603",
+      "title": "Audi At The Chhatrapati Sambhajinagar Site 5603",
+      "note": "Audi MediaCenter official detail page discovered in second pass.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:89441dc61121",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0252345EN/technical-specifications-bmw-4-series-coupe-valid-from-03/2016",
+      "title": "2016",
+      "note": "Official BMW EU technical-spec entry explicitly lists 440i, 440i xDrive, 420i, 430i, 420i xDrive, 430i xDrive for F32 Coupe.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:8a73434aa4c5",
+      "url": "https://www.audi-mediacenter.com/en/search?query=4M",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:8af93035519b",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0313447EN/the-new-bmw-5-series-sedan-545e-xdrive",
+      "title": "The New Bmw 5 Series Sedan 545E Xdrive",
+      "note": "Official BMW global launch article confirming the exact 545e xDrive hybrid layout with the electric motor integrated into the 8-speed Steptronic transmission and intelligent xDrive all-wheel drive.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:8ca59a933c62",
+      "url": "https://www.press.bmwgroup.com/switzerland/article/attachment/T0413529DE/579757",
+      "title": "579757",
+      "note": "Official BMW technical-data PDF for the exact i7 M70 xDrive stating the technical data correspond to the offering on the German market: front overall ratio 8.774, rear overall ratio 8.765, and standard staggered 255/40 R21 front + 285/35 R21 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:8cfb64b90dee",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/47/file_de/19ed34485396a6c2b76e6c838da5a44dd57db7e8/TD-Audi-A7-Sportback-45-TFSI-quattro-S_tronic-195kW-MHEV_240906.pdf?1725886553&disposition=attachment",
+      "title": "Td Audi A7 Sportback 45 Tfsi Quattro S Tronic 195Kw Mhev 240906.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A7 Sportback 45 TFSI quattro S tronic 195 kW MHEV: quattro ultra AWD, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and base tire 225/55 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:8d27cb10445a",
+      "url": "https://www.borgmann-krefeld.de/fileadmin/audi/audi-borgmann-Audi-RS7-Sportback-Technische-Daten.pdf",
+      "title": "Audi Borgmann Audi Rs7 Sportback Technische Daten.Pdf",
+      "note": "Official Audi Germany technical-data PDF for the exact RS 7 Sportback dated 16.11.2020: quattro permanent AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and basic 275/35 R21 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:8dbd6602ef26",
+      "url": "https://www.audi-mediacenter.com/en/search?query=Q3+35+TFSI+technical+data",
+      "title": "Search",
+      "note": "Official Audi search path showing these exact 35 TFSI PDFs under the old-generation Q3 'until 2025' context, which keeps the broad `2019-2026` row from absorbing one unsplit production mapping.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:8e51d741ecbd",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0307289DE/449073",
+      "title": "449073",
+      "note": "Official BMW PressClub DE technical-data PDF valid from 04/2020 for the exact X3 M40i: Allrad, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:8efb72f0dc5c",
+      "url": "https://www.bmw.de/de/neufahrzeuge/x/x7/bmw-x7-technische-daten.html",
+      "title": "Bmw X7 Technische Daten.Html",
+      "note": "Official BMW DE technical-data page confirming the exact xDrive40i drivetrain and Germany-market model continuity for the current row family.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:8f2bf93bfab5",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+8+Series+Convertible+%28G14%2C+2019-2025%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:8fea5faa09d1",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X1+%28U11%2C+2023-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:9082383f872a",
+      "url": "https://www.audi.co.uk/en/models/etrongt/audi-e-tron-gt/design-and-specification/",
+      "title": "Design And Specification",
+      "note": "Official Audi UK model page lists the base model as `e-tron GT quattro`, with no distinct standalone `e-tron GT` variant page.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:92623d6bbb03",
+      "url": "https://archive.org/download/audi-c-7-4-g-a-6-maintenance-edition-12.2018/Audi%20A6%20%28C7_4G%29%20-%208-speed%20automatic%20gearbox%200BK%2C%20four-wheel%20drive_djvu.txt",
+      "title": "Audi%20A6%20%28C7 4G%29%20 %208 Speed%20Automatic%20Gearbox%200Bk%2C%20Four Wheel%20Drive Djvu.Txt",
+      "note": "Mirror of official Audi workshop-manual text for the 8-speed automatic gearbox 0BK, where the recovered 3.0 TFSI 228 kW A6 allocation is explicitly marked USA/Canada/South Korea rather than EU-DE, so it cannot safely overwrite the target market mapping.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:933efbe6a7d1",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X3+%28F25%2C+2011-2017%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:936c0c69490c",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0326838EN/472824",
+      "title": "472824",
+      "note": "Official BMW ACEA 03/2021 technical-data PDF cross-check for the exact X7 xDrive40i with the same ratio set, reverse 3.712, final drive 3.636, and standard 275/50 R20 tire fitment.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:943733f37975",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0378353DE/555258",
+      "title": "555258",
+      "note": "Official BMW DE facelift technical-data PDF for the exact X7 xDrive40i confirming 8-Gang Steptronic transmission, the same forward ratio set, reverse 3.712, final drive 3.636, and standard 275/50 R20 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:956542619eaf",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+M3+%28F80%2C+2014-2018%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:95b9bf2bf0cf",
+      "url": "https://www.press.bmwgroup.com/global/article/search/category:11",
+      "title": "Category:11",
+      "note": "BMW Group Fact & Figures section (official technical data publication channel).",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:96bea889fe6f",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0405048DE/634492",
+      "title": "634492",
+      "note": "Official BMW Germany price-list PDF confirming the exact 545e xDrive DE model naming, 8-Gang Steptronic wording, and grouped 225/55 R17 baseline tire package.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:96c5b7290275",
+      "url": "https://www.bmw.co.uk/en_GB/all-models/5-series/saloon/bmw-5-series-saloon-technical-data.html",
+      "title": "Bmw 5 Series Saloon Technical Data.Html",
+      "note": "Official BMW UK technical data page currently references G60-era 5 Series (e.g., 550e), not G30 2017-2023, so not used to overwrite G30 ratio fields.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:96cc5a533adb",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X7+%28G07%2C+2019-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:97624cf593b1",
+      "url": "https://www.press.bmwgroup.com/global",
+      "title": "Global",
+      "note": "BMW Group official press/media source used for EU technical documents and attachments.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:987b02afd090",
+      "url": "https://www.audi-mediacenter.com/en/search?query=4M8",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:9942185c701e",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0322780DE/634499",
+      "title": "634499",
+      "note": "Official BMW Germany price-list PDF confirming xDrive30i with Allrad and 8-Gang Steptronic, standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:99ade101fb93",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0348394DE/559002",
+      "title": "559002",
+      "note": "Official BMW Deutschland technical-data attachment for the exact iX M60 checked in this pass, but the ratio text was not recoverable for exact axle-ratio extraction.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:99caa4fa4b54",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G07+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:9a27d8aef08c",
+      "url": "https://www.audi-mediacenter.com/en/the-audi-r8-until-2024-updated-dynamics-for-the-high-performance-sports-car-11734/the-new-audi-r8-11735",
+      "title": "The New Audi R8 11735",
+      "note": "Official Audi MediaCenter article confirming the facelift-era naming change to R8 Coup\u00e9 V10 quattro and European sales context from early 2019 onward.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:9a94972b2802",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0318749DE/463129",
+      "title": "463129",
+      "note": "Official BMW Germany 11/2020 technical-data PDF cross-check for the exact 520i Limousine with final drive 2.929, top gear 0.640, and 225/55 R17 101Y XL baseline tires plus an updated forward-ratio set.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:9a9f7660e688",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+Q8+%284M8%2C+2019-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:9ac0d28dbf13",
+      "url": "https://www.press.bmwgroup.com/united-kingdom/article/attachment/T0125651EN_GB/186485",
+      "title": "186485",
+      "note": "Official BMW UK 5 Series Saloon pricelist PDF (March 2012) indicating manual and automatic transmission offerings by model.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:9ac37563abd5",
+      "url": "https://www.audi-mediacenter.com/system/production/uploaded_files/18086/file/fae7d0829bc1fc3f99d57d9fb916c21f0a5e6da0/Technische_Daten_Audi_Q8_60_TFSI_e_quattro_tiptronic_340kW.pdf?1607015768&disposition=attachment",
+      "title": "Technische Daten Audi Q8 60 Tfsi E Quattro Tiptronic 340Kw.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 2020 Q8 60 TFSI e quattro: permanent quattro AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and 265/55 R19 basic tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:9b59acace271",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/573/file_en/b055e6be3d938aecc8f0656a4554036d5b1479da/eTD-Audi-RS_5-Coupe-TFSI_240426.pdf?1714141018&disposition=attachment",
+      "title": "Etd Audi Rs 5 Coupe Tfsi 240426.Pdf",
+      "note": "Official Audi MediaCenter 2024 technical-data PDF for the exact RS 5 Coup\u00e9: permanent quattro AWD with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.204, and basic square 265/35 R19 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:9cb10e268364",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0334392DE/483091",
+      "title": "483091",
+      "note": "Official BMW PressClub DE technical-data PDF for the LCI X3 xDrive20i: Allrad, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard 225/60 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:9dbbe8367fa2",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/818/file_en/fffc493e2134c00cc79e6b7030ab5b05a0b8601d/eTD-Audi-A4-Sedan-40-TFSI-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Etd Audi A4 Sedan 40 Tfsi S Tronic 150Kw Mhev 240613.Pdf",
+      "note": "Official Audi MediaCenter eTD confirming A4 Sedan 40 TFSI S tronic final-drive ratio 4.234.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:9e97ecf68724",
+      "url": "https://www.audi-mediacenter.com/en/audi-rs-4-avant-29",
+      "title": "Audi Rs 4 Avant 29",
+      "note": "Official Audi MediaCenter model page for the RS 4 Avant linking the exact technical-data sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:9ec5479fbc04",
+      "url": "https://bmwbrochures.co.uk/0114/BMW_5S_Saloon_F10_LCI/files/inc/347eb8995b.pdf",
+      "title": "347Eb8995B.Pdf",
+      "note": "UK-market F10 LCI brochure mirror used only as secondary cross-check; supports transmission availability context but does not provide final-drive/top-gear ratio tables.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:9f629e8bc0c1",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F01+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:9f75939b3958",
+      "url": "https://www.audi-mediacenter.com/en/search?query=8V",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:9f8d6ee410eb",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/bmw_m4_coupu_cabrio_katalog_morz_2024-new.pdf.coredownload.inline.pdf",
+      "title": "Bmw M4 Coupu Cabrio Katalog Morz 2024 New.Pdf.Coredownload.Inline.Pdf",
+      "note": "Official BMW DE catalog confirming the exact M4 Competition xDrive gearbox naming and standard DE-market 275/35 ZR19 front + 285/30 ZR20 rear tire setup.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:9fd32b9ccf1f",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G02+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:9fe846420ccb",
+      "url": "https://archive.org/download/audi-c-7-4-g-a-6-maintenance-edition-12.2018/Audi%20A6%20%28C7_4G%29%20-%207-speed%20dual%20clutch%20gearbox%200B5%20%28S%20tronic%29_djvu.txt",
+      "title": "Audi%20A6%20%28C7 4G%29%20 %207 Speed%20Dual%20Clutch%20Gearbox%200B5%20%28S%20Tronic%29 Djvu.Txt",
+      "note": "Mirror of official Audi workshop-manual text for the 7-speed dual clutch gearbox 0B5 (S tronic); the allocation table maps A6 2011> 3.0 TFSI 220 kW and 228 kW sedan states to this gearbox and publishes 1st-7th ratios 3.692 / 2.150 / 1.406 / 1.025 / 0.787 / 0.625 / 0.519, reverse 2.944, front reduction 4.093, and rear reduction 4.111.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:a011f712276d",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+iX+%28I20%2C+2022-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:a1d14382bcee",
+      "url": "https://www.auto-data.net/en/audi-a7-sportback-c7-3.0-tfsi-v6-310hp-quattro-s-tronic-19129",
+      "title": "Audi A7 Sportback C7 3.0 Tfsi V6 310Hp Quattro S Tronic 19129",
+      "note": "Reputable secondary exact page for the pre-facelift A7 3.0 TFSI quattro S tronic showing AWD, 7-speed automatic, and 255/45 R18 tires.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:a24edcc340c2",
+      "url": "https://www.audi-mediacenter.com/en/videos/video/audi-g-tron-long-distance-mobility-audi-e-gas-animation-3663",
+      "title": "Audi G Tron Long Distance Mobility Audi E Gas Animation 3663",
+      "note": "Audi MediaCenter official detail page discovered in second pass.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:a2d58b9d1ac9",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F06+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:a3af81211686",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+RS+4+Avant+%28B9%2C+2018-2024%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:a615f24ca1f7",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/961/file_en/93d6c3bc2510ab51f06a949ecc7808b0434e8964/eTD-Audi-A5-Sportback-35-TDI-S_tronic-120kW-MHEV_240613.pdf?1718361362",
+      "title": "Etd Audi A5 Sportback 35 Tdi S Tronic 120Kw Mhev 240613.Pdf",
+      "note": "Official Audi MediaCenter Germany cross-check PDF for the exact 06/13/2024 A5 Sportback 35 TDI S tronic 120 kW MHEV with the same ratio set, reverse ratio, final drive 4.048, and basic tire 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:a66ead086a49",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1243/file_en/0963f4ffa97bc4da673e65ee635a8d8df16b1481/eTD_Audi_TT_Coupe_45_TFSI_quattro_S_tronic_180kW_230113.pdf?1698933948&disposition=attachment",
+      "title": "Etd Audi Tt Coupe 45 Tfsi Quattro S Tronic 180Kw 230113.Pdf",
+      "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact TT Coup\u00e9 45 TFSI quattro S tronic 180 kW: quattro AWD with electronically controlled multi-plate clutch, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:a6de0bcaa857",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1027/file_en/2cbcea158f0fd003e5a1519697c726fc3e844d8b/eTD-Audi-Q5-40-TDI-quattro-S_tronic-150kW-MHEV_240604.pdf?disposition=attachment",
+      "title": "Etd Audi Q5 40 Tdi Quattro S Tronic 150Kw Mhev 240604.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 06/04/2024 FY Q5 40 TDI quattro 150 kW MHEV: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, and basic tire 235/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:a7a38f705f5d",
+      "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/update-fuer-den-audi-q4-e-tron-mehr-reichweite-mehr-effizienz-mehr-emotionen-15594",
+      "title": "Update Fuer Den Audi Q4 E Tron Mehr Reichweite Mehr Effizienz Mehr Emotionen 15594",
+      "note": "Official Audi MediaCenter Germany update article showing the 2024 lineup rename to 45 e-tron / 45 e-tron quattro / 55 e-tron quattro, demonstrating that the original 40 e-tron name was not continuous through the full broad row span.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:a82aa709528b",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0378353EN/555263",
+      "title": "555263",
+      "note": "Official BMW PressClub specifications PDF for the exact X7 M60i xDrive (ACEA markets, Germany-relevant): 8-speed Steptronic transmission, forward ratios 5.501 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, reverse 4.543, final drive 3.385, and standard 285/45 R21 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:a9c2e6189261",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0404224DE/567438",
+      "title": "567438",
+      "note": "Official BMW Deutschland technical-data PDF for the exact iX1 xDrive30: AWD, single-speed automatic/fixed-ratio EV transmission, front reduction 11.190, rear reduction 10.050, top speed 180 km/h, and base 205/65 R17 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:aaa1bd276e93",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/973/file_de/508475bafc977bdb13891c4ae12a76ce1c5ad213/td_Q5_35_TDI_S_tronic_120_kW.pdf",
+      "title": "Td Q5 35 Tdi S Tronic 120 Kw.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 2019 Q5 35 TDI S tronic 120 kW: Frontantrieb, 7-stufige S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, and basic tire 235/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:accc520c8c58",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286585EN/419605",
+      "title": "BMW M4 technical data PDF",
+      "note": "Official BMW PDF confirming manual VI 0.846, DCT VII 0.671, final drive data, and full forward gear-ratio tables for the F82 M4.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:ae186108fea8",
+      "url": "https://www.audi-mediacenter.com/en/audi-at-the-hungary-site-gyor-5570",
+      "title": "Audi At The Hungary Site Gyor 5570",
+      "note": "Audi MediaCenter official detail page discovered in second pass.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:ae91c7109615",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1237/file_en/1bc6c25d021edf80ecf5289e69fe15cc1e5351ec/eTD-Audi-RS-e-tron-GT-500kW_251022.pdf?disposition=attachment",
+      "title": "Etd Audi Rs E Tron Gt 500Kw 251022.Pdf",
+      "note": "Official Audi MediaCenter Germany-market technical-data PDF cross-check for the current exact RS e-tron GT with top speed 250 km/h and the same basic staggered 245/45 R20 front + 285/40 R20 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:aeed8033e9c3",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0289704EN/442417",
+      "title": "442417",
+      "note": "Official BMW launch technical-data PDF cross-check for the exact Z4 sDrive30i automatic with the same 8-speed ratio set, reverse 3.712, and final drive 3.154; used as a launch-era cross-check because the publication predates the on-sale 2019 model year.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:af3332d3612c",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0450434DE",
+      "title": "T0450434De",
+      "note": "Official BMW DE article states that the new BMW i4 M60 xDrive replaces the predecessor from July 2025, so the broad 2022-2026 row cannot safely treat M50 as one exact continuous variant through 2026.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:af6ef0d8b15a",
+      "url": "https://uploads.audi-mediacenter.com/system/production/uploaded_files/22693/file/26cc2c3ff6cc9d4d117beee0b97081276e44a8a9/221125_Presse-Information_Audi_etron-GT_Fahrveranstaltung_EN.pdf?disposition=attachment",
+      "title": "221125 Presse Information Audi Etron Gt Fahrveranstaltung En.Pdf",
+      "note": "Official Audi MediaCenter press PDF for the 2022 RS e-tron GT Germany-market drive event: front ratio 8.1:1, rear second gear 8.2:1, rear first gear 15.6:1, rear two-speed transmission architecture, and top speed 250 km/h.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b04c6ac99a88",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1073/file_en/5b4b65c8ae72cd8942fa0df105e4c3743645d7ab/eTD-Audi-A5-Sportback-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf?disposition=attachment",
+      "title": "Etd Audi A5 Sportback 45 Tfsi Quattro S Tronic 195Kw Mhev 240613.Pdf",
+      "note": "Official Audi MediaCenter eTD confirming A5 Sportback 45 TFSI quattro S tronic final-drive ratio 4.410.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b20cb3ff78c5",
+      "url": "https://www.audi-mediacenter.com/de/search?query=A8%2050%20TFSI%20quattro",
+      "title": "Search",
+      "note": "Official Audi MediaCenter Germany search results resolve the checked D5 A8 petrol search toward 55 TFSI quattro and 50 TDI quattro, with no recovered exact Germany 50 TFSI quattro technical-data sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b225154c654e",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+RS+6+Avant+%28C8%2C+2020-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:b248c52777b2",
+      "url": "https://www.audi-mediacenter.com/de/audi-q7-tfsi-e-quattro-15963",
+      "title": "Audi Q7 Tfsi E Quattro 15963",
+      "note": "Official Audi MediaCenter Germany model page confirming the exact Q7 55 TFSI e quattro and Q7 60 TFSI e quattro facelift-era naming and document path.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b24b22157008",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/951/file_de/882a1ba9c0e910a31233ea47216745dd30ebd89b/td_Q5_40_TDI_quattro_140_kW.pdf",
+      "title": "Td Q5 40 Tdi Quattro 140 Kw.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 09/27/2019 Q5 40 TDI quattro 140 kW: AWD, 6-speed manual, forward ratios 3.778 / 1.957 / 1.241 / 0.912 / 0.692 / 0.571, reverse 3.333, final drive 2.647, and basic tire 235/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b2aa53aedfdc",
+      "url": "https://ownersmanual.audi.com/home/",
+      "title": "Home",
+      "note": "Official Audi manual portal checked as an exact-document entrypoint, but no model-specific D4 4.0 TFSI extractable output was recovered in this run.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:b2d556993748",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_G32_28_05.pdf",
+      "title": "Preisliste G32 28 05.Pdf",
+      "note": "Official BMW Germany price list valid from 14.11.2022 confirming the exact 640i xDrive DE model as Allrad with 8-Gang Steptronic Getriebe, 245/50 R18 baseline tires, and 19- and 20-inch optional wheel packages.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b3655e5aa9ee",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0281744EN/the-all-new-bmw-8-series-coupe?language=en",
+      "title": "BMW 8 Series Coupe press kit",
+      "note": "Official BMW G15 launch press kit hosting the technical-specification attachment for the 8 Series Coupe lineup.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b385759b36d8",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F45+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:b3921f131921",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0404224DE/technische-daten-bmw-ix1-xdrive30-gueltig-ab-11/2022?language=de",
+      "title": "2022",
+      "note": "Official BMW Deutschland article for the exact iX1 xDrive30 technical-data sheet valid from 11/2022.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b5bb7c63c3d1",
+      "url": "https://www.audi-mediacenter.com/en/audi-rs-5-coupe-38",
+      "title": "Audi Rs 5 Coupe 38",
+      "note": "Official Audi MediaCenter model page for the RS 5 Coup\u00e9 linking the exact technical-data sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b5d8a7f385c9",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325531EN/471537",
+      "title": "471537",
+      "note": "Official BMW PressClub 03/2021 technical-data PDF for the exact BMW 330i xDrive Sedan: Eight-speed Steptronic transmission, full forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 225/50 R17 98Y XL tires on 7.5J x 17 wheels.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b75aa6c442cb",
+      "url": "https://www.audi-mediacenter.com/en/electric-suvs-in-the-premium-compact-segment-the-audi-q4-e-tron-and-the-q4-sportback-e-tron-13887/facts-and-figures-13891",
+      "title": "Facts And Figures 13891",
+      "note": "Official Audi MediaCenter facts page confirms 19- to 21-inch wheel coverage for the exact launch family and mixed-size tires with a wider rear axle for the quattro variants, though the fetched text did not expose the numeric tire sizes.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b8cf19533840",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G80+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:b901a9c86975",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/the-audi-a5-new-look-and-new-technologies-2020-12342",
+      "title": "The Audi A5 New Look And New Technologies 2020 12342",
+      "note": "Official Audi launch material showing that the early Germany/Europe 40 TFSI state was still a 140 kW configuration, which keeps broad-row production promotion unsafe without an early exact technical-data sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b92080a8b603",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw3er.pdf.coredownload.pdf",
+      "title": "Preisliste Bmw3Er.Pdf.Coredownload.Pdf",
+      "note": "Official BMW Germany 03/2026 price list URL recovered in this pass, but direct extraction did not complete here, so this run could not prove later plain-330i availability versus xDrive in the checked Germany scope.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:b94833fffa01",
+      "url": "http://www.bmw-brochure-downloads.co.uk/BMW_5_Series_Saloon_Performance_and_Technical_Data.pdf",
+      "title": "Bmw 5 Series Saloon Performance And Technical Data.Pdf",
+      "note": "Document content corresponds to i5/5 Series current-era lineup (e.g., 550e, Nov 2025), not G30; excluded.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:bbc34df1e9f3",
+      "url": "https://www.auto-data.net/en/audi-a7-sportback-c7-3.0-tdi-v6-245hp-quattro-s-tronic-18186",
+      "title": "Audi A7 Sportback C7 3.0 Tdi V6 245Hp Quattro S Tronic 18186",
+      "note": "Reputable secondary exact page for the early A7 Sportback 3.0 TDI quattro S tronic showing AWD, 7-speed S tronic wording, and 235/55 R17 tires.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:bc25c256657b",
+      "url": "https://www.audi-mediacenter.com/en/search?query=8J",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:bcbf4df558fb",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0378353EN/the-new-bmw-x7?language=en",
+      "title": "The New Bmw X7",
+      "note": "Official BMW PressClub launch article providing launch context for the X7 M60i xDrive, standard 21-inch M wheels, and optional larger staggered wheel packages.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:bd3399c45b29",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1076/file_en/be71d58f33a992b656581fe5b38cb3e4bb830973/eTD-Audi-A5-Coupe-45-TFSI-quattro-S_tronic-195kW-MHEV_240320.pdf?disposition=attachment",
+      "title": "Etd Audi A5 Coupe 45 Tfsi Quattro S Tronic 195Kw Mhev 240320.Pdf",
+      "note": "Official Audi MediaCenter eTD for the exact A5 Coupe 45 TFSI quattro 195 kW: 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and basic tire 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:bd452ec32ba7",
+      "url": "https://www.audi-mediacenter.com/en/search?query=A8%204.0%20TFSI%20tiptronic",
+      "title": "Search",
+      "note": "Official Audi MediaCenter search attempt used to look for D4 4.0 TFSI technical-data sheets; checked output resolved to newer D5 material instead.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:bd5f589fe214",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F80+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:bd797ac39b22",
+      "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/geschaerftes-design-und-innovative-technologien-fuer-das-flaggschiff-der-aufgewertete-audi-a8-14357",
+      "title": "Geschaerftes Design Und Innovative Technologien Fuer Das Flaggschiff Der Aufgewertete Audi A8 14357",
+      "note": "Official Audi MediaCenter Germany facelift press release states the petrol D5 flagship as A8 55 TFSI quattro and describes the lower-output 210 kW 3.0 TFSI variant as China-only.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:bdbd52866d52",
+      "url": "https://www.auto-data.net/en/audi-a7-sportback-c7-facelift-2014-3.0-tfsi-v6-333hp-quattro-s-tronic-22438",
+      "title": "Audi A7 Sportback C7 Facelift 2014 3.0 Tfsi V6 333Hp Quattro S Tronic 22438",
+      "note": "Reputable secondary facelift exact page for the A7 3.0 TFSI quattro S tronic showing AWD, 7-speed automatic, and 235/55 R17 plus 255/45 R18 tire context.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:bf1e088e1d64",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G82+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:c00f0527a92d",
+      "url": "https://static.nhtsa.gov/odi/tsbs/2012/MC-10073950-2280.pdf",
+      "title": "Mc 10073950 2280.Pdf",
+      "note": "Official Audi OEM spec book published via NHTSA for A7 MY2011 3.0L TFSI 228 kW showing Automatic Transmission 0BK AWD with front ratio 2.848 and rear ratio 2.851, contradicting a generic one-size 7-speed S tronic assumption but not resolving the exact EU-DE market target.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:c0c98c38e567",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0405042DE/643405",
+      "title": "643405",
+      "note": "Official BMW Germany 2026 price-list PDF confirming the current 430i xDrive Coup\u00e9 tire matrix: standard 225/50 R17, optional 225/45 R18, and optional staggered 225/40 R19 front + 255/35 R19 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:c143819cabc5",
+      "url": "https://www.audi-mediacenter.com/en/search?query=C7",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:c279a8e6c8b8",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0135994EN/bmw-model-update-measures-for-spring-2013",
+      "title": "Bmw Model Update Measures For Spring 2013",
+      "note": "Official BMW spring 2013 update confirms additional xDrive expansion for BMW 6 Series models.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:c2eafaaa3bb4",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/632/file_de/b56e37f81d3658f0b63f12381a9429189ff5249d/TD-Audi-A8-55TFSI-quattro-tiptronic-250kW-MHEV_251023.pdf?1761641662",
+      "title": "Td Audi A8 55Tfsi Quattro Tiptronic 250Kw Mhev 251023.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A8 55 TFSI quattro tiptronic 250 kW MHEV: permanent quattro AWD with self-locking center differential, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and base tire 235/55 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:c34943178335",
+      "url": "https://www.audi-mediacenter.com/en/high-performance-redefined-audi-rs-3-sportback-and-rs-3-sedan-2021-14310/audi-rs-3-sportback-and-rs-3-sedan-the-epitome-of-sporty-driving-14312",
+      "title": "Audi Rs 3 Sportback And Rs 3 Sedan The Epitome Of Sporty Driving 14312",
+      "note": "Official Audi MediaCenter launch article confirming the 2021 launch context and official body split between the 8Y RS 3 Sportback and 8Y RS 3 Sedan.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:c4511d075c89",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0197450EN/301332",
+      "title": "301332",
+      "note": "Official BMW PDF technical tables list 8-speed gear ratios (VIII=0.667), with final drive 3.231 for 640i/640i xDrive Gran Coupe and 2.813 for 650i/650i xDrive/640d/640d xDrive Gran Coupe.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:c695158c5f25",
+      "url": "http://prensa.audi.es/wp-content/uploads/2020/04/Fichas-t%C3%A9cnicas-nuevo-Audi-A3-Sedan.pdf",
+      "title": "Fichas T%C3%A9Cnicas Nuevo Audi A3 Sedan.Pdf",
+      "note": "Official Audi Spain technical-data PDF (03/2020) for the exact A3 Sedan 35 TFSI 110 kW 6-speed manual: Front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:c6e2f8abe80a",
+      "url": "https://www.audi-mediacenter.com/en/the-audi-a5-new-look-and-new-technologies-2020-12622/drive-system-and-suspension-12627",
+      "title": "Drive System And Suspension 12627",
+      "note": "Official Audi MediaCenter launch article confirming the A5 35 TDI front-wheel-drive automatic late-B9 context in the Germany/EU lineup.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:c6f574693b14",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/839/file_en/b5352391c2acb8ab92835f8662f8287ebdd45084/eTD-Audi-Q8-SUV-TFSI-quattro-tiptronic-250kW-MHEV_260204.pdf?1770654719&disposition=attachment",
+      "title": "Etd Audi Q8 Suv Tfsi Quattro Tiptronic 250Kw Mhev 260204.Pdf",
+      "note": "Official Audi MediaCenter technical-data PDF for the exact Q8 SUV TFSI quattro tiptronic 250 kW MHEV: permanent quattro AWD with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final-drive field 3.504 / 1.000, and base tire 265/55 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:c71437bb1b44",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1545/file_en/4fa19f9df51c551a54ddb969966dffefecb35555/eTD-Audi-RS3-Sedan_260306.pdf",
+      "title": "Etd Audi Rs3 Sedan 260306.Pdf",
+      "note": "Official Audi MediaCenter technical-data PDF for the exact 8Y RS 3 Sedan (Germany): AWD with torque splitter, 7-speed S tronic, forward ratios 3.560 / 2.530 / 1.680 / 1.020 / 0.790 / 0.760 / 0.630, reverse 2.790, final drive 4.059, and basic staggered tires 265/30 ZR19 front + 245/35 ZR19 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:ca112b946e77",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329599EN/476188",
+      "title": "476188",
+      "note": "Official BMW technical-data PDF valid from 03/2021 for the exact X4 xDrive20i: 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard 225/60 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:ca1480e64c12",
+      "url": "https://www.press.bmwgroup.com/usa/article/attachment/T0271687EN_US/395669",
+      "title": "395669",
+      "note": "Official BMW 2018 US technical-data PDF for the exact 640i xDrive used as a non-promoting year-split cross-check: it keeps final drive 3.077 and top gear 0.640 but publishes different 1st-6th and reverse ratios from the 11/2020 document.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:cb241bb66e51",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+Z4+%28G29%2C+2019-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:ccacc2c59e31",
+      "url": "https://www.audi-mediacenter.com/en/photos/detail/audi-a7-sportback-3-0-tdi-quattro-13701",
+      "title": "Audi A7 Sportback 3 0 Tdi Quattro 13701",
+      "note": "Official Audi MediaCenter detail page confirming the exact launch variant name Audi A7 Sportback 3.0 TDI quattro.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:cdf00de14164",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F39+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:cf2e1d0043a3",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0252345EN/348119",
+      "title": "348119",
+      "note": "Official BMW spec PDF for 420i xDrive/430i xDrive shows drivetrain-dependent gear/final-drive mapping distinct from RWD entries.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:d0e736bd2502",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0285836EN/418428",
+      "title": "418428",
+      "note": "Official BMW ACEA technical-data PDF for the exact launch-era X7 xDrive40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.636, and standard 275/50 R20 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:d0ef656899fb",
+      "url": "https://www.audi.de/de/service-zubehoer/bordbuch-bedienungsanleitungen/",
+      "title": "Bordbuch Bedienungsanleitungen",
+      "note": "Official Audi Germany owner-manual portal checked as the direct EU-DE documentation entrypoint, but no exact A7 3.0 TDI technical-data extract was recoverable in this run without model/VIN flow.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:d13f1c818845",
+      "url": "https://www.audi-mediacenter.com/en/audi-q8-10296",
+      "title": "Audi Q8 10296",
+      "note": "Official Audi MediaCenter model page for the Q8 linking the exact 250 kW TFSI quattro tiptronic technical-data sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:d15bf307acbd",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0314291DE/460630",
+      "title": "460630",
+      "note": "Official BMW Germany 05/2020 technical-data PDF for the exact 520i Limousine: 8-Gang Steptronic Getriebe, top gear 0.640, reverse 3.712, final drive 2.929, and 225/55 R17 101Y XL baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:d1c6a5f1d2e6",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/930/file_en/b54efbc79b4cb52e6b91dffee6593c055c5d0e8c/eTD-Audi-A4-Sedan-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf?1718355094&disposition=attachment",
+      "title": "Etd Audi A4 Sedan 45 Tfsi Quattro S Tronic 195Kw Mhev 240613.Pdf",
+      "note": "Official Audi MediaCenter eTD confirming A4 Sedan 45 TFSI quattro S tronic final-drive ratio 4.410.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:d1d0954039e3",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A7+Sportback+%28C8%2C+2019-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:d2317d3698fe",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_G30_IV_1606.pdf",
+      "title": "Preisliste G30 Iv 1606.Pdf",
+      "note": "Official BMW Germany launch price list listing 530i and 530i xDrive as separate rows, confirming the non-xDrive 530i as a rear-wheel-drive model with 8-Gang Steptronic wording.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:d58df4be7646",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F10+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:d5fc03e7d5f3",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0336854EN/the-all-new-bmw-2-series-coup%C3%A9",
+      "title": "The All New Bmw 2 Series Coup%C3%A9",
+      "note": "Official BMW global launch press kit states that the new coupe launches with rear-wheel-driven four-cylinder models and M240i xDrive, with the 230i Coup\u00e9 joining in summer 2022 as part of the rear-wheel-drive core lineup.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:d63fb6ea66e8",
+      "url": "https://www.audi-mediacenter.com/en/high-performance-at-its-most-beautiful-the-audi-rs-7-sportback-and-the-rs-7-sportback-performance-12082/dynamic-power-meets-expressive-design-the-rs-7-sportback-performance-12083",
+      "title": "Dynamic Power Meets Expressive Design The Rs 7 Sportback Performance 12083",
+      "note": "Official Audi MediaCenter family article confirming standard 21-inch tires and 22-inch family wheel context for the RS 7 Sportback range.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:d78cb5eee4f7",
+      "url": "https://www.press.bmwgroup.com/ireland/article/attachment/T0442649EN/616886",
+      "title": "616886",
+      "note": "Official BMW PressClub 05/2024 technical-data PDF cross-check for the exact M3 Competition Sedan with M xDrive: same transmission ratio set, reverse 3.478, final drive 3.154, and staggered 275/35 ZR19 front + 285/30 ZR20 rear tire fitment for the German-market figures.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:d795879ff7ec",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0418860DE/bmw-modellpflege-massnahmen-zum-sommer-2023",
+      "title": "Bmw Modellpflege Massnahmen Zum Sommer 2023",
+      "note": "Official BMW Germany model-update article confirming the exact i7 eDrive50 in Germany-market scope.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:d9e8060997ac",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0412894EN/the-bmw-i7-m70-xdrive",
+      "title": "The Bmw I7 M70 Xdrive",
+      "note": "Official BMW press material confirms the i7 M70 xDrive uses a dual-motor all-electric single-speed drive layout rather than a conventional ICE automatic gearbox.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:daa8f80dca50",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/3-series/sedan/2024/preisliste-bmw3er.pdf.coredownload.pdf",
+      "title": "Preisliste Bmw3Er.Pdf.Coredownload.Pdf",
+      "note": "Official BMW Germany 07/2024 price list confirming 320i remains a rear-wheel-drive 8-Gang Steptronic Sport model with a 225/50 R17 standard tire and 18/19-inch wheel options in the checked later Germany-market slice.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:dae61be0efdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1498/file_en/743bfc0b0f620333a8f50632242fb1ea62fc003a/eTD-Audi-RS3-Sportback_260306.pdf",
+      "title": "Etd Audi Rs3 Sportback 260306.Pdf",
+      "note": "Official Audi MediaCenter cross-check PDF for the exact 8Y RS 3 Sportback with the same ratio set, final drive 4.059, top gear 0.630, and the same staggered 19-inch base tire setup.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:db448ae320f5",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F20+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:db56476b60f5",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0266807EN/the-new-bmw-4-series",
+      "title": "The New Bmw 4 Series",
+      "note": "Official BMW press kit confirms multiple xDrive variants in 4 Series lineup (LCI era) and that xDrive is available in Coupe variants.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:dbb5ac0b503d",
+      "url": "https://www.audi-mediacenter.com/en/search?query=8V%2F8Y",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:dbc78803d2a3",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0326317DE/472219",
+      "title": "472219",
+      "note": "Official BMW PressClub DE technical-data PDF valid from 03/2021 for the new 4 Series Coup\u00e9; it lists 420i Coup\u00e9, 430i Coup\u00e9, and M440i xDrive Coup\u00e9, but it does not list 430i xDrive Coup\u00e9, so it acts as a negative launch check for exact 430i xDrive continuity across the full row span.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:dcccf9a2f873",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+7+Series+%28G70%2C+2023-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:dded4fecb402",
+      "url": "https://www.audi-mediacenter.com/de/audi-a7-sportback-47",
+      "title": "Audi A7 Sportback 47",
+      "note": "Official Audi MediaCenter Germany model page for the A7 Sportback linking the exact 45 TFSI quattro technical-data sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:de2b0611ceb4",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F32+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:de50008b9df2",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmwx7.pdf.coredownload.pdf",
+      "title": "Preisliste Bmwx7.Pdf.Coredownload.Pdf",
+      "note": "Official BMW DE price list confirming xDrive40i standard 275/50 R20 tires, optional 285/45 R21 tires, and optional staggered 275/40 R22 + 315/35 R22 or 275/35 R23 + 315/30 R23 fitments.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:de6c75804abf",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G01+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:ded47975365d",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X6+%28F16%2C+2015-2019%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:df617cc28562",
+      "url": "https://www.audi-mediacenter.com/en/photos/detail/audi-s6-avant-c7-v8-comfort-for-every-journey-127765",
+      "title": "Audi S6 Avant C7 V8 Comfort For Every Journey 127765",
+      "note": "Audi MediaCenter official detail page discovered in second pass.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:e0ba5607333f",
+      "url": "https://www.auto-data.net/en/audi-a6-limousine-4g-c7-facelift-2014-3.0-tfsi-v6-333hp-quattro-s-tronic-20694",
+      "title": "Audi A6 Limousine 4G C7 Facelift 2014 3.0 Tfsi V6 333Hp Quattro S Tronic 20694",
+      "note": "Reputable secondary exact page for the facelift A6 3.0 TFSI quattro S tronic sedan confirming AWD, 7-speed S tronic wording, and a 225/55 R17 baseline tire.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:e0d00fcedc95",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+M3+%28G80%2C+2021-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:e0e3c0af8330",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1185/file_en/8e06a44da501d26d1aa26806c124c1e4b90d507f/eTD-Audi-RS7-Sportback-TFSI-441kW_240613.pdf?1718375697",
+      "title": "Etd Audi Rs7 Sportback Tfsi 441Kw 240613.Pdf",
+      "note": "Official Audi MediaCenter Germany-market technical-data PDF cross-check for the exact RS 7 Sportback with the same ratio set, final drive 3.204, top gear 0.667, and basic 275/35 ZR21 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e0f98b630da4",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A1+%28GB%2C+2019-2024%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:e1449089775f",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G14+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:e2310c408b54",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/sharpened-design-and-innovative-technologies-for-the-flagship-the-enhanced-audi-a8-14357",
+      "title": "Sharpened Design And Innovative Technologies For The Flagship The Enhanced Audi A8 14357",
+      "note": "Official Audi MediaCenter press release confirming the 3.0 TFSI-powered A8 55 TFSI quattro and the 18-to-21-inch wheel range for the facelift-era D5 family.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:e26b69822173",
+      "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+M4+%28G82%2C+2021-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official BMW press documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:e26c1ff07b3a",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A3+%288Y%2C+2021-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:e2ab2042d8b2",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G32+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:e359a1117b6f",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329893EN/477739",
+      "title": "477739",
+      "note": "Official BMW PressClub 05/2021 technical-data PDF for the exact M3 Competition Sedan with M xDrive: Eight-speed M Steptronic transmission with Drivelogic, full forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.154, and staggered 275/35 ZR19 front + 285/30 ZR20 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e4992bd8c221",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/826/file_de/70dc72176f74e5f1cd5bb1a80f5c8681a7949a84/TD-Audi-A6-Limousine-45-TFSI-quattro-S_tronic-195kW-MHEV_240829.pdf?1725010885&disposition=attachment",
+      "title": "Td Audi A6 Limousine 45 Tfsi Quattro S Tronic 195Kw Mhev 240829.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A6 Sedan 45 TFSI quattro S tronic 195 kW MHEV: quattro ultra AWD, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and base tire 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e4bd02b0cc12",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F90+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:e4d20bd4419f",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+Q2+%28GA%2C+2017-2024%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:e4fef97ece37",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw7er.pdf",
+      "title": "Preisliste Bmw7Er.Pdf",
+      "note": "Official BMW DE price list confirming standard staggered 255/40 R21 front + 285/35 R21 rear tires and a 20-inch staggered 255/45 front + 285/40 rear package for the i7 M70 xDrive.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e60dd4460f09",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/761/file_de/920cf84b13a26d902c0818dc1cf31aadb18b8ad2/TD-Audi-Q3-40-TDI-quattro-S_tronic-142kW_250605.pdf?1749195008",
+      "title": "Td Audi Q3 40 Tdi Quattro S Tronic 142Kw 250605.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact Q3 40 TDI quattro S tronic 142 kW: bedarfsgerechter Allradantrieb quattro mit elektronisch geregelter Lamellenkupplung, 7-stufige S tronic, forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, split final drives 4.813 / 3.667, and basic tire 215/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e6959b573c42",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1237/file_en/1bc6c25d021edf80ecf5289e69fe15cc1e5351ec/eTD_Audi_RS_e-tron_GT_quattro_440kW_240502.pdf?1714651378",
+      "title": "Etd Audi Rs E Tron Gt Quattro 440Kw 240502.Pdf",
+      "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact RS e-tron GT confirming AWD, 2-speed / automatic, top speed 250 km/h, and basic staggered 245/45 R20 front + 285/40 R20 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e6a149e4a747",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/930/file_en/b54efbc79b4cb52e6b91dffee6593c055c5d0e8c/eTD-Audi-A4-Sedan-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf?disposition=attachment",
+      "title": "Etd Audi A4 Sedan 45 Tfsi Quattro S Tronic 195Kw Mhev 240613.Pdf",
+      "note": "Official Audi MediaCenter eTD for the exact DE A4 Sedan 45 TFSI quattro 195 kW: 7-speed S tronic, quattro ultra AWD, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and basic tire 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e6b28c39d7e6",
+      "url": "https://www.audi-mediacenter.com/en/audi-q5-tfsi-e-until-2025-11628",
+      "title": "Audi Q5 Tfsi E Until 2025 11628",
+      "note": "Official Audi MediaCenter model page used to map the exact Q5 55 TFSI e quattro technical-data PDF for the EU/DE PHEV configuration.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e6c066ac31ae",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/936/file_en/b9a2b988f92292c9fc34d688ac4ce69ed2ba412e/eTD-Audi-Q7-SUV-TFSI-quattro-tiptronic-250kW-MHEV-5-seats_260204.pdf?1770709676",
+      "title": "Etd Audi Q7 Suv Tfsi Quattro Tiptronic 250Kw Mhev 5 Seats 260204.Pdf",
+      "note": "Official Audi MediaCenter technical-data PDF for the exact current Q7 SUV TFSI quattro tiptronic 250 kW MHEV 5-seat configuration: permanent quattro AWD with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, and a 255/60 R18 basic tire.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e6d59d64ee25",
+      "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/geschaerfter-dauerbrennerupgrade-fuer-den-audi-a3-15916",
+      "title": "Geschaerfter Dauerbrennerupgrade Fuer Den Audi A3 15916",
+      "note": "Official Audi Germany 2024 facelift launch release confirming 35 TDI S tronic remains part of the Europe/Germany A3 update context.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e6dcdf409dbe",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0443474EN/specifications-of-the-bmw-5-series-sedan-valid-from-03/2025",
+      "title": "2025",
+      "note": "Official 03/2025 ACEA-market technical specs list EU 5 Series sedan variants and attachment with per-variant technical data.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e7a5c628203d",
+      "url": "https://www.audi-mediacenter.com/en/search?query=Q3+40+TFSI+quattro+technical+data",
+      "title": "Search",
+      "note": "Audi MediaCenter search page used to recover the exact old-generation Q3 40 TFSI quattro technical-data PDFs.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:eac349833cc2",
+      "url": "https://www.ultimatespecs.com/car-specs/Audi/12216/Audi-A7-Sportback-30-TFSI-quattro-S-tronic-7-sp.html",
+      "title": "Audi A7 Sportback 30 Tfsi Quattro S Tronic 7 Sp.Html",
+      "note": "Reputable secondary cross-check for the early 220 kW A7 3.0 TFSI quattro S tronic with AWD and 255/45 R18 tires.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:eae8f6c35d1a",
+      "url": "https://www.bmw.de/de/neufahrzeuge/1er/5-tuerer/2017/auf-einen-blick.html",
+      "title": "Auf Einen Blick.Html",
+      "note": "Redirects to current BMW 1er page context (F70), so F20-specific variant/ratio evidence could not be safely extracted.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:ec1f2b5d8fc4",
+      "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2020/preislisten/q7_sq7.pdf",
+      "title": "Q7 Sq7.Pdf",
+      "note": "Official Audi Germany MY2020 price list sampled in this pass lists 55 TFSI quattro on the petrol side and does not expose an exact Germany 45 TFSI quattro row.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:ec4f691f5393",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0124299EN/bmw-model-year-update-measures-for-march-2012",
+      "title": "Bmw Model Year Update Measures For March 2012",
+      "note": "Official BMW model-year update (EU context) confirms F30 320i introduction and 8-speed automatic availability, but no complete numeric gear/final-drive table for all listed variants.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:eca9fb0d3e74",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F40+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:ed529186a624",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/970/file_en/3929d8c79ac5796cab7777c7f0cf691d95d6ec56/eTD-Audi-A5-Coupe-40-TFSI-S_tronic-150kW-MHEV_240320.pdf?disposition=attachment",
+      "title": "Etd Audi A5 Coupe 40 Tfsi S Tronic 150Kw Mhev 240320.Pdf",
+      "note": "Official Audi MediaCenter eTD confirming A5 Coupe 40 TFSI S tronic final-drive ratio 4.234.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:ed5679233d8c",
+      "url": "https://www.audi-mediacenter.com/en/search?query=D5",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:edd605c5ca47",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1086/file_en/1a04595184bd087d7fc9476ec2bad5ce3e77c903/eTD-Audi-A6-Sedan-55-TFSI-quattro-S_tronic-250kW-MHEV_240911.pdf?1726126540",
+      "title": "Etd Audi A6 Sedan 55 Tfsi Quattro S Tronic 250Kw Mhev 240911.Pdf",
+      "note": "Official Audi MediaCenter technical-data PDF for the exact A6 Sedan 55 TFSI quattro S tronic 250 kW MHEV: quattro ultra AWD, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.410, and base tire 225/55 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:ede0bc1c6aee",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0203608EN/specifications-bmw-2-series-active-tourer-valid-from-march-2015",
+      "title": "Specifications Bmw 2 Series Active Tourer Valid From March 2015",
+      "note": "Official March 2015 update confirms continued F45 technical data publication and attachment set for EU/ACEA specification context.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:ee23956fe3cd",
+      "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2025/preislisten/preisliste_rs-6-avant_rs-6-avant-performance.pdf",
+      "title": "Preisliste Rs 6 Avant Rs 6 Avant Performance.Pdf",
+      "note": "Official Audi DE price list confirming 10.5Jx21 with 275/35 R21 and 10.5Jx22 with 285/30 R22 as the exact RS 6 Avant orderable wheel and tire fitments.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:eec306178221",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F82+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:efd444c9156f",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/953/file_de/0a4a8fa2a3274aecf30b11d6b8bd47624ac4bfd3/td_Q5_45_TFSI_quattro_S_tronic_180_kW.pdf?1698933816",
+      "title": "Td Q5 45 Tfsi Quattro S Tronic 180 Kw.Pdf",
+      "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact Q5 45 TFSI quattro S tronic 180 kW: quattro ultra AWD, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f0f319a0cc78",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329593EN/476180",
+      "title": "476180",
+      "note": "Official BMW ACEA 03/2021 technical-data PDF for the exact Z4 sDrive30i automatic: rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.154, and standard staggered 225/50 R17 front + 255/45 R17 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f15178e8436e",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+Q3+%288U%2C+2012-2018%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:f1e673d6713e",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0281455EN/416380",
+      "title": "416380",
+      "note": "Official BMW ACEA technical-data PDF for the exact launch-era X5 xDrive40i: 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard 255/55 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f215d565d740",
+      "url": "https://www.bmw.de/de/neufahrzeuge/z4/z4-roadster/bmw-z4-technische-daten.html",
+      "title": "Bmw Z4 Technische Daten.Html",
+      "note": "Official BMW DE technical-data page confirming the current Z4 sDrive30i remains a rear-wheel-drive 8-speed automatic model in Germany.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f31f1ea854da",
+      "url": "https://www.bmw.de/de/neufahrzeuge/m/limousine/bmw-7er-limousine-m-modelle-technische-daten.html",
+      "title": "Bmw 7Er Limousine M Modelle Technische Daten.Html",
+      "note": "Official BMW DE technical-data page confirming the exact i7 M70 xDrive as AWD with 1-speed automatic EV drivetrain and Germany-market continuity.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f328feae7002",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+RS+7+Sportback+%28C8%2C+2020-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:f33bee2d7717",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/928/file_en/56a29fe0bfc7faaac389a2fbafbd094de5e3ad84/eTD-Audi-A4-Sedan-35-TDI-S_tronic-120kW-MHEV_240320.pdf?disposition=attachment",
+      "title": "Etd Audi A4 Sedan 35 Tdi S Tronic 120Kw Mhev 240320.Pdf",
+      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact 03/20/2024 A4 Sedan 35 TDI S tronic 120 kW MHEV: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f3928778422d",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/928/file_en/56a29fe0bfc7faaac389a2fbafbd094de5e3ad84/eTD-Audi-A4-Sedan-35-TDI-S_tronic-120kW-MHEV_240613.pdf?disposition=attachment",
+      "title": "Etd Audi A4 Sedan 35 Tdi S Tronic 120Kw Mhev 240613.Pdf",
+      "note": "Official Audi MediaCenter Germany 06/13/2024 cross-check PDF for the exact A4 Sedan 35 TDI S tronic with the same ratio set, reverse ratio, final drive 4.048, and basic tire 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f3fe62f03e97",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0330570EN/specifications-of-the-bmw-m8-coupe-valid-from-03/2021?language=en",
+      "title": "BMW M8 Coupe specifications page",
+      "note": "Official BMW M8 Coupe technical-data page confirming M xDrive drivetrain context for M8 Coupe and M8 Competition Coupe.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f3ff6ea4bfe6",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/335/file_en/824cd6b831b620f3969a43e61549348b22b8d6e6/eTechnische_Daten_Audi_R8V10_Coupe_419kW.pdf?1698933709",
+      "title": "Etechnische Daten Audi R8V10 Coupe 419Kw.Pdf",
+      "note": "Official Audi Germany technical-data PDF for the exact 2019+ R8 V10 quattro Coup\u00e9: AWD, 7-speed S tronic, Audi-form ratio data 13.969 / 9.287 / 6.746 / 5.080 / 4.003 / 3.171 / 2.343, final-drive values 1.848 / 1.488, and basic staggered tires 245/35 R19 front + 295/35 R19 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f40ffef80c9d",
+      "url": "https://www.audi-mediacenter.com/en/search?query=4S",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:f46299570461",
+      "url": "https://www.audi-mediacenter.com/en/audi-tt-coupe-68",
+      "title": "Audi Tt Coupe 68",
+      "note": "Official Audi MediaCenter model page for the TT Coup\u00e9 linking the exact 45 TFSI quattro technical-data sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f576994a4890",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=F30+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:f6365cece15e",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1184/file_en/6124caef9007249169df603b05d8cb70b2982f3f/eTD-Audi-RS6-Avant-TFSI-441kW_240613.pdf?1718380177&disposition=attachment",
+      "title": "Etd Audi Rs6 Avant Tfsi 441Kw 240613.Pdf",
+      "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact RS 6 Avant: quattro permanent AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and basic 275/35 R21 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f66a48c88326",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0281798EN/410795",
+      "title": "410795",
+      "note": "Official BMW technical-data PDF valid from 08/2018 for the exact X4 M40i: AWD, 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f72d096965c6",
+      "url": "https://www.audi-mediacenter.com/en/search?query=GB",
+      "title": "Search",
+      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:f7b0bdd3aad4",
+      "url": "https://www.auto-data.net/en/audi-a6-limousine-4g-c7-3.0-tfsi-v6-310hp-quattro-s-tronic-18154",
+      "title": "Audi A6 Limousine 4G C7 3.0 Tfsi V6 310Hp Quattro S Tronic 18154",
+      "note": "Reputable secondary exact page for the pre-facelift A6 3.0 TFSI quattro S tronic sedan confirming AWD, 7-speed S tronic wording, and a 225/55 R17 baseline tire.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:f8299c41e459",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw2er.pdf.coredownload.pdf",
+      "title": "Preisliste Bmw2Er.Pdf.Coredownload.Pdf",
+      "note": "Official BMW Germany price-list PDF endpoint was identified from BMW pages, but text extraction failed in this run, so no numeric ratio confirmation was possible.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:f83cdba50e26",
+      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A6+%28C8%2C+2019-2026%29+technical+data+Europe",
+      "title": "Search",
+      "note": "Targeted lookup for official Audi media technical documents for this model.",
+      "confidence": "low"
+    },
+    {
+      "id": "legacy_research_sources:f8533e1b6b48",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0317777DE/461542",
+      "title": "461542",
+      "note": "Official BMW Germany technical-data PDF for the exact 545e xDrive: AWD plug-in hybrid with 8-Gang Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, rear-axle ratio 3.231, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f89b00916d7f",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0317777DE/technische-daten-bmw-5er-limousine-545e-xdrive-gueltig-ab-11/2020",
+      "title": "2020",
+      "note": "Official BMW Germany PressClub article for the exact 545e xDrive technical-data attachment valid from 11/2020.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f8d3f991ca53",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1491/file_en/d7793fc81649f7cb1ae432f090246ab8cb377399/eTD-Audi-Q5-40-TFSI-quattro-S_tronic-150kW-MHEV_240604.pdf?1741620895",
+      "title": "Etd Audi Q5 40 Tfsi Quattro S Tronic 150Kw Mhev 240604.Pdf",
+      "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact FY Q5 40 TFSI quattro 150 kW MHEV: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f9d6f511233d",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0267658DE/technische-daten-der-neuen-bmw-5er-limousine-bmw-540i-bmw-540i-xdrive-gueltig-ab-11/2016?language=de",
+      "title": "2016",
+      "note": "Official BMW Germany PressClub article for the exact 540i / 540i xDrive technical-data attachment valid from 11/2016.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:fb0ad8a77215",
+      "url": "https://www.bmw.de/de/neufahrzeuge/2er/2-series-coupe/bmw-2er-coupe.html#technische-daten",
+      "title": "Bmw 2Er Coupe.Html",
+      "note": "Official BMW Germany model page states the coupe concept around rear-wheel drive and separately presents M240i xDrive as xDrive variant.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:fbef3422499f",
+      "url": "https://www.press.bmwgroup.com/usa/article/attachment/T0160684EN_US/391907",
+      "title": "BMW M3 technical data PDF",
+      "note": "Official BMW MY2018 M3 technical PDF confirming manual VI 0.846, DCT VII 0.671, and full forward gear-ratio tables.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:fc3067f501c7",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0325531EN",
+      "title": "T0325531En",
+      "note": "Official BMW PressClub article for 3 Series Sedan technical data valid from 03/2021; German-market context for the exact 330i xDrive PDF attachment.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:fc63799e6f4d",
+      "url": "https://www.audi-mediacenter.com/de/publikationen/preislisten/preisliste-audi-q7-audi-q7-tfsi-e-audi-sq7-modelljahr-2026-293/download",
+      "title": "Download",
+      "note": "Official Audi MediaCenter Germany MY2026 price list sampled in this pass again resolves the petrol Q7 as SUV TFSI quattro 250 kW and does not recover an exact Germany 45 TFSI quattro technical-data row.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:fc9d1c242093",
+      "url": "https://www.audi-mediacenter.com/de/audi-a8-tfsi-e-12167",
+      "title": "Audi A8 Tfsi E 12167",
+      "note": "Official Audi MediaCenter Germany model page confirming the exact A8 60 TFSI e quattro target and compact e-machine hybrid context.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:fd03c253ad14",
+      "url": "https://www.audi-mediacenter.com/en/electric-suvs-in-the-premium-compact-segment-the-audi-q4-e-tron-and-the-q4-sportback-e-tron-13887/electric-motors-and-electric-all-wheel-drive-13900",
+      "title": "Electric Motors And Electric All Wheel Drive 13900",
+      "note": "Audi MediaCenter drivetrain page documents the Q4 e-tron launch mix and confirms there is no non-quattro `Q4 50 e-tron` RWD variant in the supported EU set.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:fe5920beed47",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G22+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:ff48a54d62d6",
+      "url": "https://www.press.bmwgroup.com/global/article/search?query=G20+technical+data&language=en",
+      "title": "Search",
+      "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
+      "confidence": "medium"
+    }
+  ]
+}
