@@ -2182,7 +2182,25 @@
       {
         "name": "xDrive20i",
         "engine": "B48 2.0L I4 Turbo",
-        "drivetrain": "AWD"
+        "drivetrain": "AWD",
+        "gearboxes": [
+          {
+            "name": "8-speed Steptronic transmission",
+            "final_drive_ratio": 3.385,
+            "top_gear_ratio": 0.64
+          }
+        ],
+        "tire_options": [
+          {
+            "name": "Standard 18\"",
+            "tire_width_mm": 225.0,
+            "tire_aspect_pct": 60.0,
+            "rim_in": 18.0
+          }
+        ],
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 60.0,
+        "rim_in": 18.0
       },
       {
         "name": "xDrive30i",
@@ -4505,7 +4523,18 @@
               0.433
             ]
           }
-        ]
+        ],
+        "tire_options": [
+          {
+            "name": "Standard 17\"",
+            "tire_width_mm": 235.0,
+            "tire_aspect_pct": 65.0,
+            "rim_in": 17.0
+          }
+        ],
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 65.0,
+        "rim_in": 17.0
       },
       {
         "name": "55 TFSI e quattro",

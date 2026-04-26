@@ -344,7 +344,7 @@
     "BMW|2 Series Active Tourer (F45, 2014-2021)": {
       "car_index": 4,
       "verification_status": "verification_backlog",
-      "decision_summary": "Issue #1034 official-source review kept the retained 8-speed family baseline for the non-overridden F45 variants, moved the documented 225xe 6-speed Steptronic ratio pair onto the 225xe variant explicitly, and added an explicit 220i 7-speed dual-clutch override so the documented 220i/225xe transmissions no longer rely on shared gearbox rows. Official BMW sources confirm the transmission types; the 220i numeric ratio pair uses reputable secondary references because the extracted 2018 BMW specification PDF does not expose an unambiguous final-drive field mapping.",
+      "decision_summary": "Issue #1034 official-source review kept the retained 8-speed family baseline for the non-overridden F45 variants, moved the documented 225xe 6-speed Steptronic ratio pair onto the 225xe variant explicitly, and added an explicit 220i 7-speed dual-clutch override so the documented 220i/225xe transmissions no longer rely on shared gearbox rows. Wave 20 re-check confirms from the official 01/2018 BMW specifications PDF that the exact 220i ACEA-market baseline tire is 205/60 R16 and that BMW publishes overall 7-speed DCT ratio figures in that sheet, but those figures still do not expose a safe standalone final-drive/top-gear mapping. Wave 21 extends the exact official 01/2018 ACEA evidence to the 218i: the same BMW specifications PDF proves the 218i 6-speed manual state with ratios 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683, reverse 3.538, and baseline 205/60 R16 tires, while the optional 7-speed DCT appears only as overall parenthesized ratios 17.348 / 10.232 / 6.593 / 4.615 / 3.572 / 2.819 / 2.285 with reverse 15.982, still without a safely separable final-drive/top-gear mapping. The 225xe official 07/2019 specifications PDF also confirms the exact 205/55 R17 baseline tire alongside the full 6-speed ratio set, final drive 3.944, and top gear 0.672.",
       "unresolved": [
         {
           "item": "Remaining non-overridden F45 variant gearbox mapping",
@@ -353,6 +353,10 @@
         {
           "item": "Official BMW numeric confirmation for the 220i DCT ratio pair",
           "reason": "BMW official materials confirm the 220i uses the 7-speed dual-clutch Steptronic transmission, but the public PressClub documents retrieved for this fix do not expose an unambiguous final-drive field mapping, so the numeric ratio pair remains backed by reputable secondary references."
+        },
+        {
+          "item": "Official BMW numeric confirmation for the 218i optional 7-speed DCT ratio pair",
+          "reason": "The official 01/2018 ACEA-market BMW specifications PDF proves the 218i optional 7-speed DCT exists and publishes only overall parenthesized ratios rather than a safely separable final-drive/top-gear mapping, so no exact standalone numeric gearbox override is yet safe for the automatic 218i state."
         }
       ],
       "sources": {
@@ -364,7 +368,7 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0299792EN/436732",
-            "note": "Official BMW 225xe specifications PDF (07/2019) provides 6-speed Steptronic gear ratios and final drive ratio 3.944; top gear ratio 0.672.",
+            "note": "Official BMW 225xe specifications PDF (07/2019) provides the full 6-speed Steptronic gear-ratio set 4.459 / 2.508 / 1.556 / 1.142 / 0.851 / 0.672, electric ratio 3.185, final drive ratio 3.944, and the exact 205/55 R17 baseline tire.",
             "confidence": "high"
           },
           {
@@ -381,7 +385,19 @@
           },
           {
             "url": "https://www.press.bmwgroup.com/global/article/attachment/T0277458EN/401747",
-            "note": "Official 2018 specifications PDF includes 220i transmission table, but final-drive mapping is not explicitly recoverable in extracted text with full certainty.",
+            "note": "Official 2018 specifications PDF includes the exact 220i 7-speed DCT transmission table and 205/60 R16 baseline tire, but the published ratio figures appear as overall gearbox values (15.304 / 9.026 / 5.735 / 4.015 / 3.108 / 2.487 / 2.016) rather than a safely separable final-drive/top-gear mapping.",
+            "confidence": "medium"
+          }
+        ],
+        "218i_exact_states": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0277458EN/401747",
+            "note": "Official 01/2018 BMW 2 Series Active Tourer specifications PDF proves the exact ACEA-market 218i 6-speed manual state with ratios 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683, reverse 3.538, and 205/60 R16 baseline tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/attachment/T0277458EN/401747",
+            "note": "The same official 01/2018 BMW specifications PDF proves the exact ACEA-market 218i optional 7-speed DCT state exists, but publishes only overall parenthesized ratios 17.348 / 10.232 / 6.593 / 4.615 / 3.572 / 2.819 / 2.285 with reverse 15.982, not a safely separable final-drive/top-gear mapping; the same sheet keeps the 205/60 R16 baseline tire.",
             "confidence": "medium"
           }
         ],
@@ -1848,11 +1864,15 @@
     "BMW|X3 (G01, 2018-2024)": {
       "car_index": 25,
       "verification_status": "verification_backlog",
-      "decision_summary": "Official BMW Germany technical-data and price-list material now confirms the exact G01 X3 xDrive30i mapping across checked launch and LCI documents: 8-Gang Steptronic Getriebe, final drive 3.385, top gear 0.640, standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments. Those exact final-drive, top-gear, and tire fields are now safe to land as a variant-scoped production override. Wave 10 validation also adds exact M40i source-ledger evidence from the 04/2020 ACEA technical-data sheet: AWD, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires. The broad row remains verification backlog because the xDrive30i gear-ratio array changed between the checked 09/2018 and 06/2021 official sheets and this pass did not recover year-spanning official evidence proving one unchanged M40i package across the full 2018-2024 row.",
+      "decision_summary": "Wave 21 re-check shows the checked 09/2018 and 06/2021 BMW Germany technical-data PDFs are exact X3 xDrive20i states. Across both states they prove Allrad, 8-Gang Steptronic Getriebe, final drive 3.385, top gear 0.640, and a 225/60 R18 basic tire, which is sufficient to land those stable fields as an xDrive20i variant-scoped production override. The full xDrive20i gear-ratio array changed between the checked 2018 and 2021 official sheets (5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 vs 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640), so one shared exact gear-ratio array would still be unsafe. Official Germany price-list material continues to confirm the broader G01 wheel/tire matrix and xDrive30i market context, and wave 10 validation also adds exact M40i source-ledger evidence from the 04/2020 ACEA technical-data sheet: AWD, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires. The broad row remains verification backlog because the xDrive20i full gear-ratio array changed between the checked official sheets, xDrive30i still lacks a directly checked exact ratio PDF in this row, and this pass did not recover year-spanning official evidence proving one unchanged M40i package across the full 2018-2024 row.",
       "unresolved": [
         {
-          "item": "BMW X3 xDrive30i exact gear-ratio and reverse-ratio applicability across the full 2018-2024 row span",
-          "reason": "Official BMW DE sheets now prove final drive 3.385, top gear 0.640, and the Germany-market tire matrix for xDrive30i, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split."
+          "item": "BMW X3 xDrive20i exact gear-ratio and reverse-ratio applicability across the full 2018-2024 row span",
+          "reason": "Official BMW DE xDrive20i sheets now prove final drive 3.385, top gear 0.640, and the 225/60 R18 basic tire, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split."
+        },
+        {
+          "item": "BMW X3 xDrive30i exact official ratio mapping",
+          "reason": "The checked 09/2018 and 06/2021 BMW Germany technical-data PDFs used in this row are exact xDrive20i sheets, while the currently retained xDrive30i notes are still supported mainly by Germany price-list context and not by one directly checked exact xDrive30i ratio PDF in this run."
         },
         {
           "item": "BMW X3 M40i production-data applicability across the full 2018-2024 row span",
@@ -1868,17 +1888,19 @@
         }
       ],
       "sources": {
-        "official_xdrive30i_exact_ratios": [
+        "official_xdrive20i_exact_states": [
           {
             "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0284378DE/413521",
-            "note": "Official BMW PressClub DE technical-data PDF valid from 09/2018 for the exact X3 xDrive30i: Allrad, 8-Gang Steptronic Getriebe, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard 225/60 R18 tires.",
+            "note": "Official BMW PressClub DE technical-data PDF valid from 09/2018 for the exact X3 xDrive20i: Allrad, 8-Gang Steptronic Getriebe, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.385, and standard 225/60 R18 tires.",
             "confidence": "high"
           },
           {
             "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0334392DE/483091",
-            "note": "Official BMW PressClub DE technical-data PDF for the LCI X3 xDrive30i: Allrad, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard 225/60 R18 tires.",
+            "note": "Official BMW PressClub DE technical-data PDF for the LCI X3 xDrive20i: Allrad, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard 225/60 R18 tires.",
             "confidence": "high"
-          },
+          }
+        ],
+        "official_xdrive30i_price_list_context": [
           {
             "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0322780DE/634499",
             "note": "Official BMW Germany price-list PDF confirming xDrive30i with Allrad and 8-Gang Steptronic, standard 225/60 R18 tires, optional 245/50 R19 tires, and optional staggered 245/45 R20 front + 275/40 R20 rear or 245/40 R21 front + 275/35 R21 rear fitments.",
@@ -3012,18 +3034,39 @@
     "Audi|A3 (8V, 2013-2020)": {
       "car_index": 44,
       "verification_status": "verification_backlog",
-      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "decision_summary": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
       "unresolved": [
         {
           "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference."
+          "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping."
         },
         {
           "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries."
+        },
+        {
+          "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+          "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly."
         }
       ],
       "sources": {
+        "official_spain_sedan_2020_exact_states": [
+          {
+            "url": "http://prensa.audi.es/wp-content/uploads/2020/04/Fichas-t%C3%A9cnicas-nuevo-Audi-A3-Sedan.pdf",
+            "note": "Official Audi Spain technical-data PDF (03/2020) for the exact A3 Sedan 35 TFSI 110 kW 6-speed manual: Front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "http://prensa.audi.es/wp-content/uploads/2020/04/Fichas-t%C3%A9cnicas-nuevo-Audi-A3-Sedan.pdf",
+            "note": "Official Audi Spain technical-data PDF (03/2020) for the exact A3 Sedan 35 TDI 110 kW 7-speed S tronic: Front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires.",
+            "confidence": "high"
+          },
+          {
+            "url": "http://prensa.audi.es/wp-content/uploads/2020/04/Fichas-t%C3%A9cnicas-nuevo-Audi-A3-Sedan.pdf",
+            "note": "Official Audi Spain technical-data PDF (03/2020) for the exact A3 Sedan 35 TFSI 110 kW MHEV S tronic 7-speed state: Front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires.",
+            "confidence": "high"
+          }
+        ],
         "official_lookup_attempts": [
           {
             "url": "https://www.audi.com/en.html",
@@ -3036,11 +3079,6 @@
             "confidence": "medium"
           },
           {
-            "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A3+%288V%2C+2013-2020%29+technical+data+Europe",
-            "note": "Targeted lookup for official Audi media technical documents for this model.",
-            "confidence": "low"
-          },
-          {
             "url": "https://www.audi-mediacenter.com/en/search?query=8V",
             "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
             "confidence": "medium"
@@ -3049,6 +3087,11 @@
             "url": "https://www.audi-mediacenter.com/en/models-4",
             "note": "Audi MediaCenter official model hub (entry point for model-specific documents).",
             "confidence": "medium"
+          },
+          {
+            "url": "http://prensa.audi.es/wp-content/uploads/2020/04/Fichas-t%C3%A9cnicas-nuevo-Audi-A3-Sedan.pdf",
+            "note": "Official Audi Spain press archive PDF used in wave 21 to recover exact 2020 sedan drivetrain/ratio/tire states that the broader MediaCenter search did not surface directly.",
+            "confidence": "high"
           }
         ]
       }
