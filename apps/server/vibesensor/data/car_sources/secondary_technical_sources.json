@@ -105,6 +105,55 @@
       "title": "Ultimate Specs A5 B8 3.0 TDI quattro tiptronic specification entry",
       "note": "Independent secondary 2007-2011 A5 Coupe 3.0 TDI Quattro tiptronic DPF page used to corroborate the pre-facelift Tiptronic identity while the broad-row 8-speed mapping remains unresolved.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-carfolio",
+      "url": "https://www.carfolio.com/audi-a4-3.0-tdi-quattro-264979",
+      "title": "Carfolio A4 B8 3.0 TDI quattro manual specification entry",
+      "note": "Exact secondary 2012 A4 3.0 TDI quattro sedan page used to cross-check AWD and 6-speed manual transmission for the broad B8 row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-a4-b8-8k-3.0-tdi-v6-240hp-quattro-4319",
+      "title": "Auto-Data A4 B8 3.0 TDI quattro manual specification entry",
+      "note": "Exact secondary 2007-2011 A4 3.0 TDI 240 hp quattro sedan entry used to cross-check AWD and 6-speed manual transmission for the broad B8 row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-carfolio",
+      "url": "https://www.carfolio.com/audi-a4-3.0-tdi-quattro-s-tronic-355630",
+      "title": "Carfolio A4 B8 3.0 TDI quattro S tronic specification entry",
+      "note": "Exact secondary 2015 A4 3.0 TDI quattro S-Tronic sedan page used to cross-check AWD and 7-speed automatic transmission for the broad B8 row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a4-b8-8k-facelift-2011-3.0-tdi-v6-245hp-quattro-s-tronic-18821",
+      "title": "Auto-Data A4 B8 3.0 TDI quattro S tronic specification entry",
+      "note": "Exact secondary 2011-2015 facelift A4 3.0 TDI 245 hp quattro S tronic sedan entry used to cross-check AWD and 7-speed S tronic transmission for the broad B8 row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-3-0-tdi-quattro-zf8hp-autodata",
+      "url": "https://www.auto-data.net/en/audi-a4-b8-8k-3.0-tdi-v6-240hp-quattro-tiptronic-4320",
+      "title": "Auto-Data A4 B8 3.0 TDI quattro Tiptronic specification entry",
+      "note": "Exact secondary 2007-2011 A4 3.0 TDI 240 hp quattro Tiptronic sedan entry used to document that the pre-facelift row is Tiptronic with 6 gears, which conflicts with the broad-row 8-speed ZF8HP mapping.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio",
+      "url": "https://www.carfolio.com/audi-a4-3.0-tfsi-quattro-s-tronic-264704",
+      "title": "Carfolio A4 B8 3.0 TFSI quattro S tronic specification entry",
+      "note": "Exact secondary 2012 A4 3.0 TFSI quattro S-Tronic sedan page used to cross-check AWD and 7-speed automatic transmission for the broad B8 row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a4-b8-8k-facelift-2011-3.0-tfsi-v6-272hp-quattro-s-tronic-18843",
+      "title": "Auto-Data A4 B8 3.0 TFSI quattro S tronic specification entry",
+      "note": "Exact secondary 2012-2014 facelift A4 3.0 TFSI 272 hp quattro S tronic sedan entry used to cross-check AWD and 7-speed S tronic transmission for the broad B8 row.",
+      "confidence": "medium"
     }
   ]
 }
