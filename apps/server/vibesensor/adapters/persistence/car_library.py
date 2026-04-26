@@ -105,6 +105,11 @@ class CarLibraryEntry(TypedDict):
     variants: list[CarLibraryVariant]
 
 
+class ResolvedCarLibraryEntry(CarLibraryEntry, total=False):
+    drivetrain: Literal["FWD", "RWD", "AWD"]
+    engine: str
+
+
 class VehicleConfigurationRow(TypedDict):
     brand: str
     type: str
@@ -163,6 +168,7 @@ for _typed_dict in (
     CarLibraryTireOption,
     CarLibraryVariant,
     CarLibraryEntry,
+    ResolvedCarLibraryEntry,
     VehicleConfigurationRow,
     VehicleConfigurationFieldProvenanceRow,
 ):
@@ -649,19 +655,22 @@ def get_exact_configurations_for_variant(
 def resolve_variant(
     base_entry: CarLibraryEntry,
     variant_name: str | None,
-) -> CarLibraryEntry:
+) -> ResolvedCarLibraryEntry:
     """Merge a variant's overrides onto a base model entry.
 
-    Returns a new dict with the effective gearboxes, tire_options, and
-    default tire specs.  Unknown *variant_name* or ``None`` returns a
-    deep copy of the base entry so callers cannot corrupt the cached
-    library data.
+    Returns a new dict with the effective engine/drivetrain metadata,
+    gearboxes, tire_options, and default tire specs. Unknown
+    *variant_name* or ``None`` returns a deep copy of the base entry so
+    callers cannot corrupt the cached library data.
     """
-    result = _deep_copy_entry(base_entry)
+    result: ResolvedCarLibraryEntry = _deep_copy_entry(base_entry)
     if not variant_name:
         return result
     for variant in base_entry["variants"]:
         if variant["name"] == variant_name:
+            result["drivetrain"] = variant["drivetrain"]
+            if "engine" in variant:
+                result["engine"] = variant["engine"]
             if variant.get("gearboxes"):
                 result["gearboxes"] = copy.deepcopy(variant["gearboxes"])
             if variant.get("tire_options"):

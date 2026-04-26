@@ -6,7 +6,11 @@ import json
 
 import pytest
 
-from vibesensor.adapters.persistence.car_library import _DATA_FILE, load_car_library, resolve_variant
+from vibesensor.adapters.persistence.car_library import (
+    _DATA_FILE,
+    load_car_library,
+    resolve_variant,
+)
 
 _RATIO_SOURCES_FILE = _DATA_FILE.with_name("car_library_ratio_sources.json")
 _VARIANT_SOURCES_FILE = _DATA_FILE.with_name("CAR_VARIANT_SOURCES.md")
@@ -31,7 +35,9 @@ def test_wave18_m3_and_m4_top_gears_use_official_m_dct_and_manual_values() -> No
     for row in (m3, m4):
         row_gearboxes = {gearbox["name"]: gearbox for gearbox in row["gearboxes"]}
 
-        assert row_gearboxes["7-speed dual-clutch (M-DCT)"]["top_gear_ratio"] == pytest.approx(0.671)
+        assert row_gearboxes["7-speed dual-clutch (M-DCT)"]["top_gear_ratio"] == pytest.approx(
+            0.671
+        )
         assert row_gearboxes["7-speed dual-clutch (M-DCT)"]["gear_ratios"] == pytest.approx(
             [4.806, 2.593, 1.701, 1.277, 1.0, 0.844, 0.671]
         )
@@ -75,25 +81,31 @@ def test_wave18_ratio_source_rows_capture_new_official_bmw_evidence() -> None:
     assert "official_m3_my18_tech_specs" in sources["BMW|M3 (F80, 2014-2018)"]["sources"]
     assert "official_m4_2018_exact_ratios" in sources["BMW|M4 (F82, 2014-2020)"]["sources"]
     assert "official_m5_2020_exact_ratios" in sources["BMW|M5 (F90, 2018-2024)"]["sources"]
-    assert "official_g15_m850i_ratio_context" in sources["BMW|8 Series Coupe (G15, 2019-2025)"]["sources"]
+    assert (
+        "official_g15_m850i_ratio_context"
+        in sources["BMW|8 Series Coupe (G15, 2019-2025)"]["sources"]
+    )
     assert "official_m8_awd_context" in sources["BMW|8 Series Coupe (G15, 2019-2025)"]["sources"]
 
 
 def test_wave18_variant_source_doc_tracks_updated_m_rows() -> None:
     text = _VARIANT_SOURCES_FILE.read_text(encoding="utf-8")
+    m3_row = (
+        "| M3 | S55 3.0L I6 Turbo | RWD | 7-speed M-DCT TG 0.671 / "
+        "6-speed manual TG 0.846 | BMW technical data (MY18) | High |"
+    )
+    m4_row = (
+        "| M4 | S55 3.0L I6 Turbo | RWD | 7-speed M-DCT TG 0.671 / "
+        "6-speed manual TG 0.846 | BMW technical data (09/2018) | High |"
+    )
+    m5_row = (
+        "| M5 Competition | S63 4.4L V8 Turbo | AWD | 8-speed M Steptronic FD 3.154 "
+        "TG 0.640 | BMW technical data (06/2020) | High |"
+    )
 
-    assert (
-        "| M3 | S55 3.0L I6 Turbo | RWD | 7-speed M-DCT TG 0.671 / 6-speed manual TG 0.846 | BMW technical data (MY18) | High |"
-        in text
-    )
-    assert (
-        "| M4 | S55 3.0L I6 Turbo | RWD | 7-speed M-DCT TG 0.671 / 6-speed manual TG 0.846 | BMW technical data (09/2018) | High |"
-        in text
-    )
-    assert (
-        "| M5 Competition | S63 4.4L V8 Turbo | AWD | 8-speed M Steptronic FD 3.154 TG 0.640 | BMW technical data (06/2020) | High |"
-        in text
-    )
+    assert m3_row in text
+    assert m4_row in text
+    assert m5_row in text
     assert (
         "| M8 Competition | 4.4L V8 Turbo | AWD | – | BMW M technical data | High |" in text
     )
