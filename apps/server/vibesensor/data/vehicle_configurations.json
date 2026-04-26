@@ -12871,17 +12871,19 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:490c5b8fd0e9",
-        "legacy_research_sources:62c1bbb53e87",
-        "legacy_research_sources:ec1f2b5d8fc4",
-        "legacy_research_sources:fc63799e6f4d"
+        "legacy_research_sources:29114921acdf",
+        "legacy_research_sources:b248c52777b2"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Exact official Audi MediaCenter Q7 TFSI e model-page and technical-data PDF evidence confirm permanent quattro AWD for the checked 55 TFSI e configuration, while broader ratio and tire continuity across the inherited row remain unresolved.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:29114921acdf",
+        "legacy_research_sources:b248c52777b2"
+      ],
+      "notes": "Exact official Audi MediaCenter Q7 TFSI e model-page and technical-data PDF evidence confirm the 8-speed tiptronic transmission wording for the checked 55 TFSI e configuration, while broader ratio and tire continuity across the inherited row remain unresolved.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
@@ -13135,17 +13137,19 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:490c5b8fd0e9",
         "legacy_research_sources:62c1bbb53e87",
-        "legacy_research_sources:ec1f2b5d8fc4",
-        "legacy_research_sources:fc63799e6f4d"
+        "legacy_research_sources:e6c066ac31ae"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Exact official Audi MediaCenter Q7 model-page and technical-data PDF evidence confirm permanent quattro AWD for the checked 55 TFSI configuration, while broader ratio and tire continuity across the inherited row remain unresolved.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:62c1bbb53e87",
+        "legacy_research_sources:e6c066ac31ae"
+      ],
+      "notes": "Exact official Audi MediaCenter Q7 model-page and technical-data PDF evidence confirm the 8-speed tiptronic transmission wording for the checked 55 TFSI configuration, while broader ratio and tire continuity across the inherited row remain unresolved.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
@@ -24208,13 +24212,21 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:7ac3af4db956",
+        "legacy_research_sources:e6a149e4a747"
+      ],
+      "notes": "Exact official Audi MediaCenter A4 Sedan 45 TFSI quattro technical-data PDFs confirm quattro ultra AWD for the checked late-B9 195 kW sedan state, while earlier-year continuity across the inherited row remains unresolved.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:7ac3af4db956",
+        "legacy_research_sources:e6a149e4a747"
+      ],
+      "notes": "Exact official Audi MediaCenter A4 Sedan 45 TFSI quattro technical-data PDFs confirm the 7-speed S tronic gearbox for the checked late-B9 195 kW sedan state, while earlier-year continuity across the inherited row remains unresolved.",
       "code": "DCT7",
       "name": "7-speed S tronic"
     },
