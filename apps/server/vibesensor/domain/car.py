@@ -36,7 +36,7 @@ __all__ = [
     "TireSpec",
 ]
 
-CarOrderReferenceSourceStatus = Literal["compat_projection", "exact_row", "manual_entry"]
+CarOrderReferenceSourceStatus = Literal["exact_row", "manual_entry"]
 OrderAnalysisCarDataScope = Literal["tire", "driveline", "engine_speed_derived"]
 
 _ORDER_ANALYSIS_CONFIDENCE_RANK = {

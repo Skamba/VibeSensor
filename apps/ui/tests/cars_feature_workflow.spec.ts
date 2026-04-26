@@ -503,7 +503,7 @@ describe("createCarsFeatureWorkflow", () => {
     expect(workflow.getRenderState().isOpen).toBe(false);
   });
 
-  test("shows the approximate library action hint when the selected gearbox is projected", async () => {
+  test("shows the approximate library action hint when the selected gearbox is approximate", async () => {
     const harness = createHarness();
     const workflow = createCarsFeatureWorkflow({
       addCarFromWizard: async () => undefined,
@@ -520,7 +520,7 @@ describe("createCarsFeatureWorkflow", () => {
               makeGearbox({
                 final_drive_ratio_confidence: "family_default",
                 requires_manual_confirmation: true,
-                source_status: "compat_projection",
+                source_status: "exact_row",
                 top_gear_ratio_confidence: "family_default",
                 transmission_confidence: "family_default",
               }),

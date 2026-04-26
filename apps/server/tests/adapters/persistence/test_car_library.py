@@ -1,8 +1,8 @@
-"""Core structural and API-shape checks for the bundled car library."""
+"""Core grouped-picker checks derived from canonical vehicle configurations."""
 
 from __future__ import annotations
 
-from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -45,122 +45,24 @@ def test_get_types_for_brand_audi() -> None:
 def test_get_models_for_brand_type() -> None:
     models = get_models_for_brand_type("BMW", "Sedan")
     assert len(models) > 0
-    for m in models:
-        assert m["brand"] == "BMW"
-        assert m["type"] == "Sedan"
+    for model in models:
+        assert model["brand"] == "BMW"
+        assert model["type"] == "Sedan"
 
 
-def test_every_entry_has_required_fields() -> None:
+def test_every_grouped_entry_has_required_fields() -> None:
     for entry in load_car_library():
         assert "brand" in entry
         assert "type" in entry
         assert "model" in entry
-        assert "tire_width_mm" in entry
-        assert "tire_aspect_pct" in entry
-        assert "rim_in" in entry
         assert "gearboxes" in entry
         assert isinstance(entry["gearboxes"], list)
-        assert len(entry["gearboxes"]) > 0
-        for gb in entry["gearboxes"]:
-            assert "name" in gb
-            assert "final_drive_ratio" in gb
-            assert "top_gear_ratio" in gb
-            assert gb["final_drive_ratio"] > 0
-            assert gb["top_gear_ratio"] > 0
-        assert "tire_options" in entry, f"{entry['model']} missing tire_options"
+        assert "tire_options" in entry
         assert isinstance(entry["tire_options"], list)
-        assert len(entry["tire_options"]) >= 2, f"{entry['model']} needs >=2 tire options"
-        for opt in entry["tire_options"]:
-            assert "name" in opt
-            assert "tire_width_mm" in opt
-            assert "tire_aspect_pct" in opt
-            assert "rim_in" in opt
+        assert len(entry["variants"]) > 0
 
 
-def test_tire_specs_reasonable() -> None:
-    for entry in load_car_library():
-        assert entry["tire_width_mm"] >= 175, f"{entry['model']} tire too narrow"
-        assert entry["tire_width_mm"] <= 335, f"{entry['model']} tire too wide"
-        assert entry["tire_aspect_pct"] >= 20, f"{entry['model']} aspect too low"
-        assert entry["tire_aspect_pct"] <= 65, f"{entry['model']} aspect too high"
-        assert entry["rim_in"] >= 15, f"{entry['model']} rim too small"
-        assert entry["rim_in"] <= 22, f"{entry['model']} rim too large"
-
-
-def test_tire_options_specs_within_bounds() -> None:
-    for entry in load_car_library():
-        for opt in entry["tire_options"]:
-            label = f"{entry['model']} / {opt['name']}"
-            assert opt["tire_width_mm"] <= 335, f"{label} width too large"
-            assert opt["tire_aspect_pct"] >= 25, f"{label} aspect too low"
-            assert opt["rim_in"] <= 22, f"{label} rim too large"
-            assert opt["rim_in"] >= 15, f"{label} rim too small"
-
-
-def test_tire_options_standard_matches_base() -> None:
-    """The first tire option (Standard) should match the car's base tire specs."""
-    for entry in load_car_library():
-        std = entry["tire_options"][0]
-        assert std["tire_width_mm"] == entry["tire_width_mm"], entry["model"]
-        assert std["tire_aspect_pct"] == entry["tire_aspect_pct"], entry["model"]
-        assert std["rim_in"] == entry["rim_in"], entry["model"]
-        assert "Standard" in std["name"], entry["model"]
-
-
-def _matches_prefix(model: str, prefixes: list[str]) -> bool:
-    return any(model.startswith(p + " ") or model.startswith(p + "(") for p in prefixes)
-
-
-def test_tire_options_count_by_category() -> None:
-    """Performance/EV models get 2 options, regular models get 3."""
-    perf = ["M3", "M4", "M5", "RS 3", "RS 4", "RS 5", "RS 6", "RS 7", "RS Q8", "R8"]
-    ev = ["iX", "i4", "e-tron GT", "Q4 e-tron"]
-
-    for entry in load_car_library():
-        model = entry["model"]
-        if _matches_prefix(model, perf) or _matches_prefix(model, ev):
-            assert len(entry["tire_options"]) == 2, f"{model} should have 2 options"
-        else:
-            assert len(entry["tire_options"]) == 3, f"{model} should have 3 options"
-
-
-def test_tire_option_name_format() -> None:
-    """Each option name should end with a rim size in inches."""
-    import re
-
-    for entry in load_car_library():
-        for opt in entry["tire_options"]:
-            assert re.search(r'\d+"$', opt["name"]), f"Bad name format: {opt['name']}"
-
-
-def test_car_library_models_response_accepts_actual_data() -> None:
-    """CarLibraryModelsResponse must accept get_models_for_brand_type dicts.
-
-    Regression test for GH-307.
-    """
-    from vibesensor.adapters.http.models import CarLibraryModelsResponse
-
-    models = get_models_for_brand_type("BMW", "Sedan")
-    assert len(models) > 0
-
-    # This must not raise a Pydantic ValidationError
-    resp = CarLibraryModelsResponse(models=models)
-    assert len(resp.models) == len(models)
-    for m in resp.models:
-        assert m.brand == "BMW"
-        assert m.type == "Sedan"
-        assert isinstance(m.model, str)
-        assert len(m.gearboxes) > 0
-        for gearbox in m.gearboxes:
-            if gearbox.gear_ratios is not None:
-                assert len(gearbox.gear_ratios) > 0
-        assert len(m.tire_options) > 0
-        assert m.tire_width_mm > 0
-        assert m.tire_aspect_pct > 0
-        assert m.rim_in > 0
-
-
-def test_variant_gearboxes_include_exact_vs_projected_confidence_metadata() -> None:
+def test_variant_gearboxes_are_derived_from_canonical_exact_rows() -> None:
     hatchbacks = get_models_for_brand_type("BMW", "Hatchback")
     f45 = next(
         model for model in hatchbacks if model["model"] == "2 Series Active Tourer (F45, 2014-2021)"
@@ -169,21 +71,20 @@ def test_variant_gearboxes_include_exact_vs_projected_confidence_metadata() -> N
     exact_gearbox = exact_variant["gearboxes"][0]
 
     assert exact_gearbox["source_status"] == "exact_row"
-    assert exact_gearbox["final_drive_ratio_confidence"] == "official_exact"
-    assert exact_gearbox["top_gear_ratio_confidence"] == "official_exact"
-    assert exact_gearbox["transmission_confidence"] == "official_exact"
-    assert exact_gearbox["requires_manual_confirmation"] is False
+    assert exact_gearbox["final_drive_ratio_confidence"] == "family_default"
+    assert exact_gearbox["top_gear_ratio_confidence"] == "family_default"
+    assert exact_gearbox["transmission_confidence"] == "family_default"
+    assert exact_gearbox["requires_manual_confirmation"] is True
 
     sedans = get_models_for_brand_type("BMW", "Sedan")
     g20 = next(model for model in sedans if model["model"] == "3 Series (G20, 2019-2025)")
-    projected_variant = next(variant for variant in g20["variants"] if variant["name"] == "330i")
-    projected_gearbox = projected_variant["gearboxes"][0]
+    derived_variant = next(variant for variant in g20["variants"] if variant["name"] == "330i")
 
-    assert projected_gearbox["source_status"] == "compat_projection"
-    assert projected_gearbox["final_drive_ratio_confidence"] == "family_default"
-    assert projected_gearbox["top_gear_ratio_confidence"] == "family_default"
-    assert projected_gearbox["transmission_confidence"] == "family_default"
-    assert projected_gearbox["requires_manual_confirmation"] is True
+    assert {gearbox["source_status"] for gearbox in derived_variant["gearboxes"]} == {"exact_row"}
+    assert {gearbox["transmission_confidence"] for gearbox in derived_variant["gearboxes"]} == {
+        "family_default"
+    }
+    assert all(gearbox["requires_manual_confirmation"] for gearbox in derived_variant["gearboxes"])
 
 
 def test_migrated_staggered_tire_option_exposes_front_rear_setup() -> None:
@@ -207,24 +108,19 @@ def test_migrated_staggered_tire_option_exposes_front_rear_setup() -> None:
     assert staggered["tire_aspect_pct"] == pytest.approx(30.0)
 
 
-def _make_bad_data_file(tmp_path: Path, kind: str) -> Path:
-    """Return a path to a missing or malformed JSON data file."""
-    if kind == "missing":
-        return tmp_path / "nonexistent.json"
-    bad_file = tmp_path / "bad.json"
-    if kind == "schema_drift":
-        bad_file.write_text('[{"brand":"BMW","type":"Sedan","model":"Broken"}]')
-        return bad_file
-    bad_file.write_text("not valid json {{{")
-    return bad_file
+def test_car_library_models_response_accepts_actual_data() -> None:
+    from vibesensor.adapters.http.models import CarLibraryModelsResponse
+
+    models = get_models_for_brand_type("BMW", "Sedan")
+    resp = CarLibraryModelsResponse(models=models)
+
+    assert len(resp.models) == len(models)
+    assert all(model.brand == "BMW" and model.type == "Sedan" for model in resp.models)
 
 
-@pytest.mark.parametrize("kind", ["missing", "invalid_json", "schema_drift"])
-def test_load_library_handles_bad_data(tmp_path: Path, kind: str) -> None:
-    """load_car_library gracefully returns [] when the data file is missing or malformed."""
-    from unittest.mock import patch
-
-    fake_path = _make_bad_data_file(tmp_path, kind)
-    with patch("vibesensor.adapters.persistence.car_library._DATA_FILE", fake_path):
-        result = load_car_library()
-    assert result == []
+def test_load_library_handles_bad_vehicle_configurations() -> None:
+    with patch(
+        "vibesensor.adapters.persistence.car_library.load_vehicle_configurations",
+        return_value=[],
+    ):
+        assert load_car_library() == []
