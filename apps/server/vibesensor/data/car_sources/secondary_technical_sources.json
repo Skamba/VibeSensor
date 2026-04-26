@@ -14,6 +14,48 @@
       "title": "Carfolio F45 220i Active Tourer specification entry",
       "note": "Independent secondary cross-check for the F45 220i DCT ratio pair used in the exact-row override.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
+      "url": "https://www.carfolio.com/audi-a4-2.0-tdi-quattro-192203",
+      "title": "Carfolio A4 B8 2.0 TDI quattro manual specification entry",
+      "note": "Exact secondary manual row for the pre-facelift A4 2.0 TDI quattro sedan showing AWD, 6-speed manual transmission, top gear 0.63, final drive 4.49, and 225/55 R16 tires.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-a4-b8-8k-2.0-tdi-170hp-quattro-4311",
+      "title": "Auto-Data A4 B8 2.0 TDI quattro manual specification entry",
+      "note": "Exact secondary pre-facelift A4 2.0 TDI quattro sedan entry used to cross-check AWD, 6-speed manual transmission, and 225/55 R16 baseline tires for the manual row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-carfolio",
+      "url": "https://www.carfolio.com/audi-a4-2.0-tdi-quattro-s-tronic-435050",
+      "title": "Carfolio A4 B8 2.0 TDI quattro S tronic specification entry",
+      "note": "Exact secondary facelift A4 2.0 TDI quattro sedan row showing AWD, 7-speed S tronic, top gear 0.39, final drive 4.27, and 225/50 R17 tires.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a4-b8-8k-facelift-2011-2.0-tdi-177hp-quattro-s-tronic-18816",
+      "title": "Auto-Data A4 B8 2.0 TDI quattro S tronic specification entry",
+      "note": "Exact secondary facelift A4 2.0 TDI quattro sedan entry used to cross-check AWD, 7-speed S tronic transmission, and 225/55 R16 tires for the S tronic row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a5-coupe-8t3-2.0-tfsi-211hp-quattro-s-tronic-4514",
+      "title": "Auto-Data A5 B8 2.0 TFSI quattro S tronic specification entry",
+      "note": "Exact secondary 2008-2011 A5 Coupe 2.0 TFSI quattro S tronic entry used to document AWD, 7-speed S tronic transmission, and 225/50 R17 tires for the broad B8 coupe row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-zf8hp-autodata",
+      "url": "https://www.auto-data.net/en/audi-a5-coupe-8t3-2.0-tfsi-211hp-quattro-tiptronic-53519",
+      "title": "Auto-Data A5 B8 2.0 TFSI quattro Tiptronic specification entry",
+      "note": "Exact secondary 2009-2011 A5 Coupe 2.0 TFSI quattro Tiptronic entry used to document AWD, Tiptronic transmission, and 245/40 R18 plus 255/35 R19 tire fitments for the broad B8 coupe row.",
+      "confidence": "medium"
     }
   ]
 }
