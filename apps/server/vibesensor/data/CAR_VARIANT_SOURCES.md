@@ -113,9 +113,9 @@ as `verification_backlog`, `verified`, `corrected`, or
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
-| 420i | B48 2.0L I4 Turbo | RWD | BMW DE technical data | High |
+| 420i | B48 2.0L I4 Turbo | RWD | BMW PressClub technical data (exact 03/2021 + 01/2024 states) | High |
 | 430i xDrive | B48 2.0L I4 Turbo | AWD | BMW DE technical data | High |
-| M440i xDrive | B58 3.0L I6 Turbo | AWD | BMW DE technical data | High |
+| M440i xDrive | B58 3.0L I6 Turbo | AWD | BMW PressClub technical data (exact 07/2021 launch state) | High |
 
 ### 5 Series (F10, 2011-2017)
 
@@ -292,7 +292,7 @@ as `verification_backlog`, `verified`, `corrected`, or
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
 | xDrive40i | B58 3.0L I6 Turbo | AWD | Launch-era 8-speed Steptronic FD 3.385 TG 0.640 | BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) | High |
-| xDrive45e | B58 3.0L I6 Turbo PHEV | AWD | 8-speed Steptronic FD 3.636 | BMW DE technical data | High |
+| xDrive45e | B58 3.0L I6 Turbo PHEV | AWD | 8-speed Steptronic FD 3.636 TG 0.667 basic 265/50 R19 | BMW DE technical data (exact 2019 + 2021 states) | High |
 | M50i | N63 4.4L V8 Turbo | AWD | – | BMW press release | High |
 
 ### X6 (F16, 2015-2019)
