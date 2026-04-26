@@ -3614,13 +3614,21 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:a66ead086a49",
+        "legacy_research_sources:f46299570461"
+      ],
+      "notes": "Exact official Audi MediaCenter TT Coupe model-page and technical-data PDF evidence confirm quattro AWD with electronically controlled multi-plate clutch for the checked 180 kW coupe state, while full-row numeric continuity remains unresolved.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:a66ead086a49",
+        "legacy_research_sources:f46299570461"
+      ],
+      "notes": "Exact official Audi MediaCenter TT Coupe model-page and technical-data PDF evidence confirm the 7-speed S tronic transmission wording for the checked 180 kW coupe state, while full-row numeric continuity remains unresolved.",
       "code": "DCT7",
       "name": "7-speed S tronic (DQ381)"
     },
@@ -26079,13 +26087,21 @@
     "engine_name": "2.0L I4 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:01c00967f62a",
+        "legacy_research_sources:e4992bd8c221"
+      ],
+      "notes": "Exact official Audi MediaCenter A6 Sedan 45 TFSI quattro model-page and technical-data PDF evidence confirm quattro ultra AWD for the checked 195 kW sedan state, while earlier-row continuity across the inherited span remains unresolved.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2024 195 kW S tronic state) with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:01c00967f62a",
+        "legacy_research_sources:e4992bd8c221"
+      ],
+      "notes": "Exact official Audi MediaCenter A6 Sedan 45 TFSI quattro model-page and technical-data PDF evidence confirm the 7-speed S tronic transmission for the checked 195 kW sedan state, while earlier-row continuity across the inherited span remains unresolved.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL382)"
     },
@@ -26294,13 +26310,21 @@
     "engine_name": "3.0L V6 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact current 250 kW tiptronic state) with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:720a93990098",
+        "legacy_research_sources:edd605c5ca47"
+      ],
+      "notes": "Exact official Audi MediaCenter A6 Sedan 55 TFSI quattro technical-data PDFs confirm quattro ultra AWD for the checked sedan states, while year-split numeric continuity across the inherited span remains unresolved.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter technical data (exact current 250 kW tiptronic state) with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:720a93990098",
+        "legacy_research_sources:edd605c5ca47"
+      ],
+      "notes": "Exact official Audi MediaCenter A6 Sedan 55 TFSI quattro technical-data PDFs confirm the 7-speed S tronic transmission wording for the checked sedan states, while year-split numeric continuity across the inherited span remains unresolved.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL382)"
     },
