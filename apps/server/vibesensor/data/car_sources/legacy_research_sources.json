@@ -219,6 +219,13 @@
       "confidence": "high"
     },
     {
+      "id": "legacy_research_sources:13ea013ef134",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0286585EN/specifications-of-the-bmw-m4-coupe-valid-from-09/2018",
+      "title": "BMW M4 Coupe specifications page",
+      "note": "Official BMW Fact & Figures page for F82 M4 technical data (09/2018 ACEA context).",
+      "confidence": "high"
+    },
+    {
       "id": "legacy_research_sources:1404f2cf2b28",
       "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+8+Series+Gran+Coupe+%28G16%2C+2020-2025%29+technical+data+Europe",
       "title": "Search",
@@ -296,6 +303,13 @@
       "confidence": "high"
     },
     {
+      "id": "legacy_research_sources:1a749424448c",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0314287EN/specifications-of-the-bmw-m5-valid-from-06/2020",
+      "title": "BMW M5 specifications page",
+      "note": "Official BMW Fact & Figures page for F90 M5 technical data (06/2020).",
+      "confidence": "high"
+    },
+    {
       "id": "legacy_research_sources:1af3f514e4a4",
       "url": "https://www.bmw.de/de/neufahrzeuge/2er/coupe/2021/bmw-2er-coupe-ueberblick.html",
       "title": "Bmw 2Er Coupe Ueberblick.Html",
@@ -328,6 +342,20 @@
       "url": "https://press.audi.co.uk/assets/documents/original/4945-AudiA5Sportback40TFSIUKTechnicalDataDecember2020.pdf",
       "title": "4945 Audia5Sportback40Tfsiuktechnicaldatadecember2020.Pdf",
       "note": "Official Audi UK technical data confirming A5 Sportback 40 TFSI S tronic final-drive ratio 4.234.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:20f44bbf0284",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0314287EN/457877",
+      "title": "BMW M5 technical data PDF",
+      "note": "Official BMW PDF with 8-speed M Steptronic ratio table, top gear 0.640, and final drive 3.154.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:21e9bf67c7b7",
+      "url": "https://www.press.bmwgroup.com/usa/article/detail/T0160684EN_US/the-all-new-bmw-m3-sedan-and-bmw-m4-coupe?language=en_US",
+      "title": "BMW M3 sedan and M4 coupe press kit",
+      "note": "Official BMW PressClub article hosting MY2018 technical attachments for F80 M3 and F82 M4.",
       "confidence": "high"
     },
     {
@@ -602,6 +630,13 @@
       "title": "Details",
       "note": "Reputable secondary cross-check for the facelift A6 3.0 TFSI quattro sedan with 7-speed automatic/S tronic wording and 225/55 R17 baseline tires.",
       "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:3bf1daddf136",
+      "url": "https://www.press.bmwgroup.com/united-kingdom/article/attachment/T0282168EN_GB/419879",
+      "title": "BMW G15 technical data PDF",
+      "note": "Official BMW technical data PDF showing 8HP76 Sport with top gear 0.640 and final drive 2.813 for M850i xDrive.",
+      "confidence": "high"
     },
     {
       "id": "legacy_research_sources:3c0c0aa886bf",
@@ -917,6 +952,13 @@
       "title": "Search",
       "note": "BMW Group official PressClub search page used in second-pass lookup for model-code technical data documents.",
       "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:52e2ccf0b07d",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0330570EN/477179",
+      "title": "BMW M8 Coupe technical data PDF",
+      "note": "Official BMW M8 Coupe technical-data PDF confirming M xDrive drivetrain context for M8 Coupe and M8 Competition Coupe.",
+      "confidence": "high"
     },
     {
       "id": "legacy_research_sources:53c036dd5c01",
@@ -1808,6 +1850,13 @@
       "confidence": "high"
     },
     {
+      "id": "legacy_research_sources:accc520c8c58",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286585EN/419605",
+      "title": "BMW M4 technical data PDF",
+      "note": "Official BMW PDF confirming manual VI 0.846, DCT VII 0.671, final drive data, and full forward gear-ratio tables for the F82 M4.",
+      "confidence": "high"
+    },
+    {
       "id": "legacy_research_sources:ae186108fea8",
       "url": "https://www.audi-mediacenter.com/en/audi-at-the-hungary-site-gyor-5570",
       "title": "Audi At The Hungary Site Gyor 5570",
@@ -1889,6 +1938,13 @@
       "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_G32_28_05.pdf",
       "title": "Preisliste G32 28 05.Pdf",
       "note": "Official BMW Germany price list valid from 14.11.2022 confirming the exact 640i xDrive DE model as Allrad with 8-Gang Steptronic Getriebe, 245/50 R18 baseline tires, and 19- and 20-inch optional wheel packages.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b3655e5aa9ee",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0281744EN/the-all-new-bmw-8-series-coupe?language=en",
+      "title": "BMW 8 Series Coupe press kit",
+      "note": "Official BMW G15 launch press kit hosting the technical-specification attachment for the 8 Series Coupe lineup.",
       "confidence": "high"
     },
     {
@@ -2613,6 +2669,13 @@
       "confidence": "high"
     },
     {
+      "id": "legacy_research_sources:f3fe62f03e97",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0330570EN/specifications-of-the-bmw-m8-coupe-valid-from-03/2021?language=en",
+      "title": "BMW M8 Coupe specifications page",
+      "note": "Official BMW M8 Coupe technical-data page confirming M xDrive drivetrain context for M8 Coupe and M8 Competition Coupe.",
+      "confidence": "high"
+    },
+    {
       "id": "legacy_research_sources:f3ff6ea4bfe6",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/335/file_en/824cd6b831b620f3969a43e61549348b22b8d6e6/eTechnische_Daten_Audi_R8V10_Coupe_419kW.pdf?1698933709",
       "title": "Etechnische Daten Audi R8V10 Coupe 419Kw.Pdf",
@@ -2715,6 +2778,13 @@
       "url": "https://www.bmw.de/de/neufahrzeuge/2er/2-series-coupe/bmw-2er-coupe.html#technische-daten",
       "title": "Bmw 2Er Coupe.Html",
       "note": "Official BMW Germany model page states the coupe concept around rear-wheel drive and separately presents M240i xDrive as xDrive variant.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:fbef3422499f",
+      "url": "https://www.press.bmwgroup.com/usa/article/attachment/T0160684EN_US/391907",
+      "title": "BMW M3 technical data PDF",
+      "note": "Official BMW MY2018 M3 technical PDF confirming manual VI 0.846, DCT VII 0.671, and full forward gear-ratio tables.",
       "confidence": "high"
     },
     {
