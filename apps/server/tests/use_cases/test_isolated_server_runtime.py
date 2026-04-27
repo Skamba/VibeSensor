@@ -18,9 +18,7 @@ def test_build_isolated_server_config_rewrites_runtime_paths_and_copies_seed_dat
 ) -> None:
     seed_dir = tmp_path / "seed-data"
     seed_dir.mkdir()
-    seed_vehicle_path = (
-        seed_dir / "vehicle_configurations" / "brand" / "family" / "GEN.json"
-    )
+    seed_vehicle_path = seed_dir / "vehicle_configurations" / "brand" / "family" / "GEN.json"
     seed_vehicle_path.parent.mkdir(parents=True)
     seed_vehicle_path.write_text("[]\n", encoding="utf-8")
     runtime_root = tmp_path / "runtime"
@@ -38,9 +36,9 @@ def test_build_isolated_server_config_rewrites_runtime_paths_and_copies_seed_dat
 
     assert result.root == runtime_root
     assert result.config_path == runtime_root / "shard.yaml"
-    assert (
-        result.data_dir / "vehicle_configurations" / "brand" / "family" / "GEN.json"
-    ).read_text(encoding="utf-8") == "[]\n"
+    assert (result.data_dir / "vehicle_configurations" / "brand" / "family" / "GEN.json").read_text(
+        encoding="utf-8"
+    ) == "[]\n"
 
     data = yaml.safe_load(result.config_path.read_text(encoding="utf-8"))
     assert data["server"] == {"host": "127.0.0.1", "port": 18080}
