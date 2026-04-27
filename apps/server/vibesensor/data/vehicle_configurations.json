@@ -41697,8 +41697,8 @@
     "model_code": "F20",
     "body_code": "F20",
     "production_start_year": 2011,
-    "production_end_year": 2019,
-    "model_name": "1 Series (F20, 2011-2019)",
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
     "variant_name": "114i",
     "engine_code": "1.6L",
     "engine_name": "1.6L",
@@ -41709,8 +41709,11 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "unverified",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "Contradicted placeholder. The official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF publishes only 116i and 118i launch rows, so this represented 114i MT6 row is not a supported exact 2011 production state under its current id.",
       "code": "MT6",
       "name": "6-speed manual"
     },
@@ -41811,67 +41814,33 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official BMW F20/F21 technical pages are retired or redirected to current-generation 1 Series pages, and no official accessible source in this pass provided F20-specific gearbox/final-drive/top-gear confirmations.",
+        "note": "Batch 13 directly revalidated the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF. That checked official source publishes only 116i and 118i launch-state rows and provides no 114i row in either manual or automatic form, so this represented 114i MT6 entry remains an invalid advisory placeholder rather than a supported exact 2011 production configuration.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "F20/F21 EU-market drivetrain split by variant (including any xDrive variants)",
-        "reason": "Official BMW pages accessible in this run did not provide extractable F20-specific variant tables; current pages are mostly redirected/retired content.",
+        "item": "BMW F20 114i exact 2011 launch-state row",
+        "reason": "The checked official BMW 09/2011 petrol launch sheet contains only 116i and 118i, so this represented 114i row is contradicted for the exact 2011 launch-state under its current id.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
       },
       {
-        "item": "Per-variant gearbox availability differences (manual vs 8HP automatic) for EU F20/F21 range",
-        "reason": "No official accessible EU technical sheet in this run provided model-code-level transmission mapping for the requested generation.",
+        "item": "BMW F20 114i later-introduction exact row replacement",
+        "reason": "If an official later 114i introduction exists outside the checked 09/2011 launch-state source, it should be added only under its own supported year/source chain rather than silently conflating it with this disproved 2011 id.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
-        ]
-      },
-      {
-        "item": "Confirmed F20/F21 final drive and top gear ratios by EU variant",
-        "reason": "No official accessible source in this pass provided authoritative ratio values; ratios were therefore left unchanged.",
-        "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -41883,8 +41852,8 @@
     "model_code": "F20",
     "body_code": "F20",
     "production_start_year": 2011,
-    "production_end_year": 2019,
-    "model_name": "1 Series (F20, 2011-2019)",
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
     "variant_name": "114i",
     "engine_code": "1.6L",
     "engine_name": "1.6L",
@@ -41895,8 +41864,11 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "unverified",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "Contradicted placeholder. The official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF publishes only 116i and 118i launch rows, so this represented 114i ZF8HP row is not a supported exact 2011 production state under its current id.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -41997,67 +41969,33 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official BMW F20/F21 technical pages are retired or redirected to current-generation 1 Series pages, and no official accessible source in this pass provided F20-specific gearbox/final-drive/top-gear confirmations.",
+        "note": "Batch 13 directly revalidated the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF. That checked official source publishes only 116i and 118i launch-state rows and provides no 114i row in either manual or automatic form, so this represented 114i ZF8HP entry remains an invalid advisory placeholder rather than a supported exact 2011 production configuration.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "F20/F21 EU-market drivetrain split by variant (including any xDrive variants)",
-        "reason": "Official BMW pages accessible in this run did not provide extractable F20-specific variant tables; current pages are mostly redirected/retired content.",
+        "item": "BMW F20 114i exact 2011 launch-state row",
+        "reason": "The checked official BMW 09/2011 petrol launch sheet contains only 116i and 118i, so this represented 114i row is contradicted for the exact 2011 launch-state under its current id.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
       },
       {
-        "item": "Per-variant gearbox availability differences (manual vs 8HP automatic) for EU F20/F21 range",
-        "reason": "No official accessible EU technical sheet in this run provided model-code-level transmission mapping for the requested generation.",
+        "item": "BMW F20 114i later-introduction exact row replacement",
+        "reason": "If an official later 114i introduction exists outside the checked 09/2011 launch-state source, it should be added only under its own supported year/source chain rather than silently conflating it with this disproved 2011 id.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
-        ]
-      },
-      {
-        "item": "Confirmed F20/F21 final drive and top gear ratios by EU variant",
-        "reason": "No official accessible source in this pass provided authoritative ratio values; ratios were therefore left unchanged.",
-        "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -42069,177 +42007,168 @@
     "model_code": "F20",
     "body_code": "F20",
     "production_start_year": 2011,
-    "production_end_year": 2019,
-    "model_name": "1 Series (F20, 2011-2019)",
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
     "variant_name": "118i",
-    "engine_code": "B38",
-    "engine_name": "B38 1.5L I3 Turbo",
+    "engine_code": "N13",
+    "engine_name": "N13 1.6L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF lists the 118i in the petrol launch-state table for the new F20 1 Series and confirms the exact rear-wheel-drive configuration.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF directly publishes the exact 118i manual row as a six-speed manual with optional eight-speed automatic figures shown in brackets.",
       "code": "MT6",
       "name": "6-speed manual"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.812
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.830 as the sixth gear for the exact 118i manual launch-state.",
+        "value": 0.83
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.231
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 3.077 as the differential ratio for the exact 118i manual launch-state.",
+        "value": 3.077
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118i launch-state.",
         "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:17bbee7ba639",
-            "legacy_research_sources:3687a455cefb",
-            "legacy_research_sources:38987808b4bf",
-            "legacy_research_sources:7dcd6cc94ab9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:db448ae320f5",
-            "legacy_research_sources:eae8f6c35d1a"
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118i launch-state.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 16-inch square 205-section tire package for the exact 118i launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "16\" square upgrade"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 205-section tire package for the exact 118i launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 205"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 225-section tire package for the exact 118i launch-state.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
             "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
+          "name": "17\" square 225"
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:17bbee7ba639",
-            "legacy_research_sources:3687a455cefb",
-            "legacy_research_sources:38987808b4bf",
-            "legacy_research_sources:7dcd6cc94ab9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:db448ae320f5",
-            "legacy_research_sources:eae8f6c35d1a"
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 17-inch tire package for the exact 118i launch-state.",
           "front": {
-            "width_mm": 235.0,
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" staggered"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch tire package for the exact 118i launch-state.",
+          "front": {
+            "width_mm": 225.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:17bbee7ba639",
-            "legacy_research_sources:3687a455cefb",
-            "legacy_research_sources:38987808b4bf",
-            "legacy_research_sources:7dcd6cc94ab9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:db448ae320f5",
-            "legacy_research_sources:eae8f6c35d1a"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
+          "rear": {
             "width_mm": 245.0,
             "aspect_pct": 35.0,
-            "rim_in": 19.0
+            "rim_in": 18.0
           },
           "default_axle_for_speed": "rear",
-          "name": "M Sport 19\""
+          "name": "18\" staggered"
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official BMW F20/F21 technical pages are retired or redirected to current-generation 1 Series pages, and no official accessible source in this pass provided F20-specific gearbox/final-drive/top-gear confirmations.",
+        "note": "Batch 13 narrows the broad 118i manual row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the 118i with six-speed manual, sixth gear 0.830, differential ratio 3.077, standard 195/55 R16 tires, and 16-inch, 17-inch square, 17-inch staggered, and 18-inch staggered option ladders.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "F20/F21 EU-market drivetrain split by variant (including any xDrive variants)",
-        "reason": "Official BMW pages accessible in this run did not provide extractable F20-specific variant tables; current pages are mostly redirected/retired content.",
-        "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
-        ]
-      },
-      {
-        "item": "Per-variant gearbox availability differences (manual vs 8HP automatic) for EU F20/F21 range",
-        "reason": "No official accessible EU technical sheet in this run provided model-code-level transmission mapping for the requested generation.",
-        "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
-        ]
-      },
-      {
-        "item": "Confirmed F20/F21 final drive and top gear ratios by EU variant",
-        "reason": "No official accessible source in this pass provided authoritative ratio values; ratios were therefore left unchanged.",
-        "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
@@ -42255,177 +42184,168 @@
     "model_code": "F20",
     "body_code": "F20",
     "production_start_year": 2011,
-    "production_end_year": 2019,
-    "model_name": "1 Series (F20, 2011-2019)",
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
     "variant_name": "118i",
-    "engine_code": "B38",
-    "engine_name": "B38 1.5L I3 Turbo",
+    "engine_code": "N13",
+    "engine_name": "N13 1.6L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF lists the 118i in the petrol launch-state table for the new F20 1 Series and confirms the exact rear-wheel-drive configuration.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF publishes the 118i as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the exact 118i automatic launch-state.",
         "value": 0.667
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 3.077 as the differential ratio for the exact 118i automatic launch-state.",
         "value": 3.077
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118i launch-state.",
         "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 45.0,
-          "rim_in": 17.0
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:17bbee7ba639",
-            "legacy_research_sources:3687a455cefb",
-            "legacy_research_sources:38987808b4bf",
-            "legacy_research_sources:7dcd6cc94ab9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:db448ae320f5",
-            "legacy_research_sources:eae8f6c35d1a"
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118i launch-state.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 16-inch square 205-section tire package for the exact 118i launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "16\" square upgrade"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 205-section tire package for the exact 118i launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 205"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 225-section tire package for the exact 118i launch-state.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
             "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
+          "name": "17\" square 225"
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:17bbee7ba639",
-            "legacy_research_sources:3687a455cefb",
-            "legacy_research_sources:38987808b4bf",
-            "legacy_research_sources:7dcd6cc94ab9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:db448ae320f5",
-            "legacy_research_sources:eae8f6c35d1a"
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 17-inch tire package for the exact 118i launch-state.",
           "front": {
-            "width_mm": 235.0,
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" staggered"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch tire package for the exact 118i launch-state.",
+          "front": {
+            "width_mm": 225.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:17bbee7ba639",
-            "legacy_research_sources:3687a455cefb",
-            "legacy_research_sources:38987808b4bf",
-            "legacy_research_sources:7dcd6cc94ab9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:db448ae320f5",
-            "legacy_research_sources:eae8f6c35d1a"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
+          "rear": {
             "width_mm": 245.0,
             "aspect_pct": 35.0,
-            "rim_in": 19.0
+            "rim_in": 18.0
           },
           "default_axle_for_speed": "rear",
-          "name": "M Sport 19\""
+          "name": "18\" staggered"
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official BMW F20/F21 technical pages are retired or redirected to current-generation 1 Series pages, and no official accessible source in this pass provided F20-specific gearbox/final-drive/top-gear confirmations.",
+        "note": "Batch 13 narrows the broad 118i automatic row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the 118i with optional eight-speed automatic, eighth gear 0.667, differential ratio 3.077, standard 195/55 R16 tires, and 16-inch, 17-inch square, 17-inch staggered, and 18-inch staggered option ladders.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "F20/F21 EU-market drivetrain split by variant (including any xDrive variants)",
-        "reason": "Official BMW pages accessible in this run did not provide extractable F20-specific variant tables; current pages are mostly redirected/retired content.",
-        "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
-        ]
-      },
-      {
-        "item": "Per-variant gearbox availability differences (manual vs 8HP automatic) for EU F20/F21 range",
-        "reason": "No official accessible EU technical sheet in this run provided model-code-level transmission mapping for the requested generation.",
-        "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
-        ]
-      },
-      {
-        "item": "Confirmed F20/F21 final drive and top gear ratios by EU variant",
-        "reason": "No official accessible source in this pass provided authoritative ratio values; ratios were therefore left unchanged.",
-        "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
@@ -42441,8 +42361,8 @@
     "model_code": "F20",
     "body_code": "F20",
     "production_start_year": 2011,
-    "production_end_year": 2019,
-    "model_name": "1 Series (F20, 2011-2019)",
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
     "variant_name": "120i",
     "engine_code": "B48",
     "engine_name": "B48 2.0L I4 Turbo",
@@ -42453,8 +42373,11 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "unverified",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "Contradicted placeholder. The official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF publishes only 116i and 118i launch rows, so this represented 120i MT6 row is not a supported exact 2011 production state under its current id.",
       "code": "MT6",
       "name": "6-speed manual"
     },
@@ -42555,67 +42478,33 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official BMW F20/F21 technical pages are retired or redirected to current-generation 1 Series pages, and no official accessible source in this pass provided F20-specific gearbox/final-drive/top-gear confirmations.",
+        "note": "Batch 13 directly revalidated the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF. That checked official source publishes only 116i and 118i launch-state rows and provides no 120i row in either manual or automatic form, so this represented 120i MT6 entry remains an invalid advisory placeholder rather than a supported exact 2011 production configuration.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "F20/F21 EU-market drivetrain split by variant (including any xDrive variants)",
-        "reason": "Official BMW pages accessible in this run did not provide extractable F20-specific variant tables; current pages are mostly redirected/retired content.",
+        "item": "BMW F20 120i exact 2011 launch-state row",
+        "reason": "The checked official BMW 09/2011 petrol launch sheet contains only 116i and 118i, so this represented 120i row is contradicted for the exact 2011 launch-state under its current id.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
       },
       {
-        "item": "Per-variant gearbox availability differences (manual vs 8HP automatic) for EU F20/F21 range",
-        "reason": "No official accessible EU technical sheet in this run provided model-code-level transmission mapping for the requested generation.",
+        "item": "BMW F20 120i later-introduction exact row replacement",
+        "reason": "If an official later 120i introduction exists outside the checked 09/2011 launch-state source, it should be added only under its own supported year/source chain rather than silently conflating it with this disproved 2011 id.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
-        ]
-      },
-      {
-        "item": "Confirmed F20/F21 final drive and top gear ratios by EU variant",
-        "reason": "No official accessible source in this pass provided authoritative ratio values; ratios were therefore left unchanged.",
-        "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -42627,8 +42516,8 @@
     "model_code": "F20",
     "body_code": "F20",
     "production_start_year": 2011,
-    "production_end_year": 2019,
-    "model_name": "1 Series (F20, 2011-2019)",
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
     "variant_name": "120i",
     "engine_code": "B48",
     "engine_name": "B48 2.0L I4 Turbo",
@@ -42639,8 +42528,11 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "unverified",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "Contradicted placeholder. The official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF publishes only 116i and 118i launch rows, so this represented 120i ZF8HP row is not a supported exact 2011 production state under its current id.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -42741,67 +42633,33 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official BMW F20/F21 technical pages are retired or redirected to current-generation 1 Series pages, and no official accessible source in this pass provided F20-specific gearbox/final-drive/top-gear confirmations.",
+        "note": "Batch 13 directly revalidated the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF. That checked official source publishes only 116i and 118i launch-state rows and provides no 120i row in either manual or automatic form, so this represented 120i ZF8HP entry remains an invalid advisory placeholder rather than a supported exact 2011 production configuration.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "F20/F21 EU-market drivetrain split by variant (including any xDrive variants)",
-        "reason": "Official BMW pages accessible in this run did not provide extractable F20-specific variant tables; current pages are mostly redirected/retired content.",
+        "item": "BMW F20 120i exact 2011 launch-state row",
+        "reason": "The checked official BMW 09/2011 petrol launch sheet contains only 116i and 118i, so this represented 120i row is contradicted for the exact 2011 launch-state under its current id.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
       },
       {
-        "item": "Per-variant gearbox availability differences (manual vs 8HP automatic) for EU F20/F21 range",
-        "reason": "No official accessible EU technical sheet in this run provided model-code-level transmission mapping for the requested generation.",
+        "item": "BMW F20 120i later-introduction exact row replacement",
+        "reason": "If an official later 120i introduction exists outside the checked 09/2011 launch-state source, it should be added only under its own supported year/source chain rather than silently conflating it with this disproved 2011 id.",
         "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
-        ]
-      },
-      {
-        "item": "Confirmed F20/F21 final drive and top gear ratios by EU variant",
-        "reason": "No official accessible source in this pass provided authoritative ratio values; ratios were therefore left unchanged.",
-        "evidence_refs": [
-          "legacy_research_sources:17bbee7ba639",
-          "legacy_research_sources:3687a455cefb",
-          "legacy_research_sources:38987808b4bf",
-          "legacy_research_sources:7dcd6cc94ab9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:db448ae320f5",
-          "legacy_research_sources:eae8f6c35d1a"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
