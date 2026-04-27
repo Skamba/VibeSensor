@@ -27184,7 +27184,7 @@
     },
     "verification_notes": [
       {
-        "note": "Official Audi MediaCenter technical-data sheets now confirm the exact 8Y RS 3 Sedan and Sportback drivetrain mapping, full 7-speed S tronic ratio set, final drive 4.059, top gear 0.630, and staggered 19-inch base tires for the Germany-market 8Y cars. The broad 8V/8Y row remains unchanged because those exact 8Y values cannot be safely projected back onto the mixed-generation row without splitting it.",
+        "note": "Official Audi MediaCenter technical-data sheets now confirm the exact 8Y RS 3 Sedan and Sportback drivetrain mapping, full 7-speed S tronic ratio set, final drive 4.059, top gear 0.630, and staggered 19-inch base tires for the Germany-market 8Y cars. An official Audi Switzerland MJ2026 price list independently confirms the EU-market RS 3 Limousine identity (8YMRWY), 7-Gang S tronic wording, the same staggered 19-inch 265/30 + 245/35 setup, optional Pirelli P Zero Trofeo R tires, and the 280/290 km/h option packages. The broad 8V/8Y row remains unchanged because those exact 8Y values still cannot be safely projected back onto the mixed-generation row without splitting it.",
         "evidence_refs": [
           "legacy_research_sources:4b4b833b364a",
           "legacy_research_sources:4b8ab423f879",
@@ -27192,6 +27192,7 @@
           "legacy_research_sources:6a4b6af77c6c",
           "legacy_research_sources:c34943178335",
           "legacy_research_sources:c71437bb1b44",
+          "legacy_research_sources:e52a1c74b8d3",
           "legacy_research_sources:dae61be0efdf",
           "legacy_research_sources:dbb5ac0b503d"
         ]
@@ -27217,7 +27218,7 @@
       },
       {
         "item": "Audi RS 3 official transmission code and non-basic tire-option coverage",
-        "reason": "The checked exact Audi sources prove the 7-speed S tronic ratio set, final drive, top gear, and the basic staggered 19-inch setup, but they do not publish a transmission code or the full optional wheel/tire matrix.",
+        "reason": "The checked exact Audi sources prove the 7-speed S tronic ratio set, final drive, top gear, the basic staggered 19-inch setup, and an EU-market Trofeo R option in the same staggered sizes, but they still do not publish a transmission code or one complete optional wheel/tire matrix across all exact 8Y RS 3 states.",
         "evidence_refs": [
           "legacy_research_sources:4b4b833b364a",
           "legacy_research_sources:4b8ab423f879",
@@ -27225,6 +27226,7 @@
           "legacy_research_sources:6a4b6af77c6c",
           "legacy_research_sources:c34943178335",
           "legacy_research_sources:c71437bb1b44",
+          "legacy_research_sources:e52a1c74b8d3",
           "legacy_research_sources:dae61be0efdf",
           "legacy_research_sources:dbb5ac0b503d"
         ]
@@ -56621,27 +56623,39 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:672d5c0fbe65",
-        "legacy_research_sources:6e8be3d590d9"
+        "legacy_research_sources:0b686d9345fd",
+        "legacy_research_sources:3d68278cff53"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data (exact 2019 + 2021 states) with High confidence.",
+      "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs for the exact G05 X5 xDrive45e consistently describe full-hybrid drive with torque routed to all four wheels via BMW xDrive.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data (exact 2019 + 2021 states) with High confidence.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:0b686d9345fd",
+        "legacy_research_sources:3d68278cff53"
+      ],
+      "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs for the exact G05 X5 xDrive45e print 8-speed/8-Gang Steptronic wording. The repo keeps ZF8HP as the canonical automatic-family code for that official Steptronic mapping.",
       "code": "ZF8HP",
       "name": "8-speed Steptronic transmission"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data (exact 2019 + 2021 states) with High confidence.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:0b686d9345fd",
+          "legacy_research_sources:3d68278cff53"
+        ],
+        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs consistently list 0.667 as the top-gear ratio for the exact G05 X5 xDrive45e.",
         "value": 0.667
       },
       "gear_ratios": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data (exact 2019 + 2021 states) with High confidence.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:0b686d9345fd",
+          "legacy_research_sources:3d68278cff53"
+        ],
+        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs consistently list the full forward gear-ratio set for the exact G05 X5 xDrive45e.",
         "value": [
           4.714,
           3.143,
@@ -56654,32 +56668,33 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data (exact 2019 + 2021 states) with High confidence.",
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:0b686d9345fd",
+          "legacy_research_sources:3d68278cff53"
+        ],
+        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs publish one axle/final-drive value of 3.636 for the exact G05 X5 xDrive45e. The repo duplicates that single official value into the front field until a source publishes a split front/rear ratio.",
         "value": 3.636
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data (exact 2019 + 2021 states) with High confidence.",
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:0b686d9345fd",
+          "legacy_research_sources:3d68278cff53"
+        ],
+        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs publish one axle/final-drive value of 3.636 for the exact G05 X5 xDrive45e. The repo duplicates that single official value into the rear field until a source publishes a split front/rear ratio.",
         "value": 3.636
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
           "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
           "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
+          "legacy_research_sources:6e8be3d590d9"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data (exact 2019 + 2021 states) with High confidence.",
+        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs consistently list 265/50 R19 110W XL as the standard tire for the exact G05 X5 xDrive45e, and the official 08/2020 BMW Germany price list independently confirms the same standard 19-inch setup.",
         "front": {
           "width_mm": 265.0,
           "aspect_pct": 50.0,
@@ -56689,20 +56704,13 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:016fe2ba6b0f",
             "legacy_research_sources:0b686d9345fd",
-            "legacy_research_sources:393d7682b19e",
             "legacy_research_sources:3d68278cff53",
-            "legacy_research_sources:51dc23420162",
-            "legacy_research_sources:672d5c0fbe65",
-            "legacy_research_sources:6e8be3d590d9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:f1e673d6713e"
+            "legacy_research_sources:6e8be3d590d9"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data (exact 2019 + 2021 states) with High confidence.",
+          "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs and the 08/2020 BMW Germany price list confirm this as the standard 19-inch setup for the exact G05 X5 xDrive45e.",
           "front": {
             "width_mm": 265.0,
             "aspect_pct": 50.0,
@@ -56715,15 +56723,15 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW DE and ACEA technical-data sources now confirm two exact G05 mappings: xDrive45e with 8-speed Steptronic, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.636, and standard 265/50 R19 tires; and launch-era xDrive40i with 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, and standard 255/55 R18 tires. The broad G05 row remains verification backlog because later Germany-market xDrive40i material changes gearbox wording and the standard tire baseline, so one undifferentiated 2019-2026 production mapping would be unsafe and the full EU variant matrix is still incomplete.",
+        "note": "Official BMW DE and ACEA technical-data sources now confirm two exact G05 mappings: xDrive45e with 8-speed Steptronic, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, one published axle/final-drive value 3.636, and standard 265/50 R19 tires; and launch-era xDrive40i with 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, and standard 255/55 R18 tires. The official 08/2020 BMW Germany price list independently confirms the exact xDrive45e standard 19-inch setup, but the full optional wheel matrix still needs visual per-column checking before every 20/21/22-inch package can be promoted as xDrive45e-specific production data. The broad G05 row remains verification backlog because later Germany-market xDrive40i material changes gearbox wording and the standard tire baseline, so one undifferentiated 2019-2026 production mapping would be unsafe and the full EU variant matrix is still incomplete.",
         "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
           "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
           "legacy_research_sources:3d68278cff53",
+          "legacy_research_sources:6e8be3d590d9",
+          "legacy_research_sources:016fe2ba6b0f",
+          "legacy_research_sources:393d7682b19e",
           "legacy_research_sources:51dc23420162",
           "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
           "legacy_research_sources:95b9bf2bf0cf",
           "legacy_research_sources:97624cf593b1",
           "legacy_research_sources:f1e673d6713e"
@@ -56783,7 +56791,7 @@
         ]
       }
     ],
-    "configuration_confidence": "medium_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
@@ -65444,161 +65452,118 @@
     "model_name": "3 Series (G20, 2019-2025)",
     "variant_name": "330e",
     "engine_code": "2.0L",
-    "engine_name": "2.0L I4 Turbo",
-    "fuel_type": "ICE",
+    "engine_name": "2.0L I4 Turbo PHEV",
+    "fuel_type": "PHEV",
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_market_pages:g20-3-series-de-overview",
-        "bmw_market_pages:g20-3-series-uk-listing",
-        "legacy_research_sources:0bfbe440deb6",
-        "legacy_research_sources:3c7fce849237",
-        "legacy_research_sources:5d6e9b9da00b",
-        "legacy_research_sources:b5d8a7f385c9",
-        "legacy_research_sources:b92080a8b603",
-        "legacy_research_sources:daa8f80dca50",
-        "legacy_research_sources:fc3067f501c7"
+        "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+        "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence.",
+      "notes": "Official BMW 08/2019 and 05/2024 technical-data PDFs consistently place the exact G20 330e full-hybrid drive on the rear wheels.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+        "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
+      ],
+      "notes": "Official BMW 08/2019 and 05/2024 technical-data PDFs print Eight-speed Steptronic wording for the exact G20 330e. The repo keeps ZF8HP as the canonical automatic-family code for that official Steptronic mapping.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "name": "8-speed Steptronic transmission"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
+        ],
+        "notes": "Official BMW 08/2019 and 05/2024 technical-data PDFs consistently list 0.667 as the top-gear ratio for the exact G20 330e.",
         "value": 0.667
       },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
+        ],
+        "notes": "Official BMW 08/2019 and 05/2024 technical-data PDFs consistently list the full forward gear-ratio set for the exact G20 330e.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence.",
-        "value": 2.813
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
+        ],
+        "notes": "Official BMW 08/2019 and 05/2024 technical-data PDFs consistently list 3.231 as the rear final-drive ratio for the exact G20 330e.",
+        "value": 3.231
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence.",
+        "notes": "The official BMW 08/2019 technical-data PDF lists 225/50 R17 98Y XL on 7.5J x 17 wheels as the launch-era standard setup for the exact G20 330e. The official 05/2024 technical-data PDF later moves the standard square setup to 225/45 R18 95Y XL, so the broad 2019-2025 row should not be treated as one wheel-stable production state.",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "bmw_market_pages:g20-3-series-de-overview",
-            "bmw_market_pages:g20-3-series-uk-listing",
-            "legacy_research_sources:0bfbe440deb6",
-            "legacy_research_sources:3c7fce849237",
-            "legacy_research_sources:5d6e9b9da00b",
-            "legacy_research_sources:7c9fbfb0e7d2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b5d8a7f385c9",
-            "legacy_research_sources:b92080a8b603",
-            "legacy_research_sources:daa8f80dca50",
-            "legacy_research_sources:fc3067f501c7",
-            "legacy_research_sources:ff48a54d62d6"
+            "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence.",
+          "notes": "The official BMW 08/2019 technical-data PDF lists this as the launch-era standard square setup for the exact G20 330e.",
           "front": {
             "width_mm": 225.0,
-            "aspect_pct": 40.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Launch standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2024 technical-data PDF lists this as the later standard square setup for the exact G20 330e.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
             "rim_in": 18.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_market_pages:g20-3-series-de-overview",
-            "bmw_market_pages:g20-3-series-uk-listing",
-            "legacy_research_sources:0bfbe440deb6",
-            "legacy_research_sources:3c7fce849237",
-            "legacy_research_sources:5d6e9b9da00b",
-            "legacy_research_sources:7c9fbfb0e7d2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b5d8a7f385c9",
-            "legacy_research_sources:b92080a8b603",
-            "legacy_research_sources:daa8f80dca50",
-            "legacy_research_sources:fc3067f501c7",
-            "legacy_research_sources:ff48a54d62d6"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_market_pages:g20-3-series-de-overview",
-            "bmw_market_pages:g20-3-series-uk-listing",
-            "legacy_research_sources:0bfbe440deb6",
-            "legacy_research_sources:3c7fce849237",
-            "legacy_research_sources:5d6e9b9da00b",
-            "legacy_research_sources:7c9fbfb0e7d2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b5d8a7f385c9",
-            "legacy_research_sources:b92080a8b603",
-            "legacy_research_sources:daa8f80dca50",
-            "legacy_research_sources:fc3067f501c7",
-            "legacy_research_sources:ff48a54d62d6"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "name": "Later standard 18\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW 08/2019 and 05/2024 technical-data PDFs now confirm the exact G20 330e Sedan as a rear-wheel-drive full-hybrid / plug-in-hybrid state with Eight-speed Steptronic transmission, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, rear final drive 3.231, and a launch-era 225/50 R17 baseline that later shifts to a square 225/45 R18 setup. The official BMW 08/2019 launch article also confirms the PHEV architecture, including the electric motor integrated into the transmission, the 12.0 kWh battery under the rear seats, and XtraBoost. This row now carries the corrected hybrid fuel type and exact drivetrain/final-drive evidence, but wheel-order use remains manual because the standard tire baseline changes within the represented 2019-2025 span.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-330e-2019-launch-article-pdf",
+          "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
         ]
       },
       {
@@ -65607,75 +65572,19 @@
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "BMW G20 330e baseline wheel/tire continuity across the full 2019-2025 row span",
+        "reason": "The official BMW 08/2019 technical-data PDF lists a 225/50 R17 launch baseline, while the official 05/2024 technical-data PDF lists a later 225/45 R18 standard setup. This pass did not recover one authoritative official wheel matrix that closes the exact changeover timing across the full represented span.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
         ]
       },
       {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
+        "item": "Exact public gearbox code and full tire-option matrix for the G20 330e",
+        "reason": "The checked official BMW PressClub sheets prove the exact Steptronic ratio package plus launch-era and later standard square tire setups, but they do not publish a supplier-family gearbox code or a complete official optional wheel/tire matrix for this exact PHEV row.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
         ]
       }
     ],
@@ -65683,7 +65592,7 @@
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -69163,15 +69072,16 @@
         }
       ]
     },
-    "verification_notes": [
-      {
-        "note": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data material consistently keeps the exact G30 530e on rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, rear final drive 3.231, and 225/55 R17 baseline tires. The checked later documents also separate the 530e xDrive as a different configuration, confirming that the corrected 530e row should stay RWD-only.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
-          "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
-        ]
-      }
+      "verification_notes": [
+        {
+          "note": "Official BMW 03/2017, 08/2019, and 11/2020 technical-data material consistently keeps the exact G30 530e on rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, rear final drive 3.231, and 225/55 R17 baseline tires. The checked later documents also separate the 530e xDrive as a different configuration, confirming that the corrected 530e row should stay RWD-only. An official BMW launch article adds PHEV architecture detail for the same exact car: the electric motor is mounted upstream of the transmission so the transmission ratios remain usable in EV mode, the system dispenses with a torque converter, and the high-voltage battery sits under the rear seat.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g30-530e-2016-launch-article-pdf",
+            "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
+            "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
+            "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf"
+          ]
+        }
     ],
     "unresolved": [
       {

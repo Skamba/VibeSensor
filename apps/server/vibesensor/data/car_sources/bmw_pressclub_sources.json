@@ -121,6 +121,27 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:g20-330e-2019-launch-article-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0298940EN/470770",
+      "title": "BMW PressClub G20 330e 2019 launch article PDF",
+      "note": "Official BMW 08/2019 launch article for the exact G20 330e Sedan describing the plug-in-hybrid/full-hybrid architecture, eight-speed Steptronic wording, XtraBoost, the electric motor integrated into the transmission, and the 12.0 kWh battery packaged under the rear seats.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0298940EN/470771",
+      "title": "BMW PressClub G20 330e 2019 technical data PDF",
+      "note": "Official BMW 08/2019 technical-data PDF for the exact G20 330e Sedan showing full-hybrid drive to the rear wheels, Eight-speed Steptronic transmission, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, rear final drive 3.231, and launch baseline 225/50 R17 98Y XL tires on 7.5J x 17 wheels.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0442333EN/620072",
+      "title": "BMW PressClub G20 330e 2024 technical data PDF",
+      "note": "Official BMW 05/2024 technical-data PDF for the exact later G20 330e Sedan showing the same rear-wheel-drive full-hybrid layout, Eight-speed Steptronic transmission, unchanged 0.667 top gear and 3.231 rear final drive, and a later standard 225/45 R18 95Y XL tire on 7.5J x 18 wheels.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g30-518d-2018-austria-launch-article",
       "url": "https://www.press.bmwgroup.com/austria/article/detail/T0285927DE/bmw-5er-limousine-und-bmw-5er-touring-zum-modelljahr-2018-erweiterte-antriebsvielfalt",
       "title": "BMW PressClub G30 518d 2018 Austria launch article",
@@ -167,6 +188,13 @@
       "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0318749DE/463129",
       "title": "BMW PressClub G30 530e 2020 technical data PDF",
       "note": "Official BMW 11/2020 technical-data PDF for the facelift G30 530e Limousine showing the same RWD, 8-Gang Steptronic, 3.231 final-drive, and 225/55 R17 baseline-tire package while separately listing the 530e xDrive Limousine.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-530e-2016-launch-article-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0266487EN/388546",
+      "title": "BMW PressClub G30 530e 2016 launch article PDF",
+      "note": "Official BMW 10/2016 launch article for the exact G30 530e iPerformance Sedan stating that the combustion engine and electric motor drive the rear wheels through the standard 8-speed Steptronic transmission, with the electric motor mounted upstream of the transmission so the transmission ratios remain usable in EV mode, no torque converter, and the high-voltage battery packaged under the rear seat.",
       "confidence": "high"
     },
     {
