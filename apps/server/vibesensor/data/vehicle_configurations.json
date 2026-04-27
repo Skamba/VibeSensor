@@ -10775,63 +10775,6 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q7 55 TFSI e quattro production-data applicability across the full 4M row span",
-        "reason": "Checked exact official Germany-market evidence resolved the current facelift-era 55 TFSI e quattro values, but this pass did not prove the same ratio and final-drive mapping across the full 2016-2026 row span.",
-        "evidence_refs": [
-          "legacy_research_sources:29114921acdf",
-          "legacy_research_sources:2b9d74e8ab56",
-          "legacy_research_sources:490c5b8fd0e9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:62c1bbb53e87",
-          "legacy_research_sources:63fd9d7843ad",
-          "legacy_research_sources:8a73434aa4c5",
-          "legacy_research_sources:b248c52777b2",
-          "legacy_research_sources:e6c066ac31ae",
-          "legacy_research_sources:ec1f2b5d8fc4",
-          "legacy_research_sources:fc63799e6f4d"
-        ]
-      },
-      {
-        "item": "Audi Q7 55 TFSI e quattro exact optional tire matrix and gearbox-family naming",
-        "reason": "Official Audi exact sources prove the base 255/55 R19 fitment and 8-speed tiptronic wording, but this pass did not recover the full optional tire matrix or explicit official ZF 8HP naming.",
-        "evidence_refs": [
-          "legacy_research_sources:29114921acdf",
-          "legacy_research_sources:2b9d74e8ab56",
-          "legacy_research_sources:490c5b8fd0e9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:62c1bbb53e87",
-          "legacy_research_sources:63fd9d7843ad",
-          "legacy_research_sources:8a73434aa4c5",
-          "legacy_research_sources:b248c52777b2",
-          "legacy_research_sources:e6c066ac31ae",
-          "legacy_research_sources:ec1f2b5d8fc4",
-          "legacy_research_sources:fc63799e6f4d"
-        ]
-      },
-      {
-        "item": "Audi Q7 55 TFSI quattro production-data applicability and tire-baseline continuity across the full 4M row span",
-        "reason": "Checked exact official current-generation 55 TFSI quattro evidence resolves the 250 kW ratio set, final drive 3.204, and a 5-seat 255/60 R18 basic tire, but this pass did not prove the same mapping across the full 2016-2026 non-PHEV row span or recover one uncontested production-safe tire baseline for all represented configurations.",
-        "evidence_refs": [
-          "legacy_research_sources:29114921acdf",
-          "legacy_research_sources:2b9d74e8ab56",
-          "legacy_research_sources:490c5b8fd0e9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:62c1bbb53e87",
-          "legacy_research_sources:63fd9d7843ad",
-          "legacy_research_sources:8a73434aa4c5",
-          "legacy_research_sources:b248c52777b2",
-          "legacy_research_sources:e6c066ac31ae",
-          "legacy_research_sources:ec1f2b5d8fc4",
-          "legacy_research_sources:fc63799e6f4d"
-        ]
-      },
-      {
         "item": "Exact EU-market Audi Q7 45 TFSI quattro mapping",
         "reason": "Official Audi exact-trim material confirms Q7 45 TFSI quattro identity in a non-EU market, but the checked official Germany MY2026 price list does not surface a 45 TFSI gasoline row and this pass did not recover an exact EU-market 45 TFSI technical-data sheet proving the row's broad EU 2016-2026 drivetrain, ratio, final-drive, or tire mapping.",
         "evidence_refs": [
@@ -73654,19 +73597,22 @@
     "model_name": "7 Series (G11, 2016)",
     "variant_name": "740Le",
     "engine_code": "2.0L",
-    "engine_name": "2.0L I4 Turbo",
-    "fuel_type": "ICE",
+    "engine_name": "2.0L I4 Turbo + electric motor (PHEV)",
+    "fuel_type": "PHEV",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        "legacy_research_sources:387f07d4c6ab"
       ],
-      "notes": "Checked official BMW 11/2015 G11 launch specifications article. It publishes exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d xDrive, 740Ld xDrive, 740i, 740Li, 750i, 750Li, 750i xDrive, and 750Li xDrive, but it does not publish a 740e row, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
+      "notes": "The official BMW DE launch-era 7 Series brochure technical-data table publishes a shared `740e/Le` rear-wheel-drive column and a separate `740Le xDrive` all-wheel-drive column. That exact official table is sufficient to close the represented 2016 740Le long-wheelbase plug-in-hybrid row as rear-wheel drive.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:387f07d4c6ab"
+      ],
+      "notes": "The official BMW DE launch-era 7 Series brochure lists `8-Gang Steptronic` for the shared `740e/Le` long-wheelbase plug-in-hybrid column. The repo keeps `ZF8HP` as the canonical transmission-family mapping for that official BMW automatic wording.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -73684,97 +73630,60 @@
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:2201c7bcf575",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7699086a1abd",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "legacy_research_sources:387f07d4c6ab"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The official BMW DE launch-era 7 Series brochure technical-data table lists `245/50 R18 Y` as the baseline tire for the shared `740e/Le` column.",
         "front": {
           "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "legacy_research_sources:387f07d4c6ab"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official BMW DE launch-era 7 Series brochure technical-data table lists `245/50 R18 Y` as the baseline tire for the shared `740e/Le` column.",
           "front": {
             "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 20.0
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 21\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 22\""
+          "name": "Standard 18\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Batch 18 directly revalidated the official BMW 11/2015 G11 launch specifications article. That checked official BMW launch page publishes exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d xDrive, 740Ld xDrive, 740i, 740Li, 750i, 750Li, 750i xDrive, and 750Li xDrive, but it does not publish an exact 740e row, so this represented 2016 740e RWD configuration remains an unsupported advisory row rather than a validated exact state.",
+        "note": "Batch 9 rechecks the launch-era BMW DE 7 Series brochure and uses the exact `740e/Le` technical-data column to correct this long-wheelbase plug-in-hybrid row. The official table closes `fuel_type=PHEV`, rear-wheel drive for `740e/Le`, `8-Gang Steptronic` wording, and a `245/50 R18 Y` baseline tire for the represented 2016 740Le row, while keeping the separate `740Le xDrive` sibling outside this exact RWD configuration. The checked official source does not publish a gear-ratio table or final-drive value for the 740Le, so the inherited ratio placeholders remain unresolved.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW G11 740e exact official 2016 technical-data row",
-        "reason": "The checked official BMW 11/2015 launch specifications article omits 740e from the published EU launch lineup, and this pass did not recover another official 2016 EU technical-data page for the exact variant.",
+        "item": "BMW G11 740Le exact official 2016 gear-ratio and final-drive mapping",
+        "reason": "The checked official BMW DE launch-era brochure closes the exact 740Le rear-wheel-drive PHEV identity, `8-Gang Steptronic` wording, and baseline 18-inch tire, but it does not publish a gear-ratio table or final-drive value for the shared `740e/Le` column.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "legacy_research_sources:387f07d4c6ab"
+        ]
+      },
+      {
+        "item": "BMW G11 740Le exact optional wheel/tire matrix",
+        "reason": "The checked official BMW DE launch-era brochure safely closes the baseline `245/50 R18` package for the shared `740e/Le` column, but this pass does not encode the broader optional wheel/tire matrix for the exact long-wheelbase 740Le row.",
+        "evidence_refs": [
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
-    "configuration_confidence": "no_confidence",
+    "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": false,
@@ -74067,19 +73976,22 @@
     "model_name": "7 Series (G11, 2016)",
     "variant_name": "740e",
     "engine_code": "2.0L",
-    "engine_name": "2.0L I4 Turbo",
-    "fuel_type": "ICE",
+    "engine_name": "2.0L I4 Turbo + electric motor (PHEV)",
+    "fuel_type": "PHEV",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        "legacy_research_sources:387f07d4c6ab"
       ],
-      "notes": "Checked official BMW 11/2015 G11 launch specifications article. It publishes exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d xDrive, 740Ld xDrive, 740i, 740Li, 750i, 750Li, 750i xDrive, and 750Li xDrive, but it does not publish a 750Ld row, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
+      "notes": "The official BMW DE launch-era 7 Series brochure technical-data table publishes a shared `740e/Le` rear-wheel-drive column and a separate `740Le xDrive` all-wheel-drive column. That exact official table is sufficient to close the represented 2016 740e plug-in-hybrid row as rear-wheel drive.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:387f07d4c6ab"
+      ],
+      "notes": "The official BMW DE launch-era 7 Series brochure lists `8-Gang Steptronic` for the shared `740e/Le` plug-in-hybrid column. The repo keeps `ZF8HP` as the canonical transmission-family mapping for that official BMW automatic wording.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -74097,97 +74009,60 @@
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:2201c7bcf575",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7699086a1abd",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "legacy_research_sources:387f07d4c6ab"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The official BMW DE launch-era 7 Series brochure technical-data table lists `245/50 R18 Y` as the baseline tire for the shared `740e/Le` column.",
         "front": {
           "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "legacy_research_sources:387f07d4c6ab"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official BMW DE launch-era 7 Series brochure technical-data table lists `245/50 R18 Y` as the baseline tire for the shared `740e/Le` column.",
           "front": {
             "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 20.0
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 21\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 22\""
+          "name": "Standard 18\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Batch 18 directly revalidated the official BMW 11/2015 G11 launch specifications article. That checked official BMW launch page publishes exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d xDrive, 740Ld xDrive, 740i, 740Li, 750i, 750Li, 750i xDrive, and 750Li xDrive, but it does not publish an exact 750Ld row, so this represented 2016 750Ld RWD configuration remains an unsupported advisory row rather than a validated exact state.",
+        "note": "Batch 9 rechecks the launch-era BMW DE 7 Series brochure and uses the exact `740e/Le` technical-data column to correct this short-wheelbase plug-in-hybrid row. The official table closes `fuel_type=PHEV`, rear-wheel drive for `740e/Le`, `8-Gang Steptronic` wording, and a `245/50 R18 Y` baseline tire for the represented 2016 740e row, while keeping the separate `740Le xDrive` sibling outside this exact RWD configuration. The checked official source does not publish a gear-ratio table or final-drive value for the 740e, so the inherited ratio placeholders remain unresolved.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW G11 750Ld exact official 2016 technical-data row",
-        "reason": "The checked official BMW 11/2015 launch specifications article omits 750Ld from the published EU launch lineup, and this pass did not recover another official 2016 EU technical-data page for the exact variant.",
+        "item": "BMW G11 740e exact official 2016 gear-ratio and final-drive mapping",
+        "reason": "The checked official BMW DE launch-era brochure closes the exact 740e rear-wheel-drive PHEV identity, `8-Gang Steptronic` wording, and baseline 18-inch tire, but it does not publish a gear-ratio table or final-drive value for the shared `740e/Le` column.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "legacy_research_sources:387f07d4c6ab"
+        ]
+      },
+      {
+        "item": "BMW G11 740e exact optional wheel/tire matrix",
+        "reason": "The checked official BMW DE launch-era brochure safely closes the baseline `245/50 R18` package for the shared `740e/Le` column, but this pass does not encode the broader optional wheel/tire matrix for the exact short-wheelbase 740e row.",
+        "evidence_refs": [
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
-    "configuration_confidence": "no_confidence",
+    "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": false,
@@ -74625,9 +74500,10 @@
     "drivetrain": {
       "confidence": "unverified",
       "evidence_refs": [
-        "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+        "legacy_research_sources:387f07d4c6ab"
       ],
-      "notes": "Checked official BMW 11/2015 G11 launch specifications article. It publishes exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d xDrive, 740Ld xDrive, 740i, 740Li, 750i, 750Li, 750i xDrive, and 750Li xDrive, but it does not publish a 750d row, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
+      "notes": "The checked official BMW 11/2015 G11 launch specifications article omits `750d` from the published RWD launch lineup, and the official BMW DE launch-era 7 Series brochure then shows `750d/Ld xDrive` only in the all-wheel-drive technical-data columns. This represented 2016 `750Ld` rear-wheel-drive mapping remains a contradicted advisory placeholder rather than a supported exact state.",
       "value": "RWD"
     },
     "transmission": {
@@ -74725,18 +74601,20 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 18 directly revalidated the official BMW 11/2015 G11 launch specifications article. That checked official BMW launch page publishes exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d xDrive, 740Ld xDrive, 740i, 740Li, 750i, 750Li, 750i xDrive, and 750Li xDrive, but it does not publish an exact 750d row, so this represented 2016 750d RWD configuration remains an unsupported advisory row rather than a validated exact state.",
+        "note": "Batch 9 rechecks the official BMW 11/2015 launch specifications article and the BMW DE launch-era 7 Series brochure. Together they show that `750d/Ld` is absent from the published rear-wheel-drive lineup and appears only as `750d/Ld xDrive` in the all-wheel-drive technical-data columns. This represented 2016 `750Ld` rear-wheel-drive row therefore remains a contradicted advisory placeholder rather than a validated exact production state.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW G11 750d exact official 2016 technical-data row",
-        "reason": "The checked official BMW 11/2015 launch specifications article omits 750d from the published EU launch lineup, and this pass did not recover another official 2016 EU technical-data page for the exact variant.",
+        "item": "BMW G11 750Ld exact official 2016 rear-wheel-drive technical-data row",
+        "reason": "The checked official BMW launch-source chain shows `750d/Ld` only as `750d/Ld xDrive` in the AWD technical-data columns and does not publish any exact `750Ld` rear-wheel-drive row for the represented 2016 EU state.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
@@ -74765,9 +74643,10 @@
     "drivetrain": {
       "confidence": "unverified",
       "evidence_refs": [
-        "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+        "legacy_research_sources:387f07d4c6ab"
       ],
-      "notes": "Checked official BMW 11/2015 G11 launch specifications article. It publishes exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d xDrive, 740Ld xDrive, 740i, 740Li, 750i, 750Li, 750i xDrive, and 750Li xDrive, but it does not publish a 750d row, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
+      "notes": "The checked official BMW 11/2015 G11 launch specifications article omits `750d` from the published rear-wheel-drive lineup, and the official BMW DE launch-era 7 Series brochure then shows `750d/Ld xDrive` only in the all-wheel-drive technical-data columns. This represented 2016 `750d` rear-wheel-drive mapping remains a contradicted advisory placeholder rather than a supported exact state.",
       "value": "RWD"
     },
     "transmission": {
@@ -74865,18 +74744,20 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 18 directly revalidated the official BMW 11/2015 G11 launch specifications article. That checked official BMW launch page publishes exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d xDrive, 740Ld xDrive, 740i, 740Li, 750i, 750Li, 750i xDrive, and 750Li xDrive, but it does not publish an exact 750d row, so this represented 2016 750d RWD configuration remains an unsupported advisory row rather than a validated exact state.",
+        "note": "Batch 9 rechecks the official BMW 11/2015 launch specifications article and the BMW DE launch-era 7 Series brochure. Together they show that `750d` is absent from the published rear-wheel-drive lineup and appears only as `750d/Ld xDrive` in the all-wheel-drive technical-data columns. This represented 2016 `750d` rear-wheel-drive row therefore remains a contradicted advisory placeholder rather than a validated exact production state.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW G11 750d exact official 2016 technical-data row",
-        "reason": "The checked official BMW 11/2015 launch specifications article omits 750d from the published EU launch lineup, and this pass did not recover another official 2016 EU technical-data page for the exact variant.",
+        "item": "BMW G11 750d exact official 2016 rear-wheel-drive technical-data row",
+        "reason": "The checked official BMW launch-source chain shows `750d` only through the `750d/Ld xDrive` AWD technical-data columns and does not publish any exact `750d` rear-wheel-drive row for the represented 2016 EU state.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
