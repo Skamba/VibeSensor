@@ -1,0 +1,3595 @@
+[
+  {
+    "id": "audi-b8-1-8-tfsi-eu-2008-mt6-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "1.8 TFSI",
+    "engine_code": "1.8L",
+    "engine_name": "1.8L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-1-8-tfsi-eu-2008-dct7-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "1.8 TFSI",
+    "engine_code": "1.8L",
+    "engine_name": "1.8L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL501)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.68
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.444
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-1-8-tfsi-eu-2008-zf8hp-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "1.8 TFSI",
+    "engine_code": "1.8L",
+    "engine_name": "1.8L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tdi-eu-2008-mt6-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TDI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "Exact secondary pre-facelift manual sources agree on AWD, 6-speed manual transmission, and 225/55 R16 baseline tires, but those sources only cover 2008-2011 and do not safely justify correcting the full 2008-2016 row without a year split.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-autodata"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 2.0 TDI quattro manual pre-facelift evidence is not safe for the broad 2008-2016 row",
+        "reason": "Carfolio and Auto-Data exact manual rows agree on AWD, 6-speed manual transmission, and 225/55 R16 tires for 2008-2011, but that subset does not yet resolve whether later B8 years kept the same base tire or ratio package.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-autodata"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tdi-eu-2008-dct7-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TDI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL501)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.68
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.444
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tdi-eu-2008-zf8hp-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TDI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tdi-quattro-eu-2008-mt6-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TDI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.462
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tdi-quattro-eu-2008-dct7-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TDI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "reputable_secondary_crosschecked",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
+      ],
+      "notes": "Independent exact secondary facelift A4 2.0 TDI quattro S tronic sources agree on AWD, but they diverge on the baseline tire package and do not safely resolve the broad 2008-2016 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "reputable_secondary_crosschecked",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
+      ],
+      "notes": "Independent exact secondary facelift A4 2.0 TDI quattro S tronic sources agree on the 7-speed S tronic gearbox, but ratio and tire continuity remain unresolved for the broad 2008-2016 row.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL501)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.68
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.444
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.444
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "Exact secondary facelift S tronic sources agree on AWD and 7-speed S tronic transmission, but Auto-Data reports 225/55 R16 tires while Carfolio reports 225/50 R17 and only Carfolio exposed a numeric top-gear/final-drive pair, so the broad row stays unresolved.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 2.0 TDI quattro S tronic exact secondary sources disagree on the baseline tire package",
+        "reason": "The exact facelift Auto-Data row lists 225/55 R16 while the exact 2015 Carfolio row lists 225/50 R17 and 0.39 / 4.27 for top gear and final drive, so the broad 2008-2016 row cannot be safely corrected without a year-specific official source or an explicit split.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tdi-quattro-eu-2008-zf8hp-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TDI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.077
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tfsi-eu-2008-mt6-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TFSI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tfsi-eu-2008-dct7-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TFSI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL501)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.68
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.444
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tfsi-eu-2008-zf8hp-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TFSI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tfsi-quattro-eu-2008-mt6-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TFSI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary A4 2.0 TFSI quattro sources agree on AWD, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "value": "AWD",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
+      ]
+    },
+    "transmission": {
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary A4 2.0 TFSI quattro sources agree on the 6-speed manual gearbox, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "code": "MT6",
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
+      ]
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Exact secondary manual sources agree on AWD and a 6-speed manual gearbox, but the pre-facelift Auto-Data row and the 2013 Carfolio row do not expose a cross-checked numeric ratio package or a safe full-row tire mapping.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 2.0 TFSI quattro manual exact secondary sources confirm identity but not a safe broad-row ratio package",
+        "reason": "The exact 2008-2011 Auto-Data row and the exact 2013 Carfolio row agree on AWD and the 6-speed manual transmission, but neither pair provides a cross-checked full-row ratio or tire package across the 2008-2016 span.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tfsi-quattro-eu-2008-dct7-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TFSI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary facelift A4 2.0 TFSI quattro S tronic sources agree on AWD, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "value": "AWD",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
+      ]
+    },
+    "transmission": {
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary facelift A4 2.0 TFSI quattro S tronic sources agree on the 7-speed S tronic gearbox, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL501)",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
+      ]
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.68
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.444
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.444
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Exact secondary S tronic sources agree on AWD and a 7-speed S tronic gearbox, but the available facelift-only evidence does not expose a cross-checked numeric ratio package or a safe full-row tire mapping.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 2.0 TFSI quattro S tronic exact secondary sources confirm identity but not a safe broad-row ratio package",
+        "reason": "The exact 2012-2015 Auto-Data row and the exact 2013 Carfolio row agree on AWD and the 7-speed S tronic transmission, but neither pair provides a cross-checked full-row ratio or tire package across the 2008-2016 span.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-2-0-tfsi-quattro-eu-2008-zf8hp-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "2.0 TFSI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Exact pre-facelift Tiptronic evidence contradicts the broad-row 8-speed ZF8HP mapping, so treat the transmission code and gear count as unresolved until the row is split or later-year continuity is proven.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.077
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Follow-up review found that the exact 2008-2011 Auto-Data sedan row identifies this pre-facelift Tiptronic configuration as 6-speed automatic, which conflicts with the broad-row 8-speed ZF8HP mapping and keeps the transmission field unresolved.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-zf8hp-autodata"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 2.0 TFSI quattro Tiptronic pre-facelift evidence conflicts with the broad 2008-2016 ZF8HP row",
+        "reason": "The exact 2008-2011 Auto-Data sedan row identifies the pre-facelift Tiptronic configuration as 6-speed automatic, so the broad ZF8HP row likely conflates distinct transmission eras and is not safe for order analysis without a split or later-year proof.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-zf8hp-autodata"
+        ]
+      }
+    ],
+    "configuration_confidence": "no_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-3-0-tdi-quattro-eu-2008-mt6-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "3.0 TDI quattro",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L V6 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary A4 3.0 TDI quattro sources agree on AWD, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "value": "AWD",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-carfolio",
+        "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-autodata"
+      ]
+    },
+    "transmission": {
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary A4 3.0 TDI quattro sources agree on the 6-speed manual gearbox, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "code": "MT6",
+      "name": "6-speed manual",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-carfolio",
+        "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-autodata"
+      ]
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.462
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "Exact secondary manual sources agree on AWD and a 6-speed manual gearbox, but the pre-facelift Auto-Data row and the 2012 Carfolio row do not expose a cross-checked numeric ratio package or a safe full-row tire mapping.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-carfolio",
+          "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-autodata"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 3.0 TDI quattro manual exact secondary sources confirm identity but not a safe broad-row ratio package",
+        "reason": "The exact 2007-2011 Auto-Data row and the exact 2012 Carfolio row agree on AWD and the 6-speed manual transmission, but neither pair provides a cross-checked full-row ratio or tire package across the 2008-2016 span.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-carfolio",
+          "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-autodata"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-3-0-tdi-quattro-eu-2008-dct7-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "3.0 TDI quattro",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L V6 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary facelift A4 3.0 TDI quattro S tronic sources agree on AWD, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "value": "AWD",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-autodata"
+      ]
+    },
+    "transmission": {
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary facelift A4 3.0 TDI quattro S tronic sources agree on the 7-speed S tronic gearbox, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL501)",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-autodata"
+      ]
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.68
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.444
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.444
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "Exact secondary S tronic sources agree on AWD and a 7-speed S tronic gearbox, but the available facelift-only evidence does not expose a cross-checked numeric ratio package or a safe full-row tire mapping.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-autodata"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 3.0 TDI quattro S tronic exact secondary sources confirm identity but not a safe broad-row ratio package",
+        "reason": "The exact 2011-2015 Auto-Data row and the exact 2015 Carfolio row agree on AWD and the 7-speed S tronic transmission, but neither pair provides a cross-checked full-row ratio or tire package across the 2008-2016 span.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-autodata"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-3-0-tdi-quattro-eu-2008-zf8hp-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "3.0 TDI quattro",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L V6 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Exact pre-facelift Tiptronic evidence contradicts the broad-row 8-speed ZF8HP mapping, so treat the transmission code and gear count as unresolved until the row is split or later-year continuity is proven.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.077
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      },
+      {
+        "note": "Follow-up review found that the exact 2007-2011 Auto-Data sedan row identifies this pre-facelift Tiptronic configuration as 6-speed automatic, which conflicts with the broad-row 8-speed ZF8HP mapping and keeps the transmission field unresolved.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tdi-quattro-zf8hp-autodata"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 3.0 TDI quattro Tiptronic pre-facelift evidence conflicts with the broad 2008-2016 ZF8HP row",
+        "reason": "The exact 2007-2011 Auto-Data sedan row identifies the pre-facelift Tiptronic configuration as 6-speed automatic, so the broad ZF8HP row likely conflates distinct transmission eras and is not safe for order analysis without a split or later-year proof.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tdi-quattro-zf8hp-autodata"
+        ]
+      }
+    ],
+    "configuration_confidence": "no_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-3-0-tfsi-quattro-eu-2008-mt6-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "3.0 TFSI quattro",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L V6 Supercharged",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-3-0-tfsi-quattro-eu-2008-dct7-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "3.0 TFSI quattro",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L V6 Supercharged",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary facelift A4 3.0 TFSI quattro S tronic sources agree on AWD, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "value": "AWD",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
+      ]
+    },
+    "transmission": {
+      "confidence": "reputable_secondary_crosschecked",
+      "notes": "Independent exact secondary facelift A4 3.0 TFSI quattro S tronic sources agree on the 7-speed S tronic gearbox, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL501)",
+      "evidence_refs": [
+        "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio",
+        "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
+      ]
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.68
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.444
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.444
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Exact secondary S tronic sources agree on AWD and a 7-speed S tronic gearbox, but the available facelift-only evidence does not expose a cross-checked numeric ratio package or a safe full-row tire mapping.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 3.0 TFSI quattro S tronic exact secondary sources confirm identity but not a safe broad-row ratio package",
+        "reason": "The exact 2012-2014 Auto-Data row and the exact 2012 Carfolio row agree on AWD and the 7-speed S tronic transmission, but neither pair provides a cross-checked full-row ratio or tire package across the 2008-2016 span.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b8-3-0-tfsi-quattro-eu-2008-zf8hp-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "B8",
+    "body_code": "B8",
+    "production_start_year": 2008,
+    "production_end_year": 2016,
+    "model_name": "A4 (B8, 2008-2016)",
+    "variant_name": "3.0 TFSI quattro",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L V6 Supercharged",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Exact secondary facelift 3.0 TFSI quattro sources identify the checked sedan state as 7-speed S tronic rather than tiptronic, so treat the transmission code and gear count as unresolved until the broad row is split or exact EU continuity is proven.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.077
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:40d6e1e8fc60",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:4d505818df53",
+            "legacy_research_sources:5e252f7f436b"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      },
+      {
+        "note": "Follow-up review found that exact 2012-2014 and 2012 secondary A4 3.0 TFSI quattro sedan pages identify the checked configuration as AWD with a 7-speed S tronic gearbox, which conflicts with the broad-row 8-speed ZF8HP mapping and keeps this Tiptronic row unresolved.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:40d6e1e8fc60",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:4d505818df53",
+          "legacy_research_sources:5e252f7f436b"
+        ]
+      },
+      {
+        "item": "Audi A4 3.0 TFSI quattro Tiptronic evidence conflicts with the broad 2008-2016 ZF8HP row",
+        "reason": "Exact 2012-2014 Auto-Data and 2012 Carfolio sedan pages identify the checked 3.0 TFSI quattro state as AWD with 7-speed S tronic, so the broad ZF8HP row likely conflates distinct transmission states and is not safe for order analysis without a split or exact later-year proof.",
+        "evidence_refs": [
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata",
+          "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
+        ]
+      }
+    ],
+    "configuration_confidence": "no_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

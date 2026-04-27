@@ -1,0 +1,817 @@
+[
+  {
+    "id": "bmw-g15-840i-eu-2019-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G15",
+    "body_code": "G15",
+    "production_start_year": 2019,
+    "production_end_year": 2019,
+    "model_name": "8 Series Coupe (G15, 2019)",
+    "variant_name": "840i",
+    "engine_code": "B58",
+    "engine_name": "B58 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g15-8-series-coupe-2018-launch-article",
+        "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+      ],
+      "notes": "The official BMW launch article and technical-data PDF confirm rear-wheel drive for the exact 8 Series Coupe 840i state represented by this narrowed 2019-only row.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+      ],
+      "notes": "The official BMW launch technical-data PDF confirms 8-speed Steptronic wording for the exact 8 Series Coupe 840i state represented by this narrowed 2019-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF lists 0.640 as the top-gear ratio for the exact 8 Series Coupe 840i state represented by this narrowed 2019-only row.",
+        "value": 0.64
+      },
+      "gear_ratios": {
+        "value": [
+          5.25,
+          3.36,
+          2.172,
+          1.72,
+          1.316,
+          1.0,
+          0.822,
+          0.64
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF lists the full forward gear-ratio set for the exact 8 Series Coupe 840i state represented by this narrowed 2019-only row."
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF lists 2.929 as the final-drive ratio for the exact 8 Series Coupe 840i state represented by this narrowed 2019-only row.",
+        "value": 2.929
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF lists staggered 245/45 R18 front and 275/40 R18 rear baseline tires for the exact 8 Series Coupe 840i state represented by this narrowed 2019-only row.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+          ],
+          "notes": "The official BMW launch technical-data PDF lists staggered 245/45 R18 front and 275/40 R18 rear baseline tires for the exact 8 Series Coupe 840i state represented by this narrowed 2019-only row.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW launch article and technical-data PDF establish the exact 8 Series Coupe 840i launch-state mapping: RWD, 8-speed Steptronic/ZF8HP mapping, full forward ratios, 2.929 final drive, and staggered 245/45 R18 front plus 275/40 R18 rear baseline tires. This row remains narrowed to the supported 2019-only state because later exact numeric continuity was not recovered in this pass.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-8-series-coupe-2018-launch-article",
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW 8 Series Coupe 840i exact optional wheel/tire matrix beyond the narrowed 2019 row",
+        "reason": "The checked official BMW launch technical-data PDF closes the staggered 18-inch baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g15-840i-xdrive-eu-2019-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G15",
+    "body_code": "G15",
+    "production_start_year": 2019,
+    "production_end_year": 2019,
+    "model_name": "8 Series Coupe (G15, 2019)",
+    "variant_name": "840i xDrive",
+    "engine_code": "B58",
+    "engine_name": "B58 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g15-8-series-coupe-2018-launch-article",
+        "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+      ],
+      "notes": "The official BMW launch article and technical-data PDF confirm xDrive all-wheel drive for the exact 8 Series Coupé 840i xDrive state represented by this narrowed 2019-only row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+      ],
+      "notes": "The official BMW launch technical-data PDF confirms 8-speed Steptronic wording for the exact 8 Series Coupé 840i xDrive state represented by this narrowed 2019-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF lists 0.640 as the top-gear ratio for the exact 8 Series Coupé 840i xDrive state represented by this narrowed 2019-only row.",
+        "value": 0.64
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF publishes a single 2.929 final-drive ratio for the exact 8 Series Coupé 840i xDrive state represented by this narrowed 2019-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.929
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF publishes a single 2.929 final-drive ratio for the exact 8 Series Coupé 840i xDrive state represented by this narrowed 2019-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.929
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF lists staggered 245/45 R18 front and 275/40 R18 rear baseline tires for the exact 8 Series Coupé 840i xDrive state represented by this narrowed 2019-only row.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+          ],
+          "notes": "The official BMW launch technical-data PDF lists staggered 245/45 R18 front and 275/40 R18 rear baseline tires for the exact 8 Series Coupé 840i xDrive state represented by this narrowed 2019-only row.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:53c036dd5c01",
+            "legacy_research_sources:72e9c147f482",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 21\""
+        },
+        {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:53c036dd5c01",
+            "legacy_research_sources:72e9c147f482",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 25.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 22\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW launch article and technical-data PDF establish the exact 8 Series Coupé 840i xDrive launch-state mapping: AWD, 8-speed Steptronic, 0.640 top gear, a single published 2.929 final-drive ratio, and staggered 245/45 R18 front plus 275/40 R18 rear baseline tires. This row is narrowed to the supported 2019-only state because later exact numeric continuity was not recovered in this pass.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-8-series-coupe-2018-launch-article",
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW 8 Series Coupé 840i xDrive exact optional wheel/tire matrix beyond the narrowed 2019 row",
+        "reason": "The checked official BMW launch technical-data PDF closes the staggered 18-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW 8 Series Coupé 840i xDrive separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g15-m8-eu-2019-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G15",
+    "body_code": "G15",
+    "production_start_year": 2019,
+    "production_end_year": 2019,
+    "model_name": "8 Series Coupe (G15, 2019)",
+    "variant_name": "M8",
+    "engine_code": "4.4L",
+    "engine_name": "4.4L V8 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "value": "AWD",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:52e2ccf0b07d",
+        "legacy_research_sources:f3fe62f03e97"
+      ],
+      "notes": "Official BMW M8 technical data confirms M xDrive all-wheel drive for the M8 Coupe."
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.077
+      },
+      "final_drive_front": {
+        "value": 3.077,
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked."
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:53c036dd5c01",
+          "legacy_research_sources:72e9c147f482",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 20.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:53c036dd5c01",
+            "legacy_research_sources:72e9c147f482",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 20\""
+        },
+        {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:53c036dd5c01",
+            "legacy_research_sources:72e9c147f482",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 21\""
+        },
+        {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:53c036dd5c01",
+            "legacy_research_sources:72e9c147f482",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 25.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 22\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 18 added official BMW G15 and M8 technical-data evidence proving that M850i xDrive uses an 8HP76 Sport ratio set with top gear 0.640 and final drive 2.813, and that M8/M8 Competition Coupe are M xDrive all-wheel-drive configurations rather than rear-wheel-drive. Production now applies a variant-level gearbox override for M850i xDrive and corrects M8 drivetrain mapping to AWD.",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:3bf1daddf136",
+          "legacy_research_sources:52e2ccf0b07d",
+          "legacy_research_sources:53c036dd5c01",
+          "legacy_research_sources:72e9c147f482",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:b3655e5aa9ee",
+          "legacy_research_sources:f3fe62f03e97"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW G15 840i / 840i xDrive exact final drive and top-gear mapping across markets",
+        "reason": "Wave 18 official ratio sheet verifies 840d and M850i xDrive states plus M8 AWD context, but this pass did not recover one exact 840i/840i xDrive ratio table for the represented row.",
+        "evidence_refs": [
+          "legacy_research_sources:3bf1daddf136",
+          "legacy_research_sources:52e2ccf0b07d",
+          "legacy_research_sources:b3655e5aa9ee",
+          "legacy_research_sources:f3fe62f03e97"
+        ]
+      },
+      {
+        "item": "BMW G15 M8 Coupe final-drive numeric mapping in row schema",
+        "reason": "Wave 18 confirms M8 AWD drivetrain from official BMW M technical data, but this pass did not promote a separate M8 ratio override because one consistent year-spanning numeric table was not closed.",
+        "evidence_refs": [
+          "legacy_research_sources:3bf1daddf136",
+          "legacy_research_sources:52e2ccf0b07d",
+          "legacy_research_sources:b3655e5aa9ee",
+          "legacy_research_sources:f3fe62f03e97"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g15-m8-competition-eu-2019-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G15",
+    "body_code": "G15",
+    "production_start_year": 2019,
+    "production_end_year": 2019,
+    "model_name": "8 Series Coupe (G15, 2019)",
+    "variant_name": "M8 Competition",
+    "engine_code": "4.4L",
+    "engine_name": "4.4L V8 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "value": "AWD",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:52e2ccf0b07d",
+        "legacy_research_sources:f3fe62f03e97"
+      ],
+      "notes": "Official BMW M8 technical data confirms M xDrive all-wheel drive for the M8 Competition Coupe."
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.077
+      },
+      "final_drive_front": {
+        "value": 3.077,
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked."
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:53c036dd5c01",
+          "legacy_research_sources:72e9c147f482",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 20.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:53c036dd5c01",
+            "legacy_research_sources:72e9c147f482",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 20\""
+        },
+        {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:53c036dd5c01",
+            "legacy_research_sources:72e9c147f482",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 21\""
+        },
+        {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:53c036dd5c01",
+            "legacy_research_sources:72e9c147f482",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 25.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 22\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 18 added official BMW G15 and M8 technical-data evidence proving that M850i xDrive uses an 8HP76 Sport ratio set with top gear 0.640 and final drive 2.813, and that M8/M8 Competition Coupe are M xDrive all-wheel-drive configurations rather than rear-wheel-drive. Production now applies a variant-level gearbox override for M850i xDrive and corrects M8 drivetrain mapping to AWD.",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:3bf1daddf136",
+          "legacy_research_sources:52e2ccf0b07d",
+          "legacy_research_sources:53c036dd5c01",
+          "legacy_research_sources:72e9c147f482",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:b3655e5aa9ee",
+          "legacy_research_sources:f3fe62f03e97"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW G15 840i / 840i xDrive exact final drive and top-gear mapping across markets",
+        "reason": "Wave 18 official ratio sheet verifies 840d and M850i xDrive states plus M8 AWD context, but this pass did not recover one exact 840i/840i xDrive ratio table for the represented row.",
+        "evidence_refs": [
+          "legacy_research_sources:3bf1daddf136",
+          "legacy_research_sources:52e2ccf0b07d",
+          "legacy_research_sources:b3655e5aa9ee",
+          "legacy_research_sources:f3fe62f03e97"
+        ]
+      },
+      {
+        "item": "BMW G15 M8 Coupe final-drive numeric mapping in row schema",
+        "reason": "Wave 18 confirms M8 AWD drivetrain from official BMW M technical data, but this pass did not promote a separate M8 ratio override because one consistent year-spanning numeric table was not closed.",
+        "evidence_refs": [
+          "legacy_research_sources:3bf1daddf136",
+          "legacy_research_sources:52e2ccf0b07d",
+          "legacy_research_sources:b3655e5aa9ee",
+          "legacy_research_sources:f3fe62f03e97"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g15-m850i-xdrive-eu-2019-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G15",
+    "body_code": "G15",
+    "production_start_year": 2019,
+    "production_end_year": 2019,
+    "model_name": "8 Series Coupe (G15, 2019)",
+    "variant_name": "M850i xDrive",
+    "engine_code": "N63",
+    "engine_name": "N63 4.4L V8 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g15-8-series-coupe-2018-launch-article",
+        "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+      ],
+      "notes": "The official BMW launch article and technical-data PDF confirm xDrive all-wheel drive for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+      ],
+      "notes": "The official BMW launch technical-data PDF confirms 8-speed Steptronic wording for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "value": 0.64,
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF lists 0.640 as the top-gear ratio for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row."
+      },
+      "gear_ratios": {
+        "value": [
+          5.5,
+          3.52,
+          2.2,
+          1.72,
+          1.317,
+          1.0,
+          0.823,
+          0.64
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF lists the full forward gear-ratio set for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row."
+      },
+      "final_drive_front": {
+        "value": 2.813,
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation."
+      },
+      "final_drive_rear": {
+        "value": 2.813,
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation."
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+        ],
+        "notes": "The official BMW launch technical-data PDF lists staggered 245/35 R20 front and 275/30 R20 rear baseline tires for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 20.0
+        },
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 30.0,
+          "rim_in": 20.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+          ],
+          "notes": "The official BMW launch technical-data PDF lists staggered 245/35 R20 front and 275/30 R20 rear baseline tires for the exact 8 Series Coupe M850i xDrive state represented by this narrowed 2019-only row.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW launch article and technical-data PDF close the exact 8 Series Coupe M850i xDrive launch-state mapping: AWD, 8-speed Steptronic/ZF8HP mapping, full forward ratios, the single published 2.813 final-drive ratio duplicated across the front and rear axle fields, and staggered 245/35 R20 front plus 275/30 R20 rear baseline tires. This row is narrowed to the supported 2019-only state because later exact numeric continuity was not recovered in this pass.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-8-series-coupe-2018-launch-article",
+          "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW 8 Series Coupe M850i xDrive exact optional wheel/tire matrix beyond the narrowed 2019 row",
+        "reason": "The checked official BMW launch technical-data PDF closes the staggered 20-inch baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW 8 Series Coupe M850i xDrive separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  }
+]

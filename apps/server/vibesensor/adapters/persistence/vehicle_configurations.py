@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from pathlib import Path
 from typing import Any, Literal, NotRequired, TypedDict, cast
 
 from pydantic import ConfigDict, TypeAdapter, ValidationError
@@ -30,11 +31,11 @@ from .car_library_validation import ensure_valid_vehicle_configurations
 LOGGER = logging.getLogger(__name__)
 
 __all__ = [
-    "_VEHICLE_CONFIG_DATA_FILE",
+    "_VEHICLE_CONFIG_DATA_DIR",
     "load_vehicle_configurations",
 ]
 
-_VEHICLE_CONFIG_DATA_FILE = resolve_static_data_file("vehicle_configurations.json")
+_VEHICLE_CONFIG_DATA_DIR = resolve_static_data_file("vehicle_configurations")
 _STRICT_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")
 
 
@@ -264,26 +265,83 @@ def _configuration_from_row(row: VehicleConfigurationRow) -> VehicleConfiguratio
     )
 
 
-def _load_vehicle_configurations_snapshot() -> list[VehicleConfiguration]:
+def _relative_shard_path(shard_path: Path) -> Path:
     try:
-        with _VEHICLE_CONFIG_DATA_FILE.open(encoding="utf-8") as fh:
-            data = json.load(fh)
-        rows = _VEHICLE_CONFIGURATION_ADAPTER.validate_python(data)
+        return shard_path.relative_to(_VEHICLE_CONFIG_DATA_DIR)
+    except ValueError:
+        return shard_path
+
+
+def _load_vehicle_configuration_rows() -> list[VehicleConfigurationRow]:
+    if not _VEHICLE_CONFIG_DATA_DIR.is_dir():
+        LOGGER.warning(
+            "Could not load exact vehicle configurations: missing data dir %s",
+            _VEHICLE_CONFIG_DATA_DIR,
+        )
+        return []
+
+    rows: list[VehicleConfigurationRow] = []
+    seen_ids: dict[str, Path] = {}
+    for shard_path in sorted(_VEHICLE_CONFIG_DATA_DIR.rglob("*.json")):
+        try:
+            with shard_path.open(encoding="utf-8") as fh:
+                data = json.load(fh)
+        except (json.JSONDecodeError, PermissionError, OSError) as exc:
+            LOGGER.warning(
+                "Could not read exact vehicle configuration shard %s: %s",
+                _relative_shard_path(shard_path),
+                exc,
+            )
+            return []
+
+        if not isinstance(data, list):
+            LOGGER.warning(
+                "Exact vehicle configuration shard %s must contain a JSON array",
+                _relative_shard_path(shard_path),
+            )
+            return []
+
+        try:
+            shard_rows = _VEHICLE_CONFIGURATION_ADAPTER.validate_python(data)
+        except ValidationError as exc:
+            LOGGER.warning(
+                "Exact vehicle configuration shard %s failed validation: %s",
+                _relative_shard_path(shard_path),
+                exc,
+            )
+            return []
+
+        for row in shard_rows:
+            row_id = row["id"]
+            previous_shard = seen_ids.get(row_id)
+            if previous_shard is not None and previous_shard != shard_path:
+                LOGGER.warning(
+                    "Exact vehicle configuration id %s appears in multiple shards: %s and %s",
+                    row_id,
+                    _relative_shard_path(previous_shard),
+                    _relative_shard_path(shard_path),
+                )
+                return []
+            seen_ids.setdefault(row_id, shard_path)
+        rows.extend(shard_rows)
+
+    return rows
+
+
+def _load_vehicle_configurations_snapshot() -> list[VehicleConfiguration]:
+    rows = _load_vehicle_configuration_rows()
+    if not rows and not _VEHICLE_CONFIG_DATA_DIR.is_dir():
+        return []
+
+    try:
         configs = [_configuration_from_row(row) for row in rows]
         ensure_valid_vehicle_configurations(configs)
         ensure_valid_vehicle_configuration_source_evidence(configs)
         return configs
-    except (
-        FileNotFoundError,
-        json.JSONDecodeError,
-        PermissionError,
-        OSError,
-        ValidationError,
-        ValueError,
-    ) as exc:
+    except ValueError as exc:
         LOGGER.warning(
-            "Could not load exact vehicle configurations from %s: %s",
-            _VEHICLE_CONFIG_DATA_FILE,
+            "Could not validate exact vehicle configurations from %s: %s",
+            _VEHICLE_CONFIG_DATA_DIR,
             exc,
         )
         return []

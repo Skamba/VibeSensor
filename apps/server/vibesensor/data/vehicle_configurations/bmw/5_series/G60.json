@@ -1,0 +1,434 @@
+[
+  {
+    "id": "bmw-g60-520i-eu-2024-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G60",
+    "body_code": "G60",
+    "production_start_year": 2024,
+    "production_end_year": 2026,
+    "model_name": "5 Series (G60, 2024-2026)",
+    "variant_name": "520i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+        "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+        "legacy_research_sources:349959b1860e"
+      ],
+      "notes": "The official BMW 05/2023 launch material and the 03/2025 technical-specification PDF both confirm rear-wheel drive for the exact 520i configuration represented by this row.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+        "legacy_research_sources:349959b1860e"
+      ],
+      "notes": "The official BMW 05/2023 and 03/2025 technical-data sheets both list an 8-speed Steptronic transmission for the exact 520i. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic.",
+      "code": "ZF8HP",
+      "name": "8-speed Steptronic transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+          "legacy_research_sources:349959b1860e"
+        ],
+        "notes": "The official BMW 05/2023 and 03/2025 technical-data sheets list 0.640 as the top-gear ratio for the exact 520i.",
+        "value": 0.64
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+          "legacy_research_sources:349959b1860e"
+        ],
+        "notes": "The official BMW 05/2023 and 03/2025 technical-data sheets list the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact 520i.",
+        "value": [
+          5.25,
+          3.36,
+          2.172,
+          1.72,
+          1.316,
+          1.0,
+          0.822,
+          0.64
+        ]
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+          "legacy_research_sources:349959b1860e"
+        ],
+        "notes": "The official BMW 05/2023 and 03/2025 technical-data sheets list 3.077 as the final-drive ratio for the exact 520i.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+          "legacy_research_sources:349959b1860e"
+        ],
+        "notes": "The official BMW 05/2023 and 03/2025 technical-data sheets list 225/55 R18 as the standard tire package for the exact 520i.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+            "legacy_research_sources:349959b1860e"
+          ],
+          "notes": "The official BMW 05/2023 and 03/2025 technical-data sheets list 225/55 R18 as the standard tire package for the exact 520i.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "This pass directly revalidated the exact 520i core row from official BMW 05/2023 and 03/2025 technical-data sheets: rear-wheel drive, 8-speed Steptronic transmission wording, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.077, and a 225/55 R18 standard tire package. Those stable fields are now promoted row-specific instead of inheriting family defaults.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+          "legacy_research_sources:349959b1860e"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW 520i exact optional wheel/tire matrix beyond the standard 18-inch package",
+        "reason": "This pass directly revalidated the standard 225/55 R18 fitment, but it did not re-extract one BMW Germany wheel matrix strong enough to promote the optional 19/20/21-inch packages on this exact row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+          "legacy_research_sources:349959b1860e"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g60-i5-m60-xdrive-eu-2024-ss1-awd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G60",
+    "body_code": "G60",
+    "production_start_year": 2024,
+    "production_end_year": 2026,
+    "model_name": "5 Series (G60, 2024-2026)",
+    "variant_name": "i5 M60 xDrive",
+    "engine_code": "Electric",
+    "engine_name": "Electric Dual Motor",
+    "fuel_type": "EV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+        "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+      ],
+      "notes": "The official BMW launch press kit and 03/2025 technical-specification PDF confirm dual-motor xDrive all-wheel drive for the exact i5 M60 xDrive.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2025 technical-specification PDF lists a single-speed transmission for the exact i5 M60 xDrive.",
+      "code": "SS1",
+      "name": "Single-speed fixed gear (EV)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2025 technical-specification PDF lists a single-speed transmission for the exact i5 M60 xDrive. The repo keeps 1.0 as the canonical top-gear value for that single-speed EV mapping.",
+        "value": 1.0
+      },
+      "final_drive_front": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2025 technical-specification PDF lists 8.774 as the front overall-drive ratio for the exact i5 M60 xDrive.",
+        "value": 8.774
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2025 technical-specification PDF lists 9.374 as the rear overall-drive ratio for the exact i5 M60 xDrive.",
+        "value": 9.374
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2025 technical-specification PDF lists 245/45 R19 front and 275/40 R19 rear as the standard tire package for the exact i5 M60 xDrive.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 45.0,
+          "rim_in": 19.0
+        },
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2025 technical-specification PDF lists 245/45 R19 front and 275/40 R19 rear as the standard tire package for the exact i5 M60 xDrive.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+            "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+            "legacy_research_sources:0500c1e63e86",
+            "legacy_research_sources:142cdffd456d",
+            "legacy_research_sources:349959b1860e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:e6dcdf409dbe"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / BMW M model page with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+            "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+            "legacy_research_sources:0500c1e63e86",
+            "legacy_research_sources:142cdffd456d",
+            "legacy_research_sources:349959b1860e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:e6dcdf409dbe"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / BMW M model page with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "This pass directly revalidated the exact i5 M60 xDrive core row from the official BMW launch press kit and the 03/2025 technical-specification PDF: dual-motor xDrive AWD, single-speed transmission, front overall-drive ratio 8.774, rear overall-drive ratio 9.374, and a standard 245/45 R19 front + 275/40 R19 rear tire package. The schema can encode those axle-split reducer values and the standard staggered 19-inch setup, so they are now promoted row-specific instead of left as inherited family defaults.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW i5 M60 xDrive exact optional 20-inch and 21-inch wheel/tire matrix",
+        "reason": "This pass directly revalidated the standard staggered 19-inch package, but it did not recover one directly readable BMW Germany wheel matrix strong enough to promote the retained 20-inch and 21-inch option packages row-specific.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g60-i5-edrive40-eu-2024-ss1-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G60",
+    "body_code": "G60",
+    "production_start_year": 2024,
+    "production_end_year": 2026,
+    "model_name": "5 Series (G60, 2024-2026)",
+    "variant_name": "i5 eDrive40",
+    "engine_code": "Electric",
+    "engine_name": "Electric Single Motor",
+    "fuel_type": "EV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+        "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+      ],
+      "notes": "The official BMW launch press kit and 03/2025 technical-specification PDF confirm rear-wheel drive for the exact i5 eDrive40.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2025 technical-specification PDF lists a single-speed transmission for the exact i5 eDrive40.",
+      "code": "SS1",
+      "name": "Single-speed fixed gear (EV)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2025 technical-specification PDF lists a single-speed transmission for the exact i5 eDrive40. The repo keeps 1.0 as the canonical top-gear value for that single-speed EV mapping.",
+        "value": 1.0
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2025 technical-specification PDF lists 11.115 as the overall-drive ratio for the exact i5 eDrive40.",
+        "value": 11.115
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2025 technical-specification PDF lists 245/45 R19 as the standard tire package for the exact i5 eDrive40.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 45.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2025 technical-specification PDF lists 245/45 R19 as the standard tire package for the exact i5 eDrive40.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
+            "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+            "legacy_research_sources:0500c1e63e86",
+            "legacy_research_sources:142cdffd456d",
+            "legacy_research_sources:349959b1860e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:e6dcdf409dbe"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "rear": {
+            "width_mm": 285.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "This pass directly revalidated the exact i5 eDrive40 core row from the official BMW launch press kit and the 03/2025 technical-specification PDF: rear-wheel drive, single-speed transmission, overall-drive ratio 11.115, and a standard 245/45 R19 tire package. Those stable fields are now promoted row-specific instead of inheriting family defaults.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW i5 eDrive40 exact current wheel/tire matrix beyond the standard 19-inch package",
+        "reason": "This pass directly revalidated the standard 245/45 R19 fitment, but it did not independently re-extract one directly readable BMW Germany wheel matrix strong enough to freshly close the retained 21-inch staggered option or the rest of the current wheel matrix.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g60-5-series-launch-press-kit",
+          "bmw_pressclub_sources:g60-2025-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  }
+]

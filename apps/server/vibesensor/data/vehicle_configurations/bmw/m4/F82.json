@@ -1,0 +1,632 @@
+[
+  {
+    "id": "bmw-f82-m4-eu-2014-mt6-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F82",
+    "body_code": "F82",
+    "production_start_year": 2014,
+    "production_end_year": 2020,
+    "model_name": "M4 (F82, 2014-2020)",
+    "variant_name": "M4",
+    "engine_code": "S55",
+    "engine_name": "S55 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "value": 0.846,
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ],
+        "notes": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set."
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.462
+      },
+      "gear_ratios": {
+        "value": [
+          4.11,
+          2.315,
+          1.542,
+          1.179,
+          1.0,
+          0.846
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ],
+        "notes": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set."
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:7484e69ac570",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:eec306178221"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 255.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:7484e69ac570",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:eec306178221"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:7484e69ac570",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:eec306178221"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Performance 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 18 added official BMW 09/2018 technical-data evidence for the F82 M4 and M4 Competition showing 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with final drive 3.462. Production now promotes those exact top-gear values and full forward gear-ratio sets, replacing the prior mismatched top-gear defaults.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:7484e69ac570",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:accc520c8c58",
+          "legacy_research_sources:eec306178221"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
+        "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ]
+      },
+      {
+        "item": "M4 special-edition ratio variance handling",
+        "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f82-m4-eu-2014-dct7-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F82",
+    "body_code": "F82",
+    "production_start_year": 2014,
+    "production_end_year": 2020,
+    "model_name": "M4 (F82, 2014-2020)",
+    "variant_name": "M4",
+    "engine_code": "S55",
+    "engine_name": "S55 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed dual-clutch (M-DCT)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "value": 0.671,
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ],
+        "notes": "Official BMW 09/2018 technical data confirms the M4 M-DCT top-gear value and full forward gear-ratio set."
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.154
+      },
+      "gear_ratios": {
+        "value": [
+          4.806,
+          2.593,
+          1.701,
+          1.277,
+          1.0,
+          0.844,
+          0.671
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ],
+        "notes": "Official BMW 09/2018 technical data confirms the M4 M-DCT top-gear value and full forward gear-ratio set."
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:7484e69ac570",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:eec306178221"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 255.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:7484e69ac570",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:eec306178221"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:7484e69ac570",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:eec306178221"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Performance 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 18 added official BMW 09/2018 technical-data evidence for the F82 M4 and M4 Competition showing 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with final drive 3.462. Production now promotes those exact top-gear values and full forward gear-ratio sets, replacing the prior mismatched top-gear defaults.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:7484e69ac570",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:accc520c8c58",
+          "legacy_research_sources:eec306178221"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
+        "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ]
+      },
+      {
+        "item": "M4 special-edition ratio variance handling",
+        "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f82-m4-competition-eu-2014-mt6-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F82",
+    "body_code": "F82",
+    "production_start_year": 2014,
+    "production_end_year": 2020,
+    "model_name": "M4 (F82, 2014-2020)",
+    "variant_name": "M4 Competition",
+    "engine_code": "S55",
+    "engine_name": "S55 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "value": 0.846,
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ],
+        "notes": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set."
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.462
+      },
+      "gear_ratios": {
+        "value": [
+          4.11,
+          2.315,
+          1.542,
+          1.179,
+          1.0,
+          0.846
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ],
+        "notes": "Official BMW 09/2018 technical data confirms the M4 manual top-gear value and full forward gear-ratio set."
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:7484e69ac570",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:eec306178221"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 255.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:7484e69ac570",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:eec306178221"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:7484e69ac570",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:eec306178221"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Performance 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 18 added official BMW 09/2018 technical-data evidence for the F82 M4 and M4 Competition showing 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with final drive 3.462. Production now promotes those exact top-gear values and full forward gear-ratio sets, replacing the prior mismatched top-gear defaults.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:7484e69ac570",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:accc520c8c58",
+          "legacy_research_sources:eec306178221"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
+        "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ]
+      },
+      {
+        "item": "M4 special-edition ratio variance handling",
+        "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f82-m4-competition-eu-2014-dct7-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F82",
+    "body_code": "F82",
+    "production_start_year": 2014,
+    "production_end_year": 2020,
+    "model_name": "M4 (F82, 2014-2020)",
+    "variant_name": "M4 Competition",
+    "engine_code": "S55",
+    "engine_name": "S55 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed dual-clutch (M-DCT)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "value": 0.671,
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ],
+        "notes": "Official BMW 09/2018 technical data confirms the M4 M-DCT top-gear value and full forward gear-ratio set."
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.154
+      },
+      "gear_ratios": {
+        "value": [
+          4.806,
+          2.593,
+          1.701,
+          1.277,
+          1.0,
+          0.844,
+          0.671
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ],
+        "notes": "Official BMW 09/2018 technical data confirms the M4 M-DCT top-gear value and full forward gear-ratio set."
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:7484e69ac570",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:eec306178221"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 255.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:7484e69ac570",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:eec306178221"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:7484e69ac570",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:eec306178221"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Performance 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 18 added official BMW 09/2018 technical-data evidence for the F82 M4 and M4 Competition showing 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671 with final drive 3.462. Production now promotes those exact top-gear values and full forward gear-ratio sets, replacing the prior mismatched top-gear defaults.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:7484e69ac570",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:accc520c8c58",
+          "legacy_research_sources:eec306178221"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW M4 (F82) one exact ratio package across all lifecycle updates",
+        "reason": "Wave 18 confirms 09/2018 ACEA mapping, but this pass did not recover every pre-LCI and late-run sheet to prove no lifecycle ratio change.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ]
+      },
+      {
+        "item": "M4 special-edition ratio variance handling",
+        "reason": "Official sources include additional derivatives such as GTS states and this row intentionally keeps only base M4 and M4 Competition mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:13ea013ef134",
+          "legacy_research_sources:accc520c8c58"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

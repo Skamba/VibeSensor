@@ -1,0 +1,865 @@
+[
+  {
+    "id": "bmw-g70-i7-edrive50-eu-2022-ss1-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G70",
+    "body_code": "G70",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "7 Series (G70, 2022-2026)",
+    "variant_name": "i7 eDrive50",
+    "engine_code": "Electric",
+    "engine_name": "Electric Single Motor",
+    "fuel_type": "EV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:0fcfffa568a6",
+        "legacy_research_sources:386e9ba97f8b",
+        "legacy_research_sources:43771d65c9e5",
+        "legacy_research_sources:5a5c196c955b"
+      ],
+      "notes": "BMW's 04/2022 G70 launch article states that Europe launches the new 7 Series initially with the i7, and the current BMW Germany technical-data page plus Germany-market catalog attachments identify the exact i7 eDrive50 as Hinterradantrieb. That is sufficient to retime the row to a 2022 Europe start and confirm RWD for the exact trim.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:386e9ba97f8b",
+        "legacy_research_sources:43771d65c9e5",
+        "legacy_research_sources:5a5c196c955b"
+      ],
+      "notes": "The current BMW Germany technical-data page and two Germany-market catalog attachments all describe the exact i7 eDrive50 as a 1-Gang automatic EV drivetrain. The repo maps that directly to the canonical SS1 transmission code.",
+      "code": "SS1",
+      "name": "Single-speed fixed gear (EV)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:386e9ba97f8b",
+          "legacy_research_sources:43771d65c9e5",
+          "legacy_research_sources:5a5c196c955b"
+        ],
+        "notes": "BMW publishes the exact i7 eDrive50 as a single-speed electric drivetrain. The canonical ratio model represents that fixed single forward ratio as 1.0.",
+        "value": 1.0
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+        "value": 11.1
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:43771d65c9e5",
+          "legacy_research_sources:5a5c196c955b",
+          "legacy_research_sources:e4fef97ece37"
+        ],
+        "notes": "BMW's Germany-market catalog attachments and current Germany price list all list the exact i7 eDrive50 with 245/50 R19 standard tires.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 50.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:43771d65c9e5",
+            "legacy_research_sources:5a5c196c955b",
+            "legacy_research_sources:e4fef97ece37"
+          ],
+          "notes": "BMW's Germany-market catalog attachments and current Germany price list all list the exact i7 eDrive50 with 245/50 R19 standard tires.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Direct validation of BMW's 04/2022 G70 launch article, the current BMW Germany technical-data page, Germany-market catalog attachments, and the current BMW Germany price list now confirms the exact i7 eDrive50 as the Europe-launch rear-wheel-drive 1-Gang EV with 245/50 R19 standard tires, so this row is retimed from 2023 to a 2022 Europe start.",
+        "evidence_refs": [
+          "legacy_research_sources:0fcfffa568a6",
+          "legacy_research_sources:386e9ba97f8b",
+          "legacy_research_sources:43771d65c9e5",
+          "legacy_research_sources:5a5c196c955b",
+          "legacy_research_sources:e4fef97ece37"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact i7 eDrive50 numeric reduction ratio and overall-drive value",
+        "reason": "The directly revalidated BMW launch material, current technical-data page, catalog attachments, and price list confirm the exact i7 eDrive50 as the rear-wheel-drive 1-Gang EV with 245/50 R19 standard tires, but they still do not publish a numeric reduction ratio or overall-drive value for this trim.",
+        "evidence_refs": [
+          "legacy_research_sources:0fcfffa568a6",
+          "legacy_research_sources:386e9ba97f8b",
+          "legacy_research_sources:43771d65c9e5",
+          "legacy_research_sources:5a5c196c955b",
+          "legacy_research_sources:e4fef97ece37"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g70-740d-xdrive-eu-2023-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G70",
+    "body_code": "G70",
+    "production_start_year": 2023,
+    "production_end_year": 2026,
+    "model_name": "7 Series (G70, 2023-2026)",
+    "variant_name": "740d xDrive",
+    "engine_code": "B57",
+    "engine_name": "B57 3.0L I6 Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:0fcfffa568a6",
+        "legacy_research_sources:386e9ba97f8b",
+        "legacy_research_sources:41656ee717a8"
+      ],
+      "notes": "BMW's 04/2022 G70 launch article, 09/2022 additional-variants article, and the current BMW Germany technical-data page all identify the exact 740d xDrive as the Europe-market diesel 7 Series with BMW xDrive all-wheel drive.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:386e9ba97f8b",
+        "legacy_research_sources:41656ee717a8",
+        "legacy_research_sources:e4fef97ece37"
+      ],
+      "notes": "The current BMW Germany technical-data page exposes the exact 740d xDrive with eight forward gears, while BMW's additional-variants article and Germany-market price list describe the diesel mild-hybrid drivetrain as using an eight-speed Steptronic transmission. The repo normalizes that row-specific BMW wording to the canonical ZF8HP label.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.64
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 2.813
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:e4fef97ece37"
+        ],
+        "notes": "The official BMW Germany 7 Series price list lists the exact 740d xDrive with 19-inch Doppelspeiche 903 wheels in 8.5J x 19 and 245/50 R19 tires as the standard package.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 50.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:e4fef97ece37"
+          ],
+          "notes": "The official BMW Germany 7 Series price list lists the exact 740d xDrive with 19-inch Doppelspeiche 903 wheels in 8.5J x 19 and 245/50 R19 tires as the standard package.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0fcfffa568a6",
+            "legacy_research_sources:2b258af30ac4",
+            "legacy_research_sources:2ced3d6e2dff",
+            "legacy_research_sources:386e9ba97f8b",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:41656ee717a8",
+            "legacy_research_sources:43771d65c9e5",
+            "legacy_research_sources:5a5c196c955b",
+            "legacy_research_sources:8ca59a933c62",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:d795879ff7ec",
+            "legacy_research_sources:d9e8060997ac",
+            "legacy_research_sources:dcccf9a2f873",
+            "legacy_research_sources:e4fef97ece37",
+            "legacy_research_sources:f31f1ea854da"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "21\" package"
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0fcfffa568a6",
+            "legacy_research_sources:2b258af30ac4",
+            "legacy_research_sources:2ced3d6e2dff",
+            "legacy_research_sources:386e9ba97f8b",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:41656ee717a8",
+            "legacy_research_sources:43771d65c9e5",
+            "legacy_research_sources:5a5c196c955b",
+            "legacy_research_sources:8ca59a933c62",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:d795879ff7ec",
+            "legacy_research_sources:d9e8060997ac",
+            "legacy_research_sources:dcccf9a2f873",
+            "legacy_research_sources:e4fef97ece37",
+            "legacy_research_sources:f31f1ea854da"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "22\" package"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Direct validation of BMW's G70 launch and additional-variants articles, the current BMW Germany technical-data page, and the current BMW Germany 7 Series price list now confirms the exact 740d xDrive as the Europe-market AWD diesel variant with eight-speed Steptronic transmission wording and 245/50 R19 standard tires.",
+        "evidence_refs": [
+          "legacy_research_sources:0fcfffa568a6",
+          "legacy_research_sources:386e9ba97f8b",
+          "legacy_research_sources:41656ee717a8",
+          "legacy_research_sources:e4fef97ece37"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact 740d xDrive top-gear and final-drive ratios",
+        "reason": "The directly revalidated BMW launch/update articles, current technical-data page, and price list do not publish extractable numeric top-gear or final-drive values for the exact 740d xDrive row.",
+        "evidence_refs": [
+          "legacy_research_sources:0fcfffa568a6",
+          "legacy_research_sources:386e9ba97f8b",
+          "legacy_research_sources:41656ee717a8",
+          "legacy_research_sources:e4fef97ece37"
+        ]
+      },
+      {
+        "item": "Exact 740d xDrive optional wheel and tire matrix",
+        "reason": "This pass directly revalidated the standard 19-inch 245/50 R19 package, but it did not recover a full exact BMW wheel matrix for the row's retained 21-inch and 22-inch option entries.",
+        "evidence_refs": [
+          "legacy_research_sources:e4fef97ece37"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g70-750e-xdrive-eu-2023-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G70",
+    "body_code": "G70",
+    "production_start_year": 2023,
+    "production_end_year": 2026,
+    "model_name": "7 Series (G70, 2023-2026)",
+    "variant_name": "750e xDrive",
+    "engine_code": "B58",
+    "engine_name": "B58 3.0L I6 Turbo PHEV",
+    "fuel_type": "PHEV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:0fcfffa568a6",
+        "legacy_research_sources:386e9ba97f8b",
+        "legacy_research_sources:41656ee717a8"
+      ],
+      "notes": "BMW's 04/2022 G70 launch article, 09/2022 additional-variants article, and the current BMW Germany technical-data page all identify the exact 750e xDrive as the Europe-market plug-in-hybrid 7 Series with BMW xDrive all-wheel drive.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:386e9ba97f8b",
+        "legacy_research_sources:41656ee717a8",
+        "legacy_research_sources:e4fef97ece37"
+      ],
+      "notes": "The current BMW Germany technical-data page exposes the exact 750e xDrive with eight forward gears, while BMW's additional-variants article and Germany-market price list describe the plug-in hybrid drivetrain as using an eight-speed Steptronic Sport transmission. The repo normalizes that row-specific BMW wording to the canonical ZF8HP label.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.64
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 2.813
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:e4fef97ece37"
+        ],
+        "notes": "The official BMW Germany 7 Series price list lists the exact 750e xDrive with 19-inch Aerodynamikräder 904 Bicolor wheels in 8.5J x 19 and 245/50 R19 tires as the standard package.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 50.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:e4fef97ece37"
+          ],
+          "notes": "The official BMW Germany 7 Series price list lists the exact 750e xDrive with 19-inch Aerodynamikräder 904 Bicolor wheels in 8.5J x 19 and 245/50 R19 tires as the standard package.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0fcfffa568a6",
+            "legacy_research_sources:2b258af30ac4",
+            "legacy_research_sources:2ced3d6e2dff",
+            "legacy_research_sources:386e9ba97f8b",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:41656ee717a8",
+            "legacy_research_sources:43771d65c9e5",
+            "legacy_research_sources:5a5c196c955b",
+            "legacy_research_sources:8ca59a933c62",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:d795879ff7ec",
+            "legacy_research_sources:d9e8060997ac",
+            "legacy_research_sources:dcccf9a2f873",
+            "legacy_research_sources:e4fef97ece37",
+            "legacy_research_sources:f31f1ea854da"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "21\" package"
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0fcfffa568a6",
+            "legacy_research_sources:2b258af30ac4",
+            "legacy_research_sources:2ced3d6e2dff",
+            "legacy_research_sources:386e9ba97f8b",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:41656ee717a8",
+            "legacy_research_sources:43771d65c9e5",
+            "legacy_research_sources:5a5c196c955b",
+            "legacy_research_sources:8ca59a933c62",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:d795879ff7ec",
+            "legacy_research_sources:d9e8060997ac",
+            "legacy_research_sources:dcccf9a2f873",
+            "legacy_research_sources:e4fef97ece37",
+            "legacy_research_sources:f31f1ea854da"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "22\" package"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Direct validation of BMW's G70 launch and additional-variants articles, the current BMW Germany technical-data page, and the current BMW Germany 7 Series price list now confirms the exact 750e xDrive as the Europe-market AWD plug-in hybrid variant with eight-speed Steptronic Sport transmission wording and 245/50 R19 standard tires.",
+        "evidence_refs": [
+          "legacy_research_sources:0fcfffa568a6",
+          "legacy_research_sources:386e9ba97f8b",
+          "legacy_research_sources:41656ee717a8",
+          "legacy_research_sources:e4fef97ece37"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact 750e xDrive top-gear and final-drive ratios",
+        "reason": "The directly revalidated BMW launch/update articles, current technical-data page, and price list do not publish extractable numeric top-gear or final-drive values for the exact 750e xDrive row.",
+        "evidence_refs": [
+          "legacy_research_sources:0fcfffa568a6",
+          "legacy_research_sources:386e9ba97f8b",
+          "legacy_research_sources:41656ee717a8",
+          "legacy_research_sources:e4fef97ece37"
+        ]
+      },
+      {
+        "item": "Exact 750e xDrive optional wheel and tire matrix",
+        "reason": "This pass directly revalidated the standard 19-inch 245/50 R19 package, but it did not recover a full exact BMW wheel matrix for the row's retained 21-inch and 22-inch option entries.",
+        "evidence_refs": [
+          "legacy_research_sources:e4fef97ece37"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g70-m760e-xdrive-eu-2023-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G70",
+    "body_code": "G70",
+    "production_start_year": 2023,
+    "production_end_year": 2026,
+    "model_name": "7 Series (G70, 2023-2026)",
+    "variant_name": "M760e xDrive",
+    "engine_code": "B58",
+    "engine_name": "B58 3.0L I6 Turbo PHEV",
+    "fuel_type": "PHEV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:0fcfffa568a6",
+        "legacy_research_sources:386e9ba97f8b",
+        "legacy_research_sources:41656ee717a8"
+      ],
+      "notes": "BMW's 04/2022 G70 launch article, 09/2022 additional-variants article, and the current BMW Germany technical-data page all identify the exact M760e xDrive as the Europe-market BMW M plug-in-hybrid 7 Series with BMW xDrive all-wheel drive.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:386e9ba97f8b",
+        "legacy_research_sources:41656ee717a8",
+        "legacy_research_sources:e4fef97ece37"
+      ],
+      "notes": "The current BMW Germany technical-data page exposes the exact M760e xDrive with eight forward gears, while BMW's additional-variants article and Germany-market price list describe the plug-in hybrid drivetrain as using an eight-speed Steptronic Sport transmission. The repo normalizes that row-specific BMW wording to the canonical ZF8HP label.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / BMW M press material with High confidence.",
+        "value": 0.64
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / BMW M press material with High confidence.",
+        "value": 2.813
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / BMW M press material with High confidence.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:e4fef97ece37"
+        ],
+        "notes": "The official BMW Germany 7 Series price list lists the exact M760e xDrive with 21-inch M Aerodynamikräder 909 M wheels in staggered 9J x 21 front with 255/40 R21 tires and 10.5J x 21 rear with 285/35 R21 tires as the standard package.",
+        "front": {
+          "width_mm": 255.0,
+          "aspect_pct": 40.0,
+          "rim_in": 21.0
+        },
+        "rear": {
+          "width_mm": 285.0,
+          "aspect_pct": 35.0,
+          "rim_in": 21.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:e4fef97ece37"
+          ],
+          "notes": "The official BMW Germany 7 Series price list lists the exact M760e xDrive with 21-inch M Aerodynamikräder 909 M wheels in staggered 9J x 21 front with 255/40 R21 tires and 10.5J x 21 rear with 285/35 R21 tires as the standard package.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "rear": {
+            "width_mm": 285.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 21\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0fcfffa568a6",
+            "legacy_research_sources:2b258af30ac4",
+            "legacy_research_sources:2ced3d6e2dff",
+            "legacy_research_sources:386e9ba97f8b",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:41656ee717a8",
+            "legacy_research_sources:43771d65c9e5",
+            "legacy_research_sources:5a5c196c955b",
+            "legacy_research_sources:8ca59a933c62",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:d795879ff7ec",
+            "legacy_research_sources:d9e8060997ac",
+            "legacy_research_sources:dcccf9a2f873",
+            "legacy_research_sources:e4fef97ece37",
+            "legacy_research_sources:f31f1ea854da"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / BMW M press material with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "21\" package"
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0fcfffa568a6",
+            "legacy_research_sources:2b258af30ac4",
+            "legacy_research_sources:2ced3d6e2dff",
+            "legacy_research_sources:386e9ba97f8b",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:41656ee717a8",
+            "legacy_research_sources:43771d65c9e5",
+            "legacy_research_sources:5a5c196c955b",
+            "legacy_research_sources:8ca59a933c62",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:d795879ff7ec",
+            "legacy_research_sources:d9e8060997ac",
+            "legacy_research_sources:dcccf9a2f873",
+            "legacy_research_sources:e4fef97ece37",
+            "legacy_research_sources:f31f1ea854da"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release / BMW M press material with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "22\" package"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Direct validation of BMW's G70 launch and additional-variants articles, the current BMW Germany technical-data page, and the current BMW Germany 7 Series price list now confirms the exact M760e xDrive as the Europe-market AWD BMW M plug-in hybrid with eight-speed Steptronic Sport transmission wording and staggered 255/40 R21 front plus 285/35 R21 rear standard tires.",
+        "evidence_refs": [
+          "legacy_research_sources:0fcfffa568a6",
+          "legacy_research_sources:386e9ba97f8b",
+          "legacy_research_sources:41656ee717a8",
+          "legacy_research_sources:e4fef97ece37"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact M760e xDrive top-gear and final-drive ratios",
+        "reason": "The directly revalidated BMW launch/update articles, current technical-data page, and price list do not publish extractable numeric top-gear or final-drive values for the exact M760e xDrive row.",
+        "evidence_refs": [
+          "legacy_research_sources:0fcfffa568a6",
+          "legacy_research_sources:386e9ba97f8b",
+          "legacy_research_sources:41656ee717a8",
+          "legacy_research_sources:e4fef97ece37"
+        ]
+      },
+      {
+        "item": "Exact M760e xDrive optional wheel and tire matrix beyond the standard 21-inch staggered package",
+        "reason": "This pass directly revalidated the standard staggered 21-inch tire package, but it did not recover a full exact BMW wheel matrix for the row's retained optional entries.",
+        "evidence_refs": [
+          "legacy_research_sources:e4fef97ece37"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g70-i7-m70-xdrive-eu-2023-ss1-awd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G70",
+    "body_code": "G70",
+    "production_start_year": 2023,
+    "production_end_year": 2026,
+    "model_name": "7 Series (G70, 2023-2026)",
+    "variant_name": "i7 M70 xDrive",
+    "engine_code": "Electric",
+    "engine_name": "Electric Dual Motor",
+    "fuel_type": "EV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:8ca59a933c62",
+        "legacy_research_sources:d9e8060997ac",
+        "legacy_research_sources:f31f1ea854da"
+      ],
+      "notes": "BMW's i7 M70 xDrive launch article, the exact Germany-market technical-data PDF, and the current BMW Germany M 7 Series technical-data page all identify this row as the dual-motor all-electric xDrive variant, confirming AWD for the exact trim.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:8ca59a933c62",
+        "legacy_research_sources:d9e8060997ac",
+        "legacy_research_sources:f31f1ea854da"
+      ],
+      "notes": "BMW's i7 M70 xDrive launch material, Germany-market technical-data PDF, and current BMW Germany M 7 Series technical-data page all describe the exact trim as a 1-Gang automatic EV drivetrain. The repo maps that directly to the canonical SS1 transmission code.",
+      "code": "SS1",
+      "name": "Single-speed fixed gear (EV)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:8ca59a933c62",
+          "legacy_research_sources:d9e8060997ac",
+          "legacy_research_sources:f31f1ea854da"
+        ],
+        "notes": "BMW publishes the exact i7 M70 xDrive as a single-speed electric drivetrain. The canonical ratio model represents that fixed single forward ratio as 1.0.",
+        "value": 1.0
+      },
+      "final_drive_front": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:8ca59a933c62"
+        ],
+        "notes": "The exact BMW Germany technical-data PDF for the i7 M70 xDrive publishes a front overall ratio of 8.774.",
+        "value": 8.774
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:8ca59a933c62"
+        ],
+        "notes": "The exact BMW Germany technical-data PDF for the i7 M70 xDrive publishes a rear overall ratio of 8.765.",
+        "value": 8.765
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:8ca59a933c62",
+          "legacy_research_sources:e4fef97ece37"
+        ],
+        "notes": "BMW's Germany-market technical-data PDF and current Germany price list both list the exact i7 M70 xDrive with a staggered standard package: 255/40 R21 front and 285/35 R21 rear.",
+        "front": {
+          "width_mm": 255.0,
+          "aspect_pct": 40.0,
+          "rim_in": 21.0
+        },
+        "rear": {
+          "width_mm": 285.0,
+          "aspect_pct": 35.0,
+          "rim_in": 21.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:8ca59a933c62",
+            "legacy_research_sources:e4fef97ece37"
+          ],
+          "notes": "BMW's Germany-market technical-data PDF and current Germany price list both list the exact i7 M70 xDrive with a staggered standard package: 255/40 R21 front and 285/35 R21 rear.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "rear": {
+            "width_mm": 285.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 21\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0fcfffa568a6",
+            "legacy_research_sources:2b258af30ac4",
+            "legacy_research_sources:2ced3d6e2dff",
+            "legacy_research_sources:386e9ba97f8b",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:41656ee717a8",
+            "legacy_research_sources:43771d65c9e5",
+            "legacy_research_sources:5a5c196c955b",
+            "legacy_research_sources:8ca59a933c62",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:d795879ff7ec",
+            "legacy_research_sources:d9e8060997ac",
+            "legacy_research_sources:dcccf9a2f873",
+            "legacy_research_sources:e4fef97ece37",
+            "legacy_research_sources:f31f1ea854da"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / BMW M model page with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "21\" package"
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0fcfffa568a6",
+            "legacy_research_sources:2b258af30ac4",
+            "legacy_research_sources:2ced3d6e2dff",
+            "legacy_research_sources:386e9ba97f8b",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:41656ee717a8",
+            "legacy_research_sources:43771d65c9e5",
+            "legacy_research_sources:5a5c196c955b",
+            "legacy_research_sources:8ca59a933c62",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:d795879ff7ec",
+            "legacy_research_sources:d9e8060997ac",
+            "legacy_research_sources:dcccf9a2f873",
+            "legacy_research_sources:e4fef97ece37",
+            "legacy_research_sources:f31f1ea854da"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / BMW M model page with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "22\" package"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Direct validation of BMW's i7 M70 xDrive launch article, the exact Germany-market technical-data PDF, the current BMW Germany M 7 Series technical-data page, and the current BMW Germany price list now confirms the exact trim as the AWD dual-motor EV with a 1-Gang drivetrain, front overall ratio 8.774, rear overall ratio 8.765, and staggered 255/40 R21 front plus 285/35 R21 rear standard tires.",
+        "evidence_refs": [
+          "legacy_research_sources:8ca59a933c62",
+          "legacy_research_sources:d9e8060997ac",
+          "legacy_research_sources:e4fef97ece37",
+          "legacy_research_sources:f31f1ea854da"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact i7 M70 xDrive optional wheel and tire matrix beyond the standard 21-inch staggered package",
+        "reason": "This pass directly revalidated the standard staggered 21-inch tire package and confirmed the nearby 20-inch staggered package is not applicable to the i7 M70 xDrive, but it did not recover a full exact BMW matrix for the row's retained optional entries.",
+        "evidence_refs": [
+          "legacy_research_sources:8ca59a933c62",
+          "legacy_research_sources:d9e8060997ac",
+          "legacy_research_sources:e4fef97ece37",
+          "legacy_research_sources:f31f1ea854da"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  }
+]

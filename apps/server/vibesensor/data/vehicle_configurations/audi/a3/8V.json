@@ -1,0 +1,2062 @@
+[
+  {
+    "id": "audi-8v-1-6-tdi-eu-2013-mt6-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "1.6 TDI",
+    "engine_code": "1.6L",
+    "engine_name": "1.6L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8v-1-6-tdi-eu-2013-dct7-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "1.6 TDI",
+    "engine_code": "1.6L",
+    "engine_name": "1.6L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DQ381)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+        "value": 4.769
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8v-2-0-tdi-eu-2013-mt6-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "2.0 TDI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8v-2-0-tdi-eu-2013-dct7-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "2.0 TDI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DQ381)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 4.769
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8v-2-0-tdi-quattro-eu-2013-mt6-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "2.0 TDI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.462
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8v-2-0-tdi-quattro-eu-2013-dct7-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "2.0 TDI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DQ381)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 4.769
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 4.769
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8v-30-tfsi-eu-2013-mt6-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "30 TFSI",
+    "engine_code": "1.0L",
+    "engine_name": "1.0L I3 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8v-30-tfsi-eu-2013-dct7-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "30 TFSI",
+    "engine_code": "1.0L",
+    "engine_name": "1.0L I3 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DQ381)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 4.769
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8v-35-tfsi-eu-2013-mt6-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "35 TFSI",
+    "engine_code": "1.5L",
+    "engine_name": "1.5L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8v-35-tfsi-eu-2013-dct7-fwd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "35 TFSI",
+    "engine_code": "1.5L",
+    "engine_name": "1.5L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DQ381)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+        "value": 4.769
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8v-40-tfsi-quattro-eu-2013-mt6-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "40 TFSI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8v-40-tfsi-quattro-eu-2013-dct7-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2013,
+    "production_end_year": 2020,
+    "model_name": "A3 (8V, 2013-2020)",
+    "variant_name": "40 TFSI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DQ381)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 4.769
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 4.769
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9f75939b3958",
+            "legacy_research_sources:c695158c5f25"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
+        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      },
+      {
+        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
+        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9f75939b3958",
+          "legacy_research_sources:c695158c5f25"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]
