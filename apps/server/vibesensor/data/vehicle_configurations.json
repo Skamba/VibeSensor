@@ -10327,9 +10327,9 @@
     "market": "EU",
     "model_code": "4M",
     "body_code": "4M",
-    "production_start_year": 2016,
+    "production_start_year": 2024,
     "production_end_year": 2026,
-    "model_name": "Q7 (4M, 2016-2026)",
+    "model_name": "Q7 (4M, 2024-2026)",
     "variant_name": "45 TFSI",
     "engine_code": "2.0L",
     "engine_name": "2.0L I4 TFSI Turbo",
@@ -10842,249 +10842,219 @@
     "engine_name": "3.0L V6 TFSI Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:490c5b8fd0e9",
-        "legacy_research_sources:62c1bbb53e87",
-        "legacy_research_sources:ec1f2b5d8fc4",
-        "legacy_research_sources:fc63799e6f4d"
+        "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "Official Audi 2024 and 2026 technical-data PDFs consistently describe the exact facelift-era Q7 55 TFSI / TFSI quattro 250 kW state as permanent quattro all-wheel drive with self-locking center differential.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+        "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
+      ],
+      "notes": "Official Audi 2024 and 2026 technical-data PDFs print 8-speed tiptronic wording for the exact facelift-era Q7 petrol row. The repo keeps ZF8HP as the canonical automatic-family code for that official tiptronic mapping.",
       "code": "ZF8HP",
       "name": "8-speed tiptronic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2024 and 2026 technical-data PDFs consistently list 0.640 as the eighth-gear ratio for the exact facelift-era Q7 petrol row.",
+        "value": 0.640
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2024 and 2026 technical-data PDFs consistently list the full forward gear-ratio set for the exact facelift-era Q7 petrol row.",
+        "value": [
+          5.0,
+          3.2,
+          2.143,
+          1.72,
+          1.313,
+          1.0,
+          0.823,
+          0.64
+        ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.333
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2024 and 2026 technical-data PDFs consistently publish 3.204 as the exact final-drive value for the facelift-era Q7 petrol row. The repo duplicates that single official value into the front field because Audi's printed final-drive line includes an auxiliary trailing slot (1.000 or -) that the schema does not model separately.",
+        "value": 3.204
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.333
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2024 and 2026 technical-data PDFs consistently publish 3.204 as the exact final-drive value for the facelift-era Q7 petrol row. The repo duplicates that single official value into the rear field because Audi's printed final-drive line includes an auxiliary trailing slot (1.000 or -) that the schema does not model separately.",
+        "value": 3.204
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:29114921acdf",
-          "legacy_research_sources:2b9d74e8ab56",
-          "legacy_research_sources:490c5b8fd0e9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:62c1bbb53e87",
-          "legacy_research_sources:63fd9d7843ad",
-          "legacy_research_sources:8a73434aa4c5",
-          "legacy_research_sources:b248c52777b2",
-          "legacy_research_sources:e6c066ac31ae",
-          "legacy_research_sources:ec1f2b5d8fc4",
-          "legacy_research_sources:fc63799e6f4d"
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-revised-2024-release",
+          "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Official Audi 2024 and 2026 technical-data PDFs list 255/60 R18 on 8J x 18 wheels as the basic setup for the exact facelift-era Q7 petrol row. Official 2024 launch and 2026 Germany price-list material meanwhile show 19-inch wheels as the sales-standard V6 fitment, so treat this 18-inch value as the exact basic/homologation baseline rather than one universally standard retail package.",
         "front": {
           "width_mm": 255.0,
-          "aspect_pct": 50.0,
-          "rim_in": 20.0
+          "aspect_pct": 60.0,
+          "rim_in": 18.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:29114921acdf",
-            "legacy_research_sources:2b9d74e8ab56",
-            "legacy_research_sources:490c5b8fd0e9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:62c1bbb53e87",
-            "legacy_research_sources:63fd9d7843ad",
-            "legacy_research_sources:8a73434aa4c5",
-            "legacy_research_sources:b248c52777b2",
-            "legacy_research_sources:e6c066ac31ae",
-            "legacy_research_sources:ec1f2b5d8fc4",
-            "legacy_research_sources:fc63799e6f4d"
+            "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+            "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+            "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Official Audi 2024 and 2026 technical-data PDFs list this as the basic wheel/tire setup for the exact facelift-era Q7 petrol row.",
           "front": {
             "width_mm": 255.0,
-            "aspect_pct": 50.0,
+            "aspect_pct": 60.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Basic 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "audi_mediacenter_sources:4m-q7-revised-2024-release",
+            "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
+          ],
+          "notes": "Official Audi 2024 launch material and the 2026 Germany price list show a square 19-inch sales fitment for the regular Q7 petrol row.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 55.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Square 19\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
+          ],
+          "notes": "The official Audi Germany MY2026 price list lists this square 20-inch summer package for the regular Q7 petrol row.",
+          "front": {
+            "width_mm": 285.0,
+            "aspect_pct": 45.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
+          "name": "Square 20\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:29114921acdf",
-            "legacy_research_sources:2b9d74e8ab56",
-            "legacy_research_sources:490c5b8fd0e9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:62c1bbb53e87",
-            "legacy_research_sources:63fd9d7843ad",
-            "legacy_research_sources:8a73434aa4c5",
-            "legacy_research_sources:b248c52777b2",
-            "legacy_research_sources:e6c066ac31ae",
-            "legacy_research_sources:ec1f2b5d8fc4",
-            "legacy_research_sources:fc63799e6f4d"
+            "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official Audi Germany MY2026 price list lists this square 21-inch summer package for the regular Q7 petrol row.",
           "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 45.0,
+            "width_mm": 285.0,
+            "aspect_pct": 40.0,
             "rim_in": 21.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport 21\""
+          "name": "Square 21\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:29114921acdf",
-            "legacy_research_sources:2b9d74e8ab56",
-            "legacy_research_sources:490c5b8fd0e9",
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:62c1bbb53e87",
-            "legacy_research_sources:63fd9d7843ad",
-            "legacy_research_sources:8a73434aa4c5",
-            "legacy_research_sources:b248c52777b2",
-            "legacy_research_sources:e6c066ac31ae",
-            "legacy_research_sources:ec1f2b5d8fc4",
-            "legacy_research_sources:fc63799e6f4d"
+            "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official Audi Germany MY2026 price list lists this square 22-inch summer package for the regular Q7 petrol row.",
           "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
+            "width_mm": 285.0,
+            "aspect_pct": 35.0,
             "rim_in": 22.0
           },
           "default_axle_for_speed": "rear",
-          "name": "S line 22\""
+          "name": "Square 22\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Official Audi Germany-market technical-data sheets now confirm the exact Q7 55 TFSI e quattro mapping for the current facelift-era configuration: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and base tire 255/55 R19. This pass also adds exact current non-PHEV Q7 55 TFSI quattro evidence from official Germany-market material: permanent quattro AWD, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, and a checked 5-seat basic tire 255/60 R18. Wave 14 checks the exact 45 TFSI quattro target and finds that the sampled Germany-market launch/current Q7 material resolves the petrol SUV to 55 TFSI quattro / 250 kW instead, with no recovered exact Germany 45 TFSI quattro technical-data sheet. The broad Q7 row remains unchanged because this pass did not prove the same values across the full 2016-2026 span or recover one production-safe tire baseline and gearbox-family mapping for all represented non-PHEV and PHEV variants.",
+        "note": "Official Audi facelift-era material now resolves the exact Q7 55 TFSI quattro / TFSI quattro 250 kW petrol row across the 2024-2026 slice: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, and a published final-drive value of 3.204. The exact technical-data PDFs keep 255/60 R18 on 8J x 18 as the basic setup, while the official 2024 launch release and 2026 Germany price list show current sales equipment stepping through square 19/20/21/22-inch packages with no recovered staggered regular-Q7 package. This row is therefore narrowed to the exact facelift-era state instead of projecting those values back across the earlier 2016-2023 phase.",
         "evidence_refs": [
-          "legacy_research_sources:29114921acdf",
-          "legacy_research_sources:2b9d74e8ab56",
-          "legacy_research_sources:490c5b8fd0e9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:62c1bbb53e87",
-          "legacy_research_sources:63fd9d7843ad",
-          "legacy_research_sources:8a73434aa4c5",
-          "legacy_research_sources:b248c52777b2",
-          "legacy_research_sources:e6c066ac31ae",
-          "legacy_research_sources:ec1f2b5d8fc4",
-          "legacy_research_sources:fc63799e6f4d"
+          "audi_mediacenter_sources:4m-q7-revised-2024-release",
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "Audi Q7 55 TFSI e quattro production-data applicability across the full 4M row span",
-        "reason": "Checked exact official Germany-market evidence resolved the current facelift-era 55 TFSI e quattro values, but this pass did not prove the same ratio and final-drive mapping across the full 2016-2026 row span.",
+        "item": "Audi Q7 55 TFSI quattro final-drive field semantics in Audi technical-data PDFs",
+        "reason": "The 2024 official technical-data PDF prints the final-drive line as -3.478 / 3.204 / 1.000, while the 2026 official PDFs print -3.478 / 3.204 / -. This pass consistently supports 3.204 as the published final-drive value, but it does not resolve the meaning of the auxiliary trailing field.",
         "evidence_refs": [
-          "legacy_research_sources:29114921acdf",
-          "legacy_research_sources:2b9d74e8ab56",
-          "legacy_research_sources:490c5b8fd0e9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:62c1bbb53e87",
-          "legacy_research_sources:63fd9d7843ad",
-          "legacy_research_sources:8a73434aa4c5",
-          "legacy_research_sources:b248c52777b2",
-          "legacy_research_sources:e6c066ac31ae",
-          "legacy_research_sources:ec1f2b5d8fc4",
-          "legacy_research_sources:fc63799e6f4d"
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
         ]
       },
       {
-        "item": "Audi Q7 55 TFSI e quattro exact optional tire matrix and gearbox-family naming",
-        "reason": "Official Audi exact sources prove the base 255/55 R19 fitment and 8-speed tiptronic wording, but this pass did not recover the full optional tire matrix or explicit official ZF 8HP naming.",
+        "item": "Audi Q7 55 TFSI quattro basic-versus-sales-standard wheel baseline",
+        "reason": "Official Audi technical-data PDFs list 255/60 R18 as the exact basic setup, while the official 2024 launch release and 2026 Germany price list show 19-inch wheels as the sales-standard V6 package and additional square 20/21/22-inch offerings. This pass did not recover one single trim-agnostic retail baseline that supersedes the technical-data basic wheel line.",
         "evidence_refs": [
-          "legacy_research_sources:29114921acdf",
-          "legacy_research_sources:2b9d74e8ab56",
-          "legacy_research_sources:490c5b8fd0e9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:62c1bbb53e87",
-          "legacy_research_sources:63fd9d7843ad",
-          "legacy_research_sources:8a73434aa4c5",
-          "legacy_research_sources:b248c52777b2",
-          "legacy_research_sources:e6c066ac31ae",
-          "legacy_research_sources:ec1f2b5d8fc4",
-          "legacy_research_sources:fc63799e6f4d"
+          "audi_mediacenter_sources:4m-q7-revised-2024-release",
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
         ]
       },
       {
-        "item": "Audi Q7 55 TFSI quattro production-data applicability and tire-baseline continuity across the full 4M row span",
-        "reason": "Checked exact official current-generation 55 TFSI quattro evidence resolves the 250 kW ratio set, final drive 3.204, and a 5-seat 255/60 R18 basic tire, but this pass did not prove the same mapping across the full 2016-2026 non-PHEV row span or recover one uncontested production-safe tire baseline for all represented configurations.",
+        "item": "Audi Q7 55 TFSI quattro explicit supplier-family gearbox naming",
+        "reason": "Official Audi exact sources consistently prove 8-speed tiptronic wording for the facelift-era petrol Q7, but they do not explicitly publish the gearbox supplier-family label `ZF8HP`.",
         "evidence_refs": [
-          "legacy_research_sources:29114921acdf",
-          "legacy_research_sources:2b9d74e8ab56",
-          "legacy_research_sources:490c5b8fd0e9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:62c1bbb53e87",
-          "legacy_research_sources:63fd9d7843ad",
-          "legacy_research_sources:8a73434aa4c5",
-          "legacy_research_sources:b248c52777b2",
-          "legacy_research_sources:e6c066ac31ae",
-          "legacy_research_sources:ec1f2b5d8fc4",
-          "legacy_research_sources:fc63799e6f4d"
-        ]
-      },
-      {
-        "item": "Exact Germany-market Audi Q7 45 TFSI quattro mapping",
-        "reason": "Checked official Germany launch/current Q7 model pages, press releases, and 2020/2026 price-list material resolve the petrol SUV to 55 TFSI quattro / 250 kW instead, and this pass did not recover an official Germany 45 TFSI quattro technical-data sheet that would justify reusing the 55 TFSI data.",
-        "evidence_refs": [
-          "legacy_research_sources:29114921acdf",
-          "legacy_research_sources:2b9d74e8ab56",
-          "legacy_research_sources:490c5b8fd0e9",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:62c1bbb53e87",
-          "legacy_research_sources:63fd9d7843ad",
-          "legacy_research_sources:8a73434aa4c5",
-          "legacy_research_sources:b248c52777b2",
-          "legacy_research_sources:e6c066ac31ae",
-          "legacy_research_sources:ec1f2b5d8fc4",
-          "legacy_research_sources:fc63799e6f4d"
+          "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+          "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },

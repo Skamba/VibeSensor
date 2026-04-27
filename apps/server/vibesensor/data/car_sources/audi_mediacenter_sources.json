@@ -250,7 +250,28 @@
       "id": "audi_mediacenter_sources:4m-q7-revised-2024-release",
       "url": "https://www.audi-mediacenter.com/en/press-releases/strong-in-design-comfort-and-technologythe-revised-audi-q7-15849",
       "title": "Audi MediaCenter revised Q7 2024 release",
-      "note": "Official Audi MediaCenter release for the revised Q7 proving the model line continued after the 'until 2023' phase into the 2024 facelift-era car.",
+      "note": "Official Audi MediaCenter release for the revised 2024 Q7 proving the model line continued after the 'until 2023' phase and explicitly naming the facelift-era Q7 55 TFSI quattro 250 kW state with 8-speed tiptronic, permanent quattro, first-quarter 2024 launch timing, and 19-inch standard wheels for the V6 combustion models.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/936/file_en/b9a2b988f92292c9fc34d688ac4ce69ed2ba412e/eTD-Audi-Q7-SUV-55-TFSI-quattro-tiptronic-250kW-MHEV-5-Sitzer_240327.pdf?disposition=attachment",
+      "title": "Audi MediaCenter Q7 55 TFSI 2024 technical-data PDF",
+      "note": "Official Audi MediaCenter technical-data PDF for the exact facelift-era Q7 SUV 55 TFSI quattro tiptronic 250 kW MHEV 5-seat state showing permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final-drive field 3.204 / 1.000, and basic 255/60 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/936/file_en/b9a2b988f92292c9fc34d688ac4ce69ed2ba412e/eTD-Audi-Q7-SUV-TFSI-quattro-tiptronic-250kW-MHEV-5-seats_260204.pdf?1770709676&disposition=attachment",
+      "title": "Audi MediaCenter Q7 TFSI 250 kW 2026 5-seat technical-data PDF",
+      "note": "Official Audi MediaCenter technical-data PDF for the exact current Q7 SUV TFSI quattro tiptronic 250 kW MHEV 5-seat configuration showing permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final-drive field 3.204 / -, and basic 255/60 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/937/file_en/ff4216fd5423de021f91ef537d491cb8eff57610/eTD-Audi-Q7-SUV-TFSI-quattro-tiptronic-250kW-MHEV-7-seats_260204.pdf?1770709676&disposition=attachment",
+      "title": "Audi MediaCenter Q7 TFSI 250 kW 2026 7-seat technical-data PDF",
+      "note": "Official Audi MediaCenter technical-data PDF for the exact current Q7 SUV TFSI quattro tiptronic 250 kW MHEV 7-seat configuration showing the same permanent quattro AWD, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final-drive field 3.204 / -, and basic 255/60 R18 tires while confirming the 7-seat body state.",
       "confidence": "high"
     },
     {
