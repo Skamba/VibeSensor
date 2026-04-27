@@ -411,14 +411,14 @@
       "id": "legacy_research_sources:27e3d1aa1f09",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286569EN/419611",
       "title": "419611",
-      "note": "Official BMW 09/2018 technical-data PDF for the G32 6 Series Gran Turismo lineup. It includes exact pages for 630d xDrive Gran Turismo and 640d xDrive Gran Turismo with xDrive AWD, 8-speed Steptronic, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires; it does not list a 630i xDrive row.",
+      "note": "Official BMW 09/2018 technical-data PDF for the G32 6 Series Gran Turismo lineup. It includes exact pages for 620d and 630i Gran Turismo with rear-wheel drive, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.077, and 225/60 R17 baseline tires; for 630d and 630d xDrive Gran Turismo with forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 2.563, and 225/60 R17 baseline tires; and for 640i Gran Turismo with rear-wheel drive, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.077, and 225/60 R17 baseline tires. The same PDF also lists 640d xDrive and does not publish a 630i xDrive row.",
       "confidence": "high"
     },
     {
       "id": "legacy_research_sources:5c1b0ad4cf7e",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0314290EN/463145",
       "title": "463145",
-      "note": "Official BMW 11/2020 technical-data PDF for the G32 6 Series Gran Turismo lineup. It includes exact pages for 630d xDrive Gran Turismo and 640d xDrive Gran Turismo; 630d keeps xDrive AWD, Eight-speed Steptronic, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires, while 640d keeps xDrive AWD, Eight-speed Steptronic, 0.640 top gear, 2.563 final drive, and moves to 245/50 R18 baseline tires. The PDF still does not list a 630i xDrive row.",
+      "note": "Official BMW 11/2020 technical-data PDF for the G32 6 Series Gran Turismo lineup. It includes exact pages for 620d and 630i Gran Turismo with rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.077, and 225/60 R17 baseline tires; for 630d and 630d xDrive Gran Turismo with Eight-speed Steptronic transmission, forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, final drive 2.563, and 225/60 R17 baseline tires; and for 640i Gran Turismo with rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.077, and 245/50 R18 baseline tires. The same PDF also lists 640d xDrive and 640i xDrive, and it still does not publish a 630i xDrive row.",
       "confidence": "high"
     },
     {
@@ -586,7 +586,7 @@
       "id": "legacy_research_sources:386e9ba97f8b",
       "url": "https://www.bmw.de/de/neufahrzeuge/7er/limousine/bmw-7er-limousine-technische-daten.html",
       "title": "Bmw 7Er Limousine Technische Daten.Html",
-      "note": "Official BMW DE technical-data page confirming the exact 750e xDrive drivetrain as AWD with 8-Gang, automatisch gearbox wording and Germany-market model-code continuity.",
+      "note": "Official BMW DE 7 Series technical-data page whose embedded per-trim metadata surfaces the exact 740d xDrive, 750e xDrive, M760e xDrive, and i7 eDrive50 trim entries with row-specific AWD/RWD and 8-speed or 1-speed drivetrain wording in current Germany-market scope.",
       "confidence": "high"
     },
     {
@@ -740,7 +740,7 @@
       "id": "legacy_research_sources:41656ee717a8",
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0404080EN/progress-and-efficiency-with-added-variety:-additional-drive-system-variants-and-innovations-for-the-new-bmw-7-series",
       "title": "Progress And Efficiency With Added Variety: Additional Drive System Variants And Innovations For The New Bmw 7 Series",
-      "note": "Official BMW PressClub article confirming the 750e xDrive for European markets with six-cylinder petrol engine plus electric motor integrated into the eight-speed Steptronic transmission and xDrive.",
+      "note": "Official BMW PressClub article confirming the 740d xDrive for European markets with an electric motor integrated into the eight-speed Steptronic transmission plus the 750e xDrive and M760e xDrive PHEV variants with six-cylinder petrol engines, integrated electric motors, and xDrive.",
       "confidence": "high"
     },
     {
@@ -1836,6 +1836,13 @@
       "confidence": "high"
     },
     {
+      "id": "legacy_research_sources:6f9c4e86b2a1",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/421/file_en/bedd9abf6b9d0dbf986fe96870c1806bdc1b85b9/eTD_Audi_TT_Coupe_40_TFSI_S_tronic_145kW_230113.pdf?1698933712&disposition=attachment",
+      "title": "Etd Audi Tt Coupe 40 Tfsi S Tronic 145Kw 230113.Pdf",
+      "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact TT Coup\u00e9 40 TFSI S tronic 145 kW: front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
+      "confidence": "high"
+    },
+    {
       "id": "legacy_research_sources:a6de0bcaa857",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1027/file_en/2cbcea158f0fd003e5a1519697c726fc3e844d8b/eTD-Audi-Q5-40-TDI-quattro-S_tronic-150kW-MHEV_240604.pdf?disposition=attachment",
       "title": "Etd Audi Q5 40 Tdi Quattro S Tronic 150Kw Mhev 240604.Pdf",
@@ -2490,7 +2497,7 @@
       "id": "legacy_research_sources:e4fef97ece37",
       "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw7er.pdf",
       "title": "Preisliste Bmw7Er.Pdf",
-      "note": "Official BMW DE price list confirming standard staggered 255/40 R21 front + 285/35 R21 rear tires and a 20-inch staggered 255/45 front + 285/40 rear package for the i7 M70 xDrive.",
+      "note": "Official BMW DE price list confirming the standard 245/50 R19 tire package for the 740d xDrive, 750e xDrive, and i7 eDrive50 plus the standard staggered 255/40 R21 front + 285/35 R21 rear package for the M760e xDrive and i7 M70 xDrive.",
       "confidence": "high"
     },
     {
@@ -2714,7 +2721,7 @@
       "id": "legacy_research_sources:f46299570461",
       "url": "https://www.audi-mediacenter.com/en/audi-tt-coupe-68",
       "title": "Audi Tt Coupe 68",
-      "note": "Official Audi MediaCenter model page for the TT Coup\u00e9 linking the exact 45 TFSI quattro technical-data sheet.",
+      "note": "Official Audi MediaCenter model page for the TT Coup\u00e9 linking the exact 40 TFSI S tronic, 45 TFSI S tronic, and 45 TFSI quattro S tronic technical-data sheets.",
       "confidence": "high"
     },
     {
