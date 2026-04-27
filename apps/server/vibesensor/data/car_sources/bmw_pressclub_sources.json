@@ -33,7 +33,7 @@
       "id": "bmw_pressclub_sources:f45-2018-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0277458EN/401747",
       "title": "BMW PressClub F45 Active Tourer 2018 specifications PDF cross-check",
-      "note": "Official BMW PDF reused as a cross-check for the F45 225xe ratio pair and transmission naming.",
+      "note": "Official BMW 01/2018 F45 specifications PDF used to confirm the exact 216d, 218d, 220d, 216i, 218i, 220i, and 225i xDrive Active Tourer transmission-table context for ACEA markets. It proves the 218d optional Eight-speed Steptronic ratio set 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 and 205/60 R16 baseline tires, confirms the 220d front-wheel-drive state with the same Eight-speed Steptronic ratio set and 205/60 R16 baseline tires, confirms 220i Seven-speed DCT wording plus overall DCT ratios and 205/60 R16 baseline tires, confirms 218i optional Seven-speed DCT overall ratios and 205/60 R16 baseline tires, shows 216d uses six-speed manual with optional seven-speed DCT overall ratios and 205/60 R16 baseline tires, shows 216i uses six-speed manual with 205/60 R16 baseline tires, and shows 225i xDrive with Eight-speed Steptronic and 205/55 R17 baseline tires. The same PDF does not surface front-wheel-drive 225i, eight-speed 216d, eight-speed 216i, or eight-speed 218i rows.",
       "confidence": "high"
     },
     {
@@ -41,6 +41,90 @@
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0285128EN/425813",
       "title": "BMW PressClub G20 3 Series technical data attachment",
       "note": "Official BMW attachment used for the G20 330i xDrive automatic final-drive verification.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-518d-2018-austria-launch-article",
+      "url": "https://www.press.bmwgroup.com/austria/article/detail/T0285927DE/bmw-5er-limousine-und-bmw-5er-touring-zum-modelljahr-2018-erweiterte-antriebsvielfalt",
+      "title": "BMW PressClub G30 518d 2018 Austria launch article",
+      "note": "Official BMW Austria article used to prove that the exact G30 518d Sedan and Touring first appear from 07/2018 with the new 110 kW / 150 PS diesel state.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-518d-2021-italy-price-list-pdf",
+      "url": "https://www.press.bmwgroup.com/italy/article/attachment/T0322948IT/469497",
+      "title": "BMW PressClub G30 518d Italy price list PDF",
+      "note": "Official BMW Italy price list PDF used to confirm that the exact G30 518d Sedan and Touring continue as automatic 110 kW / 150 PS states after launch-era introduction. The checked extraction supports 2018-on continuity, but it does not close the exact ratio or final-drive mapping by itself.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-520e-2021-launch-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0324817EN/new-entry-level-models-with-plug-in-hybrid-drive-for-the-bmw-3-series-and-bmw-5-series",
+      "title": "BMW PressClub G30 520e 2021 launch article",
+      "note": "Official BMW launch article used to prove that the exact G30 520e Sedan first appears from 03/2021 and routes hybrid drive torque to the rear wheels via an 8-speed Steptronic transmission.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-520e-2021-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325537EN/471546",
+      "title": "BMW PressClub G30 520e 2021 technical data PDF",
+      "note": "Official BMW 03/2021 technical-data PDF for the exact G30 520e Sedan showing RWD, 8-speed Steptronic transmission, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.231, and 225/55 R17 101Y XL baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-530e-2017-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0268500DE/383689",
+      "title": "BMW PressClub G30 530e 2017 technical data PDF",
+      "note": "Official BMW 03/2017 technical-data PDF for the exact G30 530e iPerformance Sedan showing RWD, 8-Gang Steptronic transmission, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, rear final drive 3.231, 225/55 R17 baseline tires, and 18/19/20-inch option packages.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-530e-2019-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0299399EN/436484",
+      "title": "BMW PressClub G30 530e 2019 technical data PDF",
+      "note": "Official BMW 08/2019 technical-data PDF for the exact G30 530e Sedan showing the same RWD, 8-speed Steptronic, 3.231 final-drive, and 225/55 R17 baseline-tire package while separately listing the new 530e xDrive Sedan.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-530e-2020-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0318749DE/463129",
+      "title": "BMW PressClub G30 530e 2020 technical data PDF",
+      "note": "Official BMW 11/2020 technical-data PDF for the facelift G30 530e Limousine showing the same RWD, 8-Gang Steptronic, 3.231 final-drive, and 225/55 R17 baseline-tire package while separately listing the 530e xDrive Limousine.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-520i-2017-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0270585DE/385160",
+      "title": "BMW PressClub G30 520i 2017 technical data PDF",
+      "note": "Official BMW 07/2017 technical-data PDF for the exact G30 520i Limousine showing RWD, 8-Gang Steptronic transmission wording, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, rear final drive 2.929, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-530i-and-xdrive-2016-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0267657DE/377424",
+      "title": "BMW PressClub G30 530i and 530i xDrive 2016 technical data PDF",
+      "note": "Official BMW 11/2016 technical-data PDF for the exact G30 530i Limousine and 530i xDrive Limousine launch states showing RWD and xDrive AWD, 8-Gang Steptronic transmission wording, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, a published 2.929 rear-axle ratio, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0267658DE/377421",
+      "title": "BMW PressClub G30 540i and 540i xDrive 2016 technical data PDF",
+      "note": "Official BMW 11/2016 technical-data PDF for the exact G30 540i Limousine and 540i xDrive Limousine launch states showing RWD and xDrive AWD, 8-Gang Steptronic transmission wording, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, a published 2.929 rear-axle ratio, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286569EN/419611",
+      "title": "BMW PressClub G32 6 Series Gran Turismo 2018 technical data PDF",
+      "note": "Official BMW 09/2018 technical-data PDF for the exact G32 620d, 630d, 630d xDrive, and 630i Gran Turismo states, and to confirm that the checked 2018 lineup omits a 630i xDrive technical-data row.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g32-2020-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0314290EN/463145",
+      "title": "BMW PressClub G32 6 Series Gran Turismo 2020 technical data PDF",
+      "note": "Official BMW 11/2020 technical-data PDF for the exact G32 620d, 630d, 630d xDrive, and 630i Gran Turismo states, and to confirm that the checked 2020 lineup still omits a 630i xDrive technical-data row while publishing 640i xDrive and 640d xDrive.",
       "confidence": "high"
     },
     {
@@ -54,7 +138,7 @@
       "id": "bmw_pressclub_sources:g60-2025-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0443474EN/629035",
       "title": "BMW PressClub G60 5 Series 2025 technical specifications PDF",
-      "note": "Official BMW technical specifications PDF used for the i5 eDrive40 overall ratio and single-speed transmission evidence.",
+      "note": "Official BMW 03/2025 technical specifications PDF used for exact G60 520i eight-speed ratio/final-drive/225/55 R18 data, i5 eDrive40 single-speed 11.115 / 245/45 R19 data, and i5 M60 xDrive front 8.774 / rear 9.374 with standard 245/45 R19 + 275/40 R19 staggered tires.",
       "confidence": "high"
     },
     {
@@ -243,7 +327,35 @@
       "id": "bmw_pressclub_sources:g11-7-series-2015-spec-article",
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0235242EN/specifications-bmw-7-series-sedan-valid-from-11/2015",
       "title": "BMW PressClub G11 7 Series 2015 specifications article",
-      "note": "Official BMW 11/2015 7 Series Sedan specifications page used to confirm the launch-lineup scope and reach the exact 750i xDrive technical-data attachment.",
+      "note": "Official BMW 11/2015 7 Series Sedan specifications page used to confirm the checked EU launch-lineup scope, including exact attachment links for 730d, 730d xDrive, 740d xDrive, 740i, 750i, and 750i xDrive while omitting 725d and 730i from the published launch rows.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g11-730d-2015-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0235242EN/336671",
+      "title": "BMW PressClub G11 730d 2015 technical data PDF",
+      "note": "Official BMW 11/2015 technical-data PDF for the exact G11 730d and 730Ld states showing RWD, 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 2.563, and 225/60 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0235242EN/336673",
+      "title": "BMW PressClub G11 740d xDrive 2015 technical data PDF",
+      "note": "Official BMW 11/2015 technical-data PDF for the exact G11 740d xDrive state showing AWD, 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 2.563, and 245/50 R18 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g11-740i-2015-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0235242EN/336674",
+      "title": "BMW PressClub G11 740i 2015 technical data PDF",
+      "note": "Official BMW 11/2015 technical-data PDF for the exact G11 740i and 740Li states showing RWD, 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 3.077, and 225/60 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g11-750i-2015-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0235242EN/336675",
+      "title": "BMW PressClub G11 750i 2015 technical data PDF",
+      "note": "Official BMW 11/2015 technical-data PDF for the exact G11 750i and 750Li states showing RWD, 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 2.813, and 245/50 R18 baseline tires.",
       "confidence": "high"
     },
     {
@@ -254,31 +366,115 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:g11-7-series-2019-press-kit",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0289615EN/the-new-bmw-7-series",
+      "title": "BMW PressClub G11 7 Series 2019 press kit",
+      "note": "Official BMW 01/2019 facelift-era 7 Series press kit introducing the new plug-in hybrid variants BMW 745e, 745Le, and 745Le xDrive with maximum system output 290 kW / 394 hp, proving that the 745e and 745Le lineup starts in 2019 rather than in the original 2015/2016 G11 launch window.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g14-8-series-convertible-2018-launch-article",
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0286150EN/the-new-bmw-8-series-convertible",
       "title": "BMW PressClub G14 8 Series Convertible launch article",
-      "note": "Official BMW launch article for the G14 8 Series Convertible used to confirm the launch-lineup scope and xDrive plus 8-speed Steptronic applicability for the exact M850i xDrive Convertible state.",
+      "note": "Official BMW launch article for the G14 8 Series Convertible used to confirm the launch-lineup scope and xDrive plus 8-speed Steptronic applicability for the exact M850i xDrive Convertible state. The paired launch technical-data PDF covers the M850i xDrive Convertible and 840d xDrive Convertible launch states, while the later 02/2020 technical-data packet closes the exact 840i Convertible row.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:g14-8-series-convertible-2018-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286150EN/445834",
       "title": "BMW PressClub G14 8 Series Convertible technical data PDF",
-      "note": "Official BMW launch technical-data PDF for the G14 8 Series Convertible used for the exact M850i xDrive Convertible top-gear, forward-ratio, reverse-ratio, final-drive, and baseline-tire mappings.",
+      "note": "Official BMW launch technical-data PDF for the G14 8 Series Convertible used for the exact M850i xDrive Convertible top-gear, forward-ratio, reverse-ratio, final-drive, and baseline-tire mappings, and to confirm that the launch technical-data sheet covers M850i xDrive Convertible and 840d xDrive Convertible rather than the later 840i Convertible state.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g14-840i-convertible-2020-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0305274EN/specifications-of-the-new-bmw-840i-convertible-valid-from-02/2020?language=en",
+      "title": "BMW PressClub G14 840i Convertible 2020 technical-data article",
+      "note": "Official BMW 02/2020 technical-data article for the exact G14 840i Convertible state.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g14-840i-convertible-2020-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0305274EN/445819",
+      "title": "BMW PressClub G14 840i Convertible 2020 technical data PDF",
+      "note": "Official BMW 02/2020 technical-data PDF for the exact G14 840i Convertible state showing RWD, 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final-drive ratio 2.929, and staggered 245/45 R18 front plus 275/40 R18 rear baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:u10-ix2-launch-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0437451EN/the-all-new-bmw-x2-and-the-first-ever-bmw-ix2",
+      "title": "BMW PressClub U10 X2 and iX2 launch article",
+      "note": "Official BMW 10/2023 launch article for the all-new X2 range used to confirm that the exact BMW iX2 xDrive30 enters the market in March 2024, uses two electric drive units at the front and rear axles, and rides on 17-inch light-alloy wheels as standard while the seven-speed dual-clutch transmission wording applies only to the combustion-engine X2 variants.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:u10-x2-2023-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0437451EN/608982",
+      "title": "BMW PressClub U10 X2 2023 technical specifications PDF",
+      "note": "Official BMW 10/2023 technical-data PDF for the new X2 range used for the exact X2 sDrive20i launch-standard 225/55 R18 tires and the published seven-speed dual-clutch overall-ratio table.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g45-x3-global-launch-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0442377EN/the-new-bmw-x3",
+      "title": "BMW PressClub G45 X3 global launch article",
+      "note": "Official BMW 06/2024 global launch article for the new G45 X3 used to confirm that Europe and the USA market launch begin in Q4 2024, that the exact X3 M50 xDrive is part of that launch lineup with xDrive AWD and an eight-speed Steptronic Sport transmission, and that the Europe-facing G45 lineup centers on X3 20 xDrive, X3 20d xDrive, X3 30e xDrive, and X3 M50 xDrive rather than on an EU-market X3 xDrive30 trim.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0308632EN/the-new-bmw-x2-xdrive25e",
+      "title": "BMW PressClub F39 X2 xDrive25e launch article",
+      "note": "Official BMW 05/2020 launch article for the F39 X2 xDrive25e plug-in hybrid used to confirm that the xDrive25e identity belongs to the outgoing F39 generation with a three-cylinder front-axle combustion engine, a rear-axle electric motor, July 2020 market launch, and 17-inch standard wheels rather than to the later U10 generation.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:u11-ix1-tech-spec-article",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0404224DE/technische-daten-bmw-ix1-xdrive30-gueltig-ab-11/2022?language=de",
+      "title": "BMW PressClub U11 iX1 xDrive30 technical-data article",
+      "note": "Official BMW Deutschland technical-data article for the exact iX1 xDrive30 state valid from 11/2022.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:u11-ix1-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0404224DE/567438",
+      "title": "BMW PressClub U11 iX1 xDrive30 technical-data PDF",
+      "note": "Official BMW Deutschland technical-data PDF for the exact iX1 xDrive30 showing AWD dual-motor layout, single-speed fixed-ratio EV transmission wording, front reduction 11.190, rear reduction 10.050, and 205/65 R17 100Y XL baseline tires on 7.5J x 17 wheels.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:g15-8-series-coupe-2018-launch-article",
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0281744EN/the-all-new-bmw-8-series-coupe?language=en",
       "title": "BMW PressClub G15 8 Series Coupe launch article",
-      "note": "Official BMW launch article for the G15 8 Series Coupé used to confirm the launch-lineup context and reach the exact 840i xDrive Coupé technical-data attachment.",
+      "note": "Official BMW launch article for the G15 8 Series Coupé used to confirm the launch-lineup context and reach the exact 840i Coupé, 840i xDrive Coupé, and M850i xDrive Coupé technical-data attachments.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0281744EN/445825",
-      "title": "BMW PressClub G15 840i xDrive Coupe technical data PDF",
-      "note": "Official BMW launch technical-data PDF for the exact G15 840i xDrive Coupé state showing AWD, 8-speed Steptronic, 0.640 top gear, single 2.929 final-drive ratio, and staggered 18-inch baseline tires.",
+      "title": "BMW PressClub G15 840i / 840i xDrive Coupe technical data PDF",
+      "note": "Official BMW launch technical-data PDF for the exact G15 840i Coupé and 840i xDrive Coupé states showing 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, single 2.929 final-drive ratio, and staggered 18-inch baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0281744EN/445824",
+      "title": "BMW PressClub G15 M850i xDrive Coupe technical data PDF",
+      "note": "Official BMW launch technical-data PDF for the exact G15 M850i xDrive Coupé state showing AWD, 8-speed Steptronic, forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, single 2.813 final-drive ratio, and staggered 20-inch baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0322932EN/specifications-of-the-new-bmw-8-series-gran-coupe-and-the-new-bmw-m8-gran-coupe?language=en",
+      "title": "BMW PressClub G16 8 Series Gran Coupe 2020 technical-data article",
+      "note": "Official BMW 11/2020 technical-data article for the G16 8 Series Gran Coupe used to anchor the exact 840i Gran Coupe and M850i xDrive Gran Coupe launch-state PDF.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0322932EN/468535",
+      "title": "BMW PressClub G16 8 Series Gran Coupe 2020 technical data PDF",
+      "note": "Official BMW 11/2020 technical-data PDF for the exact G16 840i Gran Coupe and M850i xDrive Gran Coupe states showing 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with reverse 3.712 and final-drive ratio 2.929 for 840i, plus 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 with reverse 3.993 and final-drive ratio 2.813 for M850i xDrive, together with staggered 18-inch and 20-inch baseline tires respectively.",
       "confidence": "high"
     },
     {
@@ -286,6 +482,27 @@
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0131447EN/207819",
       "title": "BMW PressClub F01 750i xDrive 2012 technical data PDF",
       "note": "Official BMW 07/2012 technical-data PDF for the exact F01 750i xDrive state showing AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.208 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, single 2.813 final-drive ratio, and 245/50 R18 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0131447EN/207815",
+      "title": "BMW PressClub F01 740i / 750i / 760i 2012 technical data PDF",
+      "note": "Official BMW 07/2012 technical-data PDF for the exact F01 740i, 750i, and 760i states showing RWD, 8-speed automatic with Steptronic, shared forward ratios 4.714 / 3.143 / 2.208 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.295 for 740i and 3.317 for 750i/760i, final-drive ratios 3.077 for 740i and 2.813 for 750i/760i, and 245/50 R18 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0131447EN/207820",
+      "title": "BMW PressClub F01 730i / 730Li 2012 technical data PDF",
+      "note": "Official BMW 07/2012 technical-data PDF for the exact F01 730i and 730Li states showing RWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.208 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.295, final-drive ratio 3.462, and 245/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f01-750d-xdrive-2012-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0131447EN/207816",
+      "title": "BMW PressClub F01 730d xDrive / 740d xDrive / 750d xDrive 2012 technical data PDF",
+      "note": "Official BMW 07/2012 technical-data PDF for the exact F01 730d xDrive, 740d xDrive, and 750d xDrive states showing AWD, 8-speed automatic with Steptronic, shared forward ratios 4.714 / 3.143 / 2.208 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final-drive ratios 2.563 for 730d xDrive, 2.647 for 740d xDrive, and 2.813 for 750d xDrive, plus 245/50 R18 baseline tires for 750d xDrive.",
       "confidence": "high"
     },
     {
