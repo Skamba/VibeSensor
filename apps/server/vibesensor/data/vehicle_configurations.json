@@ -7882,13 +7882,13 @@
     }
   },
   {
-    "id": "audi-f3-45-tfsi-e-eu-2019-dct7-fwd",
+    "id": "audi-f3-45-tfsi-e-eu-2021-dct6-fwd",
     "brand": "Audi",
     "type": "SUV",
     "market": "EU",
     "model_code": "F3",
     "body_code": "F3",
-    "production_start_year": 2019,
+    "production_start_year": 2021,
     "production_end_year": 2025,
     "model_name": "Q3 (F3, 2019-2025)",
     "variant_name": "45 TFSI e",
@@ -7896,135 +7896,156 @@
     "engine_name": "1.4L I4 TFSI Turbo PHEV",
     "fuel_type": "PHEV",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+        "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
+        "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+      ],
+      "notes": "The checked official Audi Germany model-year 2021 price list, 2020 launch release, and later exact technical-data PDF consistently place the exact old-generation Q3 45 TFSI e on the front wheels.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DQ381)"
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+        "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
+        "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+      ],
+      "notes": "Official Audi Germany launch and model-year 2021 material explicitly say the exact Q3 45 TFSI e uses 6-Gang / 6-speed S tronic and exclude 7-Gang S tronic for this variant. The repo keeps the normalized DCT6 code, but the checked official sources do not publish a gearbox family code.",
+      "code": "DCT6",
+      "name": "6-speed S tronic"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.725
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2024 technical-data PDF lists 0.840 as the 6th-gear ratio for the exact old-generation Q3 45 TFSI e S tronic state. Applied here as official-derived evidence after the launch release and MY2021 price list closed the exact 2021+ identity and transmission mapping.",
+        "value": 0.84
+      },
+      "gear_ratios": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2024 technical-data PDF lists the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 for the exact old-generation Q3 45 TFSI e S tronic state. Applied here as official-derived evidence after the launch release and MY2021 price list closed the exact 2021+ identity and transmission mapping.",
+        "value": [
+          3.5,
+          2.773,
+          1.852,
+          1.02,
+          1.023,
+          0.84
+        ]
       },
       "final_drive_front": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Retained conservative placeholder because the checked official Audi MediaCenter 2024 technical-data PDF publishes split final-drive ratios 4.588 / 3.545 for the exact Q3 45 TFSI e state, and the current single final_drive_front field cannot safely encode both official values without losing row fidelity.",
         "value": 4.769
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:252eccf99577",
-          "legacy_research_sources:2c76c716cf17",
-          "legacy_research_sources:307b4bc397ba",
-          "legacy_research_sources:3c27d2c5b039",
-          "legacy_research_sources:450723bbeba5",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6f5476f1d60e",
-          "legacy_research_sources:814f63488d22",
-          "legacy_research_sources:8dbd6602ef26",
-          "legacy_research_sources:e60dd4460f09",
-          "legacy_research_sources:e7a5c628203d"
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+          "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
+          "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "The checked official Audi Germany model-year 2021 price list and launch release confirm 17-inch wheels as the exact launch baseline for the Q3 45 TFSI e, and the later official Audi MediaCenter 2024 technical-data PDF independently confirms 215/65 R17 as the basic tire size.",
         "front": {
-          "width_mm": 235.0,
-          "aspect_pct": 45.0,
-          "rim_in": 19.0
+          "width_mm": 215.0,
+          "aspect_pct": 65.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:252eccf99577",
-            "legacy_research_sources:2c76c716cf17",
-            "legacy_research_sources:307b4bc397ba",
-            "legacy_research_sources:3c27d2c5b039",
-            "legacy_research_sources:450723bbeba5",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:6f5476f1d60e",
-            "legacy_research_sources:814f63488d22",
-            "legacy_research_sources:8dbd6602ef26",
-            "legacy_research_sources:e60dd4460f09",
-            "legacy_research_sources:e7a5c628203d"
+            "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+            "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
+            "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes": "Official Audi Germany model-year 2021 material shows the exact Q3 45 TFSI e starts on a 17-inch square setup; the later technical-data PDF independently confirms 215/65 R17 as the basic tire size.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+            "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
+          ],
+          "notes": "The checked official Audi Germany model-year 2021 price list lists a square 235/55 R18 package for the exact Q3 45 TFSI e, and the launch release confirms 18-inch wheels are available as official options.",
           "front": {
             "width_mm": 235.0,
+            "aspect_pct": 55.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "18\" square"
+        },
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+            "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
+          ],
+          "notes": "The checked official Audi Germany model-year 2021 price list lists a square 235/50 R19 package for the exact Q3 45 TFSI e, and the launch release confirms 19-inch wheels are available as official options.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "19\" square 235"
+        },
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+            "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
+          ],
+          "notes": "The checked official Audi Germany model-year 2021 price list lists a square 255/45 R19 package for the exact Q3 45 TFSI e, and the launch release confirms 19-inch wheels are available as official options.",
+          "front": {
+            "width_mm": 255.0,
             "aspect_pct": 45.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "name": "19\" square 255"
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_derived",
           "evidence_refs": [
-            "legacy_research_sources:252eccf99577",
-            "legacy_research_sources:2c76c716cf17",
-            "legacy_research_sources:307b4bc397ba",
-            "legacy_research_sources:3c27d2c5b039",
-            "legacy_research_sources:450723bbeba5",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:6f5476f1d60e",
-            "legacy_research_sources:814f63488d22",
-            "legacy_research_sources:8dbd6602ef26",
-            "legacy_research_sources:e60dd4460f09",
-            "legacy_research_sources:e7a5c628203d"
+            "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+            "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes": "The checked official Audi Germany model-year 2021 price list lists a square 255/40 R20 package for the exact Q3 45 TFSI e, and the launch release confirms 20-inch wheels are available as official options.",
           "front": {
-            "width_mm": 245.0,
+            "width_mm": 255.0,
             "aspect_pct": 40.0,
             "rim_in": 20.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Sport 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:252eccf99577",
-            "legacy_research_sources:2c76c716cf17",
-            "legacy_research_sources:307b4bc397ba",
-            "legacy_research_sources:3c27d2c5b039",
-            "legacy_research_sources:450723bbeba5",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:6f5476f1d60e",
-            "legacy_research_sources:814f63488d22",
-            "legacy_research_sources:8dbd6602ef26",
-            "legacy_research_sources:e60dd4460f09",
-            "legacy_research_sources:e7a5c628203d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 21\""
+          "name": "20\" square"
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Batch 3 review replaces the copied Q3 cluster note with row-specific Audi MediaCenter evidence for the old-generation Q3 45 TFSI e state. The checked 2024 technical-data PDF resolves front-wheel drive, 6-speed S tronic, top gear 0.840, split final drives 4.588 / 3.545, and steel 6.5 J x 17 / 215/65 R17 basic tires, while the checked Germany model-year 2021 price list confirms the old-generation 45 TFSI e is on sale with 17-inch base wheels and 6-Gang S tronic. The row end year is corrected to 2025 because Audi scopes this generation as 'Q3 (until 2025)'.",
+        "note": "Batch 8 review re-keys the old unsupported 2019/DCT7 placeholder to the exact old-generation Q3 45 TFSI e state supported by official Audi material. The 2020 launch release fixes German presales to January 2021 and explicitly says the plug-in hybrid drives the front wheels through a six-speed S tronic. The checked Germany model-year 2021 price list independently confirms Frontantrieb, 6-Gang S tronic, 17-inch standard wheels, and the 18/19/20-inch option ladder for the exact 45 TFSI e row. The later official Audi MediaCenter 2024 technical-data PDF then supplies the exact forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 and confirms 215/65 R17 as the basic tire size for the same 110/180 kW old-generation Q3 45 TFSI e state.",
         "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
           "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf",
           "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
           "audi_mediacenter_sources:f3-q3-until-2025-model-page"
@@ -8033,33 +8054,35 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q3 45 TFSI e production-start mapping within the current row",
-        "reason": "The checked Germany model-year 2021 price list proves the old-generation 45 TFSI e is on sale in that program, but this pass did not recover an official source proving the current row's 2019 start year or a clean row-retime target that would preserve the canonical identifier semantics.",
-        "evidence_refs": [
-          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
-        ]
-      },
-      {
-        "item": "Schema-safe encoding of exact Audi Q3 45 TFSI e split final-drive values",
-        "reason": "The checked official Audi MediaCenter 2024 technical-data PDF publishes split final drives 4.588 / 3.545 for the target, but the current row has only one final_drive_front field and cannot safely encode both values.",
+        "item": "Audi Q3 45 TFSI e schema-safe encoding of official split final-drive values",
+        "reason": "The checked official Audi MediaCenter 2024 technical-data PDF publishes final-drive ratios 4.588 / 3.545 for the exact Q3 45 TFSI e state, but the current schema exposes only one front final-drive field and cannot safely encode both official values without losing fidelity.",
         "evidence_refs": [
           "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
         ]
       },
       {
-        "item": "Broad-row Audi Q3 45 TFSI e transmission-code and row-shape continuity",
-        "reason": "The checked official sources use 6-speed S tronic for the exact old-generation 45 TFSI e state, but the current canonical row id still encodes a DCT7-shaped identifier and this pass did not re-key the row until the production-start split is decided.",
+        "item": "Audi Q3 45 TFSI e wheel-package continuity beyond the checked Germany MY2021 matrix",
+        "reason": "The checked official Audi Germany model-year 2021 price list and launch release resolve the launch 17/18/19/20-inch square wheel ladder for the exact 45 TFSI e row, but this pass did not recover later year-by-year Audi wheel matrices proving every option carried unchanged through the full 2021-2025 span.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+          "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
+        ]
+      },
+      {
+        "item": "Audi Q3 45 TFSI e exact gearbox family-code naming",
+        "reason": "The checked official Audi sources explicitly publish 6-speed S tronic wording and PHEV gearbox integration details, but they do not name the supplier or family code behind the repo's normalized DCT6 mapping.",
         "evidence_refs": [
           "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf",
-          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+          "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -27042,15 +27065,15 @@
     }
   },
   {
-    "id": "audi-8v-8y-rs-3-eu-2017-dct7-awd",
+    "id": "audi-8v-rs3-sedan-eu-2017-dct7-awd",
     "brand": "Audi",
     "type": "Sedan",
     "market": "EU",
-    "model_code": "8V/8Y",
-    "body_code": "8V/8Y",
+    "model_code": "8V",
+    "body_code": "8V",
     "production_start_year": 2017,
-    "production_end_year": 2026,
-    "model_name": "RS 3 (8V/8Y, 2017-2026)",
+    "production_end_year": 2020,
+    "model_name": "RS 3 Sedan (8V, 2017-2020)",
     "variant_name": "RS 3",
     "engine_code": "2.5L",
     "engine_name": "2.5L I5 TFSI Turbo",
@@ -27058,151 +27081,415 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:c34943178335"
+        "legacy_research_sources:cb8e49d17f26",
+        "legacy_research_sources:cd4f372ab981"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "notes": "Official Audi MediaCenter launch and archived Audi Germany model-page material confirm the exact 8V RS 3 Sedan uses quattro AWD in the EU launch-era state.",
       "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:cd4f372ab981"
+      ],
+      "notes": "The archived official Audi Germany RS 3 Limousine page explicitly says the exact 8V sedan uses a seven-speed S tronic. The repo keeps DCT7 as the canonical transmission-family mapping, but no checked official source publishes a gearbox family code.",
       "code": "DCT7",
-      "name": "7-speed S tronic (DQ500)"
+      "name": "7-speed S tronic"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 0.725
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 4.077
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
-        "value": 4.077
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs": [
+          "secondary_technical_sources:rs3-8v-sedan-carfolio",
+          "secondary_technical_sources:rs3-8v-sedan-carspecs"
+        ],
+        "notes": "Independent secondary exact sedan pages agree on a 0.640 top gear for the 8V RS 3 Sedan, while the checked official Audi launch-era sources do not publish a gear-by-gear ratio table.",
+        "value": 0.64
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "reputable_secondary_crosschecked",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a4b6af77c6c",
-          "legacy_research_sources:c34943178335",
-          "legacy_research_sources:c71437bb1b44",
-          "legacy_research_sources:dae61be0efdf",
-          "legacy_research_sources:dbb5ac0b503d"
+          "legacy_research_sources:ce71a24f5b83",
+          "secondary_technical_sources:rs3-8v-sedan-brochure-mirror",
+          "secondary_technical_sources:rs3-8v-sedan-carfolio",
+          "secondary_technical_sources:rs3-8v-sedan-carspecs"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "notes": "Independent secondary exact sedan pages agree on square 235/35 R19 tires for the 8V RS 3 Sedan, and the March 2017 German-market brochure mirror with archived Audi Austria provenance independently lists 235/35 R19 in the brochure tire table. The same brochure also lists 255/30 R19 without a clean axle or package mapping, so production JSON keeps only the cross-checked 235/35 R19 baseline.",
         "front": {
-          "width_mm": 255.0,
-          "aspect_pct": 30.0,
+          "width_mm": 235.0,
+          "aspect_pct": 35.0,
           "rim_in": 19.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "reputable_secondary_crosschecked",
           "evidence_refs": [
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:6a4b6af77c6c",
-            "legacy_research_sources:c34943178335",
-            "legacy_research_sources:c71437bb1b44",
-            "legacy_research_sources:dae61be0efdf",
-            "legacy_research_sources:dbb5ac0b503d"
+            "legacy_research_sources:ce71a24f5b83",
+            "secondary_technical_sources:rs3-8v-sedan-brochure-mirror",
+            "secondary_technical_sources:rs3-8v-sedan-carfolio",
+            "secondary_technical_sources:rs3-8v-sedan-carspecs"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes": "Independent secondary exact sedan pages agree on square 235/35 R19 tires for the 8V RS 3 Sedan, and the March 2017 German-market brochure mirror with archived Audi Austria provenance independently lists 235/35 R19 in the brochure tire table.",
           "front": {
-            "width_mm": 255.0,
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 8 review replaces the mixed 8V/8Y RS 3 placeholder with an exact 8V sedan row. Official Audi MediaCenter and archived Audi Germany launch-era material confirm the distinct 8V RS 3 Limousine identity, 294 kW / 400 PS, 480 Nm, 4.1-second launch performance state, quattro AWD, and seven-speed S tronic wording for the EU launch-era sedan. An archived Audi Austria brochure index proves provenance for the March 2017 German-market RS 3 brochure mirror, and the checked secondary cross-checks support top gear 0.640 plus a square 235/35 R19 baseline tire while the final-drive story remains unresolved.",
+        "evidence_refs": [
+          "legacy_research_sources:cb8e49d17f26",
+          "legacy_research_sources:cd4f372ab981",
+          "legacy_research_sources:ce71a24f5b83",
+          "secondary_technical_sources:rs3-8v-sedan-brochure-mirror",
+          "secondary_technical_sources:rs3-8v-sedan-carfolio",
+          "secondary_technical_sources:rs3-8v-sedan-carspecs"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi RS 3 Sedan (8V) exact official gear-ratio and final-drive table",
+        "reason": "The checked official Audi launch-era sources prove quattro AWD and seven-speed S tronic wording for the 8V sedan, but they do not publish an exact gear-by-gear or final-drive table. Secondary sources conflict on the final-drive figure and only the weaker source exposes a full gear stack.",
+        "evidence_refs": [
+          "legacy_research_sources:cb8e49d17f26",
+          "legacy_research_sources:cd4f372ab981",
+          "secondary_technical_sources:rs3-8v-sedan-carfolio",
+          "secondary_technical_sources:rs3-8v-sedan-carspecs"
+        ]
+      },
+      {
+        "item": "Audi RS 3 Sedan (8V) exact axle assignment and package mapping for the 255/30 R19 brochure tire size",
+        "reason": "The March 2017 German-market brochure mirror lists both 235/35 R19 and 255/30 R19 tire sizes, but it does not cleanly assign 255/30 R19 to an axle or an exact orderable wheel package for the 8V sedan.",
+        "evidence_refs": [
+          "legacy_research_sources:ce71a24f5b83",
+          "secondary_technical_sources:rs3-8v-sedan-brochure-mirror"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8y-rs3-sportback-eu-2021-dct7-awd",
+    "brand": "Audi",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "8Y",
+    "body_code": "8Y",
+    "production_start_year": 2021,
+    "production_end_year": 2026,
+    "model_name": "RS 3 Sportback (8Y, 2021-2026)",
+    "variant_name": "RS 3",
+    "engine_code": "2.5L",
+    "engine_name": "2.5L I5 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:c34943178335",
+        "legacy_research_sources:dae61be0efdf"
+      ],
+      "notes": "Official Audi MediaCenter launch and exact Sportback technical-data material confirm the 8Y RS 3 Sportback uses quattro AWD with torque splitter.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:c34943178335",
+        "legacy_research_sources:dae61be0efdf"
+      ],
+      "notes": "Official Audi MediaCenter launch and exact Sportback technical-data material consistently use 7-speed S tronic wording for the 8Y RS 3 Sportback. The repo keeps DCT7 as the canonical transmission-family mapping, but the checked official sources do not publish a gearbox family code.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:dae61be0efdf"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF lists 0.630 as the top-gear ratio for the exact 8Y RS 3 Sportback.",
+        "value": 0.63
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:dae61be0efdf"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF lists the full forward ratio set for the exact 8Y RS 3 Sportback.",
+        "value": [
+          3.56,
+          2.53,
+          1.68,
+          1.02,
+          0.79,
+          0.76,
+          0.63
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:dae61be0efdf"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF publishes one final-drive value of 4.059 for the exact 8Y RS 3 Sportback. The repo duplicates that single official value into the front field until a source publishes a split front/rear ratio.",
+        "value": 4.059
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:dae61be0efdf"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF publishes one final-drive value of 4.059 for the exact 8Y RS 3 Sportback. The repo duplicates that single official value into the rear field until a source publishes a split front/rear ratio.",
+        "value": 4.059
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:c34943178335",
+          "legacy_research_sources:dae61be0efdf"
+        ],
+        "notes": "Official Audi MediaCenter launch and exact Sportback technical-data material confirm the basic staggered 19-inch setup for the 8Y RS 3 Sportback.",
+        "front": {
+          "width_mm": 265.0,
+          "aspect_pct": 30.0,
+          "rim_in": 19.0
+        },
+        "rear": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:c34943178335",
+            "legacy_research_sources:dae61be0efdf"
+          ],
+          "notes": "Official Audi MediaCenter launch and exact Sportback technical-data material confirm the basic staggered 19-inch setup for the 8Y RS 3 Sportback.",
+          "front": {
+            "width_mm": 265.0,
             "aspect_pct": 30.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 8 review splits the mixed RS 3 row and promotes the exact 8Y RS 3 Sportback into production data. The official Audi MediaCenter launch article and exact Sportback technical-data PDF confirm quattro AWD with torque splitter, 7-speed S tronic wording, forward ratios 3.560 / 2.530 / 1.680 / 1.020 / 0.790 / 0.760 / 0.630, one published final-drive value 4.059, and the basic staggered 19-inch 265/30 front plus 245/35 rear setup.",
+        "evidence_refs": [
+          "legacy_research_sources:c34943178335",
+          "legacy_research_sources:dae61be0efdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi RS 3 Sportback (8Y) exact gearbox family code and full optional wheel/tire matrix",
+        "reason": "The checked exact Audi sources prove the 7-speed S tronic ratio set, one published final-drive value, and the basic staggered 19-inch setup, but they do not publish a gearbox family code or one complete optional wheel and tire matrix for the exact Sportback row.",
+        "evidence_refs": [
+          "legacy_research_sources:c34943178335",
+          "legacy_research_sources:dae61be0efdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8y-rs3-sedan-eu-2021-dct7-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8Y",
+    "body_code": "8Y",
+    "production_start_year": 2021,
+    "production_end_year": 2026,
+    "model_name": "RS 3 Sedan (8Y, 2021-2026)",
+    "variant_name": "RS 3",
+    "engine_code": "2.5L",
+    "engine_name": "2.5L I5 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:c34943178335",
+        "legacy_research_sources:c71437bb1b44"
+      ],
+      "notes": "Official Audi MediaCenter launch and exact Sedan technical-data material confirm the 8Y RS 3 Sedan uses quattro AWD with torque splitter.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:c34943178335",
+        "legacy_research_sources:c71437bb1b44",
+        "legacy_research_sources:e52a1c74b8d3"
+      ],
+      "notes": "Official Audi MediaCenter launch material, the exact Sedan technical-data PDF, and the Audi Switzerland price list consistently use 7-speed / 7-Gang S tronic wording for the 8Y RS 3 Sedan. The repo keeps DCT7 as the canonical transmission-family mapping, but the checked official sources do not publish a gearbox family code.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:c71437bb1b44"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF lists 0.630 as the top-gear ratio for the exact 8Y RS 3 Sedan.",
+        "value": 0.63
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:c71437bb1b44"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF lists the full forward ratio set for the exact 8Y RS 3 Sedan.",
+        "value": [
+          3.56,
+          2.53,
+          1.68,
+          1.02,
+          0.79,
+          0.76,
+          0.63
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:c71437bb1b44"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF publishes one final-drive value of 4.059 for the exact 8Y RS 3 Sedan. The repo duplicates that single official value into the front field until a source publishes a split front/rear ratio.",
+        "value": 4.059
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:c71437bb1b44"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF publishes one final-drive value of 4.059 for the exact 8Y RS 3 Sedan. The repo duplicates that single official value into the rear field until a source publishes a split front/rear ratio.",
+        "value": 4.059
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:c71437bb1b44",
+          "legacy_research_sources:e52a1c74b8d3"
+        ],
+        "notes": "The official Audi MediaCenter Sedan technical-data PDF and the Audi Switzerland price list confirm the exact 8Y RS 3 Sedan's basic staggered 19-inch setup.",
+        "front": {
+          "width_mm": 265.0,
+          "aspect_pct": 30.0,
+          "rim_in": 19.0
+        },
+        "rear": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:c71437bb1b44",
+            "legacy_research_sources:e52a1c74b8d3"
+          ],
+          "notes": "The official Audi MediaCenter Sedan technical-data PDF and the Audi Switzerland price list confirm this as the basic staggered 19-inch setup for the exact 8Y RS 3 Sedan.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 30.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
             "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
           "name": "Standard 19\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:4b4b833b364a",
-            "legacy_research_sources:4b8ab423f879",
-            "legacy_research_sources:5e252f7f436b",
-            "legacy_research_sources:6a4b6af77c6c",
-            "legacy_research_sources:c34943178335",
-            "legacy_research_sources:c71437bb1b44",
-            "legacy_research_sources:dae61be0efdf",
-            "legacy_research_sources:dbb5ac0b503d"
+            "legacy_research_sources:e52a1c74b8d3"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "notes": "The official Audi Switzerland price list confirms optional Pirelli P Zero Trofeo R tires for the exact 8Y RS 3 Sedan in the same staggered 19-inch sizes.",
           "front": {
             "width_mm": 265.0,
-            "aspect_pct": 25.0,
-            "rim_in": 20.0
+            "aspect_pct": 30.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Performance 20\""
+          "name": "Pirelli P Zero Trofeo R 19\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Official Audi MediaCenter technical-data sheets now confirm the exact 8Y RS 3 Sedan and Sportback drivetrain mapping, full 7-speed S tronic ratio set, final drive 4.059, top gear 0.630, and staggered 19-inch base tires for the Germany-market 8Y cars. An official Audi Switzerland MJ2026 price list independently confirms the EU-market RS 3 Limousine identity (8YMRWY), 7-Gang S tronic wording, the same staggered 19-inch 265/30 + 245/35 setup, optional Pirelli P Zero Trofeo R tires, and the 280/290 km/h option packages. The broad 8V/8Y row remains unchanged because those exact 8Y values still cannot be safely projected back onto the mixed-generation row without splitting it.",
+        "note": "Batch 8 review splits the mixed RS 3 row and promotes the exact 8Y RS 3 Sedan into production data. The official Audi MediaCenter launch article and exact Sedan technical-data PDF confirm quattro AWD with torque splitter, 7-speed S tronic wording, forward ratios 3.560 / 2.530 / 1.680 / 1.020 / 0.790 / 0.760 / 0.630, one published final-drive value 4.059, and the basic staggered 19-inch 265/30 front plus 245/35 rear setup. The official Audi Switzerland price list independently confirms the EU-market Sedan identity, the same staggered base fitment, optional Pirelli P Zero Trofeo R tires in the same sizes, and the 280 / 290 km/h top-speed option packages.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a4b6af77c6c",
           "legacy_research_sources:c34943178335",
           "legacy_research_sources:c71437bb1b44",
-          "legacy_research_sources:e52a1c74b8d3",
-          "legacy_research_sources:dae61be0efdf",
-          "legacy_research_sources:dbb5ac0b503d"
+          "legacy_research_sources:e52a1c74b8d3"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "Split the broad Audi RS 3 row into exact 8V/8Y body- and generation-specific entries",
-        "reason": "Official Audi now provides exact 8Y Sedan and Sportback technical-data sheets with body-specific ratio and tire evidence, but the current mixed 8V/8Y row cannot absorb those numbers safely without splitting the row.",
+        "item": "Audi RS 3 Sedan (8Y) exact gearbox family code and full optional wheel/tire matrix beyond the checked 19-inch packages",
+        "reason": "The checked exact Audi sources prove the 7-speed S tronic ratio set, one published final-drive value, the basic staggered 19-inch setup, and the same-size Trofeo R option, but they do not publish a gearbox family code or a complete wheel and tire matrix for every exact 8Y Sedan package.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a4b6af77c6c",
           "legacy_research_sources:c34943178335",
           "legacy_research_sources:c71437bb1b44",
-          "legacy_research_sources:dae61be0efdf",
-          "legacy_research_sources:dbb5ac0b503d"
-        ]
-      },
-      {
-        "item": "Audi RS 3 official transmission code and non-basic tire-option coverage",
-        "reason": "The checked exact Audi sources prove the 7-speed S tronic ratio set, final drive, top gear, the basic staggered 19-inch setup, and an EU-market Trofeo R option in the same staggered sizes, but they still do not publish a transmission code or one complete optional wheel/tire matrix across all exact 8Y RS 3 states.",
-        "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a4b6af77c6c",
-          "legacy_research_sources:c34943178335",
-          "legacy_research_sources:c71437bb1b44",
-          "legacy_research_sources:e52a1c74b8d3",
-          "legacy_research_sources:dae61be0efdf",
-          "legacy_research_sources:dbb5ac0b503d"
+          "legacy_research_sources:e52a1c74b8d3"
         ]
       }
     ],
-    "configuration_confidence": "medium_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
@@ -31408,21 +31695,15 @@
           "name": "Standard 17\""
         },
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
             "bmw_market_pages:g42-2-series-price-list-2024",
             "bmw_market_pages:g42-2-series-price-list-current",
             "bmw_market_pages:g42-2-series-technical-data-de",
-            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
-            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
-            "legacy_research_sources:27089d2ed61a",
-            "legacy_research_sources:69757924a78e",
-            "legacy_research_sources:95b9bf2bf0cf",
             "legacy_research_sources:d5fc03e7d5f3",
-            "legacy_research_sources:f8299c41e459",
             "legacy_research_sources:fb0ad8a77215"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price lists with High confidence.",
+          "notes": "Official BMW Germany 2024 and current price lists list 225/45 R18 as the exact standard square wheel/tire package for the current 230i M Sport state.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 45.0,
@@ -31753,8 +32034,9 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 3 validation closes the exact launch-era numeric mapping for the G42 230i row. The official BMW 03/2022 230i Coupé technical-data PDF valid for ACEA markets proves rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and a 225/50 R17 launch-standard tire. The checked BMW Germany technical-data page plus the 2024/current price lists confirm that 230i remains a rear-wheel-drive automatic state in later German-market material, but they also show the current 230i M Sport standard tire moved to 225/45 R18 and use Steptronic Sport wording. The row therefore promotes the exact launch ratio package while leaving full-span tire continuity and public gearbox-subtype naming unresolved.",
+        "note": "Batch 3 validation closes the exact launch-era numeric mapping for the G42 230i row. The official BMW PressClub article and 03/2022 230i Coupé technical-data PDF valid for ACEA markets prove the exact row starts from 03/2022 with rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and a 225/50 R17 launch-standard tire. The checked BMW Germany technical-data page plus the 2024/current price lists confirm that 230i remains a rear-wheel-drive automatic state in later German-market material, but they also show the current 230i M Sport standard tire moved to 225/45 R18 and use Steptronic Sport wording. The row therefore promotes the exact launch ratio package while leaving full-span tire continuity and public gearbox-subtype naming unresolved.",
         "evidence_refs": [
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-article",
           "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
           "bmw_market_pages:g42-2-series-price-list-2024",
           "bmw_market_pages:g42-2-series-price-list-current",
@@ -43684,8 +43966,8 @@
     "model_code": "F45",
     "body_code": "F45",
     "production_start_year": 2014,
-    "production_end_year": 2021,
-    "model_name": "2 Series Active Tourer (F45, 2014-2021)",
+    "production_end_year": 2015,
+    "model_name": "2 Series Active Tourer (F45, 2014-2015)",
     "variant_name": "214d",
     "engine_code": "B37C15",
     "engine_name": "B37C15 I3 Turbo",
@@ -44946,29 +45228,43 @@
     "engine_name": "B48A20O0 I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
+        "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
         "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
-        "bmw_pressclub_sources:f45-2018-spec-pdf"
+        "bmw_pressclub_sources:f45-2014-launch-article"
       ],
-      "notes": "Checked official BMW 03/2015 and 01/2018 specifications PDFs directly. The exact 03/2015 BMW sheet publishes an early plain front-wheel-drive 225i Active Tourer with Eight-speed Steptronic and 205/55 R17 baseline tires, while the 01/2018 facelift sheet instead publishes 225i xDrive. This represented 2014-2021 front-wheel-drive row therefore conflates incompatible official states and remains an unsupported advisory placeholder.",
+      "notes": "Official BMW launch-era and March 2015 source chain places the exact plain 225i Active Tourer on the front wheels before the later 225i xDrive row takes over the checked official split context.",
       "value": "FWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+        "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
+        "bmw_pressclub_sources:f45-2014-launch-article"
+      ],
+      "notes": "Official BMW 02/2014 and 03/2015 technical-data material plus the launch article consistently use Eight-speed Steptronic wording for the exact early plain 225i Active Tourer. The repo keeps ZF8HP as its canonical automatic-family code for that official BMW mapping.",
       "code": "ZF8HP",
-      "name": "8-speed automatic (Aisin)"
+      "name": "8-speed Steptronic transmission"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
+        ],
+        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list 0.673 as the top overdrive ratio for the exact plain F45 225i Active Tourer row.",
         "value": 0.673
       },
       "gear_ratios": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
+        ],
+        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list the full forward ratio set for the exact plain F45 225i Active Tourer row.",
         "value": [
           5.25,
           3.029,
@@ -44981,27 +45277,23 @@
         ]
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 4.398
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
+        ],
+        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list 3.075 as the final-drive ratio for the exact plain F45 225i Active Tourer row.",
+        "value": 3.075
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf",
-          "bmw_pressclub_sources:f45-220i-2018-press-kit",
-          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
-          "bmw_pressclub_sources:f45-225xe-launch-release",
-          "legacy_research_sources:4bcbbab016e3",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b385759b36d8",
-          "legacy_research_sources:ede0bc1c6aee",
-          "secondary_technical_sources:f45-220i-dct-autodata",
-          "secondary_technical_sources:f45-220i-dct-carfolio"
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list a square 205/55 R17 baseline setup on 7.5J x 17 wheels for the exact plain F45 225i Active Tourer row.",
         "front": {
           "width_mm": 205.0,
           "aspect_pct": 55.0,
@@ -45011,20 +45303,12 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "bmw_pressclub_sources:f45-2018-spec-pdf",
-            "bmw_pressclub_sources:f45-220i-2018-press-kit",
-            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
-            "bmw_pressclub_sources:f45-225xe-launch-release",
-            "legacy_research_sources:4bcbbab016e3",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b385759b36d8",
-            "legacy_research_sources:ede0bc1c6aee",
-            "secondary_technical_sources:f45-220i-dct-autodata",
-            "secondary_technical_sources:f45-220i-dct-carfolio"
+            "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+            "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list the standard square 205/55 R17 setup for the exact plain F45 225i Active Tourer row.",
           "front": {
             "width_mm": 205.0,
             "aspect_pct": 55.0,
@@ -45032,86 +45316,45 @@
           },
           "default_axle_for_speed": "rear",
           "name": "Standard 17\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f45-2018-spec-pdf",
-            "bmw_pressclub_sources:f45-220i-2018-press-kit",
-            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
-            "bmw_pressclub_sources:f45-225xe-launch-release",
-            "legacy_research_sources:4bcbbab016e3",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b385759b36d8",
-            "legacy_research_sources:ede0bc1c6aee",
-            "secondary_technical_sources:f45-220i-dct-autodata",
-            "secondary_technical_sources:f45-220i-dct-carfolio"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 215.0,
-            "aspect_pct": 50.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f45-2018-spec-pdf",
-            "bmw_pressclub_sources:f45-220i-2018-press-kit",
-            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
-            "bmw_pressclub_sources:f45-225xe-launch-release",
-            "legacy_research_sources:4bcbbab016e3",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b385759b36d8",
-            "legacy_research_sources:ede0bc1c6aee",
-            "secondary_technical_sources:f45-220i-dct-autodata",
-            "secondary_technical_sources:f45-220i-dct-carfolio"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 19\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Checked official BMW 03/2015 and 01/2018 specifications PDFs directly. The exact 03/2015 BMW sheet publishes a plain 225i Active Tourer row with Eight-speed Steptronic, forward ratios 5.250 / 3.029 / 1.950 / 1.457 / 1.221 / 1.000 / 0.809 / 0.673, final drive 3.075, and 205/55 R17 baseline tires, while the 01/2018 facelift sheet instead publishes 225i xDrive. This represented 2014-2021 225i FWD row therefore remains an unsupported advisory configuration rather than one validated exact row.",
+        "note": "Batch 8 review narrows the broad unsupported F45 225i row to the exact early plain front-wheel-drive state supported by official BMW launch-era evidence. The checked 02/2014 technical-data PDF publishes a plain 225i Active Tourer row with Eight-speed Steptronic, forward ratios 5.250 / 3.029 / 1.950 / 1.457 / 1.221 / 1.000 / 0.809 / 0.673, final drive 3.075, top speed 240 km/h, and a square 205/55 R17 baseline setup. The official launch article independently states the launch car uses a front-wheel-drive system, the 225i Active Tourer tops the launch range with a standard-fitted eight-speed Steptronic gearbox, and xDrive variants are added later. The checked March 2015 wrapper corroborates that the plain 225i specification attachment still exists in 2015, while the later 11/2014 225i xDrive specification PDF confirms the later all-wheel-drive row must stay separate.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2014-launch-article",
           "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
+          "bmw_pressclub_sources:f45-225i-xdrive-2014-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW F45 225i exact front-wheel-drive technical-data row",
-        "reason": "Official BMW 03/2015 technical-data material proves an early plain front-wheel-drive 225i Active Tourer row, but official 01/2018 facelift specifications instead publish 225i xDrive, so the current broad 2014-2021 FWD row does not describe one exact configuration.",
+        "item": "BMW F45 225i exact optional wheel-package coverage beyond the standard 17-inch setup",
+        "reason": "The checked official BMW 02/2014 and 03/2015 technical-data PDFs close the square 205/55 R17 standard setup for the exact plain F45 225i row, but this pass did not recover a launch-era official optional wheel matrix for the same exact configuration.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
           "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
+          "bmw_pressclub_sources:f45-2014-launch-article"
         ]
       },
       {
-        "item": "BMW F45 225i exact drivetrain, gearbox, and baseline-tire mapping for the represented FWD row",
-        "reason": "Because the checked official BMW sources split early plain 225i from later 225i xDrive, this represented 2014-2021 front-wheel-drive row should not receive one guessed drivetrain, transmission, ratio, or tire mapping without a row split or re-timing decision.",
+        "item": "BMW F45 225i exact continuation after the checked March 2015 plain-FWD carryover",
+        "reason": "The checked official BMW source chain proves the plain front-wheel-drive 225i Active Tourer at launch and confirms the same plain-spec attachment still exists in the March 2015 wrapper, but this pass did not recover a later official ACEA-market plain-225i row proving how long that exact front-wheel-drive state persisted before the published 225i xDrive-only material takes over.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-launch-article",
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
           "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
+          "bmw_pressclub_sources:f45-225i-xdrive-2014-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "no_confidence",
+    "configuration_confidence": "medium_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
+      "usable_for_driveshaft_order": true,
       "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }

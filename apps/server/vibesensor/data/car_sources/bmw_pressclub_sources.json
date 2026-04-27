@@ -58,6 +58,27 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0165875EN/312197",
+      "title": "BMW PressClub F45 225i 2014 specifications PDF",
+      "note": "Official BMW 02/2014 launch-era technical-data PDF for the exact plain F45 225i Active Tourer ACEA-market row showing Eight-speed Steptronic, forward ratios 5.250 / 3.029 / 1.950 / 1.457 / 1.221 / 1.000 / 0.809 / 0.673, reverse 4.015, final drive 3.075, top speed 240 km/h, and 205/55 R17 baseline tires on 7.5J x 17 wheels.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f45-2014-launch-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0186826EN/the-new-bmw-2-series-active-tourer?language=en",
+      "title": "BMW PressClub F45 2014 launch article",
+      "note": "Official BMW launch article for the F45 Active Tourer stating the launch car uses a front-wheel-drive system, the 225i Active Tourer tops the launch range with a standard-fitted eight-speed Steptronic gearbox, and xDrive variants are added later.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f45-225i-xdrive-2014-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0193422EN/312195",
+      "title": "BMW PressClub F45 225i xDrive 2014 specifications PDF",
+      "note": "Official BMW 11/2014 technical-data PDF for the later F45 225i xDrive Active Tourer row, used to keep the later all-wheel-drive state separate from the early plain front-wheel-drive 225i row.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f45-2014-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0165875EN/312197",
       "title": "BMW PressClub F45 Active Tourer 2014 specifications PDF",
@@ -279,6 +300,13 @@
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0336854EN/609768",
       "title": "BMW PressClub G42 220i 2021 technical specifications PDF",
       "note": "Official BMW technical-data PDF used for the exact G42 220i ratios, final drive, reverse ratio, and launch-standard tire.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g42-230i-2022-tech-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0374753EN/specifications-of-the-bmw-2-series-coupe-230i-valid-from-03/2022",
+      "title": "BMW PressClub G42 230i 2022 technical specifications article",
+      "note": "Official BMW PressClub article detail page anchoring the exact BMW 2 Series Coupe 230i technical-data attachment as valid from 03/2022.",
       "confidence": "high"
     },
     {
