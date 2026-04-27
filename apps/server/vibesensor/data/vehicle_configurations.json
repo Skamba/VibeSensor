@@ -44266,6 +44266,1384 @@
     }
   },
   {
+    "id": "bmw-f21-114i-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "114i",
+    "engine_code": "1.6L",
+    "engine_name": "1.6L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 114i row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF publishes the exact 114i row as six-speed manual only, without any bracketed automatic alternative.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.830 as the sixth gear for the exact 114i manual row.",
+        "value": 0.83
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 2.813 as the differential ratio for the exact 114i manual row.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 114i row.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 114i row.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 114i manual row. The official BMW technical-data PDF confirms the 114i with six-speed manual, sixth gear 0.830, differential ratio 2.813, and standard 195/55 R16 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-116i-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "116i",
+    "engine_code": "1.6L",
+    "engine_name": "1.6L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 116i row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF directly publishes the exact 116i manual row as six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.830 as the sixth gear for the exact 116i manual row.",
+        "value": 0.83
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 2.813 as the differential ratio for the exact 116i manual row.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116i row.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116i row.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 116i manual row. The official BMW technical-data PDF confirms the 116i with six-speed manual, sixth gear 0.830, differential ratio 2.813, and standard 195/55 R16 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-116i-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "116i",
+    "engine_code": "1.6L",
+    "engine_name": "1.6L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 116i row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF publishes the 116i as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.667 as the eighth gear for the exact 116i automatic row.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 3.077 as the differential ratio for the exact 116i automatic row.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116i row.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116i row.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 116i automatic row. The official BMW technical-data PDF confirms the 116i with optional eight-speed automatic, eighth gear 0.667, differential ratio 3.077, and standard 195/55 R16 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-petrol-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-116d-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "116d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 116d row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF directly publishes the exact 116d manual row as six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.645 as the sixth gear for the exact 116d manual row.",
+        "value": 0.645
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 3.077 as the differential ratio for the exact 116d manual row.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116d row.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116d row.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 116d manual row. The official BMW technical-data PDF confirms the 116d with six-speed manual, sixth gear 0.645, differential ratio 3.077, and standard 195/55 R16 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-116d-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "116d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 116d row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF publishes the 116d as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.667 as the eighth gear for the exact 116d automatic row.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 2.647 as the differential ratio for the exact 116d automatic row.",
+        "value": 2.647
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116d row.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116d row.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 116d automatic row. The official BMW technical-data PDF confirms the 116d with optional eight-speed automatic, eighth gear 0.667, differential ratio 2.647, and standard 195/55 R16 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-118d-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "118d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 118d row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF directly publishes the exact 118d manual row as six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.645 as the sixth gear for the exact 118d manual row.",
+        "value": 0.645
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 3.077 as the differential ratio for the exact 118d manual row.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118d row.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118d row.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 118d manual row. The official BMW technical-data PDF confirms the 118d with six-speed manual, sixth gear 0.645, differential ratio 3.077, and standard 195/55 R16 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-118d-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "118d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 118d row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF publishes the 118d as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.667 as the eighth gear for the exact 118d automatic row.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 2.647 as the differential ratio for the exact 118d automatic row.",
+        "value": 2.647
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118d row.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118d row.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 118d automatic row. The official BMW technical-data PDF confirms the 118d with optional eight-speed automatic, eighth gear 0.667, differential ratio 2.647, and standard 195/55 R16 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-125d-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "125d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 125d row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF directly publishes the exact 125d manual row as six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.659 as the sixth gear for the exact 125d manual row.",
+        "value": 0.659
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 3.385 as the differential ratio for the exact 125d manual row.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125d row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125d row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 125d manual row. The official BMW technical-data PDF confirms the 125d with six-speed manual, sixth gear 0.659, differential ratio 3.385, and standard 205/50 R17 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-125d-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "125d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 125d row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF publishes the 125d as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.667 as the eighth gear for the exact 125d automatic row.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 2.647 as the differential ratio for the exact 125d automatic row.",
+        "value": 2.647
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125d row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125d row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 125d automatic row. The official BMW technical-data PDF confirms the 125d with optional eight-speed automatic, eighth gear 0.667, differential ratio 2.647, and standard 205/50 R17 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-116d-efficientdynamics-edition-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "116d EfficientDynamics Edition",
+    "engine_code": "1.6L",
+    "engine_name": "1.6L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-116d-ed-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 116d EfficientDynamics Edition row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-116d-ed-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF directly publishes the exact 116d EfficientDynamics Edition row as six-speed manual transmission.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-116d-ed-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.645 as the sixth gear for the exact 116d EfficientDynamics Edition row.",
+        "value": 0.645
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-116d-ed-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 2.929 as the differential ratio for the exact 116d EfficientDynamics Edition row.",
+        "value": 2.929
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-116d-ed-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116d EfficientDynamics Edition row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-116d-ed-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116d EfficientDynamics Edition row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 116d EfficientDynamics Edition manual row. The official BMW technical-data PDF confirms the variant with six-speed manual, sixth gear 0.645, differential ratio 2.929, and standard 205/55 R16 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-116d-ed-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-125i-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "125i",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 125i row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF directly publishes the exact 125i manual row as six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.677 as the sixth gear for the exact 125i manual row.",
+        "value": 0.677
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 3.909 as the differential ratio for the exact 125i manual row.",
+        "value": 3.909
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125i row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125i row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 125i manual row. The official BMW technical-data PDF confirms the 125i with six-speed manual, sixth gear 0.677, differential ratio 3.909, and standard 205/50 R17 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-125i-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "125i",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch 125i row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF publishes the 125i as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.667 as the eighth gear for the exact 125i automatic row.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 3.077 as the differential ratio for the exact 125i automatic row.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125i row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125i row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 125i automatic row. The official BMW technical-data PDF confirms the 125i with optional eight-speed automatic, eighth gear 0.667, differential ratio 3.077, and standard 205/50 R17 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-125i-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-m135i-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "M135i",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch M135i row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF directly publishes the exact M135i manual row as six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.846 as the sixth gear for the exact M135i manual row.",
+        "value": 0.846
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 3.077 as the differential ratio for the exact M135i manual row.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard staggered 18-inch tire package for the exact M135i row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "rear": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard staggered 18-inch tire package for the exact M135i row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\" staggered"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 M135i manual row. The official BMW technical-data PDF confirms the M135i with six-speed manual, sixth gear 0.846, differential ratio 3.077, and standard staggered 225/40 R18 front plus 245/35 R18 rear tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f21-m135i-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F21",
+    "body_code": "F21",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F21, 2012)",
+    "variant_name": "M135i",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF lists the exact F21 1 Series 3 Door Hatch M135i row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF publishes the M135i as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 0.667 as the eighth gear for the exact M135i automatic row.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF publishes 3.077 as the differential ratio for the exact M135i automatic row.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+        ],
+        "notes": "Official BMW 07/2012 technical-data PDF confirms the standard staggered 18-inch tire package for the exact M135i row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "rear": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+          ],
+          "notes": "Official BMW 07/2012 technical-data PDF confirms the standard staggered 18-inch tire package for the exact M135i row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\" staggered"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 16 adds the exact 07/2012 F21 M135i automatic row. The official BMW technical-data PDF confirms the M135i with optional eight-speed automatic, eighth gear 0.667, differential ratio 3.077, and standard staggered 225/40 R18 front plus 245/35 R18 rear tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f21-2012-m135i-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
     "id": "bmw-f40-118i-eu-2019-dct7-fwd",
     "brand": "BMW",
     "type": "Hatchback",

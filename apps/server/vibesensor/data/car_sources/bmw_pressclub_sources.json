@@ -121,6 +121,41 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f21-2012-petrol-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0132125EN/198998",
+      "title": "BMW PressClub F21 1 Series 3 Door Hatch 114i and 116i 2012 specifications PDF",
+      "note": "Official BMW 07/2012 technical-data PDF for the exact F21 1 Series 3 Door Hatch 114i and 116i ACEA-market rows. The checked table directly publishes the 114i six-speed manual row plus the 116i six-speed manual row with optional eight-speed automatic figures in brackets, the shared 195/55 R16 standard tire baseline, and the exact 114i/116i launch-state differential ratios.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f21-2012-diesel-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0132125EN/198999",
+      "title": "BMW PressClub F21 1 Series 3 Door Hatch 116d, 118d, and 125d 2012 specifications PDF",
+      "note": "Official BMW 07/2012 technical-data PDF for the exact F21 1 Series 3 Door Hatch 116d, 118d, and 125d ACEA-market rows. The checked table directly publishes the manual and optional eight-speed automatic ratios for all three diesel variants, including the 125d manual sixth gear 0.659, the shared automatic eighth gear 0.667, differential ratios 3.077 / 2.647 for 116d and 118d, differential ratios 3.385 / 2.647 for 125d, and the standard tire baselines of 195/55 R16 for 116d and 118d plus 205/50 R17 for 125d.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f21-2012-116d-ed-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0132125EN/199002",
+      "title": "BMW PressClub F21 1 Series 3 Door Hatch 116d EfficientDynamics Edition 2012 specifications PDF",
+      "note": "Official BMW 07/2012 technical-data PDF for the exact F21 1 Series 3 Door Hatch 116d EfficientDynamics Edition ACEA-market row. The checked table directly publishes the six-speed manual ratio set, sixth gear 0.645, differential ratio 2.929, and the standard 205/55 R16 tire package.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f21-2012-125i-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0132125EN/199003",
+      "title": "BMW PressClub F21 1 Series 3 Door Hatch 125i 2012 specifications PDF",
+      "note": "Official BMW 07/2012 technical-data PDF for the exact F21 1 Series 3 Door Hatch 125i ACEA-market row. The checked table directly publishes the 125i six-speed manual row with optional eight-speed automatic figures in brackets, sixth gear 0.677, automatic eighth gear 0.667, differential ratios 3.909 and 3.077, and the standard 205/50 R17 tire package.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f21-2012-m135i-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0132125EN/199004",
+      "title": "BMW PressClub F21 M135i 2012 specifications PDF",
+      "note": "Official BMW 07/2012 technical-data PDF for the exact F21 1 Series 3 Door Hatch M135i ACEA-market row. The checked table directly publishes the M135i rear-wheel-drive six-speed manual row with optional eight-speed automatic figures in brackets, top gears 0.846 and 0.667, differential ratio 3.077 for both transmissions, and the standard staggered 225/40 R18 front plus 245/35 R18 rear tire package.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g20-330i-xdrive-ratio-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0285128EN/425813",
       "title": "BMW PressClub G20 3 Series technical data attachment",
