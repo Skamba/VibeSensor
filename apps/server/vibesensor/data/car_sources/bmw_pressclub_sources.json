@@ -107,6 +107,13 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f20-2011-diesel-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0117890EN/196619",
+      "title": "BMW PressClub F20 1 Series diesel 2011 launch specifications PDF",
+      "note": "Official BMW 07/2011 valid-from-09/2011 technical-data PDF for the diesel launch-state F20 1 Series 5-door range. The checked table directly publishes the exact 116d, 118d, and 120d manual and optional eight-speed automatic ratios, the standard 16-inch tire baselines, and the shared 17/18-inch option ladder with the 205/55 R16 square upgrade explicitly called out for 116d and 118d.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g20-330i-xdrive-ratio-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0285128EN/425813",
       "title": "BMW PressClub G20 3 Series technical data attachment",

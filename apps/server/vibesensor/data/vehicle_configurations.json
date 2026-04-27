@@ -42000,6 +42000,360 @@
     }
   },
   {
+    "id": "bmw-f20-116i-eu-2011-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
+    "variant_name": "116i",
+    "engine_code": "1.6L",
+    "engine_name": "1.6L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF lists the 116i in the petrol launch-state table for the new F20 1 Series and confirms the exact rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF directly publishes the exact 116i manual row as a six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.830 as the sixth gear for the exact 116i manual launch-state.",
+        "value": 0.83
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 2.813 as the differential ratio for the exact 116i manual launch-state.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116i launch-state.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 16-inch square 205-section tire package for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "16\" square upgrade"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 205-section tire package for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 205"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 225-section tire package for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 225"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 17-inch tire package for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" staggered"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch tire package for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "18\" staggered"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 14 adds the exact 09/2011 F20 116i manual launch-state row. The official BMW technical-data PDF confirms the 116i with six-speed manual, sixth gear 0.830, differential ratio 2.813, standard 195/55 R16 tires, and 16-inch, 17-inch square, 17-inch staggered, and 18-inch staggered option ladders.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f20-116i-eu-2011-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
+    "variant_name": "116i",
+    "engine_code": "1.6L",
+    "engine_name": "1.6L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF lists the 116i in the petrol launch-state table for the new F20 1 Series and confirms the exact rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF publishes the 116i as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the exact 116i automatic launch-state.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 3.077 as the differential ratio for the exact 116i automatic launch-state.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116i launch-state.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 16-inch square 205-section tire package for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "16\" square upgrade"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 205-section tire package for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 205"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 225-section tire package for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 225"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 17-inch tire package for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" staggered"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch tire package for the exact 116i launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "18\" staggered"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 14 adds the exact 09/2011 F20 116i automatic launch-state row. The official BMW technical-data PDF confirms the 116i with optional eight-speed automatic, eighth gear 0.667, differential ratio 3.077, standard 195/55 R16 tires, and 16-inch, 17-inch square, 17-inch staggered, and 18-inch staggered option ladders.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
     "id": "bmw-f20-118i-eu-2011-mt6-rwd",
     "brand": "BMW",
     "type": "Hatchback",
@@ -42660,6 +43014,1040 @@
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": false,
       "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f20-116d-eu-2011-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
+    "variant_name": "116d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF lists the 116d in the diesel launch-state table for the new F20 1 Series and confirms the exact rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF directly publishes the exact 116d manual row as a six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.645 as the sixth gear for the exact 116d manual launch-state.",
+        "value": 0.645
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 3.077 as the differential ratio for the exact 116d manual launch-state.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116d launch-state.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF explicitly adds the 205/55 R16 square upgrade for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "16\" square upgrade"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 205-section tire package for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 205"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 225-section tire package for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 225"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 17-inch tire package for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" staggered"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch tire package for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "18\" staggered"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 14 adds the exact 09/2011 F20 116d manual launch-state row. The official BMW technical-data PDF confirms the 116d with six-speed manual, sixth gear 0.645, differential ratio 3.077, standard 195/55 R16 tires, the 205/55 R16 square upgrade, and the 17-inch and 18-inch option ladders.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f20-116d-eu-2011-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
+    "variant_name": "116d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF lists the 116d in the diesel launch-state table for the new F20 1 Series and confirms the exact rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF publishes the 116d as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the exact 116d automatic launch-state.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 2.647 as the differential ratio for the exact 116d automatic launch-state.",
+        "value": 2.647
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116d launch-state.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF explicitly adds the 205/55 R16 square upgrade for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "16\" square upgrade"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 205-section tire package for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 205"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 225-section tire package for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 225"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 17-inch tire package for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" staggered"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch tire package for the exact 116d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "18\" staggered"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 14 adds the exact 09/2011 F20 116d automatic launch-state row. The official BMW technical-data PDF confirms the 116d with optional eight-speed automatic, eighth gear 0.667, differential ratio 2.647, standard 195/55 R16 tires, the 205/55 R16 square upgrade, and the 17-inch and 18-inch option ladders.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f20-118d-eu-2011-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
+    "variant_name": "118d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF lists the 118d in the diesel launch-state table for the new F20 1 Series and confirms the exact rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF directly publishes the exact 118d manual row as a six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.645 as the sixth gear for the exact 118d manual launch-state.",
+        "value": 0.645
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 3.077 as the differential ratio for the exact 118d manual launch-state.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118d launch-state.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF explicitly adds the 205/55 R16 square upgrade for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "16\" square upgrade"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 205-section tire package for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 205"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 225-section tire package for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 225"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 17-inch tire package for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" staggered"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch tire package for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "18\" staggered"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 14 adds the exact 09/2011 F20 118d manual launch-state row. The official BMW technical-data PDF confirms the 118d with six-speed manual, sixth gear 0.645, differential ratio 3.077, standard 195/55 R16 tires, the 205/55 R16 square upgrade, and the 17-inch and 18-inch option ladders.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f20-118d-eu-2011-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
+    "variant_name": "118d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF lists the 118d in the diesel launch-state table for the new F20 1 Series and confirms the exact rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF publishes the 118d as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the exact 118d automatic launch-state.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 2.647 as the differential ratio for the exact 118d automatic launch-state.",
+        "value": 2.647
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118d launch-state.",
+        "front": {
+          "width_mm": 195.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 195.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF explicitly adds the 205/55 R16 square upgrade for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "16\" square upgrade"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 205-section tire package for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 205"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 225-section tire package for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 225"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 17-inch tire package for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" staggered"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch tire package for the exact 118d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "18\" staggered"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 14 adds the exact 09/2011 F20 118d automatic launch-state row. The official BMW technical-data PDF confirms the 118d with optional eight-speed automatic, eighth gear 0.667, differential ratio 2.647, standard 195/55 R16 tires, the 205/55 R16 square upgrade, and the 17-inch and 18-inch option ladders.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f20-120d-eu-2011-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
+    "variant_name": "120d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF lists the 120d in the diesel launch-state table for the new F20 1 Series and confirms the exact rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF directly publishes the exact 120d manual row as a six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.659 as the sixth gear for the exact 120d manual launch-state.",
+        "value": 0.659
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 3.154 as the differential ratio for the exact 120d manual launch-state.",
+        "value": 3.154
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 120d launch-state.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 120d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 205-section tire package for the exact 120d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 205"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 225-section tire package for the exact 120d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 225"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 17-inch tire package for the exact 120d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" staggered"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch tire package for the exact 120d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "18\" staggered"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 14 adds the exact 09/2011 F20 120d manual launch-state row. The official BMW technical-data PDF confirms the 120d with six-speed manual, sixth gear 0.659, differential ratio 3.154, standard 205/55 R16 tires, and the 17-inch and 18-inch option ladders.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f20-120d-eu-2011-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "1 Series (F20, 2011)",
+    "variant_name": "120d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF lists the 120d in the diesel launch-state table for the new F20 1 Series and confirms the exact rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2011 valid-from-09/2011 technical-data PDF publishes the 120d as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the exact 120d automatic launch-state.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF publishes 2.647 as the differential ratio for the exact 120d automatic launch-state.",
+        "value": 2.647
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ],
+        "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 120d launch-state.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the standard 16-inch square tire setup for the exact 120d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 205-section tire package for the exact 120d launch-state.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 205"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the 17-inch square 225-section tire package for the exact 120d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" square 225"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 17-inch tire package for the exact 120d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "17\" staggered"
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+          ],
+          "notes": "Official BMW 09/2011 technical-data PDF confirms the staggered 18-inch tire package for the exact 120d launch-state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "18\" staggered"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 14 adds the exact 09/2011 F20 120d automatic launch-state row. The official BMW technical-data PDF confirms the 120d with optional eight-speed automatic, eighth gear 0.667, differential ratio 2.647, standard 205/55 R16 tires, and the 17-inch and 18-inch option ladders.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2011-diesel-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
       "requires_manual_confirmation": true
     }
   },
