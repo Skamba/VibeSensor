@@ -4,12 +4,10 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from vibesensor.adapters.persistence.car_library import load_car_library
 from vibesensor.adapters.persistence.car_library_validation import (
     validate_car_library_rows,
     validate_vehicle_configurations,
 )
-from vibesensor.adapters.persistence.vehicle_configurations import load_vehicle_configurations
 from vibesensor.domain import (
     AxleTireSetup,
     TireSpec,

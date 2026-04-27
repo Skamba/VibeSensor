@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.adapters.persistence.car_library import get_variants_for_model, load_car_library, resolve_variant
+from vibesensor.adapters.persistence.car_library import (
+    get_variants_for_model,
+    load_car_library,
+    resolve_variant,
+)
 from vibesensor.shared.types.car_config import car_from_persistence_dict, car_to_persistence_dict
 
 
@@ -39,6 +43,8 @@ def test_resolve_variant_inherits_base_gearboxes() -> None:
             resolved = resolve_variant(entry, first_v["name"])
             assert resolved["gearboxes"] == entry["gearboxes"]
             break
+
+
 def test_resolve_variant_unknown_name_returns_base() -> None:
     """resolve_variant with unknown name returns base entry unchanged."""
     base = _library_entries()[0]
@@ -49,6 +55,8 @@ def test_resolve_variant_unknown_name_returns_base() -> None:
 # ---------------------------------------------------------------------------
 # Pydantic model tests
 # ---------------------------------------------------------------------------
+
+
 def test_car_library_variant_entry_requires_drivetrain() -> None:
     """CarLibraryVariantEntry requires drivetrain field."""
     from pydantic import ValidationError
