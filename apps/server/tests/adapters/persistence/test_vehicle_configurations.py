@@ -123,7 +123,7 @@ def test_exact_bmw_rows_keep_inline_source_backed_metadata() -> None:
     assert f45_220i.metadata_for("drivetrain").confidence == "official_exact"
     assert f45_220i.metadata_for("drivetrain").evidence_refs
     assert f45_220i.metadata_for("top_gear_ratio") is not None
-    assert f45_220i.metadata_for("top_gear_ratio").confidence == "family_default"
+    assert f45_220i.metadata_for("top_gear_ratio").confidence == "official_derived"
 
     g20_330i_xdrive = configs[
         ("3 Series (G20, 2019-2025)", "330i xDrive", "8-speed automatic (ZF 8HP)")
