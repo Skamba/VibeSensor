@@ -72760,9 +72760,10 @@
     "drivetrain": {
       "confidence": "unverified",
       "evidence_refs": [
-        "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+        "legacy_research_sources:387f07d4c6ab"
       ],
-      "notes": "Checked official BMW 11/2015 G11 launch specifications article. It publishes exact rows for 730d, 730d xDrive, 740d xDrive, 740i, 750i, and 750i xDrive, but it does not publish a 725d row, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
+      "notes": "Checked official BMW 11/2015 G11 launch specifications article and the official BMW DE launch-era 7 Series brochure/catalog. Together they publish the 2016 diesel lineup as 730d/Ld RWD plus 730d/Ld xDrive and 740d/Ld xDrive AWD, but they do not publish any 725d row in either the rear-wheel-drive or xDrive technical-data sections, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
       "value": "RWD"
     },
     "transmission": {
@@ -72860,25 +72861,28 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 16 directly revalidated the official BMW 11/2015 G11 launch specifications article. That checked official BMW launch page publishes exact rows for 730d, 730d xDrive, 740d xDrive, 740i, 750i, and 750i xDrive, but it does not publish an exact 725d row, so this represented 2016 725d RWD configuration remains an unsupported advisory row rather than a validated exact state.",
+        "note": "Batch 16 directly revalidated the official BMW 11/2015 G11 launch specifications article, and batch 10 then rechecked the official BMW DE launch-era 7 Series brochure/catalog technical table. Together they show that 2016 EU diesel rows are published as 730d/Ld RWD plus 730d/Ld xDrive and 740d/Ld xDrive AWD, but no exact 725d row appears in either the launch article or the Germany-market technical-data table, so this represented 2016 725d RWD configuration remains an unsupported advisory row rather than a validated exact state.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
     "unresolved": [
       {
         "item": "BMW G11 725d exact official 2016 technical-data row",
-        "reason": "The checked official BMW 11/2015 launch specifications article omits 725d from the published EU launch lineup, and this pass did not recover another official 2016 EU technical-data page for the exact variant.",
+        "reason": "The checked official BMW 11/2015 launch specifications article omits 725d from the published EU launch lineup, and the official BMW DE launch-era technical-data table also omits 725d from both the rear-wheel-drive and xDrive sections, so this pass still has no exact official 2016 EU technical-data row for the variant.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       },
       {
         "item": "BMW G11 725d exact final-drive, top-gear, and default-tire mapping",
         "reason": "Without an official exact 725d technical-data row for the represented 2016 EU state, this pass cannot promote the inherited gearbox, final-drive, or tire placeholders.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
@@ -73452,9 +73456,10 @@
       "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:g11-7-series-2015-spec-article",
-        "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf",
+        "legacy_research_sources:387f07d4c6ab"
       ],
-      "notes": "Checked official BMW 11/2015 G11 launch specifications article and exact 740d xDrive technical-data PDF. They publish 740d xDrive and 740Ld xDrive, but they do not publish a 740Ld RWD row, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
+      "notes": "The checked official BMW 11/2015 launch specifications article omits `740Ld` from the published rear-wheel-drive lineup, and the official BMW DE launch-era 7 Series brochure then shows `740d/Ld xDrive` only in the all-wheel-drive technical-data columns. This represented 2016 `740Ld` rear-wheel-drive mapping remains a contradicted advisory placeholder rather than a supported exact state.",
       "value": "RWD"
     },
     "transmission": {
@@ -73552,20 +73557,22 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 17 directly revalidated the official BMW 11/2015 G11 launch specifications article and the exact 740d xDrive technical-data PDF. Those checked official BMW sources publish 740d xDrive and 740Ld xDrive, but they do not publish an exact 740Ld RWD row, so this represented 2016 740Ld RWD configuration remains an unsupported advisory row rather than a validated exact state.",
+        "note": "Batch 10 rechecks the official BMW 11/2015 launch specifications article, the exact 740d xDrive technical-data PDF, and the BMW DE launch-era 7 Series brochure. Together they show that `740Ld` is absent from the published rear-wheel-drive lineup and appears only through the shared `740d/Ld xDrive` all-wheel-drive technical-data column. This represented 2016 `740Ld` rear-wheel-drive row therefore remains a contradicted advisory placeholder rather than a validated exact production state.",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
-          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
     "unresolved": [
       {
         "item": "BMW G11 740Ld exact official 2016 RWD technical-data row",
-        "reason": "The checked official BMW 11/2015 launch sources publish only 740d xDrive and 740Ld xDrive rows for the represented launch window, and this pass did not recover another official 2016 EU technical-data page for a 740Ld RWD state.",
+        "reason": "The checked official BMW launch-source chain shows `740Ld` only through the shared `740d/Ld xDrive` AWD technical-data column and does not publish any exact `740Ld` rear-wheel-drive row for the represented 2016 EU state.",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
-          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       },
       {
@@ -73573,7 +73580,8 @@
         "reason": "Without an official exact 740Ld RWD technical-data row for the represented 2016 EU state, this pass cannot promote the inherited gearbox, final-drive, or tire placeholders.",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
-          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
@@ -73831,9 +73839,10 @@
       "confidence": "unverified",
       "evidence_refs": [
         "bmw_pressclub_sources:g11-7-series-2015-spec-article",
-        "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+        "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf",
+        "legacy_research_sources:387f07d4c6ab"
       ],
-      "notes": "Checked official BMW 11/2015 G11 launch specifications article and exact 740d xDrive technical-data PDF. They publish 740d xDrive and 740Ld xDrive, but they do not publish a 740d RWD row, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
+      "notes": "Checked official BMW 11/2015 G11 launch specifications article, the exact 740d xDrive technical-data PDF, and the official BMW DE launch-era 7 Series brochure/catalog. Together they publish 740d xDrive and 740Ld xDrive in the AWD technical-data columns, but they do not publish a 740d RWD row, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
       "value": "RWD"
     },
     "transmission": {
@@ -73931,20 +73940,22 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 16 directly revalidated the official BMW 11/2015 G11 launch specifications article and the exact 740d xDrive technical-data PDF. Those checked official BMW sources publish 740d xDrive and 740Ld xDrive, but they do not publish an exact 740d RWD row, so this represented 2016 740d RWD configuration remains an unsupported advisory row rather than a validated exact state.",
+        "note": "Batch 16 directly revalidated the official BMW 11/2015 G11 launch specifications article and the exact 740d xDrive technical-data PDF, and batch 10 then rechecked the official BMW DE launch-era 7 Series brochure/catalog technical table. Those checked official BMW sources publish 740d xDrive and 740Ld xDrive in the AWD technical-data columns, but they do not publish an exact 740d RWD row, so this represented 2016 740d RWD configuration remains an unsupported advisory row rather than a validated exact state.",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
-          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
     "unresolved": [
       {
         "item": "BMW G11 740d exact official 2016 RWD technical-data row",
-        "reason": "The checked official BMW 11/2015 launch sources publish only 740d xDrive and 740Ld xDrive rows for the represented launch window, and this pass did not recover another official 2016 EU technical-data page for a 740d RWD state.",
+        "reason": "The checked official BMW 11/2015 launch sources publish only 740d xDrive and 740Ld xDrive rows for the represented launch window, and the official BMW DE launch-era technical-data table also places 740d/Ld only in the xDrive section rather than the rear-wheel-drive section, so this pass still has no exact official 2016 EU technical-data row for a 740d RWD state.",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
-          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       },
       {
@@ -73952,7 +73963,8 @@
         "reason": "Without an official exact 740d RWD technical-data row for the represented 2016 EU state, this pass cannot promote the inherited gearbox, final-drive, or tire placeholders.",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
-          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+          "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
