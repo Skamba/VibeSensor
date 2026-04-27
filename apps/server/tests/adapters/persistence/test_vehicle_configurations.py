@@ -114,7 +114,7 @@ def test_exact_bmw_rows_keep_inline_source_backed_metadata() -> None:
 
     f45_220i = configs[
         (
-            "2 Series Active Tourer (F45, 2014-2021)",
+            "2 Series Active Tourer (F45, 2018)",
             "220i",
             "7-speed Steptronic dual-clutch transmission",
         )

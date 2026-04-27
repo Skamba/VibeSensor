@@ -128,7 +128,7 @@ def test_resolve_variant_inherits_base_gearboxes() -> None:
 def test_resolve_variant_carries_variant_engine_and_drivetrain() -> None:
     """Resolved variants should expose the selected variant's identity fields."""
     for entry in _library_entries():
-        if entry["brand"] == "BMW" and entry["model"] == "8 Series Coupe (G15, 2019-2025)":
+        if entry["brand"] == "BMW" and entry["model"] == "8 Series Coupe (G15, 2019)":
             resolved = resolve_variant(entry, "M8")
             assert resolved["engine"] == "4.4L V8 Turbo"
             assert resolved["drivetrain"] == "AWD"
