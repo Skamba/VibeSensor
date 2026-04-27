@@ -86,6 +86,20 @@
       "confidence": "high"
     },
     {
+      "id": "audi_mediacenter_sources:b9-a5-coupe-until-2024-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-a5-coupe-until-2024-16567",
+      "title": "Audi MediaCenter A5 Coupé (until 2024) model page",
+      "note": "Official Audi MediaCenter model hub scoping the outgoing A5 Coupé as 'until 2024' and linking the exact 45 TFSI quattro S tronic 195 kW technical-data PDF.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1076/file_en/be71d58f33a992b656581fe5b38cb3e4bb830973/eTD-Audi-A5-Coupe-45-TFSI-quattro-S_tronic-195kW-MHEV_240320.pdf?disposition=attachment",
+      "title": "Audi MediaCenter A5 Coupé 45 TFSI quattro 2024 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late-B9 A5 Coupé 45 TFSI quattro S tronic 195 kW MHEV state showing quattro ultra AWD, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and basic 225/50 R17 tires.",
+      "confidence": "high"
+    },
+    {
       "id": "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/953/file_de/0a4a8fa2a3274aecf30b11d6b8bd47624ac4bfd3/td_Q5_45_TFSI_quattro_S_tronic_180_kW.pdf?1698933816",
       "title": "Audi MediaCenter Q5 45 TFSI quattro 2019 technical-data PDF",
@@ -111,6 +125,34 @@
       "url": "https://www.audi-mediacenter.com/en/press-releases/the-new-audi-q5-suv-proven-concept-in-its-third-generation-16232",
       "title": "Audi MediaCenter third-generation Q5 launch release",
       "note": "Official Audi launch release stating the new Q5 is the third generation, with ordering from September 2024 and market launch in the first quarter of 2025, used to bound the FY Q5 row end year.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/37/file_en/80e6790c8c1cd17c8677f056d55467d0af1aa56c/en01605_td_Q5_35_TDI_quattro_S_tronic_120_kW.pdf?1698933679",
+      "title": "Audi MediaCenter Q5 35 TDI quattro 2019 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact FY Q5 35 TDI quattro S tronic 120 kW state showing quattro AWD with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, and basic 235/65 R17 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-35-tdi-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1119/file_en/7f879fa689e6211fe8e08cf0057f508e5cdd9b5b/eTD-Audi-Q5-35-TDI-S_tronic-120kW-MHEV_240402.pdf?1712157030&disposition=attachment",
+      "title": "Audi MediaCenter Q5 35 TDI 2024 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the later FY Q5 35 TDI S tronic 120 kW MHEV state showing front-wheel drive, 7-speed S tronic, the same 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 ratio set, a different final drive 4.885, and basic 235/65 R17 tires, used to contradict any broad 35 TDI quattro continuity claim.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2019-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/951/file_de/882a1ba9c0e910a31233ea47216745dd30ebd89b/td_Q5_40_TDI_quattro_140_kW.pdf",
+      "title": "Audi MediaCenter Q5 40 TDI quattro 2019 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact FY Q5 40 TDI quattro 140 kW state showing AWD, 6-speed manual transmission, forward ratios 3.778 / 1.957 / 1.241 / 0.912 / 0.692 / 0.571, reverse 3.333, final drive 2.647, and basic 235/65 R17 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1027/file_en/2cbcea158f0fd003e5a1519697c726fc3e844d8b/eTD-Audi-Q5-40-TDI-quattro-S_tronic-150kW-MHEV_240604.pdf?disposition=attachment",
+      "title": "Audi MediaCenter Q5 40 TDI quattro 2024 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late-FY Q5 40 TDI quattro S tronic 150 kW MHEV state showing quattro AWD with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, and basic 235/65 R17 tires.",
       "confidence": "high"
     },
     {
@@ -191,6 +233,27 @@
       "confidence": "high"
     },
     {
+      "id": "audi_mediacenter_sources:4m-q7-45-tfsi-middle-east-brochure-pdf",
+      "url": "https://media.audi.com/is/content/audi/country/me/assets/brochures/en/q7.pdf",
+      "title": "Audi Middle East Q7 brochure PDF",
+      "note": "Official Audi Middle East brochure confirming the exact Q7 45 TFSI quattro identity with 1984 cc, 185 kW, 370 Nm, permanent quattro all-wheel drive with self-locking center differential, and 8-speed tiptronic, used only for exact trim identity because it is not an EU-market source.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-until-2023-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-q7-until-2023-15735",
+      "title": "Audi MediaCenter Q7 (until 2023) model page",
+      "note": "Official Audi MediaCenter model hub scoping the earlier Q7 line as 'until 2023', used to bound the pre-revision 4M lifecycle phase.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-revised-2024-release",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/strong-in-design-comfort-and-technologythe-revised-audi-q7-15849",
+      "title": "Audi MediaCenter revised Q7 2024 release",
+      "note": "Official Audi MediaCenter release for the revised Q7 proving the model line continued after the 'until 2023' phase into the 2024 facelift-era car.",
+      "confidence": "high"
+    },
+    {
       "id": "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release",
       "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/maximale-effizienz-auf-grossem-raum-die-neuen-audi-q7-tfsi-e-quattro-und-q8-tfsi-e-quattro-16001",
       "title": "Audi MediaCenter 2024 Q7 TFSI e upgrade release",
@@ -208,7 +271,7 @@
       "id": "audi_mediacenter_sources:4m-q7-2026-price-list-pdf",
       "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2026/preislisten/preisliste_q7-suv_q7-suv-tfsi-e_sq7-suv.pdf",
       "title": "Audi Germany model-year 2026 Q7 price list",
-      "note": "Official Audi Germany MY2026 price list confirming continued sale of the Q7 TFSI e quattro 290 kW tiptronic state in the 2026 Germany-market program.",
+      "note": "Official Audi Germany MY2026 price list confirming continued sale of the facelift-era Q7 program, including the TFSI e quattro 290 kW state and the non-PHEV TFSI quattro 250 kW petrol row, while not surfacing any Germany-market 45 TFSI gasoline row. The same price list also publishes the current Q7 family square wheel packages such as 255/55 R19, 285/45 R20, 285/40 R21, and 285/35 R22.",
       "confidence": "high"
     },
     {
