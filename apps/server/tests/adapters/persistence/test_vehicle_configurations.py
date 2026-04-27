@@ -18,7 +18,12 @@ def _load_sample_shards(count: int) -> list[tuple[Path, list[dict[str, object]]]
         payload = json.loads(shard_path.read_text(encoding="utf-8"))
         assert isinstance(payload, list)
         assert all(isinstance(row, dict) for row in payload)
-        shards.append((shard_path.relative_to(_VEHICLE_CONFIG_DATA_DIR), cast(list[dict[str, object]], payload)))
+        shards.append(
+            (
+                shard_path.relative_to(_VEHICLE_CONFIG_DATA_DIR),
+                cast(list[dict[str, object]], payload),
+            )
+        )
         if len(shards) == count:
             return shards
     raise AssertionError(f"Expected at least {count} canonical vehicle-configuration shards")
