@@ -590,6 +590,13 @@
       "confidence": "high"
     },
     {
+      "id": "legacy_research_sources:387f07d4c6ab",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/brochure/catalogue/BMW_7er_Katalog.pdf",
+      "title": "Bmw 7Er Katalog.Pdf",
+      "note": "Official BMW DE 7 Series brochure/catalog finalized in 03/2017 for the launch-era lineup. The technical-data table confirms 740e/Le as rear-wheel-drive plug-in hybrids with 8-Gang Steptronic and 245/50 R18 baseline tires, separates 740Le xDrive as the AWD sibling, and shows 750d/Ld only in the xDrive columns rather than as RWD rows.",
+      "confidence": "high"
+    },
+    {
       "id": "legacy_research_sources:38987808b4bf",
       "url": "https://www.bmw.de/sitemap.xml",
       "title": "Sitemap.Xml",
@@ -2144,6 +2151,27 @@
       "confidence": "high"
     },
     {
+      "id": "legacy_research_sources:cb8e49d17f26",
+      "url": "https://www.audi-mediacenter.com/en/videos/video/rs-3-limousine-trailer-2016-amtv-en-3264",
+      "title": "Rs 3 Limousine Trailer 2016 Amtv En 3264",
+      "note": "Official Audi MediaCenter video page for the 2016 Paris reveal of the 8V RS 3 Limousine, confirming the distinct launch-era sedan identity, 400 hp output, and pre-sale state.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:cd4f372ab981",
+      "url": "https://web.archive.org/web/20161029231656id_/https://www.audi.de/de/brand/de/neuwagen/a3/rs-3-limousine.html",
+      "title": "Archived Audi Germany Rs 3 Limousine Launch Page",
+      "note": "Archived official Audi Germany RS 3 Limousine model page for the launch-era 8V sedan, confirming 294 kW / 400 PS, 480 Nm, 4.1 s, optional 280 km/h, seven-speed S tronic wording, and permanent quattro AWD before the European market start.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:ce71a24f5b83",
+      "url": "https://web.archive.org/web/20180903133108id_/https://www.audi.at/kontakt/infomaterial/im-pdf-format",
+      "title": "Archived Audi Austria Infomaterial Rs 3 Brochure Index",
+      "note": "Archived official Audi Austria infomaterial page proving Audi-hosted provenance for the RS 3 Limousine and Sportback brochure PDF mirrored in later secondary archives.",
+      "confidence": "high"
+    },
+    {
       "id": "legacy_research_sources:c4511d075c89",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0197450EN/301332",
       "title": "301332",
@@ -2176,6 +2204,13 @@
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1545/file_en/4fa19f9df51c551a54ddb969966dffefecb35555/eTD-Audi-RS3-Sedan_260306.pdf",
       "title": "Etd Audi Rs3 Sedan 260306.Pdf",
       "note": "Official Audi MediaCenter technical-data PDF for the exact 8Y RS 3 Sedan (Germany): AWD with torque splitter, 7-speed S tronic, forward ratios 3.560 / 2.530 / 1.680 / 1.020 / 0.790 / 0.760 / 0.630, reverse 2.790, final drive 4.059, and basic staggered tires 265/30 ZR19 front + 245/35 ZR19 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e52a1c74b8d3",
+      "url": "https://emea-dam.audi.com/adobe/assets/urn:aaid:aem:46d7199f-0a45-47ab-affb-5fc21e88b29d/original/as/Audi_RS_3_Preisliste_MJ26_ab_23.07.25_DE.pdf",
+      "title": "Audi Rs 3 Preisliste Mj26 Ab 23.07.25 De.Pdf",
+      "note": "Official Audi Switzerland MJ2026 price list for the exact RS 3 Limousine TFSI quattro 7-Gang S tronic (model code 8YMRWY), confirming the EU-market 19-inch staggered package with 9.0J / 8.0J x 19 wheels and 265/30 / 245/35 R19 tires, optional Pirelli P Zero Trofeo R tires in the same sizes, and the 280 km/h or 290 km/h top-speed option packages.",
       "confidence": "high"
     },
     {
@@ -2869,6 +2904,34 @@
       "url": "https://press.audi.co.uk/assets/documents/original/20342-AudiUK00000091Q320TFSIquattroStronic.pdf",
       "title": "Q3 2 0 Tfsi Quattro S Tronic",
       "note": "Official Audi UK technical-data PDF for the exact Q3 2.0 TFSI quattro S tronic state: quattro AWD, 7-speed S tronic, top gear 0.667, final drives 4.769 and 3.444, and basic 235/55 R17 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:52f10520a911",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0119134EN/174108",
+      "title": "Specifications Bmw 5 Series Sedan 520I 528I 09 2011",
+      "note": "Official BMW 09/2011 technical-data PDF for the exact F10 520i and 528i non-xDrive launch-state. For the 520i automatic values shown in parentheses it confirms eight-speed automatic with Steptronic, top gear 0.667, final drive 3.231, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:53f10535a911",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0119134EN/174107",
+      "title": "Specifications Bmw 5 Series Sedan 530I 535I 09 2011",
+      "note": "Official BMW 09/2011 technical-data PDF for the exact F10 530i and 535i non-xDrive launch-state. For the automatic values shown in parentheses it confirms eight-speed automatic with Steptronic, top gear 0.667, final drive 3.385 for 530i and 3.077 for 535i, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:55f10550a911",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0119134EN/174106",
+      "title": "Specifications Bmw 5 Series Sedan 550I 09 2011",
+      "note": "Official BMW 09/2011 technical-data PDF for the exact F10 550i non-xDrive launch-state: rear-wheel-drive 550i with Eight-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 2.813, standard 245/45 R18 tires, and staggered 18-inch, 19-inch, and 20-inch options.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f1055dc71011",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0122682EN/178942",
+      "title": "Specifications Bmw M5 10 2011",
+      "note": "Official BMW 10/2011 technical-data PDF for the exact F10 M5 launch-state: seven-speed M double-clutch transmission with Drivelogic, forward ratios 4.806 / 2.593 / 1.701 / 1.277 / 1.000 / 0.844 / 0.671, reverse 4.172, final drive 3.150, and standard staggered 265/40 R19 front plus 295/35 R19 rear tires.",
       "confidence": "high"
     }
   ]
