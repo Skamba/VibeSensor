@@ -16,6 +16,27 @@
       "confidence": "medium"
     },
     {
+      "id": "secondary_technical_sources:rs3-8v-sedan-brochure-mirror",
+      "url": "https://de.readkong.com/page/flyer-rs3-rs3-limousine-sportback-max-gruppe-9138212",
+      "title": "ReadKong mirror of Audi RS 3 Limousine and Sportback brochure",
+      "note": "Secondary mirror of an originally Audi-hosted March 2017 German-market RS 3 Limousine and Sportback brochure, used with archived Audi Austria provenance to cross-check the 8V sedan's 294 kW / 400 PS state, 7-speed S tronic wording, and the presence of 235/35 R19 plus 255/30 R19 tire sizes in the brochure tire table.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:rs3-8v-sedan-carfolio",
+      "url": "https://www.carfolio.com/audi-rs-3-543477",
+      "title": "Carfolio Audi RS 3 sedan specification entry",
+      "note": "Reputable secondary 2018 RS 3 sedan page used to cross-check 8V sedan top gear 0.64, square 235/35 R19 tires, and the unresolved single-value final-drive figure 3.45.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:rs3-8v-sedan-carspecs",
+      "url": "https://www.carspecs.us/cars/2017/audi/rs-3/68403",
+      "title": "CarSpecs 2017 Audi RS 3 specification entry",
+      "note": "Independent secondary 2017 RS 3 sedan page used to cross-check 7-speed S tronic wording, seventh gear 0.64, square 235/35 R19 tires, and the conflicting final-drive figure 4.06 for the 8V sedan.",
+      "confidence": "medium"
+    },
+    {
       "id": "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
       "url": "https://www.carfolio.com/audi-a4-2.0-tdi-quattro-192203",
       "title": "Carfolio A4 B8 2.0 TDI quattro manual specification entry",
