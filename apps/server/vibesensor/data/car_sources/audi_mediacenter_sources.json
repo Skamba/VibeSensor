@@ -420,6 +420,76 @@
       "title": "Audi MediaCenter 2025 Q5 e-hybrid launch release",
       "note": "Official Audi launch release for the successor Q5 SUV e-hybrid quattro and Q5 Sportback e-hybrid quattro models, used to document the mid-2025 product-cycle handover away from FY 55 TFSI e quattro naming.",
       "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-tt-coupe-45-tfsi-2023-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/808/file_en/38cfda37fdcdc7930ef9e317e384c05f8d2a16b4/eTD_Audi_TT_Coupe_45_TFSI_S_tronic_180kW_230113.pdf?1698933763&disposition=attachment",
+      "title": "Audi MediaCenter TT Coupe 45 TFSI 2023 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW state showing front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304 under the 'final drive ratio 1-2 / 2-3' label, and basic 225/50 R17 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-tt-coupe-45-tfsi-quattro-2023-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1243/file_en/0963f4ffa97bc4da673e65ee635a8d8df16b1481/eTD_Audi_TT_Coupe_45_TFSI_quattro_S_tronic_180kW_230113.pdf?1698933948&disposition=attachment",
+      "title": "Audi MediaCenter TT Coupe 45 TFSI quattro 2023 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late-cycle TT Coupe 45 TFSI quattro S tronic 180 kW state showing on-demand quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304 under the 'final drive ratio 1-2 / 2-3' label, and basic 225/50 R17 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-tt-roadster-40-tfsi-2023-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/423/file_en/58c1b878a5f8fb1ac9d8a5d390f94d8ff2dce2d1/eTD_Audi_TT_Roadster_40_TFSI_S_tronic_145kW_230113.pdf?1698933715&disposition=attachment",
+      "title": "Audi MediaCenter TT Roadster 40 TFSI 2023 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late-cycle TT Roadster 40 TFSI S tronic 145 kW state showing front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304 under the 'final drive ratio 1-2 / 2-3' label, and basic 225/50 R17 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-tt-roadster-45-tfsi-2022-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/805/file_en/d9e951c7fea84aedba25c67982c3f0ad503b5044/eTD_Audi_TT_Roadster_45_TFSI_S_tronic_180kW_221104.pdf?1698933764&disposition=attachment",
+      "title": "Audi MediaCenter TT Roadster 45 TFSI 2022 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact TT Roadster 45 TFSI S tronic 180 kW state showing front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304 under the 'final drive ratio 1-2 / 2-3' label, and basic 225/50 R17 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-tt-roadster-45-tfsi-quattro-2023-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1250/file_en/d045c55e23e1c059e4e40479363b5bd5ae38520a/eTD_Audi_TT_Roadster_45_TFSI_quattro_S_tronic_180kW_230113.pdf?1698933958&disposition=attachment",
+      "title": "Audi MediaCenter TT Roadster 45 TFSI quattro 2023 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late-cycle TT Roadster 45 TFSI quattro S tronic 180 kW state showing on-demand quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304 under the 'final drive ratio 1-2 / 2-3' label, and basic 225/50 R17 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-tts-coupe-2023-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/117/file_en/47310967d3234d1373d6646cf8bcab32998f3b5b/eTD_Audi_TTS_Coupe_TFSI_230113.pdf?1698933679&disposition=attachment",
+      "title": "Audi MediaCenter TTS Coupe 2023 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late-cycle TTS Coupe state showing on-demand quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661, Audi's published dual final-drive values 4.471 / 3.304 under the 'final drive ratio 1-2 / 2-3' label, and basic 245/40 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-tts-roadster-2023-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/118/file_en/fab69b320fc15e43b1e281004ad57ebe60732fd7/eTD_Audi_TTS_Roadster_TFSI_230113.pdf?1698933679&disposition=attachment",
+      "title": "Audi MediaCenter TTS Roadster 2023 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late-cycle TTS Roadster state showing on-demand quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661, Audi's published dual final-drive values 4.471 / 3.304 under the 'final drive ratio 1-2 / 2-3' label, and basic 245/40 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-ttrs-coupe-2022-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/837/file_en/ab1a688414eda4f444a9a7fad976f57fbe0061a8/eTD_Audi_TTRS_Coupe_TFSI_221102.pdf?1698933785&disposition=attachment",
+      "title": "Audi MediaCenter TT RS Coupe 2022 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact TT RS Coupe state showing all-wheel drive, 7-speed S tronic, forward ratios 3.563 / 2.526 / 1.679 / 1.022 / 0.788 / 0.761 / 0.635, and basic 245/35 R19 tires while not publishing a final-drive value.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-ttrs-roadster-2022-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/454/file_en/3bb1572551ab62836b2df3341b915afa09a5a0d0/eTD_Audi_TTRS_Roadster_TFSI_221102.pdf?1698933727&disposition=attachment",
+      "title": "Audi MediaCenter TT RS Roadster 2022 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact TT RS Roadster state showing all-wheel drive, 7-speed S tronic, forward ratios 3.563 / 2.526 / 1.679 / 1.022 / 0.788 / 0.761 / 0.635, and basic 245/35 R19 tires while not publishing a final-drive value.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-ttrs-basic-info-2016-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/uploaded_files/873/file/07b84e9ae43aafe66c235dacc447a2b7194ef0eb/enBasisinfo_Audi_TT_RS.pdf?1473325640&disposition=attachment",
+      "title": "Audi MediaCenter TT RS basic info 2016 PDF",
+      "note": "Official Audi MediaCenter basic-info PDF for the TT RS Coupe and TT RS Roadster stating that both body styles use quattro AWD with a 7-speed S tronic and documenting the standard 245/35 R19 tire package plus the optional 255/30 R20 package.",
+      "confidence": "high"
     }
   ]
 }

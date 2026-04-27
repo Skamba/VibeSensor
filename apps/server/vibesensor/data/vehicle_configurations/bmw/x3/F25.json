@@ -1,5 +1,277 @@
 [
   {
+    "id": "bmw-f25-xdrive20d-eu-2011-mt6-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F25",
+    "body_code": "F25",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "X3 (F25, 2011)",
+    "variant_name": "xDrive20d",
+    "engine_code": "2.0D",
+    "engine_name": "2.0L I4 Turbo Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2011 technical-data PDF confirms xDrive all-wheel drive for the exact X3 xDrive20d 6-speed manual launch state represented by this narrowed 2011 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2011 technical-data PDF confirms a 6-speed manual transmission for the exact X3 xDrive20d launch state represented by this narrowed 2011 row. The repo keeps MT6 as the canonical gearbox-family mapping for that official manual transmission.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF lists 0.659 as the top-gear ratio for the exact X3 xDrive20d 6-speed manual configuration represented by this narrowed row.",
+        "value": 0.659
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF lists the full forward gear-ratio set for the exact X3 xDrive20d 6-speed manual configuration represented by this narrowed row.",
+        "value": [
+          4.11,
+          2.248,
+          1.403,
+          1.0,
+          0.802,
+          0.659
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF publishes a single 3.727 final-drive ratio for the exact X3 xDrive20d 6-speed manual configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.727
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF publishes a single 3.727 final-drive ratio for the exact X3 xDrive20d 6-speed manual configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.727
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20d 6-speed manual configuration represented by this narrowed row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 60.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20d 6-speed manual configuration represented by this narrowed row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 03/2011 technical-data PDF establishes the exact launch-state X3 xDrive20d manual row: AWD, 6-speed manual, forward ratios 4.110 / 2.248 / 1.403 / 1.000 / 0.802 / 0.659, a single published 3.727 final-drive ratio, and 225/60 R17 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 xDrive20d exact optional wheel/tire matrix for the narrowed 2011 row",
+        "reason": "The checked official BMW technical-data sheet closes the baseline fitment for this exact row, but it does not prove one exact optional wheel/tire matrix.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive20d separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f25-xdrive20d-eu-2011-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F25",
+    "body_code": "F25",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "X3 (F25, 2011)",
+    "variant_name": "xDrive20d",
+    "engine_code": "2.0D",
+    "engine_name": "2.0L I4 Turbo Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2011 technical-data PDF confirms xDrive all-wheel drive for the exact X3 xDrive20d 8-speed automatic launch state represented by this narrowed 2011 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2011 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact X3 xDrive20d launch state represented by this narrowed 2011 row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic transmission.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF lists 0.667 as the top-gear ratio for the exact X3 xDrive20d 8-speed automatic configuration represented by this narrowed row.",
+        "value": 0.667
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF lists the full forward gear-ratio set for the exact X3 xDrive20d 8-speed automatic configuration represented by this narrowed row.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF publishes a single 3.077 final-drive ratio for the exact X3 xDrive20d 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.077
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF publishes a single 3.077 final-drive ratio for the exact X3 xDrive20d 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20d 8-speed automatic configuration represented by this narrowed row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 60.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive20d 8-speed automatic configuration represented by this narrowed row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 03/2011 technical-data PDF establishes the exact launch-state X3 xDrive20d automatic row: AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 3.077 final-drive ratio, and 225/60 R17 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 xDrive20d exact optional wheel/tire matrix for the narrowed 2011 row",
+        "reason": "The checked official BMW technical-data sheet closes the baseline fitment for this exact row, but it does not prove one exact optional wheel/tire matrix.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive20d separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
     "id": "bmw-f25-xdrive20i-eu-2011-mt6-awd",
     "brand": "BMW",
     "type": "SUV",
@@ -357,8 +629,8 @@
     "model_code": "F25",
     "body_code": "F25",
     "production_start_year": 2011,
-    "production_end_year": 2017,
-    "model_name": "X3 (F25, 2011-2017)",
+    "production_end_year": 2011,
+    "model_name": "X3 (F25, 2011)",
     "variant_name": "xDrive28i",
     "engine_code": "3.0L",
     "engine_name": "3.0L I6",
@@ -366,17 +638,17 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
-        "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf"
+        "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
       ],
-      "notes": "The official BMW 09/2011 technical-data PDF confirms xDrive all-wheel drive for the exact X3 xDrive28i automatic configuration.",
+      "notes": "The official BMW 03/2011 technical-data PDF confirms xDrive all-wheel drive for the exact X3 xDrive28i automatic configuration.",
       "value": "AWD"
     },
     "transmission": {
       "confidence": "official_derived",
       "evidence_refs": [
-        "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf"
+        "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
       ],
-      "notes": "The official BMW 09/2011 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact X3 xDrive28i automatic configuration. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
+      "notes": "The official BMW 03/2011 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact X3 xDrive28i automatic configuration. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -384,17 +656,17 @@
       "top_gear_ratio": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
         ],
-        "notes": "The official BMW 09/2011 technical-data PDF lists 0.667 as the top-gear ratio for the exact X3 xDrive28i 8-speed automatic configuration.",
+        "notes": "The official BMW 03/2011 technical-data PDF lists 0.667 as the top-gear ratio for the exact X3 xDrive28i 8-speed automatic configuration.",
         "value": 0.667
       },
       "gear_ratios": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
         ],
-        "notes": "The official BMW 09/2011 technical-data PDF lists the full forward gear-ratio set for the exact X3 xDrive28i 8-speed automatic configuration.",
+        "notes": "The official BMW 03/2011 technical-data PDF lists the full forward gear-ratio set for the exact X3 xDrive28i 8-speed automatic configuration.",
         "value": [
           4.714,
           3.143,
@@ -409,17 +681,17 @@
       "final_drive_front": {
         "confidence": "official_derived",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
         ],
-        "notes": "The official BMW 09/2011 technical-data PDF publishes a single 3.727 final-drive ratio for the exact X3 xDrive28i automatic configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "notes": "The official BMW 03/2011 technical-data PDF publishes a single 3.727 final-drive ratio for the exact X3 xDrive28i automatic configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
         "value": 3.727
       },
       "final_drive_rear": {
         "confidence": "official_derived",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
         ],
-        "notes": "The official BMW 09/2011 technical-data PDF publishes a single 3.727 final-drive ratio for the exact X3 xDrive28i automatic configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "notes": "The official BMW 03/2011 technical-data PDF publishes a single 3.727 final-drive ratio for the exact X3 xDrive28i automatic configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
         "value": 3.727
       }
     },
@@ -427,9 +699,9 @@
       "default": {
         "confidence": "official_exact",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
         ],
-        "notes": "The official BMW 09/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive28i automatic configuration.",
+        "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive28i automatic configuration.",
         "front": {
           "width_mm": 225.0,
           "aspect_pct": 60.0,
@@ -441,9 +713,9 @@
         {
           "confidence": "official_exact",
           "evidence_refs": [
-            "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf"
+            "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
           ],
-          "notes": "The official BMW 09/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive28i automatic configuration.",
+          "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive28i automatic configuration.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -492,28 +764,437 @@
     },
     "verification_notes": [
       {
-        "note": "The official BMW 09/2011 technical-data PDF now confirms the exact X3 xDrive28i automatic configuration: xDrive AWD, 8-speed automatic with Steptronic wording, 2996 cc inline-6 engine identity, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published final-drive ratio of 3.727, and 225/60 R17 baseline tires.",
+        "note": "The official BMW 03/2011 technical-data PDF shows that the exact early X3 xDrive28i row is a 2996 cc inline-6 AWD automatic configuration with the 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 ratio set, a single published 3.727 final-drive ratio, and 225/60 R17 baseline tires. The official 03/2012 refresh sheet then changes xDrive28i to a 1997 cc four-cylinder state with a 3.385 final drive, so the old 2011-2017 broad row was split instead of preserving one mixed-era mapping.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf",
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X3 (F25, 2011-2017) EU ratio-relevant variant mapping",
-        "reason": "The official BMW 09/2011 technical-data PDF safely resolves the exact xDrive28i automatic launch-state ratio package, but this row still lacks exact optional wheel-package continuity across the broader represented span.",
+        "item": "BMW X3 xDrive28i exact optional wheel/tire matrix for the narrowed 2011 row",
+        "reason": "The checked official BMW 03/2011 launch technical-data sheet close the baseline 17-inch fitment, but they do not prove one exact optional wheel/tire matrix for the narrowed row.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
         ]
       },
       {
-        "item": "BMW X3 (F25, 2011-2017) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The official BMW 09/2011 technical-data PDF publishes one exact final-drive ratio for the xDrive28i automatic state; the repo duplicates that value across front and rear final-drive fields because BMW does not publish separate axle ratios in this sheet.",
+        "item": "BMW X3 xDrive28i separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf"
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f25-xdrive28i-eu-2012-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F25",
+    "body_code": "F25",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "X3 (F25, 2012)",
+    "variant_name": "xDrive28i",
+    "engine_code": "N20",
+    "engine_name": "N20 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2012 technical-data PDF confirms xDrive all-wheel drive for the refreshed X3 xDrive28i automatic state represented by this narrowed 2012 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the refreshed X3 xDrive28i state represented by this narrowed 2012 row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic transmission.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact X3 xDrive28i 8-speed automatic configuration represented by this narrowed row.",
+        "value": 0.667
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2012 technical-data PDF lists the full forward gear-ratio set for the exact X3 xDrive28i 8-speed automatic configuration represented by this narrowed row.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2012 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X3 xDrive28i 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.385
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2012 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X3 xDrive28i 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive28i 8-speed automatic configuration represented by this narrowed row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 60.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive28i 8-speed automatic configuration represented by this narrowed row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 03/2012 technical-data PDF establishes the corrected X3 xDrive28i automatic row for the four-cylinder era: AWD, 8-speed automatic with Steptronic, 1997 cc inline-4 turbo engine identity, the same forward ratio set, a lower 3.385 final-drive ratio, and 225/60 R17 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 xDrive28i exact optional wheel/tire matrix for the narrowed 2012 row",
+        "reason": "The checked official BMW technical-data sheet closes the baseline fitment for this exact row, but it does not prove one exact optional wheel/tire matrix.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive28i separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f25-xdrive30d-eu-2011-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F25",
+    "body_code": "F25",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "X3 (F25, 2011)",
+    "variant_name": "xDrive30d",
+    "engine_code": "3.0D",
+    "engine_name": "3.0L I6 Turbo Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2011 technical-data PDF confirms xDrive all-wheel drive for the exact X3 xDrive30d 8-speed automatic launch state represented by this narrowed 2011 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2011 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact X3 xDrive30d launch state represented by this narrowed 2011 row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic transmission.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF lists 0.667 as the top-gear ratio for the exact X3 xDrive30d 8-speed automatic configuration represented by this narrowed row.",
+        "value": 0.667
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF lists the full forward gear-ratio set for the exact X3 xDrive30d 8-speed automatic configuration represented by this narrowed row.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF publishes a single 2.813 final-drive ratio for the exact X3 xDrive30d 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.813
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF publishes a single 2.813 final-drive ratio for the exact X3 xDrive30d 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive30d 8-speed automatic configuration represented by this narrowed row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 60.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2011 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 xDrive30d 8-speed automatic configuration represented by this narrowed row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 03/2011 technical-data PDF establishes the exact launch-state X3 xDrive30d automatic row: AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 2.813 final-drive ratio, and 225/60 R17 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 xDrive30d exact optional wheel/tire matrix for the narrowed 2011 row",
+        "reason": "The checked official BMW technical-data sheet closes the baseline fitment for this exact row, but it does not prove one exact optional wheel/tire matrix.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive30d separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f25-xdrive35d-eu-2011-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F25",
+    "body_code": "F25",
+    "production_start_year": 2011,
+    "production_end_year": 2011,
+    "model_name": "X3 (F25, 2011)",
+    "variant_name": "xDrive35d",
+    "engine_code": "3.0D",
+    "engine_name": "3.0L I6 Turbo Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 09/2011 technical-data PDF confirms xDrive all-wheel drive for the exact X3 xDrive35d 8-speed automatic state represented by this narrowed 2011 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 09/2011 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact X3 xDrive35d state represented by this narrowed 2011 row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic transmission.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 technical-data PDF lists 0.667 as the top-gear ratio for the exact X3 xDrive35d 8-speed automatic configuration represented by this narrowed row.",
+        "value": 0.667
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 technical-data PDF lists the full forward gear-ratio set for the exact X3 xDrive35d 8-speed automatic configuration represented by this narrowed row.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 technical-data PDF publishes a single 2.813 final-drive ratio for the exact X3 xDrive35d 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.813
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 technical-data PDF publishes a single 2.813 final-drive ratio for the exact X3 xDrive35d 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 technical-data PDF lists 245/50 R18 as the baseline tire for the exact X3 xDrive35d 8-speed automatic configuration represented by this narrowed row.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 technical-data PDF lists 245/50 R18 as the baseline tire for the exact X3 xDrive35d 8-speed automatic configuration represented by this narrowed row.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 09/2011 technical-data PDF establishes the exact X3 xDrive35d row: AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 2.813 final-drive ratio, and 245/50 R18 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 xDrive35d exact optional wheel/tire matrix for the narrowed 2011 row",
+        "reason": "The checked official BMW technical-data sheet closes the baseline fitment for this exact row, but it does not prove one exact optional wheel/tire matrix.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive35d separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf"
         ]
       }
     ],
@@ -698,6 +1379,370 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f25-xdrive28i-35i-2011-tech-spec-pdf",
           "bmw_pressclub_sources:f25-xdrive35i-2014-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f25-sdrive18d-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F25",
+    "body_code": "F25",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "X3 (F25, 2012)",
+    "variant_name": "sDrive18d",
+    "engine_code": "2.0D",
+    "engine_name": "2.0L I4 Turbo Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 11/2012 technical-data PDF confirms rear-wheel drive for the exact X3 sDrive18d 6-speed manual state represented by this narrowed 2012 row.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 11/2012 technical-data PDF confirms a 6-speed manual transmission for the exact X3 sDrive18d state represented by this narrowed 2012 row. The repo keeps MT6 as the canonical gearbox-family mapping for that official manual transmission.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2012 technical-data PDF lists 0.659 as the top-gear ratio for the exact X3 sDrive18d 6-speed manual configuration represented by this narrowed row.",
+        "value": 0.659
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2012 technical-data PDF lists the full forward gear-ratio set for the exact X3 sDrive18d 6-speed manual configuration represented by this narrowed row.",
+        "value": [
+          4.11,
+          2.248,
+          1.403,
+          1.0,
+          0.802,
+          0.659
+        ]
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2012 technical-data PDF lists 3.462 as the final-drive ratio for the exact X3 sDrive18d 6-speed manual configuration represented by this narrowed row.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive18d 6-speed manual configuration represented by this narrowed row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 60.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive18d 6-speed manual configuration represented by this narrowed row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 11/2012 technical-data PDF establishes the exact X3 sDrive18d manual row: RWD, 6-speed manual, forward ratios 4.110 / 2.248 / 1.403 / 1.000 / 0.802 / 0.659, rear final drive 3.462, and 225/60 R17 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 sDrive18d exact optional wheel/tire matrix for the narrowed 2012 row",
+        "reason": "The checked official BMW technical-data sheet closes the baseline fitment for this exact row, but it does not prove one exact optional wheel/tire matrix.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f25-sdrive18d-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F25",
+    "body_code": "F25",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "X3 (F25, 2012)",
+    "variant_name": "sDrive18d",
+    "engine_code": "2.0D",
+    "engine_name": "2.0L I4 Turbo Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 11/2012 technical-data PDF confirms rear-wheel drive for the exact X3 sDrive18d 8-speed automatic state represented by this narrowed 2012 row.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 11/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact X3 sDrive18d state represented by this narrowed 2012 row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic transmission.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact X3 sDrive18d 8-speed automatic configuration represented by this narrowed row.",
+        "value": 0.667
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2012 technical-data PDF lists the full forward gear-ratio set for the exact X3 sDrive18d 8-speed automatic configuration represented by this narrowed row.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2012 technical-data PDF lists 3.077 as the final-drive ratio for the exact X3 sDrive18d 8-speed automatic configuration represented by this narrowed row.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive18d 8-speed automatic configuration represented by this narrowed row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 60.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2012 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive18d 8-speed automatic configuration represented by this narrowed row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 11/2012 technical-data PDF establishes the exact X3 sDrive18d automatic row: RWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, rear final drive 3.077, and 225/60 R17 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 sDrive18d exact optional wheel/tire matrix for the narrowed 2012 row",
+        "reason": "The checked official BMW technical-data sheet closes the baseline fitment for this exact row, but it does not prove one exact optional wheel/tire matrix.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f25-sdrive20i-eu-2014-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F25",
+    "body_code": "F25",
+    "production_start_year": 2014,
+    "production_end_year": 2014,
+    "model_name": "X3 (F25, 2014)",
+    "variant_name": "sDrive20i",
+    "engine_code": "N20",
+    "engine_name": "N20 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 04/2014 facelift technical-data PDF confirms rear-wheel drive for the exact X3 sDrive20i automatic state represented by this narrowed 2014 row.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 04/2014 facelift technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact X3 sDrive20i state represented by this narrowed 2014 row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic transmission.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 04/2014 technical-data PDF lists 0.667 as the top-gear ratio for the exact X3 sDrive20i 8-speed automatic configuration represented by this narrowed row.",
+        "value": 0.667
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 04/2014 technical-data PDF lists the full forward gear-ratio set for the exact X3 sDrive20i 8-speed automatic configuration represented by this narrowed row.",
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ]
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 04/2014 technical-data PDF lists 3.385 as the final-drive ratio for the exact X3 sDrive20i 8-speed automatic configuration represented by this narrowed row.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 04/2014 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive20i 8-speed automatic configuration represented by this narrowed row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 60.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 04/2014 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X3 sDrive20i 8-speed automatic configuration represented by this narrowed row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 04/2014 facelift technical-data PDF establishes the exact X3 sDrive20i automatic row: RWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, rear final drive 3.385, and 225/60 R17 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 sDrive20i exact optional wheel/tire matrix for the narrowed 2014 row",
+        "reason": "The checked official BMW technical-data sheet closes the baseline fitment for this exact row, but it does not prove one exact optional wheel/tire matrix.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf"
         ]
       }
     ],
