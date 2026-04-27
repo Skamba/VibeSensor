@@ -18,7 +18,9 @@ def test_build_isolated_server_config_rewrites_runtime_paths_and_copies_seed_dat
 ) -> None:
     seed_dir = tmp_path / "seed-data"
     seed_dir.mkdir()
-    seed_vehicle_path = seed_dir / "vehicle_configurations" / "brand" / "family" / "GEN.json"
+    seed_vehicle_path = (
+        seed_dir / "vehicle_configurations" / "brand" / "family" / "GEN.json"
+    )
     seed_vehicle_path.parent.mkdir(parents=True)
     seed_vehicle_path.write_text("[]\n", encoding="utf-8")
     runtime_root = tmp_path / "runtime"
