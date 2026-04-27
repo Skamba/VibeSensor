@@ -453,48 +453,31 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "note": "Follow-up official BMW packet review still does not recover any EU F22 228i row. The saved 03/2014 launch article anchors 220i and M235i petrol launch material, the saved 07/2016 packet publishes the later 220i, 230i, and M240i lineup, and the saved 03/2021 packet still shows only 220i and 230i. This row should therefore be treated as an unsupported EU placeholder, not as a verified 2014-2021 configuration.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-spec-article",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
-        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "item": "BMW F22 228i exact EU applicability within the recovered official packet set",
+        "reason": "The saved official BMW launch, facelift, and late-cycle packets recover 220i, 230i, and M235i/M240i states but do not recover an EU 228i row, so this stored EU placeholder remains unsupported.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-spec-article",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
       },
       {
-        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
-        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "item": "Schema-safe replacement for the unsupported F22 228i EU manual row",
+        "reason": "This pass proves the stored EU 228i manual row is not backed by the recovered official packet sequence, but it does not prove whether the right fix is deletion, market narrowing, or a broader petrol-row refactor.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
-        ]
-      },
-      {
-        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
-        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
-        "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-spec-article",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
       }
     ],
@@ -526,14 +509,10 @@
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g30-518d-2021-italy-price-list-pdf",
-        "bmw_market_pages:g30-5-series-price-list-2023-it"
-      ],
-      "notes": "Official BMW Italy 2021 and 2023 price lists explicitly list the exact G30 518d Sedan as a `2TE` Eight-speed Steptronic automatic state. The repo keeps ZF8HP as the canonical automatic-family mapping, but the checked official sources do not publish a literal gearbox family code.",
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Follow-up official BMW packet review did not recover any supported EU 228i row, so this automatic-family mapping remains an unresolved placeholder rather than a verified F22 transmission state.",
       "code": "ZF8HP",
-      "name": "8-speed Steptronic transmission"
+      "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
@@ -624,48 +603,31 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "note": "Follow-up official BMW packet review still does not recover any EU F22 228i row. The saved 03/2014 launch article anchors 220i and M235i petrol launch material, the saved 07/2016 packet publishes the later 220i, 230i, and M240i lineup, and the saved 03/2021 packet still shows only 220i and 230i. This stored automatic row should therefore be treated as an unsupported EU placeholder, not as a verified 2014-2021 configuration.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-spec-article",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
-        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "item": "BMW F22 228i exact EU applicability within the recovered official packet set",
+        "reason": "The saved official BMW launch, facelift, and late-cycle packets recover 220i, 230i, and M235i/M240i states but do not recover an EU 228i row, so this stored EU placeholder remains unsupported.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-spec-article",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
       },
       {
-        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
-        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "item": "Schema-safe replacement for the unsupported F22 228i EU automatic row",
+        "reason": "This pass proves the stored EU 228i automatic row is not backed by the recovered official packet sequence, but it does not prove whether the right fix is deletion, market narrowing, or a broader petrol-row refactor.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
-        ]
-      },
-      {
-        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
-        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
-        "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-spec-article",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
       }
     ],
@@ -791,13 +753,11 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "note": "Official BMW packet review shows that the F22 230i appears only in the recovered 07/2016 facelift technical-data packet, not in the 03/2014 launch packet, and the recovered 03/2021 packet keeps 230i only as a late automatic state. This broad 2014-2021 manual row therefore mixes a too-early start year with a later manual state that does not span the stored range.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-spec-article",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
       },
       {
@@ -806,36 +766,19 @@
     ],
     "unresolved": [
       {
-        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
-        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "item": "BMW F22 230i exact EU start-year applicability",
+        "reason": "The recovered official BMW packet sequence first supports 230i in the 07/2016 facelift packet rather than in the stored 2014 start year.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-spec-article",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
         ]
       },
       {
-        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
-        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "item": "Schema-safe split between later F22 230i manual and late-cycle automatic-only states",
+        "reason": "The saved 07/2016 packet publishes 230i as manual with optional eight-speed automatic, while the saved 03/2021 packet keeps 230i only as a later automatic state, so the broad 2014-2021 manual row is not one exact production-safe configuration.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
-        ]
-      },
-      {
-        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
-        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
-        "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
       }
     ],
@@ -961,13 +904,11 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "note": "Official BMW packet review shows that the F22 230i appears only in the recovered 07/2016 facelift technical-data packet, not in the 03/2014 launch packet, and the recovered 03/2021 packet keeps 230i as a later automatic-only state. This broad 2014-2021 automatic row therefore remains a mixed-era placeholder rather than one exact production-safe automatic configuration.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-spec-article",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
       },
       {
@@ -976,36 +917,19 @@
     ],
     "unresolved": [
       {
-        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
-        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "item": "BMW F22 230i exact EU start-year applicability",
+        "reason": "The recovered official BMW packet sequence first supports 230i in the 07/2016 facelift packet rather than in the stored 2014 start year.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2014-spec-article",
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
         ]
       },
       {
-        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
-        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "item": "Schema-safe split between later F22 230i automatic states across facelift and late-cycle packets",
+        "reason": "The saved 07/2016 packet publishes 230i as manual with optional eight-speed automatic, while the saved 03/2021 packet keeps 230i only as a later automatic state, so the broad 2014-2021 automatic row is not one exact production-safe configuration.",
         "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
-        ]
-      },
-      {
-        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
-        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
-        "evidence_refs": [
-          "legacy_research_sources:1af3f514e4a4",
-          "legacy_research_sources:224120e311f3",
-          "legacy_research_sources:60f36b6f8878",
-          "legacy_research_sources:7e0213853a41",
-          "legacy_research_sources:95b9bf2bf0cf"
+          "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+          "bmw_pressclub_sources:f22-2021-spec-pdf"
         ]
       }
     ],

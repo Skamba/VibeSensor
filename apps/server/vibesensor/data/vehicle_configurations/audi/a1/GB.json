@@ -113,13 +113,10 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 25 TFSI manual placeholder. The 06/20/2018 launch release supports manual availability for non-top engines at Europe launch, but the checked 02/03/2026 Germany-program 25 TFSI sheet closes a later exact 5-speed manual state with 0.673 top gear, 3.933 final drive, and 185/65 R15 tires. Those late official values contradict the inherited MT6, 0.840, 3.462, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf"
         ]
       },
       {
@@ -128,25 +125,18 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A1 (GB, 2019-2024) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi A1 Sportback 25 TFSI manual applicability across the represented EU 2019-2024 row span",
+        "reason": "The checked 2026 Germany-program technical-data sheet proves a later exact manual state, but this pass did not recover an official year-by-year source chain proving the full represented EU 2019-2024 row as one unchanged mapping.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf"
         ]
       },
       {
-        "item": "Audi A1 (GB, 2019-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row manual gearbox count, top gear, final drive, and tire applicability",
+        "reason": "The checked late official 25 TFSI manual sheet documents a 5-speed gearbox with 0.673 top gear, 3.933 final drive, and 185/65 R15 tires rather than the inherited MT6, 0.840, 3.462, and 215/45 R17 broad-row carryover values.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf"
         ]
       }
     ],
@@ -272,13 +262,10 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 25 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, but the checked 02/03/2026 Germany-program 25 TFSI S tronic sheet closes a later exact state with 0.795 top gear, split final drives 4.438 / 3.227, and 185/65 R15 tires. Those late official values contradict the inherited 0.680, 3.786, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       },
       {
@@ -287,25 +274,18 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A1 (GB, 2019-2024) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi A1 Sportback 25 TFSI S tronic applicability across the represented EU 2019-2024 row span",
+        "reason": "The checked 2026 Germany-program technical-data sheet proves a later exact S tronic state, but this pass did not recover an official year-by-year source chain proving the full represented EU 2019-2024 row as one unchanged mapping.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       },
       {
-        "item": "Audi A1 (GB, 2019-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row S tronic top gear, split final-drive, and tire applicability",
+        "reason": "The checked late official 25 TFSI S tronic sheet documents 0.795 top gear, split final drives 4.438 / 3.227, and 185/65 R15 tires rather than the inherited 0.680, single 3.786 final drive, and 215/45 R17 broad-row carryover values.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       }
     ],
@@ -431,13 +411,10 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 30 TFSI manual placeholder. The 06/20/2018 launch release supports manual availability for non-top engines at Europe launch, and the checked 02/03/2026 Germany-program 30 TFSI sheet closes a later exact 6-speed manual state with 0.554 top gear, 4.353 final drive, and 185/65 R15 tires. Those late official values contradict the inherited 0.840, 3.462, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
         ]
       },
       {
@@ -446,25 +423,18 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A1 (GB, 2019-2024) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi A1 Sportback 30 TFSI manual applicability across the represented EU 2019-2024 row span",
+        "reason": "The checked 2026 Germany-program technical-data sheet proves a later exact manual state, but this pass did not recover an official year-by-year source chain proving the full represented EU 2019-2024 row as one unchanged mapping.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
         ]
       },
       {
-        "item": "Audi A1 (GB, 2019-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row manual top gear, final drive, and tire applicability",
+        "reason": "The checked late official 30 TFSI manual sheet documents 0.554 top gear, 4.353 final drive, and 185/65 R15 tires rather than the inherited 0.840, 3.462, and 215/45 R17 broad-row carryover values.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf"
         ]
       }
     ],
@@ -590,13 +560,10 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 30 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, but the checked 02/03/2026 Germany-program 30 TFSI S tronic sheet closes a later exact state with 0.795 top gear, split final drives 4.438 / 3.227, and 185/65 R15 tires. Those late official values contradict the inherited 0.680, 3.786, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       },
       {
@@ -605,25 +572,18 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A1 (GB, 2019-2024) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi A1 Sportback 30 TFSI S tronic applicability across the represented EU 2019-2024 row span",
+        "reason": "The checked 2026 Germany-program technical-data sheet proves a later exact S tronic state, but this pass did not recover an official year-by-year source chain proving the full represented EU 2019-2024 row as one unchanged mapping.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       },
       {
-        "item": "Audi A1 (GB, 2019-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row S tronic top gear, split final-drive, and tire applicability",
+        "reason": "The checked late official 30 TFSI S tronic sheet documents 0.795 top gear, split final drives 4.438 / 3.227, and 185/65 R15 tires rather than the inherited 0.680, single 3.786 final drive, and 215/45 R17 broad-row carryover values.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       }
     ],
@@ -651,24 +611,24 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "value": "FWD"
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "code": "MT6",
       "name": "6-speed manual"
     },
     "ratios": {
       "top_gear_ratio": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
         "value": 0.84
       },
       "final_drive_front": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
         "value": 3.462
       }
     },
@@ -682,7 +642,7 @@
           "legacy_research_sources:e0f98b630da4",
           "legacy_research_sources:f72d096965c6"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
         "front": {
           "width_mm": 215.0,
           "aspect_pct": 45.0,
@@ -700,7 +660,7 @@
             "legacy_research_sources:e0f98b630da4",
             "legacy_research_sources:f72d096965c6"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 45.0,
@@ -718,7 +678,7 @@
             "legacy_research_sources:e0f98b630da4",
             "legacy_research_sources:f72d096965c6"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -736,7 +696,7 @@
             "legacy_research_sources:e0f98b630da4",
             "legacy_research_sources:f72d096965c6"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
           "front": {
             "width_mm": 235.0,
             "aspect_pct": 35.0,
@@ -749,40 +709,33 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 35 TFSI manual placeholder. The 06/20/2018 launch release says non-top engines could launch with manual or 7-speed S tronic transmissions, but the current Audi MediaCenter A1 Sportback model page and the checked 02/03/2026 exact technical-data set expose only a 35 TFSI S tronic late-program sheet. No checked official source closes a 35 TFSI manual ratio or tire package, so the inherited MT6, 0.840, 3.462, and 215/45 R17 carryover values remain unsupported and production JSON stays unchanged.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-sportback-until-2026-model-page",
+          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       },
       {
-        "note": "Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence."
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "Audi A1 (GB, 2019-2024) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Exact Audi A1 Sportback 35 TFSI manual applicability across the represented EU 2019-2024 row span",
+        "reason": "The checked official chain leaves room for an early manual launch-era state, but the current official model page and recovered late exact sheets expose only 35 TFSI S tronic. No checked official manual technical-data sheet was recovered for the represented 35 TFSI row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-sportback-until-2026-model-page",
+          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       },
       {
-        "item": "Audi A1 (GB, 2019-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row manual gearbox, top gear, final drive, and tire applicability",
+        "reason": "Because no checked official 35 TFSI manual technical-data sheet was recovered, the inherited MT6, 0.840, 3.462, and 215/45 R17 values remain unsupported broad-row carryover data rather than an exact manual mapping.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-until-2026-model-page",
+          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       }
     ],
@@ -810,24 +763,24 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "value": "FWD"
     },
     "transmission": {
       "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
       "code": "DCT7",
       "name": "7-speed S tronic (DQ200)"
     },
     "ratios": {
       "top_gear_ratio": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
         "value": 0.68
       },
       "final_drive_front": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
         "value": 3.786
       }
     },
@@ -841,7 +794,7 @@
           "legacy_research_sources:e0f98b630da4",
           "legacy_research_sources:f72d096965c6"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
         "front": {
           "width_mm": 215.0,
           "aspect_pct": 45.0,
@@ -859,7 +812,7 @@
             "legacy_research_sources:e0f98b630da4",
             "legacy_research_sources:f72d096965c6"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 45.0,
@@ -877,7 +830,7 @@
             "legacy_research_sources:e0f98b630da4",
             "legacy_research_sources:f72d096965c6"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -895,7 +848,7 @@
             "legacy_research_sources:e0f98b630da4",
             "legacy_research_sources:f72d096965c6"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence.",
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
           "front": {
             "width_mm": 235.0,
             "aspect_pct": 35.0,
@@ -908,40 +861,31 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 35 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, while the current Audi MediaCenter model page and the checked 02/03/2026 35 TFSI S tronic sheet close a later exact state with 0.653 top gear, split final drives 4.800 / 3.429, and 195/55 R16 tires. Those late official values contradict the inherited 0.680, 3.786, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+          "audi_mediacenter_sources:gb-a1-sportback-until-2026-model-page",
+          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       },
       {
-        "note": "Legacy variant-source research previously recorded this variant as Audi Spain 03/2020 technical-data PDF (exact sedan manual + MHEV S tronic states) with High confidence."
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "Audi A1 (GB, 2019-2024) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi A1 Sportback 35 TFSI S tronic applicability across the represented EU 2019-2024 row span",
+        "reason": "The checked 2026 Germany-program technical-data sheet proves a later exact S tronic state, but this pass did not recover an official year-by-year source chain proving the full represented EU 2019-2024 row as one unchanged mapping.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-sportback-until-2026-model-page",
+          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       },
       {
-        "item": "Audi A1 (GB, 2019-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row S tronic top gear, split final-drive, and tire applicability",
+        "reason": "The checked late official 35 TFSI S tronic sheet documents 0.653 top gear, split final drives 4.800 / 3.429, and 195/55 R16 tires rather than the inherited 0.680, single 3.786 final drive, and 215/45 R17 broad-row carryover values.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:e0f98b630da4",
-          "legacy_research_sources:f72d096965c6"
+          "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       }
     ],

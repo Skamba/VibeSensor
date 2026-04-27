@@ -192,9 +192,13 @@
         "notes": "Official BMW MY2018 technical data confirms the M3 M-DCT top-gear value and full forward gear-ratio set."
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.154
+        "value": 3.462,
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f80-m3-2018-portugal-tech-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2014 launch-period and 01/2018 Portugal technical-data PDFs both list 3.462 as the F80 M3 DCT final drive. The prior 3.154 carryover was not an F80 launch-period value."
       },
       "gear_ratios": {
         "value": [
@@ -273,8 +277,10 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 18 added official BMW MY2018 technical-data evidence that the F80 M3 manual and M-DCT top-gear values in production were inaccurate. The official sheet lists 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671, so the row now promotes those exact top-gear values and full forward gear-ratio sets while keeping the drivetrain scope unchanged.",
+        "note": "Wave 18 added official BMW MY2018 technical-data evidence that the F80 M3 manual and M-DCT top-gear values in production were inaccurate. This follow-up adds official BMW 03/2014 launch-period and 01/2018 Portugal evidence that the F80 M3 DCT final drive is 3.462, correcting the inherited 3.154 carryover while keeping the broader row scope unchanged.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f80-m3-2018-portugal-tech-spec-pdf",
           "legacy_research_sources:21e9bf67c7b7",
           "legacy_research_sources:393d7682b19e",
           "legacy_research_sources:956542619eaf",
@@ -290,19 +296,18 @@
     ],
     "unresolved": [
       {
-        "item": "BMW M3 (F80) EU-vs-US transmission calibration continuity across all model years",
-        "reason": "Wave 18 evidence is from official BMW MY2018 US technical data; this pass did not recover a parallel ACEA sheet proving no year or market calibration drift for every F80 state.",
+        "item": "BMW M3 (F80) exact continuity across the represented 2014-2018 row span",
+        "reason": "The checked official BMW 03/2014 launch-period and 01/2018 Portugal technical-data PDFs agree on the core M3 transmission and final-drive package, but this pass did not recover a complete official year-by-year chain for every intermediate model year in the row.",
         "evidence_refs": [
-          "legacy_research_sources:21e9bf67c7b7",
-          "legacy_research_sources:fbef3422499f"
+          "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f80-m3-2018-portugal-tech-spec-pdf"
         ]
       },
       {
-        "item": "BMW M3 Competition-specific ratio deltas across production years",
-        "reason": "The checked official source provides one MY2018 M3 and M3 DCT matrix but not a complete year-by-year competition-specific ratio timeline.",
+        "item": "BMW M3 exact standard-versus-optional tyre package semantics",
+        "reason": "The checked official BMW 03/2014 launch-period technical-data PDF shows the base M3 standard package as staggered 255/40 ZR18 front plus 275/40 ZR18 rear, but this pass did not retune the row's existing default-versus-option tyre ordering.",
         "evidence_refs": [
-          "legacy_research_sources:21e9bf67c7b7",
-          "legacy_research_sources:fbef3422499f"
+          "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf"
         ]
       }
     ],
@@ -315,13 +320,13 @@
     }
   },
   {
-    "id": "bmw-f80-m3-competition-eu-2014-mt6-rwd",
+    "id": "bmw-f80-m3-competition-eu-2016-mt6-rwd",
     "brand": "BMW",
     "type": "Sedan",
     "market": "EU",
     "model_code": "F80",
     "body_code": "F80",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2018,
     "model_name": "M3 (F80, 2014-2018)",
     "variant_name": "M3 Competition",
@@ -430,8 +435,10 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 18 added official BMW MY2018 technical-data evidence that the F80 M3 manual and M-DCT top-gear values in production were inaccurate. The official sheet lists 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671, so the row now promotes those exact top-gear values and full forward gear-ratio sets while keeping the drivetrain scope unchanged.",
+        "note": "This research wave narrows the F80 M3 Competition manual row to 2016-2018. Official BMW Competition Package launch material states that the Competition Package becomes available from spring 2016, and the paired Competition technical-data PDF confirms the manual top gear 0.846 and final drive 3.462 for the exact Competition state.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f82-competition-2016-launch-article",
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf",
           "legacy_research_sources:21e9bf67c7b7",
           "legacy_research_sources:393d7682b19e",
           "legacy_research_sources:956542619eaf",
@@ -447,19 +454,18 @@
     ],
     "unresolved": [
       {
-        "item": "BMW M3 (F80) EU-vs-US transmission calibration continuity across all model years",
-        "reason": "Wave 18 evidence is from official BMW MY2018 US technical data; this pass did not recover a parallel ACEA sheet proving no year or market calibration drift for every F80 state.",
+        "item": "BMW M3 Competition exact continuity across the represented 2016-2018 row span",
+        "reason": "The checked official BMW 01/2016 Competition Package launch-period material closes the start year and core ratio/final-drive package, but this pass did not recover a complete official year-by-year chain for every later Competition model year in the row.",
         "evidence_refs": [
-          "legacy_research_sources:21e9bf67c7b7",
-          "legacy_research_sources:fbef3422499f"
+          "bmw_pressclub_sources:f82-competition-2016-launch-article",
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
         ]
       },
       {
-        "item": "BMW M3 Competition-specific ratio deltas across production years",
-        "reason": "The checked official source provides one MY2018 M3 and M3 DCT matrix but not a complete year-by-year competition-specific ratio timeline.",
+        "item": "BMW M3 Competition exact standard-versus-optional tyre package semantics",
+        "reason": "The checked official BMW 01/2016 Competition Package technical-data PDF shows the Competition standard package as staggered 265/30 ZR20 front plus 285/30 ZR20 rear, but this pass did not retune the row's existing default-versus-option tyre ordering.",
         "evidence_refs": [
-          "legacy_research_sources:21e9bf67c7b7",
-          "legacy_research_sources:fbef3422499f"
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
         ]
       }
     ],
@@ -472,13 +478,13 @@
     }
   },
   {
-    "id": "bmw-f80-m3-competition-eu-2014-dct7-rwd",
+    "id": "bmw-f80-m3-competition-eu-2016-dct7-rwd",
     "brand": "BMW",
     "type": "Sedan",
     "market": "EU",
     "model_code": "F80",
     "body_code": "F80",
-    "production_start_year": 2014,
+    "production_start_year": 2016,
     "production_end_year": 2018,
     "model_name": "M3 (F80, 2014-2018)",
     "variant_name": "M3 Competition",
@@ -507,9 +513,12 @@
         "notes": "Official BMW MY2018 technical data confirms the M3 M-DCT top-gear value and full forward gear-ratio set."
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.154
+        "value": 3.462,
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2016 Competition Package technical-data PDF lists 3.462 as the exact F80 M3 Competition DCT final drive. The prior 3.154 carryover was not an F80 Competition value."
       },
       "gear_ratios": {
         "value": [
@@ -588,8 +597,10 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 18 added official BMW MY2018 technical-data evidence that the F80 M3 manual and M-DCT top-gear values in production were inaccurate. The official sheet lists 6-speed manual VI gear 0.846 and 7-speed M-DCT VII gear 0.671, so the row now promotes those exact top-gear values and full forward gear-ratio sets while keeping the drivetrain scope unchanged.",
+        "note": "This research wave narrows the F80 M3 Competition M-DCT row to 2016-2018 and corrects its final drive to 3.462. Official BMW Competition Package launch material states that the Competition Package becomes available from spring 2016, and the paired Competition technical-data PDF confirms the DCT top gear 0.671 and final drive 3.462 for the exact Competition state.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f82-competition-2016-launch-article",
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf",
           "legacy_research_sources:21e9bf67c7b7",
           "legacy_research_sources:393d7682b19e",
           "legacy_research_sources:956542619eaf",
@@ -605,19 +616,18 @@
     ],
     "unresolved": [
       {
-        "item": "BMW M3 (F80) EU-vs-US transmission calibration continuity across all model years",
-        "reason": "Wave 18 evidence is from official BMW MY2018 US technical data; this pass did not recover a parallel ACEA sheet proving no year or market calibration drift for every F80 state.",
+        "item": "BMW M3 Competition exact continuity across the represented 2016-2018 row span",
+        "reason": "The checked official BMW 01/2016 Competition Package launch-period material closes the start year and core ratio/final-drive package, but this pass did not recover a complete official year-by-year chain for every later Competition model year in the row.",
         "evidence_refs": [
-          "legacy_research_sources:21e9bf67c7b7",
-          "legacy_research_sources:fbef3422499f"
+          "bmw_pressclub_sources:f82-competition-2016-launch-article",
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
         ]
       },
       {
-        "item": "BMW M3 Competition-specific ratio deltas across production years",
-        "reason": "The checked official source provides one MY2018 M3 and M3 DCT matrix but not a complete year-by-year competition-specific ratio timeline.",
+        "item": "BMW M3 Competition exact standard-versus-optional tyre package semantics",
+        "reason": "The checked official BMW 01/2016 Competition Package technical-data PDF shows the Competition standard package as staggered 265/30 ZR20 front plus 285/30 ZR20 rear, but this pass did not retune the row's existing default-versus-option tyre ordering.",
         "evidence_refs": [
-          "legacy_research_sources:21e9bf67c7b7",
-          "legacy_research_sources:fbef3422499f"
+          "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
         ]
       }
     ],

@@ -2723,10 +2723,11 @@
     },
     "transmission": {
       "confidence": "reputable_secondary_crosschecked",
-      "notes": "Independent exact secondary facelift A4 3.0 TDI quattro S tronic sources agree on the 7-speed S tronic gearbox, but they do not safely resolve numeric ratios, tire packages, or full-year continuity for the broad 2008-2016 row.",
+      "notes": "Independent exact secondary facelift A4 3.0 TDI quattro S tronic sources agree on the later 7-speed S tronic gearbox, but official Audi MediaCenter clean-diesel evidence separately supports six-speed tiptronic for the pre-facelift automatic family, so the broad 2008-2016 row remains split-sensitive and does not safely resolve numeric ratios, tire packages, or full-year continuity.",
       "code": "DCT7",
       "name": "7-speed S tronic (DL501)",
       "evidence_refs": [
+        "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release",
         "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-carfolio",
         "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-autodata"
       ]
@@ -2838,8 +2839,9 @@
         "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
       },
       {
-        "note": "Exact secondary S tronic sources agree on AWD and a 7-speed S tronic gearbox, but the available facelift-only evidence does not expose a cross-checked numeric ratio package or a safe full-row tire mapping.",
+        "note": "Exact facelift secondary sources agree on AWD and a 7-speed S tronic gearbox, while official Audi MediaCenter clean-diesel material separately supports six-speed tiptronic for the pre-facelift Germany-market automatic family. That automatic-family split means this broad 2008-2016 row cannot be treated as one exact production-safe S tronic configuration.",
         "evidence_refs": [
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release",
           "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-carfolio",
           "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-autodata"
         ]
@@ -2869,9 +2871,10 @@
         ]
       },
       {
-        "item": "Audi A4 3.0 TDI quattro S tronic exact secondary sources confirm identity but not a safe broad-row ratio package",
-        "reason": "The exact 2011-2015 Auto-Data row and the exact 2015 Carfolio row agree on AWD and the 7-speed S tronic transmission, but neither pair provides a cross-checked full-row ratio or tire package across the 2008-2016 span.",
+        "item": "Audi A4 3.0 TDI quattro automatic family spans official pre-facelift Tiptronic and later facelift S tronic states",
+        "reason": "Official Audi MediaCenter clean-diesel material supports six-speed tiptronic for the pre-facelift Germany-market family, while exact 2011-2015 secondary sedan sources support a later 7-speed S tronic state. The broad 2008-2016 automatic row therefore mixes distinct transmission eras and is not safe as one exact ratio or tire package.",
         "evidence_refs": [
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release",
           "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-carfolio",
           "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-autodata"
         ]
@@ -3017,8 +3020,9 @@
         "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
       },
       {
-        "note": "Follow-up review found that the exact 2007-2011 Auto-Data sedan row identifies this pre-facelift Tiptronic configuration as 6-speed automatic, which conflicts with the broad-row 8-speed ZF8HP mapping and keeps the transmission field unresolved.",
+        "note": "Official Audi MediaCenter clean-diesel material states that the Germany-market 3.0 TDI clean diesel quattro family combines six-speed tiptronic with quattro permanent all-wheel drive, and the exact 2007-2011 Auto-Data sedan row matches that Tiptronic family. That directly contradicts the broad-row 8-speed ZF8HP mapping and leaves the stored automatic code unresolved without a split.",
         "evidence_refs": [
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release",
           "secondary_technical_sources:a4-b8-3-0-tdi-quattro-zf8hp-autodata"
         ]
       }
@@ -3047,9 +3051,10 @@
         ]
       },
       {
-        "item": "Audi A4 3.0 TDI quattro Tiptronic pre-facelift evidence conflicts with the broad 2008-2016 ZF8HP row",
-        "reason": "The exact 2007-2011 Auto-Data sedan row identifies the pre-facelift Tiptronic configuration as 6-speed automatic, so the broad ZF8HP row likely conflates distinct transmission eras and is not safe for order analysis without a split or later-year proof.",
+        "item": "Audi A4 3.0 TDI quattro official pre-facelift Tiptronic evidence conflicts with the broad 2008-2016 ZF8HP row",
+        "reason": "Official Audi MediaCenter clean-diesel material and the exact 2007-2011 Auto-Data sedan row both identify the pre-facelift automatic family as six-speed tiptronic, so the broad ZF8HP row conflates distinct transmission eras and is not safe for order analysis without a split or later-year proof.",
         "evidence_refs": [
+          "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release",
           "secondary_technical_sources:a4-b8-3-0-tdi-quattro-zf8hp-autodata"
         ]
       }

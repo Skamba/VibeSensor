@@ -113,13 +113,11 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific contradiction evidence for the broad Q5 8R 2.0 TFSI front-wheel-drive S tronic placeholder. The recovered early Germany-market lineup article names only 2.0 TFSI quattro petrol states, and the stronger secondary facelift tables recovered in this packet also split 2.0 TFSI only into quattro exact slices. That means the broad 2011-2017 FWD DCT7 row is unsupported by the recovered packet and cannot inherit AWD petrol evidence, so production JSON remains unchanged.",
         "evidence_refs": [
-          "legacy_research_sources:428937eb9fd6",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "legacy_research_sources:5c2e1a7d8f4b",
+          "legacy_research_sources:6e9b3d4a1c2f",
+          "legacy_research_sources:7d0c4e1b9a6f"
         ]
       },
       {
@@ -128,25 +126,21 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q5 (8R, 2011-2017) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Exact Audi Q5 8R 2.0 TFSI front-wheel-drive S tronic applicability across the represented EU 2011-2017 row span",
+        "reason": "The recovered packet does not close any front-wheel-drive 2.0 TFSI Q5 state. The checked early official article names only quattro petrol states, and the stronger secondary facelift tables likewise recover only quattro exact slices.",
         "evidence_refs": [
-          "legacy_research_sources:428937eb9fd6",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "legacy_research_sources:5c2e1a7d8f4b",
+          "legacy_research_sources:6e9b3d4a1c2f",
+          "legacy_research_sources:7d0c4e1b9a6f"
         ]
       },
       {
-        "item": "Audi Q5 (8R, 2011-2017) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row front-wheel-drive DCT7 ratio, final-drive, and tire applicability",
+        "reason": "Because no checked exact front-wheel-drive 2.0 TFSI Q5 state was recovered in this packet, the inherited DCT7 gearbox family, 0.680 top gear, 3.444 final drive, and 235/55 R18 tire mapping remain unsupported broad-row carryover values.",
         "evidence_refs": [
-          "legacy_research_sources:428937eb9fd6",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "legacy_research_sources:5c2e1a7d8f4b",
+          "legacy_research_sources:6e9b3d4a1c2f",
+          "legacy_research_sources:7d0c4e1b9a6f"
         ]
       }
     ],
@@ -272,13 +266,11 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific contradiction evidence for the broad Q5 8R 2.0 TFSI front-wheel-drive tiptronic placeholder. The recovered early Germany-market lineup article names only 2.0 TFSI quattro petrol states, and the stronger secondary facelift tables recovered in this packet also split 2.0 TFSI only into quattro exact slices. That means the broad 2011-2017 FWD ZF8HP row is unsupported by the recovered packet and cannot inherit AWD petrol evidence, so production JSON remains unchanged.",
         "evidence_refs": [
-          "legacy_research_sources:428937eb9fd6",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "legacy_research_sources:5c2e1a7d8f4b",
+          "legacy_research_sources:6e9b3d4a1c2f",
+          "legacy_research_sources:7d0c4e1b9a6f"
         ]
       },
       {
@@ -287,25 +279,21 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q5 (8R, 2011-2017) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Exact Audi Q5 8R 2.0 TFSI front-wheel-drive tiptronic applicability across the represented EU 2011-2017 row span",
+        "reason": "The recovered packet does not close any front-wheel-drive 2.0 TFSI Q5 state. The checked early official article names only quattro petrol states, and the stronger secondary facelift tables likewise recover only quattro exact slices.",
         "evidence_refs": [
-          "legacy_research_sources:428937eb9fd6",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "legacy_research_sources:5c2e1a7d8f4b",
+          "legacy_research_sources:6e9b3d4a1c2f",
+          "legacy_research_sources:7d0c4e1b9a6f"
         ]
       },
       {
-        "item": "Audi Q5 (8R, 2011-2017) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row front-wheel-drive ZF8HP ratio, final-drive, and tire applicability",
+        "reason": "Because no checked exact front-wheel-drive 2.0 TFSI Q5 state was recovered in this packet, the inherited ZF8HP gearbox family, 0.667 top gear, 3.077 final drive, and 235/55 R18 tire mapping remain unsupported broad-row carryover values.",
         "evidence_refs": [
-          "legacy_research_sources:428937eb9fd6",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:753cf52ddd21"
+          "legacy_research_sources:5c2e1a7d8f4b",
+          "legacy_research_sources:6e9b3d4a1c2f",
+          "legacy_research_sources:7d0c4e1b9a6f"
         ]
       }
     ],
