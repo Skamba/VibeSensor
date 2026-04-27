@@ -408,6 +408,48 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f25-xdrive20d-xdrive30d-2011-03-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0094837EN/144304",
+      "title": "BMW PressClub F25 xDrive20d and xDrive30d 2011 technical data PDF",
+      "note": "Official BMW 03/2011 technical-data PDF for the exact F25 X3 xDrive20d manual and optional 8-speed automatic launch states plus the xDrive30d automatic launch state, showing the full forward gear ratios, single published final-drive ratios, and 225/60 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f25-xdrive28i-35i-2011-03-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0094837EN/144305",
+      "title": "BMW PressClub F25 xDrive28i and xDrive35i 2011 launch technical data PDF",
+      "note": "Official BMW 03/2011 technical-data PDF for the launch F25 X3 xDrive28i and xDrive35i states showing the early xDrive28i as a 2996 cc inline-6 automatic with a 3.727 final-drive ratio and 225/60 R17 baseline tires, alongside the launch xDrive35i row.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f25-xdrive30d-xdrive35d-2011-09-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0118790EN/175708",
+      "title": "BMW PressClub F25 xDrive30d and xDrive35d 2011 technical data PDF",
+      "note": "Official BMW 09/2011 technical-data PDF for the exact F25 X3 xDrive30d and xDrive35d automatic states showing AWD, 8-speed automatic with Steptronic, the full forward gear ratios, single published 2.813 final-drive ratios, and baseline tires of 225/60 R17 for xDrive30d and 245/50 R18 for xDrive35d.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f25-xdrive28i-35i-2012-03-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0125202EN/185371",
+      "title": "BMW PressClub F25 xDrive28i and xDrive35i 2012 technical data PDF",
+      "note": "Official BMW 03/2012 technical-data PDF for the refreshed F25 X3 xDrive28i and xDrive35i states showing that xDrive28i changes to a 1997 cc inline-4 turbo configuration with the same 8-speed automatic ratio set but a lower 3.385 final-drive ratio and 225/60 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f25-sdrive18d-2012-11-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0130268EN/204356",
+      "title": "BMW PressClub F25 sDrive18d 2012 technical data PDF",
+      "note": "Official BMW 11/2012 technical-data PDF for the exact F25 X3 sDrive18d rear-wheel-drive manual and optional 8-speed automatic states, showing the full forward gear ratios, final-drive ratios 3.462 and 3.077, and 225/60 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f25-sdrive20i-xdrive20i-2014-04-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0165242EN/250218",
+      "title": "BMW PressClub F25 sDrive20i and xDrive20i 2014 technical data PDF",
+      "note": "Official BMW 04/2014 facelift technical-data PDF for the exact F25 X3 sDrive20i automatic state and the xDrive20i manual and optional 8-speed automatic cross-check, showing the full forward gear ratios, final-drive ratios, and 225/60 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f32-420i-xdrive-2013-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0147064EN/225547",
       "title": "BMW PressClub F32 420i xDrive 2013 technical data PDF",
