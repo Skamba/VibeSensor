@@ -200,9 +200,11 @@
     "drivetrain": {
       "confidence": "unverified",
       "evidence_refs": [
-        "bmw_pressclub_sources:f45-2018-spec-pdf"
+        "bmw_pressclub_sources:f45-2014-launch-article",
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-2020-spec-pdf"
       ],
-      "notes": "Checked official BMW 01/2018 specifications PDF directly. That exact F45 sheet publishes the 216d Active Tourer with six-speed manual and optional seven-speed DCT overall ratios plus 205/60 R16 baseline tires, but it does not surface any eight-speed Steptronic 216d row, so this represented ZF8HP mapping remains an unsupported advisory placeholder.",
+      "notes": "Checked official BMW 02/2014 launch material plus the 01/2018 and 11/2020 specifications PDFs directly. The launch article does not include 216d in the 2014 F45 launch engine trio, and the later official sheets publish the 216d only with six-speed manual or optional seven-speed Steptronic with double clutch plus 205/60 R16 baseline tires, never with eight-speed Steptronic, so this represented 2014 ZF8HP mapping remains an unsupported advisory placeholder.",
       "value": "FWD"
     },
     "transmission": {
@@ -334,25 +336,28 @@
     },
     "verification_notes": [
       {
-        "note": "Checked official BMW 01/2018 specifications PDF directly. That exact F45 sheet publishes the 216d Active Tourer with six-speed manual and optional seven-speed DCT overall ratios 16.385 / 9.664 / 6.181 / 4.327 / 3.349 / 2.663 / 2.158, reverse 14.898, and 205/60 R16 baseline tires, but it does not publish any eight-speed Steptronic 216d row. This represented ZF8HP configuration therefore remains an unsupported advisory row rather than a validated exact state.",
+        "note": "This research wave extends the earlier contradiction note with start-year evidence from the official 02/2014 BMW F45 launch article. That launch article lists only 218i, 225i, and 218d as the launch engine set, so it does not support a 2014 216d row. The checked 01/2018 and 11/2020 specifications PDFs then publish the later 216d only with six-speed manual or optional seven-speed Steptronic with double clutch and 205/60 R16 baseline tires, never with eight-speed Steptronic. This represented 2014 ZF8HP configuration therefore remains an unsupported advisory row rather than a validated exact state.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
+          "bmw_pressclub_sources:f45-2014-launch-article",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW F45 216d exact automatic technical-data row",
-        "reason": "Checked official BMW 01/2018 specifications PDF publishes the 216d with six-speed manual and optional seven-speed DCT overall ratios, not with eight-speed Steptronic.",
+        "item": "BMW F45 216d exact 2014 launch applicability",
+        "reason": "The checked official 02/2014 BMW F45 launch article lists only 218i, 225i, and 218d in the launch engine set, so it does not close a 2014 launch-state 216d row.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
+          "bmw_pressclub_sources:f45-2014-launch-article"
         ]
       },
       {
         "item": "BMW F45 216d exact represented ZF8HP configuration",
-        "reason": "Without any official eight-speed Steptronic 216d row, this pass cannot promote the inherited transmission, ratio, or tire placeholders for the represented ZF8HP state.",
+        "reason": "The checked official 2018 and 2020 BMW sheets publish the later 216d only with six-speed manual or optional seven-speed Steptronic with double clutch and 205/60 R16 baseline tires, not with eight-speed Steptronic, so this pass cannot promote the inherited ZF8HP transmission, ratio, or tire placeholders.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf"
         ]
       }
     ],
@@ -381,9 +386,11 @@
     "drivetrain": {
       "confidence": "unverified",
       "evidence_refs": [
-        "bmw_pressclub_sources:f45-2018-spec-pdf"
+        "bmw_pressclub_sources:f45-2014-launch-article",
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-2020-spec-pdf"
       ],
-      "notes": "Checked official BMW 01/2018 specifications PDF directly. That exact F45 sheet publishes the 216i Active Tourer only with six-speed manual and 205/60 R16 baseline tires, and it does not surface any automatic 216i row, so this represented ZF8HP mapping remains an unsupported advisory placeholder.",
+      "notes": "Checked official BMW 02/2014 launch material plus the 01/2018 and 11/2020 specifications PDFs directly. The launch article does not include 216i in the 2014 F45 launch engine trio, and the later official sheets publish the 216i only with six-speed manual and 205/60 R16 baseline tires, never with any automatic row, so this represented 2014 ZF8HP mapping remains an unsupported advisory placeholder.",
       "value": "FWD"
     },
     "transmission": {
@@ -515,25 +522,28 @@
     },
     "verification_notes": [
       {
-        "note": "Checked official BMW 01/2018 specifications PDF directly. That exact F45 sheet publishes the 216i Active Tourer only with six-speed manual and 205/60 R16 baseline tires, and it does not surface any automatic 216i row. This represented ZF8HP configuration therefore remains an unsupported advisory row rather than a validated exact state.",
+        "note": "This research wave extends the earlier contradiction note with start-year evidence from the official 02/2014 BMW F45 launch article. That launch article lists only 218i, 225i, and 218d as the launch engine set, so it does not support a 2014 216i row. The checked 01/2018 and 11/2020 specifications PDFs then publish the later 216i only with six-speed manual and 205/60 R16 baseline tires, with no automatic row at all. This represented 2014 ZF8HP configuration therefore remains an unsupported advisory row rather than a validated exact state.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
+          "bmw_pressclub_sources:f45-2014-launch-article",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW F45 216i exact automatic technical-data row",
-        "reason": "Checked official BMW 01/2018 specifications PDF publishes the 216i only with six-speed manual and does not surface an automatic 216i row.",
+        "item": "BMW F45 216i exact 2014 launch applicability",
+        "reason": "The checked official 02/2014 BMW F45 launch article lists only 218i, 225i, and 218d in the launch engine set, so it does not close a 2014 launch-state 216i row.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
+          "bmw_pressclub_sources:f45-2014-launch-article"
         ]
       },
       {
         "item": "BMW F45 216i exact represented ZF8HP configuration",
-        "reason": "Without any official automatic 216i row, this pass cannot promote the inherited transmission, ratio, or tire placeholders for the represented ZF8HP state.",
+        "reason": "The checked official 2018 and 2020 BMW sheets publish the later 216i only with six-speed manual and 205/60 R16 baseline tires, with no automatic row at all, so this pass cannot promote the inherited ZF8HP transmission, ratio, or tire placeholders.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f45-2018-spec-pdf"
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf"
         ]
       }
     ],

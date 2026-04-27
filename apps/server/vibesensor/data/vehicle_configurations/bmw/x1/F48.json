@@ -628,37 +628,20 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Official BMW 11/2015 specifications material supports an early sDrive16d manual state with 225/55 R17 baseline tires, 0.628 top gear, and 3.588 final drive. The current inherited 2016-2022 values are contradicted by that exact checked source, and the row remains too broad for later-year continuity.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive16d-sdrive18i-xdrive18d-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Whether this broad sDrive16d manual row should be narrowed to the proven 11/2015 state or split by later-year applicability",
+        "reason": "The saved official BMW 11/2015 specifications page and technical-data sheet prove an early manual state, but the checked 2018 and 2021 master sheets did not surface a matching later sDrive16d row for the full 2016-2022 span.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
-        ]
-      },
-      {
-        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
-        "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive16d-sdrive18i-xdrive18d-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf"
         ]
       }
     ],
@@ -784,37 +767,20 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "The checked official BMW 11/2015 sDrive16d specifications page and technical-data packet are manual-only. No exact automatic sDrive16d row was recovered in the checked official set, so this represented automatic row remains unsupported rather than validated.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive16d-sdrive18i-xdrive18d-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Whether an EU-market automatic sDrive16d row existed in-scope for this configuration family",
+        "reason": "The only exact checked official BMW 11/2015 sDrive16d specifications packet is manual-only and no later checked official master sheet surfaced an exact automatic sDrive16d row.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
-        ]
-      },
-      {
-        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
-        "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive16d-sdrive18i-xdrive18d-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf"
         ]
       }
     ],
@@ -858,43 +824,44 @@
         "value": 0.812
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.385
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The checked official BMW 07/2015, 09/2018, and 03/2021 technical-data PDFs agree on 3.389 as the stable manual final-drive ratio for the broad sDrive18d row, even though manual top gear changes across the represented span.",
+        "value": 3.389
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_derived",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The checked official BMW 07/2015, 09/2018, and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad sDrive18d row.",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 50.0,
+          "aspect_pct": 55.0,
           "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_derived",
           "evidence_refs": [
-            "legacy_research_sources:3643687db38c",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:71b4da2d92a2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The checked official BMW 07/2015, 09/2018, and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad sDrive18d row.",
           "front": {
             "width_mm": 225.0,
-            "aspect_pct": 50.0,
+            "aspect_pct": 55.0,
             "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
@@ -940,37 +907,34 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Official BMW 07/2015, 09/2018, and 03/2021 technical-data packets show that this broad sDrive18d manual row is mixed-era on top gear but stable on final drive and baseline tires. The row now promotes the stable 3.389 final drive and 225/55 R17 baseline tire while leaving top gear unresolved because the checked official manual value changes from 0.628 to 0.605 across the represented span.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "BMW X1 sDrive18d manual exact top-gear continuity across the represented 2016-2022 row span",
+        "reason": "The checked official BMW manual sheets agree on the broad row's final drive and baseline tire, but manual top gear changes from 0.628 in 07/2015 and 09/2018 to 0.605 by 03/2021.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       },
       {
-        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "BMW X1 sDrive18d exact optional wheel and tire matrix across the represented row span",
+        "reason": "The checked official BMW packets close the baseline 225/55 R17 fitment, but this pass did not recover one exact optional wheel and tire matrix for the full broad row.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
@@ -1009,9 +973,14 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.674
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The checked official BMW 07/2015, 09/2018, and 03/2021 technical-data PDFs agree on 0.673 as the automatic top-gear ratio for the broad sDrive18d row, even though the final drive changes across the represented span.",
+        "value": 0.673
       },
       "final_drive_front": {
         "confidence": "family_default",
@@ -1021,36 +990,32 @@
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_derived",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The checked official BMW 07/2015, 09/2018, and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad sDrive18d automatic row.",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 50.0,
+          "aspect_pct": 55.0,
           "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_derived",
           "evidence_refs": [
-            "legacy_research_sources:3643687db38c",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:71b4da2d92a2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The checked official BMW 07/2015, 09/2018, and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad sDrive18d automatic row.",
           "front": {
             "width_mm": 225.0,
-            "aspect_pct": 50.0,
+            "aspect_pct": 55.0,
             "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
@@ -1096,37 +1061,34 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Official BMW 07/2015, 09/2018, and 03/2021 technical-data packets show that this broad sDrive18d automatic row is mixed-era on final drive but stable on top gear and baseline tires. The row now promotes the stable 0.673 top gear and 225/55 R17 baseline tire while keeping final drive unresolved because the checked official value changes from 2.955 to 2.851 across the represented span.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "BMW X1 sDrive18d automatic exact final-drive continuity across the represented 2016-2022 row span",
+        "reason": "The checked official BMW automatic sheets agree on top gear and baseline tire, but final drive changes from 2.955 in 07/2015 to 2.851 in 09/2018 and 03/2021.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       },
       {
-        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "BMW X1 sDrive18d exact optional wheel and tire matrix across the represented row span",
+        "reason": "The checked official BMW packets close the baseline 225/55 R17 fitment, but this pass did not recover one exact optional wheel and tire matrix for the full broad row.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
@@ -1165,48 +1127,50 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.812
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The checked official BMW 11/2015 and 03/2021 technical-data PDFs agree on 0.683 as the manual top-gear ratio for the broad sDrive18i row.",
+        "value": 0.683
       },
       "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.385
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The checked official BMW 11/2015 and 03/2021 technical-data PDFs agree on 3.882 as the manual final-drive ratio for the broad sDrive18i row.",
+        "value": 3.882
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_derived",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "The checked official BMW 11/2015 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad sDrive18i manual row.",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 50.0,
+          "aspect_pct": 55.0,
           "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_derived",
           "evidence_refs": [
-            "legacy_research_sources:3643687db38c",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:71b4da2d92a2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "The checked official BMW 11/2015 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad sDrive18i manual row.",
           "front": {
             "width_mm": 225.0,
-            "aspect_pct": 50.0,
+            "aspect_pct": 55.0,
             "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
@@ -1252,13 +1216,10 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Official BMW 11/2015 and 03/2021 technical-data sheets agree on the broad sDrive18i manual state: 225/55 R17 baseline tires, 0.683 top gear, and 3.882 final drive. The row now promotes those stable official values instead of the contradicted inherited placeholders.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       },
       {
@@ -1267,25 +1228,11 @@
     ],
     "unresolved": [
       {
-        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "BMW X1 sDrive18i manual year-by-year continuity across the represented 2016-2022 row span",
+        "reason": "The checked official BMW 11/2015 and 03/2021 manual sheets agree on the promoted top-gear, final-drive, and baseline-tire values, but this pass did not recover a complete official year-by-year chain for every intermediate model year.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
-        ]
-      },
-      {
-        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
-        "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
@@ -1411,13 +1358,11 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Official BMW automatic sDrive18i sources do exist, but they do not support a ZF8HP row. The checked 11/2015 technical-data sheet shows 6-speed Steptronic, while the checked 09/2018 and 03/2021 master sheets show 7-speed Steptronic with double clutch, so this single ZF8HP row remains contradicted and overbroad.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       },
       {
@@ -1426,25 +1371,12 @@
     ],
     "unresolved": [
       {
-        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Exact cutover timing for the sDrive18i automatic change from 6-speed Steptronic to 7-speed dual-clutch",
+        "reason": "The checked official BMW automatic sources prove an early 6AT state and a later 7DCT state, but this pass did not split the broad 2016-2022 row at the precise transition point.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
-        ]
-      },
-      {
-        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
-        "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
@@ -1570,37 +1502,24 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Official BMW 07/2016 specifications material now closes an exact early sDrive20d manual state with 225/55 R17 baseline tires, 0.674 top gear, and 3.778 final drive. The broad 2016-2022 manual row still remains too wide for direct numeric promotion because the checked late-run BMW 03/2021 master sheet supports only an automatic sDrive20d state.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Whether this broad sDrive20d manual row should be narrowed to the proven 07/2016 state or split away from the later automatic-only lineup",
+        "reason": "The checked official BMW 07/2016 packet proves an early manual sDrive20d state, while the checked 03/2021 master sheet supports only an automatic sDrive20d row for the later lineup.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
-        ]
-      },
-      {
-        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
-        "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
@@ -1639,9 +1558,13 @@
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.674
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The checked official BMW 07/2016 and 03/2021 technical-data PDFs agree on 0.673 as the automatic top-gear ratio for the broad sDrive20d row, even though the final drive changes across the represented span.",
+        "value": 0.673
       },
       "final_drive_front": {
         "confidence": "family_default",
@@ -1651,36 +1574,30 @@
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_derived",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The checked official BMW 07/2016 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad sDrive20d automatic row.",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 50.0,
+          "aspect_pct": 55.0,
           "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_derived",
           "evidence_refs": [
-            "legacy_research_sources:3643687db38c",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:71b4da2d92a2",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The checked official BMW 07/2016 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad sDrive20d automatic row.",
           "front": {
             "width_mm": 225.0,
-            "aspect_pct": 50.0,
+            "aspect_pct": 55.0,
             "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
@@ -1726,37 +1643,30 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Official BMW 07/2016 and 03/2021 technical-data packets show that this broad sDrive20d automatic row is mixed-era on final drive but stable on top gear and baseline tires. The row now promotes the stable 0.673 top gear and 225/55 R17 baseline tire while keeping final drive unresolved because the checked official value changes from 2.955 to 2.851 across the represented span.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "BMW X1 sDrive20d automatic exact final-drive continuity across the represented 2016-2022 row span",
+        "reason": "The checked official BMW automatic sheets agree on top gear and baseline tire, but final drive changes from 2.955 in 07/2016 to 2.851 by 03/2021.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       },
       {
-        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "BMW X1 sDrive20d exact optional wheel and tire matrix across the represented row span",
+        "reason": "The checked official BMW packets close the baseline 225/55 R17 fitment, but this pass did not recover one exact optional wheel and tire matrix for the full broad row.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
@@ -1882,37 +1792,37 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "The checked official BMW 07/2015, 09/2018, and 03/2021 source chain surfaces only automatic sDrive20i states: 8-speed Steptronic at launch, then 7-speed Steptronic with double clutch later. No exact manual sDrive20i technical-data row was recovered, so this MT6 row remains unsupported rather than validated.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Whether any EU-market manual sDrive20i state existed in-scope for this configuration family",
+        "reason": "The checked official BMW 07/2015, 09/2018, and 03/2021 packets only surfaced automatic sDrive20i states and did not recover an exact manual technical-data row.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       },
       {
-        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "BMW X1 sDrive20i automatic-family cutover timing inside the represented 2016-2022 block",
+        "reason": "The checked official BMW packet proves automatic-only sDrive20i states, but it changes from 8-speed Steptronic at launch to 7-speed dual-clutch by 09/2018 and 03/2021.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
@@ -2038,37 +1948,34 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "The checked official BMW sDrive20i automatic source chain proves that this row is mixed-era and overbroad: the 07/2015 launch packet is 8-speed Steptronic with 0.673 top gear, 3.200 final drive, and 225/55 R17 baseline tires, while the 09/2018 and 03/2021 packets move sDrive20i to 7-speed Steptronic with double clutch and a 3.789 final drive. This broad ZF8HP row therefore remains a contradicted placeholder rather than one production-safe exact automatic mapping.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Exact cutover timing for the sDrive20i automatic change from 8-speed Steptronic to 7-speed dual-clutch",
+        "reason": "The checked official BMW automatic packets prove an early 8AT state and later 7DCT states, but this pass did not split the broad 2016-2022 row at the precise transition point.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       },
       {
-        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "BMW X1 sDrive20i exact optional wheel and tire matrix across the represented row span",
+        "reason": "The checked official BMW packets close the baseline 225/55 R17 fitment for the recovered automatic states, but this pass did not recover one exact optional wheel and tire matrix for the full broad row.",
         "evidence_refs": [
-          "legacy_research_sources:3643687db38c",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:71b4da2d92a2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
         ]
       }
     ],

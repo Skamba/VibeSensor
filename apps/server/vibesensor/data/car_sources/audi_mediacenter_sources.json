@@ -2,6 +2,83 @@
   "pack_id": "audi_mediacenter_sources",
   "sources": [
     {
+      "id": "audi_mediacenter_sources:gb-a1-sportback-until-2026-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-a1-sportback-until-2026-17088",
+      "title": "Audi MediaCenter A1 Sportback (until 2026) model page",
+      "note": "Official Audi MediaCenter model hub scoping the outgoing A1 Sportback as 'until 2026' and linking the exact current Germany-program technical-data sheets for 25 TFSI manual and S tronic, 30 TFSI manual and S tronic, and 35 TFSI S tronic only.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:gb-a1-sportback-2018-launch-release",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/audi-a1-sportback-ideal-companion-for-an-urban-lifestyle-until-2026-10370",
+      "title": "Audi MediaCenter 2018 A1 Sportback launch release",
+      "note": "Official Audi launch release for the second-generation A1 Sportback stating that the Europe launch starts in fall 2018 and that all non-top engines are available with manual or 7-speed S tronic transmissions at launch, used only for early applicability context.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:gb-a1-25-tfsi-2026-manual-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/836/file_en/c3f2a4a26d3756035f8e8169b65605e9d8adeb2e/eTD-Audi-A1-Sportback-25-TFSI-70kW_260203.pdf?1770295290&disposition=attachment",
+      "title": "Audi MediaCenter A1 Sportback 25 TFSI 2026 manual technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late A1 Sportback 25 TFSI manual state showing a 5-speed manual gearbox, 0.673 top gear, 3.933 final drive, and basic 185/65 R15 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:gb-a1-25-tfsi-2026-s-tronic-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1077/file_en/4b8898b93889763e4c02f654521bf2bc28b62b92/eTD-Audi-A1-Sportback-25-TFSI-S_tronic-70kW_260203.pdf?1770295288&disposition=attachment",
+      "title": "Audi MediaCenter A1 Sportback 25 TFSI 2026 S tronic technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late A1 Sportback 25 TFSI S tronic state showing front-wheel drive, 7-speed S tronic, 0.795 top gear, split final drives 4.438 / 3.227, and basic 185/65 R15 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:gb-a1-30-tfsi-2026-manual-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/443/file_en/ceb80007c014f88175b0d4ebf7719aa47d319a39/eTD-Audi-A1-Sportback-30-TFSI-85kW_260203.pdf?1770295288&disposition=attachment",
+      "title": "Audi MediaCenter A1 Sportback 30 TFSI 2026 manual technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late A1 Sportback 30 TFSI manual state showing a 6-speed manual gearbox, 0.554 top gear, 4.353 final drive, and basic 185/65 R15 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:gb-a1-30-tfsi-2026-s-tronic-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/23/file_en/f758eb0e21732c5565365838957dd3d7f6eb954b/eTD-Audi-A1-Sportback-30-TFSI-S_tronic-85kW_260203.pdf?1770295287&disposition=attachment",
+      "title": "Audi MediaCenter A1 Sportback 30 TFSI 2026 S tronic technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late A1 Sportback 30 TFSI S tronic state showing front-wheel drive, 7-speed S tronic, 0.795 top gear, split final drives 4.438 / 3.227, and basic 185/65 R15 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:gb-a1-35-tfsi-2026-s-tronic-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/810/file_en/8d0168651fe36ecb3a6998adc48c150f046b561b/eTD-Audi-A1-Sportback-35-TFSI-S_tronic-110kW_260203.pdf?1770295291&disposition=attachment",
+      "title": "Audi MediaCenter A1 Sportback 35 TFSI 2026 S tronic technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late A1 Sportback 35 TFSI S tronic state showing front-wheel drive, 7-speed S tronic, 0.653 top gear, split final drives 4.800 / 3.429, and basic 195/55 R16 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:ga-q2-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-q2-5574",
+      "title": "Audi MediaCenter Q2 model page",
+      "note": "Official Audi MediaCenter model page used to scope the current Q2 gasoline technical-data sheet set, which in the checked packet links 30 TFSI manual, 35 TFSI manual, 35 TFSI S tronic, and 40 TFSI quattro S tronic sheets but no 30 TFSI S tronic sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1142/file_en/911760336865510155de5ec137c252f01514edc5/eTD-Audi-Q2-30-TFSI-85kW_260204.pdf?1770646244&disposition=attachment",
+      "title": "Audi MediaCenter Q2 30 TFSI 2026 manual technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late Q2 30 TFSI manual state showing front-wheel drive, 6-speed manual, top gears 0.739 / 0.554, final drive 5.067, and basic 205/60 R16 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/834/file_en/e1ca9c9578434c70c128c2b1635601cad96ddcdf/eTD-Audi-Q2-35-TFSI-110kW_260204.pdf?1770646247&disposition=attachment",
+      "title": "Audi MediaCenter Q2 35 TFSI 2026 manual technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late Q2 35 TFSI manual state showing front-wheel drive, 6-speed manual, top gears 0.674 / 0.510, twin listed final drives 4.563 / 4.563, and basic 205/60 R16 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/835/file_en/710b346dcb4bd1b8b83519932fc935d5c535bd35/eTD-Audi-Q2-35-TFSI-S-tronic-110kW_260204.pdf?1770646250&disposition=attachment",
+      "title": "Audi MediaCenter Q2 35 TFSI 2026 S tronic technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late Q2 35 TFSI S tronic state showing front-wheel drive, 7-speed S tronic, top gears 0.780 / 0.653, split final drives 4.800 / 3.429, and basic 205/60 R16 tires.",
+      "confidence": "high"
+    },
+    {
       "id": "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/761/file_en/920cf84b13a26d902c0818dc1cf31aadb18b8ad2/eTD-Audi-Q3-40-TDI-quattro-S_tronic-142kW_240322.pdf?1711458345&disposition=attachment",
       "title": "Audi MediaCenter Q3 40 TDI quattro 2024 technical-data PDF",
@@ -37,6 +114,13 @@
       "confidence": "high"
     },
     {
+      "id": "audi_mediacenter_sources:f3-q3-35-tdi-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1328/file_en/f338c5804a816bb6a4aa238aee097bf6af049296/eTD-Audi-Q3-35-TDI-S_tronic-110kW_240322.pdf?disposition=attachment",
+      "title": "Audi MediaCenter Q3 35 TDI 2024 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF cross-checking the exact old-generation Q3 35 TDI S tronic state with front-wheel drive, 7-speed S tronic, 0.561 top gear, split final drives 4.813 / 3.667, and basic 215/65 R17 tires.",
+      "confidence": "high"
+    },
+    {
       "id": "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1328/file_en/f338c5804a816bb6a4aa238aee097bf6af049296/eTD-Audi-Q3-35-TDI-S_tronic-110kW_250605.pdf?1749195007&disposition=attachment",
       "title": "Audi MediaCenter Q3 35 TDI 2025 technical-data PDF",
@@ -55,6 +139,13 @@
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/13/file_en/503ea49630b63e45ee7457c82882dbe3e8d70c4e/eTD-Audi-Q3-35-TFSI-S_tronic-110kW_250605.pdf?1749195006&disposition=attachment",
       "title": "Audi MediaCenter Q3 35 TFSI 2025 S tronic technical-data PDF",
       "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact old-generation Q3 35 TFSI S tronic state showing front-wheel drive, 7-speed S tronic, top gear 0.661, split final drives 5.200 / 3.900, and basic 215/65 R17 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:f3-q3-35-tfsi-2024-s-tronic-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/13/file_en/503ea49630b63e45ee7457c82882dbe3e8d70c4e/eTD-Audi-Q3-35-TFSI-S_tronic-110kW_240322.pdf?disposition=attachment",
+      "title": "Audi MediaCenter Q3 35 TFSI 2024 S tronic technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF cross-checking the exact old-generation Q3 35 TFSI S tronic state with front-wheel drive, 7-speed S tronic, top gear 0.661, split final drives 5.200 / 3.900, and basic 215/65 R17 tires.",
       "confidence": "high"
     },
     {
@@ -160,6 +251,13 @@
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1027/file_en/2cbcea158f0fd003e5a1519697c726fc3e844d8b/eTD-Audi-Q5-40-TDI-quattro-S_tronic-150kW-MHEV_240604.pdf?disposition=attachment",
       "title": "Audi MediaCenter Q5 40 TDI quattro 2024 technical-data PDF",
       "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact late-FY Q5 40 TDI quattro S tronic 150 kW MHEV state showing quattro AWD with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, and basic 235/65 R17 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8v-a3-ultra-2014-press-release",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/audi-a3-1-dot-4-tfsi-ultra-sporty-economy-expert-2268",
+      "title": "Audi MediaCenter A3 ultra 2014 press release",
+      "note": "Official Audi MediaCenter 05/2014 press release for the A3 ultra family, used to document that the 1.6 TDI ultra engine had been available on the three-door and Sportback since 2013 while the A3 Sedan version was only planned 'in future', which contradicts a clean 2013 Sedan start for the broad 8V 1.6 TDI rows.",
       "confidence": "high"
     },
     {
@@ -436,6 +534,13 @@
       "confidence": "high"
     },
     {
+      "id": "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+      "url": "https://www.audi-mediacenter.com/en/the-audi-tt-and-audi-tts-until-2023-11105/download",
+      "title": "Audi MediaCenter TT and TTS until 2023 product information PDF",
+      "note": "Official Audi MediaCenter product-information PDF for the facelift-era TT and TTS family, used to document that 45 TFSI manual availability and 45 TFSI quattro availability are separate program statements while the checked exact quattro technical-data sheet is S tronic only, and to confirm the broader 17/18/19/20-inch wheel ladder for the TT/TTS family.",
+      "confidence": "high"
+    },
+    {
       "id": "audi_mediacenter_sources:8s-tt-roadster-40-tfsi-2023-tech-data-pdf",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/423/file_en/58c1b878a5f8fb1ac9d8a5d390f94d8ff2dce2d1/eTD_Audi_TT_Roadster_40_TFSI_S_tronic_145kW_230113.pdf?1698933715&disposition=attachment",
       "title": "Audi MediaCenter TT Roadster 40 TFSI 2023 technical-data PDF",
@@ -489,6 +594,13 @@
       "url": "https://uploads.audi-mediacenter.com/system/production/uploaded_files/873/file/07b84e9ae43aafe66c235dacc447a2b7194ef0eb/enBasisinfo_Audi_TT_RS.pdf?1473325640&disposition=attachment",
       "title": "Audi MediaCenter TT RS basic info 2016 PDF",
       "note": "Official Audi MediaCenter basic-info PDF for the TT RS Coupe and TT RS Roadster stating that both body styles use quattro AWD with a 7-speed S tronic and documenting the standard 245/35 R19 tire package plus the optional 255/30 R20 package.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/the-audi-a4-3-dot-0-tdi-clean-diesel-quattro-highly-efficient-and-extremely-clean-2176",
+      "title": "Audi MediaCenter A4 3.0 TDI clean diesel quattro press release",
+      "note": "Official Audi MediaCenter press release for the Germany-market A4 3.0 TDI clean diesel quattro family stating that it combines six-speed tiptronic with quattro permanent all-wheel drive. Used to contradict the broad B8 ZF8HP automatic row and to document the pre-facelift tiptronic versus facelift S tronic split pressure on the broad 3.0 TDI automatic family.",
       "confidence": "high"
     }
   ]

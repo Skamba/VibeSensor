@@ -2,6 +2,41 @@
   "pack_id": "legacy_research_sources",
   "sources": [
     {
+      "id": "legacy_research_sources:4f1a7d2b9c0e",
+      "url": "http://prensa.audi.es/wp-content/uploads/2020/12/Fichas-t%C3%A9cnicas-Audi-Q2.pdf",
+      "title": "Audi Spain Q2 technical sheets 2020",
+      "note": "Official Audi Spain technical-sheet PDF used to close the exact 2020 Spain Q2 30 TFSI manual, 35 TFSI manual, and 35 TFSI S tronic states, including their ratio, final-drive, and 205/60 R16 baseline tire differences from the later Germany-program sheets.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:9a7c1e5d4b62",
+      "url": "https://media.audi.com/is/content/audi/nemo/ch/preislisten/mj25/Audi_Q2_Preisliste_MJ25_ab_19.08.24_DE.pdf",
+      "title": "Audi Switzerland Q2/SQ2 model-year 2025 price list",
+      "note": "Official Audi Switzerland price list used to confirm late-cycle market coexistence of Q2 35 TFSI manual and 35 TFSI S tronic states while also showing that one country-sheet program cannot safely rewrite the broad EU rows.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:5c2e1a7d8f4b",
+      "url": "https://en.audiclub.eu/article/the-audi-q5-and-audi-q5-hybrid-quattro-38",
+      "title": "Audi Q5 and Q5 hybrid quattro article mirror",
+      "note": "Mirrored Audi-origin Q5 lineup article used in the Q5 8R packet to show that the recovered early Germany-market petrol lineup names 2.0 TFSI quattro states and does not close a front-wheel-drive 2.0 TFSI row.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:6e9b3d4a1c2f",
+      "url": "https://www.engineindetail.com/cars/audi/q5/q5-8r-2012-2016",
+      "title": "Engine in Detail Audi Q5 8R 2012-2016 generation page",
+      "note": "Reputable secondary Q5 8R generation page used to show that the recovered stronger facelift 2.0 TFSI variant tables split into quattro exact slices rather than closing any front-wheel-drive 2.0 TFSI broad row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "legacy_research_sources:7d0c4e1b9a6f",
+      "url": "https://www.auto-data.net/en/audi-q5-i-8r-facelift-2012-generation-4176",
+      "title": "Auto-Data Audi Q5 8R facelift generation page",
+      "note": "Reputable secondary facelift generation table used to confirm that the recovered 2.0 TFSI petrol exact slices are quattro-specific and therefore cannot be used to validate the broad front-wheel-drive Q5 8R petrol rows.",
+      "confidence": "medium"
+    },
+    {
       "id": "legacy_research_sources:002d355a3a6c",
       "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+TT+%288S%2C+2015-2023%29+technical+data+Europe",
       "title": "Search",
@@ -2186,6 +2221,34 @@
       "confidence": "high"
     },
     {
+      "id": "legacy_research_sources:be16a3c42d91",
+      "url": "https://en.audiclub.eu/manual_download.php?id=1986",
+      "title": "Audi A3/S3 Germany brochure valid from June 2016",
+      "note": "Official-origin brochure mirror whose public landing page and recovered preview metadata prove an official Germany-market A3/S3 brochure valid from June 2016 exists, giving a conservative facelift-era timing anchor for the late 8V sedan rows even though the public preview does not expose the full drivetrain tables.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:bf27b4d53ea2",
+      "url": "https://en.audiclub.eu/manual_download.php?id=1989",
+      "title": "Audi A3/S3 Spain brochure valid from September 2016",
+      "note": "Official-origin brochure mirror whose public landing page and recovered preview metadata prove an official Spain-market A3/S3 brochure valid from September 2016 exists, giving a conservative facelift-era timing anchor without exposing full technical tables in the public preview.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:c038c5e64fb3",
+      "url": "https://en.audiclub.eu/manual_download.php?id=1994",
+      "title": "Audi A3 Germany brochure dated November 2018",
+      "note": "Official-origin brochure mirror whose public landing page and recovered preview metadata prove an official Germany-market late-8V A3 brochure dated November 2018 exists, making it the strongest public official badge-era timing anchor recovered for the 30 TFSI and 35 TFSI sedan rows.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:c149d6f750c4",
+      "url": "https://en.audiclub.eu/manual_download.php?id=1996",
+      "title": "Audi A3/S3 UK brochure 2018 model year",
+      "note": "Official-origin brochure mirror whose public landing page and recovered preview metadata explicitly say '2018 Model Year' and 'Edition 2.2 01/18', giving a strong public official badge-era timing anchor for late 8V 30 TFSI and 35 TFSI sedan rows even though the full engine tables are not publicly exposed.",
+      "confidence": "high"
+    },
+    {
       "id": "legacy_research_sources:c6e2f8abe80a",
       "url": "https://www.audi-mediacenter.com/en/the-audi-a5-new-look-and-new-technologies-2020-12622/drive-system-and-suspension-12627",
       "title": "Drive System And Suspension 12627",
@@ -2900,6 +2963,13 @@
       "confidence": "high"
     },
     {
+      "id": "legacy_research_sources:7b9e3a4d0c41",
+      "url": "https://press.audi.co.uk/assets/documents/original/20341-AudiUK00000088Q320TDIquattro177PS.pdf",
+      "title": "Q3 2 0 Tdi Quattro 177Ps Technical",
+      "note": "Official Audi UK technical-data PDF for the exact pre-facelift Q3 2.0 TDI quattro 177 PS S tronic state: quattro AWD, 7-speed S tronic, grouped gearbox/final-drive values that do not map cleanly to the current front/rear schema, and basic 215/65 R16 tires. Used to harden the early diesel quattro automatic state and to show that the broad 8U diesel rows cannot inherit one exact official automatic sheet across the full 2012-2018 span.",
+      "confidence": "high"
+    },
+    {
       "id": "legacy_research_sources:9d7fc9f138f2",
       "url": "https://press.audi.co.uk/assets/documents/original/20342-AudiUK00000091Q320TFSIquattroStronic.pdf",
       "title": "Q3 2 0 Tfsi Quattro S Tronic",
@@ -2932,6 +3002,83 @@
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0122682EN/178942",
       "title": "Specifications Bmw M5 10 2011",
       "note": "Official BMW 10/2011 technical-data PDF for the exact F10 M5 launch-state: seven-speed M double-clutch transmission with Drivelogic, forward ratios 4.806 / 2.593 / 1.701 / 1.277 / 1.000 / 0.844 / 0.671, reverse 4.172, final drive 3.150, and standard staggered 265/40 R19 front plus 295/35 R19 rear tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:0cd20821c4bc",
+      "url": "https://press.audi.co.uk/assets/documents/original/9730-AudiUK00000405TheAudiA1FullUKLaunch.pdf",
+      "title": "Audi A1 full UK launch PDF",
+      "note": "Official Audi UK launch-period PDF for the first-generation A1 used to confirm the launch-era engine and transmission lineup, including 1.4 TFSI manual and S tronic states but no 1.0 TFSI launch-state row.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:d3ced68412f8",
+      "url": "https://press.audi.co.uk/assets/documents/original/9525-AudiUK00000107A114TFSImanualTechnical.pdf",
+      "title": "Audi A1 1.4 TFSI manual technical PDF",
+      "note": "Official Audi UK launch-period technical-data PDF for the exact A1 1.4 TFSI 122 PS manual state, used to confirm that the launch-era manual gearbox is a 6-speed rather than a 5-speed.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:d36a12aece1e",
+      "url": "https://press.audi.co.uk/assets/documents/original/9526-AudiUK00000108A114TFSIStronic119g.pdf",
+      "title": "Audi A1 1.4 TFSI S tronic 122PS technical PDF",
+      "note": "Official Audi UK launch-period technical-data PDF for the exact A1 1.4 TFSI 122 PS S tronic state, used to confirm that a 1.4 TFSI S tronic launch-state exists alongside the manual.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:5709c957ea25",
+      "url": "https://press.audi.co.uk/assets/documents/original/9530-AudiUK00000120A114TFSI185PSTechnical.pdf",
+      "title": "Audi A1 1.4 TFSI 185PS technical PDF",
+      "note": "Official Audi UK launch-period technical-data PDF for the exact A1 1.4 TFSI 185 PS S tronic state, used to show that the stored broad 1.4 TFSI DCT row collapses multiple exact launch and facelift configurations.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:e344605299f2",
+      "url": "https://press.audi.co.uk/assets/documents/original/9529-AudiUK00000119A1PriceList.pdf",
+      "title": "Audi A1 UK price list PDF",
+      "note": "Official Audi UK price list cross-check for the early A1 range, kept as supporting context for launch-era gearbox and trim-package availability.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:cfd6a6b47886",
+      "url": "https://press.audi.co.uk/assets/documents/original/9285-AudiUK00016091AudiA1andA1Sportback.pdf",
+      "title": "Audi A1 and A1 Sportback facelift brochure PDF",
+      "note": "Official Audi facelift-era brochure used to confirm that 1.0 TFSI manual and S tronic states belong to the spring-2015 refresh window and that baseline tyre packages start below the stored 17-inch placeholder fitment.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:092a3f271f19",
+      "url": "https://www.audi.ge/files/a1-s1.pdf",
+      "title": "Audi A1 and S1 brochure PDF",
+      "note": "Official Audi-country brochure used as a directly downloadable facelift-era corroboration for A1 1.0 TFSI manual and S tronic existence plus baseline wheel and tyre packages.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:fa2ecfeb2ce9",
+      "url": "https://press.audi.co.uk/assets/documents/original/22581-AudiUK00000858AudiTTCoup%C3%A920TFSITechnical.pdf",
+      "title": "Audi TT Coupé 2.0 TFSI technical PDF URL",
+      "note": "Official Audi UK TT Coupé 2.0 TFSI technical-sheet URL whose indexed extract closes the exact FWD Coupé manual and 6-speed S tronic mapping, including contradictory top-gear and split final-drive values versus the inherited placeholders.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:ac68dd8bebb2",
+      "url": "https://press.audi.co.uk/assets/documents/original/22807-AudiUK00000256TTRoadster20TFSIquattro.pdf",
+      "title": "Audi TT Roadster 2.0 TFSI quattro technical PDF URL",
+      "note": "Official Audi UK TT Roadster 2.0 TFSI quattro technical-sheet URL whose indexed extract provides the closest recovered official AWD S tronic ratio and split final-drive evidence for the TT 8J packet.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:efeaede27b61",
+      "url": "https://press.audi.co.uk/assets/documents/original/22578-AudiUK00000822TTCoup%C3%A9PricingandSpecification.pdf",
+      "title": "Audi TT Coupé pricing and specification PDF URL",
+      "note": "Official Audi UK TT Coupé pricing/specification guide URL used to confirm that the UK Coupé slice offered all four drivetrain and gearbox combinations represented by the stored TT 8J rows: FWD manual, FWD S tronic, quattro manual, and quattro S tronic.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:b3806add936a",
+      "url": "https://press.audi.co.uk/assets/documents/original/22730-AudiUK00017537AudiTTandTTSCoup%C3%A9and.pdf",
+      "title": "Audi TT and TTS Coupé guide PDF URL",
+      "note": "Official Audi UK TT/TTS Coupé guide URL used as an additional official tyre-package conflict slice, showing that later official documents can surface a 245/40 R18 baseline where other official TT sources show 225/55 R16 or 245/45 R17.",
       "confidence": "high"
     }
   ]
