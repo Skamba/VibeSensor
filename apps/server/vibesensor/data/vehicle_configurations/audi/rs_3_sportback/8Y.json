@@ -1,0 +1,147 @@
+[
+  {
+    "id": "audi-8y-rs3-sportback-eu-2021-dct7-awd",
+    "brand": "Audi",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "8Y",
+    "body_code": "8Y",
+    "production_start_year": 2021,
+    "production_end_year": 2026,
+    "model_name": "RS 3 Sportback (8Y, 2021-2026)",
+    "variant_name": "RS 3",
+    "engine_code": "2.5L",
+    "engine_name": "2.5L I5 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:c34943178335",
+        "legacy_research_sources:dae61be0efdf"
+      ],
+      "notes": "Official Audi MediaCenter launch and exact Sportback technical-data material confirm the 8Y RS 3 Sportback uses quattro AWD with torque splitter.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:c34943178335",
+        "legacy_research_sources:dae61be0efdf"
+      ],
+      "notes": "Official Audi MediaCenter launch and exact Sportback technical-data material consistently use 7-speed S tronic wording for the 8Y RS 3 Sportback. The repo keeps DCT7 as the canonical transmission-family mapping, but the checked official sources do not publish a gearbox family code.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:dae61be0efdf"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF lists 0.630 as the top-gear ratio for the exact 8Y RS 3 Sportback.",
+        "value": 0.63
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:dae61be0efdf"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF lists the full forward ratio set for the exact 8Y RS 3 Sportback.",
+        "value": [
+          3.56,
+          2.53,
+          1.68,
+          1.02,
+          0.79,
+          0.76,
+          0.63
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:dae61be0efdf"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF publishes one final-drive value of 4.059 for the exact 8Y RS 3 Sportback. The repo duplicates that single official value into the front field until a source publishes a split front/rear ratio.",
+        "value": 4.059
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:dae61be0efdf"
+        ],
+        "notes": "The official Audi MediaCenter technical-data PDF publishes one final-drive value of 4.059 for the exact 8Y RS 3 Sportback. The repo duplicates that single official value into the rear field until a source publishes a split front/rear ratio.",
+        "value": 4.059
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:c34943178335",
+          "legacy_research_sources:dae61be0efdf"
+        ],
+        "notes": "Official Audi MediaCenter launch and exact Sportback technical-data material confirm the basic staggered 19-inch setup for the 8Y RS 3 Sportback.",
+        "front": {
+          "width_mm": 265.0,
+          "aspect_pct": 30.0,
+          "rim_in": 19.0
+        },
+        "rear": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:c34943178335",
+            "legacy_research_sources:dae61be0efdf"
+          ],
+          "notes": "Official Audi MediaCenter launch and exact Sportback technical-data material confirm the basic staggered 19-inch setup for the 8Y RS 3 Sportback.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 30.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 8 review splits the mixed RS 3 row and promotes the exact 8Y RS 3 Sportback into production data. The official Audi MediaCenter launch article and exact Sportback technical-data PDF confirm quattro AWD with torque splitter, 7-speed S tronic wording, forward ratios 3.560 / 2.530 / 1.680 / 1.020 / 0.790 / 0.760 / 0.630, one published final-drive value 4.059, and the basic staggered 19-inch 265/30 front plus 245/35 rear setup.",
+        "evidence_refs": [
+          "legacy_research_sources:c34943178335",
+          "legacy_research_sources:dae61be0efdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi RS 3 Sportback (8Y) exact gearbox family code and full optional wheel/tire matrix",
+        "reason": "The checked exact Audi sources prove the 7-speed S tronic ratio set, one published final-drive value, and the basic staggered 19-inch setup, but they do not publish a gearbox family code or one complete optional wheel and tire matrix for the exact Sportback row.",
+        "evidence_refs": [
+          "legacy_research_sources:c34943178335",
+          "legacy_research_sources:dae61be0efdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

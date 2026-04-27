@@ -1,0 +1,419 @@
+[
+  {
+    "id": "audi-c8-a7-45-tfsi-quattro-eu-2019-dct7-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "C8",
+    "body_code": "C8",
+    "production_start_year": 2018,
+    "production_end_year": 2025,
+    "model_name": "A7 Sportback (C8, 2018-2025)",
+    "variant_name": "45 TFSI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:c8-a7-2018-launch-subpage",
+        "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf"
+      ],
+      "notes": "Official Audi launch and technical-data material for the exact A7 Sportback 55 TFSI quattro confirm quattro all-wheel drive with ultra technology for this row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:c8-a7-2018-launch-subpage",
+        "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf"
+      ],
+      "notes": "Official Audi launch and technical-data material for the exact A7 Sportback 55 TFSI quattro confirm 7-speed S tronic wording and a hydraulically operated wet dual-clutch layout. The public source chain does not publish an internal gearbox family code beyond that wording.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL382)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2024 technical-data PDF lists 0.386 as the 7th-gear ratio for the exact A7 Sportback 55 TFSI quattro S tronic state.",
+        "value": 0.386
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2024 technical-data PDF lists the forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 for the exact A7 Sportback 55 TFSI quattro S tronic state.",
+        "value": [
+          3.188,
+          2.19,
+          1.517,
+          1.057,
+          0.738,
+          0.508,
+          0.386
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2024 technical-data PDF publishes one populated final-drive value 4.410 for the exact A7 Sportback 55 TFSI quattro S tronic state. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+        "value": 4.41
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2024 technical-data PDF publishes one populated final-drive value 4.410 for the exact A7 Sportback 55 TFSI quattro S tronic state. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+        "value": 4.41
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:c8-a7-2025-price-list-pdf"
+        ],
+        "notes": "Official Audi 2024 technical-data PDF lists 225/55 R18 on 8 J x 18 wheels as the basic package for the exact A7 Sportback 55 TFSI quattro S tronic state, and the official 2025 German price list confirms the same square 18-inch package in the A7 family wheel table.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf",
+            "audi_mediacenter_sources:c8-a7-2025-price-list-pdf"
+          ],
+          "notes": "Official Audi 2024 technical-data PDF lists 225/55 R18 on 8 J x 18 wheels as the basic package for the exact A7 Sportback 55 TFSI quattro S tronic state, and the official 2025 German price list confirms the same square 18-inch package in the A7 family wheel table.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:c8-a7-2025-price-list-pdf"
+          ],
+          "notes": "Official Audi 2025 German price list shows an A7 family square 19-inch summer wheel package with 245/45 R19 tires. The checked wheel table is family-level for conventional A7 Sportback models rather than a dedicated 55 TFSI-only column.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Square 19\""
+        },
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:c8-a7-2025-price-list-pdf"
+          ],
+          "notes": "Official Audi 2025 German price list shows A7 family square 20-inch summer wheel packages with 255/40 R20 tires. The checked wheel table is family-level for conventional A7 Sportback models rather than a dedicated 55 TFSI-only column.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Square 20\""
+        },
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:c8-a7-2025-price-list-pdf"
+          ],
+          "notes": "Official Audi 2025 German price list shows A7 family square 21-inch summer wheel packages with 255/35 R21 tires. The checked wheel table is family-level for conventional A7 Sportback models rather than a dedicated 55 TFSI-only column.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Square 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 5 closes the exact A7 Sportback 55 TFSI quattro row with official Audi source material. The 2018 launch article explicitly names the A7 Sportback 55 TFSI quattro S tronic, says the model launches on the German market in early March 2018, and states that the 3.0 TFSI is paired with seven-speed S tronic and quattro ultra technology. The official 2024 technical-data PDF for the exact 55 TFSI quattro S tronic 250 kW state proves quattro AWD, wet-clutch 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, one published final-drive value 4.410, top speed 250 km/h, and basic 225/55 R18 tires. The official Audi model page scopes the family as until 2025, while the checked 2025 price list supports square 18-inch through 21-inch A7-family wheel packages without showing any staggered A7 setup.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:c8-a7-until-2025-model-page",
+          "audi_mediacenter_sources:c8-a7-2018-launch-subpage",
+          "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:c8-a7-2025-price-list-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A7 Sportback 55 TFSI quattro exact continuity beyond the checked 2018 launch and 2024/2025 source chain",
+        "reason": "The checked official Audi chain strongly supports the exact 55 TFSI quattro launch state from early 2018 and the old-line family scope until 2025, but this pass did not recover year-by-year technical-data sheets for every intermediate model year.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:c8-a7-until-2025-model-page",
+          "audi_mediacenter_sources:c8-a7-2018-launch-subpage",
+          "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi A7 Sportback 55 TFSI quattro exact transmission-code naming",
+        "reason": "Official Audi exact sources prove 7-speed S tronic wording and a wet dual-clutch layout, but they do not publish an internal gearbox family code beyond that market-facing name.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:c8-a7-2018-launch-subpage",
+          "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi A7 Sportback 55 TFSI quattro exact per-variant wheel matrix",
+        "reason": "The checked official 2025 Audi price list supports square 18-inch, 19-inch, 20-inch, and 21-inch A7-family wheel packages and shows no staggered A7 setup, but the wheel table is family-level rather than a dedicated 55 TFSI-only matrix.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:c8-a7-2025-price-list-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-c8-a7-55-tfsi-quattro-eu-2019-dct7-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "C8",
+    "body_code": "C8",
+    "production_start_year": 2019,
+    "production_end_year": 2026,
+    "model_name": "A7 Sportback (C8, 2019-2026)",
+    "variant_name": "55 TFSI quattro",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L V6 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL382)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.564
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.564
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:07cc5dc911b9",
+          "legacy_research_sources:441dcae0f8b9",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:876c20c63603",
+          "legacy_research_sources:8cfb64b90dee",
+          "legacy_research_sources:d1d0954039e3",
+          "legacy_research_sources:dded4fecb402"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 255.0,
+          "aspect_pct": 35.0,
+          "rim_in": 20.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:07cc5dc911b9",
+            "legacy_research_sources:441dcae0f8b9",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:876c20c63603",
+            "legacy_research_sources:8cfb64b90dee",
+            "legacy_research_sources:d1d0954039e3",
+            "legacy_research_sources:dded4fecb402"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:07cc5dc911b9",
+            "legacy_research_sources:441dcae0f8b9",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:876c20c63603",
+            "legacy_research_sources:8cfb64b90dee",
+            "legacy_research_sources:d1d0954039e3",
+            "legacy_research_sources:dded4fecb402"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 21\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:07cc5dc911b9",
+            "legacy_research_sources:441dcae0f8b9",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:876c20c63603",
+            "legacy_research_sources:8cfb64b90dee",
+            "legacy_research_sources:d1d0954039e3",
+            "legacy_research_sources:dded4fecb402"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 25.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 22\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Official Audi Germany-market technical-data material now confirms late-cycle exact A7 Sportback mappings for both quattro variants: 45 TFSI quattro with forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.410, and basic tire 225/55 R18; and 55 TFSI quattro with forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.410, and the same 225/55 R18 basic tire. The broad A7 row remains unchanged because the checked exact evidence does not prove the same mappings across the full 2019-2026 span or across the shared 45/55 TFSI row.",
+        "evidence_refs": [
+          "legacy_research_sources:07cc5dc911b9",
+          "legacy_research_sources:441dcae0f8b9",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:876c20c63603",
+          "legacy_research_sources:8cfb64b90dee",
+          "legacy_research_sources:d1d0954039e3",
+          "legacy_research_sources:dded4fecb402"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi A7 Sportback 45 TFSI quattro production-data applicability across the full C8 row span",
+        "reason": "Checked exact Germany-market evidence resolves the late-cycle 195 kW 45 TFSI quattro mapping, but this pass did not recover a launch-year or 2026 technical-data sheet that proves the same package across the full 2019-2026 row span.",
+        "evidence_refs": [
+          "legacy_research_sources:07cc5dc911b9",
+          "legacy_research_sources:441dcae0f8b9",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:876c20c63603",
+          "legacy_research_sources:8cfb64b90dee",
+          "legacy_research_sources:d1d0954039e3",
+          "legacy_research_sources:dded4fecb402"
+        ]
+      },
+      {
+        "item": "Audi A7 Sportback 55 TFSI quattro production-data applicability across the full C8 row span",
+        "reason": "Checked exact Germany-market evidence resolves the late-cycle 250 kW 55 TFSI quattro mapping, but this pass did not recover an exact 2019-era technical-data sheet proving the same package across the full 2019-2026 row span.",
+        "evidence_refs": [
+          "legacy_research_sources:07cc5dc911b9",
+          "legacy_research_sources:441dcae0f8b9",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:876c20c63603",
+          "legacy_research_sources:8cfb64b90dee",
+          "legacy_research_sources:d1d0954039e3",
+          "legacy_research_sources:dded4fecb402"
+        ]
+      },
+      {
+        "item": "Mixed 45/55 TFSI row applicability for exact A7 Sportback quattro data",
+        "reason": "The broad production row still mixes 45 TFSI quattro and 55 TFSI quattro variants, so the checked exact ratio and tire packages should remain source-ledger-only until the row shape is split or variant-scoped continuity is proved.",
+        "evidence_refs": [
+          "legacy_research_sources:07cc5dc911b9",
+          "legacy_research_sources:441dcae0f8b9",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:876c20c63603",
+          "legacy_research_sources:8cfb64b90dee",
+          "legacy_research_sources:d1d0954039e3",
+          "legacy_research_sources:dded4fecb402"
+        ]
+      },
+      {
+        "item": "Audi A7 Sportback exact transmission-code and optional tire-matrix confirmation",
+        "reason": "Official Audi exact material proves the 7-speed S tronic wording, full ratio sets, final drive 4.410, and the basic 225/55 R18 fitment, but it does not publish the transmission code or the full optional wheel and tire matrix.",
+        "evidence_refs": [
+          "legacy_research_sources:07cc5dc911b9",
+          "legacy_research_sources:441dcae0f8b9",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:876c20c63603",
+          "legacy_research_sources:8cfb64b90dee",
+          "legacy_research_sources:d1d0954039e3",
+          "legacy_research_sources:dded4fecb402"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

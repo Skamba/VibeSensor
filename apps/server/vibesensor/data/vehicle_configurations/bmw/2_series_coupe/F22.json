@@ -1,0 +1,1700 @@
+[
+  {
+    "id": "bmw-f22-220i-eu-2014-mt6-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F22",
+    "body_code": "F22",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Coupe (F22, 2014-2021)",
+    "variant_name": "220i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.812
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.231
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
+        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
+        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
+        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f22-220i-eu-2014-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F22",
+    "body_code": "F22",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Coupe (F22, 2014-2021)",
+    "variant_name": "220i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
+        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
+        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
+        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f22-228i-eu-2014-mt6-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F22",
+    "body_code": "F22",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Coupe (F22, 2014-2021)",
+    "variant_name": "228i",
+    "engine_code": "B48B20",
+    "engine_name": "B48B20 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.812
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.231
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
+        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
+        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
+        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f22-228i-eu-2014-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F22",
+    "body_code": "F22",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Coupe (F22, 2014-2021)",
+    "variant_name": "228i",
+    "engine_code": "B48B20",
+    "engine_name": "B48B20 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g30-518d-2021-italy-price-list-pdf",
+        "bmw_market_pages:g30-5-series-price-list-2023-it"
+      ],
+      "notes": "Official BMW Italy 2021 and 2023 price lists explicitly list the exact G30 518d Sedan as a `2TE` Eight-speed Steptronic automatic state. The repo keeps ZF8HP as the canonical automatic-family mapping, but the checked official sources do not publish a literal gearbox family code.",
+      "code": "ZF8HP",
+      "name": "8-speed Steptronic transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
+        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
+        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
+        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f22-230i-eu-2014-mt6-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F22",
+    "body_code": "F22",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Coupe (F22, 2014-2021)",
+    "variant_name": "230i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.812
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.231
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
+        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
+        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
+        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f22-230i-eu-2014-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F22",
+    "body_code": "F22",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Coupe (F22, 2014-2021)",
+    "variant_name": "230i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
+        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
+        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
+        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f22-m2-eu-2014-mt6-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F22",
+    "body_code": "F22",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Coupe (F22, 2014-2021)",
+    "variant_name": "M2",
+    "engine_code": "B58B30O0",
+    "engine_name": "B58B30O0 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.812
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.231
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
+        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
+        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
+        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f22-m2-eu-2014-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F22",
+    "body_code": "F22",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Coupe (F22, 2014-2021)",
+    "variant_name": "M2",
+    "engine_code": "B58B30O0",
+    "engine_name": "B58B30O0 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
+        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
+        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
+        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f22-m2-competition-eu-2014-mt6-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F22",
+    "body_code": "F22",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Coupe (F22, 2014-2021)",
+    "variant_name": "M2 Competition",
+    "engine_code": "S55B30T0",
+    "engine_name": "S55B30T0 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.812
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.231
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
+        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
+        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
+        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f22-m2-competition-eu-2014-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F22",
+    "body_code": "F22",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Coupe (F22, 2014-2021)",
+    "variant_name": "M2 Competition",
+    "engine_code": "S55B30T0",
+    "engine_name": "S55B30T0 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:f1055dc71011"
+      ],
+      "notes": "The official BMW 10/2011 M5 technical-data PDF confirms the exact F10 M5 launch-state is rear-wheel drive.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "unverified",
+      "evidence_refs": [
+        "legacy_research_sources:f1055dc71011"
+      ],
+      "notes": "Contradicted placeholder. The official BMW 10/2011 M5 technical-data PDF publishes a seven-speed M double-clutch transmission with Drivelogic rather than ZF8HP, so this represented automatic row is not a valid exact production state under its current transmission id.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1af3f514e4a4",
+            "legacy_research_sources:224120e311f3",
+            "legacy_research_sources:60f36b6f8878",
+            "legacy_research_sources:7e0213853a41",
+            "legacy_research_sources:95b9bf2bf0cf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
+        "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
+        "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      },
+      {
+        "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
+        "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:1af3f514e4a4",
+          "legacy_research_sources:224120e311f3",
+          "legacy_research_sources:60f36b6f8878",
+          "legacy_research_sources:7e0213853a41",
+          "legacy_research_sources:95b9bf2bf0cf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

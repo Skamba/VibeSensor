@@ -78,7 +78,7 @@ version = {attr = "vibesensor._version.__version__"}
 include-package-data = true
 
 [tool.setuptools.package-data]
-vibesensor = ["static/**", "data/*.json", "data/*.md", "data/scripted_scenarios/*.yaml"]
+vibesensor = ["static/**", "data/*.json", "data/**/*.json", "data/*.md", "data/scripted_scenarios/*.yaml"]
 
 [tool.setuptools.packages.find]
 where = ["."]

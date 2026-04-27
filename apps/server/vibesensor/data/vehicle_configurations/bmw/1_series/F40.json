@@ -1,0 +1,1104 @@
+[
+  {
+    "id": "bmw-f40-118i-eu-2019-dct7-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F40",
+    "body_code": "F40",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "1 Series (F40, 2019-2025)",
+    "variant_name": "118i",
+    "engine_code": "B38",
+    "engine_name": "B38 1.5L I3 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:091077d8a451",
+        "legacy_research_sources:16c091e6cfd6"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed Steptronic dual-clutch transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.71
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.684
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "7-speed DCT top_gear_ratio",
+        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Per-variant transmission mapping for 118i",
+        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f40-118i-eu-2019-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F40",
+    "body_code": "F40",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "1 Series (F40, 2019-2025)",
+    "variant_name": "118i",
+    "engine_code": "B38",
+    "engine_name": "B38 1.5L I3 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:091077d8a451",
+        "legacy_research_sources:16c091e6cfd6"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed Steptronic Sport transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.673
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.075
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "7-speed DCT top_gear_ratio",
+        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Per-variant transmission mapping for 118i",
+        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f40-120i-eu-2019-dct7-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F40",
+    "body_code": "F40",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "1 Series (F40, 2019-2025)",
+    "variant_name": "120i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:091077d8a451",
+        "legacy_research_sources:16c091e6cfd6"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed Steptronic dual-clutch transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.71
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.684
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "7-speed DCT top_gear_ratio",
+        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Per-variant transmission mapping for 118i",
+        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f40-120i-eu-2019-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F40",
+    "body_code": "F40",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "1 Series (F40, 2019-2025)",
+    "variant_name": "120i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:091077d8a451",
+        "legacy_research_sources:16c091e6cfd6"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed Steptronic Sport transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.673
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.075
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "7-speed DCT top_gear_ratio",
+        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Per-variant transmission mapping for 118i",
+        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f40-m135i-xdrive-eu-2019-dct7-awd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F40",
+    "body_code": "F40",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "1 Series (F40, 2019-2025)",
+    "variant_name": "M135i xDrive",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:091077d8a451",
+        "legacy_research_sources:16c091e6cfd6"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed Steptronic dual-clutch transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.71
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.684
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.684
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "7-speed DCT top_gear_ratio",
+        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Per-variant transmission mapping for 118i",
+        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f40-m135i-xdrive-eu-2019-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F40",
+    "body_code": "F40",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "1 Series (F40, 2019-2025)",
+    "variant_name": "M135i xDrive",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:091077d8a451",
+        "legacy_research_sources:16c091e6cfd6"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed Steptronic Sport transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.673
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.075
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.075
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:091077d8a451",
+            "legacy_research_sources:16c091e6cfd6",
+            "legacy_research_sources:18deedec2c15",
+            "legacy_research_sources:82e045fca148",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:eca9fb0d3e74"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "7-speed DCT top_gear_ratio",
+        "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Per-variant transmission mapping for 118i",
+        "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      },
+      {
+        "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
+        "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
+        "evidence_refs": [
+          "legacy_research_sources:091077d8a451",
+          "legacy_research_sources:16c091e6cfd6",
+          "legacy_research_sources:18deedec2c15",
+          "legacy_research_sources:82e045fca148",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:eca9fb0d3e74"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

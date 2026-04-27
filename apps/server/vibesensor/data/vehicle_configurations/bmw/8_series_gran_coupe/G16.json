@@ -1,0 +1,285 @@
+[
+  {
+    "id": "bmw-g16-840i-eu-2020-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G16",
+    "body_code": "G16",
+    "production_start_year": 2020,
+    "production_end_year": 2020,
+    "model_name": "8 Series Gran Coupe (G16, 2020)",
+    "variant_name": "840i",
+    "engine_code": "B58",
+    "engine_name": "B58 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-article",
+        "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+      ],
+      "notes": "The official BMW 11/2020 technical-data article and PDF confirm rear-wheel drive for the exact 8 Series Gran Coupe 840i state represented by this narrowed 2020-only row.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+      ],
+      "notes": "The official BMW 11/2020 technical-data PDF confirms 8-speed Steptronic wording for the exact 8 Series Gran Coupe 840i state represented by this narrowed 2020-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDF lists 0.640 as the top-gear ratio for the exact 8 Series Gran Coupe 840i state represented by this narrowed 2020-only row.",
+        "value": 0.64
+      },
+      "gear_ratios": {
+        "value": [
+          5.25,
+          3.36,
+          2.172,
+          1.72,
+          1.316,
+          1.0,
+          0.822,
+          0.64
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDF lists the full forward gear-ratio set for the exact 8 Series Gran Coupe 840i state represented by this narrowed 2020-only row."
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDF lists 2.929 as the final-drive ratio for the exact 8 Series Gran Coupe 840i state represented by this narrowed 2020-only row.",
+        "value": 2.929
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDF lists staggered 245/45 R18 front and 275/40 R18 rear baseline tires for the exact 8 Series Gran Coupe 840i state represented by this narrowed 2020-only row.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020 technical-data PDF lists staggered 245/45 R18 front and 275/40 R18 rear baseline tires for the exact 8 Series Gran Coupe 840i state represented by this narrowed 2020-only row.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 11/2020 technical-data article and PDF close the exact 840i Gran Coupe launch state: RWD, 8-speed Steptronic/ZF8HP mapping, full forward ratios, 2.929 final drive, and staggered 245/45 R18 front plus 275/40 R18 rear baseline tires. This row is narrowed to the supported 2020-only state because later exact numeric continuity was not recovered in this pass.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-article",
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW 8 Series Gran Coupe 840i exact optional wheel/tire matrix beyond the narrowed 2020 row",
+        "reason": "The checked official BMW 11/2020 technical-data PDF closes the staggered 18-inch baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g16-m850i-xdrive-eu-2020-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G16",
+    "body_code": "G16",
+    "production_start_year": 2020,
+    "production_end_year": 2020,
+    "model_name": "8 Series Gran Coupe (G16, 2020)",
+    "variant_name": "M850i xDrive",
+    "engine_code": "N63",
+    "engine_name": "N63 4.4L V8 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-article",
+        "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+      ],
+      "notes": "The official BMW 11/2020 technical-data article and PDF confirm xDrive all-wheel drive for the exact 8 Series Gran Coupe M850i xDrive state represented by this narrowed 2020-only row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+      ],
+      "notes": "The official BMW 11/2020 technical-data PDF confirms 8-speed Steptronic wording for the exact 8 Series Gran Coupe M850i xDrive state represented by this narrowed 2020-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDF lists 0.640 as the top-gear ratio for the exact 8 Series Gran Coupe M850i xDrive state represented by this narrowed 2020-only row.",
+        "value": 0.64
+      },
+      "gear_ratios": {
+        "value": [
+          5.5,
+          3.52,
+          2.2,
+          1.72,
+          1.317,
+          1.0,
+          0.823,
+          0.64
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDF lists the full forward gear-ratio set for the exact 8 Series Gran Coupe M850i xDrive state represented by this narrowed 2020-only row."
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Gran Coupe M850i xDrive state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.813
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Gran Coupe M850i xDrive state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDF lists staggered 245/35 R20 front and 275/30 R20 rear baseline tires for the exact 8 Series Gran Coupe M850i xDrive state represented by this narrowed 2020-only row.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 20.0
+        },
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 30.0,
+          "rim_in": 20.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020 technical-data PDF lists staggered 245/35 R20 front and 275/30 R20 rear baseline tires for the exact 8 Series Gran Coupe M850i xDrive state represented by this narrowed 2020-only row.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 11/2020 technical-data article and PDF close the exact M850i xDrive Gran Coupe launch state: AWD, 8-speed Steptronic/ZF8HP mapping, full forward ratios, the single published 2.813 final-drive ratio duplicated across the front and rear axle fields, and staggered 245/35 R20 front plus 275/30 R20 rear baseline tires. This row is narrowed to the supported 2020-only state because later exact numeric continuity was not recovered in this pass.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-article",
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW 8 Series Gran Coupe M850i xDrive exact optional wheel/tire matrix beyond the narrowed 2020 row",
+        "reason": "The checked official BMW 11/2020 technical-data PDF closes the staggered 20-inch baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW 8 Series Gran Coupe M850i xDrive separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  }
+]
