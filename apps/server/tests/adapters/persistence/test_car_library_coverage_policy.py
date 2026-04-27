@@ -27,7 +27,7 @@ def test_current_canonical_rows_classify_into_approximate_and_backlog_buckets() 
     assert (
         configs[
             (
-                "2 Series Active Tourer (F45, 2014-2021)",
+                "2 Series Active Tourer (F45, 2018)",
                 "220i",
                 "7-speed Steptronic dual-clutch transmission",
             )

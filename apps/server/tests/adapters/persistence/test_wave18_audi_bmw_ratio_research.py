@@ -55,7 +55,7 @@ def test_wave18_m5_uses_official_8_speed_top_gear() -> None:
 
 
 def test_wave18_g15_variant_overrides_capture_m850i_and_m8_drivetrain_scope() -> None:
-    coupe = _entry_for("BMW", "8 Series Coupe (G15, 2019-2025)")
+    coupe = _entry_for("BMW", "8 Series Coupe (G15, 2019)")
 
     m850i = resolve_variant(coupe, "M850i xDrive")
     assert len(m850i["gearboxes"]) == 1
@@ -80,7 +80,7 @@ def test_wave18_g15_canonical_rows_preserve_official_bmw_evidence() -> None:
         "legacy_research_sources:f3fe62f03e97",
     }
 
-    m850i = _config_for("BMW", "8 Series Coupe (G15, 2019-2025)", "M850i xDrive")
+    m850i = _config_for("BMW", "8 Series Coupe (G15, 2019)", "M850i xDrive")
     assert m850i.drivetrain == "AWD"
     assert m850i.transmission_name == "8-speed automatic (ZF 8HP76 Sport)"
     assert m850i.top_gear_ratio == pytest.approx(0.64)
@@ -97,8 +97,8 @@ def test_wave18_g15_canonical_rows_preserve_official_bmw_evidence() -> None:
     assert set(m850i.gear_ratios_metadata.evidence_refs) == m850i_refs
     assert m850i.top_gear_ratio_metadata.confidence == "official_exact"
 
-    m8 = _config_for("BMW", "8 Series Coupe (G15, 2019-2025)", "M8")
-    m8_competition = _config_for("BMW", "8 Series Coupe (G15, 2019-2025)", "M8 Competition")
+    m8 = _config_for("BMW", "8 Series Coupe (G15, 2019)", "M8")
+    m8_competition = _config_for("BMW", "8 Series Coupe (G15, 2019)", "M8 Competition")
     for config in (m8, m8_competition):
         assert config.drivetrain == "AWD"
         assert config.drivetrain_metadata is not None
