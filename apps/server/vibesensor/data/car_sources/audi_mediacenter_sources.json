@@ -65,6 +65,13 @@
       "confidence": "high"
     },
     {
+      "id": "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1244/file_en/ceabc2b0fd48a749c10ea1fd2c8552b20f96e0c7/eTD-Audi-Q3-40-TFSI-quattro-S_tronic-140kW_240725.pdf?disposition=attachment",
+      "title": "Audi MediaCenter Q3 40 TFSI quattro 2024 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF cross-checking the same exact old-generation Q3 40 TFSI quattro S tronic state with all-wheel drive, 7-speed S tronic, 0.635 top gear, split final drives 4.813 / 3.667, and basic 215/65 R17 tires.",
+      "confidence": "high"
+    },
+    {
       "id": "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1238/file_en/3207de82c582b9eac73037fd1e233eb7b06f1637/eTD-Audi-Q3-45-TFSIe-S_tronic-110kW_180kW_240314.pdf?1714660882",
       "title": "Audi MediaCenter Q3 45 TFSI e 2024 technical-data PDF",
@@ -75,7 +82,7 @@
       "id": "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
       "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2021/preislisten/preisliste_q3_q3-sportback.pdf",
       "title": "Audi Germany Q3/Q3 Sportback model-year 2021 price list",
-      "note": "Official Audi Germany price list showing the old-generation Q3 and Q3 Sportback 45 TFSI e on sale with 17-inch base wheels, 215/65 R17 tire listings, and 6-Gang S tronic as the series gearbox for the 45 TFSI e state.",
+      "note": "Official Audi Germany price list showing old-generation Q3 and Q3 Sportback mid-cycle continuity, including exact 35 TDI S tronic and 35 TFSI S tronic rows with front-wheel drive and 7-Gang S tronic wording plus the family 17-inch / 215/65 R17 wheel program, and the exact 45 TFSI e row with 6-Gang S tronic and the same base wheel/tire package.",
       "confidence": "high"
     },
     {
@@ -156,6 +163,34 @@
       "confidence": "high"
     },
     {
+      "id": "audi_mediacenter_sources:4m8-q8-until-2023-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-q8-audi-sq8-tfsi-until-2023-15508",
+      "title": "Audi MediaCenter Q8 / SQ8 TFSI until 2023 model page",
+      "note": "Official Audi MediaCenter predecessor model page used to bound the earlier Q8 55 TFSI quattro state as a distinct pre-upgrade lifecycle phase that ends with the 'until 2023' model page.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-2023-upgrade-release",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/expressive-design-and-new-lighting-technology-the-upgraded-audi-q8-15555",
+      "title": "Audi MediaCenter 2023 upgraded Q8 release",
+      "note": "Official Audi 09/2023 upgrade release used to document the later Q8 55 TFSI quattro state, including 250 kW / 500 Nm, eight-speed tiptronic, quattro permanent four-wheel drive, standard 20-inch wheels, and September 2023 market launch timing for the upgraded Q8.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/839/file_en/b5352391c2acb8ab92835f8662f8287ebdd45084/eTD-Audi-Q8-SUV-TFSI-quattro-tiptronic-250kW-MHEV_260204.pdf?1770654719&disposition=attachment",
+      "title": "Audi MediaCenter Q8 55 TFSI 2026 technical-data PDF",
+      "note": "Official Audi MediaCenter technical-data PDF for the exact Q8 SUV TFSI quattro tiptronic 250 kW MHEV state showing permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final-drive expression 3.504 / -, and basic 265/55 R19 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf",
+      "url": "https://gpt-live.porsche.co.at/at/brand/A/pricelist/2145_audi_q8_pa_katalog_inkl__preisliste.pdf",
+      "title": "Audi Austria Q8 2026 brochure and price list PDF",
+      "note": "Official Audi Austria brochure and price list confirming the exact Q8 55 TFSI quattro row with Tiptronic 8 Gang, permanent quattro with self-locking center differential, and current square Q8 wheel and tire packages including 275/50 R20, 285/45 R21, 285/40 R22, 285/35 R23, and winter 265/55 R19.",
+      "confidence": "high"
+    },
+    {
       "id": "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release",
       "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/maximale-effizienz-auf-grossem-raum-die-neuen-audi-q7-tfsi-e-quattro-und-q8-tfsi-e-quattro-16001",
       "title": "Audi MediaCenter 2024 Q7 TFSI e upgrade release",
@@ -212,6 +247,34 @@
       "confidence": "high"
     },
     {
+      "id": "audi_mediacenter_sources:c8-a7-until-2025-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-a7-sportback-47",
+      "title": "Audi MediaCenter A7 Sportback until 2025 model page",
+      "note": "Official Audi MediaCenter model hub scoping the C8 A7 Sportback family as 'until 2025' and linking the exact 55 TFSI quattro S tronic technical-data sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a7-2018-launch-subpage",
+      "url": "https://www.audi-mediacenter.com/en/the-audi-a7-sportback-until-2025-progressive-in-design-and-technology-9831/the-new-audi-a7-sportback-sportiness-in-its-most-beautiful-form-9834",
+      "title": "Audi MediaCenter A7 Sportback 2018 launch article",
+      "note": "Official Audi launch article for the new A7 Sportback stating that the 55 TFSI quattro is mated to seven-speed S tronic, that quattro uses ultra technology with S tronic on this variant, and that the model launches on the German market in early March 2018.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/363/file_en/2d9ee07814bc8d0d429027ef04726da1bd796eef/eTD-Audi-A7-Sportback-55-TFSI-quattro-S_tronic-250kW-MHEV_240911.pdf?1726134799&disposition=attachment",
+      "title": "Audi MediaCenter A7 Sportback 55 TFSI quattro 2024 technical-data PDF",
+      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact A7 Sportback 55 TFSI quattro S tronic 250 kW MHEV state showing quattro ultra AWD, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, one published final-drive value 4.410, and basic 225/55 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a7-2025-price-list-pdf",
+      "url": "https://www.audi-mediacenter.com/de/publikationen/preislisten/preisliste-audi-a7-s7-sportback-modelljahr-2025-798/download",
+      "title": "Audi Germany A7/S7 Sportback model-year 2025 price list",
+      "note": "Official Audi Germany price list confirming the exact A7 Sportback 55 TFSI quattro S tronic row and documenting A7-family square 18-inch, 19-inch, 20-inch, and 21-inch summer wheel packages while not showing any staggered A7 wheel setup in the checked family table.",
+      "confidence": "high"
+    },
+    {
       "id": "audi_mediacenter_sources:c8-a6-until-2025-model-page",
       "url": "https://www.audi-mediacenter.com/de/audi-a6-40",
       "title": "Audi MediaCenter A6 Sedan (until 2025) model page",
@@ -251,6 +314,13 @@
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/933/file_en/1c194a48ecee337757e5f1e0933a8111196df7f6/eTD-Audi-Q5-55-TFSIe-quattro-S_tronic-270kW_240604.pdf",
       "title": "Audi MediaCenter Q5 55 TFSI e quattro 2024 technical-data PDF",
       "note": "Official Audi MediaCenter technical-data PDF for the exact FY Q5 55 TFSI e quattro S tronic 270 kW state showing quattro ultra AWD, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, final drive 5.302, and basic 235/60 R18 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
+      "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline_info_Q5_TFSI_e.pdf",
+      "title": "Audi official Q5 55 TFSI e quattro 2021 technical-data PDF",
+      "note": "Official Audi technical-data PDF hosted on an Audi country CDN for the exact FY Q5 55 TFSI e quattro S tronic 270 kW state, explicitly marked Program for Germany / Status 03/10/2021, showing quattro ultra AWD, 7-speed S tronic, the same forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, single final drive 5.302, and basic 235/60 R18 tires.",
       "confidence": "high"
     },
     {
