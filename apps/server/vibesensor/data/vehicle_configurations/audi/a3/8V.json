@@ -113,13 +113,10 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "Official Audi MediaCenter 05/2014 ultra release states that the A3 1.6 TDI ultra had been available on the three-door and Sportback since 2013 while the Sedan version would only arrive 'in future'. The recovered exact sedan-specific manual evidence in this run is later only: a 2016-2018 facelift 1.6 TDI manual sedan with front-wheel drive and 205/55 R16 baseline tires. That makes the broad 2013-2020 sedan row overbroad and leaves the inherited 225/45 R17 default unsupported for the exact sedan state.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "audi_mediacenter_sources:8v-a3-ultra-2014-press-release",
+          "secondary_technical_sources:a3-8v-sedan-1-6-tdi-mt6-autodata"
         ]
       },
       {
@@ -128,36 +125,26 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 1.6 TDI exact EU start-year applicability",
+        "reason": "Official Audi MediaCenter 05/2014 ultra release contradicts a clean 2013 Sedan start for the 1.6 TDI row, and the recovered exact sedan-specific manual evidence only begins in 2016.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "audi_mediacenter_sources:8v-a3-ultra-2014-press-release",
+          "secondary_technical_sources:a3-8v-sedan-1-6-tdi-mt6-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 1.6 TDI exact manual ratio and tire mapping across the represented row",
+        "reason": "Recovered exact sedan-specific manual evidence is limited to a later 2016-2018 state with 205/55 R16 baseline tires, so this pass does not prove one production-safe ratio and tire package across the full 2013-2020 broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "secondary_technical_sources:a3-8v-sedan-1-6-tdi-mt6-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V 1.6 TDI body and timing splits",
+        "reason": "The recovered evidence shows that body style and timing materially change whether the 1.6 TDI sedan state exists at all, but the current broad row does not represent those splits explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "audi_mediacenter_sources:8v-a3-ultra-2014-press-release",
+          "secondary_technical_sources:a3-8v-sedan-1-6-tdi-mt6-autodata"
         ]
       }
     ],
@@ -283,13 +270,10 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "Official Audi MediaCenter 05/2014 ultra release states that the A3 1.6 TDI ultra had been available on the three-door and Sportback since 2013 while the Sedan version would only arrive 'in future'. The recovered exact sedan-specific S tronic evidence in this run is later only: a 2016-2018 facelift 1.6 TDI S tronic sedan with front-wheel drive and 205/55 R16 baseline tires. That makes the broad 2013-2020 sedan row overbroad and leaves the inherited 225/45 R17 default unsupported for the exact sedan automatic state.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "audi_mediacenter_sources:8v-a3-ultra-2014-press-release",
+          "secondary_technical_sources:a3-8v-sedan-1-6-tdi-dct7-autodata"
         ]
       },
       {
@@ -298,36 +282,26 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 1.6 TDI exact EU start-year applicability",
+        "reason": "Official Audi MediaCenter 05/2014 ultra release contradicts a clean 2013 Sedan start for the 1.6 TDI S tronic row, and the recovered exact sedan-specific automatic evidence only begins in 2016.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "audi_mediacenter_sources:8v-a3-ultra-2014-press-release",
+          "secondary_technical_sources:a3-8v-sedan-1-6-tdi-dct7-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 1.6 TDI exact automatic ratio and tire mapping across the represented row",
+        "reason": "Recovered exact sedan-specific S tronic evidence is limited to a later 2016-2018 state with 205/55 R16 baseline tires, so this pass does not prove one production-safe ratio and tire package across the full 2013-2020 broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "secondary_technical_sources:a3-8v-sedan-1-6-tdi-dct7-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V 1.6 TDI body and timing splits",
+        "reason": "The recovered evidence shows that body style and timing materially change whether the 1.6 TDI sedan state exists at all, but the current broad row does not represent those splits explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "audi_mediacenter_sources:8v-a3-ultra-2014-press-release",
+          "secondary_technical_sources:a3-8v-sedan-1-6-tdi-dct7-autodata"
         ]
       }
     ],
@@ -453,13 +427,11 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "New official-origin brochure anchors now prove that the facelift sedan program exists publicly from mid-2016 onward: the recovered Germany brochure is valid from June 2016 and the Spain brochure from September 2016. Combined with exact sedan-specific secondary evidence for the 2016-2018 2.0 TDI 150 hp manual state, that means the broad 2013-2020 row still spans unrecovered early years and inherits an unsupported 225/45 R17 default instead of the recovered 205/55 R16 baseline.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-mt6-autodata"
         ]
       },
       {
@@ -468,36 +440,30 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 2.0 TDI exact EU start-year applicability",
+        "reason": "The recovered official brochure anchors only place the public sedan program in the facelift-era 2016 window, and the exact recovered manual sedan slice is 2016-2018, so this pass does not support the row's inherited 2013 start year.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-mt6-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 2.0 TDI exact manual ratio and tire mapping across the represented row",
+        "reason": "Recovered exact sedan-specific 2.0 TDI manual evidence is limited to the facelift-era 2016-2018 slice with a 205/55 R16 baseline, so this pass does not prove one production-safe ratio and tire package across the full 2013-2020 broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-mt6-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V 2.0 TDI facelift-era splits",
+        "reason": "The recovered evidence places the sedan-specific 2.0 TDI manual state in the facelift-era program only, but the current broad row does not represent that later-only scope explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-mt6-autodata"
         ]
       }
     ],
@@ -623,13 +589,11 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "New official-origin brochure anchors now prove that the facelift sedan program exists publicly from mid-2016 onward: the recovered Germany brochure is valid from June 2016 and the Spain brochure from September 2016. Combined with exact sedan-specific secondary evidence for the 2016-2018 2.0 TDI 150 hp S tronic state, that means the broad 2013-2020 row remains too wide and still inherits an unsupported 225/45 R17 default instead of the recovered 205/55 R16 baseline.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-dct7-autodata"
         ]
       },
       {
@@ -638,36 +602,30 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 2.0 TDI exact EU start-year applicability",
+        "reason": "The recovered official brochure anchors only place the public sedan program in the facelift-era 2016 window, and the exact recovered S tronic sedan slice is 2016-2018, so this pass does not support the row's inherited 2013 start year.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-dct7-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 2.0 TDI exact automatic ratio and tire mapping across the represented row",
+        "reason": "Recovered exact sedan-specific 2.0 TDI S tronic evidence is limited to the facelift-era 2016-2018 slice with a 205/55 R16 baseline, so this pass does not prove one production-safe ratio and tire package across the full 2013-2020 broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-dct7-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V 2.0 TDI facelift-era splits",
+        "reason": "The recovered evidence places the sedan-specific 2.0 TDI S tronic state in the facelift-era program only, but the current broad row does not represent that later-only scope explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-dct7-autodata"
         ]
       }
     ],
@@ -798,13 +756,11 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "New official-origin brochure anchors now prove that the facelift sedan program exists publicly from mid-2016 onward: the recovered Germany brochure is valid from June 2016 and the Spain brochure from September 2016. Combined with exact sedan-specific secondary evidence for the 2016-2018 2.0 TDI quattro 150 hp manual state, that means the broad 2013-2020 row still spans unrecovered early years and inherits an unsupported 225/45 R17 default instead of the recovered 205/55 R16 baseline.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-mt6-autodata"
         ]
       },
       {
@@ -813,36 +769,30 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 2.0 TDI quattro exact EU start-year applicability",
+        "reason": "The recovered official brochure anchors only place the public sedan program in the facelift-era 2016 window, and the exact recovered AWD manual sedan slice is 2016-2018, so this pass does not support the row's inherited 2013 start year.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-mt6-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 2.0 TDI quattro exact manual ratio and tire mapping across the represented row",
+        "reason": "Recovered exact sedan-specific AWD manual evidence is limited to the facelift-era 2016-2018 150 hp slice with a 205/55 R16 baseline, so this pass does not prove one production-safe manual package across the full 2013-2020 broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-mt6-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V 2.0 TDI quattro facelift-era splits",
+        "reason": "The recovered evidence places the AWD manual sedan state in the facelift-era program only, but the current broad row does not represent that later-only scope or its separate power-state split explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-mt6-autodata"
         ]
       }
     ],
@@ -973,13 +923,11 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "New official-origin brochure anchors now prove that the facelift sedan program exists publicly from mid-2016 onward: the recovered Germany brochure is valid from June 2016 and the Spain brochure from September 2016. Combined with exact sedan-specific secondary evidence for the 2016-2018 2.0 TDI quattro 184 hp S tronic state, that means the broad 2013-2020 row remains too wide and still hides the recovered 150 hp manual versus 184 hp automatic AWD split.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-dct7-autodata"
         ]
       },
       {
@@ -988,36 +936,30 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 2.0 TDI quattro exact EU start-year applicability",
+        "reason": "The recovered official brochure anchors only place the public sedan program in the facelift-era 2016 window, and the exact recovered AWD automatic sedan slice is 2016-2018, so this pass does not support the row's inherited 2013 start year.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-dct7-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 2.0 TDI quattro exact automatic ratio and tire mapping across the represented row",
+        "reason": "Recovered exact sedan-specific AWD automatic evidence is limited to the facelift-era 2016-2018 184 hp slice with a 205/55 R16 baseline, so this pass does not prove one production-safe automatic package across the full 2013-2020 broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-dct7-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V 2.0 TDI quattro facelift-era splits",
+        "reason": "The recovered evidence places the AWD automatic sedan state in the facelift-era program only and shows that it is a different exact power-state slice from the AWD manual row, but the current broad row does not represent that split explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-dct7-autodata"
         ]
       }
     ],
@@ -1143,13 +1085,11 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "New public official badge-era anchors now show that 30 TFSI belongs to the late 8V program, not to a clean 2013 row start: the recovered UK brochure explicitly says '2018 Model Year / Edition 2.2 01/18' and the Germany brochure is dated November 2018. Combined with exact sedan-specific secondary evidence for the 2018-March 2020 30 TFSI manual state, the broad row remains overbroad and its inherited 225/45 R17 default is unsupported for the recovered late sedan slice.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-30-tfsi-mt6-autodata"
         ]
       },
       {
@@ -1158,36 +1098,30 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 30 TFSI exact EU start-year applicability",
+        "reason": "Recovered public official badge-era anchors start in 2018 and the exact recovered sedan-specific 30 TFSI manual slice begins in 2018 as well, so this pass does not support the row's inherited 2013 start year.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-30-tfsi-mt6-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 30 TFSI exact manual ratio and tire mapping across the represented row",
+        "reason": "Recovered exact sedan-specific manual evidence is limited to the late 2018-2020 naming-era state with 205/55 R16 baseline tires, and the official brochure anchors only confirm the badge-era timing window, so this pass does not prove one production-safe ratio and tire package across the full 2013-2020 broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-30-tfsi-mt6-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V 30 TFSI naming-era splits",
+        "reason": "The recovered official brochure timing anchors and exact secondary evidence place the 30 TFSI sedan manual state only in the late facelift naming era, but the current broad row does not represent that late-only naming split explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-30-tfsi-mt6-autodata"
         ]
       }
     ],
@@ -1313,13 +1247,11 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "New public official badge-era anchors now show that 30 TFSI belongs to the late 8V program, not to a clean 2013 row start: the recovered UK brochure explicitly says '2018 Model Year / Edition 2.2 01/18' and the Germany brochure is dated November 2018. Combined with exact sedan-specific secondary evidence for the 2018-March 2020 30 TFSI S tronic state, the broad row remains overbroad and its inherited 225/45 R17 default is unsupported for the recovered late sedan automatic slice.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-30-tfsi-dct7-autodata"
         ]
       },
       {
@@ -1328,36 +1260,30 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 30 TFSI exact EU start-year applicability",
+        "reason": "Recovered public official badge-era anchors start in 2018 and the exact recovered sedan-specific 30 TFSI S tronic slice begins in 2018 as well, so this pass does not support the row's inherited 2013 start year.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-30-tfsi-dct7-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 30 TFSI exact automatic ratio and tire mapping across the represented row",
+        "reason": "Recovered exact sedan-specific S tronic evidence is limited to the late 2018-2020 naming-era state with 205/55 R16 baseline tires, and the official brochure anchors only confirm the badge-era timing window, so this pass does not prove one production-safe ratio and tire package across the full 2013-2020 broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-30-tfsi-dct7-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V 30 TFSI naming-era splits",
+        "reason": "The recovered official brochure timing anchors and exact secondary evidence place the 30 TFSI sedan automatic state only in the late facelift naming era, but the current broad row does not represent that late-only naming split explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-30-tfsi-dct7-autodata"
         ]
       }
     ],
@@ -1483,51 +1409,47 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "The existing official Spain 03/2020 sedan technical-data PDF already proves an exact late 35 TFSI manual state with 205/55 R16 baseline tires, and the newly recovered UK and Germany brochures show the public 35 TFSI badge-era window in 2018. Combined with exact late secondary sedan evidence, that leaves the broad 2013-2020 row starting too early and still carrying an inherited 225/45 R17 default that is unsupported for the recovered late sedan slice.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "legacy_research_sources:c695158c5f25",
+          "secondary_technical_sources:a3-8v-sedan-35-tfsi-mt6-autodata"
         ]
       },
       {
-        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence."
+        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data with High confidence, but the recovered public official timing anchors still limit the reliable sedan badge-era scope to the late 8V window rather than a clean 2013 start."
       }
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 35 TFSI exact EU start-year applicability",
+        "reason": "Recovered public official badge-era anchors start in 2018, the exact official Spain sedan manual state is late-cycle 2020, and the matching secondary sedan slice is 2018-2020, so this pass does not support the row's inherited 2013 start year.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "legacy_research_sources:c695158c5f25",
+          "secondary_technical_sources:a3-8v-sedan-35-tfsi-mt6-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 35 TFSI exact manual ratio and tire mapping across the represented row",
+        "reason": "The recovered exact late sedan evidence remains limited to the badge-era 2018-2020 slice with 205/55 R16 baseline tires, so this pass does not prove one production-safe ratio and tire package across the full 2013-2020 broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "legacy_research_sources:c695158c5f25",
+          "secondary_technical_sources:a3-8v-sedan-35-tfsi-mt6-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V 35 TFSI badge-era splits",
+        "reason": "The recovered official and secondary evidence places the 35 TFSI sedan manual state only in the late badge-era window, but the current broad row does not represent that later-only naming split explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "legacy_research_sources:c695158c5f25",
+          "secondary_technical_sources:a3-8v-sedan-35-tfsi-mt6-autodata"
         ]
       }
     ],
@@ -1653,51 +1575,47 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "The existing official Spain 03/2020 sedan technical-data PDF already proves an exact late 35 TFSI MHEV S tronic state with 205/55 R16 baseline tires, and the newly recovered UK and Germany brochures show the public 35 TFSI badge-era window in 2018. Combined with exact late secondary sedan evidence, that leaves the broad 2013-2020 row starting too early and still too ambiguous on late non-MHEV versus MHEV automatic identity.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "legacy_research_sources:c695158c5f25",
+          "secondary_technical_sources:a3-8v-sedan-35-tfsi-dct7-autodata"
         ]
       },
       {
-        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2026 Limousine manual + MHEV S tronic states) with High confidence."
+        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data with High confidence, but the recovered public official timing anchors still limit the reliable sedan badge-era scope to the late 8V window rather than a clean 2013 start."
       }
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 35 TFSI exact EU start-year applicability",
+        "reason": "Recovered public official badge-era anchors start in 2018, the exact official Spain sedan automatic state is late-cycle 2020, and the matching secondary sedan slice is 2018-2020, so this pass does not support the row's inherited 2013 start year.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "legacy_research_sources:c695158c5f25",
+          "secondary_technical_sources:a3-8v-sedan-35-tfsi-dct7-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 35 TFSI exact automatic ratio and tire mapping across the represented row",
+        "reason": "The recovered exact late sedan evidence remains limited to the badge-era 2018-2020 slice, with the official exact state closing only the MHEV S tronic version, so this pass does not prove one production-safe automatic package across the full 2013-2020 broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "legacy_research_sources:c695158c5f25",
+          "secondary_technical_sources:a3-8v-sedan-35-tfsi-dct7-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V 35 TFSI badge-era splits",
+        "reason": "The recovered official and secondary evidence places the 35 TFSI sedan automatic state only in the late badge-era window, but the current broad row does not represent that later-only naming and powertrain split explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "legacy_research_sources:c695158c5f25",
+          "secondary_technical_sources:a3-8v-sedan-35-tfsi-dct7-autodata"
         ]
       }
     ],
@@ -1828,13 +1746,14 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "New official brochure timing anchors tighten the late-8V scope but still do not rescue this row: recovered public official material only anchors the facelift and badge-era windows, while the exact AWD sedan evidence recovered in this run is automatic-only in both checked eras. With only a pre-facelift 2013-2016 1.8 TFSI quattro S tronic sedan and a facelift 2016-2018 2.0 TFSI quattro S tronic sedan recovered, the broad manual placeholder should be treated as unsupported rather than as an inherited exact configuration.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-1-8-tfsi-quattro-dct6-autodata",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tfsi-quattro-dct7-autodata"
         ]
       },
       {
@@ -1843,36 +1762,39 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 40 TFSI quattro exact manual applicability across the represented row",
+        "reason": "Recovered public official brochure timing anchors do not add any exact AWD manual sedan state, and the exact recovered AWD sedan evidence is automatic-only in both the 2013-2016 1.8 TFSI quattro state and the 2016-2018 2.0 TFSI quattro state.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-1-8-tfsi-quattro-dct6-autodata",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tfsi-quattro-dct7-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 40 TFSI quattro exact ratio and tire mapping for any manual state",
+        "reason": "The recovered public official brochure timing anchors still do not produce any exact AWD manual sedan state, so this pass does not prove any ratio or baseline-tire package for a manual 40 TFSI quattro sedan row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-1-8-tfsi-quattro-dct6-autodata",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tfsi-quattro-dct7-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V quattro powertrain-era splits",
+        "reason": "The recovered public official brochure timing anchors only reinforce that the 8V AWD sedan evidence spans multiple later eras, while the exact recovered states still split into pre-facelift 1.8 TFSI quattro S tronic and facelift 2.0 TFSI quattro S tronic slices that the current broad row does not represent explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-1-8-tfsi-quattro-dct6-autodata",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tfsi-quattro-dct7-autodata"
         ]
       }
     ],
@@ -2003,13 +1925,14 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 21 official-source review recovered exact Spain-market 03/2020 A3 Sedan configurations that materially improve the evidence record without forcing an unsafe broad-row rewrite. The official Audi Spain technical-data PDF proves the exact 35 TFSI 110 kW 6-speed manual sedan state with front-wheel drive, ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652, reverse 3.583, final drive 3.684, and 205/55 R16 tires; it also proves the exact 35 TDI 110 kW 7-speed S tronic sedan state with front-wheel drive, ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive 4.167, and 205/55 R16 tires. Wave 22 extends that exact same official Spain sedan source pack to the 35 TFSI 110 kW MHEV S tronic state: front-wheel drive, ratios 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.722, final drive 4.800, and 205/55 R16 tires. Those exact body/market/transmission states show that the retained broad row still mixes multiple body styles, markets, transmissions, and naming eras, so a production-wide ratio update would remain unsafe without a more granular split.",
+        "note": "Official brochure timing anchors now make the late 8V window clearer, but they still do not collapse this row to one exact automatic state: recovered public official material spans the facelift and badge-era windows, while the exact AWD sedan evidence still splits into a pre-facelift 2013-2016 1.8 TFSI quattro S tronic state and a facelift 2016-2018 2.0 TFSI quattro S tronic state with a broader tire ladder. The stored broad automatic row therefore still merges at least two powertrain and gearbox-era slices.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-1-8-tfsi-quattro-dct6-autodata",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tfsi-quattro-dct7-autodata"
         ]
       },
       {
@@ -2018,36 +1941,39 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
-        "reason": "Official Spain-market 2020 sedan data now closes exact 35 TFSI manual and 35 TDI S tronic states, but the represented row still mixes broader EU body styles, markets, naming eras, and transmissions without one safe production-wide mapping.",
+        "item": "Audi A3 Sedan 40 TFSI quattro exact automatic powertrain mapping across the represented row",
+        "reason": "Recovered public official brochure timing anchors reinforce the later 8V timing windows, but the exact AWD sedan evidence still splits into a 2013-2016 1.8 TFSI quattro S tronic state and a 2016-2018 2.0 TFSI quattro S tronic state, so the broad row does not represent one safe exact automatic configuration across 2013-2020.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-1-8-tfsi-quattro-dct6-autodata",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tfsi-quattro-dct7-autodata"
         ]
       },
       {
-        "item": "Audi A3 (8V, 2013-2020) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "The exact Spain-market 2020 sedan 35 TFSI manual and 35 TDI S tronic states are now officially verified, but this pass did not recover enough direct official material for the remaining row variants such as the represented 40 TFSI quattro and diesel broad-family entries.",
+        "item": "Audi A3 Sedan 40 TFSI quattro exact automatic ratio and tire continuity across the represented row",
+        "reason": "Recovered exact AWD sedan evidence still shows different gearbox speeds, different powertrains, and different tire ladders between the pre-facelift 1.8 TFSI and facelift 2.0 TFSI quattro S tronic states, so the official timing anchors do not make one production-safe numeric package safe across the full broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-1-8-tfsi-quattro-dct6-autodata",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tfsi-quattro-dct7-autodata"
         ]
       },
       {
-        "item": "Schema-safe representation of exact 8V body / market / transmission splits",
-        "reason": "The recovered official 2020 Audi Spain sedan states prove that body style, market, and transmission materially change ratio-relevant fields, but the current broad 8V row does not represent those splits explicitly.",
+        "item": "Schema-safe representation of exact 8V quattro powertrain-era splits",
+        "reason": "The recovered public official brochure timing anchors reinforce that the 8V AWD automatic evidence spans multiple later eras, while the exact recovered states still split into pre-facelift 1.8 TFSI quattro S tronic and facelift 2.0 TFSI quattro S tronic slices that the current broad row does not represent explicitly.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:9f75939b3958",
-          "legacy_research_sources:c695158c5f25"
+          "legacy_research_sources:be16a3c42d91",
+          "legacy_research_sources:bf27b4d53ea2",
+          "legacy_research_sources:c038c5e64fb3",
+          "legacy_research_sources:c149d6f750c4",
+          "secondary_technical_sources:a3-8v-sedan-1-8-tfsi-quattro-dct6-autodata",
+          "secondary_technical_sources:a3-8v-sedan-2-0-tfsi-quattro-dct7-autodata"
         ]
       }
     ],

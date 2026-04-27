@@ -2,6 +2,41 @@
   "pack_id": "bmw_pressclub_sources",
   "sources": [
     {
+      "id": "bmw_pressclub_sources:f82-competition-2016-launch-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0249809EN/new-competition-package-amps-up-the-sporty-personality-of-the-bmw-m3-and-bmw-m4-significant-handling-upgrades-power-hike-and-exclusive-equipment-features",
+      "title": "BMW PressClub F82 M4 Competition Package 2016 launch article",
+      "note": "Official BMW 01/2016 launch article stating that the BMW M3 and M4 Competition Package becomes available from spring 2016, which is used to narrow the F82 Competition rows away from an overbroad 2014 start year.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f82-my16-pricing-guide-pdf",
+      "url": "https://www.press.bmwgroup.com/usa/article/attachment/T0250284EN_US/387871",
+      "title": "BMW PressClub M3/M4 model-year 2016 pricing guide PDF",
+      "note": "Official BMW MY2016 pricing guide showing the Competition Package as a 2016 option effective March 11, 2016, used to confirm that the F82 M4 Competition state starts in 2016 rather than 2014.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f80-m3-2014-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0179962EN/265695",
+      "title": "BMW PressClub F80 M3 2014 technical data PDF",
+      "note": "Official BMW 03/2014 technical-data PDF for the exact F80 M3 launch-state showing rear-wheel drive, 6-speed manual with optional 7-speed DCT, forward-ratio tables, top gears 0.846 / 0.671, final drive 3.462 for both transmissions, and standard staggered 255/40 ZR18 front plus 275/40 ZR18 rear tyres.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0249809EN/412769",
+      "title": "BMW PressClub F80 M3 Competition 2016 technical data PDF",
+      "note": "Official BMW 01/2016 Competition Package technical-data PDF for the exact F80 M3 Competition state showing availability from spring 2016, rear-wheel drive, 6-speed manual with optional 7-speed DCT, top gears 0.846 / 0.671, final drive 3.462 for both transmissions, and standard staggered 265/30 ZR20 front plus 285/30 ZR20 rear tyres.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f80-m3-2018-portugal-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/portugal/article/attachment/T0127864PT/416781",
+      "title": "BMW PressClub F80 M3 2018 Portugal technical data PDF",
+      "note": "Official BMW Portugal 01/2018 technical-data PDF for the exact F80 M3 and M3 DKG states, used as an EU-market corroboration that the DCT final drive remains 3.462 rather than 3.154.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f45-220i-2018-press-kit",
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0277458EN/the-new-bmw-2-series-active-tourer-the-new-bmw-2-series-gran-tourer",
       "title": "BMW PressClub F45 Active Tourer 2018 press kit",
@@ -114,6 +149,13 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f20-2012-114i-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0126693EN/188718",
+      "title": "BMW PressClub F20 114i 2012 specifications PDF",
+      "note": "Official BMW 05/2012 valid-from-07/2012 technical-data PDF for the exact later F20 1 Series 5 Door Hatch 114i row. The checked table directly publishes a manual-only 114i state with sixth gear 0.830, differential ratio 2.813, standard 195/55 R16 tires, and the 16/17/18-inch option ladder, proving a later 114i introduction without supporting a 2011 launch-state row.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f20-2012-m135i-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0126696EN/207829",
       "title": "BMW PressClub F20 M135i 2012 specifications PDF",
@@ -132,6 +174,13 @@
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0124363EN/182885",
       "title": "BMW PressClub F20 125d 2012 specifications PDF",
       "note": "Official BMW 03/2012 technical-data PDF for the exact F20 1 Series 5 Door Hatch 125d. The checked table directly publishes the 125d six-speed manual row with optional eight-speed automatic figures in brackets, sixth gear 0.659, automatic eighth gear 0.667, differential ratios 3.385 and 2.647, and the standard 205/50 R17 tire package.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f20-2016-120i-125i-m140i-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0260191EN/359661",
+      "title": "BMW PressClub F20 120i, 125i, and M140i 2016 specifications PDF",
+      "note": "Official BMW 06/2016 valid-from-07/2016 technical-data PDF for the later F20 1 Series 5 Door Hatch 120i, 125i, and M140i range. The checked table directly publishes the later 120i manual and optional eight-speed automatic row with sixth gear 0.668, automatic eighth gear 0.640, differential ratios 3.385 and 2.813, standard 195/55 R16 tires, and the later option ladder, proving later 120i F20 5-door applicability without supporting a 2011 launch-state row.",
       "confidence": "high"
     },
     {
@@ -170,10 +219,45 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f22-2014-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0165234EN/specifications-bmw-2-series-coupe-03/2014",
+      "title": "BMW PressClub F22 2 Series Coupe 2014 specifications article",
+      "note": "Official BMW 03/2014 article detail page anchoring the launch 2 Series Coupe technical-data attachments. Used to show that the recovered EU launch packet covers 220i and M235i petrol states and does not recover an official EU 228i or 230i row.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f22-2014-220i-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0165234EN/250293",
+      "title": "BMW PressClub F22 220i 2014 specifications PDF",
+      "note": "Official BMW 03/2014 launch technical-data PDF for the F22 220i Coupe row. The checked table publishes the launch 220i six-speed manual row with optional eight-speed automatic figures in brackets, sixth and eighth gears 0.830 / 0.667, differential ratio 3.077 for both transmissions, and standard 205/55 R16 tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/south-africa/article/attachment/T0260233EN/359752",
+      "title": "BMW PressClub F22 220i and 230i 2016 specifications PDF",
+      "note": "Official BMW 07/2016 valid-from-07/2016 technical-data PDF for the later F22 220i, 230i, and M240i lineup. The checked table directly publishes later 230i six-speed manual and optional eight-speed automatic states, proving 230i applicability only from the facelift-era packet rather than from a 2014 launch row.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f22-2021-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0327248EN/473311",
+      "title": "BMW PressClub F22 2021 specifications PDF",
+      "note": "Official BMW 03/2021 technical-data PDF for the late-cycle F22 range. The recovered packet shows 220i and 230i as automatic-only states in 2021, used to document that late-cycle continuity does not support a broad 2014-2021 manual 230i row.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g20-330i-xdrive-ratio-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0285128EN/425813",
       "title": "BMW PressClub G20 3 Series technical data attachment",
       "note": "Official BMW attachment used for the G20 330i xDrive automatic final-drive verification.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-318i-2020-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0304990EN/445465",
+      "title": "BMW PressClub G20 318i Sedan 2020 technical data PDF",
+      "note": "Official BMW 01/2020 technical-data PDF for the exact G20 318i Sedan row showing rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 205/60 R16 96W XL tires on 6.5J x 16 wheels.",
       "confidence": "high"
     },
     {
@@ -198,6 +282,41 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:g28-in-320ld-330li-2023-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/india/article/attachment/T0407338EN/572044",
+      "title": "BMW PressClub India G28 320Ld and 330Li 2023 technical data PDF",
+      "note": "Official BMW India 01/2023 technical-data PDF for the 3 Series Gran Limousine G28 family showing exact 320Ld M Sport and 330Li M Sport rows with rear-wheel drive, 8-Speed Steptronic Sport automatic transmission, and mixed 225/45 R18 front plus 255/40 R18 rear tyres.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g28-in-320ld-diesel-launch-page",
+      "url": "https://www.press.bmwgroup.com/india/article/detail/T0444862EN/the-new-bmw-3-series-gran-limousine-m-sport-pro-edition-now-available-in-diesel",
+      "title": "BMW PressClub India G28 320Ld diesel launch page",
+      "note": "Official BMW India launch page explicitly naming the 320Ld M Sport Pro inside the 3 Series Gran Limousine family and stating the 8-speed Steptronic Sport automatic transmission.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-320d-2019-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0299451EN/437354",
+      "title": "BMW PressClub G20 320d Sedan 2019 launch specifications PDF",
+      "note": "Official BMW 03/2019 launch technical-data PDF for the exact G20 320d Sedan row showing six-speed manual with optional Eight-speed Steptronic figures in brackets. The checked automatic state uses forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 205/60 R16 96W XL tires on 6.5J x 16 wheels for the ACEA-market row.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-320i-2019-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0299451EN/437354",
+      "title": "BMW PressClub G20 320i Sedan 2019 launch specifications PDF",
+      "note": "Official BMW 03/2019 launch technical-data PDF for the exact G20 320i Sedan row showing rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 205/60 R16 96W XL tires on 6.5J x 16 wheels.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-320i-2021-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325531EN/471537",
+      "title": "BMW PressClub G20 320i Sedan 2021 specifications PDF",
+      "note": "Official BMW 03/2021 technical-data PDF for the exact G20 320i Sedan row showing rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 205/60 R16 96W XL tires on 6.5J x 16 wheels.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325531EN/471537",
       "title": "BMW PressClub G20 320d Sedan 2021 specifications PDF",
@@ -205,10 +324,38 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:g20-320e-2021-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325531EN/471537",
+      "title": "BMW PressClub G20 320e Sedan 2021 specifications PDF",
+      "note": "Official BMW 03/2021 technical-data PDF for the exact G20 320e Sedan row showing rear-wheel-drive full-hybrid layout, Eight-speed Steptronic transmission, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, rear final drive 3.231, and standard 225/50 R17 98Y XL tires on 7.5J x 17 wheels.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g20-320d-2022-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0388273EN/555363",
       "title": "BMW PressClub G20 320d Sedan 2022 facelift specifications PDF",
       "note": "Official BMW 05/2022 facelift technical-data PDF for the exact G20 320d Sedan automatic rear-wheel-drive state showing Eight-speed Steptronic transmission, the same 0.640 top gear and 2.813 final drive package, and a later standard 225/50 R17 98Y XL tire on 7.5J x 17 wheels.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0442333EN/620072",
+      "title": "BMW PressClub G20 318i / 318d / 320d Sedan 2024 specifications PDF",
+      "note": "Official BMW 05/2024 ACEA-market technical-data PDF covering the exact G20 318i, 318d, and 320d Sedan rows. The checked tables show all three as rear-wheel-drive Eight-speed Steptronic states, keep the diesel automatic 0.640 top gear and 2.813 final drive package, and move the standard tire to 225/50 R17 98Y XL on 7.5J x 17 wheels.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-330i-2019-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0299451EN/437354",
+      "title": "BMW PressClub G20 330i Sedan 2019 launch specifications PDF",
+      "note": "Official BMW 03/2019 launch technical-data PDF for the exact G20 330i Sedan row showing rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 225/50 R17 98Y XL tires on 7.5J x 17 wheels.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g20-330i-2021-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325531EN/471537",
+      "title": "BMW PressClub G20 330i Sedan 2021 specifications PDF",
+      "note": "Official BMW 03/2021 technical-data PDF for the exact G20 330i Sedan row showing rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 225/50 R17 98Y XL tires on 7.5J x 17 wheels.",
       "confidence": "high"
     },
     {
@@ -450,10 +597,52 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f25-euro-zula-09-10-pdf",
+      "url": "https://myair-bdr.bmwgroup.com/static/manual/RadReif/RadReif/Zulassungsinfo/F25_EURO_ZuLa_ab_09_10.pdf",
+      "title": "BMW F25 EU wheel and tire approval sheet from 09/2010",
+      "note": "Official BMW EU homologation sheet for F25 model year from 09/2010, used to confirm the standard, factory-option, and accessory summer tire packages for the 2011 xDrive20i, xDrive20d, xDrive28i, xDrive30d, xDrive35i, and xDrive35d rows.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f25-euro-zula-04-12-pdf",
+      "url": "https://myair-bdr.bmwgroup.com/static/manual/RadReif/downloads/Rad-Reifen/Zulassungsinfo/F25_F26/F25_EURO_ZuLa_ab_04_12.pdf",
+      "title": "BMW F25 EU wheel and tire approval sheet from 04/2012",
+      "note": "Official BMW EU homologation sheet for F25 model year from 04/2012, used to confirm the standard, factory-option, and accessory summer tire packages for the narrowed 2012 sDrive18d and xDrive28i rows and for later xDrive family option-matrix continuity.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f25-euro-zula-04-14-pdf",
+      "url": "https://myair-bdr.bmwgroup.com/static/manual/RadReif/downloads/Rad-Reifen/Zulassungsinfo/F25_F26/F25-F26_EURO_ZuLa_ab_04_14__Stand_13_02_14.pdf",
+      "title": "BMW F25 EU wheel and tire approval sheet from 04/2014",
+      "note": "Official BMW EU homologation sheet for F25 model year from 04/2014, used to confirm the standard, factory-option, and accessory summer tire packages for the facelift-era sDrive20i and the later xDrive20i and xDrive35i wheel/tire matrix, including the 21-inch accessory fitment.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f32-420i-xdrive-2013-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0147064EN/225547",
       "title": "BMW PressClub F32 420i xDrive 2013 technical data PDF",
       "note": "Official BMW launch-era technical-data PDF for the F32 420i xDrive manual and automatic states, used for the exact 2014-2015 ratio, final-drive, and baseline-tire mapping.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0142634EN/256334",
+      "title": "BMW PressClub F32 428i and 435i 2013 launch technical data PDF",
+      "note": "Official BMW 11/2013 launch-period technical-data PDF for the exact F32 428i and 435i Coupe manual and automatic rows, including published ratio tables, final-drive ratios, standard 225/50 R17 94W tyres, and the parallel xDrive tables for the same engines.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0147064EN/225549",
+      "title": "BMW PressClub F32 430d 2013 technical data PDF",
+      "note": "Official BMW 11/2013 technical-data PDF for the exact F32 430d Coupe row showing rear-wheel drive, 8-speed Steptronic automatic only, published forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 2.563, and standard 225/50 R17 94W tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0147064EN/225550",
+      "title": "BMW PressClub F32 435d xDrive 2013 technical data PDF",
+      "note": "Official BMW 11/2013 technical-data PDF for the exact F32 435d xDrive Coupe row showing xDrive all-wheel drive, 8-speed Steptronic automatic only, final drive 2.563, and standard 225/50 R17 94W tires.",
       "confidence": "high"
     },
     {
@@ -464,24 +653,45 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0252345EN/348118",
+      "title": "BMW PressClub F32 420i and 430i 2016 technical data PDF",
+      "note": "Official BMW 03/2016 technical-data PDF for the exact facelift-era F32 420i and 430i Coupe rows showing that 430i first appears in the checked 03/2016 lineup, with manual and automatic ratio tables, final-drive ratios, standard 225/50 R17 94W tires, and the official 18/19-inch tire matrix.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0147064EN/specifications-bmw-4-series-coupe-valid-from-11/2013",
       "title": "BMW PressClub F32 4 Series Coupe 2013 specifications article",
-      "note": "Official BMW launch-era 4 Series Coupé specifications page used to confirm the original 11/2013 lineup scope, including that later 440i xDrive variants were absent from the launch-state range.",
+      "note": "Official BMW launch-era 4 Series Coup\u00e9 specifications page used to confirm the original 11/2013 lineup scope, including that later 440i xDrive variants were absent from the launch-state range.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f32-440i-2016-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0252345EN/348116",
+      "title": "BMW PressClub F32 440i 2016 technical data PDF",
+      "note": "Official BMW 03/2016 technical-data PDF for the exact facelift-era F32 440i Coupe rows showing that 440i first appears in the checked 03/2016 lineup, with manual and automatic ratio tables, final-drive ratios, standard 225/50 R17 94W tires, and the official 18/19-inch tire matrix.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-article",
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0252345EN/technical-specifications-bmw-4-series-coupe-valid-from-03/2016",
       "title": "BMW PressClub F32 440i xDrive 2016 specifications article",
-      "note": "Official BMW 03/2016 4 Series Coupé specifications page used to confirm when the 440i xDrive Coupé first appears in the checked official lineup.",
+      "note": "Official BMW 03/2016 4 Series Coup\u00e9 specifications page used to confirm when the 440i xDrive Coup\u00e9 first appears in the checked official lineup.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0252345EN/348117",
       "title": "BMW PressClub F32 440i xDrive 2016 technical data PDF",
-      "note": "Official BMW 03/2016 technical-data PDF for the exact F32 440i xDrive Coupé manual and automatic states, used for the retimed 2016-only top-gear, final-drive, and baseline-tire evidence.",
+      "note": "Official BMW 03/2016 technical-data PDF for the exact F32 440i xDrive Coup\u00e9 manual and automatic states, used for the retimed 2016-only top-gear, final-drive, and baseline-tire evidence.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0179962EN/265695",
+      "title": "BMW PressClub F32 M4 2014 technical data PDF",
+      "note": "Official BMW 03/2014 technical-data PDF for the exact F32 M4 Coupe row showing rear-wheel drive, 6-speed manual with optional 7-speed M double-clutch transmission, published ratio tables, final drive 3.462, and standard staggered 255/40 ZR18 front plus 275/40 ZR18 rear tires.",
       "confidence": "high"
     },
     {
@@ -492,10 +702,73 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0223367EN/specifications-the-new-bmw-x1-sdrive20i-xdrive20i-valid-from-07/2015",
+      "title": "BMW PressClub F48 X1 sDrive20i and xDrive20i 2015 specifications article",
+      "note": "Official BMW 07/2015 X1 specifications page for the shared sDrive20i and xDrive20i launch packet, used to confirm that the checked official technical-data attachment covers automatic-only launch states for both variants.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0223367EN/316338",
       "title": "BMW PressClub F48 X1 xDrive20i 2015 technical data PDF",
       "note": "Official BMW 07/2015 technical-data PDF for the exact F48 X1 xDrive20i state showing AWD, 8-speed Steptronic automatic only, 0.673 top gear, single 3.200 final-drive ratio, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0223367EN/316338",
+      "title": "BMW PressClub F48 X1 sDrive20i and xDrive20i 2015 technical data PDF",
+      "note": "Official BMW 07/2015 technical-data PDF for the shared F48 X1 sDrive20i and xDrive20i launch packet, used to confirm that the checked official sDrive20i launch state is automatic-only with 225/55 R17 baseline tires and that the paired xDrive20i state is also automatic-only.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0232406EN/325735",
+      "title": "BMW PressClub F48 X1 sDrive16d 2015 technical data PDF",
+      "note": "Official BMW 11/2015 technical-data PDF for the exact F48 X1 sDrive16d manual state showing front-driven sDrive layout, 6-speed manual only, 0.628 top gear, 3.588 final drive, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-sdrive16d-sdrive18i-xdrive18d-2015-tech-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0232406EN/specifications-bmw-x1-sdrive-16d-bmw-x1-sdrive18i-bmw-x1-xdrive18d",
+      "title": "BMW PressClub F48 X1 sDrive16d, sDrive18i, xDrive18d 2015 specifications article",
+      "note": "Official BMW 11/2015 specifications page used to confirm applicability for the checked sDrive16d and sDrive18i launch-period packet and to reach the exact technical-data attachments.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0232406EN/325736",
+      "title": "BMW PressClub F48 X1 sDrive18i 2015 technical data PDF",
+      "note": "Official BMW 11/2015 technical-data PDF for the exact F48 X1 sDrive18i states showing front-driven sDrive layout, 6-speed manual or 6-speed Steptronic automatic, manual 0.683 top gear, automatic 0.672 top gear, final drives 3.882 and 4.103, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0223368EN/bmw-x1-sdrive18d-xdrive18d-xdrive20d-valid-from-07/2015",
+      "title": "BMW PressClub F48 X1 sDrive18d, xDrive18d, xDrive20d 2015 specifications article",
+      "note": "Official BMW 07/2015 specifications page used to confirm applicability for the checked sDrive18d launch-period packet and to reach the exact technical-data attachment.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0223368EN/316341",
+      "title": "BMW PressClub F48 X1 sDrive18d, xDrive18d, xDrive20d 2015 technical data PDF",
+      "note": "Official BMW 07/2015 technical-data PDF for the checked F48 sDrive18d states showing 6-speed manual with optional 8-speed Steptronic, manual top gear 0.628, automatic top gear 0.673, final drives 3.389 and 2.955, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0260622EN/specifications-bmw-x1-sdrive-20d-valid-from-07/2016",
+      "title": "BMW PressClub F48 X1 sDrive20d 2016 specifications article",
+      "note": "Official BMW 07/2016 specifications page used to confirm applicability for the checked sDrive20d packet and to reach the exact technical-data attachment.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0260622EN/360424",
+      "title": "BMW PressClub F48 X1 sDrive20d 2016 technical data PDF",
+      "note": "Official BMW 07/2016 technical-data PDF for the checked F48 sDrive20d states showing 6-speed manual with optional 8-speed Steptronic, manual top gear 0.674, automatic top gear 0.673, final drives 3.778 and 2.955, and 225/55 R17 baseline tires.",
       "confidence": "high"
     },
     {
@@ -572,14 +845,28 @@
       "id": "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0327516EN/specifications-of-the-bmw-x1-valid-from-03/2021",
       "title": "BMW PressClub F48 X1 2021 specifications article",
-      "note": "Official BMW 03/2021 X1 specifications page used to confirm the checked later-state continuity for F48 xDrive25d, xDrive25e, and xDrive25i variants and to reach the exact technical-data attachment.",
+      "note": "Official BMW 03/2021 X1 specifications page used to confirm the checked later-state continuity for the broader F48 lineup, including sDrive18i, sDrive20i, sDrive18d, sDrive20d, xDrive25d, xDrive25e, and xDrive25i states, and to reach the exact technical-data attachment.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0327516EN/473615",
       "title": "BMW PressClub F48 X1 2021 technical data PDF",
-      "note": "Official BMW 03/2021 technical-data PDF for the later F48 X1 lineup confirming the checked xDrive25d, xDrive25e, and xDrive25i AWD automatic states, their exact top-gear and final-drive figures, and the later baseline-tire mappings used for safe narrow/split decisions.",
+      "note": "Official BMW 03/2021 technical-data PDF for the later F48 X1 lineup confirming the checked sDrive18i, sDrive20i, sDrive18d, sDrive20d, xDrive25d, xDrive25e, and xDrive25i states, their later transmission-family and final-drive mappings where applicable, and the 225/55 R17 baseline tires used for safe narrow or split decisions.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-x1-2018-tech-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0286555EN/specifications-of-the-bmw-x1-valid-from-09/2018",
+      "title": "BMW PressClub F48 X1 2018 specifications article",
+      "note": "Official BMW 09/2018 X1 specifications page used to confirm late-pre-LCI applicability for the checked sDrive18i, sDrive20i, and sDrive18d packet and to reach the exact technical-data attachment.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286555EN/419620",
+      "title": "BMW PressClub F48 X1 2018 technical data PDF",
+      "note": "Official BMW 09/2018 technical-data PDF for the later pre-LCI F48 X1 lineup confirming sDrive18i 7-speed dual-clutch, sDrive20i 7-speed dual-clutch, sDrive18d manual and automatic values, and 225/55 R17 baseline tires used for safe mixed-era and cutover decisions.",
       "confidence": "high"
     },
     {
@@ -594,6 +881,20 @@
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0297827EN/435333",
       "title": "BMW PressClub G06 X6 2019 technical data PDF",
       "note": "Official BMW launch technical-data PDF for the G06 X6 range used for the exact X6 M50i and xDrive40i top-gear, forward-ratio, reverse-ratio, final-drive, and baseline-tire mappings.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f10-550i-2011-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0119134EN/specifications-bmw-5-series-sedan-09/2011?language=en",
+      "title": "BMW PressClub F10 550i 2011 specifications article",
+      "note": "Official BMW 09/2011 5 Series Sedan specifications article used as provenance for the launch-period attachment list, including the dedicated non-xDrive 550i PDF separate from the 550i xDrive attachment.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f10-m5-2011-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0122682EN/specifications-of-the-bmw-m5-10/2011?language=en",
+      "title": "BMW PressClub F10 M5 2011 specifications article",
+      "note": "Official BMW 10/2011 M5 specifications article used as provenance for the launch-period exact M5 attachment and to keep the recovered M5 evidence scoped to the checked 10/2011 launch state rather than the full 2011-2017 production run.",
       "confidence": "high"
     },
     {
@@ -643,6 +944,13 @@
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0289615EN/the-new-bmw-7-series",
       "title": "BMW PressClub G11 7 Series 2019 press kit",
       "note": "Official BMW 01/2019 facelift-era 7 Series press kit introducing the new plug-in hybrid variants BMW 745e, 745Le, and 745Le xDrive with maximum system output 290 kW / 394 hp, proving that the 745e and 745Le lineup starts in 2019 rather than in the original 2015/2016 G11 launch window.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g11-745e-2019-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0289615EN/426493",
+      "title": "BMW PressClub G11 7 Series 2019 technical data PDF",
+      "note": "Official BMW 01/2019 facelift-era technical-data PDF used for the exact 745e and 745Le rear-wheel-drive mappings, including 8-speed Steptronic/ZF8HP transmission-family applicability, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.077, and 245/50 R18 baseline tires.",
       "confidence": "high"
     },
     {
@@ -716,6 +1024,69 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+      "url": "https://www.press.bmwgroup.com/usa/article/detail/T0275484EN_US/the-first-ever-2018-bmw-x2:-powerful-and-agile",
+      "title": "BMW USA PressClub F39 X2 2018 launch article",
+      "note": "Official BMW USA launch article used to prove that xDrive28i belongs to a non-EU market slice and uses an Aisin 8-speed automatic with a 3.200 final-drive ratio rather than any EU-market DCT row.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article",
+      "url": "https://www.press.bmwgroup.com/usa/article/detail/T0317977EN_US/the-2021-bmw-x2-edition-m-mesh",
+      "title": "BMW USA PressClub F39 X2 2021 Edition M Mesh article",
+      "note": "Official BMW USA article explicitly naming both sDrive28i and xDrive28i as US-market rows with Aisin 8G45 automatic transmission and 19-inch or 20-inch tyre packages, reinforcing that the current EU 28i placeholders are market mismatches rather than weak EU rows.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0278876EN/403768",
+      "title": "BMW PressClub F39 X2 sDrive18d 2018 specifications PDF",
+      "note": "Official BMW 03/2018 technical-data PDF for the exact F39 X2 sDrive18d ACEA-market row showing front-wheel drive, six-speed manual with optional eight-speed Steptronic automatic figures in brackets, published ratio tables, automatic top gear 0.673, automatic final drive 2.851, and the standard 225/55 R17 97W tire package.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0278876EN/403769",
+      "title": "BMW PressClub F39 X2 sDrive18i 2018 specifications PDF",
+      "note": "Official BMW 03/2018 technical-data PDF for the exact F39 X2 sDrive18i ACEA-market row showing front-wheel drive, six-speed manual with optional seven-speed Steptronic dual-clutch transmission figures in brackets, published ratio tables, final-drive ratios 3.882 and 4.176, top speed 205 km/h, and the standard 225/55 R17 97W tire package.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0283649EN/412530",
+      "title": "BMW PressClub F39 X2 sDrive20i 2017 specifications PDF",
+      "note": "Official BMW 10/2017 technical-data PDF for the exact F39 X2 sDrive20i ACEA-market launch row showing front-wheel drive, seven-speed Steptronic dual-clutch transmission, published forward ratios 4.154 / 2.450 / 1.393 / 0.975 / 0.755 / 0.675 / 0.547, reverse 3.357, front final drive 3.789, top speed 227 km/h, and the standard 225/55 R17 97W tire package.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0283649EN/412531",
+      "title": "BMW PressClub F39 X2 xDrive20d and xDrive25d 2017 specifications PDF",
+      "note": "Official BMW 10/2017 technical-data PDF for the exact F39 X2 xDrive20d and xDrive25d ACEA-market launch rows showing all-wheel drive, eight-speed Steptronic transmission, published ratio tables, final drive 2.851 for xDrive20d and 2.955 for xDrive25d, top speeds 221 and 237 km/h, and the standard 225/55 R17 97W tire package for both variants.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0278876EN/403771",
+      "title": "BMW PressClub F39 X2 xDrive20i 2018 specifications PDF",
+      "note": "Official BMW 03/2018 technical-data PDF for the exact F39 X2 xDrive20i ACEA-market row showing all-wheel drive, eight-speed Steptronic transmission, published forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, reverse 4.221, final drive 3.200, top speed 224 km/h, and the standard 225/55 R17 97W tire package.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0314293EN/457892",
+      "title": "BMW PressClub F39 X2 xDrive25e 2020 technical data PDF",
+      "note": "Official BMW 05/2020 technical-data PDF for the exact F39 X2 xDrive25e plug-in-hybrid row showing hybrid-specific all-wheel drive, six-speed Steptronic transmission, published forward ratios 4.459 / 2.508 / 1.556 / 1.142 / 0.851 / 0.672, reverse 3.185, final drive 3.944, top speed 195 km/h, and the standard 225/55 R17 97W tire package.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0327517EN/473618",
+      "title": "BMW PressClub F39 X2 2021 technical data PDF",
+      "note": "Official BMW 03/2021 ACEA-market technical-data PDF covering the F39 X2 lineup page-by-page, including sDrive18i, sDrive20i, xDrive20i, xDrive25e, sDrive18d, xDrive18d, xDrive20d, and xDrive25d. The checked tables publish drivetrain wording, gearbox families, full ratios, final drives, top speeds, and standard tires for the exact listed variants.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0308632EN/the-new-bmw-x2-xdrive25e",
       "title": "BMW PressClub F39 X2 xDrive25e launch article",
@@ -740,21 +1111,21 @@
       "id": "bmw_pressclub_sources:g15-8-series-coupe-2018-launch-article",
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0281744EN/the-all-new-bmw-8-series-coupe?language=en",
       "title": "BMW PressClub G15 8 Series Coupe launch article",
-      "note": "Official BMW launch article for the G15 8 Series Coupé used to confirm the launch-lineup context and reach the exact 840i Coupé, 840i xDrive Coupé, and M850i xDrive Coupé technical-data attachments.",
+      "note": "Official BMW launch article for the G15 8 Series Coup\u00e9 used to confirm the launch-lineup context and reach the exact 840i Coup\u00e9, 840i xDrive Coup\u00e9, and M850i xDrive Coup\u00e9 technical-data attachments.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0281744EN/445825",
       "title": "BMW PressClub G15 840i / 840i xDrive Coupe technical data PDF",
-      "note": "Official BMW launch technical-data PDF for the exact G15 840i Coupé and 840i xDrive Coupé states showing 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, single 2.929 final-drive ratio, and staggered 18-inch baseline tires.",
+      "note": "Official BMW launch technical-data PDF for the exact G15 840i Coup\u00e9 and 840i xDrive Coup\u00e9 states showing 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, single 2.929 final-drive ratio, and staggered 18-inch baseline tires.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0281744EN/445824",
       "title": "BMW PressClub G15 M850i xDrive Coupe technical data PDF",
-      "note": "Official BMW launch technical-data PDF for the exact G15 M850i xDrive Coupé state showing AWD, 8-speed Steptronic, forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, single 2.813 final-drive ratio, and staggered 20-inch baseline tires.",
+      "note": "Official BMW launch technical-data PDF for the exact G15 M850i xDrive Coup\u00e9 state showing AWD, 8-speed Steptronic, forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, single 2.813 final-drive ratio, and staggered 20-inch baseline tires.",
       "confidence": "high"
     },
     {

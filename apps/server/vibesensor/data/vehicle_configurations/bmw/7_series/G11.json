@@ -15,7 +15,11 @@
     "fuel_type": "ICE",
     "drivetrain": {
       "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+        "legacy_research_sources:387f07d4c6ab"
+      ],
+      "notes": "Checked official BMW 11/2015 G11 launch specifications article and the official BMW DE launch-era 7 Series brochure/catalog. Together they publish the 2016 diesel lineup as 730d/Ld RWD plus 730d/Ld xDrive and 740d/Ld xDrive AWD, but they do not publish any 725Ld row in either the rear-wheel-drive or xDrive technical-data sections, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
       "value": "RWD"
     },
     "transmission": {
@@ -113,45 +117,36 @@
     },
     "verification_notes": [
       {
-        "note": "Wave 12 validation adds exact Germany-market A3 Limousine 35 TFSI evidence from 2026 technical-data PDFs for both manual and S tronic states. The checked official sources prove Frontantrieb, a 6-stufiges Schaltgetriebe package with ratios 3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510, reverse 3.583, final drives 4.235 / 4.235, and a 205/55 R16 basic tire, plus a 7-stufige S tronic package with ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653, reverse 3.722, final drives 4.800 / 3.429, and the same 205/55 R16 basic tire. The broad 2021-2026 row remains unchanged because this pass only proves the exact Germany MY2026 states and the current row shape cannot safely encode the target's transmission-specific split final drives.",
+        "note": "This G11 research wave rechecks the official BMW 11/2015 launch specifications article and the official BMW DE launch-era 7 Series brochure/catalog technical table. Together they show that 2016 EU diesel rows are published as 730d/Ld RWD plus 730d/Ld xDrive and 740d/Ld xDrive AWD, but no exact 725Ld row appears in either the launch article or the Germany-market technical-data table, so this represented 2016 725Ld RWD configuration remains an unsupported advisory row rather than a validated exact state.",
         "evidence_refs": [
-          "legacy_research_sources:2201c7bcf575",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7699086a1abd",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW 7 Series (G11, 2016-2022) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "BMW G11 725Ld exact official 2016 technical-data row",
+        "reason": "The checked official BMW 11/2015 launch specifications article omits 725Ld from the published EU launch lineup, and the official BMW DE launch-era technical-data table also omits 725Ld from both the rear-wheel-drive and xDrive sections, so this pass still has no exact official 2016 EU technical-data row for the variant.",
         "evidence_refs": [
-          "legacy_research_sources:2201c7bcf575",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7699086a1abd",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       },
       {
-        "item": "BMW 7 Series (G11, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "BMW G11 725Ld exact final-drive, top-gear, and default-tire mapping",
+        "reason": "Without an official exact 725Ld technical-data row for the represented 2016 EU state, this pass cannot promote the inherited gearbox, final-drive, or tire placeholders.",
         "evidence_refs": [
-          "legacy_research_sources:2201c7bcf575",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7699086a1abd",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "no_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -445,9 +440,10 @@
     "drivetrain": {
       "confidence": "unverified",
       "evidence_refs": [
-        "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+        "legacy_research_sources:387f07d4c6ab"
       ],
-      "notes": "Checked official BMW 11/2015 G11 launch specifications article. It publishes exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d xDrive, 740Ld xDrive, 740i, 740Li, 750i, 750Li, 750i xDrive, and 750Li xDrive, but it does not publish a 730Li row, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
+      "notes": "Checked official BMW 11/2015 G11 launch specifications article and the official BMW DE launch-era 7 Series brochure/catalog technical table. Together they publish exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d/Ld xDrive, 740i, 740Li, 750i, 750Li, and xDrive petrol siblings, but they do not publish any exact 730Li row, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
       "value": "RWD"
     },
     "transmission": {
@@ -545,25 +541,28 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 17 directly revalidated the official BMW 11/2015 G11 launch specifications article. That checked official BMW launch page publishes exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d xDrive, 740Ld xDrive, 740i, 740Li, 750i, 750Li, 750i xDrive, and 750Li xDrive, but it does not publish an exact 730Li row, so this represented 2016 730Li RWD configuration remains an unsupported advisory row rather than a validated exact state.",
+        "note": "This G11 research wave rechecks the official BMW 11/2015 launch specifications article and the official BMW DE launch-era 7 Series brochure/catalog technical table. Those checked official BMW sources publish exact rows for 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d/Ld xDrive, 740i, 740Li, 750i, 750Li, and xDrive petrol siblings, but they do not publish any exact 730Li row, so this represented 2016 730Li RWD configuration remains an unsupported advisory row rather than a validated exact state.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
     "unresolved": [
       {
         "item": "BMW G11 730Li exact official 2016 technical-data row",
-        "reason": "The checked official BMW 11/2015 launch specifications article omits 730Li from the published EU launch lineup, and this pass did not recover another official 2016 EU technical-data page for the exact variant.",
+        "reason": "The checked official BMW 11/2015 launch specifications article omits 730Li from the published EU launch lineup, and the official BMW DE launch-era technical-data table also omits 730Li from the checked 2016 rear-wheel-drive and xDrive sections, so this pass still has no exact official 2016 EU/Germany technical-data row for the variant.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       },
       {
         "item": "BMW G11 730Li exact final-drive, top-gear, and default-tire mapping",
         "reason": "Without an official exact 730Li technical-data row for the represented 2016 EU state, this pass cannot promote the inherited gearbox, final-drive, or tire placeholders.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+          "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab"
         ]
       }
     ],
@@ -714,9 +713,10 @@
     "drivetrain": {
       "confidence": "unverified",
       "evidence_refs": [
-        "bmw_pressclub_sources:g11-7-series-2015-spec-article"
+        "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+        "legacy_research_sources:387f07d4c6ab"
       ],
-      "notes": "Checked official BMW 11/2015 G11 launch specifications article. It publishes exact rows for 730d, 730d xDrive, 740d xDrive, 740i, 750i, and 750i xDrive, but it does not publish a 730i row, so this represented 2016 RWD mapping remains an unsupported advisory placeholder.",
+      "notes": "Checked official BMW 11/2015 G11 launch specifications article and the official BMW DE launch-era 7 Series brochure/catalog technical table. Those checked official BMW sources do not publish any exact 730i row for the 2016 EU/Germany launch program, so this represented 2016 RWD mapping remains an unsupported advisory placeholder even though secondary exact-trim pages confirm a 2016 European-market 730i identity.",
       "value": "RWD"
     },
     "transmission": {
@@ -814,9 +814,10 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 6 revalidation keeps this row unsupported but improves the evidence chain. The official BMW 11/2015 G11 launch specifications article confirms the new 7 Series family uses an eight-speed Steptronic gearbox and is built at Dingolfing, yet the published launch rows still omit a trim-specific 730i technical-data entry. Reputable secondary exact-trim pages now independently confirm that a 2016 BMW 7 Series 730i existed for the European market as a G11/G12 2.0-liter B48B20 I4 petrol state and capture checked 17-inch, 18-inch, and 19-inch fitments. An earlier attempt to use the official BMW Germany brochure column with 1998 cm3 / 190 kW / 400 Nm as exact 730i proof was rejected because that extracted column belongs to 740e/Le iPerformance context rather than a standalone 730i row.",
+        "note": "This G11 research wave keeps the row unsupported but improves the official evidence chain. The checked BMW 11/2015 launch specifications article and the official BMW DE launch-era technical-data table still omit any trim-specific 730i row, while reputable secondary exact-trim pages independently confirm that a 2016 BMW 7 Series 730i existed for the European market as a G11/G12 2.0-liter B48B20 I4 petrol state and capture checked 17-inch, 18-inch, and 19-inch fitments. An earlier attempt to use the official BMW Germany brochure column with 1998 cm3 / 190 kW / 400 Nm as exact 730i proof was rejected because that extracted column belongs to 740e/Le iPerformance context rather than a standalone 730i row.",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab",
           "secondary_technical_sources:g11-730i-2016-tirewheelguide",
           "secondary_technical_sources:g11-730i-2016-wheel-size"
         ]
@@ -825,9 +826,10 @@
     "unresolved": [
       {
         "item": "BMW G11 730i exact official 2016 technical-data row",
-        "reason": "The checked official BMW 11/2015 launch specifications article omits 730i from the published launch rows, and this pass did not recover another official 2016 EU technical-data page for the exact variant. Secondary exact-trim pages confirm the 2016 European-market 730i identity and engine family, but they do not replace a trim-specific official drivetrain sheet.",
+        "reason": "The checked official BMW 11/2015 launch specifications article and the official BMW DE launch-era technical-data table both omit 730i from the published 2016 launch rows. Secondary exact-trim pages confirm the 2016 European-market 730i identity and engine family, but they do not replace a trim-specific official drivetrain sheet.",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab",
           "secondary_technical_sources:g11-730i-2016-tirewheelguide",
           "secondary_technical_sources:g11-730i-2016-wheel-size"
         ]
@@ -837,6 +839,7 @@
         "reason": "Without an official exact 730i technical-data row or a stronger independent secondary pair for drivetrain numerics, this pass cannot promote the inherited gearbox or final-drive placeholders. The checked exact-trim secondary pages support 17-inch, 18-inch, and 19-inch fitments for 730i, but they do not safely close one production-default tire package for the canonical row.",
         "evidence_refs": [
           "bmw_pressclub_sources:g11-7-series-2015-spec-article",
+          "legacy_research_sources:387f07d4c6ab",
           "secondary_technical_sources:g11-730i-2016-tirewheelguide",
           "secondary_technical_sources:g11-730i-2016-wheel-size"
         ]
@@ -2178,132 +2181,111 @@
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "PHEV",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+      ],
+      "notes": "The official BMW 01/2019 facelift technical-data PDF publishes the exact 745Le rear-wheel-drive plug-in-hybrid row separately from the 745Le xDrive sibling, so this represented 2019-2022 row is closed as rear-wheel drive.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+      ],
+      "notes": "The official BMW 01/2019 facelift technical-data PDF lists 8-speed Steptronic wording for the exact 745Le rear-wheel-drive row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "value": 0.667,
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical-data PDF lists 0.667 as the top-gear ratio for the exact 745Le rear-wheel-drive row."
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.813
+        "value": 3.077,
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical-data PDF lists 3.077 as the rear final-drive ratio for the exact 745Le rear-wheel-drive row."
+      },
+      "gear_ratios": {
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical-data PDF lists the full forward gear-ratio set for the exact 745Le rear-wheel-drive row."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:2201c7bcf575",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7699086a1abd",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The official BMW 01/2019 facelift technical-data PDF lists 245/50 R18 as the baseline tire for the exact 745Le rear-wheel-drive row.",
         "front": {
           "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official BMW 01/2019 facelift technical-data PDF lists 245/50 R18 as the baseline tire for the exact 745Le rear-wheel-drive row.",
           "front": {
             "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 20.0
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 21\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 22\""
+          "name": "Standard 18\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Official BMW's 01/2019 facelift-era 7 Series press kit introduces the new plug-in hybrid variants BMW 745e, 745Le, and 745Le xDrive with maximum system output 290 kW / 394 hp, which is sufficient to retime this exact 745Le row to the 2019-on facelift window and correct its fuel type to PHEV. This pass did not recover a 745Le-specific technical-data PDF, so inherited drivetrain, transmission, ratio, and tire placeholders remain advisory only.",
+        "note": "The official BMW 01/2019 facelift press kit and paired technical-data PDF close the exact 745Le rear-wheel-drive plug-in-hybrid mapping: 2019-on facelift timing, RWD, 8-speed Steptronic/ZF8HP mapping, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, rear final drive 3.077, and 245/50 R18 baseline tires. This row keeps only the baseline wheel package because the broader optional wheel matrix was not recovered from a direct official source in this pass.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit",
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW 745Le exact drivetrain, transmission, ratio, and tire mapping across the retimed 2019-2022 row",
-        "reason": "The checked official 01/2019 7 Series press kit proves the facelift-era 745Le identity and PHEV classification, but this pass did not recover a 745Le-specific technical-data PDF confirming RWD wording, transmission details, ratios, final drive, or baseline tire fitment.",
+        "item": "BMW 745Le exact optional wheel/tire matrix beyond the baseline 245/50 R18 package",
+        "reason": "The checked official BMW 01/2019 facelift technical-data PDF closes the exact baseline 18-inch tire package, but this pass did not recover a direct official wheel-options source precise enough to encode the broader optional wheel matrix for the exact 745Le rear-wheel-drive row.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
-        ]
-      },
-      {
-        "item": "BMW 745Le exact long-wheelbase versus xDrive sibling separation",
-        "reason": "The checked 01/2019 press kit lists BMW 745Le and BMW 745Le xDrive as distinct facelift-era plug-in hybrids, but this pass did not recover technical-data sheets precise enough to close any further row split or drivetrain-detail cleanup beyond the start-year correction.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   },
@@ -2322,108 +2304,94 @@
     "engine_name": "B58 3.0L I6 Turbo PHEV",
     "fuel_type": "PHEV",
     "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+      ],
+      "notes": "The official BMW 01/2019 facelift technical-data PDF publishes the exact 745e rear-wheel-drive plug-in-hybrid row separately from the 745Le and 745Le xDrive siblings, so this represented 2019-2022 row is closed as rear-wheel drive.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+      ],
+      "notes": "The official BMW 01/2019 facelift technical-data PDF lists 8-speed Steptronic wording for the exact 745e rear-wheel-drive row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.667
+        "value": 0.667,
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical-data PDF lists 0.667 as the top-gear ratio for the exact 745e rear-wheel-drive row."
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 2.813
+        "value": 3.077,
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical-data PDF lists 3.077 as the rear final-drive ratio for the exact 745e rear-wheel-drive row."
+      },
+      "gear_ratios": {
+        "value": [
+          4.714,
+          3.143,
+          2.106,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical-data PDF lists the full forward gear-ratio set for the exact 745e rear-wheel-drive row."
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:2201c7bcf575",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:7699086a1abd",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1"
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "notes": "The official BMW 01/2019 facelift technical-data PDF lists 245/50 R18 as the baseline tire for the exact 745e rear-wheel-drive row.",
         "front": {
           "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes": "The official BMW 01/2019 facelift technical-data PDF lists 245/50 R18 as the baseline tire for the exact 745e rear-wheel-drive row.",
           "front": {
             "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 20.0
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 21\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:2201c7bcf575",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:7699086a1abd",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 22\""
+          "name": "Standard 18\""
         }
       ]
     },
     "verification_notes": [
       {
-        "note": "Official BMW's 01/2019 facelift-era 7 Series press kit introduces the new plug-in hybrid variants BMW 745e, 745Le, and 745Le xDrive with maximum system output 290 kW / 394 hp, which is sufficient to retime this exact 745e row to the 2019-on facelift window. This pass did not recover a 745e-specific technical-data PDF, so inherited drivetrain, transmission, ratio, and tire placeholders remain advisory only.",
+        "note": "The official BMW 01/2019 facelift press kit and paired technical-data PDF close the exact 745e rear-wheel-drive plug-in-hybrid mapping: 2019-on facelift timing, RWD, 8-speed Steptronic/ZF8HP mapping, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, rear final drive 3.077, and 245/50 R18 baseline tires. This row keeps only the baseline wheel package because the broader optional wheel matrix was not recovered from a direct official source in this pass.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+          "bmw_pressclub_sources:g11-7-series-2019-press-kit",
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
         ]
       },
       {
@@ -2432,25 +2400,18 @@
     ],
     "unresolved": [
       {
-        "item": "BMW 745e exact drivetrain, transmission, ratio, and tire mapping across the retimed 2019-2022 row",
-        "reason": "The checked official 01/2019 7 Series press kit proves the facelift-era 745e identity and PHEV classification, but this pass did not recover a 745e-specific technical-data PDF confirming RWD wording, transmission details, ratios, final drive, or baseline tire fitment.",
+        "item": "BMW 745e exact optional wheel/tire matrix beyond the baseline 245/50 R18 package",
+        "reason": "The checked official BMW 01/2019 facelift technical-data PDF closes the exact baseline 18-inch tire package, but this pass did not recover a direct official wheel-options source precise enough to encode the broader optional wheel matrix for the exact 745e rear-wheel-drive row.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
-        ]
-      },
-      {
-        "item": "BMW 745e exact relationship to the long-wheelbase 745Le siblings",
-        "reason": "The checked 01/2019 press kit lists BMW 745e, BMW 745Le, and BMW 745Le xDrive as distinct facelift-era plug-in hybrids, but this pass did not recover technical-data sheets precise enough to close any deeper row-splitting or drivetrain-detail cleanup beyond the start-year correction.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g11-7-series-2019-press-kit"
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
         ]
       }
     ],
-    "configuration_confidence": "low_confidence",
+    "configuration_confidence": "high_confidence",
     "order_analysis_policy": {
       "usable_for_engine_order": true,
       "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
+      "usable_for_wheel_order": false,
       "requires_manual_confirmation": true
     }
   }

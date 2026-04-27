@@ -124,9 +124,10 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 13 directly revalidated the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF. That checked official source publishes only 116i and 118i launch-state rows and provides no 114i row in either manual or automatic form, so this represented 114i MT6 entry remains an invalid advisory placeholder rather than a supported exact 2011 production configuration.",
+        "note": "This run rechecked the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF and confirmed it publishes only 116i and 118i launch-state rows, so this represented 114i MT6 entry remains contradicted for the exact 2011 launch state. A later official BMW 05/2012 valid-from-07/2012 114i technical-data PDF proves a separate manual-only 114i F20 5-door row exists later, but it does not rescue this current 2011 id.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf",
+          "bmw_pressclub_sources:f20-2012-114i-spec-pdf"
         ]
       }
     ],
@@ -140,9 +141,10 @@
       },
       {
         "item": "BMW F20 114i later-introduction exact row replacement",
-        "reason": "If an official later 114i introduction exists outside the checked 09/2011 launch-state source, it should be added only under its own supported year/source chain rather than silently conflating it with this disproved 2011 id.",
+        "reason": "The official BMW 05/2012 valid-from-07/2012 114i technical-data PDF proves a later manual-only F20 5-door 114i row exists, but that later source must stay on its own supported 2012+ year chain rather than being conflated with this disproved 2011 id.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf",
+          "bmw_pressclub_sources:f20-2012-114i-spec-pdf"
         ]
       }
     ],
@@ -279,9 +281,10 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 13 directly revalidated the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF. That checked official source publishes only 116i and 118i launch-state rows and provides no 114i row in either manual or automatic form, so this represented 114i ZF8HP entry remains an invalid advisory placeholder rather than a supported exact 2011 production configuration.",
+        "note": "This run rechecked the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF and confirmed it publishes only 116i and 118i launch-state rows, so this represented 114i ZF8HP entry remains contradicted for the exact 2011 launch state. A later official BMW 05/2012 valid-from-07/2012 114i technical-data PDF proves a separate manual-only 114i F20 5-door row exists later, and no saved official source in this run proved an automatic 114i row for this body.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf",
+          "bmw_pressclub_sources:f20-2012-114i-spec-pdf"
         ]
       }
     ],
@@ -295,9 +298,10 @@
       },
       {
         "item": "BMW F20 114i later-introduction exact row replacement",
-        "reason": "If an official later 114i introduction exists outside the checked 09/2011 launch-state source, it should be added only under its own supported year/source chain rather than silently conflating it with this disproved 2011 id.",
+        "reason": "The official BMW 05/2012 valid-from-07/2012 114i technical-data PDF proves a later manual-only F20 5-door 114i row exists, but this run did not recover any saved official evidence for an automatic 114i row or for a supported 2011 start year, so this disproved 2011 id should not inherit that later source.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf",
+          "bmw_pressclub_sources:f20-2012-114i-spec-pdf"
         ]
       }
     ],
@@ -2176,9 +2180,10 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 13 directly revalidated the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF. That checked official source publishes only 116i and 118i launch-state rows and provides no 120i row in either manual or automatic form, so this represented 120i MT6 entry remains an invalid advisory placeholder rather than a supported exact 2011 production configuration.",
+        "note": "This run rechecked the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF and confirmed it publishes only 116i and 118i launch-state rows, so this represented 120i MT6 entry remains contradicted for the exact 2011 launch state. A later official BMW 06/2016 valid-from-07/2016 120i technical-data PDF proves a separate later 120i F20 5-door row exists, but it does not prove this current 2011 id.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf",
+          "bmw_pressclub_sources:f20-2016-120i-125i-m140i-spec-pdf"
         ]
       }
     ],
@@ -2192,9 +2197,10 @@
       },
       {
         "item": "BMW F20 120i later-introduction exact row replacement",
-        "reason": "If an official later 120i introduction exists outside the checked 09/2011 launch-state source, it should be added only under its own supported year/source chain rather than silently conflating it with this disproved 2011 id.",
+        "reason": "The official BMW 06/2016 valid-from-07/2016 120i technical-data PDF proves a later exact F20 5-door 120i row exists, but this run did not recover a saved official source proving the first supported year or any pre-LCI exact ratio sheet, so this disproved 2011 id should not inherit the later data.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf",
+          "bmw_pressclub_sources:f20-2016-120i-125i-m140i-spec-pdf"
         ]
       }
     ],
@@ -2331,9 +2337,10 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 13 directly revalidated the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF. That checked official source publishes only 116i and 118i launch-state rows and provides no 120i row in either manual or automatic form, so this represented 120i ZF8HP entry remains an invalid advisory placeholder rather than a supported exact 2011 production configuration.",
+        "note": "This run rechecked the official BMW 07/2011 valid-from-09/2011 F20 petrol technical-data PDF and confirmed it publishes only 116i and 118i launch-state rows, so this represented 120i ZF8HP entry remains contradicted for the exact 2011 launch state. A later official BMW 06/2016 valid-from-07/2016 120i technical-data PDF proves a separate later 120i F20 5-door row exists with automatic availability, but it does not prove this current 2011 id.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf",
+          "bmw_pressclub_sources:f20-2016-120i-125i-m140i-spec-pdf"
         ]
       }
     ],
@@ -2347,9 +2354,10 @@
       },
       {
         "item": "BMW F20 120i later-introduction exact row replacement",
-        "reason": "If an official later 120i introduction exists outside the checked 09/2011 launch-state source, it should be added only under its own supported year/source chain rather than silently conflating it with this disproved 2011 id.",
+        "reason": "The official BMW 06/2016 valid-from-07/2016 120i technical-data PDF proves a later exact F20 5-door 120i row with automatic availability exists, but this run did not recover a saved official source proving the first supported year for that automatic state, so this disproved 2011 id should not inherit the later data.",
         "evidence_refs": [
-          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf"
+          "bmw_pressclub_sources:f20-2011-petrol-spec-pdf",
+          "bmw_pressclub_sources:f20-2016-120i-125i-m140i-spec-pdf"
         ]
       }
     ],

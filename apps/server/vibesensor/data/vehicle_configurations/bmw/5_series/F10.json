@@ -1024,6 +1024,7 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
+        "bmw_pressclub_sources:f10-550i-2011-spec-article",
         "legacy_research_sources:55f10550a911"
       ],
       "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 550i launch-state sheet, so this row represents the exact rear-wheel-drive launch-state family.",
@@ -1032,9 +1033,10 @@
     "transmission": {
       "confidence": "unverified",
       "evidence_refs": [
+        "bmw_pressclub_sources:f10-550i-2011-spec-article",
         "legacy_research_sources:55f10550a911"
       ],
-      "notes": "Contradicted placeholder. The official BMW 09/2011 550i technical-data PDF publishes only Eight-speed automatic with Steptronic, so this represented MT6 row is not a valid exact production state under its current transmission id.",
+      "notes": "Contradicted placeholder. The official BMW 09/2011 5 Series Sedan specifications article separates the plain 550i attachment from the 550i xDrive sheet, and the dedicated 550i technical-data PDF then publishes only Eight-speed automatic with Steptronic. This represented MT6 row is therefore not a valid exact production state under its current transmission id.",
       "code": "MT6",
       "name": "6-speed manual"
     },
@@ -1127,8 +1129,9 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 12 directly revalidated the official BMW 09/2011 550i technical-data PDF. That checked official source confirms the F10 550i launch-state as rear-wheel drive with Eight-speed automatic with Steptronic only, final drive 2.813, and baseline 245/45 R18 tires. This represented MT6 row therefore remains an invalid advisory placeholder rather than a supported exact configuration.",
+        "note": "This F10 research wave revalidates the official BMW 09/2011 5 Series Sedan specifications article and the dedicated 550i technical-data PDF. Together they confirm the plain rear-wheel-drive 550i launch-state as Eight-speed automatic with Steptronic only, final drive 2.813, and baseline 245/45 R18 tires. This represented MT6 row therefore remains an invalid advisory placeholder rather than a supported exact configuration.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f10-550i-2011-spec-article",
           "legacy_research_sources:55f10550a911"
         ]
       }
@@ -1136,8 +1139,9 @@
     "unresolved": [
       {
         "item": "BMW F10 550i exact MT6 production row",
-        "reason": "The checked official BMW 09/2011 550i technical-data PDF publishes only Eight-speed automatic with Steptronic for the exact launch-state, and this pass did not recover any official F10 550i MT6 row because that represented manual configuration does not exist in the checked source chain.",
+        "reason": "The checked official BMW 09/2011 5 Series Sedan specifications article and dedicated 550i technical-data PDF publish only Eight-speed automatic with Steptronic for the exact launch-state, and this pass did not recover any official F10 550i MT6 row because that represented manual configuration does not exist in the checked source chain.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f10-550i-2011-spec-article",
           "legacy_research_sources:55f10550a911"
         ]
       },
@@ -1145,6 +1149,7 @@
         "item": "BMW F10 550i exact 2011 automatic row replacement",
         "reason": "The checked official BMW 09/2011 550i technical-data PDF is strong enough to seed the exact automatic row, but that valid sibling configuration is already represented by `bmw-f10-550i-eu-2011-zf8hp-rwd` and should not be silently conflated with this disproved MT6 id.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f10-550i-2011-spec-article",
           "legacy_research_sources:55f10550a911"
         ]
       }
@@ -1328,6 +1333,7 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
+        "bmw_pressclub_sources:f10-m5-2011-spec-article",
         "legacy_research_sources:f1055dc71011"
       ],
       "notes": "The official BMW 10/2011 M5 technical-data PDF confirms the exact F10 M5 launch-state is rear-wheel drive.",
@@ -1336,9 +1342,10 @@
     "transmission": {
       "confidence": "unverified",
       "evidence_refs": [
+        "bmw_pressclub_sources:f10-m5-2011-spec-article",
         "legacy_research_sources:f1055dc71011"
       ],
-      "notes": "Contradicted placeholder. The official BMW 10/2011 M5 technical-data PDF publishes a seven-speed M double-clutch transmission with Drivelogic rather than MT6, so this represented manual row is not a valid exact production state under its current transmission id.",
+      "notes": "Contradicted placeholder. The official BMW 10/2011 M5 specifications article and paired launch-period technical-data PDF publish a seven-speed M double-clutch transmission with Drivelogic rather than MT6, so this represented manual row is not a valid exact production state under its current transmission id.",
       "code": "MT6",
       "name": "6-speed manual"
     },
@@ -1431,8 +1438,9 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 12 directly revalidated the official BMW 10/2011 M5 technical-data PDF. That checked official source confirms the F10 M5 launch-state as rear-wheel drive with a seven-speed M double-clutch transmission with Drivelogic, final drive 3.150, and staggered 265/40 R19 front plus 295/35 R19 rear tires. This represented MT6 row therefore remains an invalid advisory placeholder rather than a supported exact configuration.",
+        "note": "This F10 research wave revalidates the official BMW 10/2011 M5 specifications article and paired technical-data PDF. Those checked official sources confirm the launch-period F10 M5 state as rear-wheel drive with a seven-speed M double-clutch transmission with Drivelogic, final drive 3.150, and staggered 265/40 R19 front plus 295/35 R19 rear tires. This represented MT6 row therefore remains an invalid advisory placeholder rather than a supported exact configuration, and the checked source chain does not support treating the whole `2011-2017` row span as one exact state.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f10-m5-2011-spec-article",
           "legacy_research_sources:f1055dc71011"
         ]
       }
@@ -1440,15 +1448,17 @@
     "unresolved": [
       {
         "item": "BMW F10 M5 exact MT6 production row",
-        "reason": "The checked official BMW 10/2011 M5 technical-data PDF publishes only a seven-speed M double-clutch transmission with Drivelogic for the exact launch-state, and this pass did not recover any official F10 M5 MT6 row because that represented manual configuration does not exist in the checked source chain.",
+        "reason": "The checked official BMW 10/2011 M5 specifications article and launch-period technical-data PDF publish only a seven-speed M double-clutch transmission with Drivelogic for the exact launch-state, and this pass did not recover any official F10 M5 MT6 row because that represented manual configuration does not exist in the checked source chain.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f10-m5-2011-spec-article",
           "legacy_research_sources:f1055dc71011"
         ]
       },
       {
-        "item": "BMW F10 M5 exact 2011 M DCT row replacement",
-        "reason": "The checked official BMW 10/2011 M5 technical-data PDF is strong enough to seed an exact rear-wheel-drive M DCT row, but that adjacent valid configuration should be created in its own dedicated follow-up pass rather than silently repurposing this disproved MT6 id.",
+        "item": "BMW F10 M5 exact 10/2011 M DCT row replacement and later-run continuity",
+        "reason": "The checked official BMW 10/2011 M5 technical-data PDF is strong enough to seed an exact rear-wheel-drive launch-period M DCT row, but it does not by itself prove unchanged continuity across the broad `2011-2017` row span, so that adjacent valid configuration should be created in its own dedicated follow-up pass rather than silently repurposing this disproved MT6 id.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f10-m5-2011-spec-article",
           "legacy_research_sources:f1055dc71011"
         ]
       }
@@ -1478,6 +1488,7 @@
     "drivetrain": {
       "confidence": "official_exact",
       "evidence_refs": [
+        "bmw_pressclub_sources:f10-m5-2011-spec-article",
         "legacy_research_sources:f1055dc71011"
       ],
       "notes": "The official BMW 10/2011 M5 technical-data PDF confirms the exact F10 M5 launch-state is rear-wheel drive.",
@@ -1486,9 +1497,10 @@
     "transmission": {
       "confidence": "unverified",
       "evidence_refs": [
+        "bmw_pressclub_sources:f10-m5-2011-spec-article",
         "legacy_research_sources:f1055dc71011"
       ],
-      "notes": "Contradicted placeholder. The official BMW 10/2011 M5 technical-data PDF publishes a seven-speed M double-clutch transmission with Drivelogic rather than ZF8HP, so this represented automatic row is not a valid exact production state under its current transmission id.",
+      "notes": "Contradicted placeholder. The official BMW 10/2011 M5 specifications article and paired launch-period technical-data PDF publish a seven-speed M double-clutch transmission with Drivelogic rather than ZF8HP, so this represented automatic row is not a valid exact production state under its current transmission id.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
@@ -1581,8 +1593,9 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 11 directly revalidated the official BMW 10/2011 M5 technical-data PDF. That checked official source confirms the F10 M5 launch-state as rear-wheel drive with a seven-speed M double-clutch transmission with Drivelogic, final drive 3.150, and staggered 265/40 R19 front plus 295/35 R19 rear tires. This represented ZF8HP row therefore remains an invalid advisory placeholder rather than a supported exact configuration.",
+        "note": "This F10 research wave revalidates the official BMW 10/2011 M5 specifications article and paired technical-data PDF. Those checked official sources confirm the launch-period F10 M5 state as rear-wheel drive with a seven-speed M double-clutch transmission with Drivelogic, final drive 3.150, and staggered 265/40 R19 front plus 295/35 R19 rear tires. This represented ZF8HP row therefore remains an invalid advisory placeholder rather than a supported exact configuration, and the checked source chain does not support treating the whole `2011-2017` row span as one exact state.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f10-m5-2011-spec-article",
           "legacy_research_sources:f1055dc71011"
         ]
       }
@@ -1590,15 +1603,17 @@
     "unresolved": [
       {
         "item": "BMW F10 M5 exact ZF8HP production row",
-        "reason": "The checked official BMW 10/2011 M5 technical-data PDF publishes only a seven-speed M double-clutch transmission with Drivelogic for the exact launch-state, and this pass did not recover any official F10 M5 ZF8HP row because that represented automatic configuration does not exist.",
+        "reason": "The checked official BMW 10/2011 M5 specifications article and launch-period technical-data PDF publish only a seven-speed M double-clutch transmission with Drivelogic for the exact launch-state, and this pass did not recover any official F10 M5 ZF8HP row because that represented automatic configuration does not exist in the checked source chain.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f10-m5-2011-spec-article",
           "legacy_research_sources:f1055dc71011"
         ]
       },
       {
-        "item": "BMW F10 M5 exact 2011 M DCT row replacement",
-        "reason": "The checked official BMW 10/2011 M5 technical-data PDF is strong enough to seed an exact rear-wheel-drive M DCT row, but that adjacent valid configuration should be created in its own dedicated follow-up pass rather than silently repurposing this disproved ZF8HP id.",
+        "item": "BMW F10 M5 exact 10/2011 M DCT row replacement and later-run continuity",
+        "reason": "The checked official BMW 10/2011 M5 technical-data PDF is strong enough to seed an exact rear-wheel-drive launch-period M DCT row, but it does not by itself prove unchanged continuity across the broad `2011-2017` row span, so that adjacent valid configuration should be created in its own dedicated follow-up pass rather than silently repurposing this disproved ZF8HP id.",
         "evidence_refs": [
+          "bmw_pressclub_sources:f10-m5-2011-spec-article",
           "legacy_research_sources:f1055dc71011"
         ]
       }

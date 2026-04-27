@@ -133,18 +133,10 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 30 TFSI manual placeholder. The checked Spain 2020 technical sheet and the 02/04/2026 Audi MediaCenter Germany technical-data PDF both prove a front-wheel-drive 6-speed manual 30 TFSI state, but they publish materially different ratio and final-drive packages while both use 205/60 R16 baseline tires. Those official states contradict the inherited 0.840, 3.462, and 215/50 R17 carryover values and show that the broad EU 2017-2024 row overlaps multiple exact states, so production JSON remains unchanged.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "legacy_research_sources:4f1a7d2b9c0e",
+          "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf"
         ]
       },
       {
@@ -153,35 +145,19 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q2 (GA, 2017-2024) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi Q2 30 TFSI manual applicability across the represented EU 2017-2024 row span",
+        "reason": "The checked 2020 Spain and 2026 Germany official sheets both prove exact manual states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "legacy_research_sources:4f1a7d2b9c0e",
+          "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf"
         ]
       },
       {
-        "item": "Audi Q2 (GA, 2017-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row manual ratio, final-drive, and tire applicability",
+        "reason": "The checked 2020 Spain and 2026 Germany official manual sheets disagree with each other and both contradict the inherited 0.840 top gear, 3.462 final drive, and 215/50 R17 broad-row carryover values.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "legacy_research_sources:4f1a7d2b9c0e",
+          "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf"
         ]
       }
     ],
@@ -327,18 +303,11 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific official Audi source-gap evidence for the broad Q2 30 TFSI S tronic placeholder. The recovered official packet closes Spain 2020 and Germany 2026 manual 30 TFSI states, but it does not recover any official 30 TFSI S tronic technical-data sheet. The checked Audi MediaCenter model page and the recovered Switzerland MY25 price list also do not safely close this broad automatic EU row, so production JSON remains unchanged.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "audi_mediacenter_sources:ga-q2-model-page",
+          "legacy_research_sources:4f1a7d2b9c0e",
+          "legacy_research_sources:9a7c1e5d4b62"
         ]
       },
       {
@@ -347,35 +316,20 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q2 (GA, 2017-2024) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Exact Audi Q2 30 TFSI S tronic applicability across the represented EU 2017-2024 row span",
+        "reason": "The recovered official packet does not safely close a 30 TFSI S tronic row: the checked Audi MediaCenter model page does not expose a 30 TFSI S tronic sheet, the Spain 2020 technical packet does not include one, and the recovered Switzerland MY25 price list omits 30 TFSI entirely.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "audi_mediacenter_sources:ga-q2-model-page",
+          "legacy_research_sources:4f1a7d2b9c0e",
+          "legacy_research_sources:9a7c1e5d4b62"
         ]
       },
       {
-        "item": "Audi Q2 (GA, 2017-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row DCT7 ratio, final-drive, and tire applicability",
+        "reason": "Because no checked official 30 TFSI S tronic technical-data sheet was recovered for this row, the inherited 0.725 top gear, 4.769 final drive, and 215/50 R17 tire mapping remain unsupported broad-row carryover values.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "audi_mediacenter_sources:ga-q2-model-page",
+          "legacy_research_sources:4f1a7d2b9c0e"
         ]
       }
     ],
@@ -521,18 +475,11 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 35 TFSI manual placeholder. The checked Spain 2020 technical sheet and the 02/04/2026 Audi MediaCenter Germany technical-data PDF both prove a front-wheel-drive 6-speed manual 35 TFSI state, and the recovered Switzerland MY25 price list confirms late-cycle manual coexistence, but the exact 2020 Spain and 2026 Germany ratio packages differ materially while the official baseline tire program stays at 205/60 R16. Those official states contradict the inherited 0.840, 3.462, and 215/50 R17 carryover values and show that the broad EU 2017-2024 row overlaps multiple exact states, so production JSON remains unchanged.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "legacy_research_sources:4f1a7d2b9c0e",
+          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf",
+          "legacy_research_sources:9a7c1e5d4b62"
         ]
       },
       {
@@ -541,35 +488,20 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q2 (GA, 2017-2024) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi Q2 35 TFSI manual applicability across the represented EU 2017-2024 row span",
+        "reason": "The checked 2020 Spain and 2026 Germany official sheets plus the late Switzerland price list prove real 35 TFSI manual states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "legacy_research_sources:4f1a7d2b9c0e",
+          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf",
+          "legacy_research_sources:9a7c1e5d4b62"
         ]
       },
       {
-        "item": "Audi Q2 (GA, 2017-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row manual ratio, final-drive, and tire applicability",
+        "reason": "The checked 2020 Spain and 2026 Germany official manual sheets disagree with each other and both contradict the inherited 0.840 top gear, 3.462 final drive, and 215/50 R17 broad-row carryover values.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "legacy_research_sources:4f1a7d2b9c0e",
+          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf"
         ]
       }
     ],
@@ -715,18 +647,11 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 35 TFSI S tronic placeholder. The checked Spain 2020 technical sheet, the 02/04/2026 Audi MediaCenter Germany technical-data PDF, and the recovered Switzerland MY25 price list all support a real front-wheel-drive 35 TFSI S tronic state, but they still represent late market-specific exact states rather than one unchanged EU 2017-2024 row. Those official states contradict the inherited 0.725, 4.769, and 215/50 R17 carryover values, so production JSON remains unchanged.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "legacy_research_sources:4f1a7d2b9c0e",
+          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf",
+          "legacy_research_sources:9a7c1e5d4b62"
         ]
       },
       {
@@ -735,35 +660,20 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q2 (GA, 2017-2024) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi Q2 35 TFSI S tronic applicability across the represented EU 2017-2024 row span",
+        "reason": "The checked 2020 Spain and 2026 Germany official sheets plus the late Switzerland price list prove real 35 TFSI S tronic states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "legacy_research_sources:4f1a7d2b9c0e",
+          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf",
+          "legacy_research_sources:9a7c1e5d4b62"
         ]
       },
       {
-        "item": "Audi Q2 (GA, 2017-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Represented-row S tronic ratio, final-drive, and tire applicability",
+        "reason": "The checked official 2020 Spain and 2026 Germany S tronic sheets contradict the inherited 0.725 top gear, 4.769 final drive, and 215/50 R17 broad-row carryover values, even though they remain too market- and era-specific for a direct broad-row rewrite.",
         "evidence_refs": [
-          "legacy_research_sources:3c0c0aa886bf",
-          "legacy_research_sources:3ff9cb8ff793",
-          "legacy_research_sources:44937c13793f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:891a3906d052",
-          "legacy_research_sources:a24edcc340c2",
-          "legacy_research_sources:ae186108fea8",
-          "legacy_research_sources:e4d20bd4419f"
+          "legacy_research_sources:4f1a7d2b9c0e",
+          "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf"
         ]
       }
     ],

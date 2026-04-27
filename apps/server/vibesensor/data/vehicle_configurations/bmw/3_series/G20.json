@@ -152,94 +152,22 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Checked official BMW 03/2019 and 03/2021 diesel technical-data PDFs plus the later 05/2024 ACEA technical-data PDF do not surface an exact G20 316d Sedan row. This MT6 row therefore remains an unsupported placeholder rather than a production-backed manual mapping.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-318d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-318d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Whether any exact G20 316d Sedan source exists for this broad EU manual row",
+        "reason": "The checked official BMW diesel technical-data PDFs surface 318d and 320d rows but no exact 316d Sedan row, so this pass cannot safely promote drivetrain, gearbox, ratio, or tire values for the represented 2019-2025 manual placeholder.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-318d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-318d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
         ]
       }
     ],
@@ -601,94 +529,22 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW 03/2019 and 03/2021 technical-data PDFs show the exact G20 318d Sedan manual state with 0.601 top gear, 3.154 final drive, and 205/60 R16 baseline tires, but the checked 05/2024 ACEA technical-data PDF only shows the later automatic state. This broad 2019-2025 MT6 row therefore needs an early-manual split instead of one inherited package.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-318d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-318d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Whether this broad G20 318d manual row should be narrowed to an early exact 2019-2021 row",
+        "reason": "The checked official BMW material proves one early manual package and later automatic-only continuity, so this pass keeps the broad MT6 row only as a split-first placeholder instead of promoting one numeric package across the full represented 2019-2025 span.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-318d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-318d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
         ]
       }
     ],
@@ -715,36 +571,45 @@
     "engine_name": "2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_derived",
       "evidence_refs": [
-        "bmw_market_pages:g20-3-series-de-overview",
-        "bmw_market_pages:g20-3-series-uk-listing",
-        "legacy_research_sources:0bfbe440deb6",
-        "legacy_research_sources:3c7fce849237",
-        "legacy_research_sources:5d6e9b9da00b",
-        "legacy_research_sources:b5d8a7f385c9",
-        "legacy_research_sources:b92080a8b603",
-        "legacy_research_sources:daa8f80dca50",
-        "legacy_research_sources:fc3067f501c7"
+        "bmw_pressclub_sources:g20-318d-2019-spec-pdf",
+        "bmw_pressclub_sources:g20-318d-2021-spec-pdf",
+        "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "The checked official BMW 03/2019, 03/2021, and 05/2024 technical-data PDFs all support the broad G20 318d Sedan automatic row as a rear-wheel-drive state.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g20-318d-2019-spec-pdf",
+        "bmw_pressclub_sources:g20-318d-2021-spec-pdf",
+        "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
+      ],
+      "notes": "The checked official BMW 03/2019, 03/2021, and 05/2024 technical-data PDFs all support the broad G20 318d Sedan automatic row as an Eight-speed Steptronic state. The repo keeps ZF8HP as the normalized gearbox-family mapping because the checked official BMW sources do not publish a subtype code.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g20-318d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-318d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
+        ],
+        "notes": "The checked official BMW 03/2019, 03/2021, and 05/2024 technical-data PDFs agree on 0.640 as the 8th-gear ratio for the broad G20 318d Sedan automatic row.",
+        "value": 0.64
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g20-318d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-318d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
+        ],
+        "notes": "The checked official BMW 03/2019, 03/2021, and 05/2024 technical-data PDFs agree on 2.813 as the final-drive ratio for the broad G20 318d Sedan automatic row.",
         "value": 2.813
       }
     },
@@ -853,94 +718,22 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW 03/2019 launch technical-data shows the exact G20 320d Sedan manual state with 0.601 top gear, 3.154 final drive, and 205/60 R16 baseline tires, but the checked 03/2021 and 05/2024 official BMW technical-data PDFs only show the later automatic state. This broad 2019-2025 MT6 row therefore needs an early-manual split instead of one inherited package.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-320d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Whether this broad G20 320d manual row should be narrowed to an early exact 2019 row",
+        "reason": "The checked official BMW material proves one launch-period manual package and later automatic-only continuity, so this pass keeps the broad MT6 row only as a split-first placeholder instead of promoting one numeric package across the full represented 2019-2025 span.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-320d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
         ]
       }
     ],
@@ -1105,94 +898,31 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW 03/2019, 03/2021, and 05/2024 technical-data PDFs all support the broad G20 318d Sedan automatic row as rear-wheel drive with Eight-speed Steptronic, 0.640 top gear, and 2.813 final drive. This follow-up promotes those stable powertrain values while leaving the tire fields unresolved because the checked official sheets move from 205/60 R16 early in the run to 225/50 R17 later in the run.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-318d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-318d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "BMW G20 318d exact default tire across the full represented 2019-2025 row span",
+        "reason": "The checked official BMW technical-data PDFs move the standard tire from early 205/60 R16 to later 225/50 R17, so the current single default-tire field remains a placeholder until the broad row is time-split or gains explicit year-aware wheel encoding.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-318d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-318d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
         ]
       },
       {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
+        "item": "BMW G20 318d exact public gearbox subtype and full optional wheel matrix",
+        "reason": "The checked official BMW sources prove market-facing Eight-speed Steptronic wording and the stable 0.640 / 2.813 powertrain package, but they do not publish a gearbox subtype code or one full optional wheel/tire matrix that safely closes the broad row.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-318d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-318d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
         ]
       }
     ],
@@ -1571,94 +1301,20 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW India press material places the 320Ld inside the 3 Series Gran Limousine / G28 long-wheelbase family and supports only an 8-speed Steptronic Sport automatic state. This G20 EU manual row is therefore wrong-shard spillover, not a production-backed G20 manual mapping.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g28-in-320ld-330li-2023-spec-pdf",
+          "bmw_pressclub_sources:g28-in-320ld-diesel-launch-page"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Move the 320Ld family into a dedicated G28 / non-EU shard",
+        "reason": "The saved official BMW India sources place 320Ld in the G28 long-wheelbase family and do not support a manual row, so this G20 EU placeholder cannot be corrected safely in place.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g28-in-320ld-330li-2023-spec-pdf",
+          "bmw_pressclub_sources:g28-in-320ld-diesel-launch-page"
         ]
       }
     ],
@@ -1846,36 +1502,20 @@
     },
     "verification_notes": [
       {
-        "note": "Batch 2 review replaces the copied neighboring G20 note with row-specific BMW evidence for the exact 320d Sedan automatic state. The checked official 03/2021 and 05/2022 BMW technical-data PDFs both prove rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, and final drive 2.813. The checked standard tire moves from 205/60 R16 in 03/2021 to 225/50 R17 in 05/2022, so the current single default-tire field remains a placeholder pending row retiming or option encoding.",
+        "note": "Official BMW India sources place the 320Ld inside the 3 Series Gran Limousine / G28 long-wheelbase family, not the EU-market G20 shard. The automatic transmission is real only on that non-EU G28 row, which also carries a mixed 18-inch tyre package rather than the inherited G20 square default.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
-          "bmw_pressclub_sources:g20-320d-2022-spec-pdf"
+          "bmw_pressclub_sources:g28-in-320ld-330li-2023-spec-pdf",
+          "bmw_pressclub_sources:g28-in-320ld-diesel-launch-page"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "BMW G20 320d production-data applicability across the full 2019-2025 row span",
-        "reason": "The checked official 03/2021 and 05/2022 technical-data PDFs prove exact rear-wheel-drive automatic 320d states with the same 0.640 / 2.813 ratio package, but this pass did not recover a launch-era 2019 source or one year-by-year chain proving one unchanged mapping across the full represented row span.",
+        "item": "Rebuild 320Ld from exact G28 market-specific sources",
+        "reason": "The saved official BMW India packet proves a non-EU G28 automatic row with different body/market scope and tyre shape, so this G20 EU placeholder should be replaced only after a dedicated G28 shard exists.",
         "evidence_refs": [
-          "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
-          "bmw_pressclub_sources:g20-320d-2022-spec-pdf"
-        ]
-      },
-      {
-        "item": "BMW G20 320d exact default tire across the full represented row span",
-        "reason": "The checked official 03/2021 technical-data PDF shows standard 205/60 R16 tires while the checked official 05/2022 technical-data PDF shows standard 225/50 R17 tires, so the current single default-tire field should not be promoted as one exact 2019-2025 mapping.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
-          "bmw_pressclub_sources:g20-320d-2022-spec-pdf"
-        ]
-      },
-      {
-        "item": "BMW G20 320d exact public gearbox code and full tire-option matrix",
-        "reason": "The checked official BMW sources prove market-facing Eight-speed Steptronic wording and show two exact standard tire states, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
-          "bmw_pressclub_sources:g20-320d-2022-spec-pdf"
+          "bmw_pressclub_sources:g28-in-320ld-330li-2023-spec-pdf",
+          "bmw_pressclub_sources:g28-in-320ld-diesel-launch-page"
         ]
       }
     ],
@@ -2040,94 +1680,20 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW Thailand and India long-wheelbase pages place the 320Li family in G28 Gran Limousine scope, not the EU-market G20 shard, and no saved official manual evidence was recovered. This G20 EU manual row remains wrong-shard spillover with unsupported gearbox identity.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_market_pages:g28-th-320li-overview-2024",
+          "bmw_market_pages:g28-in-long-wheelbase-overview"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Move 320Li into a dedicated G28 / non-EU shard",
+        "reason": "The saved official BMW long-wheelbase sources place 320Li in the G28 family and do not provide manual support, so this G20 EU manual placeholder cannot be corrected safely in place.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_market_pages:g28-th-320li-overview-2024",
+          "bmw_market_pages:g28-in-long-wheelbase-overview"
         ]
       }
     ],
@@ -2154,36 +1720,45 @@
     "engine_name": "I3",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_derived",
       "evidence_refs": [
-        "bmw_market_pages:g20-3-series-de-overview",
-        "bmw_market_pages:g20-3-series-uk-listing",
-        "legacy_research_sources:0bfbe440deb6",
-        "legacy_research_sources:3c7fce849237",
-        "legacy_research_sources:5d6e9b9da00b",
-        "legacy_research_sources:b5d8a7f385c9",
-        "legacy_research_sources:b92080a8b603",
-        "legacy_research_sources:daa8f80dca50",
-        "legacy_research_sources:fc3067f501c7"
+        "bmw_pressclub_sources:g20-320d-2019-spec-pdf",
+        "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
+        "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "The checked official BMW 03/2019, 03/2021, and 05/2024 technical-data PDFs all support the broad G20 320d Sedan automatic row as a rear-wheel-drive state.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g20-320d-2019-spec-pdf",
+        "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
+        "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
+      ],
+      "notes": "The checked official BMW 03/2019, 03/2021, and 05/2024 technical-data PDFs all support the broad G20 320d Sedan automatic row as an Eight-speed Steptronic state. The repo keeps ZF8HP as the normalized gearbox-family mapping because the checked official BMW sources do not publish a subtype code.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g20-320d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
+        ],
+        "notes": "The checked official BMW 03/2019, 03/2021, and 05/2024 technical-data PDFs agree on 0.640 as the 8th-gear ratio for the broad G20 320d Sedan automatic row.",
+        "value": 0.64
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g20-320d-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
+          "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
+        ],
+        "notes": "The checked official BMW 03/2019, 03/2021, and 05/2024 technical-data PDFs agree on 2.813 as the final-drive ratio for the broad G20 320d Sedan automatic row.",
         "value": 2.813
       }
     },
@@ -2292,94 +1867,20 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW Thailand and India long-wheelbase pages place the 320Li family in G28 Gran Limousine scope rather than the EU-market G20 shard. This automatic row therefore remains a wrong-shard placeholder and should be rebuilt from exact G28 market sources instead of inheriting G20 defaults.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_market_pages:g28-th-320li-overview-2024",
+          "bmw_market_pages:g28-in-long-wheelbase-overview"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Rebuild 320Li from exact G28 market-specific sources",
+        "reason": "The saved official BMW long-wheelbase sources prove the family scope mismatch, so this G20 EU automatic placeholder should move to a dedicated G28 shard before any numeric rewrite is attempted.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_market_pages:g28-th-320li-overview-2024",
+          "bmw_market_pages:g28-in-long-wheelbase-overview"
         ]
       }
     ],
@@ -3048,97 +2549,18 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW 03/2021 technical-data PDF shows the G20 320e Sedan only as a rear-wheel-drive full-hybrid row with 8-speed Steptronic transmission, not a 6-speed manual, and the saved packet also places the variant later than the current 2019 start year. This MT6 row remains only as a contradicted placeholder until the broader G20 shard is reshaped.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-320e-2021-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Whether this contradicted G20 320e manual row should be replaced by a 2021-on hybrid automatic row",
+        "reason": "Official BMW technical-data material in the saved packet supports the G20 320e only as a 2021-on rear-wheel-drive full-hybrid row with 8-speed Steptronic transmission, but this pass did not split the broad 2019-2025 row model.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-320e-2021-spec-pdf"
         ]
       }
     ],
@@ -3303,97 +2725,20 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW 03/2019 and 03/2021 technical-data PDFs both show the EU-market G20 320i Sedan only as a rear-wheel-drive 8-speed Steptronic row, not a 6-speed manual. This MT6 row remains only as a contradicted placeholder until the broader G20 shard is reshaped.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-320i-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-320i-2021-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Whether this contradicted G20 320i manual row should be deleted or replaced by an exact automatic-only row",
+        "reason": "Official BMW technical-data material in the saved packet supports the G20 320i only as a rear-wheel-drive 8-speed Steptronic row and does not support a 6-speed manual state, but this pass did not restructure the broad row set.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-320i-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-320i-2021-spec-pdf"
         ]
       }
     ],
@@ -3558,97 +2903,22 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW 08/2019 launch and 05/2024 technical-data material shows the EU-market G20 330e Sedan as an 8-speed Steptronic full-hybrid row with the electric motor integrated into the transmission, not a 6-speed manual. This MT6 row remains only as a contradicted placeholder until the broader G20 shard is reshaped.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-330e-2019-launch-article-pdf",
+          "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Whether this contradicted G20 330e manual row should be deleted or replaced by the exact hybrid automatic row already evidenced elsewhere in the shard",
+        "reason": "Official BMW launch and technical-data material supports the G20 330e only as an 8-speed Steptronic full-hybrid row and does not support a 6-speed manual state, but this pass did not remove or merge the placeholder row.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-330e-2019-launch-article-pdf",
+          "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
         ]
       }
     ],
@@ -3813,97 +3083,20 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW 03/2019 and 03/2021 technical-data PDFs both show the EU-market G20 330i Sedan only as a rear-wheel-drive 8-speed Steptronic row, not a 6-speed manual. This MT6 row remains only as a contradicted placeholder until the broader G20 shard is reshaped.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-330i-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-330i-2021-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release / technical data with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Whether this contradicted G20 330i manual row should be deleted or replaced by an exact automatic-only row",
+        "reason": "Official BMW technical-data material in the saved packet supports the G20 330i only as a rear-wheel-drive 8-speed Steptronic row and does not support a 6-speed manual state, but this pass did not restructure the broad row set.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g20-330i-2019-spec-pdf",
+          "bmw_pressclub_sources:g20-330i-2021-spec-pdf"
         ]
       }
     ],
@@ -4068,94 +3261,18 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW China spec data distinguishes G28 long-wheelbase from G20 standard-wheelbase and lists 325Li under the G28 family. No saved official manual evidence was recovered, so this G20 EU manual row remains wrong-shard spillover with unsupported gearbox identity.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_market_pages:g28-cn-2024-specsheet"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Move 325Li into a dedicated G28 / non-EU shard",
+        "reason": "The saved official BMW China source places 325Li in the G28 long-wheelbase family and does not support a manual row, so this G20 EU placeholder cannot be corrected safely in place.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_market_pages:g28-cn-2024-specsheet"
         ]
       }
     ],
@@ -4320,94 +3437,18 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW China spec data distinguishes G28 long-wheelbase from G20 standard-wheelbase and lists 325Li under the G28 family. This automatic row therefore remains a wrong-shard placeholder and should be rebuilt from exact G28 market sources instead of inheriting G20 defaults.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_market_pages:g28-cn-2024-specsheet"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Rebuild 325Li from exact G28 market-specific sources",
+        "reason": "The saved official BMW China source proves the family-scope mismatch, so this G20 EU automatic placeholder should move to a dedicated G28 shard before any numeric rewrite is attempted.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_market_pages:g28-cn-2024-specsheet"
         ]
       }
     ],
@@ -4572,94 +3613,20 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW India and China material places the 330Li inside the G28 long-wheelbase family and supports an 8-speed automatic state rather than a manual one. This G20 EU manual row is therefore wrong-shard spillover, not a production-backed G20 manual mapping.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g28-in-320ld-330li-2023-spec-pdf",
+          "bmw_market_pages:g28-cn-2024-specsheet"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Move 330Li into a dedicated G28 / non-EU shard",
+        "reason": "The saved official BMW India and China sources place 330Li in the G28 long-wheelbase family and support automatic-only non-EU rows, so this G20 EU manual placeholder cannot be corrected safely in place.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g28-in-320ld-330li-2023-spec-pdf",
+          "bmw_market_pages:g28-cn-2024-specsheet"
         ]
       }
     ],
@@ -4824,94 +3791,20 @@
     },
     "verification_notes": [
       {
-        "note": "Official BMW PressClub technical-data sheets now confirm the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813, top-gear ratio at 0.640, the full 8-speed ratio set, and the standard 225/50 R17 tire from exact 03/2021 and 07/2022 EU-DE documents, so the current 330i xDrive override was corrected. Wave 14 adds the parallel rear-wheel-drive petrol evidence without promoting it into production: official 03/2021 and 07/2022 BMW technical-data sheets prove the exact 320i RWD ratio package, reverse ratio 3.712, final drive 2.813, and baseline tires changing from 205/60 R16 to 225/50 R17, while official 03/2021 BMW technical-data also proves the exact 330i RWD ratio package and 225/50 R17 baseline tire. The broad row remains unchanged because this pass did not recover one current exact numeric BMW Germany table that safely closes plain-RWD 320i and 330i continuity across the full 2019-2025 span.",
+        "note": "Official BMW India and China material places the 330Li inside the G28 long-wheelbase family rather than the EU-market G20 shard. The saved India technical-data PDF also shows a mixed 18-inch tyre package, so this G20 EU automatic row should be rebuilt from exact G28 market sources instead of inheriting G20 defaults.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g28-in-320ld-330li-2023-spec-pdf",
+          "bmw_market_pages:g28-cn-2024-specsheet"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-        "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
+        "item": "Rebuild 330Li from exact G28 market-specific sources",
+        "reason": "The saved official BMW India and China sources prove the family-scope mismatch and non-G20 tyre package, so this G20 EU automatic placeholder should move to a dedicated G28 shard before any numeric rewrite is attempted.",
         "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-        "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-        "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
-        ]
-      },
-      {
-        "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-        "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g20-3-series-de-overview",
-          "bmw_market_pages:g20-3-series-uk-listing",
-          "legacy_research_sources:0bfbe440deb6",
-          "legacy_research_sources:3c7fce849237",
-          "legacy_research_sources:5d6e9b9da00b",
-          "legacy_research_sources:7c9fbfb0e7d2",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b5d8a7f385c9",
-          "legacy_research_sources:b92080a8b603",
-          "legacy_research_sources:daa8f80dca50",
-          "legacy_research_sources:fc3067f501c7",
-          "legacy_research_sources:ff48a54d62d6"
+          "bmw_pressclub_sources:g28-in-320ld-330li-2023-spec-pdf",
+          "bmw_market_pages:g28-cn-2024-specsheet"
         ]
       }
     ],

@@ -37,6 +37,132 @@
       "confidence": "medium"
     },
     {
+      "id": "secondary_technical_sources:a3-8v-sedan-1-6-tdi-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-1.6-tdi-110hp-23998",
+      "title": "Auto-Data A3 8V Sedan 1.6 TDI manual specification entry",
+      "note": "Exact secondary 2016-2018 facelift A3 Sedan 1.6 TDI 110 hp manual entry used to document that the sedan-specific 1.6 TDI state starts later than 2013 and carries 205/55 R16 baseline tires rather than the shard's inherited 225/45 R17 default.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-1-6-tdi-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-1.6-tdi-110hp-s-tronic-24010",
+      "title": "Auto-Data A3 8V Sedan 1.6 TDI S tronic specification entry",
+      "note": "Exact secondary 2016-2018 facelift A3 Sedan 1.6 TDI 110 hp S tronic entry used to document that the sedan-specific automatic 1.6 TDI state starts later than 2013 and carries 205/55 R16 baseline tires rather than the shard's inherited 225/45 R17 default.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-30-tfsi-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-30-tfsi-116hp-35151",
+      "title": "Auto-Data A3 8V Sedan 30 TFSI manual specification entry",
+      "note": "Exact secondary 2018-2020 facelift A3 Sedan 30 TFSI 116 hp manual entry used to document that the late-name 30 TFSI sedan row does not safely extend back to 2013 and carries 205/55 R16 baseline tires in the recovered sedan evidence.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-30-tfsi-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-30-tfsi-116hp-s-tronic-35152",
+      "title": "Auto-Data A3 8V Sedan 30 TFSI S tronic specification entry",
+      "note": "Exact secondary 2018-2020 facelift A3 Sedan 30 TFSI 116 hp S tronic entry used to document that the late-name automatic 30 TFSI sedan row does not safely extend back to 2013 and carries 205/55 R16 baseline tires in the recovered sedan evidence.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-2-0-tdi-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-2.0-tdi-150hp-24020",
+      "title": "Auto-Data A3 8V Sedan 2.0 TDI manual specification entry",
+      "note": "Exact secondary 2016-2018 facelift A3 Sedan 2.0 TDI 150 hp manual entry used to document that the recovered sedan-specific diesel manual state begins in the facelift-era public evidence and carries a 205/55 R16 baseline tire rather than the shard's inherited 225/45 R17 default.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-2-0-tdi-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-2.0-tdi-150hp-s-tronic-23754",
+      "title": "Auto-Data A3 8V Sedan 2.0 TDI S tronic specification entry",
+      "note": "Exact secondary 2016-2018 facelift A3 Sedan 2.0 TDI 150 hp S tronic entry used to document that the recovered sedan-specific diesel automatic state begins in the facelift-era public evidence and carries a 205/55 R16 baseline tire rather than the shard's inherited 225/45 R17 default.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-2.0-tdi-150hp-quattro-23815",
+      "title": "Auto-Data A3 8V Sedan 2.0 TDI quattro manual specification entry",
+      "note": "Exact secondary 2016-2018 facelift A3 Sedan 2.0 TDI quattro 150 hp manual entry used to document the recovered AWD manual slice and its 205/55 R16 baseline tire, showing that the broad quattro family row is still over-grouped.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-2.0-tdi-184hp-quattro-s-tronic-26348",
+      "title": "Auto-Data A3 8V Sedan 2.0 TDI quattro S tronic specification entry",
+      "note": "Exact secondary 2016-2018 facelift A3 Sedan 2.0 TDI quattro 184 hp S tronic entry used to document the recovered AWD automatic slice and its 205/55 R16 baseline tire, showing that the broad quattro family row currently merges different power states.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-35-tfsi-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-35-tfsi-150hp-35153",
+      "title": "Auto-Data A3 8V Sedan 35 TFSI manual specification entry",
+      "note": "Exact secondary 2018-2020 facelift A3 Sedan 35 TFSI 150 hp manual entry used to confirm that the late-name 35 TFSI sedan manual state belongs to the late badge-era window and carries a 205/55 R16 baseline tire.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-35-tfsi-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-35-tfsi-150hp-s-tronic-35154",
+      "title": "Auto-Data A3 8V Sedan 35 TFSI S tronic specification entry",
+      "note": "Exact secondary 2018-2020 facelift A3 Sedan 35 TFSI 150 hp S tronic entry used to confirm that the late-name 35 TFSI sedan automatic state belongs to the late badge-era window and carries a 205/55 R16 baseline tire.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-2-0-tdi-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-2.0-tdi-150hp-24020",
+      "title": "Auto-Data A3 8V Sedan 2.0 TDI manual specification entry",
+      "note": "Exact secondary 2016-2018 facelift A3 Sedan 2.0 TDI 150 hp manual entry used to document that the recovered sedan-specific diesel manual state begins in the facelift-era public evidence and carries a 205/55 R16 baseline tire rather than the shard's inherited 225/45 R17 default.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-2-0-tdi-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-2.0-tdi-150hp-s-tronic-23754",
+      "title": "Auto-Data A3 8V Sedan 2.0 TDI S tronic specification entry",
+      "note": "Exact secondary 2016-2018 facelift A3 Sedan 2.0 TDI 150 hp S tronic entry used to document that the recovered sedan-specific diesel automatic state begins in the facelift-era public evidence and carries a 205/55 R16 baseline tire rather than the shard's inherited 225/45 R17 default.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-2.0-tdi-150hp-quattro-23815",
+      "title": "Auto-Data A3 8V Sedan 2.0 TDI quattro manual specification entry",
+      "note": "Exact secondary 2016-2018 facelift A3 Sedan 2.0 TDI quattro 150 hp manual entry used to document the recovered AWD manual slice and its 205/55 R16 baseline tire, showing that the broad quattro family row is still over-grouped.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-2-0-tdi-quattro-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-2.0-tdi-184hp-quattro-s-tronic-26348",
+      "title": "Auto-Data A3 8V Sedan 2.0 TDI quattro S tronic specification entry",
+      "note": "Exact secondary 2016-2018 facelift A3 Sedan 2.0 TDI quattro 184 hp S tronic entry used to document the recovered AWD automatic slice and its 205/55 R16 baseline tire, showing that the broad quattro family row currently merges different power states.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-35-tfsi-mt6-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-35-tfsi-150hp-35153",
+      "title": "Auto-Data A3 8V Sedan 35 TFSI manual specification entry",
+      "note": "Exact secondary 2018-2020 facelift A3 Sedan 35 TFSI 150 hp manual entry used to confirm that the late-name 35 TFSI sedan manual state belongs to the late badge-era window and carries a 205/55 R16 baseline tire.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-35-tfsi-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-35-tfsi-150hp-s-tronic-35154",
+      "title": "Auto-Data A3 8V Sedan 35 TFSI S tronic specification entry",
+      "note": "Exact secondary 2018-2020 facelift A3 Sedan 35 TFSI 150 hp S tronic entry used to confirm that the late-name 35 TFSI sedan automatic state belongs to the late badge-era window and carries a 205/55 R16 baseline tire.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-1-8-tfsi-quattro-dct6-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-1.8-tfsi-180hp-quattro-s-tronic-23176",
+      "title": "Auto-Data A3 8V Sedan 1.8 TFSI quattro S tronic specification entry",
+      "note": "Exact secondary 2013-2016 pre-facelift A3 Sedan 1.8 TFSI 180 hp quattro S tronic entry used to document that the early exact AWD sedan state is automatic-only and six-speed, not a manual 40 TFSI quattro row.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a3-8v-sedan-2-0-tfsi-quattro-dct7-autodata",
+      "url": "https://www.auto-data.net/en/audi-a3-sedan-8v-facelift-2016-2.0-tfsi-190hp-quattro-s-tronic-23784",
+      "title": "Auto-Data A3 8V Sedan 2.0 TFSI quattro S tronic specification entry",
+      "note": "Exact secondary 2016-2018 facelift A3 Sedan 2.0 TFSI 190 hp quattro S tronic entry used to document that the later exact AWD sedan state is also automatic-only and belongs to a different facelift-era powertrain slice than the broad 2013-2020 row.",
+      "confidence": "medium"
+    },
+    {
       "id": "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
       "url": "https://www.carfolio.com/audi-a4-2.0-tdi-quattro-192203",
       "title": "Carfolio A4 B8 2.0 TDI quattro manual specification entry",

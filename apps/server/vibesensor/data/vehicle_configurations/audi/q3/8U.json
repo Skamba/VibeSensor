@@ -113,13 +113,9 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Follow-up official Audi UK diesel review recovered an exact pre-facelift 2.0 TDI quattro 177 PS S tronic sheet, but no exact official FWD diesel technical sheet. This broad 2012-2018 FWD manual row therefore remains an unsupported placeholder and must not inherit the recovered quattro automatic state.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a198c9d097d",
-          "legacy_research_sources:f15178e8436e"
+          "legacy_research_sources:7b9e3a4d0c41"
         ]
       },
       {
@@ -128,25 +124,17 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi Q3 8U exact FWD diesel manual mapping against recovered official diesel evidence",
+        "reason": "The only exact official diesel technical sheet recovered in this pass is the AWD 177 PS S tronic row, which does not validate this FWD manual configuration.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a198c9d097d",
-          "legacy_research_sources:f15178e8436e"
+          "legacy_research_sources:7b9e3a4d0c41"
         ]
       },
       {
-        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Schema-safe exact FWD diesel replacement for the broad 2012-2018 manual row",
+        "reason": "This pass did not recover an official FWD diesel technical sheet that would justify narrowing or rewriting the stored broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a198c9d097d",
-          "legacy_research_sources:f15178e8436e"
+          "legacy_research_sources:7b9e3a4d0c41"
         ]
       }
     ],
@@ -272,13 +260,9 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Follow-up official Audi UK diesel review recovered an exact pre-facelift 2.0 TDI quattro 177 PS S tronic sheet, but no exact official FWD diesel technical sheet. This broad 2012-2018 FWD automatic row therefore remains an unsupported placeholder and must not inherit the recovered quattro automatic state.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a198c9d097d",
-          "legacy_research_sources:f15178e8436e"
+          "legacy_research_sources:7b9e3a4d0c41"
         ]
       },
       {
@@ -287,25 +271,17 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi Q3 8U exact FWD diesel automatic mapping against recovered official diesel evidence",
+        "reason": "The only exact official diesel technical sheet recovered in this pass is the AWD 177 PS S tronic row, which does not validate this FWD automatic configuration.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a198c9d097d",
-          "legacy_research_sources:f15178e8436e"
+          "legacy_research_sources:7b9e3a4d0c41"
         ]
       },
       {
-        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Schema-safe exact FWD diesel replacement for the broad 2012-2018 automatic row",
+        "reason": "This pass did not recover an official FWD diesel technical sheet that would justify narrowing or rewriting the stored broad automatic row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a198c9d097d",
-          "legacy_research_sources:f15178e8436e"
+          "legacy_research_sources:7b9e3a4d0c41"
         ]
       }
     ],
@@ -756,8 +732,9 @@
     },
     "verification_notes": [
       {
-        "note": "Exact secondary Q3 manual pages now confirm the checked AWD/manual identity and 235/55 R17 baseline tire. Exact top-gear and axle-final-drive values still were not recovered from a source that maps cleanly into the current schema.",
+        "note": "Exact secondary Q3 manual pages still support the checked AWD/manual identity and 235/55 R17 baseline tire, but the follow-up official Audi UK diesel sheet recovered in this pass is for the pre-facelift 177 PS quattro S tronic automatic state, not for the manual row. This broad AWD manual placeholder therefore remains unresolved and must not inherit the recovered official automatic configuration.",
         "evidence_refs": [
+          "legacy_research_sources:7b9e3a4d0c41",
           "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
           "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-car-specs"
         ]
@@ -768,17 +745,19 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
-        "reason": "Exact secondary Q3 manual pages confirm AWD, 6-speed manual transmission, and 235/55 R17 tires, but they still do not recover a trustworthy top-gear or axle-final-drive pair for the broad row.",
+        "item": "Audi Q3 8U exact AWD diesel manual mapping against recovered official diesel evidence",
+        "reason": "The follow-up official Audi UK diesel technical sheet recovered in this pass is the pre-facelift 177 PS quattro S tronic state, so it does not validate this broad AWD manual row.",
         "evidence_refs": [
+          "legacy_research_sources:7b9e3a4d0c41",
           "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
           "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-car-specs"
         ]
       },
       {
-        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "No checked exact source in this pass exposed axle-final-drive values or a safe top-gear value for the broad manual row.",
+        "item": "Schema-safe split between manual-secondary and official automatic diesel quattro states",
+        "reason": "The broad row still combines a secondary-backed manual identity with a separate official early automatic diesel sheet, so this pass does not justify one shared exact-row mapping.",
         "evidence_refs": [
+          "legacy_research_sources:7b9e3a4d0c41",
           "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
           "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-car-specs"
         ]
@@ -911,13 +890,9 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Follow-up official Audi UK diesel review recovered an exact pre-facelift Q3 2.0 TDI quattro 177 PS S tronic technical sheet showing AWD, 7-speed S tronic, grouped gearbox/final-drive presentation, and basic 215/65 R16 tires. That official packet hardens the early automatic state, but it does not close full 2012-2018 continuity for this broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a198c9d097d",
-          "legacy_research_sources:f15178e8436e"
+          "legacy_research_sources:7b9e3a4d0c41"
         ]
       },
       {
@@ -926,25 +901,17 @@
     ],
     "unresolved": [
       {
-        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi Q3 8U 2.0 TDI quattro S tronic exact early-era versus full-row applicability",
+        "reason": "The recovered official Audi UK diesel technical sheet proves one exact pre-facelift 177 PS quattro S tronic state, but it does not by itself prove the whole 2012-2018 broad row.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a198c9d097d",
-          "legacy_research_sources:f15178e8436e"
+          "legacy_research_sources:7b9e3a4d0c41"
         ]
       },
       {
-        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Schema-safe continuity beyond the recovered exact pre-facelift diesel quattro S tronic sheet",
+        "reason": "The current broad row still spans years beyond the recovered exact official 177 PS automatic sheet, so this pass does not justify treating one early UK technical PDF as the full-row mapping.",
         "evidence_refs": [
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:6a198c9d097d",
-          "legacy_research_sources:f15178e8436e"
+          "legacy_research_sources:7b9e3a4d0c41"
         ]
       }
     ],
