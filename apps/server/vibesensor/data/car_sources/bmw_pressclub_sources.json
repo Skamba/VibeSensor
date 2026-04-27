@@ -121,6 +121,20 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f20-2012-125i-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0124363EN/182884",
+      "title": "BMW PressClub F20 125i 2012 specifications PDF",
+      "note": "Official BMW 03/2012 technical-data PDF for the exact F20 1 Series 5 Door Hatch 125i. The checked table directly publishes the 125i six-speed manual row with optional eight-speed automatic figures in brackets, sixth gear 0.677, automatic eighth gear 0.667, differential ratios 3.909 and 3.077, and the standard 205/50 R17 tire package.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f20-2012-125d-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0124363EN/182885",
+      "title": "BMW PressClub F20 125d 2012 specifications PDF",
+      "note": "Official BMW 03/2012 technical-data PDF for the exact F20 1 Series 5 Door Hatch 125d. The checked table directly publishes the 125d six-speed manual row with optional eight-speed automatic figures in brackets, sixth gear 0.659, automatic eighth gear 0.667, differential ratios 3.385 and 2.647, and the standard 205/50 R17 tire package.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f21-2012-petrol-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0132125EN/198998",
       "title": "BMW PressClub F21 1 Series 3 Door Hatch 114i and 116i 2012 specifications PDF",

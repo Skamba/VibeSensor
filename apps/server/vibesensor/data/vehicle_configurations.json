@@ -44266,6 +44266,394 @@
     }
   },
   {
+    "id": "bmw-f20-125i-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F20, 2012)",
+    "variant_name": "125i",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2012 technical-data PDF lists the exact F20 1 Series 5 Door Hatch 125i row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2012 technical-data PDF directly publishes the exact 125i manual row as six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF publishes 0.677 as the sixth gear for the exact 125i manual row.",
+        "value": 0.677
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF publishes 3.909 as the differential ratio for the exact 125i manual row.",
+        "value": 3.909
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125i row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+          ],
+          "notes": "Official BMW 03/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125i row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 17 adds the exact 03/2012 F20 125i manual row. The official BMW technical-data PDF confirms the 125i with six-speed manual, sixth gear 0.677, differential ratio 3.909, and standard 205/50 R17 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f20-125i-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F20, 2012)",
+    "variant_name": "125i",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2012 technical-data PDF lists the exact F20 1 Series 5 Door Hatch 125i row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2012 technical-data PDF publishes the 125i as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF publishes 0.667 as the eighth gear for the exact 125i automatic row.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF publishes 3.077 as the differential ratio for the exact 125i automatic row.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125i row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+          ],
+          "notes": "Official BMW 03/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125i row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 17 adds the exact 03/2012 F20 125i automatic row. The official BMW technical-data PDF confirms the 125i with optional eight-speed automatic, eighth gear 0.667, differential ratio 3.077, and standard 205/50 R17 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125i-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f20-125d-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F20, 2012)",
+    "variant_name": "125d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2012 technical-data PDF lists the exact F20 1 Series 5 Door Hatch 125d row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2012 technical-data PDF directly publishes the exact 125d manual row as six-speed manual with optional eight-speed automatic figures shown in brackets.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF publishes 0.659 as the sixth gear for the exact 125d manual row.",
+        "value": 0.659
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF publishes 3.385 as the differential ratio for the exact 125d manual row.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125d row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+          ],
+          "notes": "Official BMW 03/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125d row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 17 adds the exact 03/2012 F20 125d manual row. The official BMW technical-data PDF confirms the 125d with six-speed manual, sixth gear 0.659, differential ratio 3.385, and standard 205/50 R17 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f20-125d-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F20",
+    "body_code": "F20",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "1 Series (F20, 2012)",
+    "variant_name": "125d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2012 technical-data PDF lists the exact F20 1 Series 5 Door Hatch 125d row and confirms the rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2012 technical-data PDF publishes the 125d as six-speed manual with optional eight-speed automatic figures in brackets, which directly support this exact automatic row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF publishes 0.667 as the eighth gear for the exact 125d automatic row.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF publishes 2.647 as the differential ratio for the exact 125d automatic row.",
+        "value": 2.647
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+        ],
+        "notes": "Official BMW 03/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125d row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+          ],
+          "notes": "Official BMW 03/2012 technical-data PDF confirms the standard 17-inch square tire setup for the exact 125d row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 17 adds the exact 03/2012 F20 125d automatic row. The official BMW technical-data PDF confirms the 125d with optional eight-speed automatic, eighth gear 0.667, differential ratio 2.647, and standard 205/50 R17 tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f20-2012-125d-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
     "id": "bmw-f21-114i-eu-2012-mt6-rwd",
     "brand": "BMW",
     "type": "Hatchback",
