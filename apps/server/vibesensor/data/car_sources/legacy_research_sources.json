@@ -590,6 +590,13 @@
       "confidence": "high"
     },
     {
+      "id": "legacy_research_sources:387f07d4c6ab",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/brochure/catalogue/BMW_7er_Katalog.pdf",
+      "title": "Bmw 7Er Katalog.Pdf",
+      "note": "Official BMW DE 7 Series brochure/catalog finalized in 03/2017 for the launch-era lineup. The technical-data table confirms 740e/Le as rear-wheel-drive plug-in hybrids with 8-Gang Steptronic and 245/50 R18 baseline tires, separates 740Le xDrive as the AWD sibling, and shows 750d/Ld only in the xDrive columns rather than as RWD rows.",
+      "confidence": "high"
+    },
+    {
       "id": "legacy_research_sources:38987808b4bf",
       "url": "https://www.bmw.de/sitemap.xml",
       "title": "Sitemap.Xml",
