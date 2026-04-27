@@ -216,8 +216,8 @@ def test_resolve_variant_audi_b9_fy_s_tronic_uses_verified_final_drives(
         ("A4 (B9, 2016-2025)", "35 TDI", "2.0L I4 TDI Diesel", "FWD"),
         ("Q3 (8U, 2012-2018)", "2.0 TDI", "2.0L I4 TDI Diesel", "FWD"),
         ("Q3 (8U, 2012-2018)", "2.0 TDI quattro", "2.0L I4 TDI Diesel", "AWD"),
-        ("Q3 (F3, 2019-2026)", "35 TDI", "2.0L I4 TDI Diesel", "FWD"),
-        ("Q3 (F3, 2019-2026)", "40 TDI quattro", "2.0L I4 TDI Diesel", "AWD"),
+        ("Q3 (F3, 2019-2025)", "35 TDI", "2.0L I4 TDI Diesel", "FWD"),
+        ("Q3 (F3, 2019-2025)", "40 TDI quattro", "2.0L I4 TDI Diesel", "AWD"),
         ("Q5 (FY, 2017-2026)", "35 TDI quattro", "2.0L I4 TDI Diesel", "AWD"),
         ("Q5 (FY, 2017-2026)", "40 TDI quattro", "2.0L I4 TDI Diesel", "AWD"),
     ],
@@ -249,9 +249,14 @@ def test_audi_models_include_verified_tdi_variants(
             },
         ),
         (
-            "7 Series (G70, 2023-2026)",
+            "7 Series (G70, 2022-2026)",
             {
                 "i7 eDrive50": ("Electric Single Motor", "RWD"),
+            },
+        ),
+        (
+            "7 Series (G70, 2023-2026)",
+            {
                 "i7 M70 xDrive": ("Electric Dual Motor", "AWD"),
             },
         ),

@@ -9,6 +9,16 @@
       "rule": "pure_ev_requires_single_speed",
       "entity": "BMW|X2 (U10, 2024-2026)|iX2 xDrive30",
       "reason": "Legacy row still inherits shared non-EV gearbox data until an exact EV drivetrain row is captured."
+    },
+    {
+      "rule": "gear_ratio_order",
+      "entity": "Audi|TT (8S, 2023)",
+      "reason": "The exact late-cycle TT 40 TFSI S tronic row carries the official Audi raw gearbox ratios alongside split final-drive values, so the grouped row can expose a non-monotonic raw ratio list even though the OEM overall gearing is production-valid."
+    },
+    {
+      "rule": "gear_ratio_order",
+      "entity": "Audi|TT (8S, 2023)|40 TFSI",
+      "reason": "The exact late-cycle TT 40 TFSI S tronic row carries the official Audi raw gearbox ratios alongside split final-drive values, so the variant override can expose a non-monotonic raw ratio list even though the OEM overall gearing is production-valid."
     }
   ]
 }
