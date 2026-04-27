@@ -121,15 +121,9 @@
     },
     "verification_notes": [
       {
-        "note": "Official Audi Germany-market material now confirms the exact late-cycle TT Coupé 45 TFSI quattro S tronic 180 kW mapping: quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. The broad TT row remains unchanged because the current schema stores only one final_drive_ratio, the checked exact evidence is late-cycle only, and this pass did not prove one production-safe mapping across the full 2015-2023 row.",
+        "note": "Official Audi TT/TTS product-information material shows the facelift-era 40 TFSI only with 7-speed S tronic rather than a manual gearbox, and this run did not recover an accepted exact official 2014/2015 Audi technical-data sheet for a 40 TFSI manual coupe. The broad legacy manual row therefore remains only as an unresolved placeholder rather than a supported exact configuration.",
         "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
+          "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf"
         ]
       },
       {
@@ -138,42 +132,17 @@
     ],
     "unresolved": [
       {
-        "item": "Schema-safe encoding of the exact Audi TT 45 TFSI quattro dual final-drive values",
-        "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 for the target, but the current row stores only one final_drive_ratio field.",
+        "item": "Audi TT 40 TFSI exact manual applicability across the represented row",
+        "reason": "Official Audi TT/TTS product information shows the facelift-era 40 TFSI only with 7-speed S tronic, and this run did not recover an accepted exact official 2014/2015 Audi technical-data sheet for a 40 TFSI manual coupe.",
         "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
+          "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf"
         ]
       },
       {
-        "item": "Audi TT 45 TFSI quattro production-data applicability across the full 2015-2023 row span",
-        "reason": "The checked exact 2023 Germany-market technical-data PDF resolves the late-cycle 45 TFSI quattro mapping, but this pass did not recover enough year-specific official ratio sheets to prove one unchanged package across the full represented span.",
+        "item": "Audi TT 40 TFSI legacy manual row replacement evidence",
+        "reason": "Accessible public historical analogue evidence suggests an early front-wheel-drive manual TT coupe existed under older naming, but this run did not recover accepted official Audi source material that maps that analogue cleanly onto a 40 TFSI manual row.",
         "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
-        ]
-      },
-      {
-        "item": "Audi TT 45 TFSI quattro exact transmission-code and non-basic tire-option coverage",
-        "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire, but they do not publish the gearbox code or the full optional wheel/tire matrix for the exact target.",
-        "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
+          "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf"
         ]
       }
     ],
@@ -307,56 +276,25 @@
     },
     "verification_notes": [
       {
-        "note": "Official Audi Germany-market material now confirms the exact late-cycle TT Coupé 45 TFSI quattro S tronic 180 kW mapping: quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. The broad TT row remains unchanged because the current schema stores only one final_drive_ratio, the checked exact evidence is late-cycle only, and this pass did not prove one production-safe mapping across the full 2015-2023 row.",
+        "note": "Official Audi TT/TTS product-information material confirms that the facelift-era 45 TFSI program includes a 6-speed manual coupe, but this run did not recover an accepted exact official 2014/2015 Audi technical-data sheet with the manual row's ratios, final drive, and basic tire. The broad legacy manual row therefore remains unresolved rather than promoted to an exact early-cycle mapping.",
         "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
+          "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "Schema-safe encoding of the exact Audi TT 45 TFSI quattro dual final-drive values",
-        "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 for the target, but the current row stores only one final_drive_ratio field.",
+        "item": "Audi TT 45 TFSI exact manual ratio and final-drive mapping across the represented row",
+        "reason": "Official Audi TT/TTS product information confirms 45 TFSI manual availability, but this run did not recover an accepted exact official 2014/2015 Audi technical-data sheet with the manual row's ratios or final-drive publication.",
         "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
+          "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf"
         ]
       },
       {
-        "item": "Audi TT 45 TFSI quattro production-data applicability across the full 2015-2023 row span",
-        "reason": "The checked exact 2023 Germany-market technical-data PDF resolves the late-cycle 45 TFSI quattro mapping, but this pass did not recover enough year-specific official ratio sheets to prove one unchanged package across the full represented span.",
+        "item": "Audi TT 45 TFSI exact wheel/tire coverage across the represented manual row",
+        "reason": "Official Audi TT/TTS product information closes the broader TT/TTS family 17/18/19/20-inch wheel ladder, but this run did not recover one accepted exact official wheel/tire matrix for the manual 45 TFSI coupe row.",
         "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
-        ]
-      },
-      {
-        "item": "Audi TT 45 TFSI quattro exact transmission-code and non-basic tire-option coverage",
-        "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire, but they do not publish the gearbox code or the full optional wheel/tire matrix for the exact target.",
-        "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
+          "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf"
         ]
       }
     ],
@@ -678,15 +616,10 @@
     },
     "verification_notes": [
       {
-        "note": "Official Audi Germany-market material now confirms the exact late-cycle TT Coupé 45 TFSI quattro S tronic 180 kW mapping: quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. The broad TT row remains unchanged because the current schema stores only one final_drive_ratio, the checked exact evidence is late-cycle only, and this pass did not prove one production-safe mapping across the full 2015-2023 row.",
+        "note": "Official Audi TT/TTS product-information material and the exact 01/2023 TT Coupe 45 TFSI quattro technical-data PDF support quattro AWD only alongside 7-speed S tronic wording; this run did not recover any accepted official evidence for a manual 45 TFSI quattro coupe row. The broad legacy manual row therefore remains only as an unresolved placeholder rather than a supported exact configuration.",
         "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
+          "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+          "audi_mediacenter_sources:8s-tt-coupe-45-tfsi-quattro-2023-tech-data-pdf"
         ]
       },
       {
@@ -698,39 +631,23 @@
         "item": "Schema-safe encoding of the exact Audi TT 45 TFSI quattro dual final-drive values",
         "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 for the target, but the current row stores only one final_drive_ratio field.",
         "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
+          "audi_mediacenter_sources:8s-tt-coupe-45-tfsi-quattro-2023-tech-data-pdf"
         ]
       },
       {
-        "item": "Audi TT 45 TFSI quattro production-data applicability across the full 2015-2023 row span",
-        "reason": "The checked exact 2023 Germany-market technical-data PDF resolves the late-cycle 45 TFSI quattro mapping, but this pass did not recover enough year-specific official ratio sheets to prove one unchanged package across the full represented span.",
+        "item": "Audi TT 45 TFSI quattro exact manual applicability across the represented row",
+        "reason": "Official Audi TT/TTS product information lists 45 TFSI manual availability and 45 TFSI quattro availability separately, while the checked exact quattro technical-data PDF is S tronic only; this run did not recover any accepted official evidence for a manual 45 TFSI quattro coupe row.",
         "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
+          "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+          "audi_mediacenter_sources:8s-tt-coupe-45-tfsi-quattro-2023-tech-data-pdf"
         ]
       },
       {
         "item": "Audi TT 45 TFSI quattro exact transmission-code and non-basic tire-option coverage",
-        "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire, but they do not publish the gearbox code or the full optional wheel/tire matrix for the exact target.",
+        "reason": "Official Audi sources prove 7-speed S tronic wording, the late-cycle dual-final-drive label, and the 225/50 R17 basic tire, while TT/TTS product information only closes the broader 17/18/19/20-inch family wheel ladder rather than one exact manual-quattro option matrix or gearbox-family code.",
         "evidence_refs": [
-          "legacy_research_sources:002d355a3a6c",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:593c29d5ab5f",
-          "legacy_research_sources:5e252f7f436b",
-          "legacy_research_sources:a66ead086a49",
-          "legacy_research_sources:f46299570461"
+          "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+          "audi_mediacenter_sources:8s-tt-coupe-45-tfsi-quattro-2023-tech-data-pdf"
         ]
       }
     ],

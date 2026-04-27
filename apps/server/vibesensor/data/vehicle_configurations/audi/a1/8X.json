@@ -113,13 +113,11 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Checked exact official Audi launch and facelift sources. Official Audi material places the 1.0 TFSI only in the spring-2015 facelift window, while facelift brochures confirm the 1.0 TFSI 5-speed manual FWD state and a lower 15-inch baseline wheel package. This represented 2011 manual row therefore remains a contradicted advisory placeholder rather than a validated launch-era exact state.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:0cd20821c4bc",
+          "legacy_research_sources:cfd6a6b47886",
+          "legacy_research_sources:092a3f271f19"
         ]
       },
       {
@@ -128,25 +126,20 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A1 (8X, 2011-2018) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi A1 1.0 TFSI facelift-era exact ratio and final-drive capture",
+        "reason": "The recovered official facelift sources close the 1.0 TFSI manual existence, FWD applicability, and lower baseline tyre package, but this pass did not safely capture a directly quotable official ratio/final-drive table for the exact manual state.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:cfd6a6b47886",
+          "legacy_research_sources:092a3f271f19"
         ]
       },
       {
-        "item": "Audi A1 (8X, 2011-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Audi A1 1.0 TFSI placeholder replacement for the contradicted 2011 row",
+        "reason": "Official Audi launch and facelift material shows that 1.0 TFSI belongs to the spring-2015 refresh window rather than the 2011 launch window, but this pass did not split the stored placeholder into exact 2015+ manual rows.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:0cd20821c4bc",
+          "legacy_research_sources:cfd6a6b47886",
+          "legacy_research_sources:092a3f271f19"
         ]
       }
     ],
@@ -272,13 +265,11 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Checked exact official Audi launch and facelift sources. Official Audi material again places the 1.0 TFSI only in the spring-2015 facelift window, while facelift brochures confirm the 1.0 TFSI 7-speed S tronic FWD state and a lower 15-inch baseline wheel package. This represented 2011 S tronic row therefore remains a contradicted advisory placeholder rather than a validated launch-era exact state.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:0cd20821c4bc",
+          "legacy_research_sources:cfd6a6b47886",
+          "legacy_research_sources:092a3f271f19"
         ]
       },
       {
@@ -287,25 +278,20 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A1 (8X, 2011-2018) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi A1 1.0 TFSI S tronic facelift-era exact ratio and final-drive capture",
+        "reason": "The recovered official facelift sources close the 1.0 TFSI S tronic existence, FWD applicability, and lower baseline tyre package, but this pass did not safely capture a directly quotable official ratio/final-drive table for the exact S tronic state.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:cfd6a6b47886",
+          "legacy_research_sources:092a3f271f19"
         ]
       },
       {
-        "item": "Audi A1 (8X, 2011-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Audi A1 1.0 TFSI S tronic placeholder replacement for the contradicted 2011 row",
+        "reason": "Official Audi launch and facelift material shows that 1.0 TFSI belongs to the spring-2015 refresh window rather than the 2011 launch window, but this pass did not split the stored placeholder into exact 2015+ S tronic rows.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:0cd20821c4bc",
+          "legacy_research_sources:cfd6a6b47886",
+          "legacy_research_sources:092a3f271f19"
         ]
       }
     ],
@@ -431,13 +417,11 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Checked exact official Audi launch and facelift sources. Official Audi launch-era 1.4 TFSI 122 PS technical data and later facelift brochures both show a 6-speed manual rather than a 5-speed, so this represented 2011 5-speed row remains a contradicted advisory placeholder rather than a validated exact state.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:0cd20821c4bc",
+          "legacy_research_sources:d3ced68412f8",
+          "legacy_research_sources:cfd6a6b47886"
         ]
       },
       {
@@ -446,25 +430,19 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A1 (8X, 2011-2018) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi A1 1.4 TFSI exact 6-speed-manual row split by power and era",
+        "reason": "Official Audi launch and facelift sources both point to a 6-speed manual, but the stored broad 1.4 TFSI manual placeholder still collapses launch 122 PS and later facelift states into one non-exact row.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:0cd20821c4bc",
+          "legacy_research_sources:d3ced68412f8",
+          "legacy_research_sources:cfd6a6b47886"
         ]
       },
       {
-        "item": "Audi A1 (8X, 2011-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Audi A1 1.4 TFSI manual exact ratio and final-drive capture",
+        "reason": "The recovered official launch technical-sheet URL is strong gearbox-family evidence, but this pass did not safely capture a directly quotable ratio/final-drive table for repo upgrade.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:d3ced68412f8"
         ]
       }
     ],
@@ -590,13 +568,12 @@
     },
     "verification_notes": [
       {
-        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "note": "Checked official Audi launch and facelift sources. Official launch-period 1.4 TFSI technical sheets already show separate 122 PS S tronic and 185 PS S tronic states, and later facelift brochures add further 1.4 TFSI S tronic variants. This single represented 2011 DCT row therefore remains a mixed-power, mixed-era advisory placeholder rather than one exact production-safe configuration.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:0cd20821c4bc",
+          "legacy_research_sources:d36a12aece1e",
+          "legacy_research_sources:5709c957ea25",
+          "legacy_research_sources:cfd6a6b47886"
         ]
       },
       {
@@ -605,25 +582,21 @@
     ],
     "unresolved": [
       {
-        "item": "Audi A1 (8X, 2011-2018) EU ratio-relevant variant mapping",
-        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "item": "Audi A1 1.4 TFSI S tronic exact power-era split",
+        "reason": "Official Audi launch material already shows separate 122 PS and 185 PS S tronic states, and later facelift material adds more 1.4 TFSI S tronic variants, so this single broad row still merges multiple exact configurations.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:d36a12aece1e",
+          "legacy_research_sources:5709c957ea25",
+          "legacy_research_sources:cfd6a6b47886"
         ]
       },
       {
-        "item": "Audi A1 (8X, 2011-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
-        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "item": "Audi A1 1.4 TFSI S tronic exact ratio and final-drive capture",
+        "reason": "The recovered official launch and facelift sources close gearbox-family existence, but they do not support a single production-safe ratio/final-drive mapping for this mixed-power placeholder row.",
         "evidence_refs": [
-          "legacy_research_sources:1497d4e055e8",
-          "legacy_research_sources:493533bb041f",
-          "legacy_research_sources:4b4b833b364a",
-          "legacy_research_sources:4b8ab423f879",
-          "legacy_research_sources:5e252f7f436b"
+          "legacy_research_sources:d36a12aece1e",
+          "legacy_research_sources:5709c957ea25",
+          "legacy_research_sources:cfd6a6b47886"
         ]
       }
     ],

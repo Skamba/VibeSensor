@@ -309,47 +309,13 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
+        "note": "This follow-up removes a copied 430d contradiction note from the F32 418i manual row. No exact official F32 418i technical-data artifact was recovered in the saved packet, so the current engine, ratio, and tyre fields remain inherited placeholders."
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
+        "item": "Recover an exact official F32 418i manual technical-data sheet",
+        "reason": "The saved official F32 packet still does not include an exact 418i source, so this row cannot safely be rewritten yet and keeps its inherited engine, ratio, and tyre metadata."
       }
     ],
     "configuration_confidence": "low_confidence",
@@ -491,47 +457,13 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
+        "note": "This follow-up removes a copied 430d contradiction note from the F32 418i automatic row. No exact official F32 418i technical-data artifact was recovered in the saved packet, so the current engine, ratio, and tyre fields remain inherited placeholders."
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
+        "item": "Recover an exact official F32 418i automatic technical-data sheet",
+        "reason": "The saved official F32 packet still does not include an exact 418i source, so this row cannot safely be rewritten yet and keeps its inherited engine, ratio, and tyre metadata."
       }
     ],
     "configuration_confidence": "low_confidence",
@@ -673,49 +605,18 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "Official BMW 03/2016 technical-data PDF first proves the F32 430i Coupe as a facelift-era row, not a 2014-start launch-state row. This manual row remains only as an overbroad placeholder until the broader F32 shard is reshaped.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Whether this overbroad F32 430i manual row should be re-ranged to the facelift-era start",
+        "reason": "The saved official BMW technical-data packet first proves the F32 430i Coupe from the 03/2016 facelift range, so the current 2014 start year is contradicted, but this pass did not split the row by era.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
         ]
       }
     ],
@@ -858,49 +759,18 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "Official BMW 03/2016 technical-data PDF first proves the F32 430i Coupe as a facelift-era row, not a 2014-start launch-state row. This automatic row remains only as an overbroad placeholder until the broader F32 shard is reshaped.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Whether this overbroad F32 430i automatic row should be re-ranged to the facelift-era start",
+        "reason": "The saved official BMW technical-data packet first proves the F32 430i Coupe from the 03/2016 facelift range, so the current 2014 start year is contradicted, but this pass did not split the row by era.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-420i-430i-2016-tech-spec-pdf"
         ]
       }
     ],
@@ -1115,75 +985,68 @@
     "engine_name": "2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fe428128ffa",
-        "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 428i Coupe manual row.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+      ],
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms a 6-speed manual gearbox for the exact F32 428i Coupe manual row.",
       "code": "MT6",
       "name": "6-speed manual"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.812
+        "confidence": "official_exact",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 0.701 as the top-gear ratio for the exact F32 428i Coupe manual row.",
+        "value": 0.701,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
+        "confidence": "official_exact",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 3.909 as the final-drive ratio for the exact F32 428i Coupe manual row.",
+        "value": 3.909,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 428i Coupe manual row.",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
+            "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 428i Coupe manual row.",
           "front": {
             "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "name": "Standard 17\""
         },
         {
           "confidence": "family_default",
@@ -1231,46 +1094,18 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "This follow-up replaces copied 435d contradiction residue on the F32 428i manual row with the recovered official BMW launch-period values: rear-wheel drive, 6-speed manual, top gear 0.701, final drive 3.909, and standard 225/50 R17 tyres.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Launch-period exactness across the full stored F32 428i manual span",
+        "reason": "The recovered official source is the 11/2013 launch-period sheet; this pass did not recover every later lifecycle table to prove no ratio or standard-tyre drift across the full 2014-2020 row span.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ]
       }
     ],
@@ -1297,75 +1132,68 @@
     "engine_name": "2.0L I4 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fe428128ffa",
-        "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 428i Coupe automatic row.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+      ],
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F32 428i Coupe automatic row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "official_exact",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 0.667 as the top-gear ratio for the exact F32 428i Coupe automatic row.",
+        "value": 0.667,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "official_exact",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 3.154 as the final-drive ratio for the exact F32 428i Coupe automatic row.",
+        "value": 3.154,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 428i Coupe automatic row.",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
+            "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 428i Coupe automatic row.",
           "front": {
             "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "name": "Standard 17\""
         },
         {
           "confidence": "family_default",
@@ -1413,228 +1241,18 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "This follow-up replaces copied 435d contradiction residue on the F32 428i automatic row with the recovered official BMW launch-period values: rear-wheel drive, 8-speed Steptronic automatic, top gear 0.667, final drive 3.154, and standard 225/50 R17 tyres.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Launch-period exactness across the full stored F32 428i automatic span",
+        "reason": "The recovered official source is the 11/2013 launch-period sheet; this pass did not recover every later lifecycle table to prove no ratio or standard-tyre drift across the full 2014-2020 row span.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f32-430d-eu-2014-mt6-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F32",
-    "body_code": "F32",
-    "production_start_year": 2014,
-    "production_end_year": 2020,
-    "model_name": "4 Series (F32, 2014-2020)",
-    "variant_name": "430d",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "evidence_refs": [
-        "legacy_research_sources:0fe428128ffa",
-        "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.812
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ]
       }
     ],
@@ -1661,75 +1279,68 @@
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fe428128ffa",
-        "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "The official BMW 11/2013 technical-data PDF confirms rear-wheel drive for the exact F32 430d Coupe automatic row.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 11/2013 technical-data PDF confirms the F32 430d Coupe only as an 8-speed automatic with Steptronic. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "official_exact",
+        "notes": "The official BMW 11/2013 technical-data PDF lists 0.667 as the top-gear ratio for the exact F32 430d Coupe automatic row.",
+        "value": 0.667,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "official_exact",
+        "notes": "The official BMW 11/2013 technical-data PDF lists 2.563 as the final-drive ratio for the exact F32 430d Coupe automatic row.",
+        "value": 2.563,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The official BMW 11/2013 technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 430d Coupe automatic row.",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
+            "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official BMW 11/2013 technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 430d Coupe automatic row.",
           "front": {
             "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "name": "Standard 17\""
         },
         {
           "confidence": "family_default",
@@ -1777,46 +1388,18 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "This follow-up tightens the F32 430d automatic row to the recovered official BMW 11/2013 values: rear-wheel drive, 8-speed Steptronic automatic, top gear 0.667, final drive 2.563, and standard 225/50 R17 tyres. The prior 3.077 final drive and 18-inch default were stale family carryover.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Launch-period exactness across the full stored F32 430d automatic span",
+        "reason": "The recovered official source is the 11/2013 launch-period sheet; this pass did not recover every later lifecycle table to prove no ratio or standard-tyre drift across the full 2014-2020 row span.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-430d-2013-tech-spec-pdf"
         ]
       }
     ],
@@ -1959,49 +1542,18 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "Official BMW 03/2016 technical-data PDF first proves the F32 440i Coupe as a facelift-era row, not a 2014-start launch-state row. This manual row remains only as an overbroad placeholder until the broader F32 shard is reshaped.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-440i-2016-tech-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Whether this overbroad F32 440i manual row should be re-ranged to the facelift-era start",
+        "reason": "The saved official BMW technical-data packet first proves the F32 440i Coupe from the 03/2016 facelift range, so the current 2014 start year is contradicted, but this pass did not split the row by era.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-440i-2016-tech-spec-pdf"
         ]
       }
     ],
@@ -2144,49 +1696,18 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "Official BMW 03/2016 technical-data PDF first proves the F32 440i Coupe as a facelift-era row, not a 2014-start launch-state row. This automatic row remains only as an overbroad placeholder until the broader F32 shard is reshaped.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-440i-2016-tech-spec-pdf"
         ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Whether this overbroad F32 440i automatic row should be re-ranged to the facelift-era start",
+        "reason": "The saved official BMW technical-data packet first proves the F32 440i Coupe from the 03/2016 facelift range, so the current 2014 start year is contradicted, but this pass did not split the row by era.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-440i-2016-tech-spec-pdf"
         ]
       }
     ],
@@ -2199,7 +1720,7 @@
     }
   },
   {
-    "id": "bmw-f32-435d-eu-2014-mt6-rwd",
+    "id": "bmw-f32-435d-xdrive-eu-2014-zf8hp-awd",
     "brand": "BMW",
     "type": "Coupe",
     "market": "EU",
@@ -2208,262 +1729,75 @@
     "production_start_year": 2014,
     "production_end_year": 2020,
     "model_name": "4 Series (F32, 2014-2020)",
-    "variant_name": "435d",
+    "variant_name": "435d xDrive",
     "engine_code": "3.0L",
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fe428128ffa",
-        "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
+        "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "RWD"
+      "notes": "The official BMW launch article and 11/2013 technical-data PDF confirm xDrive all-wheel drive for the exact F32 435d xDrive Coupe automatic row.",
+      "value": "AWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.812
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-f32-435d-eu-2014-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "F32",
-    "body_code": "F32",
-    "production_start_year": 2014,
-    "production_end_year": 2020,
-    "model_name": "4 Series (F32, 2014-2020)",
-    "variant_name": "435d",
-    "engine_code": "3.0L",
-    "engine_name": "3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_derived",
       "evidence_refs": [
-        "legacy_research_sources:0fe428128ffa",
-        "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
+        "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "The official BMW launch article and 11/2013 technical-data PDF confirm the F32 435d Coupe only as an 8-speed automatic with Steptronic. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "This replacement pass focused on the contradicted F32 435d row identity, drivetrain, final drive, and baseline tyre package. The stored 0.667 top gear remains the inherited 8-speed family carryover until the exact ratio table is promoted into production.",
         "value": 0.667
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "official_exact",
+        "notes": "The official BMW 11/2013 technical-data PDF lists 2.563 as the final-drive ratio for the exact F32 435d xDrive Coupe automatic row.",
+        "value": 2.563,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
+          "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
+          "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The official BMW 11/2013 technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 435d xDrive Coupe automatic row.",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
+            "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
+            "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official BMW 11/2013 technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 435d xDrive Coupe automatic row.",
           "front": {
             "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "name": "Standard 17\""
         },
         {
           "confidence": "family_default",
@@ -2511,46 +1845,28 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "This follow-up replaces the contradicted rear-wheel-drive 435d placeholder with the exact official BMW launch-period 435d xDrive automatic row, including xDrive drivetrain, 8-speed Steptronic automatic, final drive 2.563, and standard 225/50 R17 tyres.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
+          "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Promote the exact F32 435d xDrive automatic top-gear value",
+        "reason": "The saved official packet cleanly closes drivetrain, transmission family, final drive, and standard-tyre baseline, but this replacement pass did not promote the exact top-gear value into production.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
+          "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
         ]
       },
       {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
+        "item": "Launch-period exactness across the full stored F32 435d xDrive automatic span",
+        "reason": "The recovered official sources are launch-period material; this pass did not recover every later lifecycle table to prove no ratio or standard-tyre drift across the full 2014-2020 row span.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
+          "bmw_pressclub_sources:f32-435d-xdrive-2013-tech-spec-pdf"
         ]
       }
     ],
@@ -2577,75 +1893,68 @@
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fe428128ffa",
-        "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 435i Coupe manual row.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+      ],
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms a 6-speed manual gearbox for the exact F32 435i Coupe manual row.",
       "code": "MT6",
       "name": "6-speed manual"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.812
+        "confidence": "official_exact",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 0.846 as the top-gear ratio for the exact F32 435i Coupe manual row.",
+        "value": 0.846,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
+        "confidence": "official_exact",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 3.231 as the final-drive ratio for the exact F32 435i Coupe manual row.",
+        "value": 3.231,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 435i Coupe manual row.",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
+            "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 435i Coupe manual row.",
           "front": {
             "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "name": "Standard 17\""
         },
         {
           "confidence": "family_default",
@@ -2693,46 +2002,18 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "This follow-up replaces generic F32 carryover on the 435i manual row with the recovered official BMW launch-period values: rear-wheel drive, 6-speed manual, top gear 0.846, final drive 3.231, and standard 225/50 R17 tyres.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Launch-period exactness across the full stored F32 435i manual span",
+        "reason": "The recovered official source is the 11/2013 launch-period sheet; this pass did not recover every later lifecycle table to prove no ratio or standard-tyre drift across the full 2014-2020 row span.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ]
       }
     ],
@@ -2759,75 +2040,68 @@
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fe428128ffa",
-        "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms rear-wheel drive for the exact F32 435i Coupe automatic row.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+      ],
+      "notes": "The official BMW 11/2013 launch technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F32 435i Coupe automatic row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
       "code": "ZF8HP",
       "name": "8-speed automatic (ZF 8HP)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "official_exact",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 0.667 as the top-gear ratio for the exact F32 435i Coupe automatic row.",
+        "value": 0.667,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "official_exact",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 3.154 as the final-drive ratio for the exact F32 435i Coupe automatic row.",
+        "value": 3.154,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 435i Coupe automatic row.",
         "front": {
           "width_mm": 225.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
         },
         "default_axle_for_speed": "rear"
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
+            "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 435i Coupe automatic row.",
           "front": {
             "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
           },
           "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "name": "Standard 17\""
         },
         {
           "confidence": "family_default",
@@ -2875,46 +2149,18 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "This follow-up replaces generic F32 carryover on the 435i automatic row with the recovered official BMW launch-period values: rear-wheel drive, 8-speed Steptronic automatic, top gear 0.667, final drive 3.154, and standard 225/50 R17 tyres.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Launch-period exactness across the full stored F32 435i automatic span",
+        "reason": "The recovered official source is the 11/2013 launch-period sheet; this pass did not recover every later lifecycle table to prove no ratio or standard-tyre drift across the full 2014-2020 row span.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
-        ]
-      },
-      {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
-        "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-428i-435i-2013-launch-tech-pdf"
         ]
       }
     ],
@@ -3311,49 +2557,49 @@
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fe428128ffa",
-        "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "The official BMW 03/2014 M4 technical-data PDF confirms rear-wheel drive for the exact F32 M4 Coupe manual row.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2014 M4 technical-data PDF confirms a 6-speed manual gearbox for the exact F32 M4 Coupe manual row.",
       "code": "MT6",
       "name": "6-speed manual"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.812
+        "confidence": "official_exact",
+        "notes": "The official BMW 03/2014 M4 technical-data PDF lists 0.846 as the top-gear ratio for the exact F32 M4 Coupe manual row.",
+        "value": 0.846,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.231
+        "confidence": "official_exact",
+        "notes": "The official BMW 03/2014 M4 technical-data PDF lists 3.462 as the final-drive ratio for the exact F32 M4 Coupe manual row.",
+        "value": 3.462,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The official BMW 03/2014 M4 technical-data PDF lists the base M4 standard tyre package as staggered 255/40 ZR18 95Y front plus 275/40 ZR18 99Y rear. The repo stores the front baseline and keeps the rear axle as the speed-default axle.",
         "front": {
-          "width_mm": 225.0,
+          "width_mm": 255.0,
           "aspect_pct": 40.0,
           "rim_in": 18.0
         },
@@ -3361,20 +2607,13 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
+            "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official BMW 03/2014 M4 technical-data PDF lists the base M4 standard tyre package as staggered 255/40 ZR18 95Y front plus 275/40 ZR18 99Y rear. The repo stores the front baseline and keeps the rear axle as the speed-default axle.",
           "front": {
-            "width_mm": 225.0,
+            "width_mm": 255.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
@@ -3427,46 +2666,25 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "This follow-up replaces generic petrol carryover on the F32 M4 manual row with the recovered official BMW 03/2014 values: rear-wheel drive, 6-speed manual, top gear 0.846, final drive 3.462, and launch-period staggered 18-inch tyres.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Launch-period exactness across the full stored F32 M4 manual span",
+        "reason": "The recovered official source is the 03/2014 launch-period M4 sheet; this pass did not recover every later lifecycle table to prove no ratio or standard-tyre drift across the full 2014-2020 row span.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ]
       },
       {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
+        "item": "Explicit rear-tyre encoding for the standard F32 M4 package",
+        "reason": "The official source lists a staggered front/rear tyre package, but the current schema stores only the front baseline plus the rear speed axle marker.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ]
       }
     ],
@@ -3479,7 +2697,7 @@
     }
   },
   {
-    "id": "bmw-f32-m4-eu-2014-zf8hp-rwd",
+    "id": "bmw-f32-m4-eu-2014-dct7-rwd",
     "brand": "BMW",
     "type": "Coupe",
     "market": "EU",
@@ -3493,49 +2711,49 @@
     "engine_name": "3.0L I6 Turbo",
     "fuel_type": "ICE",
     "drivetrain": {
-      "confidence": "unverified",
+      "confidence": "official_exact",
       "evidence_refs": [
-        "legacy_research_sources:0fe428128ffa",
-        "legacy_research_sources:89441dc61121",
-        "legacy_research_sources:db56476b60f5"
+        "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "notes": "The official BMW 03/2014 M4 technical-data PDF confirms rear-wheel drive for the exact F32 M4 Coupe double-clutch row.",
       "value": "RWD"
     },
     "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2014 M4 technical-data PDF confirms the optional 7-speed M double-clutch transmission for the exact F32 M4 Coupe automatic row. The repo normalizes that official BMW wording to the canonical DCT7 gearbox family.",
+      "code": "DCT7",
+      "name": "7-speed dual-clutch (M-DCT)"
     },
     "ratios": {
       "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
+        "confidence": "official_exact",
+        "notes": "The official BMW 03/2014 M4 technical-data PDF lists 0.671 as the top-gear ratio for the exact F32 M4 Coupe double-clutch row.",
+        "value": 0.671,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+        ]
       },
       "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.077
+        "confidence": "official_exact",
+        "notes": "The official BMW 03/2014 M4 technical-data PDF lists 3.462 as the final-drive ratio for the exact F32 M4 Coupe double-clutch row.",
+        "value": 3.462,
+        "evidence_refs": [
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
+        ]
       }
     },
     "tires": {
       "default": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "notes": "The official BMW 03/2014 M4 technical-data PDF lists the base M4 standard tyre package as staggered 255/40 ZR18 95Y front plus 275/40 ZR18 99Y rear. The repo stores the front baseline and keeps the rear axle as the speed-default axle.",
         "front": {
-          "width_mm": 225.0,
+          "width_mm": 255.0,
           "aspect_pct": 40.0,
           "rim_in": 18.0
         },
@@ -3543,20 +2761,13 @@
       },
       "options": [
         {
-          "confidence": "family_default",
+          "confidence": "official_exact",
           "evidence_refs": [
-            "legacy_research_sources:0fe428128ffa",
-            "legacy_research_sources:4ca576983b84",
-            "legacy_research_sources:5a2c34af7aa2",
-            "legacy_research_sources:89441dc61121",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:cf2e1d0043a3",
-            "legacy_research_sources:db56476b60f5",
-            "legacy_research_sources:de2b0611ceb4"
+            "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
           ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "notes": "The official BMW 03/2014 M4 technical-data PDF lists the base M4 standard tyre package as staggered 255/40 ZR18 95Y front plus 275/40 ZR18 99Y rear. The repo stores the front baseline and keeps the rear axle as the speed-default axle.",
           "front": {
-            "width_mm": 225.0,
+            "width_mm": 255.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
@@ -3609,46 +2820,25 @@
     },
     "verification_notes": [
       {
-        "note": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
+        "note": "This follow-up replaces the fake F32 M4 ZF8HP placeholder with the exact official BMW 03/2014 M4 DCT row, including the 7-speed M double-clutch transmission, top gear 0.671, final drive 3.462, and launch-period staggered 18-inch tyres.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ]
       }
     ],
     "unresolved": [
       {
-        "item": "Map precise top_gear_ratio/final_drive_ratio values into current generic `gearboxes` list",
-        "reason": "Official BMW data provides multiple conflicting values by engine (420i/430i/440i), drivetrain (RWD/xDrive), and transmission choice; current schema usage here stores only two generic gearbox entries, so assigning one pair would require assumptions.",
+        "item": "Launch-period exactness across the full stored F32 M4 DCT span",
+        "reason": "The recovered official source is the 03/2014 launch-period M4 sheet; this pass did not recover every later lifecycle table to prove no ratio or standard-tyre drift across the full 2014-2020 row span.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ]
       },
       {
-        "item": "Determine whether current stored gearbox ratios (0.667/3.077 and 0.812/3.231) correspond to specific diesel or non-listed F32 variants",
-        "reason": "Those exact values were not confirmed for the listed petrol variants from the retrieved official EU 420i/430i/440i specification PDFs.",
+        "item": "Explicit rear-tyre encoding for the standard F32 M4 package",
+        "reason": "The official source lists a staggered front/rear tyre package, but the current schema stores only the front baseline plus the rear speed axle marker.",
         "evidence_refs": [
-          "legacy_research_sources:0fe428128ffa",
-          "legacy_research_sources:4ca576983b84",
-          "legacy_research_sources:5a2c34af7aa2",
-          "legacy_research_sources:89441dc61121",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:cf2e1d0043a3",
-          "legacy_research_sources:db56476b60f5",
-          "legacy_research_sources:de2b0611ceb4"
+          "bmw_pressclub_sources:f32-m4-2014-tech-spec-pdf"
         ]
       }
     ],
@@ -3793,7 +2983,7 @@
     },
     "verification_notes": [
       {
-        "note": "The official BMW 11/2013 launch-era 4 Series Coupé specifications page does not list 440i xDrive, while the official 03/2016 specifications page and technical-data PDF establish the first checked exact 440i xDrive manual state: AWD, 6-speed manual, 0.846 top gear, a single published 3.231 final-drive ratio, and 225/50 R17 baseline tires. This row is therefore retimed to the supported 2016-only state instead of preserving an unsupported 2014-2020 span.",
+        "note": "The official BMW 11/2013 launch-era 4 Series Coup\u00e9 specifications page does not list 440i xDrive, while the official 03/2016 specifications page and technical-data PDF establish the first checked exact 440i xDrive manual state: AWD, 6-speed manual, 0.846 top gear, a single published 3.231 final-drive ratio, and 225/50 R17 baseline tires. This row is therefore retimed to the supported 2016-only state instead of preserving an unsupported 2014-2020 span.",
         "evidence_refs": [
           "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
           "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-article",
@@ -3958,7 +3148,7 @@
     },
     "verification_notes": [
       {
-        "note": "The official BMW 11/2013 launch-era 4 Series Coupé specifications page does not list 440i xDrive, while the official 03/2016 specifications page and technical-data PDF establish the first checked exact 440i xDrive automatic state: AWD, 8-speed Steptronic, 0.640 top gear, a single published 2.813 final-drive ratio, and 225/50 R17 baseline tires. This row is therefore retimed to the supported 2016-only state instead of preserving an unsupported 2014-2020 span.",
+        "note": "The official BMW 11/2013 launch-era 4 Series Coup\u00e9 specifications page does not list 440i xDrive, while the official 03/2016 specifications page and technical-data PDF establish the first checked exact 440i xDrive automatic state: AWD, 8-speed Steptronic, 0.640 top gear, a single published 2.813 final-drive ratio, and 225/50 R17 baseline tires. This row is therefore retimed to the supported 2016-only state instead of preserving an unsupported 2014-2020 span.",
         "evidence_refs": [
           "bmw_pressclub_sources:f32-4-series-coupe-2013-tech-spec-article",
           "bmw_pressclub_sources:f32-440i-xdrive-2016-tech-spec-article",

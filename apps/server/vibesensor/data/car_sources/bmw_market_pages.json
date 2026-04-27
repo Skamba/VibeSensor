@@ -30,10 +30,52 @@
       "confidence": "medium"
     },
     {
+      "id": "bmw_market_pages:f39-x2-price-list-2022-de",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_F39_III_04_06.pdf",
+      "title": "BMW Germany F39 X2 2022 price list",
+      "note": "Official BMW Germany 11/2022 price list used to confirm the late-run EU F39 lineup, the 17/18/19-inch wheel matrix, and the continued absence of any EU-market sDrive28i or xDrive28i rows.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:f39-x2-brochure-2021-cy",
+      "url": "https://www.bmw.com.cy/content/dam/bmw/marketCY/bmw_com_cy/topics/brochures/new_brochures/F39%20PSL44%20EWL_web.pdf",
+      "title": "BMW Cyprus F39 X2 2021 brochure",
+      "note": "Official BMW Cyprus brochure used to confirm the EU-family sDrive16d row exists as a front-wheel-drive state with manual-standard wording, bracketed automatic performance figures, and a 225/55 R17 base-tyre package, while not naming an exact automatic gearbox family.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:f39-x2-brochure-2022-gr",
+      "url": "https://www.bmw.gr/content/dam/bmw/marketGR/bmw_gr/topics/pricelists-brochures/brochures/2022/THE_X2.pdf.asset.1649156814399.pdf",
+      "title": "BMW Greece F39 X2 2022 brochure",
+      "note": "Official BMW Greece brochure used as a late-run EU-family cross-check for the F39 lineup, confirming the continued absence of EU 28i rows and the xDrive25e hybrid-specific 6-speed context.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_market_pages:g20-3-series-price-list-2024",
       "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/3-series/sedan/2024/preisliste-bmw3er.pdf.coredownload.pdf",
       "title": "BMW Germany 3 Series Sedan 2024 price list",
       "note": "Official BMW Germany 07/2024 price list used as a later-market cross-check for exact G20 318i and 320d rear-wheel-drive automatic continuity, including standard 225/50 R17 tire listings in the checked Germany-market slice.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g28-th-320li-overview-2024",
+      "url": "https://www.bmw.co.th/en/all-models/3-series/3-series-gran-limousine-g28.html",
+      "title": "BMW Thailand 3 Series Gran Limousine G28 overview page",
+      "note": "Official BMW Thailand overview page explicitly tied to the 3 Series Gran Limousine G28 family, used to prove that the 320Li lineage belongs to the long-wheelbase G28 scope rather than the EU-market G20 shard.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g28-in-long-wheelbase-overview",
+      "url": "https://www.bmw.in/en/all-models/3-series/gran-limousine/2022/bmw-3-series-gran-limousine-technical-data.html",
+      "title": "BMW India 3 Series Gran Limousine technical data page",
+      "note": "Official BMW India long-wheelbase technical-data page used to confirm G28 Gran Limousine scope and the market-facing 8-speed Steptronic Sport transmission wording across the non-EU long-wheelbase family.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g28-cn-2024-specsheet",
+      "url": "https://www.bmw.com.cn/zh/all-models/3-series/sedan/2024/specsheet.html",
+      "title": "BMW China 3 Series Sedan 2024 specsheet",
+      "note": "Official BMW China specsheet whose embedded model data distinguishes G28 long-wheelbase from G20 standard-wheelbase and lists current 325Li and 330Li variants under the G28 family.",
       "confidence": "high"
     },
     {
