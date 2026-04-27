@@ -33,7 +33,7 @@
       "id": "bmw_market_pages:g42-2-series-technical-data-de",
       "url": "https://www.bmw.de/de/neufahrzeuge/2er/2-series-coupe/bmw-2er-coupe-technische-daten.html",
       "title": "BMW Germany 2 Series Coupe technical data page",
-      "note": "Official BMW Germany technical-data page used for the current G42 220i drivetrain and automatic-only market context.",
+      "note": "Official BMW Germany technical-data page used for current G42 lineup identity: 230i Coup\u00e9 M Sport remains the rear-drive four-cylinder offering while M240i xDrive is the distinct AWD trim.",
       "confidence": "high"
     },
     {
@@ -47,7 +47,42 @@
       "id": "bmw_market_pages:g42-2-series-price-list-current",
       "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmw2er.pdf.coredownload.inline.pdf",
       "title": "BMW Germany 2 Series Coupe current inline price list",
-      "note": "Official BMW Germany current price list used as a current-market cross-check for the G42 220i automatic-only context and tire matrix.",
+      "note": "Official BMW Germany current price list used as a current-market cross-check for the G42 230i M Sport automatic RWD context, its visible 18/19-inch wheel matrix, and the separate M240i xDrive AWD listing.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:u10-ix2-technical-data-uk",
+      "url": "https://www.bmw.co.uk/en/all-models/bmw-i/ix2/bmw-ix2-technical-data.html",
+      "title": "BMW UK iX2 technical data page",
+      "note": "Official BMW UK technical-data page for the BMW iX2 xDrive30 M Sport (model code IX25, productionYear 2023 metadata, fuelType E) used to confirm the exact iX2 page identity and the official transmission wording shown for this EV page.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g45-x3-technical-data-uk",
+      "url": "https://www.bmw.co.uk/en/all-models/x-models/x3/bmw-x3-technical-data.html",
+      "title": "BMW UK G45 X3 technical data page",
+      "note": "Official BMW UK technical-data page for the new G45 X3 model range used to confirm the live UK G45 page identity, productionYear 2024 metadata, and the existence of a current-market G45 technical-data surface while exact variant-level rendered tables remain JS-heavy.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:u11-x1-overview-de",
+      "url": "https://www.bmw.de/de/neufahrzeuge/x/x1/bmw-x1.html",
+      "title": "BMW Germany U11 X1 overview page",
+      "note": "Official BMW Germany overview page whose embedded product block currently surfaces the exact BMW X1 xDrive23i within the U11 range and marks productionYear 2022 with petrol fuel metadata.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:u11-x1-technical-data-de",
+      "url": "https://www.bmw.de/de/neufahrzeuge/x/x1/bmw-x1-technische-daten.html",
+      "title": "BMW Germany U11 X1 technical data page",
+      "note": "Official BMW Germany technical-data page whose embedded product metadata currently surfaces the exact BMW X1 xDrive23i with productionYear 2022 and also exposes the exact BMW X1 sDrive18i with front-wheel-drive and seven-speed dual-clutch transmission metadata while the rendered spec tables remain JS-heavy.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:u11-x1-technical-data-uk",
+      "url": "https://www.bmw.co.uk/en/all-models/x-models/x1/bmw-x1-technical-data.html",
+      "title": "BMW UK U11 X1 technical data page",
+      "note": "Official BMW UK technical-data page whose embedded product block currently surfaces the exact BMW X1 xDrive23i xLine within the U11 range and marks productionYear 2022 with petrol fuel metadata while the rendered spec tables remain JS-heavy.",
       "confidence": "high"
     }
   ]
