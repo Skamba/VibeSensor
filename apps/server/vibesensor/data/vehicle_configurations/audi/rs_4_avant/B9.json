@@ -1,0 +1,160 @@
+[
+  {
+    "id": "audi-b9-rs-4-eu-2018-zf8hp-awd",
+    "brand": "Audi",
+    "type": "Wagon",
+    "market": "EU",
+    "model_code": "B9",
+    "body_code": "B9",
+    "production_start_year": 2018,
+    "production_end_year": 2024,
+    "model_name": "RS 4 Avant (B9, 2018-2024)",
+    "variant_name": "RS 4",
+    "engine_code": "2.9L",
+    "engine_name": "2.9L V6 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.077
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:03e33032d1fd",
+          "legacy_research_sources:40b7eea7495e",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9e97ecf68724",
+          "legacy_research_sources:a3af81211686"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 275.0,
+          "aspect_pct": 30.0,
+          "rim_in": 20.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:03e33032d1fd",
+            "legacy_research_sources:40b7eea7495e",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9e97ecf68724",
+            "legacy_research_sources:a3af81211686"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:03e33032d1fd",
+            "legacy_research_sources:40b7eea7495e",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:9e97ecf68724",
+            "legacy_research_sources:a3af81211686"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 285.0,
+            "aspect_pct": 25.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Performance 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Official Audi Germany technical-data material now confirms the exact later-cycle RS 4 Avant mapping: permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.204, and a basic square 265/35 R19 tire setup. The broad RS 4 row remains unchanged because this pass did not recover a launch-year 2018 Germany/EU technical-data sheet, and checked official sources do not prove the same optional wheel/tire matrix or gearbox-family naming across the full 2018-2024 span.",
+        "evidence_refs": [
+          "legacy_research_sources:03e33032d1fd",
+          "legacy_research_sources:40b7eea7495e",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9e97ecf68724",
+          "legacy_research_sources:a3af81211686"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi RS 4 Avant exact production-data applicability across the full 2018-2024 row span",
+        "reason": "The checked official RS 4 Avant technical-data material resolves the later-cycle mapping, but this pass did not recover a launch-year 2018 Germany/EU sheet that proves the same ratio and tire package across the full represented span.",
+        "evidence_refs": [
+          "legacy_research_sources:03e33032d1fd",
+          "legacy_research_sources:40b7eea7495e",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9e97ecf68724",
+          "legacy_research_sources:a3af81211686"
+        ]
+      },
+      {
+        "item": "Audi RS 4 Avant exact transmission-code and non-basic tire-option coverage",
+        "reason": "Official Audi exact material proves 8-speed tiptronic wording, the full ratio set, final drive 3.204, and the 265/35 R19 basic tire, but it does not publish a gearbox-family code or a full optional wheel/tire matrix for the plain RS 4 Avant.",
+        "evidence_refs": [
+          "legacy_research_sources:03e33032d1fd",
+          "legacy_research_sources:40b7eea7495e",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:9e97ecf68724",
+          "legacy_research_sources:a3af81211686"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

@@ -1,0 +1,966 @@
+[
+  {
+    "id": "audi-fy-40-tfsi-eu-2017-dct7-fwd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "FY",
+    "body_code": "FY",
+    "production_start_year": 2017,
+    "production_end_year": 2026,
+    "model_name": "Q5 (FY, 2017-2026)",
+    "variant_name": "40 TFSI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL382)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+        "value": 5.302
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:0704ea887c86",
+          "legacy_research_sources:4395fed0b13e",
+          "legacy_research_sources:54af60a9ddf0",
+          "legacy_research_sources:58f92c263343",
+          "legacy_research_sources:6db6eab4aafb",
+          "legacy_research_sources:7e60864b72c3",
+          "legacy_research_sources:84ab012d7125",
+          "legacy_research_sources:a6de0bcaa857",
+          "legacy_research_sources:aaa1bd276e93",
+          "legacy_research_sources:b24b22157008",
+          "legacy_research_sources:e6b28c39d7e6",
+          "legacy_research_sources:efd444c9156f",
+          "legacy_research_sources:f8d3f991ca53"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 50.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0704ea887c86",
+            "legacy_research_sources:4395fed0b13e",
+            "legacy_research_sources:54af60a9ddf0",
+            "legacy_research_sources:58f92c263343",
+            "legacy_research_sources:6db6eab4aafb",
+            "legacy_research_sources:7e60864b72c3",
+            "legacy_research_sources:84ab012d7125",
+            "legacy_research_sources:a6de0bcaa857",
+            "legacy_research_sources:aaa1bd276e93",
+            "legacy_research_sources:b24b22157008",
+            "legacy_research_sources:e6b28c39d7e6",
+            "legacy_research_sources:efd444c9156f",
+            "legacy_research_sources:f8d3f991ca53"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0704ea887c86",
+            "legacy_research_sources:4395fed0b13e",
+            "legacy_research_sources:54af60a9ddf0",
+            "legacy_research_sources:58f92c263343",
+            "legacy_research_sources:6db6eab4aafb",
+            "legacy_research_sources:7e60864b72c3",
+            "legacy_research_sources:84ab012d7125",
+            "legacy_research_sources:a6de0bcaa857",
+            "legacy_research_sources:aaa1bd276e93",
+            "legacy_research_sources:b24b22157008",
+            "legacy_research_sources:e6b28c39d7e6",
+            "legacy_research_sources:efd444c9156f",
+            "legacy_research_sources:f8d3f991ca53"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0704ea887c86",
+            "legacy_research_sources:4395fed0b13e",
+            "legacy_research_sources:54af60a9ddf0",
+            "legacy_research_sources:58f92c263343",
+            "legacy_research_sources:6db6eab4aafb",
+            "legacy_research_sources:7e60864b72c3",
+            "legacy_research_sources:84ab012d7125",
+            "legacy_research_sources:a6de0bcaa857",
+            "legacy_research_sources:aaa1bd276e93",
+            "legacy_research_sources:b24b22157008",
+            "legacy_research_sources:e6b28c39d7e6",
+            "legacy_research_sources:efd444c9156f",
+            "legacy_research_sources:f8d3f991ca53"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verified Audi Q5 FY S tronic final-drive ratios from official Audi MediaCenter and Audi technical data PDFs. Exact Germany-market technical-data sheets for the Q5 45 TFSI quattro now confirm top gear 0.433, full forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17 across checked 2019 and 2024 documents, which is sufficient to correct the variant-scoped production top gear and add the exact ratio set. Wave 10 validation now also confirms the late-FY exact Q5 40 TFSI quattro mapping from the 06/04/2024 Germany technical-data PDF: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, and basic tire 235/65 R17. Wave 11 validation adds exact 40 TDI quattro context across two contradictory official FY-era Germany states: the 09/27/2019 sheet proves AWD, 6-speed manual, forward ratios 3.778 / 1.957 / 1.241 / 0.912 / 0.692 / 0.571, reverse 3.333, final drive 2.647, and basic tire 235/65 R17; the 06/04/2024 sheet proves quattro ultra AWD, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, and the same 235/65 R17 basic tire. Wave 12 validation now adds exact 35 TDI Germany context across two official front-wheel-drive states: the 2019 120 kW Q5 35 TDI S tronic sheet and the 2024 120 kW MHEV Q5 35 TDI S tronic sheet both prove Frontantrieb, the same forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, and the same 235/65 R17 basic tire, but they publish different final drives 5.302 and 4.885 and do not support any checked Germany-market 35 TDI quattro state. The existing 03/27/2025 front-wheel-drive 150 kW Q5 SUV source is retained only as evidence that a newer-generation Q5 state exists and must not be treated as FY 40 TFSI evidence. Later exact 55 TFSI e quattro sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 235/60 R18 basic tire for the 270 kW PHEV configuration, but the broad FY row remains unchanged until the represented production span is proven at the same granularity.",
+        "evidence_refs": [
+          "legacy_research_sources:0704ea887c86",
+          "legacy_research_sources:4395fed0b13e",
+          "legacy_research_sources:54af60a9ddf0",
+          "legacy_research_sources:58f92c263343",
+          "legacy_research_sources:6db6eab4aafb",
+          "legacy_research_sources:7e60864b72c3",
+          "legacy_research_sources:84ab012d7125",
+          "legacy_research_sources:a6de0bcaa857",
+          "legacy_research_sources:aaa1bd276e93",
+          "legacy_research_sources:b24b22157008",
+          "legacy_research_sources:e6b28c39d7e6",
+          "legacy_research_sources:efd444c9156f",
+          "legacy_research_sources:f8d3f991ca53"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Broad-row Audi Q5 FY 40 TFSI production-data applicability across the represented span",
+        "reason": "The checked 06/04/2024 Germany FY sheet resolves a late-FY 40 TFSI quattro state, but this pass did not recover official earlier FY or later new-generation sheets proving one unchanged 40 TFSI package across the broad 2017-2026 row.",
+        "evidence_refs": [
+          "legacy_research_sources:0704ea887c86",
+          "legacy_research_sources:4395fed0b13e",
+          "legacy_research_sources:54af60a9ddf0",
+          "legacy_research_sources:58f92c263343",
+          "legacy_research_sources:6db6eab4aafb",
+          "legacy_research_sources:7e60864b72c3",
+          "legacy_research_sources:84ab012d7125",
+          "legacy_research_sources:a6de0bcaa857",
+          "legacy_research_sources:aaa1bd276e93",
+          "legacy_research_sources:b24b22157008",
+          "legacy_research_sources:e6b28c39d7e6",
+          "legacy_research_sources:efd444c9156f",
+          "legacy_research_sources:f8d3f991ca53"
+        ]
+      },
+      {
+        "item": "Audi Q5 FY 40 TFSI exact optional tire matrix and row-shape continuity",
+        "reason": "Official Audi exact material now proves the FY 40 TFSI quattro drivetrain, full ratio set, reverse ratio, final drive 5.302, and the 235/65 R17 basic tire, but it does not close a full FY optional wheel/tire matrix or prove how the library's current front-drive 40 TFSI variant should be split from the later FY quattro state.",
+        "evidence_refs": [
+          "legacy_research_sources:0704ea887c86",
+          "legacy_research_sources:4395fed0b13e",
+          "legacy_research_sources:54af60a9ddf0",
+          "legacy_research_sources:58f92c263343",
+          "legacy_research_sources:6db6eab4aafb",
+          "legacy_research_sources:7e60864b72c3",
+          "legacy_research_sources:84ab012d7125",
+          "legacy_research_sources:a6de0bcaa857",
+          "legacy_research_sources:aaa1bd276e93",
+          "legacy_research_sources:b24b22157008",
+          "legacy_research_sources:e6b28c39d7e6",
+          "legacy_research_sources:efd444c9156f",
+          "legacy_research_sources:f8d3f991ca53"
+        ]
+      },
+      {
+        "item": "Broad-row Audi Q5 FY 55 TFSI e quattro top_gear_ratio applicability across the represented span",
+        "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 270 kW 55 TFSI e quattro configuration, but this pass did not verify whether every year represented by the broad FY row uses the same exact mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:0704ea887c86",
+          "legacy_research_sources:4395fed0b13e",
+          "legacy_research_sources:54af60a9ddf0",
+          "legacy_research_sources:58f92c263343",
+          "legacy_research_sources:6db6eab4aafb",
+          "legacy_research_sources:7e60864b72c3",
+          "legacy_research_sources:84ab012d7125",
+          "legacy_research_sources:a6de0bcaa857",
+          "legacy_research_sources:aaa1bd276e93",
+          "legacy_research_sources:b24b22157008",
+          "legacy_research_sources:e6b28c39d7e6",
+          "legacy_research_sources:efd444c9156f",
+          "legacy_research_sources:f8d3f991ca53"
+        ]
+      },
+      {
+        "item": "Broad-row Audi Q5 FY 40 TDI quattro production-data applicability across the represented span",
+        "reason": "Checked official Germany-market FY evidence now proves at least two contradictory 40 TDI quattro states within the represented row: a 2019 6-speed manual package with final drive 2.647 and a 2024 7-speed S tronic package with final drive 5.302, so no single production mapping is safe without a year split.",
+        "evidence_refs": [
+          "legacy_research_sources:0704ea887c86",
+          "legacy_research_sources:4395fed0b13e",
+          "legacy_research_sources:54af60a9ddf0",
+          "legacy_research_sources:58f92c263343",
+          "legacy_research_sources:6db6eab4aafb",
+          "legacy_research_sources:7e60864b72c3",
+          "legacy_research_sources:84ab012d7125",
+          "legacy_research_sources:a6de0bcaa857",
+          "legacy_research_sources:aaa1bd276e93",
+          "legacy_research_sources:b24b22157008",
+          "legacy_research_sources:e6b28c39d7e6",
+          "legacy_research_sources:efd444c9156f",
+          "legacy_research_sources:f8d3f991ca53"
+        ]
+      },
+      {
+        "item": "Audi Q5 FY 40 TDI quattro exact optional tire matrix, gearbox-family code, and FY boundary",
+        "reason": "Official Audi exact material now proves both the 2019 manual and 2024 S tronic 40 TDI quattro ratio packages and the shared 235/65 R17 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or any FY continuity beyond Audi's own 'bis 2024' boundary.",
+        "evidence_refs": [
+          "legacy_research_sources:0704ea887c86",
+          "legacy_research_sources:4395fed0b13e",
+          "legacy_research_sources:54af60a9ddf0",
+          "legacy_research_sources:58f92c263343",
+          "legacy_research_sources:6db6eab4aafb",
+          "legacy_research_sources:7e60864b72c3",
+          "legacy_research_sources:84ab012d7125",
+          "legacy_research_sources:a6de0bcaa857",
+          "legacy_research_sources:aaa1bd276e93",
+          "legacy_research_sources:b24b22157008",
+          "legacy_research_sources:e6b28c39d7e6",
+          "legacy_research_sources:efd444c9156f",
+          "legacy_research_sources:f8d3f991ca53"
+        ]
+      },
+      {
+        "item": "Whether Audi Q5 FY 35 TDI quattro belongs in the broad row at all",
+        "reason": "Checked official Germany-market FY 35 TDI technical-data sheets from 2019 and 2024 both describe front-wheel-drive Q5 35 TDI S tronic states and this pass did not recover any official Germany evidence for a 35 TDI quattro configuration.",
+        "evidence_refs": [
+          "legacy_research_sources:0704ea887c86",
+          "legacy_research_sources:4395fed0b13e",
+          "legacy_research_sources:54af60a9ddf0",
+          "legacy_research_sources:58f92c263343",
+          "legacy_research_sources:6db6eab4aafb",
+          "legacy_research_sources:7e60864b72c3",
+          "legacy_research_sources:84ab012d7125",
+          "legacy_research_sources:a6de0bcaa857",
+          "legacy_research_sources:aaa1bd276e93",
+          "legacy_research_sources:b24b22157008",
+          "legacy_research_sources:e6b28c39d7e6",
+          "legacy_research_sources:efd444c9156f",
+          "legacy_research_sources:f8d3f991ca53"
+        ]
+      },
+      {
+        "item": "Broad-row Audi Q5 FY 35 TDI production-data applicability, final-drive continuity, and tire-matrix scope",
+        "reason": "Official Audi exact material now proves two front-wheel-drive 35 TDI FY states with the same forward ratio set, reverse ratio, and 235/65 R17 basic tire but different final drives 5.302 and 4.885, while Audi's own model page still scopes FY Q5 only 'bis 2024'; no safe broad production mapping or full optional wheel/tire matrix is closed yet.",
+        "evidence_refs": [
+          "legacy_research_sources:0704ea887c86",
+          "legacy_research_sources:4395fed0b13e",
+          "legacy_research_sources:54af60a9ddf0",
+          "legacy_research_sources:58f92c263343",
+          "legacy_research_sources:6db6eab4aafb",
+          "legacy_research_sources:7e60864b72c3",
+          "legacy_research_sources:84ab012d7125",
+          "legacy_research_sources:a6de0bcaa857",
+          "legacy_research_sources:aaa1bd276e93",
+          "legacy_research_sources:b24b22157008",
+          "legacy_research_sources:e6b28c39d7e6",
+          "legacy_research_sources:efd444c9156f",
+          "legacy_research_sources:f8d3f991ca53"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-fy-35-tdi-quattro-eu-2017-dct7-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "FY",
+    "body_code": "FY",
+    "production_start_year": 2018,
+    "production_end_year": 2019,
+    "model_name": "Q5 (FY, 2018-2019)",
+    "variant_name": "35 TDI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf"
+      ],
+      "notes": "Official Audi 09/27/2019 technical-data material confirms that the exact FY Q5 35 TDI quattro S tronic state uses quattro all-wheel drive with ultra technology.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf"
+      ],
+      "notes": "Official Audi 09/27/2019 technical-data material confirms 7-speed S tronic transmission wording and a dual-clutch layout for the exact FY Q5 35 TDI quattro state. The repo keeps the normalized DCT7 code, but the checked official source does not publish a gearbox-family code.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf"
+        ],
+        "notes": "Official Audi 09/27/2019 technical-data PDF lists 0.386 as the 7th-gear ratio for the exact FY Q5 35 TDI quattro S tronic row.",
+        "value": 0.386
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf"
+        ],
+        "notes": "Official Audi 09/27/2019 technical-data PDF lists the forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 for the exact FY Q5 35 TDI quattro S tronic row.",
+        "value": [
+          3.188,
+          2.19,
+          1.517,
+          1.057,
+          0.738,
+          0.508,
+          0.386
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf"
+        ],
+        "notes": "Official Audi 09/27/2019 technical-data PDF publishes one final-drive value 5.302 for the exact FY Q5 35 TDI quattro S tronic row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+        "value": 5.302
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf"
+        ],
+        "notes": "Official Audi 09/27/2019 technical-data PDF publishes one final-drive value 5.302 for the exact FY Q5 35 TDI quattro S tronic row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+        "value": 5.302
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf",
+          "secondary_technical_sources:fy-q5-35-tdi-quattro-adac"
+        ],
+        "notes": "Official Audi 09/27/2019 technical-data material confirms 235/65 R17 as the exact basic tire package for the FY Q5 35 TDI quattro S tronic row, and the exact ADAC variant page cross-checks the same baseline size.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 65.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf",
+            "secondary_technical_sources:fy-q5-35-tdi-quattro-adac"
+          ],
+          "notes": "Official Audi 09/27/2019 technical-data material confirms 235/65 R17 as the exact basic tire package for the FY Q5 35 TDI quattro S tronic row, and the exact ADAC variant page cross-checks the same baseline size.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Basic 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 6 validation rewrites this row from a broad unsupported FY placeholder into the exact AWD state actually supported by the evidence. The official Audi 09/27/2019 technical-data PDF proves the exact FY Q5 35 TDI quattro S tronic 120 kW package with quattro all-wheel drive, 7-speed dual-clutch S tronic transmission, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, one published final-drive value 5.302, and basic 235/65 R17 tires. The exact ADAC variant page narrows the checked lifecycle to 08/2018-05/2019, which is normalized here to the conservative 2018-2019 year bucket. Later official Audi 04/02/2024 35 TDI material is retained only as contradiction evidence because it describes a front-wheel-drive FY Q5 35 TDI S tronic state rather than the checked quattro row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-35-tdi-2024-tech-data-pdf",
+          "secondary_technical_sources:fy-q5-35-tdi-quattro-adac"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact Audi Q5 FY 35 TDI quattro EU-market lifecycle inside the 2018-2019 year bucket",
+        "reason": "The checked official Audi 2019 technical-data PDF proves the exact quattro state and the exact ADAC page narrows it to 08/2018-05/2019, but this pass did not recover a second independent exact-source ledger for every EU market month inside the normalized 2018-2019 bucket.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf",
+          "secondary_technical_sources:fy-q5-35-tdi-quattro-adac"
+        ]
+      },
+      {
+        "item": "Audi Q5 FY 35 TDI quattro exact optional wheel and tire matrix",
+        "reason": "The checked official Audi exact sheet proves only the basic 235/65 R17 package for the exact 35 TDI quattro row. Broader optional wheel sizes or any staggered package were not recovered for this exact 2018-2019 AWD state.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q5 FY 35 TDI quattro exact public gearbox-family naming",
+        "reason": "The checked official Audi exact sheet proves 7-speed S tronic dual-clutch wording for the 2018-2019 AWD state but does not publish a gearbox-family code such as DL382.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-fy-45-tfsi-quattro-eu-2019-dct7-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "FY",
+    "body_code": "FY",
+    "production_start_year": 2019,
+    "production_end_year": 2024,
+    "model_name": "Q5 (FY, 2019-2024)",
+    "variant_name": "45 TFSI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
+        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+      ],
+      "notes": "The checked official Audi MediaCenter 2019 and 2024 technical-data PDFs confirm quattro all-wheel drive with ultra technology for the exact FY Q5 45 TFSI quattro state. Applied as official-derived evidence for the corrected 2019-2024 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
+        "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+      ],
+      "notes": "The checked official Audi MediaCenter 2019 and 2024 technical-data PDFs confirm a 7-speed S tronic transmission for the exact FY Q5 45 TFSI quattro state. The repo keeps the normalized DCT7 code, but no checked official Audi source names the gearbox family code.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2019 and 2024 technical-data PDFs list 0.433 as the checked top-gear ratio for the FY Q5 45 TFSI quattro state.",
+        "value": 0.433
+      },
+      "gear_ratios": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2019 and 2024 technical-data PDFs agree on the full forward ratio set for the FY Q5 45 TFSI quattro state.",
+        "value": [
+          3.188,
+          2.19,
+          1.517,
+          1.057,
+          0.738,
+          0.557,
+          0.433
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2019 and 2024 technical-data PDFs agree on final drive 5.302 for the FY Q5 45 TFSI quattro state.",
+        "value": 5.302
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2019 and 2024 technical-data PDFs agree on final drive 5.302 for the FY Q5 45 TFSI quattro state.",
+        "value": 5.302
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2019 and 2024 technical-data PDFs confirm 235/65 R17 as the basic tire package for the FY Q5 45 TFSI quattro state. Applied as official-derived evidence for the corrected 2019-2024 row while the full optional wheel/tire matrix remains unresolved.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 65.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
+            "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+          ],
+          "notes": "The checked official Audi MediaCenter 2019 and 2024 technical-data PDFs confirm 235/65 R17 as the basic tire package for the FY Q5 45 TFSI quattro state. The broader optional wheel/tire matrix remains unresolved.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 3 review replaces the copied FY Q5 cluster note with row-specific Audi MediaCenter evidence for the exact FY Q5 45 TFSI quattro state. The checked 2019 and 2024 technical-data PDFs agree on quattro ultra AWD, 7-speed S tronic, top gear 0.433, the full 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 ratio set, final drive 5.302, and basic 235/65 R17 tires. The row start is corrected to 2019 because this pass did not recover official 2017 or 2018 evidence for a Germany-market 45 TFSI quattro state, and the row end is capped at 2024 because Audi's own model hub scopes the FY Q5 as 'until 2024' before the third-generation launch.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-until-2024-model-page",
+          "audi_mediacenter_sources:fy-q5-third-generation-launch-release"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q5 FY 45 TFSI quattro optional wheel/tire matrix",
+        "reason": "The checked official Audi MediaCenter 2019 and 2024 technical-data PDFs resolve the basic 235/65 R17 tire package, but this pass did not recover a full FY optional wheel/tire matrix tied to this exact row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q5 FY 45 TFSI quattro gearbox family-code confirmation",
+        "reason": "The checked official Audi sources use the market-facing 7-speed S tronic wording and do not name the supplier or family code behind the repo's normalized DCT7 transmission mapping.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2024-tech-data-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-fy-55-tfsi-e-quattro-eu-2019-dct7-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "FY",
+    "body_code": "FY",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "Q5 (FY, 2019-2025)",
+    "variant_name": "55 TFSI e quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo PHEV",
+    "fuel_type": "PHEV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2019-launch-pdf",
+        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
+        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf"
+      ],
+      "notes": "Official Audi launch, 2021 technical-data, and 2024 technical-data material confirm quattro ultra AWD for the exact FY 55 TFSI e quattro state. The row keeps a broader 2019-2025 span, but direct numeric drivetrain continuity is only evidenced from the official 2021 and 2024 technical-data sheets.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2019-launch-pdf",
+        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
+        "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf"
+      ],
+      "notes": "Official Audi launch, 2021 technical-data, and 2024 technical-data material confirm the 7-speed S tronic gearbox for the exact FY 55 TFSI e quattro state, including the PHEV layout with the electric motor integrated into that transmission. The public gearbox family code remains unresolved.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL382)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2021 and 2024 technical-data PDFs both list 0.433 as the top-gear ratio for the exact FY Q5 55 TFSI e quattro S tronic state. Applied as official exact evidence while launch-year numeric continuity remains inferred rather than directly printed in a 2019 ratio table.",
+        "value": 0.433
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2021 and 2024 technical-data PDFs both list the forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 for the exact FY Q5 55 TFSI e quattro S tronic state. Applied as official exact evidence while launch-year numeric continuity remains inferred rather than directly printed in a 2019 ratio table.",
+        "value": [
+          3.188,
+          2.19,
+          1.517,
+          1.057,
+          0.738,
+          0.557,
+          0.433
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2021 and 2024 technical-data PDFs publish one populated final-drive value 5.302 for the exact FY Q5 55 TFSI e quattro S tronic state. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+        "value": 5.302
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2021 and 2024 technical-data PDFs publish one populated final-drive value 5.302 for the exact FY Q5 55 TFSI e quattro S tronic state. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+        "value": 5.302
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 2021 and 2024 technical-data PDFs both list 235/60 R18 on 8 J x 18 wheels as the basic non-staggered tire package for the exact FY Q5 55 TFSI e quattro state. Applied as official exact evidence while the optional wheel/tire matrix remains unresolved.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 60.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
+            "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf"
+          ],
+          "notes": "Official Audi 2021 and 2024 technical-data PDFs both list 235/60 R18 on 8 J x 18 wheels as the basic non-staggered tire package for the exact FY Q5 55 TFSI e quattro state. Applied as official exact evidence while the optional wheel/tire matrix remains unresolved.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 60.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0704ea887c86",
+            "legacy_research_sources:4395fed0b13e",
+            "legacy_research_sources:54af60a9ddf0",
+            "legacy_research_sources:58f92c263343",
+            "legacy_research_sources:6db6eab4aafb",
+            "legacy_research_sources:7e60864b72c3",
+            "legacy_research_sources:84ab012d7125",
+            "legacy_research_sources:a6de0bcaa857",
+            "legacy_research_sources:aaa1bd276e93",
+            "legacy_research_sources:b24b22157008",
+            "legacy_research_sources:e6b28c39d7e6",
+            "legacy_research_sources:efd444c9156f",
+            "legacy_research_sources:f8d3f991ca53"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter / technical data PDF with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0704ea887c86",
+            "legacy_research_sources:4395fed0b13e",
+            "legacy_research_sources:54af60a9ddf0",
+            "legacy_research_sources:58f92c263343",
+            "legacy_research_sources:6db6eab4aafb",
+            "legacy_research_sources:7e60864b72c3",
+            "legacy_research_sources:84ab012d7125",
+            "legacy_research_sources:a6de0bcaa857",
+            "legacy_research_sources:aaa1bd276e93",
+            "legacy_research_sources:b24b22157008",
+            "legacy_research_sources:e6b28c39d7e6",
+            "legacy_research_sources:efd444c9156f",
+            "legacy_research_sources:f8d3f991ca53"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter / technical data PDF with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 4 validation strengthens this exact FY Q5 55 TFSI e quattro row with an official three-step Audi chain: the 2019 launch PDF introduces the exact 55 TFSI e quattro and its seven-speed S tronic / quattro ultra PHEV layout, the official 2021 technical-data PDF and the official 2024 technical-data PDF both prove the same exact numeric package with forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, one published final-drive value 5.302, and basic 235/60 R18 tires, and the 2025 e-hybrid launch release marks the successor handover away from FY naming. The row now promotes the exact 2021/2024 numeric package while keeping launch-year numeric continuity and the mid-2025 handover granularity unresolved.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2019-launch-pdf",
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-2025-e-hybrid-launch-release"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q5 FY 55 TFSI e quattro exact ratio, final-drive, and tire applicability across the retimed 2019-2025 row",
+        "reason": "The checked official 2021 and 2024 technical-data PDFs prove the same exact numeric package for the outgoing FY 55 TFSI e quattro state, but this pass did not recover a 2019 or 2020 ratio table proving that same package applied unchanged from launch.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2019-launch-pdf",
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-2025-e-hybrid-launch-release"
+        ]
+      },
+      {
+        "item": "Audi Q5 FY 55 TFSI e quattro exact transmission-code, optional tire matrix, and mid-2025 handover granularity",
+        "reason": "Official Audi material proves the 7-speed S tronic wording and the successor e-hybrid handover starting in mid-June 2025, but it does not publish the transmission family code, a full optional wheel/tire matrix, or a finer-grained boundary inside the shared 2025 year.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2019-launch-pdf",
+          "audi_mediacenter_sources:fy-q5-55-tfsi-e-2024-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-2025-e-hybrid-launch-release"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-fy-40-tdi-quattro-eu-2017-dct7-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "FY",
+    "body_code": "FY",
+    "production_start_year": 2020,
+    "production_end_year": 2024,
+    "model_name": "Q5 (FY, 2020-2024)",
+    "variant_name": "40 TDI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf"
+      ],
+      "notes": "Official Audi 06/04/2024 technical-data material confirms that the exact later FY Q5 40 TDI quattro state uses quattro all-wheel drive with ultra technology.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf"
+      ],
+      "notes": "Official Audi 06/04/2024 technical-data material confirms the later FY Q5 40 TDI quattro state uses 7-speed S tronic wording and a dual-clutch layout. The repo keeps the normalized DCT7 code, but the checked official source does not publish a gearbox-family code.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 06/04/2024 technical-data PDF lists 0.386 as the 7th-gear ratio for the exact later FY Q5 40 TDI quattro S tronic row.",
+        "value": 0.386
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 06/04/2024 technical-data PDF lists the forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 for the exact later FY Q5 40 TDI quattro S tronic row.",
+        "value": [
+          3.188,
+          2.19,
+          1.517,
+          1.057,
+          0.738,
+          0.508,
+          0.386
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 06/04/2024 technical-data PDF publishes one final-drive value 5.302 for the exact later FY Q5 40 TDI quattro S tronic row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+        "value": 5.302
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 06/04/2024 technical-data PDF publishes one final-drive value 5.302 for the exact later FY Q5 40 TDI quattro S tronic row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+        "value": 5.302
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf",
+          "secondary_technical_sources:fy-q5-40-tdi-quattro-adac"
+        ],
+        "notes": "Official Audi 06/04/2024 technical-data material confirms 235/65 R17 as the exact basic tire package for the later FY Q5 40 TDI quattro S tronic row, and the exact ADAC facelift variant page cross-checks the same baseline size.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 65.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf",
+            "secondary_technical_sources:fy-q5-40-tdi-quattro-adac"
+          ],
+          "notes": "Official Audi 06/04/2024 technical-data material confirms 235/65 R17 as the exact basic tire package for the later FY Q5 40 TDI quattro S tronic row, and the exact ADAC facelift variant page cross-checks the same baseline size.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Basic 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 6 validation narrows this row from a mixed FY placeholder into the later dual-clutch state actually supported by the evidence. The official Audi 06/04/2024 technical-data PDF proves the exact later FY Q5 40 TDI quattro S tronic package with quattro all-wheel drive, 7-speed dual-clutch S tronic transmission, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, one published final-drive value 5.302, and basic 235/65 R17 tires. The exact ADAC facelift variant page anchors this later state to 09/2020-11/2023, while the Audi model page still scopes the FY Q5 as 'until 2024' and the third-generation launch release shows the successor arriving afterwards. Earlier official 09/27/2019 40 TDI quattro material is retained only as contradiction evidence because it proves an older AWD 6-speed manual state that must not be merged into this later S tronic row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2019-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-until-2024-model-page",
+          "audi_mediacenter_sources:fy-q5-third-generation-launch-release",
+          "secondary_technical_sources:fy-q5-40-tdi-quattro-adac"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact Audi Q5 FY 40 TDI quattro EU-market lifecycle inside the 2020-2024 year bucket",
+        "reason": "The checked official Audi 2024 technical-data PDF proves the later S tronic state, the exact ADAC facelift page anchors 09/2020-11/2023, and Audi's own FY model page scopes the generation until 2024, but this pass did not recover a second market-by-market exact-source ledger for every EU month inside the normalized 2020-2024 bucket.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:fy-q5-until-2024-model-page",
+          "secondary_technical_sources:fy-q5-40-tdi-quattro-adac"
+        ]
+      },
+      {
+        "item": "Audi Q5 FY 40 TDI quattro exact optional wheel and tire matrix for the later S tronic state",
+        "reason": "The checked official Audi exact sheet proves only the basic 235/65 R17 package for the later 40 TDI quattro S tronic row. This pass did not promote broader optional wheel packages because the exact official matrix was not recovered cleanly enough for production data.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q5 FY 40 TDI quattro exact public gearbox-family naming",
+        "reason": "The checked official Audi exact sheet proves 7-speed S tronic dual-clutch wording for the later AWD state but does not publish a gearbox-family code such as DL382.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

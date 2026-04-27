@@ -1,0 +1,500 @@
+[
+  {
+    "id": "bmw-u11-xdrive23i-eu-2022-dct7-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "U11",
+    "body_code": "U11",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "X1 (U11, 2022-2026)",
+    "variant_name": "xDrive23i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_market_pages:u11-x1-overview-de",
+        "bmw_market_pages:u11-x1-technical-data-de",
+        "bmw_market_pages:u11-x1-technical-data-uk"
+      ],
+      "notes": "Current official BMW Germany overview and technical-data pages plus the BMW UK technical-data page all surface the exact U11 xDrive23i product identity. BMW's xDrive naming and the current product blocks are sufficient to confirm the AWD layout for this row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed dual-clutch (DKG)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.71
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.636
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.636
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:6d0d993f5901",
+          "legacy_research_sources:78b598b517e4",
+          "legacy_research_sources:8fea5faa09d1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:a9c2e6189261",
+          "legacy_research_sources:b3921f131921"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:6d0d993f5901",
+            "legacy_research_sources:78b598b517e4",
+            "legacy_research_sources:8fea5faa09d1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:a9c2e6189261",
+            "legacy_research_sources:b3921f131921"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:6d0d993f5901",
+            "legacy_research_sources:78b598b517e4",
+            "legacy_research_sources:8fea5faa09d1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:a9c2e6189261",
+            "legacy_research_sources:b3921f131921"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:6d0d993f5901",
+            "legacy_research_sources:78b598b517e4",
+            "legacy_research_sources:8fea5faa09d1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:a9c2e6189261",
+            "legacy_research_sources:b3921f131921"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Direct validation of current BMW Germany overview and technical-data pages plus the BMW UK technical-data page now confirms that the exact U11 xDrive23i is a live first-party product surface and that BMW's embedded product metadata marks this variant with productionYear 2022. That is strong enough to retime the row to a 2022 start and replace the copied iX1 EV advisory block, but not strong enough to promote the inherited transmission or tire data.",
+        "evidence_refs": [
+          "bmw_market_pages:u11-x1-overview-de",
+          "bmw_market_pages:u11-x1-technical-data-de",
+          "bmw_market_pages:u11-x1-technical-data-uk"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact U11 xDrive23i transmission wording and raw ratio / final-drive mapping",
+        "reason": "The current BMW Germany and UK product pages directly confirm trim identity and productionYear 2022, but their rendered technical tables were not statically recoverable in this pass, so the inherited DCT and ratio fields remain unresolved.",
+        "evidence_refs": [
+          "bmw_market_pages:u11-x1-overview-de",
+          "bmw_market_pages:u11-x1-technical-data-de",
+          "bmw_market_pages:u11-x1-technical-data-uk"
+        ]
+      },
+      {
+        "item": "Exact U11 xDrive23i baseline and optional wheel/tire matrix",
+        "reason": "This pass confirmed the live BMW xDrive23i product surfaces and productionYear metadata, but it did not recover one directly readable first-party wheel and tire table for the exact row.",
+        "evidence_refs": [
+          "bmw_market_pages:u11-x1-overview-de",
+          "bmw_market_pages:u11-x1-technical-data-de",
+          "bmw_market_pages:u11-x1-technical-data-uk"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-u11-ix1-xdrive30-eu-2023-ss1-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "U11",
+    "body_code": "U11",
+    "production_start_year": 2023,
+    "production_end_year": 2026,
+    "model_name": "X1 (U11, 2023-2026)",
+    "variant_name": "iX1 xDrive30",
+    "engine_code": "Electric",
+    "engine_name": "Electric Dual Motor",
+    "fuel_type": "EV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:u11-ix1-tech-spec-article",
+        "bmw_pressclub_sources:u11-ix1-tech-spec-pdf"
+      ],
+      "notes": "The official BMW Deutschland technical-data article and PDF for the exact iX1 xDrive30 describe coordinated drive torque from one electric motor at the front axle and one at the rear axle, which is sufficient to confirm the AWD layout for this row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:u11-ix1-tech-spec-pdf"
+      ],
+      "notes": "The official BMW Deutschland technical-data PDF for the exact iX1 xDrive30 states \"Automatikgetriebe, einstufig mit fester Übersetzung\". The repo normalizes that EV wording to the canonical SS1 single-speed fixed-gear transmission label.",
+      "code": "SS1",
+      "name": "Single-speed fixed gear (EV)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:u11-ix1-tech-spec-pdf"
+        ],
+        "notes": "The official BMW Deutschland technical-data PDF describes a single-speed fixed-ratio EV transmission. The repo's EV ratio model represents that gearbox with a normalized top-gear value of 1.0.",
+        "value": 1.0
+      },
+      "final_drive_front": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:u11-ix1-tech-spec-pdf"
+        ],
+        "notes": "The official BMW Deutschland technical-data PDF publishes the front electric-motor reduction ratio for the exact iX1 xDrive30 as 11.190.",
+        "value": 11.19
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:u11-ix1-tech-spec-pdf"
+        ],
+        "notes": "The official BMW Deutschland technical-data PDF publishes the rear electric-motor reduction ratio for the exact iX1 xDrive30 as 10.050.",
+        "value": 10.05
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:u11-ix1-tech-spec-pdf"
+        ],
+        "notes": "The official BMW Deutschland technical-data PDF for the exact iX1 xDrive30 publishes 205/65 R17 100Y XL tires on 7.5J x 17 wheels as the baseline fitment.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 65.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:6d0d993f5901",
+            "legacy_research_sources:78b598b517e4",
+            "legacy_research_sources:8fea5faa09d1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:a9c2e6189261",
+            "legacy_research_sources:b3921f131921"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub / model overview with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "18\" package"
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:6d0d993f5901",
+            "legacy_research_sources:78b598b517e4",
+            "legacy_research_sources:8fea5faa09d1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:a9c2e6189261",
+            "legacy_research_sources:b3921f131921"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub / model overview with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "19\" package"
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:6d0d993f5901",
+            "legacy_research_sources:78b598b517e4",
+            "legacy_research_sources:8fea5faa09d1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:a9c2e6189261",
+            "legacy_research_sources:b3921f131921"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub / model overview with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "20\" package"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Direct validation of the official BMW Deutschland technical-data article and PDF now lets this exact iX1 xDrive30 row carry the EV-specific AWD layout, single-speed fixed-ratio transmission normalization, front and rear reduction ratios 11.190 / 10.050, and the 205/65 R17 launch-standard tire that were previously left only in row notes.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:u11-ix1-tech-spec-article",
+          "bmw_pressclub_sources:u11-ix1-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Current-market iX1 xDrive30 optional wheel and tire matrix across the retained 2023-2026 row span",
+        "reason": "This pass directly revalidated the official launch technical-data PDF for the exact iX1 xDrive30 but did not recover a fresh current BMW market document proving the later option matrix well enough to replace the inherited option tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:u11-ix1-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-u11-sdrive18i-eu-2023-dct7-fwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "U11",
+    "body_code": "U11",
+    "production_start_year": 2023,
+    "production_end_year": 2026,
+    "model_name": "X1 (U11, 2023-2026)",
+    "variant_name": "sDrive18i",
+    "engine_code": "B38",
+    "engine_name": "B38 1.5L I3 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_market_pages:u11-x1-technical-data-de"
+      ],
+      "notes": "The current official BMW Germany U11 X1 technical-data page exposes the exact BMW X1 sDrive18i in its embedded per-trim schema block with driveWheelConfiguration set to Vorderradantrieb, which is sufficient to confirm the front-wheel-drive layout for this row.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_market_pages:u11-x1-technical-data-de"
+      ],
+      "notes": "The current official BMW Germany U11 X1 technical-data page exposes the exact BMW X1 sDrive18i with a Steptronic Sport Getriebe mit Doppelkupplung label in the model dropdown and seven forward gears in the embedded schema block. The repo normalizes that row-specific BMW wording to the canonical DCT7 label.",
+      "code": "DCT7",
+      "name": "7-speed dual-clutch (DKG)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.71
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.636
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:6d0d993f5901",
+          "legacy_research_sources:78b598b517e4",
+          "legacy_research_sources:8fea5faa09d1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:a9c2e6189261",
+          "legacy_research_sources:b3921f131921"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:6d0d993f5901",
+            "legacy_research_sources:78b598b517e4",
+            "legacy_research_sources:8fea5faa09d1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:a9c2e6189261",
+            "legacy_research_sources:b3921f131921"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:6d0d993f5901",
+            "legacy_research_sources:78b598b517e4",
+            "legacy_research_sources:8fea5faa09d1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:a9c2e6189261",
+            "legacy_research_sources:b3921f131921"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:6d0d993f5901",
+            "legacy_research_sources:78b598b517e4",
+            "legacy_research_sources:8fea5faa09d1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:a9c2e6189261",
+            "legacy_research_sources:b3921f131921"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Direct validation of the current BMW Germany U11 X1 technical-data page now confirms the exact sDrive18i trim surface, front-wheel-drive layout, and Steptronic Sport dual-clutch transmission wording for this row. That is strong enough to replace the copied iX1 EV advisory block and promote drivetrain/transmission support, but not strong enough to promote the inherited ratio or tire fields.",
+        "evidence_refs": [
+          "bmw_market_pages:u11-x1-technical-data-de"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact U11 sDrive18i raw ratio and final-drive mapping",
+        "reason": "The current BMW Germany technical-data page directly confirms the exact sDrive18i trim, FWD layout, and seven-speed dual-clutch wording, but its rendered numeric gear-ratio and final-drive tables were not recoverable in this pass.",
+        "evidence_refs": [
+          "bmw_market_pages:u11-x1-technical-data-de"
+        ]
+      },
+      {
+        "item": "Exact U11 sDrive18i baseline and optional wheel/tire matrix",
+        "reason": "This pass did not recover one directly readable first-party BMW wheel and tire table for the exact sDrive18i trim, so the inherited 18-inch, 19-inch, and 20-inch tire entries remain unresolved.",
+        "evidence_refs": [
+          "bmw_market_pages:u11-x1-technical-data-de"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  }
+]

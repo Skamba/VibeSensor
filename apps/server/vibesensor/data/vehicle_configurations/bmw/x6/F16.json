@@ -1,0 +1,339 @@
+[
+  {
+    "id": "bmw-f16-xdrive50i-eu-2015-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F16",
+    "body_code": "F16",
+    "production_start_year": 2015,
+    "production_end_year": 2015,
+    "model_name": "X6 (F16, 2015)",
+    "variant_name": "xDrive50i",
+    "engine_code": "N63",
+    "engine_name": "N63 4.4L V8 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f16-xdrive50i-2014-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 06/2014 launch technical-data pages confirm xDrive all-wheel drive for the exact X6 xDrive50i state represented by this narrowed 2015-only row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f16-xdrive50i-2014-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 06/2014 launch technical-data pages confirm 8-speed Steptronic sport transmission wording for the exact X6 xDrive50i state represented by this narrowed 2015-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f16-xdrive50i-2014-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 06/2014 launch technical-data pages list 0.640 as the top-gear ratio for the exact X6 xDrive50i state represented by this narrowed 2015-only row.",
+        "value": 0.64
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f16-xdrive50i-2014-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 06/2014 launch technical-data pages list the forward gear ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 for the exact X6 xDrive50i state represented by this narrowed 2015-only row.",
+        "value": [
+          5.0,
+          3.2,
+          2.143,
+          1.72,
+          1.313,
+          1.0,
+          0.823,
+          0.64
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f16-xdrive50i-2014-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 06/2014 launch technical-data pages publish a single 3.154 final-drive ratio for the exact X6 xDrive50i state represented by this narrowed 2015-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.154
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f16-xdrive50i-2014-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 06/2014 launch technical-data pages publish a single 3.154 final-drive ratio for the exact X6 xDrive50i state represented by this narrowed 2015-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.154
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f16-xdrive50i-2014-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 06/2014 launch technical-data pages list 255/50 R19 as the baseline tire for the exact X6 xDrive50i state represented by this narrowed 2015-only row.",
+        "front": {
+          "width_mm": 255.0,
+          "aspect_pct": 50.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f16-xdrive50i-2014-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2014 launch technical-data pages list 255/50 R19 as the baseline tire for the exact X6 xDrive50i state represented by this narrowed 2015-only row.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0260d6f23394",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:ded47975365d"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 45.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0260d6f23394",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:ded47975365d"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 06/2014 launch technical-data pages establish the exact X6 xDrive50i state checked in this pass: AWD, 8-speed Steptronic sport transmission, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, a single published 3.154 final-drive ratio, and 255/50 R19 baseline tires. This row is narrowed to the supported 2015-only state because later exact numeric continuity was not recovered in this pass.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f16-xdrive50i-2014-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X6 xDrive50i exact optional wheel/tire matrix beyond the narrowed 2015 row",
+        "reason": "The checked official BMW 06/2014 launch technical-data pages close the 19-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f16-xdrive50i-2014-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X6 xDrive50i separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f16-xdrive50i-2014-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f16-xdrive35i-eu-2015-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F16",
+    "body_code": "F16",
+    "production_start_year": 2015,
+    "production_end_year": 2019,
+    "model_name": "X6 (F16, 2015-2019)",
+    "variant_name": "xDrive35i",
+    "engine_code": "N55",
+    "engine_name": "N55 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.154
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.154
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:0260d6f23394",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:ded47975365d"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 255.0,
+          "aspect_pct": 50.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0260d6f23394",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:ded47975365d"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0260d6f23394",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:ded47975365d"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 45.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:0260d6f23394",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:ded47975365d"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:0260d6f23394",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:ded47975365d"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X6 (F16, 2015-2019) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:0260d6f23394",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:ded47975365d"
+        ]
+      },
+      {
+        "item": "BMW X6 (F16, 2015-2019) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:0260d6f23394",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:ded47975365d"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

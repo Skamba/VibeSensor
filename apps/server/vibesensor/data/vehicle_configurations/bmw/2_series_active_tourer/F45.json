@@ -1,0 +1,1619 @@
+[
+  {
+    "id": "bmw-f45-214d-eu-2014-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45",
+    "production_start_year": 2014,
+    "production_end_year": 2015,
+    "model_name": "2 Series Active Tourer (F45, 2014-2015)",
+    "variant_name": "214d",
+    "engine_code": "B37C15",
+    "engine_name": "B37C15 I3 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-214d-2015-launch-article",
+        "bmw_pressclub_sources:f45-214d-2015-spec-pdf"
+      ],
+      "notes": "Checked official BMW spring 2015 launch material and the exact 03/2015 214d specifications PDF directly. That exact F45 sheet publishes the 214d Active Tourer as a front-wheel-drive six-speed manual state with 205/60 R16 baseline tires, and it does not surface any automatic 214d row, so this represented 2014 ZF8HP mapping remains an unsupported advisory placeholder.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.673
+      },
+      "gear_ratios": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": [
+          5.25,
+          3.029,
+          1.95,
+          1.457,
+          1.221,
+          1.0,
+          0.809,
+          0.673
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 4.398
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-220i-2018-press-kit",
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "bmw_pressclub_sources:f45-225xe-launch-release",
+          "legacy_research_sources:4bcbbab016e3",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:b385759b36d8",
+          "legacy_research_sources:ede0bc1c6aee",
+          "secondary_technical_sources:f45-220i-dct-autodata",
+          "secondary_technical_sources:f45-220i-dct-carfolio"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Checked official BMW spring 2015 launch material and the exact 03/2015 214d specifications PDF directly. That exact F45 sheet introduces the 214d from 03/2015 and publishes only a six-speed manual state with forward ratios 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683, final drive 3.632, and 205/60 R16 baseline tires. This represented 2014 ZF8HP configuration therefore remains an unsupported advisory row rather than a validated exact state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F45 214d exact automatic technical-data row",
+        "reason": "Checked official BMW 03/2015 specifications PDF publishes the 214d only with six-speed manual and does not surface any automatic 214d row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW F45 214d exact represented ZF8HP configuration",
+        "reason": "Official BMW spring 2015 launch material introduces the 214d only from 03/2015, and the exact 03/2015 specifications PDF shows six-speed manual with 205/60 R16 baseline tires rather than the inherited 8-speed, 4.398, and 17-inch placeholders.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-214d-2015-launch-article",
+          "bmw_pressclub_sources:f45-214d-2015-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "no_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f45-216d-eu-2014-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Active Tourer (F45, 2014-2021)",
+    "variant_name": "216d",
+    "engine_code": "B37C15",
+    "engine_name": "B37C15 I3 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2018-spec-pdf"
+      ],
+      "notes": "Checked official BMW 01/2018 specifications PDF directly. That exact F45 sheet publishes the 216d Active Tourer with six-speed manual and optional seven-speed DCT overall ratios plus 205/60 R16 baseline tires, but it does not surface any eight-speed Steptronic 216d row, so this represented ZF8HP mapping remains an unsupported advisory placeholder.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.673
+      },
+      "gear_ratios": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": [
+          5.25,
+          3.029,
+          1.95,
+          1.457,
+          1.221,
+          1.0,
+          0.809,
+          0.673
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 4.398
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-220i-2018-press-kit",
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "bmw_pressclub_sources:f45-225xe-launch-release",
+          "legacy_research_sources:4bcbbab016e3",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:b385759b36d8",
+          "legacy_research_sources:ede0bc1c6aee",
+          "secondary_technical_sources:f45-220i-dct-autodata",
+          "secondary_technical_sources:f45-220i-dct-carfolio"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Checked official BMW 01/2018 specifications PDF directly. That exact F45 sheet publishes the 216d Active Tourer with six-speed manual and optional seven-speed DCT overall ratios 16.385 / 9.664 / 6.181 / 4.327 / 3.349 / 2.663 / 2.158, reverse 14.898, and 205/60 R16 baseline tires, but it does not publish any eight-speed Steptronic 216d row. This represented ZF8HP configuration therefore remains an unsupported advisory row rather than a validated exact state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F45 216d exact automatic technical-data row",
+        "reason": "Checked official BMW 01/2018 specifications PDF publishes the 216d with six-speed manual and optional seven-speed DCT overall ratios, not with eight-speed Steptronic.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW F45 216d exact represented ZF8HP configuration",
+        "reason": "Without any official eight-speed Steptronic 216d row, this pass cannot promote the inherited transmission, ratio, or tire placeholders for the represented ZF8HP state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "no_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f45-216i-eu-2014-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Active Tourer (F45, 2014-2021)",
+    "variant_name": "216i",
+    "engine_code": "B38A15U0",
+    "engine_name": "B38A15U0 I3 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2018-spec-pdf"
+      ],
+      "notes": "Checked official BMW 01/2018 specifications PDF directly. That exact F45 sheet publishes the 216i Active Tourer only with six-speed manual and 205/60 R16 baseline tires, and it does not surface any automatic 216i row, so this represented ZF8HP mapping remains an unsupported advisory placeholder.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.673
+      },
+      "gear_ratios": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": [
+          5.25,
+          3.029,
+          1.95,
+          1.457,
+          1.221,
+          1.0,
+          0.809,
+          0.673
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 4.398
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-220i-2018-press-kit",
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "bmw_pressclub_sources:f45-225xe-launch-release",
+          "legacy_research_sources:4bcbbab016e3",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:b385759b36d8",
+          "legacy_research_sources:ede0bc1c6aee",
+          "secondary_technical_sources:f45-220i-dct-autodata",
+          "secondary_technical_sources:f45-220i-dct-carfolio"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Checked official BMW 01/2018 specifications PDF directly. That exact F45 sheet publishes the 216i Active Tourer only with six-speed manual and 205/60 R16 baseline tires, and it does not surface any automatic 216i row. This represented ZF8HP configuration therefore remains an unsupported advisory row rather than a validated exact state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F45 216i exact automatic technical-data row",
+        "reason": "Checked official BMW 01/2018 specifications PDF publishes the 216i only with six-speed manual and does not surface an automatic 216i row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW F45 216i exact represented ZF8HP configuration",
+        "reason": "Without any official automatic 216i row, this pass cannot promote the inherited transmission, ratio, or tire placeholders for the represented ZF8HP state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "no_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f45-218i-eu-2014-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Active Tourer (F45, 2014-2021)",
+    "variant_name": "218i",
+    "engine_code": "B38",
+    "engine_name": "B38 1.5L I3 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2014-spec-pdf",
+        "bmw_pressclub_sources:f45-2015-spec-pdf",
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-2020-spec-pdf"
+      ],
+      "notes": "Checked official BMW 2014, 2015, 2018, and 2020 F45 ACEA-market specification PDFs consistently show the plain 218i Active Tourer as a non-xDrive front-wheel-drive state. None of those exact official sheets publish an eight-speed 218i automatic row, so this represented ZF8HP mapping remains contradicted.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
+        "value": 0.673
+      },
+      "gear_ratios": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
+        "value": [
+          5.25,
+          3.029,
+          1.95,
+          1.457,
+          1.221,
+          1.0,
+          0.809,
+          0.673
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
+        "value": 4.398
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-220i-2018-press-kit",
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "bmw_pressclub_sources:f45-225xe-launch-release",
+          "legacy_research_sources:4bcbbab016e3",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:b385759b36d8",
+          "legacy_research_sources:ede0bc1c6aee",
+          "secondary_technical_sources:f45-220i-dct-autodata",
+          "secondary_technical_sources:f45-220i-dct-carfolio"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 3 validation strengthens the contradiction on this exact row with a four-step official BMW ACEA-market chain. The checked 02/2014 and 03/2015 specification PDFs show the 218i Active Tourer with six-speed manual or optional six-speed Steptronic, 205/60 R16 baseline tires, and no eight-speed row. The checked 01/2018 and 11/2020 specification PDFs then show the facelift/late 218i with six-speed manual or optional seven-speed DCT / seven-speed Steptronic with double clutch, again with no eight-speed row, while the same official PDFs explicitly publish Eight-speed Steptronic on 225i xDrive. This represented ZF8HP configuration therefore remains a contradicted advisory row rather than a validated exact state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW 01/2018 specifications PDF / press release with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F45 218i exact eight-speed Steptronic row",
+        "reason": "Checked official BMW 2014, 2015, 2018, and 2020 F45 ACEA-market specification PDFs show the 218i only with six-speed manual plus optional six-speed Steptronic early or optional seven-speed DCT / seven-speed Steptronic with double clutch later, never with eight-speed Steptronic.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW F45 218i exact represented ZF8HP configuration",
+        "reason": "Without any official eight-speed 218i row, this pass cannot promote the inherited transmission, ratio, or tire placeholders for the represented automatic state. The official source chain instead shows an unresolved early six-speed automatic state and a later seven-speed DCT state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW F45 218i exact automatic switchover from six-speed Steptronic to seven-speed DCT",
+        "reason": "The checked official BMW source chain proves the early 218i automatic as six-speed Steptronic and the facelift/late 218i automatic as seven-speed DCT / seven-speed Steptronic with double clutch, but this pass did not recover the exact official switchover month or model-year boundary between those two supported automatic states.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-2020-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "no_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f45-225i-eu-2014-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Active Tourer (F45, 2014-2021)",
+    "variant_name": "225i",
+    "engine_code": "B48A20O0",
+    "engine_name": "B48A20O0 I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+        "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
+        "bmw_pressclub_sources:f45-2014-launch-article"
+      ],
+      "notes": "Official BMW launch-era and March 2015 source chain places the exact plain 225i Active Tourer on the front wheels before the later 225i xDrive row takes over the checked official split context.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+        "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
+        "bmw_pressclub_sources:f45-2014-launch-article"
+      ],
+      "notes": "Official BMW 02/2014 and 03/2015 technical-data material plus the launch article consistently use Eight-speed Steptronic wording for the exact early plain 225i Active Tourer. The repo keeps ZF8HP as its canonical automatic-family code for that official BMW mapping.",
+      "code": "ZF8HP",
+      "name": "8-speed Steptronic transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
+        ],
+        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list 0.673 as the top overdrive ratio for the exact plain F45 225i Active Tourer row.",
+        "value": 0.673
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
+        ],
+        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list the full forward ratio set for the exact plain F45 225i Active Tourer row.",
+        "value": [
+          5.25,
+          3.029,
+          1.95,
+          1.457,
+          1.221,
+          1.0,
+          0.809,
+          0.673
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
+        ],
+        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list 3.075 as the final-drive ratio for the exact plain F45 225i Active Tourer row.",
+        "value": 3.075
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
+        ],
+        "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list a square 205/55 R17 baseline setup on 7.5J x 17 wheels for the exact plain F45 225i Active Tourer row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+            "bmw_pressclub_sources:f45-225i-2015-spec-pdf"
+          ],
+          "notes": "Official BMW 02/2014 and 03/2015 technical-data PDFs consistently list the standard square 205/55 R17 setup for the exact plain F45 225i Active Tourer row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 8 review narrows the broad unsupported F45 225i row to the exact early plain front-wheel-drive state supported by official BMW launch-era evidence. The checked 02/2014 technical-data PDF publishes a plain 225i Active Tourer row with Eight-speed Steptronic, forward ratios 5.250 / 3.029 / 1.950 / 1.457 / 1.221 / 1.000 / 0.809 / 0.673, final drive 3.075, top speed 240 km/h, and a square 205/55 R17 baseline setup. The official launch article independently states the launch car uses a front-wheel-drive system, the 225i Active Tourer tops the launch range with a standard-fitted eight-speed Steptronic gearbox, and xDrive variants are added later. The checked March 2015 wrapper corroborates that the plain 225i specification attachment still exists in 2015, while the later 11/2014 225i xDrive specification PDF confirms the later all-wheel-drive row must stay separate.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-2014-launch-article",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-xdrive-2014-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F45 225i exact optional wheel-package coverage beyond the standard 17-inch setup",
+        "reason": "The checked official BMW 02/2014 and 03/2015 technical-data PDFs close the square 205/55 R17 standard setup for the exact plain F45 225i row, but this pass did not recover a launch-era official optional wheel matrix for the same exact configuration.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-2014-launch-article"
+        ]
+      },
+      {
+        "item": "BMW F45 225i exact continuation after the checked March 2015 plain-FWD carryover",
+        "reason": "The checked official BMW source chain proves the plain front-wheel-drive 225i Active Tourer at launch and confirms the same plain-spec attachment still exists in the March 2015 wrapper, but this pass did not recover a later official ACEA-market plain-225i row proving how long that exact front-wheel-drive state persisted before the published 225i xDrive-only material takes over.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2014-launch-article",
+          "bmw_pressclub_sources:f45-225i-2014-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-2015-spec-pdf",
+          "bmw_pressclub_sources:f45-225i-xdrive-2014-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f45-225xe-eu-2014-6-speed-step-awd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45",
+    "production_start_year": 2014,
+    "production_end_year": 2021,
+    "model_name": "2 Series Active Tourer (F45, 2014-2021)",
+    "variant_name": "225xe",
+    "engine_code": "B38",
+    "engine_name": "B38 1.5L I3 Turbo PHEV",
+    "fuel_type": "PHEV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2018-spec-pdf",
+        "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+        "bmw_pressclub_sources:f45-225xe-launch-release"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "6-SPEED-STEP",
+      "name": "6-speed Steptronic (225xe iPerformance)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.672
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.944
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.944
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-220i-2018-press-kit",
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "bmw_pressclub_sources:f45-225xe-launch-release",
+          "legacy_research_sources:4bcbbab016e3",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:b385759b36d8",
+          "legacy_research_sources:ede0bc1c6aee",
+          "secondary_technical_sources:f45-220i-dct-autodata",
+          "secondary_technical_sources:f45-220i-dct-carfolio"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Issue #1034 official-source review kept the retained 8-speed family baseline for the non-overridden F45 variants, moved the documented 225xe 6-speed Steptronic ratio pair onto the 225xe variant explicitly, and added an explicit 220i 7-speed dual-clutch override so the documented 220i/225xe transmissions no longer rely on shared gearbox rows. Wave 20 re-check confirms from the official 01/2018 BMW specifications PDF that the exact 220i ACEA-market baseline tire is 205/60 R16 and that BMW publishes overall 7-speed DCT ratio figures in that sheet, but those figures still do not expose a safe standalone final-drive/top-gear mapping. Wave 21 extends the exact official 01/2018 ACEA evidence to the 218i: the same BMW specifications PDF proves the 218i 6-speed manual state with ratios 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683, reverse 3.538, and baseline 205/60 R16 tires, while the optional 7-speed DCT appears only as overall parenthesized ratios 17.348 / 10.232 / 6.593 / 4.615 / 3.572 / 2.819 / 2.285 with reverse 15.982, still without a safely separable final-drive/top-gear mapping. The 225xe official 07/2019 specifications PDF also confirms the exact 205/55 R17 baseline tire alongside the full 6-speed ratio set, final drive 3.944, and top gear 0.672.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-220i-2018-press-kit",
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "bmw_pressclub_sources:f45-225xe-launch-release",
+          "legacy_research_sources:4bcbbab016e3",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:b385759b36d8",
+          "legacy_research_sources:ede0bc1c6aee",
+          "secondary_technical_sources:f45-220i-dct-autodata",
+          "secondary_technical_sources:f45-220i-dct-carfolio"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Remaining non-overridden F45 variant gearbox mapping",
+        "reason": "Issue #1034 made the documented 220i and 225xe transmission mappings explicit, but the other listed variants still inherit the retained family baseline until authoritative variant-specific ratio tables are confirmed.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-220i-2018-press-kit",
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "bmw_pressclub_sources:f45-225xe-launch-release",
+          "legacy_research_sources:4bcbbab016e3",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:b385759b36d8",
+          "legacy_research_sources:ede0bc1c6aee",
+          "secondary_technical_sources:f45-220i-dct-autodata",
+          "secondary_technical_sources:f45-220i-dct-carfolio"
+        ]
+      },
+      {
+        "item": "Official BMW numeric confirmation for the 220i DCT ratio pair",
+        "reason": "BMW official materials confirm the 220i uses the 7-speed dual-clutch Steptronic transmission, but the public PressClub documents retrieved for this fix do not expose an unambiguous final-drive field mapping, so the numeric ratio pair remains backed by reputable secondary references.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-220i-2018-press-kit",
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "bmw_pressclub_sources:f45-225xe-launch-release",
+          "legacy_research_sources:4bcbbab016e3",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:b385759b36d8",
+          "legacy_research_sources:ede0bc1c6aee",
+          "secondary_technical_sources:f45-220i-dct-autodata",
+          "secondary_technical_sources:f45-220i-dct-carfolio"
+        ]
+      },
+      {
+        "item": "Official BMW numeric confirmation for the 218i optional 7-speed DCT ratio pair",
+        "reason": "The official 01/2018 ACEA-market BMW specifications PDF proves the 218i optional 7-speed DCT exists and publishes only overall parenthesized ratios rather than a safely separable final-drive/top-gear mapping, so no exact standalone numeric gearbox override is yet safe for the automatic 218i state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf",
+          "bmw_pressclub_sources:f45-220i-2018-press-kit",
+          "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+          "bmw_pressclub_sources:f45-225xe-launch-release",
+          "legacy_research_sources:4bcbbab016e3",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:b385759b36d8",
+          "legacy_research_sources:ede0bc1c6aee",
+          "secondary_technical_sources:f45-220i-dct-autodata",
+          "secondary_technical_sources:f45-220i-dct-carfolio"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f45-218d-eu-2018-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45",
+    "production_start_year": 2018,
+    "production_end_year": 2018,
+    "model_name": "2 Series Active Tourer (F45, 2018)",
+    "variant_name": "218d",
+    "engine_code": "B47C20",
+    "engine_name": "B47C20 I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2018-spec-pdf"
+      ],
+      "notes": "Official BMW 01/2018 specifications PDF confirms front-wheel drive for the exact 218d Active Tourer automatic state represented by this narrowed 2018-only row.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2018-spec-pdf"
+      ],
+      "notes": "Official BMW 01/2018 specifications PDF publishes the 218d automatic as the bracketed optional Eight-speed Steptronic state in the ACEA-market transmission table. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ],
+        "notes": "Official BMW 01/2018 specifications PDF lists 0.673 as the top-gear ratio for the exact 218d Active Tourer automatic state represented by this narrowed 2018-only row.",
+        "value": 0.673
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ],
+        "notes": "Official BMW 01/2018 specifications PDF lists the bracketed automatic forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the exact 218d Active Tourer automatic state represented by this narrowed 2018-only row.",
+        "value": [
+          5.519,
+          3.184,
+          2.05,
+          1.492,
+          1.235,
+          1.0,
+          0.801,
+          0.673
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Retained conservative placeholder because the official BMW 01/2018 specifications PDF closes the bracketed automatic gear ratios for 218d but does not expose a standalone final-drive field for the exact automatic state.",
+        "value": 4.398
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ],
+        "notes": "Official BMW 01/2018 specifications PDF lists 205/60 R16 as the baseline tire for the exact 218d Active Tourer automatic state represented by this narrowed 2018-only row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 60.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf"
+          ],
+          "notes": "Official BMW 01/2018 specifications PDF lists 205/60 R16 as the baseline tire for the exact 218d Active Tourer automatic state represented by this narrowed 2018-only row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 60.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Official BMW 01/2018 specifications PDF now confirms the exact 218d Active Tourer automatic state with front-wheel drive, optional Eight-speed Steptronic wording, bracketed automatic forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, reverse 4.221, and 205/60 R16 baseline tires. Production JSON narrows the broad row to the supported 2018-only state because this pass did not recover a year-by-year official source chain proving the same package across the original 2014-2021 span.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F45 218d exact standalone final-drive value",
+        "reason": "The official BMW 01/2018 specifications PDF closes the bracketed automatic gear ratios for the exact 218d state but does not expose a standalone final-drive field.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW F45 218d exact optional wheel-package coverage beyond the baseline tire",
+        "reason": "The official BMW 01/2018 specifications PDF closes the 205/60 R16 baseline tire for the exact 218d automatic state, but this pass did not recover a row-specific optional wheel matrix for the narrowed 2018-only row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f45-220d-eu-2018-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45",
+    "production_start_year": 2018,
+    "production_end_year": 2018,
+    "model_name": "2 Series Active Tourer (F45, 2018)",
+    "variant_name": "220d",
+    "engine_code": "B47C20",
+    "engine_name": "B47C20 I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2018-spec-pdf"
+      ],
+      "notes": "Official BMW 01/2018 specifications PDF confirms front-wheel drive for the exact 220d Active Tourer state represented by this narrowed 2018-only row.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2018-spec-pdf"
+      ],
+      "notes": "Official BMW 01/2018 specifications PDF confirms Eight-speed Steptronic wording for the exact 220d Active Tourer state represented by this narrowed 2018-only row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ],
+        "notes": "Official BMW 01/2018 specifications PDF lists 0.673 as the top-gear ratio for the exact 220d Active Tourer state represented by this narrowed 2018-only row.",
+        "value": 0.673
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ],
+        "notes": "Official BMW 01/2018 specifications PDF lists the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the exact 220d Active Tourer state represented by this narrowed 2018-only row.",
+        "value": [
+          5.519,
+          3.184,
+          2.05,
+          1.492,
+          1.235,
+          1.0,
+          0.801,
+          0.673
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Retained conservative placeholder because the official BMW 01/2018 specifications PDF for the exact 220d Active Tourer publishes the full forward-ratio and reverse-ratio set but does not expose a standalone final-drive field for the front-wheel-drive state.",
+        "value": 4.398
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ],
+        "notes": "Official BMW 01/2018 specifications PDF lists 205/60 R16 as the baseline tire for the exact 220d Active Tourer state represented by this narrowed 2018-only row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 60.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf"
+          ],
+          "notes": "Official BMW 01/2018 specifications PDF lists 205/60 R16 as the baseline tire for the exact 220d Active Tourer state represented by this narrowed 2018-only row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 60.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Official BMW 01/2018 specifications PDF now confirms the exact 220d Active Tourer front-wheel-drive state with Eight-speed Steptronic wording, forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, reverse 4.221, and 205/60 R16 baseline tires. Production JSON narrows the broad row to the supported 2018-only state because this pass did not recover a year-by-year official source chain proving the same package across the original 2014-2021 span.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F45 220d exact standalone final-drive value",
+        "reason": "The official BMW 01/2018 specifications PDF for the exact 220d Active Tourer publishes the full forward-ratio and reverse-ratio set but does not expose a standalone final-drive field for the front-wheel-drive state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW F45 220d exact optional wheel-package coverage beyond the baseline tire",
+        "reason": "The official BMW 01/2018 specifications PDF closes the 205/60 R16 baseline tire for the exact 220d Active Tourer state, but this pass did not recover a row-specific optional wheel matrix spanning the broader original row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f45-220i-eu-2018-dct7-fwd",
+    "brand": "BMW",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "F45",
+    "body_code": "F45",
+    "production_start_year": 2018,
+    "production_end_year": 2018,
+    "model_name": "2 Series Active Tourer (F45, 2018)",
+    "variant_name": "220i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2018-spec-pdf"
+      ],
+      "notes": "Official BMW 01/2018 specifications PDF confirms front-wheel drive for the exact 220i Active Tourer Seven-speed DCT state represented by this narrowed 2018-only row.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f45-2018-spec-pdf"
+      ],
+      "notes": "Official BMW 01/2018 specifications PDF confirms Seven-speed DCT wording for the exact 220i Active Tourer automatic state represented by this narrowed 2018-only row.",
+      "code": "DCT7",
+      "name": "7-speed Steptronic dual-clutch transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Retained conservative secondary-backed mapping because the official BMW 01/2018 specifications PDF publishes only overall Seven-speed DCT ratios 15.304 / 9.026 / 5.735 / 4.015 / 3.108 / 2.487 / 2.016 and reverse 13.825, which do not safely separate a standalone top-gear field for the exact 220i automatic state.",
+        "value": 0.698
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Retained conservative secondary-backed mapping because the official BMW 01/2018 specifications PDF publishes only overall Seven-speed DCT ratios 15.304 / 9.026 / 5.735 / 4.015 / 3.108 / 2.487 / 2.016 and reverse 13.825, which do not safely separate a standalone final-drive field for the exact 220i automatic state.",
+        "value": 3.231
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ],
+        "notes": "Official BMW 01/2018 specifications PDF lists 205/60 R16 as the baseline tire for the exact 220i Active Tourer Seven-speed DCT state represented by this narrowed 2018-only row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 60.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf"
+          ],
+          "notes": "Official BMW 01/2018 specifications PDF lists 205/60 R16 as the baseline tire for the exact 220i Active Tourer Seven-speed DCT state represented by this narrowed 2018-only row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 60.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-220i-2018-press-kit",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-launch-release",
+            "legacy_research_sources:4bcbbab016e3",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:b385759b36d8",
+            "legacy_research_sources:ede0bc1c6aee",
+            "secondary_technical_sources:f45-220i-dct-autodata",
+            "secondary_technical_sources:f45-220i-dct-carfolio"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Official BMW 01/2018 specifications PDF now confirms the exact 220i Active Tourer Seven-speed DCT state with front-wheel drive, Seven-speed DCT wording, overall DCT ratios 15.304 / 9.026 / 5.735 / 4.015 / 3.108 / 2.487 / 2.016, reverse 13.825, and 205/60 R16 baseline tires. Production JSON narrows the broad row to the supported 2018-only state and promotes the exact drivetrain / transmission / baseline-tire evidence while leaving the standalone top-gear and final-drive fields conservative because the official sheet publishes only overall DCT ratios.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F45 220i exact standalone top-gear and final-drive fields",
+        "reason": "The official BMW 01/2018 specifications PDF publishes only overall Seven-speed DCT ratios for the exact 220i automatic state, so this pass cannot safely separate a standalone top-gear or final-drive field from the official source alone.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW F45 220i exact optional wheel-package coverage beyond the baseline tire",
+        "reason": "The official BMW 01/2018 specifications PDF closes the 205/60 R16 baseline tire for the exact 220i Seven-speed DCT state, but this pass did not recover a row-specific optional wheel matrix for the narrowed 2018-only row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f45-2018-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  }
+]

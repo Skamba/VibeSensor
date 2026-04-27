@@ -1,0 +1,767 @@
+[
+  {
+    "id": "bmw-f01-730i-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F01",
+    "body_code": "F01",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "7 Series (F01, 2012)",
+    "variant_name": "730i",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L I6",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF confirms RWD for the exact F01 730i state represented by this narrowed 2012-only row.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F01 730i state represented by this narrowed 2012-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact F01 730i state represented by this narrowed 2012-only row.",
+        "value": 0.667
+      },
+      "gear_ratios": {
+        "value": [
+          4.714,
+          3.143,
+          2.208,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists the full forward gear-ratio set for the exact F01 730i state represented by this narrowed 2012-only row."
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 3.462 as the rear final-drive ratio for the exact F01 730i state represented by this narrowed 2012-only row.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 245/55 R17 baseline tires for the exact F01 730i state represented by this narrowed 2012-only row.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical-data PDF lists 245/55 R17 baseline tires for the exact F01 730i state represented by this narrowed 2012-only row.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 07/2012 technical-data PDF closes the exact F01 730i state represented by this retimed 2012-only row: RWD, 8-speed automatic with Steptronic/ZF8HP mapping, forward ratios 4.714 / 3.143 / 2.208 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.295, rear final drive 3.462, and 245/55 R17 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F01 730i exact optional wheel/tire matrix beyond the narrowed 2012 row",
+        "reason": "The checked official BMW 07/2012 technical-data PDF closes the 245/55 R17 baseline fitment, but this pass does not encode the full optional wheel/tire matrix from the same sheet for the exact 2012 row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-730i-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f01-740i-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F01",
+    "body_code": "F01",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "7 Series (F01, 2012)",
+    "variant_name": "740i",
+    "engine_code": "N55",
+    "engine_name": "N55 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF confirms RWD for the exact F01 740i state represented by this narrowed 2012-only row.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F01 740i state represented by this narrowed 2012-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact F01 740i state represented by this narrowed 2012-only row.",
+        "value": 0.667
+      },
+      "gear_ratios": {
+        "value": [
+          4.714,
+          3.143,
+          2.208,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists the full forward gear-ratio set for the exact F01 740i state represented by this narrowed 2012-only row."
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 3.077 as the rear final-drive ratio for the exact F01 740i state represented by this narrowed 2012-only row.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 baseline tires for the exact F01 740i state represented by this narrowed 2012-only row.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 baseline tires for the exact F01 740i state represented by this narrowed 2012-only row.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 07/2012 technical-data PDF closes the exact F01 740i state represented by this retimed 2012-only row: RWD, 8-speed automatic with Steptronic/ZF8HP mapping, forward ratios 4.714 / 3.143 / 2.208 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.295, rear final drive 3.077, and 245/50 R18 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F01 740i exact optional wheel/tire matrix beyond the narrowed 2012 row",
+        "reason": "The checked official BMW 07/2012 technical-data PDF closes the 245/50 R18 baseline fitment, but this pass does not encode the full optional wheel/tire matrix from the same sheet for the exact 2012 row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f01-750d-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F01",
+    "body_code": "F01",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "7 Series (F01, 2012)",
+    "variant_name": "750d",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-750d-xdrive-2012-tech-spec-pdf"
+      ],
+      "notes": "Checked official BMW 07/2012 technical-data PDF for the exact F01 750d xDrive state. It publishes 750d xDrive, but it does not publish a 750d RWD row, so this represented 2012 RWD mapping remains an unsupported advisory placeholder.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:113816cb96ee",
+          "legacy_research_sources:41ea423c2abb",
+          "legacy_research_sources:744d8cf9ed79",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9f629e8bc0c1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 45.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:113816cb96ee",
+            "legacy_research_sources:41ea423c2abb",
+            "legacy_research_sources:744d8cf9ed79",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9f629e8bc0c1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:113816cb96ee",
+            "legacy_research_sources:41ea423c2abb",
+            "legacy_research_sources:744d8cf9ed79",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9f629e8bc0c1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:113816cb96ee",
+            "legacy_research_sources:41ea423c2abb",
+            "legacy_research_sources:744d8cf9ed79",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9f629e8bc0c1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 19 directly revalidated the official BMW 07/2012 F01 diesel technical-data PDF. That checked official BMW sheet publishes an exact 750d xDrive state, but it does not publish an exact 750d RWD row, so this represented 2012 750d RWD configuration remains an unsupported advisory row rather than a validated exact state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750d-xdrive-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F01 750d exact official 2012 RWD technical-data row",
+        "reason": "The checked official BMW 07/2012 technical-data PDF publishes only 750d xDrive for the represented update window, and this pass did not recover another official 2012 EU technical-data page for a 750d RWD state.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750d-xdrive-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "no_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f01-750i-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F01",
+    "body_code": "F01",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "7 Series (F01, 2012)",
+    "variant_name": "750i",
+    "engine_code": "N63",
+    "engine_name": "N63 4.4L V8 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF confirms RWD for the exact F01 750i state represented by this narrowed 2012-only row.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F01 750i state represented by this narrowed 2012-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact F01 750i state represented by this narrowed 2012-only row.",
+        "value": 0.667
+      },
+      "gear_ratios": {
+        "value": [
+          4.714,
+          3.143,
+          2.208,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists the full forward gear-ratio set for the exact F01 750i state represented by this narrowed 2012-only row."
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 2.813 as the rear final-drive ratio for the exact F01 750i state represented by this narrowed 2012-only row.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 baseline tires for the exact F01 750i state represented by this narrowed 2012-only row.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 baseline tires for the exact F01 750i state represented by this narrowed 2012-only row.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 07/2012 technical-data PDF closes the exact F01 750i state represented by this retimed 2012-only row: RWD, 8-speed automatic with Steptronic/ZF8HP mapping, forward ratios 4.714 / 3.143 / 2.208 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, rear final drive 2.813, and 245/50 R18 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F01 750i exact optional wheel/tire matrix beyond the narrowed 2012 row",
+        "reason": "The checked official BMW 07/2012 technical-data PDF closes the 245/50 R18 baseline fitment, but this pass does not encode the full optional wheel/tire matrix from the same sheet for the exact 2012 row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f01-750i-xdrive-eu-2012-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F01",
+    "body_code": "F01",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "7 Series (F01, 2012)",
+    "variant_name": "750i xDrive",
+    "engine_code": "N63",
+    "engine_name": "N63 4.4L V8 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF confirms xDrive all-wheel drive for the exact 750i xDrive state represented by this narrowed 2012-only row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact 750i xDrive state represented by this narrowed 2012-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact 750i xDrive state represented by this narrowed 2012-only row.",
+        "value": 0.667
+      },
+      "gear_ratios": {
+        "value": [
+          4.714,
+          3.143,
+          2.208,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists the full forward gear-ratio set for the exact 750i xDrive state represented by this narrowed 2012-only row."
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF publishes a single 2.813 final-drive ratio for the exact 750i xDrive state represented by this narrowed 2012-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.813
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF publishes a single 2.813 final-drive ratio for the exact 750i xDrive state represented by this narrowed 2012-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 as the baseline tire for the exact 750i xDrive state represented by this narrowed 2012-only row.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 as the baseline tire for the exact 750i xDrive state represented by this narrowed 2012-only row.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 07/2012 technical-data PDF establishes the exact 750i xDrive launch-state mapping checked in this pass: AWD, 8-speed automatic with Steptronic/ZF8HP mapping, forward ratios 4.714 / 3.143 / 2.208 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, a single published 2.813 final-drive ratio, and 245/50 R18 baseline tires. This row is narrowed to the supported 2012-only state because later exact numeric continuity was not recovered in this pass.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW 7 Series 750i xDrive exact optional wheel/tire matrix beyond the narrowed 2012 row",
+        "reason": "The checked official BMW 07/2012 technical-data PDF closes the 18-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW 7 Series 750i xDrive separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-750i-xdrive-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f01-760i-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F01",
+    "body_code": "F01",
+    "production_start_year": 2012,
+    "production_end_year": 2012,
+    "model_name": "7 Series (F01, 2012)",
+    "variant_name": "760i",
+    "engine_code": "6.0L",
+    "engine_name": "6.0L V12 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF confirms RWD for the exact F01 760i state represented by this narrowed 2012-only row.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)",
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2012 technical-data PDF confirms 8-speed automatic with Steptronic wording for the exact F01 760i state represented by this narrowed 2012-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic."
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 0.667 as the top-gear ratio for the exact F01 760i state represented by this narrowed 2012-only row.",
+        "value": 0.667
+      },
+      "gear_ratios": {
+        "value": [
+          4.714,
+          3.143,
+          2.208,
+          1.667,
+          1.285,
+          1.0,
+          0.839,
+          0.667
+        ],
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists the full forward gear-ratio set for the exact F01 760i state represented by this narrowed 2012-only row."
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 2.813 as the rear final-drive ratio for the exact F01 760i state represented by this narrowed 2012-only row.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 baseline tires for the exact F01 760i state represented by this narrowed 2012-only row.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical-data PDF lists 245/50 R18 baseline tires for the exact F01 760i state represented by this narrowed 2012-only row.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 07/2012 technical-data PDF closes the exact F01 760i state represented by this retimed 2012-only row: RWD, 8-speed automatic with Steptronic/ZF8HP mapping, forward ratios 4.714 / 3.143 / 2.208 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, rear final drive 2.813, and 245/50 R18 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW F01 760i exact optional wheel/tire matrix beyond the narrowed 2012 row",
+        "reason": "The checked official BMW 07/2012 technical-data PDF closes the 245/50 R18 baseline fitment, but this pass does not encode the full optional wheel/tire matrix from the same sheet for the exact 2012 row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f01-740i-750i-2012-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  }
+]

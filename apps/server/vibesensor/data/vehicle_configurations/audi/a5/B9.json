@@ -1,0 +1,399 @@
+[
+  {
+    "id": "audi-b9-40-tfsi-eu-2017-dct7-fwd",
+    "brand": "Audi",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "B9",
+    "body_code": "B9",
+    "production_start_year": 2017,
+    "production_end_year": 2024,
+    "model_name": "A5 (B9, 2017-2024)",
+    "variant_name": "40 TFSI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DL382)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) with High confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) with High confidence.",
+        "value": 4.234
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1f64a70f7798",
+          "legacy_research_sources:40902bf8de39",
+          "legacy_research_sources:4d089475ce12",
+          "legacy_research_sources:4dfe6573fbd8",
+          "legacy_research_sources:6f2489b6d6b2",
+          "legacy_research_sources:a615f24ca1f7",
+          "legacy_research_sources:b04c6ac99a88",
+          "legacy_research_sources:b901a9c86975",
+          "legacy_research_sources:bd3399c45b29",
+          "legacy_research_sources:c6e2f8abe80a",
+          "legacy_research_sources:ed529186a624"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) with High confidence.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1f64a70f7798",
+            "legacy_research_sources:40902bf8de39",
+            "legacy_research_sources:4d089475ce12",
+            "legacy_research_sources:4dfe6573fbd8",
+            "legacy_research_sources:6f2489b6d6b2",
+            "legacy_research_sources:a615f24ca1f7",
+            "legacy_research_sources:b04c6ac99a88",
+            "legacy_research_sources:b901a9c86975",
+            "legacy_research_sources:bd3399c45b29",
+            "legacy_research_sources:c6e2f8abe80a",
+            "legacy_research_sources:ed529186a624"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1f64a70f7798",
+            "legacy_research_sources:40902bf8de39",
+            "legacy_research_sources:4d089475ce12",
+            "legacy_research_sources:4dfe6573fbd8",
+            "legacy_research_sources:6f2489b6d6b2",
+            "legacy_research_sources:a615f24ca1f7",
+            "legacy_research_sources:b04c6ac99a88",
+            "legacy_research_sources:b901a9c86975",
+            "legacy_research_sources:bd3399c45b29",
+            "legacy_research_sources:c6e2f8abe80a",
+            "legacy_research_sources:ed529186a624"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1f64a70f7798",
+            "legacy_research_sources:40902bf8de39",
+            "legacy_research_sources:4d089475ce12",
+            "legacy_research_sources:4dfe6573fbd8",
+            "legacy_research_sources:6f2489b6d6b2",
+            "legacy_research_sources:a615f24ca1f7",
+            "legacy_research_sources:b04c6ac99a88",
+            "legacy_research_sources:b901a9c86975",
+            "legacy_research_sources:bd3399c45b29",
+            "legacy_research_sources:c6e2f8abe80a",
+            "legacy_research_sources:ed529186a624"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verified Audi A5 B9 S tronic final-drive ratios from official Audi UK and Audi MediaCenter technical PDFs. Later exact 45 TFSI quattro Coupe and Sportback sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW MHEV configuration. Wave 11 validation added exact late-B9 Germany 40 TFSI evidence from the 03/20/2024 A5 Coupé and 06/13/2024 A5 Sportback technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.234, and basic tire 225/50 R17. Wave 13 now adds the parallel late-B9 Germany 35 TDI evidence from checked 03/20/2024 Coupé and 06/13/2024 Sportback technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 225/50 R17. The broad 2017-2024 row remains unchanged because official 2020 launch material still shows earlier model states and this pass did not recover year-spanning evidence proving one unchanged package across the whole row.",
+        "evidence_refs": [
+          "legacy_research_sources:1f64a70f7798",
+          "legacy_research_sources:40902bf8de39",
+          "legacy_research_sources:4d089475ce12",
+          "legacy_research_sources:4dfe6573fbd8",
+          "legacy_research_sources:6f2489b6d6b2",
+          "legacy_research_sources:a615f24ca1f7",
+          "legacy_research_sources:b04c6ac99a88",
+          "legacy_research_sources:b901a9c86975",
+          "legacy_research_sources:bd3399c45b29",
+          "legacy_research_sources:c6e2f8abe80a",
+          "legacy_research_sources:ed529186a624"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data (exact 2024 Coupe + Sportback states) with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Broad-row Audi A5 B9 40 TFSI production-data applicability across the full represented span",
+        "reason": "Checked exact late-B9 Germany Coupé and Sportback PDFs resolve the 150 kW 40 TFSI mapping, but official 2020 launch material still shows an earlier 140 kW 40 TFSI state and this pass did not recover the early exact technical-data sheets needed to prove one unchanged 2019-2024 package.",
+        "evidence_refs": [
+          "legacy_research_sources:1f64a70f7798",
+          "legacy_research_sources:40902bf8de39",
+          "legacy_research_sources:4d089475ce12",
+          "legacy_research_sources:4dfe6573fbd8",
+          "legacy_research_sources:6f2489b6d6b2",
+          "legacy_research_sources:a615f24ca1f7",
+          "legacy_research_sources:b04c6ac99a88",
+          "legacy_research_sources:b901a9c86975",
+          "legacy_research_sources:bd3399c45b29",
+          "legacy_research_sources:c6e2f8abe80a",
+          "legacy_research_sources:ed529186a624"
+        ]
+      },
+      {
+        "item": "Broad-row Audi A5 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+        "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW Coupe and Sportback, but this pass did not verify whether the earlier years in the broad row use the same exact mapping.",
+        "evidence_refs": [
+          "legacy_research_sources:1f64a70f7798",
+          "legacy_research_sources:40902bf8de39",
+          "legacy_research_sources:4d089475ce12",
+          "legacy_research_sources:4dfe6573fbd8",
+          "legacy_research_sources:6f2489b6d6b2",
+          "legacy_research_sources:a615f24ca1f7",
+          "legacy_research_sources:b04c6ac99a88",
+          "legacy_research_sources:b901a9c86975",
+          "legacy_research_sources:bd3399c45b29",
+          "legacy_research_sources:c6e2f8abe80a",
+          "legacy_research_sources:ed529186a624"
+        ]
+      },
+      {
+        "item": "Audi A5 B9 40 TFSI transmission-code and optional tire-matrix confirmation",
+        "reason": "Official Audi exact material now proves the late-B9 40 TFSI drivetrain, full ratio set, reverse ratio, final drive 4.234, and the 225/50 R17 basic tire, but it does not publish the gearbox-family code or a full optional wheel/tire matrix for the exact 40 TFSI target.",
+        "evidence_refs": [
+          "legacy_research_sources:1f64a70f7798",
+          "legacy_research_sources:40902bf8de39",
+          "legacy_research_sources:4d089475ce12",
+          "legacy_research_sources:4dfe6573fbd8",
+          "legacy_research_sources:6f2489b6d6b2",
+          "legacy_research_sources:a615f24ca1f7",
+          "legacy_research_sources:b04c6ac99a88",
+          "legacy_research_sources:b901a9c86975",
+          "legacy_research_sources:bd3399c45b29",
+          "legacy_research_sources:c6e2f8abe80a",
+          "legacy_research_sources:ed529186a624"
+        ]
+      },
+      {
+        "item": "Broad-row Audi A5 B9 35 TDI production-data applicability across the full represented span",
+        "reason": "Checked exact late-B9 Germany Coupé and Sportback PDFs resolve the 120 kW 35 TDI mapping, but this pass did not recover a year-by-year official chain proving one unchanged 2019-2024 package.",
+        "evidence_refs": [
+          "legacy_research_sources:1f64a70f7798",
+          "legacy_research_sources:40902bf8de39",
+          "legacy_research_sources:4d089475ce12",
+          "legacy_research_sources:4dfe6573fbd8",
+          "legacy_research_sources:6f2489b6d6b2",
+          "legacy_research_sources:a615f24ca1f7",
+          "legacy_research_sources:b04c6ac99a88",
+          "legacy_research_sources:b901a9c86975",
+          "legacy_research_sources:bd3399c45b29",
+          "legacy_research_sources:c6e2f8abe80a",
+          "legacy_research_sources:ed529186a624"
+        ]
+      },
+      {
+        "item": "Audi A5 B9 35 TDI gearbox-family code and optional tire-matrix confirmation",
+        "reason": "Official Audi exact material now proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 225/50 R17 basic tire, but it does not publish the gearbox-family code or a full optional wheel/tire matrix for the exact 35 TDI target.",
+        "evidence_refs": [
+          "legacy_research_sources:1f64a70f7798",
+          "legacy_research_sources:40902bf8de39",
+          "legacy_research_sources:4d089475ce12",
+          "legacy_research_sources:4dfe6573fbd8",
+          "legacy_research_sources:6f2489b6d6b2",
+          "legacy_research_sources:a615f24ca1f7",
+          "legacy_research_sources:b04c6ac99a88",
+          "legacy_research_sources:b901a9c86975",
+          "legacy_research_sources:bd3399c45b29",
+          "legacy_research_sources:c6e2f8abe80a",
+          "legacy_research_sources:ed529186a624"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-b9-45-tfsi-quattro-eu-2017-dct7-awd",
+    "brand": "Audi",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "B9",
+    "body_code": "B9",
+    "production_start_year": 2024,
+    "production_end_year": 2024,
+    "model_name": "A5 (B9, 2024)",
+    "variant_name": "45 TFSI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+      ],
+      "notes": "Official Audi 03/20/2024 technical-data material confirms that the exact late-B9 A5 Coupé 45 TFSI quattro S tronic state uses quattro all-wheel drive with ultra technology.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+      ],
+      "notes": "Official Audi 03/20/2024 technical-data material confirms 7-speed S tronic wording and a wet dual-clutch layout for the exact late-B9 A5 Coupé 45 TFSI quattro state.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 03/20/2024 technical-data PDF lists 0.433 as the 7th-gear ratio for the exact late-B9 A5 Coupé 45 TFSI quattro S tronic row.",
+        "value": 0.433
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 03/20/2024 technical-data PDF lists the forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 for the exact late-B9 A5 Coupé 45 TFSI quattro S tronic row.",
+        "value": [
+          3.188,
+          2.19,
+          1.517,
+          1.057,
+          0.738,
+          0.557,
+          0.433
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 03/20/2024 technical-data PDF publishes one final-drive value 4.410 for the exact late-B9 A5 Coupé 45 TFSI quattro S tronic row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+        "value": 4.41
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 03/20/2024 technical-data PDF publishes one final-drive value 4.410 for the exact late-B9 A5 Coupé 45 TFSI quattro S tronic row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+        "value": 4.41
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+        ],
+        "notes": "Official Audi 03/20/2024 technical-data material confirms 225/50 R17 as the exact basic tire package for the late-B9 A5 Coupé 45 TFSI quattro S tronic row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+          ],
+          "notes": "Official Audi 03/20/2024 technical-data material confirms 225/50 R17 as the exact basic tire package for the late-B9 A5 Coupé 45 TFSI quattro S tronic row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Basic 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 6 validation narrows this row to the exact late-B9 Coupé state actually supported by the evidence. The official Audi 03/20/2024 technical-data PDF proves the exact A5 Coupé 45 TFSI quattro S tronic 195 kW MHEV package with quattro all-wheel drive, wet 7-speed dual-clutch S tronic transmission, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, one published final-drive value 4.410, and basic 225/50 R17 tires. The Audi MediaCenter model page scopes the outgoing A5 Coupé as 'until 2024', so the row is retimed conservatively to the exact 2024 state instead of carrying unsupported continuity back to 2017.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:b9-a5-coupe-until-2024-model-page",
+          "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact Audi A5 Coupé 45 TFSI quattro continuity before the checked 2024 state",
+        "reason": "The checked official Audi evidence closes the exact 2024 Coupé state, but this pass did not recover a year-by-year official chain proving the same 195 kW 45 TFSI quattro package unchanged across earlier B9 years.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:b9-a5-coupe-until-2024-model-page",
+          "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi A5 Coupé 45 TFSI quattro exact optional wheel and tire matrix",
+        "reason": "The checked official Audi exact sheet proves only the basic 225/50 R17 package for the late-B9 Coupé row. This pass did not recover a clean official optional wheel/tire matrix or any staggered-fitment proof for the exact target.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi A5 Coupé 45 TFSI quattro exact public gearbox-family naming",
+        "reason": "The checked official Audi exact sheet proves wet-clutch 7-speed S tronic wording for the 2024 Coupé state but does not publish a gearbox-family code beyond Audi's public transmission naming.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  }
+]

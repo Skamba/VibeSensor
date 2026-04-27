@@ -1,0 +1,867 @@
+[
+  {
+    "id": "bmw-g01-m40i-eu-2018-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "G01",
+    "body_code": "G01",
+    "production_start_year": 2018,
+    "production_end_year": 2024,
+    "model_name": "X3 (G01, 2018-2024)",
+    "variant_name": "M40i",
+    "engine_code": "B58",
+    "engine_name": "B58 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:9942185c701e"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub 04/2020 technical data with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub 04/2020 technical data with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub 04/2020 technical data with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub 04/2020 technical data with High confidence.",
+        "value": 3.077
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub 04/2020 technical data with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub 04/2020 technical data with High confidence.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 45.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:38a04165d331",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8e51d741ecbd",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9942185c701e",
+            "legacy_research_sources:9cb10e268364",
+            "legacy_research_sources:de6c75804abf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub 04/2020 technical data with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:38a04165d331",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8e51d741ecbd",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9942185c701e",
+            "legacy_research_sources:9cb10e268364",
+            "legacy_research_sources:de6c75804abf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub 04/2020 technical data with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:38a04165d331",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8e51d741ecbd",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9942185c701e",
+            "legacy_research_sources:9cb10e268364",
+            "legacy_research_sources:de6c75804abf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub 04/2020 technical data with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 re-check shows the checked 09/2018 and 06/2021 BMW Germany technical-data PDFs are exact X3 xDrive20i states. Across both states they prove Allrad, 8-Gang Steptronic Getriebe, final drive 3.385, top gear 0.640, and a 225/60 R18 basic tire, which is sufficient to land those stable fields as an xDrive20i variant-scoped production override. The full xDrive20i gear-ratio array changed between the checked 2018 and 2021 official sheets (5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 vs 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640), so one shared exact gear-ratio array would still be unsafe. Official Germany price-list material continues to confirm the broader G01 wheel/tire matrix and xDrive30i market context, and wave 10 validation also adds exact M40i source-ledger evidence from the 04/2020 ACEA technical-data sheet: AWD, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires. The broad row remains verification backlog because the xDrive20i full gear-ratio array changed between the checked official sheets, xDrive30i still lacks a directly checked exact ratio PDF in this row, and this pass did not recover year-spanning official evidence proving one unchanged M40i package across the full 2018-2024 row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW PressClub 04/2020 technical data with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 xDrive20i exact gear-ratio and reverse-ratio applicability across the full 2018-2024 row span",
+        "reason": "Official BMW DE xDrive20i sheets now prove final drive 3.385, top gear 0.640, and the 225/60 R18 basic tire, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive30i exact official ratio mapping",
+        "reason": "The checked 09/2018 and 06/2021 BMW Germany technical-data PDFs used in this row are exact xDrive20i sheets, while the currently retained xDrive30i notes are still supported mainly by Germany price-list context and not by one directly checked exact xDrive30i ratio PDF in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 M40i production-data applicability across the full 2018-2024 row span",
+        "reason": "The checked official 04/2020 ACEA M40i sheet resolves final drive 3.385, top gear 0.640, the full forward ratio set, reverse ratio 3.712, and the standard staggered 245/45 R20 front + 275/40 R20 rear fitment, but this pass did not recover launch-year or later-year official sheets proving one unchanged M40i package across the full represented row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 (G01, 2018-2024) full EU variant matrix beyond the exact xDrive30i and M40i mappings",
+        "reason": "This pass resolves the exact xDrive30i final drive, top gear, and Germany-market tire fitments and adds exact M40i source-ledger evidence, but it does not establish the full official ratio and tire matrix for the other G01 variants represented by the broad row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive30i and M40i transmission subtype code",
+        "reason": "Official BMW sources prove 8-Gang Steptronic wording for the checked xDrive30i and M40i mappings but do not publish a gearbox subtype code such as a ZF 8HP variant number.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g01-sdrive20i-eu-2018-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "G01",
+    "body_code": "G01",
+    "production_start_year": 2018,
+    "production_end_year": 2024,
+    "model_name": "X3 (G01, 2018-2024)",
+    "variant_name": "sDrive20i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:9942185c701e"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 45.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:38a04165d331",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8e51d741ecbd",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9942185c701e",
+            "legacy_research_sources:9cb10e268364",
+            "legacy_research_sources:de6c75804abf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:38a04165d331",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8e51d741ecbd",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9942185c701e",
+            "legacy_research_sources:9cb10e268364",
+            "legacy_research_sources:de6c75804abf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:38a04165d331",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8e51d741ecbd",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9942185c701e",
+            "legacy_research_sources:9cb10e268364",
+            "legacy_research_sources:de6c75804abf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 re-check shows the checked 09/2018 and 06/2021 BMW Germany technical-data PDFs are exact X3 xDrive20i states. Across both states they prove Allrad, 8-Gang Steptronic Getriebe, final drive 3.385, top gear 0.640, and a 225/60 R18 basic tire, which is sufficient to land those stable fields as an xDrive20i variant-scoped production override. The full xDrive20i gear-ratio array changed between the checked 2018 and 2021 official sheets (5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 vs 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640), so one shared exact gear-ratio array would still be unsafe. Official Germany price-list material continues to confirm the broader G01 wheel/tire matrix and xDrive30i market context, and wave 10 validation also adds exact M40i source-ledger evidence from the 04/2020 ACEA technical-data sheet: AWD, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires. The broad row remains verification backlog because the xDrive20i full gear-ratio array changed between the checked official sheets, xDrive30i still lacks a directly checked exact ratio PDF in this row, and this pass did not recover year-spanning official evidence proving one unchanged M40i package across the full 2018-2024 row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 xDrive20i exact gear-ratio and reverse-ratio applicability across the full 2018-2024 row span",
+        "reason": "Official BMW DE xDrive20i sheets now prove final drive 3.385, top gear 0.640, and the 225/60 R18 basic tire, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive30i exact official ratio mapping",
+        "reason": "The checked 09/2018 and 06/2021 BMW Germany technical-data PDFs used in this row are exact xDrive20i sheets, while the currently retained xDrive30i notes are still supported mainly by Germany price-list context and not by one directly checked exact xDrive30i ratio PDF in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 M40i production-data applicability across the full 2018-2024 row span",
+        "reason": "The checked official 04/2020 ACEA M40i sheet resolves final drive 3.385, top gear 0.640, the full forward ratio set, reverse ratio 3.712, and the standard staggered 245/45 R20 front + 275/40 R20 rear fitment, but this pass did not recover launch-year or later-year official sheets proving one unchanged M40i package across the full represented row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 (G01, 2018-2024) full EU variant matrix beyond the exact xDrive30i and M40i mappings",
+        "reason": "This pass resolves the exact xDrive30i final drive, top gear, and Germany-market tire fitments and adds exact M40i source-ledger evidence, but it does not establish the full official ratio and tire matrix for the other G01 variants represented by the broad row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive30i and M40i transmission subtype code",
+        "reason": "Official BMW sources prove 8-Gang Steptronic wording for the checked xDrive30i and M40i mappings but do not publish a gearbox subtype code such as a ZF 8HP variant number.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g01-xdrive20i-eu-2018-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "G01",
+    "body_code": "G01",
+    "production_start_year": 2018,
+    "production_end_year": 2024,
+    "model_name": "X3 (G01, 2018-2024)",
+    "variant_name": "xDrive20i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:9942185c701e"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (2018, 2021 exact states) with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (2018, 2021 exact states) with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed Steptronic transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (2018, 2021 exact states) with High confidence.",
+        "value": 0.64
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (2018, 2021 exact states) with High confidence.",
+        "value": 3.385
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (2018, 2021 exact states) with High confidence.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (2018, 2021 exact states) with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 60.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:38a04165d331",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8e51d741ecbd",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9942185c701e",
+            "legacy_research_sources:9cb10e268364",
+            "legacy_research_sources:de6c75804abf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (2018, 2021 exact states) with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 re-check shows the checked 09/2018 and 06/2021 BMW Germany technical-data PDFs are exact X3 xDrive20i states. Across both states they prove Allrad, 8-Gang Steptronic Getriebe, final drive 3.385, top gear 0.640, and a 225/60 R18 basic tire, which is sufficient to land those stable fields as an xDrive20i variant-scoped production override. The full xDrive20i gear-ratio array changed between the checked 2018 and 2021 official sheets (5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 vs 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640), so one shared exact gear-ratio array would still be unsafe. Official Germany price-list material continues to confirm the broader G01 wheel/tire matrix and xDrive30i market context, and wave 10 validation also adds exact M40i source-ledger evidence from the 04/2020 ACEA technical-data sheet: AWD, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires. The broad row remains verification backlog because the xDrive20i full gear-ratio array changed between the checked official sheets, xDrive30i still lacks a directly checked exact ratio PDF in this row, and this pass did not recover year-spanning official evidence proving one unchanged M40i package across the full 2018-2024 row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (2018, 2021 exact states) with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 xDrive20i exact gear-ratio and reverse-ratio applicability across the full 2018-2024 row span",
+        "reason": "Official BMW DE xDrive20i sheets now prove final drive 3.385, top gear 0.640, and the 225/60 R18 basic tire, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive30i exact official ratio mapping",
+        "reason": "The checked 09/2018 and 06/2021 BMW Germany technical-data PDFs used in this row are exact xDrive20i sheets, while the currently retained xDrive30i notes are still supported mainly by Germany price-list context and not by one directly checked exact xDrive30i ratio PDF in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 M40i production-data applicability across the full 2018-2024 row span",
+        "reason": "The checked official 04/2020 ACEA M40i sheet resolves final drive 3.385, top gear 0.640, the full forward ratio set, reverse ratio 3.712, and the standard staggered 245/45 R20 front + 275/40 R20 rear fitment, but this pass did not recover launch-year or later-year official sheets proving one unchanged M40i package across the full represented row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 (G01, 2018-2024) full EU variant matrix beyond the exact xDrive30i and M40i mappings",
+        "reason": "This pass resolves the exact xDrive30i final drive, top gear, and Germany-market tire fitments and adds exact M40i source-ledger evidence, but it does not establish the full official ratio and tire matrix for the other G01 variants represented by the broad row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive30i and M40i transmission subtype code",
+        "reason": "Official BMW sources prove 8-Gang Steptronic wording for the checked xDrive30i and M40i mappings but do not publish a gearbox subtype code such as a ZF 8HP variant number.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g01-xdrive30i-eu-2018-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "G01",
+    "body_code": "G01",
+    "production_start_year": 2018,
+    "production_end_year": 2024,
+    "model_name": "X3 (G01, 2018-2024)",
+    "variant_name": "xDrive30i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:9942185c701e"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed Steptronic transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence.",
+        "value": 0.64
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence.",
+        "value": 3.385
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 60.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:38a04165d331",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8e51d741ecbd",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9942185c701e",
+            "legacy_research_sources:9cb10e268364",
+            "legacy_research_sources:de6c75804abf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:38a04165d331",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8e51d741ecbd",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9942185c701e",
+            "legacy_research_sources:9cb10e268364",
+            "legacy_research_sources:de6c75804abf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 19\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:38a04165d331",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8e51d741ecbd",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9942185c701e",
+            "legacy_research_sources:9cb10e268364",
+            "legacy_research_sources:de6c75804abf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 20.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 20\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:38a04165d331",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8e51d741ecbd",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:9942185c701e",
+            "legacy_research_sources:9cb10e268364",
+            "legacy_research_sources:de6c75804abf"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 21 re-check shows the checked 09/2018 and 06/2021 BMW Germany technical-data PDFs are exact X3 xDrive20i states. Across both states they prove Allrad, 8-Gang Steptronic Getriebe, final drive 3.385, top gear 0.640, and a 225/60 R18 basic tire, which is sufficient to land those stable fields as an xDrive20i variant-scoped production override. The full xDrive20i gear-ratio array changed between the checked 2018 and 2021 official sheets (5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 vs 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640), so one shared exact gear-ratio array would still be unsafe. Official Germany price-list material continues to confirm the broader G01 wheel/tire matrix and xDrive30i market context, and wave 10 validation also adds exact M40i source-ledger evidence from the 04/2020 ACEA technical-data sheet: AWD, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires. The broad row remains verification backlog because the xDrive20i full gear-ratio array changed between the checked official sheets, xDrive30i still lacks a directly checked exact ratio PDF in this row, and this pass did not recover year-spanning official evidence proving one unchanged M40i package across the full 2018-2024 row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW DE price-list / technical-data context with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X3 xDrive20i exact gear-ratio and reverse-ratio applicability across the full 2018-2024 row span",
+        "reason": "Official BMW DE xDrive20i sheets now prove final drive 3.385, top gear 0.640, and the 225/60 R18 basic tire, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive30i exact official ratio mapping",
+        "reason": "The checked 09/2018 and 06/2021 BMW Germany technical-data PDFs used in this row are exact xDrive20i sheets, while the currently retained xDrive30i notes are still supported mainly by Germany price-list context and not by one directly checked exact xDrive30i ratio PDF in this run.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 M40i production-data applicability across the full 2018-2024 row span",
+        "reason": "The checked official 04/2020 ACEA M40i sheet resolves final drive 3.385, top gear 0.640, the full forward ratio set, reverse ratio 3.712, and the standard staggered 245/45 R20 front + 275/40 R20 rear fitment, but this pass did not recover launch-year or later-year official sheets proving one unchanged M40i package across the full represented row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 (G01, 2018-2024) full EU variant matrix beyond the exact xDrive30i and M40i mappings",
+        "reason": "This pass resolves the exact xDrive30i final drive, top gear, and Germany-market tire fitments and adds exact M40i source-ledger evidence, but it does not establish the full official ratio and tire matrix for the other G01 variants represented by the broad row.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      },
+      {
+        "item": "BMW X3 xDrive30i and M40i transmission subtype code",
+        "reason": "Official BMW sources prove 8-Gang Steptronic wording for the checked xDrive30i and M40i mappings but do not publish a gearbox subtype code such as a ZF 8HP variant number.",
+        "evidence_refs": [
+          "legacy_research_sources:38a04165d331",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8e51d741ecbd",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:9942185c701e",
+          "legacy_research_sources:9cb10e268364",
+          "legacy_research_sources:de6c75804abf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

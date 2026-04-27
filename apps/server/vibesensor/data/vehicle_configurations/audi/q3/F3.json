@@ -1,0 +1,799 @@
+[
+  {
+    "id": "audi-f3-35-tdi-eu-2019-dct7-fwd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F3",
+    "body_code": "F3",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "Q3 (F3, 2019-2025)",
+    "variant_name": "35 TDI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-2018-launch-press-kit",
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+      ],
+      "notes": "The checked official Audi source chain now brackets the old-generation Q3 35 TDI S tronic state across launch, mid-cycle, and late-cycle materials: the 2018 launch press kit and the Germany model-year 2021 price list both show the exact front-wheel-drive 7-speed S tronic state in the range, while the 2025 technical-data PDF confirms front-wheel drive for the checked late-cycle exact mapping. Full 2019-2025 continuity remains unresolved.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-2018-launch-press-kit",
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+      ],
+      "notes": "The checked official Audi source chain now brackets the old-generation Q3 35 TDI S tronic state across launch, mid-cycle, and late-cycle materials: the 2018 launch press kit and the Germany model-year 2021 price list both show the exact 7-speed S tronic state in the range, while the 2025 technical-data PDF confirms the late-cycle exact transmission wording. The repo keeps the normalized DCT7 code, but no checked official Audi source names the gearbox family code.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2025 technical-data PDF lists 0.561 as the 7th-gear ratio for the old-generation Q3 35 TDI S tronic state. Applied as official-derived evidence while year-by-year continuity remains unresolved.",
+        "value": 0.561
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Retained conservative placeholder because the checked official Audi MediaCenter 2025 technical-data PDF publishes split final drives 4.813 / 3.667, and the current single final_drive_front field cannot safely encode both values without losing row fidelity.",
+        "value": 4.769
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2025 technical-data PDF confirms 215/65 R17 as the basic tire package for the old-generation Q3 35 TDI S tronic state. Applied as official-derived evidence while the broader optional wheel/tire matrix remains unresolved.",
+        "front": {
+          "width_mm": 215.0,
+          "aspect_pct": 65.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf"
+          ],
+          "notes": "The checked official Audi MediaCenter 2025 technical-data PDF confirms 215/65 R17 as the basic tire package for the old-generation Q3 35 TDI S tronic state. The broader optional wheel/tire matrix remains unresolved.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 3 review replaces the copied Q3 cluster note with row-specific Audi MediaCenter evidence for the old-generation Q3 35 TDI S tronic state: front-wheel drive, 7-speed S tronic, 0.561 top gear, split final drives 4.813 / 3.667, and basic 215/65 R17 tires. The row keeps a conservative placeholder final-drive field because the checked official source publishes two final-drive values that the current single-slot row shape cannot safely encode.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-2018-launch-press-kit",
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 35 TDI year-by-year continuity across the represented 2019-2025 row span",
+        "reason": "The checked official Audi source chain brackets the old-generation 35 TDI S tronic state at launch, in the Germany model-year 2021 price list, and in the exact 2025 technical-data sheet, but this pass still did not recover a year-by-year official chain proving one unchanged package across every model year represented by the row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-2018-launch-press-kit",
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+        ]
+      },
+      {
+        "item": "Schema-safe encoding of exact Audi Q3 35 TDI split final-drive values",
+        "reason": "The checked official Audi MediaCenter 2025 technical-data PDF publishes split final drives 4.813 / 3.667 for the target, but the current row has only one final_drive_front field and cannot safely encode both values.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q3 35 TDI optional wheel/tire matrix and gearbox family-code confirmation",
+        "reason": "The checked official source chain resolves the exact 215/65 R17 base tire and market-facing 7-speed S tronic wording, and the Germany model-year 2021 price list confirms the same family wheel program mid-cycle, but this pass did not recover an exact old-generation optional wheel/tire matrix or an official gearbox family code.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tdi-2025-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+          "audi_mediacenter_sources:f3-q3-2018-launch-press-kit"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-f3-35-tfsi-eu-2019-dct7-fwd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F3",
+    "body_code": "F3",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "Q3 (F3, 2019-2025)",
+    "variant_name": "35 TFSI",
+    "engine_code": "1.5L",
+    "engine_name": "1.5L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+      ],
+      "notes": "The checked official Audi source chain confirms that the exact old-generation Q3 35 TFSI S tronic state is front-wheel drive: the Germany model-year 2021 price list shows the exact 35 TFSI S tronic row with front-wheel drive and the 2025 technical-data PDF confirms the late-cycle exact FWD mapping. Full 2019-2025 continuity remains unresolved.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+      ],
+      "notes": "The checked official Audi source chain confirms that the exact old-generation Q3 35 TFSI S tronic state uses a 7-speed S tronic transmission: the Germany model-year 2021 price list shows the exact 35 TFSI S tronic row and the 2025 technical-data PDF confirms the late-cycle exact wording. The repo keeps the normalized DCT7 code, but no checked official Audi source names the gearbox family code.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2025 technical-data PDF lists 0.661 as the 7th-gear ratio for the exact old-generation Q3 35 TFSI S tronic state. Applied here as official-derived evidence while full 2019-2025 continuity remains unresolved.",
+        "value": 0.661
+      },
+      "gear_ratios": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2025 technical-data PDF lists the forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661 for the exact old-generation Q3 35 TFSI S tronic state. Applied here as official-derived evidence while full 2019-2025 continuity remains unresolved.",
+        "value": [
+          3.19,
+          2.75,
+          1.897,
+          1.04,
+          0.793,
+          0.86,
+          0.661
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Retained conservative placeholder because the checked official Audi MediaCenter 2025 technical-data PDF for the exact Q3 35 TFSI S tronic state publishes split final drives 5.200 / 3.900, and the current single final_drive_front field cannot safely encode both values without losing row fidelity.",
+        "value": 4.769
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2025 technical-data PDF confirms 215/65 R17 as the basic tire package for the exact old-generation Q3 35 TFSI S tronic state. Applied here as official-derived evidence while the broader optional wheel/tire matrix remains unresolved.",
+        "front": {
+          "width_mm": 215.0,
+          "aspect_pct": 65.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf"
+          ],
+          "notes": "The checked official Audi MediaCenter 2025 technical-data PDF confirms 215/65 R17 as the basic tire package for the exact old-generation Q3 35 TFSI S tronic state. The broader optional wheel/tire matrix remains unresolved.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:252eccf99577",
+            "legacy_research_sources:2c76c716cf17",
+            "legacy_research_sources:307b4bc397ba",
+            "legacy_research_sources:3c27d2c5b039",
+            "legacy_research_sources:450723bbeba5",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6f5476f1d60e",
+            "legacy_research_sources:814f63488d22",
+            "legacy_research_sources:8dbd6602ef26",
+            "legacy_research_sources:e60dd4460f09",
+            "legacy_research_sources:e7a5c628203d"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:252eccf99577",
+            "legacy_research_sources:2c76c716cf17",
+            "legacy_research_sources:307b4bc397ba",
+            "legacy_research_sources:3c27d2c5b039",
+            "legacy_research_sources:450723bbeba5",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6f5476f1d60e",
+            "legacy_research_sources:814f63488d22",
+            "legacy_research_sources:8dbd6602ef26",
+            "legacy_research_sources:e60dd4460f09",
+            "legacy_research_sources:e7a5c628203d"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 2 review replaces the broad mixed-transmission note with exact row-specific evidence for the old-generation Q3 35 TFSI S tronic state represented by this DCT7 row. The checked Germany model-year 2021 price list confirms the exact 35 TFSI S tronic row with front-wheel drive and 7-Gang S tronic, and the checked 2025 technical-data PDF resolves the exact late-cycle DCT7 mapping: front-wheel drive, 7-speed S tronic, forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661, split final drives 5.200 / 3.900, and basic 215/65 R17 tires. The row keeps a conservative placeholder final-drive field because the checked official source publishes two final-drive values that the current single-slot row shape cannot safely encode.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 35 TFSI production-data applicability across the represented 2019-2025 row span",
+        "reason": "The checked Germany model-year 2021 price list and the exact 2025 S tronic technical-data PDF confirm the old-generation 35 TFSI S tronic state mid-cycle and late-cycle, but this pass did not recover a year-by-year official chain proving one unchanged DCT7 package across every model year represented by the row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+        ]
+      },
+      {
+        "item": "Schema-safe encoding of exact Audi Q3 35 TFSI S tronic split final-drive values",
+        "reason": "The checked official 2025 Q3 35 TFSI S tronic technical-data PDF publishes split final drives 5.200 / 3.900, but the current row has only one final_drive_front field and cannot safely encode both values.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q3 35 TFSI optional wheel/tire matrix and gearbox family-code confirmation",
+        "reason": "The checked official source chain resolves the basic 215/65 R17 tire package and market-facing 7-speed S tronic wording, and the Germany model-year 2021 price list confirms the same old-generation family wheel program mid-cycle, but this pass did not recover a full exact optional wheel/tire matrix or an official gearbox family code for the S tronic state.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-35-tfsi-2025-s-tronic-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-f3-40-tdi-quattro-eu-2019-dct7-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F3",
+    "body_code": "F3",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "Q3 (F3, 2019-2025)",
+    "variant_name": "40 TDI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf"
+      ],
+      "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs confirm the checked old-generation Q3 40 TDI quattro state uses on-demand quattro permanent all-wheel drive. Applied as official-derived AWD evidence for the broader EU row while full 2019-2025 continuity remains unresolved.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf"
+      ],
+      "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs confirm a 7-speed S tronic transmission for the checked old-generation Q3 40 TDI quattro state. The repo keeps the normalized DCT7 code, but no checked official Audi source names the gearbox family code.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf"
+        ],
+        "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs list 0.561 as the checked 7th-gear ratio for the old-generation Q3 40 TDI quattro state. Applied as official-derived evidence for the broader EU row while year-by-year continuity remains unresolved.",
+        "value": 0.561
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf"
+        ],
+        "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs list 4.813 for the checked front final-drive field of the old-generation Q3 40 TDI quattro state. Applied as official-derived evidence for the broader EU row while year-by-year continuity remains unresolved.",
+        "value": 4.813
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf"
+        ],
+        "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs list 3.667 for the checked rear final-drive field of the old-generation Q3 40 TDI quattro state. Applied as official-derived evidence for the broader EU row while year-by-year continuity remains unresolved.",
+        "value": 3.667
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf"
+        ],
+        "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs confirm 215/65 R17 as the checked basic tire for the old-generation Q3 40 TDI quattro state. Applied as official-derived evidence for the broader EU row while the full optional wheel/tire matrix remains unresolved.",
+        "front": {
+          "width_mm": 215.0,
+          "aspect_pct": 65.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf"
+          ],
+          "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs confirm 215/65 R17 as the checked basic tire package for the old-generation Q3 40 TDI quattro state. The broader optional wheel/tire matrix remains unresolved.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 2 review replaces the inherited Q3 40 TDI quattro assumptions with official Audi MediaCenter exact 2024 and 2025 old-generation technical-data sheets: AWD, 7-speed S tronic, 0.561 top gear, split final drives 4.813 / 3.667, and basic 215/65 R17 tires. The row end year is corrected to 2025 because Audi scopes this generation as 'Q3 (until 2025)' and launches the third-generation Q3 in Germany and Europe from October 2025.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-until-2025-model-page",
+          "audi_mediacenter_sources:f3-q3-third-generation-launch-release"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 40 TDI quattro year-by-year continuity across the represented 2019-2025 row span",
+        "reason": "Checked exact Germany-program 2024 and 2025 technical-data PDFs agree on the core drivetrain, top-gear, split final-drive, and basic-tire package, but this pass did not recover a year-by-year official sheet chain proving one unchanged mapping across every model year in the row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q3 40 TDI quattro optional wheel/tire matrix",
+        "reason": "The 2018 Q3 launch press kit documents the old-generation family wheel program with standard 17-inch, trim-linked 18-inch, and optional 19-inch and 20-inch packages, but this pass did not recover an exact 40 TDI quattro option matrix tying every tire size to this exact row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-2018-launch-press-kit"
+        ]
+      },
+      {
+        "item": "Audi Q3 40 TDI quattro gearbox family-code confirmation",
+        "reason": "Checked official Audi sources use the market-facing 7-speed S tronic wording and do not name the supplier or family code behind the repo's normalized DCT7 transmission mapping.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tdi-quattro-2025-tech-data-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-f3-40-tfsi-quattro-eu-2019-dct7-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F3",
+    "body_code": "F3",
+    "production_start_year": 2019,
+    "production_end_year": 2025,
+    "model_name": "Q3 (F3, 2019-2025)",
+    "variant_name": "40 TFSI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf"
+      ],
+      "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs confirm all-wheel drive for the exact old-generation Q3 40 TFSI quattro state. Applied as official-derived evidence while full 2019-2025 continuity remains unresolved.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf"
+      ],
+      "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs confirm a 7-speed S tronic transmission for the exact old-generation Q3 40 TFSI quattro state. The repo keeps the normalized DCT7 code, but no checked official Audi source names the gearbox family code.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs list 0.635 as the 7th-gear ratio for the exact old-generation Q3 40 TFSI quattro state. Applied as official-derived evidence while year-by-year continuity remains unresolved.",
+        "value": 0.635
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs list 4.813 for the front final-drive field of the exact old-generation Q3 40 TFSI quattro state. Applied as official-derived evidence while year-by-year continuity remains unresolved.",
+        "value": 4.813
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs list 3.667 for the rear final-drive field of the exact old-generation Q3 40 TFSI quattro state. Applied as official-derived evidence while year-by-year continuity remains unresolved.",
+        "value": 3.667
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs confirm 215/65 R17 as the basic tire package for the exact old-generation Q3 40 TFSI quattro state. Applied as official-derived evidence while the broader optional wheel/tire matrix remains unresolved.",
+        "front": {
+          "width_mm": 215.0,
+          "aspect_pct": 65.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf"
+          ],
+          "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs confirm 215/65 R17 as the basic tire package for the exact old-generation Q3 40 TFSI quattro state. The broader optional wheel/tire matrix remains unresolved.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 2 review strengthens the exact old-generation Q3 40 TFSI quattro row with matched official Audi MediaCenter 2024 and 2025 technical-data PDFs: AWD, 7-speed S tronic, 0.635 top gear, split final drives 4.813 / 3.667, and basic 215/65 R17 tires. The row end year remains 2025 because Audi scopes this generation as 'Q3 (until 2025)' and launches the third-generation Q3 in Germany and Europe from October 2025.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-until-2025-model-page",
+          "audi_mediacenter_sources:f3-q3-third-generation-launch-release"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 40 TFSI quattro year-by-year continuity across the represented 2019-2025 row span",
+        "reason": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs resolve the same exact late old-generation 40 TFSI quattro state, but this pass did not recover a year-by-year official sheet chain proving one unchanged package across every model year represented by the row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q3 40 TFSI quattro optional wheel/tire matrix",
+        "reason": "The checked official Audi MediaCenter 2025 technical-data PDF resolves the basic 215/65 R17 tire package, but this pass did not recover an exact old-generation optional wheel/tire matrix tied to this exact row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-2018-launch-press-kit"
+        ]
+      },
+      {
+        "item": "Audi Q3 40 TFSI quattro gearbox family-code confirmation",
+        "reason": "The checked official Audi sources use the market-facing 7-speed S tronic wording and do not name the supplier or family code behind the repo's normalized DCT7 transmission mapping.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-40-tfsi-quattro-2025-tech-data-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-f3-45-tfsi-e-eu-2021-dct6-fwd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F3",
+    "body_code": "F3",
+    "production_start_year": 2021,
+    "production_end_year": 2025,
+    "model_name": "Q3 (F3, 2019-2025)",
+    "variant_name": "45 TFSI e",
+    "engine_code": "1.4L",
+    "engine_name": "1.4L I4 TFSI Turbo PHEV",
+    "fuel_type": "PHEV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+        "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
+        "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+      ],
+      "notes": "The checked official Audi Germany model-year 2021 price list, 2020 launch release, and later exact technical-data PDF consistently place the exact old-generation Q3 45 TFSI e on the front wheels.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+        "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
+        "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+      ],
+      "notes": "Official Audi Germany launch and model-year 2021 material explicitly say the exact Q3 45 TFSI e uses 6-Gang / 6-speed S tronic and exclude 7-Gang S tronic for this variant. The repo keeps the normalized DCT6 code, but the checked official sources do not publish a gearbox family code.",
+      "code": "DCT6",
+      "name": "6-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2024 technical-data PDF lists 0.840 as the 6th-gear ratio for the exact old-generation Q3 45 TFSI e S tronic state. Applied here as official-derived evidence after the launch release and MY2021 price list closed the exact 2021+ identity and transmission mapping.",
+        "value": 0.84
+      },
+      "gear_ratios": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi MediaCenter 2024 technical-data PDF lists the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 for the exact old-generation Q3 45 TFSI e S tronic state. Applied here as official-derived evidence after the launch release and MY2021 price list closed the exact 2021+ identity and transmission mapping.",
+        "value": [
+          3.5,
+          2.773,
+          1.852,
+          1.02,
+          1.023,
+          0.84
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Retained conservative placeholder because the checked official Audi MediaCenter 2024 technical-data PDF publishes split final-drive ratios 4.588 / 3.545 for the exact Q3 45 TFSI e state, and the current single final_drive_front field cannot safely encode both official values without losing row fidelity.",
+        "value": 4.769
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+          "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
+          "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+        ],
+        "notes": "The checked official Audi Germany model-year 2021 price list and launch release confirm 17-inch wheels as the exact launch baseline for the Q3 45 TFSI e, and the later official Audi MediaCenter 2024 technical-data PDF independently confirms 215/65 R17 as the basic tire size.",
+        "front": {
+          "width_mm": 215.0,
+          "aspect_pct": 65.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+            "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
+            "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+          ],
+          "notes": "Official Audi Germany model-year 2021 material shows the exact Q3 45 TFSI e starts on a 17-inch square setup; the later technical-data PDF independently confirms 215/65 R17 as the basic tire size.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+            "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
+          ],
+          "notes": "The checked official Audi Germany model-year 2021 price list lists a square 235/55 R18 package for the exact Q3 45 TFSI e, and the launch release confirms 18-inch wheels are available as official options.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 55.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "18\" square"
+        },
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+            "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
+          ],
+          "notes": "The checked official Audi Germany model-year 2021 price list lists a square 235/50 R19 package for the exact Q3 45 TFSI e, and the launch release confirms 19-inch wheels are available as official options.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "19\" square 235"
+        },
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+            "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
+          ],
+          "notes": "The checked official Audi Germany model-year 2021 price list lists a square 255/45 R19 package for the exact Q3 45 TFSI e, and the launch release confirms 19-inch wheels are available as official options.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "19\" square 255"
+        },
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+            "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
+          ],
+          "notes": "The checked official Audi Germany model-year 2021 price list lists a square 255/40 R20 package for the exact Q3 45 TFSI e, and the launch release confirms 20-inch wheels are available as official options.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "20\" square"
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 8 review re-keys the old unsupported 2019/DCT7 placeholder to the exact old-generation Q3 45 TFSI e state supported by official Audi material. The 2020 launch release fixes German presales to January 2021 and explicitly says the plug-in hybrid drives the front wheels through a six-speed S tronic. The checked Germany model-year 2021 price list independently confirms Frontantrieb, 6-Gang S tronic, 17-inch standard wheels, and the 18/19/20-inch option ladder for the exact 45 TFSI e row. The later official Audi MediaCenter 2024 technical-data PDF then supplies the exact forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 and confirms 215/65 R17 as the basic tire size for the same 110/180 kW old-generation Q3 45 TFSI e state.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release",
+          "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+          "audi_mediacenter_sources:f3-q3-until-2025-model-page"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 45 TFSI e schema-safe encoding of official split final-drive values",
+        "reason": "The checked official Audi MediaCenter 2024 technical-data PDF publishes final-drive ratios 4.588 / 3.545 for the exact Q3 45 TFSI e state, but the current schema exposes only one front final-drive field and cannot safely encode both official values without losing fidelity.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q3 45 TFSI e wheel-package continuity beyond the checked Germany MY2021 matrix",
+        "reason": "The checked official Audi Germany model-year 2021 price list and launch release resolve the launch 17/18/19/20-inch square wheel ladder for the exact 45 TFSI e row, but this pass did not recover later year-by-year Audi wheel matrices proving every option carried unchanged through the full 2021-2025 span.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+          "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
+        ]
+      },
+      {
+        "item": "Audi Q3 45 TFSI e exact gearbox family-code naming",
+        "reason": "The checked official Audi sources explicitly publish 6-speed S tronic wording and PHEV gearbox integration details, but they do not name the supplier or family code behind the repo's normalized DCT6 mapping.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:f3-q3-45-tfsi-e-2024-tech-data-pdf",
+          "audi_mediacenter_sources:f3-q3-2021-price-list-pdf",
+          "audi_mediacenter_sources:f3-q3-tfsi-e-2020-launch-release"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  }
+]

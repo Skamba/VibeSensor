@@ -1,0 +1,321 @@
+[
+  {
+    "id": "audi-fz-40-e-tron-eu-2022-ss1-rwd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "FZ",
+    "body_code": "FZ",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "Q4 e-tron (FZ, 2022-2026)",
+    "variant_name": "40 e-tron",
+    "engine_code": "Electric",
+    "engine_name": "Electric Single Motor",
+    "fuel_type": "EV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:2d1d32db2857",
+        "legacy_research_sources:fd03c253ad14"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+      "code": "SS1",
+      "name": "Single-speed fixed gear (EV)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+        "value": 1.0
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+        "value": 9.756
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:02f80102b1fb",
+          "legacy_research_sources:2d1d32db2857",
+          "legacy_research_sources:4ea362ce6a8e",
+          "legacy_research_sources:6236ede09312",
+          "legacy_research_sources:a7a38f705f5d",
+          "legacy_research_sources:b75aa6c442cb",
+          "legacy_research_sources:fd03c253ad14"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 50.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:02f80102b1fb",
+            "legacy_research_sources:2d1d32db2857",
+            "legacy_research_sources:4ea362ce6a8e",
+            "legacy_research_sources:6236ede09312",
+            "legacy_research_sources:a7a38f705f5d",
+            "legacy_research_sources:b75aa6c442cb",
+            "legacy_research_sources:fd03c253ad14"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:02f80102b1fb",
+            "legacy_research_sources:2d1d32db2857",
+            "legacy_research_sources:4ea362ce6a8e",
+            "legacy_research_sources:6236ede09312",
+            "legacy_research_sources:a7a38f705f5d",
+            "legacy_research_sources:b75aa6c442cb",
+            "legacy_research_sources:fd03c253ad14"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Issue #975 official-source review confirmed the supported EU Q4 e-tron BEV variant mapping, and this pass adds exact Audi official evidence that the launch-era 50 e-tron quattro uses axle-split one-speed reduction ratios (rear 11.5:1, front 10.0:1) plus mixed-size tires with a wider rear axle. It also adds exact official evidence that the launch-era rear-drive Q4 40 e-tron used a one-speed rear-drive ratio of 13:1 and that the later reintroduced Germany-market Q4 40 e-tron uses basic 235/55 R19 front + 255/50 R19 rear tires. The broad row remains unchanged because the current schema cannot safely encode the axle-split EV ratio mapping, the 40 e-tron name is reused across materially different sub-eras, and the later official lineup temporarily renames the upper quattro variant away from the original 50 e-tron quattro naming.",
+        "evidence_refs": [
+          "legacy_research_sources:02f80102b1fb",
+          "legacy_research_sources:2d1d32db2857",
+          "legacy_research_sources:4ea362ce6a8e",
+          "legacy_research_sources:6236ede09312",
+          "legacy_research_sources:a7a38f705f5d",
+          "legacy_research_sources:b75aa6c442cb",
+          "legacy_research_sources:fd03c253ad14"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Encode axle-split EV reduction ratios for the exact Q4 50 e-tron quattro in repo schema",
+        "reason": "Official Audi sources now prove rear 11.5:1 and front 10.0:1 one-speed reduction ratios for the exact launch-era 50 e-tron quattro, but the current broad row stores only one final_drive_ratio field and cannot safely represent the axle split.",
+        "evidence_refs": [
+          "legacy_research_sources:02f80102b1fb",
+          "legacy_research_sources:2d1d32db2857",
+          "legacy_research_sources:4ea362ce6a8e",
+          "legacy_research_sources:6236ede09312",
+          "legacy_research_sources:a7a38f705f5d",
+          "legacy_research_sources:b75aa6c442cb",
+          "legacy_research_sources:fd03c253ad14"
+        ]
+      },
+      {
+        "item": "Exact official numeric tire sizes and post-2024 naming continuity for the broad Q4 e-tron row",
+        "reason": "Official Audi launch material confirms mixed-size tires with a wider rear axle, while later official updates rename the upper quattro variant to 55 e-tron quattro, so this pass did not project one exact tire or ratio package across the full 2022-2026 broad row.",
+        "evidence_refs": [
+          "legacy_research_sources:02f80102b1fb",
+          "legacy_research_sources:2d1d32db2857",
+          "legacy_research_sources:4ea362ce6a8e",
+          "legacy_research_sources:6236ede09312",
+          "legacy_research_sources:a7a38f705f5d",
+          "legacy_research_sources:b75aa6c442cb",
+          "legacy_research_sources:fd03c253ad14"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-fz-50-e-tron-quattro-eu-2022-ss1-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "FZ",
+    "body_code": "FZ",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "Q4 e-tron (FZ, 2022-2026)",
+    "variant_name": "50 e-tron quattro",
+    "engine_code": "Electric",
+    "engine_name": "Electric Dual Motor",
+    "fuel_type": "EV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:2d1d32db2857",
+        "legacy_research_sources:fd03c253ad14"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+      "code": "SS1",
+      "name": "Single-speed fixed gear (EV)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+        "value": 1.0
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+        "value": 9.756
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+        "value": 9.756
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:02f80102b1fb",
+          "legacy_research_sources:2d1d32db2857",
+          "legacy_research_sources:4ea362ce6a8e",
+          "legacy_research_sources:6236ede09312",
+          "legacy_research_sources:a7a38f705f5d",
+          "legacy_research_sources:b75aa6c442cb",
+          "legacy_research_sources:fd03c253ad14"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 50.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:02f80102b1fb",
+            "legacy_research_sources:2d1d32db2857",
+            "legacy_research_sources:4ea362ce6a8e",
+            "legacy_research_sources:6236ede09312",
+            "legacy_research_sources:a7a38f705f5d",
+            "legacy_research_sources:b75aa6c442cb",
+            "legacy_research_sources:fd03c253ad14"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:02f80102b1fb",
+            "legacy_research_sources:2d1d32db2857",
+            "legacy_research_sources:4ea362ce6a8e",
+            "legacy_research_sources:6236ede09312",
+            "legacy_research_sources:a7a38f705f5d",
+            "legacy_research_sources:b75aa6c442cb",
+            "legacy_research_sources:fd03c253ad14"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Issue #975 official-source review confirmed the supported EU Q4 e-tron BEV variant mapping, and this pass adds exact Audi official evidence that the launch-era 50 e-tron quattro uses axle-split one-speed reduction ratios (rear 11.5:1, front 10.0:1) plus mixed-size tires with a wider rear axle. It also adds exact official evidence that the launch-era rear-drive Q4 40 e-tron used a one-speed rear-drive ratio of 13:1 and that the later reintroduced Germany-market Q4 40 e-tron uses basic 235/55 R19 front + 255/50 R19 rear tires. The broad row remains unchanged because the current schema cannot safely encode the axle-split EV ratio mapping, the 40 e-tron name is reused across materially different sub-eras, and the later official lineup temporarily renames the upper quattro variant away from the original 50 e-tron quattro naming.",
+        "evidence_refs": [
+          "legacy_research_sources:02f80102b1fb",
+          "legacy_research_sources:2d1d32db2857",
+          "legacy_research_sources:4ea362ce6a8e",
+          "legacy_research_sources:6236ede09312",
+          "legacy_research_sources:a7a38f705f5d",
+          "legacy_research_sources:b75aa6c442cb",
+          "legacy_research_sources:fd03c253ad14"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi Technology Portal / MediaCenter with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Encode axle-split EV reduction ratios for the exact Q4 50 e-tron quattro in repo schema",
+        "reason": "Official Audi sources now prove rear 11.5:1 and front 10.0:1 one-speed reduction ratios for the exact launch-era 50 e-tron quattro, but the current broad row stores only one final_drive_ratio field and cannot safely represent the axle split.",
+        "evidence_refs": [
+          "legacy_research_sources:02f80102b1fb",
+          "legacy_research_sources:2d1d32db2857",
+          "legacy_research_sources:4ea362ce6a8e",
+          "legacy_research_sources:6236ede09312",
+          "legacy_research_sources:a7a38f705f5d",
+          "legacy_research_sources:b75aa6c442cb",
+          "legacy_research_sources:fd03c253ad14"
+        ]
+      },
+      {
+        "item": "Exact official numeric tire sizes and post-2024 naming continuity for the broad Q4 e-tron row",
+        "reason": "Official Audi launch material confirms mixed-size tires with a wider rear axle, while later official updates rename the upper quattro variant to 55 e-tron quattro, so this pass did not project one exact tire or ratio package across the full 2022-2026 broad row.",
+        "evidence_refs": [
+          "legacy_research_sources:02f80102b1fb",
+          "legacy_research_sources:2d1d32db2857",
+          "legacy_research_sources:4ea362ce6a8e",
+          "legacy_research_sources:6236ede09312",
+          "legacy_research_sources:a7a38f705f5d",
+          "legacy_research_sources:b75aa6c442cb",
+          "legacy_research_sources:fd03c253ad14"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

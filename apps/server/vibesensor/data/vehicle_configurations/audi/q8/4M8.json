@@ -1,0 +1,776 @@
+[
+  {
+    "id": "audi-4m8-55-tfsi-eu-2019-zf8hp-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "4M8",
+    "body_code": "4M8",
+    "production_start_year": 2019,
+    "production_end_year": 2026,
+    "model_name": "Q8 (4M8, 2019-2026)",
+    "variant_name": "55 TFSI",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L V6 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+        "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+      ],
+      "notes": "Exact official Audi technical-data and Austria brochure evidence confirm permanent quattro AWD with self-locking center differential for the checked Q8 55 TFSI state, while early-row continuity and row-wide numeric/tire applicability remain unresolved across the broad 2019-2026 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+        "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+      ],
+      "notes": "Exact official Audi technical-data and Austria brochure evidence confirm 8-speed tiptronic wording for the checked Q8 55 TFSI state, while early-row continuity and row-wide numeric/tire applicability remain unresolved across the broad 2019-2026 row.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.333
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.333
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3da53a121d0a",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:834b58fa6ac6",
+          "legacy_research_sources:858568b097e7",
+          "legacy_research_sources:987b02afd090",
+          "legacy_research_sources:9a9f7660e688",
+          "legacy_research_sources:9ac37563abd5",
+          "legacy_research_sources:c6f574693b14",
+          "legacy_research_sources:d13f1c818845"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 285.0,
+          "aspect_pct": 40.0,
+          "rim_in": 21.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 285.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 21\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 295.0,
+            "aspect_pct": 35.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 22\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 305.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 22\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 5 exact-source review replaces the stale mixed/PHEV Q8 note with row-specific 55 TFSI evidence. The checked official Audi 02/04/2026 technical-data PDF and current Audi Austria brochure agree on Q8 55 TFSI quattro identity, permanent quattro AWD with self-locking center differential, 8-speed tiptronic, and late-cycle exact 55 TFSI figures including forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final-drive expression 3.504 / -, and 265/55 R19 as the checked technical-sheet basic tire. Official Audi lifecycle pages show that this broad row spans at least two states: a predecessor line bounded as 'until 2023' and the upgraded Q8 launched in September 2023. Production numeric and tire fields therefore remain unchanged here because this pass did not prove one safe exact 2019-2026 mapping or one year-spanning wheel program.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-until-2023-model-page",
+          "audi_mediacenter_sources:4m8-q8-2023-upgrade-release",
+          "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q8 55 TFSI production-data applicability across the represented 2019-2026 row span",
+        "reason": "The checked official Audi chain proves an earlier predecessor state bounded as 'until 2023' and a later upgraded Q8 launched in September 2023, plus an exact late-cycle 55 TFSI technical-data sheet, but this pass did not recover a year-by-year official chain proving one unchanged exact 55 TFSI mapping across the full broad row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-until-2023-model-page",
+          "audi_mediacenter_sources:4m8-q8-2023-upgrade-release",
+          "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q8 55 TFSI exact gearbox-family naming",
+        "reason": "Official Audi exact sources prove 8-speed tiptronic wording and the late-cycle 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 ratio block, but they do not publish an explicit gearbox-family code such as ZF 8HP.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q8 55 TFSI exact tire-baseline and wheel-program rewrite across the represented 2019-2026 row span",
+        "reason": "The checked exact technical-data PDF proves a 265/55 R19 basic tire, while the checked current Audi Austria brochure documents square 20-inch through 23-inch summer packages and winter 19-inch through 21-inch packages, so this pass did not prove one production-safe default or full wheel/tire rewrite for the broad row's inherited placeholders.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-4m8-55-tfsi-quattro-eu-2019-zf8hp-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "4M8",
+    "body_code": "4M8",
+    "production_start_year": 2019,
+    "production_end_year": 2026,
+    "model_name": "Q8 (4M8, 2019-2026)",
+    "variant_name": "55 TFSI quattro",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L V6 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+        "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+      ],
+      "notes": "Exact official Audi technical-data and Austria brochure evidence confirm permanent quattro AWD with self-locking center differential for the checked Q8 55 TFSI quattro state, while early-row continuity and row-wide numeric/tire applicability remain unresolved across the broad 2019-2026 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+        "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+      ],
+      "notes": "Exact official Audi technical-data and Austria brochure evidence confirm 8-speed tiptronic wording for the checked Q8 55 TFSI quattro state, while early-row continuity and row-wide numeric/tire applicability remain unresolved across the broad 2019-2026 row.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.333
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.333
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3da53a121d0a",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:834b58fa6ac6",
+          "legacy_research_sources:858568b097e7",
+          "legacy_research_sources:987b02afd090",
+          "legacy_research_sources:9a9f7660e688",
+          "legacy_research_sources:9ac37563abd5",
+          "legacy_research_sources:c6f574693b14",
+          "legacy_research_sources:d13f1c818845"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 285.0,
+          "aspect_pct": 40.0,
+          "rim_in": 21.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 285.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 21\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 295.0,
+            "aspect_pct": 35.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 22\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 305.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 22\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 5 exact-source review strengthens this row with row-specific 55 TFSI evidence and removes the stale mixed 55/60 note. The checked official Audi 02/04/2026 technical-data PDF and current Audi Austria brochure agree on Q8 55 TFSI quattro identity, permanent quattro AWD with self-locking center differential, 8-speed tiptronic, and late-cycle exact 55 TFSI figures including forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final-drive expression 3.504 / -, and 265/55 R19 as the checked technical-sheet basic tire. Official Audi lifecycle pages show that this broad row spans at least two states: a predecessor line bounded as 'until 2023' and the upgraded Q8 launched in September 2023. Production numeric and tire fields therefore remain unchanged here because this pass did not prove one safe exact 2019-2026 mapping or one year-spanning wheel program.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-until-2023-model-page",
+          "audi_mediacenter_sources:4m8-q8-2023-upgrade-release",
+          "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q8 55 TFSI quattro production-data applicability across the represented 2019-2026 row span",
+        "reason": "The checked official Audi chain proves an earlier predecessor state bounded as 'until 2023' and a later upgraded Q8 launched in September 2023, plus an exact late-cycle 55 TFSI technical-data sheet, but this pass did not recover a year-by-year official chain proving one unchanged exact 55 TFSI quattro mapping across the full broad row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-until-2023-model-page",
+          "audi_mediacenter_sources:4m8-q8-2023-upgrade-release",
+          "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q8 55 TFSI quattro exact gearbox-family naming",
+        "reason": "Official Audi exact sources prove 8-speed tiptronic wording and the late-cycle 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 ratio block, but they do not publish an explicit gearbox-family code such as ZF 8HP.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q8 55 TFSI quattro exact tire-baseline and wheel-program rewrite across the represented 2019-2026 row span",
+        "reason": "The checked exact technical-data PDF proves a 265/55 R19 basic tire, while the checked current Audi Austria brochure documents square 20-inch through 23-inch summer packages and winter 19-inch through 21-inch packages, so this pass did not prove one production-safe default or full wheel/tire rewrite for the broad row's inherited placeholders.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-4m8-60-tfsi-e-eu-2019-zf8hp-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "4M8",
+    "body_code": "4M8",
+    "production_start_year": 2019,
+    "production_end_year": 2026,
+    "model_name": "Q8 (4M8, 2019-2026)",
+    "variant_name": "60 TFSI e",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L V6 TFSI Turbo PHEV",
+    "fuel_type": "PHEV",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.333
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.333
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3da53a121d0a",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:834b58fa6ac6",
+          "legacy_research_sources:858568b097e7",
+          "legacy_research_sources:987b02afd090",
+          "legacy_research_sources:9a9f7660e688",
+          "legacy_research_sources:9ac37563abd5",
+          "legacy_research_sources:c6f574693b14",
+          "legacy_research_sources:d13f1c818845"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 285.0,
+          "aspect_pct": 40.0,
+          "rim_in": 21.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 285.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 21\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 295.0,
+            "aspect_pct": 35.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 22\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 305.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 22\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 4 review replaces the mixed Q8 55/60 family note with row-specific Audi MediaCenter evidence for the exact Q8 60 TFSI e quattro tiptronic state. The checked 11/20/2020 and 12/15/2025 technical-data PDFs agree on permanent quattro AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, and basic 265/55 R19 tires. The 2024 product-upgrade release confirms a later 360 kW facelift state under the same 60 TFSI e quattro badge, but production JSON remains unchanged because this pass did not prove one exact 2019-2026 mapping or one year-spanning tire baseline.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-2024-tfsi-e-upgrade-release",
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q8 60 TFSI e quattro production-data applicability across the represented 2019-2026 row span",
+        "reason": "The checked late-2020 and 2025 Audi MediaCenter technical-data PDFs prove later exact 60 TFSI e quattro states, but this pass did not recover a year-by-year official chain proving the current 2019 start or one unchanged exact mapping across the full broad row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-2024-tfsi-e-upgrade-release",
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Schema-safe promotion of Audi Q8 60 TFSI e quattro exact transmission naming and final-drive mapping",
+        "reason": "The checked official source chain proves market-facing 8-speed tiptronic wording and a single 3.204 final-drive value, but the current broad row still carries normalized ZF8HP and split-final-drive placeholders and this pass did not prove a safer coordinated row reshaping across the adjacent Q8 aliases.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q8 60 TFSI e quattro tire-baseline and optional wheel matrix continuity",
+        "reason": "The checked technical-data PDFs prove a 265/55 R19 basic tire, while later official market material documents a different later standard-equipment package, so this pass did not close one representative default or optional wheel/tire chain for the full broad row.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-2024-tfsi-e-upgrade-release",
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-4m8-60-tfsi-e-quattro-eu-2020-zf8hp-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "4M8",
+    "body_code": "4M8",
+    "production_start_year": 2020,
+    "production_end_year": 2026,
+    "model_name": "Q8 (4M8, 2020-2026)",
+    "variant_name": "60 TFSI e quattro",
+    "engine_code": "3.0L",
+    "engine_name": "3.0L V6 TFSI Turbo PHEV",
+    "fuel_type": "PHEV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
+        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+      ],
+      "notes": "Exact official Audi MediaCenter 2020 and 2025 Q8 60 TFSI e quattro technical-data material confirms permanent quattro AWD for the checked launch and facelift-era PHEV states, while row-wide tire-program continuity remains unresolved across the retimed 2020-2026 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
+        "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+      ],
+      "notes": "Exact official Audi MediaCenter 2020 and 2025 Q8 60 TFSI e quattro technical-data material confirms the 8-speed tiptronic transmission wording for the checked launch and facelift-era PHEV states, while row-wide tire-program continuity remains unresolved across the retimed 2020-2026 row.",
+      "code": "ZF8HP",
+      "name": "8-speed tiptronic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.333
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.333
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3da53a121d0a",
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:834b58fa6ac6",
+          "legacy_research_sources:858568b097e7",
+          "legacy_research_sources:987b02afd090",
+          "legacy_research_sources:9a9f7660e688",
+          "legacy_research_sources:9ac37563abd5",
+          "legacy_research_sources:c6f574693b14",
+          "legacy_research_sources:d13f1c818845"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 285.0,
+          "aspect_pct": 40.0,
+          "rim_in": 21.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 285.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 21\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 295.0,
+            "aspect_pct": 35.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 22\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3da53a121d0a",
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:834b58fa6ac6",
+            "legacy_research_sources:858568b097e7",
+            "legacy_research_sources:987b02afd090",
+            "legacy_research_sources:9a9f7660e688",
+            "legacy_research_sources:9ac37563abd5",
+            "legacy_research_sources:c6f574693b14",
+            "legacy_research_sources:d13f1c818845"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 305.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 22\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Exact official Audi MediaCenter Q8 60 TFSI e quattro material now supports a safe numeric promotion on this retimed 2020-2026 row. The checked 11/20/2020 and 12/15/2025 technical-data PDFs agree on permanent quattro AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, one published final-drive value 3.204, and 265/55 R19 basic tires. The checked 2024 upgrade release confirms the later 360 kW facelift handover inside the same 60 TFSI e quattro line. This pass still did not recover any earlier 2019 Germany-market 60 TFSI e sheet or a production-safe full wheel-program rewrite.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-2024-tfsi-e-upgrade-release",
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q8 60 TFSI e quattro exact tire-baseline and option continuity across the retimed 2020-2026 row span",
+        "reason": "The checked 2020 and 2025 technical-data sheets both prove a 265/55 R19 basic tire, but this pass did not recover production-safe market material for the full wheel and tire program carried by the row's inherited 21-inch and 22-inch placeholders.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q8 60 TFSI e quattro exact gearbox-family naming",
+        "reason": "Official Audi exact sources prove 8-speed tiptronic wording and the consistent 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 ratio block, but they do not publish an explicit gearbox-family code such as ZF 8HP.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+        ]
+      },
+      {
+        "item": "Audi Q8 60 TFSI e quattro production-data applicability across the full retimed 2020-2026 row span",
+        "reason": "The checked 2020 and 2025 technical-data sheets agree on the exact Q8 60 TFSI e quattro AWD, 8-speed tiptronic, ratio, final-drive, and 265/55 R19 basic-tire package, but this pass did not recover year-by-year material proving one unchanged mapping across every represented year.",
+        "evidence_refs": [
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2020-tech-data-pdf",
+          "audi_mediacenter_sources:4m8-q8-2024-tfsi-e-upgrade-release",
+          "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]
