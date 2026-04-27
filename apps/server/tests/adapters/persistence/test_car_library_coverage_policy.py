@@ -32,7 +32,7 @@ def test_current_canonical_rows_classify_into_approximate_and_backlog_buckets() 
                 "7-speed Steptronic dual-clutch transmission",
             )
         ]
-        == "trusted"
+        == "approximate"
     )
     assert (
         configs[("3 Series (G20, 2019-2025)", "330i xDrive", "8-speed automatic (ZF 8HP)")]
