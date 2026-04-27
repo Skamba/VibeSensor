@@ -15,6 +15,7 @@ from vibesensor.domain import (
     VehicleConfigurationTireOption,
     VehicleFieldConfidence,
     VehicleFieldMetadata,
+    VehicleOrderAnalysisPolicy,
 )
 
 
@@ -102,6 +103,12 @@ def _make_valid_vehicle_configuration() -> VehicleConfiguration:
         top_gear_ratio_metadata=_metadata("official_exact"),
         final_drive_front_metadata=_metadata("official_exact"),
         final_drive_rear_metadata=_metadata("official_exact"),
+        order_analysis_policy=VehicleOrderAnalysisPolicy(
+            usable_for_engine_order=True,
+            usable_for_driveshaft_order=True,
+            usable_for_wheel_order=True,
+            requires_manual_confirmation=False,
+        ),
     )
 
 
@@ -142,3 +149,40 @@ def test_validate_vehicle_configurations_flags_layout_mismatch() -> None:
     assert {issue.rule for issue in issues} == {"drivetrain_final_drive_layout"}
     assert any("final_drive_front" in issue.message for issue in issues)
     assert any("does not expose any driven final-drive ratio" in issue.message for issue in issues)
+
+
+def test_validate_vehicle_configurations_allows_manual_only_partial_final_drive() -> None:
+    config = _make_valid_vehicle_configuration()
+    partial = replace(
+        config,
+        variant_name="Validation Partial Variant",
+        final_drive_front=None,
+        final_drive_front_metadata=None,
+        final_drive_rear=None,
+        final_drive_rear_metadata=None,
+        order_analysis_policy=VehicleOrderAnalysisPolicy(
+            usable_for_engine_order=True,
+            usable_for_driveshaft_order=False,
+            usable_for_wheel_order=False,
+            requires_manual_confirmation=True,
+        ),
+    )
+
+    issues = validate_vehicle_configurations([partial], allowlist={})
+
+    assert not issues
+
+
+def test_validate_vehicle_configurations_accepts_low_dct_top_gear() -> None:
+    config = _make_valid_vehicle_configuration()
+    low_top_gear = replace(
+        config,
+        transmission_name="7-speed S tronic",
+        top_gear_ratio=0.386,
+        final_drive_front=5.302,
+        final_drive_rear=5.302,
+    )
+
+    issues = validate_vehicle_configurations([low_top_gear], allowlist={})
+
+    assert not issues
