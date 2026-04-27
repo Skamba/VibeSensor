@@ -83,7 +83,7 @@ def test_validate_vehicle_configuration_source_evidence_flags_missing_required_e
 
 
 def test_validate_vehicle_configuration_source_evidence_flags_unknown_note_reference() -> None:
-    config = _config_for("2 Series Active Tourer (F45, 2014-2021)", "220i")
+    config = _config_for("2 Series Active Tourer (F45, 2018)", "220i")
     broken = replace(
         config,
         verification_notes=(
