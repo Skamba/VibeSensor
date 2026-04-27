@@ -16,6 +16,27 @@
       "confidence": "medium"
     },
     {
+      "id": "secondary_technical_sources:rs3-8v-sedan-brochure-mirror",
+      "url": "https://de.readkong.com/page/flyer-rs3-rs3-limousine-sportback-max-gruppe-9138212",
+      "title": "ReadKong mirror of Audi RS 3 Limousine and Sportback brochure",
+      "note": "Secondary mirror of an originally Audi-hosted March 2017 German-market RS 3 Limousine and Sportback brochure, used with archived Audi Austria provenance to cross-check the 8V sedan's 294 kW / 400 PS state, 7-speed S tronic wording, and the presence of 235/35 R19 plus 255/30 R19 tire sizes in the brochure tire table.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:rs3-8v-sedan-carfolio",
+      "url": "https://www.carfolio.com/audi-rs-3-543477",
+      "title": "Carfolio Audi RS 3 sedan specification entry",
+      "note": "Reputable secondary 2018 RS 3 sedan page used to cross-check 8V sedan top gear 0.64, square 235/35 R19 tires, and the unresolved single-value final-drive figure 3.45.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:rs3-8v-sedan-carspecs",
+      "url": "https://www.carspecs.us/cars/2017/audi/rs-3/68403",
+      "title": "CarSpecs 2017 Audi RS 3 specification entry",
+      "note": "Independent secondary 2017 RS 3 sedan page used to cross-check 7-speed S tronic wording, seventh gear 0.64, square 235/35 R19 tires, and the conflicting final-drive figure 4.06 for the 8V sedan.",
+      "confidence": "medium"
+    },
+    {
       "id": "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
       "url": "https://www.carfolio.com/audi-a4-2.0-tdi-quattro-192203",
       "title": "Carfolio A4 B8 2.0 TDI quattro manual specification entry",
@@ -107,6 +128,20 @@
       "confidence": "medium"
     },
     {
+      "id": "secondary_technical_sources:fy-q5-35-tdi-quattro-adac",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q5/fy/293050/",
+      "title": "ADAC Audi Q5 FY 35 TDI quattro S tronic variant page",
+      "note": "Reputable secondary exact-variant page for the FY Q5 35 TDI quattro S tronic used to anchor the narrowed 08/2018-05/2019 lifecycle window, confirm AWD and dual-clutch identity, and cross-check the 235/65 R17 baseline tire.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:fy-q5-40-tdi-quattro-adac",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q5/fy-facelift/313511/",
+      "title": "ADAC Audi Q5 FY facelift 40 TDI quattro S tronic variant page",
+      "note": "Reputable secondary exact-variant page for the FY facelift Q5 40 TDI quattro S tronic used to anchor the narrowed 09/2020-11/2023 lifecycle window for the later AWD dual-clutch state.",
+      "confidence": "medium"
+    },
+    {
       "id": "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-carfolio",
       "url": "https://www.carfolio.com/audi-a4-3.0-tdi-quattro-264979",
       "title": "Carfolio A4 B8 3.0 TDI quattro manual specification entry",
@@ -181,6 +216,20 @@
       "url": "https://www.auto-data.net/en/audi-q3-i-8u-2.0-tfsi-211hp-quattro-s-tronic-19152",
       "title": "Auto-Data Q3 8U 2.0 TFSI quattro S tronic specification entry",
       "note": "Exact secondary 2011-2014 Q3 2.0 TFSI 211 hp quattro S tronic entry used to corroborate AWD, 7-speed S tronic transmission, and 235/55 R17 baseline tires while the official UK sheet supplies the checked top-gear and final-drive values.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g11-730i-2016-tirewheelguide",
+      "url": "https://tirewheelguide.com/sizes/bmw/7-series/2016/",
+      "title": "TireWheelGuide BMW 7 Series 730i 2016 fitment page",
+      "note": "Reputable secondary exact-trim page used to confirm the 2016 BMW 7 Series 730i as a European-market G11/G12 2.0L B48B20 I4 petrol variant and to capture the checked 17-inch, 18-inch, and 19-inch fitments while official BMW trim-specific drivetrain data remains unresolved.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g11-730i-2016-wheel-size",
+      "url": "https://www.wheel-size.com/size/bmw/7-series/2016/",
+      "title": "Wheel-Size BMW 7 Series 730i 2016 trim page",
+      "note": "Independent secondary trim-list corroboration used to confirm that the 2016 BMW 7 Series lineup includes a 730i I4 255 hp state even though the directly fetched official BMW launch material omits a trim-specific 730i technical-data row.",
       "confidence": "medium"
     }
   ]

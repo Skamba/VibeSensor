@@ -30,6 +30,20 @@
       "confidence": "medium"
     },
     {
+      "id": "bmw_market_pages:g20-3-series-price-list-2024",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/3-series/sedan/2024/preisliste-bmw3er.pdf.coredownload.pdf",
+      "title": "BMW Germany 3 Series Sedan 2024 price list",
+      "note": "Official BMW Germany 07/2024 price list used as a later-market cross-check for exact G20 318i and 320d rear-wheel-drive automatic continuity, including standard 225/50 R17 tire listings in the checked Germany-market slice.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g30-5-series-price-list-2023-it",
+      "url": "https://www.bmw.it/content/dam/bmw/marketIT/bmw_it/Topics/Business/2023/listini-0423/Listino-BMW-Serie-5-G30-G31-valido-da-prod.01.04.2023.pdf.asset.1676901177097.pdf",
+      "title": "BMW Italy 5 Series G30/G31 2023 price list",
+      "note": "Official BMW Italy 2023 price list used to confirm the exact G30 518d Sedan remains an automatic 110 kW / 150 PS state in the late run and to document the trim-dependent square and staggered wheel/tire matrix rather than one universal variant-wide default.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_market_pages:g42-2-series-technical-data-de",
       "url": "https://www.bmw.de/de/neufahrzeuge/2er/2-series-coupe/bmw-2er-coupe-technische-daten.html",
       "title": "BMW Germany 2 Series Coupe technical data page",
@@ -58,10 +72,45 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_market_pages:u10-x2-overview-at",
+      "url": "https://www.bmw.at/de/all-models/x-series/X2/bmw-x2-ueberblick.html",
+      "title": "BMW Austria U10 X2 overview page",
+      "note": "Official BMW Austria overview page used to confirm U10 X2 identity, Austria market context, and that the surfaced U10 combustion lineup is presented as petrol and diesel only rather than as a plug-in-hybrid xDrive25e offering.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:u10-x2-technical-data-at",
+      "url": "https://www.bmw.at/de/all-models/x-series/X2/bmw-x2-technische-daten.html",
+      "title": "BMW Austria U10 X2 technical data page",
+      "note": "Official BMW Austria technical-data page used to confirm the machine-readable U10 X2 model dropdown and transmission wording for the currently surfaced Austria-market lineup, which lists iX2 xDrive30, iX2 eDrive20, X2 sDrive20i, X2 M35i xDrive, X2 sDrive18d, X2 sDrive20d, and X2 xDrive20d, but no X2 xDrive25e row.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g45-x3-model-page-de",
+      "url": "https://www.bmw.de/de/neufahrzeuge/x/x3/bmw-x3.html",
+      "title": "BMW Germany G45 X3 model page",
+      "note": "Official BMW Germany model page whose embedded product metadata surfaces the exact BMW X3 20 xDrive with model-range G45 and productionYear 2024 in the live Germany-market G45 X3 range.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_market_pages:g45-x3-technical-data-uk",
       "url": "https://www.bmw.co.uk/en/all-models/x-models/x3/bmw-x3-technical-data.html",
       "title": "BMW UK G45 X3 technical data page",
       "note": "Official BMW UK technical-data page for the new G45 X3 model range used to confirm the live UK G45 page identity, productionYear 2024 metadata, and the existence of a current-market G45 technical-data surface while exact variant-level rendered tables remain JS-heavy.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g45-x3-price-list-de-2026",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pricelists/preisliste-bmwx3.pdf.coredownload.inline.pdf",
+      "title": "BMW Germany X3 2026 price list",
+      "note": "Official BMW Germany current price list used to confirm that the live G45 lineup names X3 20 xDrive, X3 20d xDrive, X3 30e xDrive, X3 40d xDrive, and X3 M50 xDrive, while not naming a non-PHEV X3 xDrive30 trim, and to document the current xDrive20 wheel and tire matrix with standard square 225/60 R18, optional square 245/50 R19, and optional staggered 255/45 R20 + 285/40 R20 and 255/40 R21 + 285/35 R21 packages.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g45-x3-price-list-at-2026",
+      "url": "https://www.bmw.at/content/dam/bmw/marketAT/bmw_at/topics/pricelists-brochures/pricelists/BMW_X3.pdf",
+      "title": "BMW Austria X3 2026 price list",
+      "note": "Official BMW Austria current price list used to confirm the live G45 lineup and technical-data tables for X3 20 xDrive, X3 20d xDrive, X3 30e xDrive, X3 40d xDrive, and X3 M50 xDrive, while not naming a non-PHEV X3 xDrive30 trim.",
       "confidence": "high"
     },
     {
