@@ -2905,6 +2905,34 @@
       "title": "Q3 2 0 Tfsi Quattro S Tronic",
       "note": "Official Audi UK technical-data PDF for the exact Q3 2.0 TFSI quattro S tronic state: quattro AWD, 7-speed S tronic, top gear 0.667, final drives 4.769 and 3.444, and basic 235/55 R17 tires.",
       "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:52f10520a911",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0119134EN/174108",
+      "title": "Specifications Bmw 5 Series Sedan 520I 528I 09 2011",
+      "note": "Official BMW 09/2011 technical-data PDF for the exact F10 520i and 528i non-xDrive launch-state. For the 520i automatic values shown in parentheses it confirms eight-speed automatic with Steptronic, top gear 0.667, final drive 3.231, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:53f10535a911",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0119134EN/174107",
+      "title": "Specifications Bmw 5 Series Sedan 530I 535I 09 2011",
+      "note": "Official BMW 09/2011 technical-data PDF for the exact F10 530i and 535i non-xDrive launch-state. For the automatic values shown in parentheses it confirms eight-speed automatic with Steptronic, top gear 0.667, final drive 3.385 for 530i and 3.077 for 535i, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:55f10550a911",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0119134EN/174106",
+      "title": "Specifications Bmw 5 Series Sedan 550I 09 2011",
+      "note": "Official BMW 09/2011 technical-data PDF for the exact F10 550i non-xDrive launch-state: rear-wheel-drive 550i with Eight-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 2.813, standard 245/45 R18 tires, and staggered 18-inch, 19-inch, and 20-inch options.",
+      "confidence": "high"
+    },
+    {
+      "id": "legacy_research_sources:f1055dc71011",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0122682EN/178942",
+      "title": "Specifications Bmw M5 10 2011",
+      "note": "Official BMW 10/2011 technical-data PDF for the exact F10 M5 launch-state: seven-speed M double-clutch transmission with Drivelogic, forward ratios 4.806 / 2.593 / 1.701 / 1.277 / 1.000 / 0.844 / 0.671, reverse 4.172, final drive 3.150, and standard staggered 265/40 R19 front plus 295/35 R19 rear tires.",
+      "confidence": "high"
     }
   ]
 }
