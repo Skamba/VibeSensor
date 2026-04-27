@@ -1,0 +1,729 @@
+[
+  {
+    "id": "bmw-g07-m60i-xdrive-eu-2019-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "G07",
+    "body_code": "G07",
+    "production_start_year": 2019,
+    "production_end_year": 2026,
+    "model_name": "X7 (G07, 2019-2026)",
+    "variant_name": "M60i xDrive",
+    "engine_code": "S68",
+    "engine_name": "S68 4.4L V8 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:8efb72f0dc5c",
+        "legacy_research_sources:bcbf4df558fb",
+        "legacy_research_sources:de50008b9df2"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed Steptronic transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+        "value": 0.64
+      },
+      "gear_ratios": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+        "value": [
+          5.501,
+          3.52,
+          2.2,
+          1.72,
+          1.301,
+          1.0,
+          0.833,
+          0.64
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+        "value": 3.385
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+        "front": {
+          "width_mm": 285.0,
+          "aspect_pct": 45.0,
+          "rim_in": 21.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8efb72f0dc5c",
+            "legacy_research_sources:936c0c69490c",
+            "legacy_research_sources:943733f37975",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:96cc5a533adb",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:99caa4fa4b54",
+            "legacy_research_sources:a82aa709528b",
+            "legacy_research_sources:bcbf4df558fb",
+            "legacy_research_sources:d0e736bd2502",
+            "legacy_research_sources:de50008b9df2"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+          "front": {
+            "width_mm": 285.0,
+            "aspect_pct": 45.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 21\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8efb72f0dc5c",
+            "legacy_research_sources:936c0c69490c",
+            "legacy_research_sources:943733f37975",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:96cc5a533adb",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:99caa4fa4b54",
+            "legacy_research_sources:a82aa709528b",
+            "legacy_research_sources:bcbf4df558fb",
+            "legacy_research_sources:d0e736bd2502",
+            "legacy_research_sources:de50008b9df2"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 22.0
+          },
+          "rear": {
+            "width_mm": 315.0,
+            "aspect_pct": 35.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 22\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8efb72f0dc5c",
+            "legacy_research_sources:936c0c69490c",
+            "legacy_research_sources:943733f37975",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:96cc5a533adb",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:99caa4fa4b54",
+            "legacy_research_sources:a82aa709528b",
+            "legacy_research_sources:bcbf4df558fb",
+            "legacy_research_sources:d0e736bd2502",
+            "legacy_research_sources:de50008b9df2"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 23.0
+          },
+          "rear": {
+            "width_mm": 315.0,
+            "aspect_pct": 30.0,
+            "rim_in": 23.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 23\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Official BMW exact technical-data documents now confirm two G07 X7 mappings for ACEA/DE markets: xDrive40i with 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.636, standard 275/50 R20 tires, and optional 285/45 R21 or staggered 275/40 R22 + 315/35 R22 / 275/35 R23 + 315/30 R23 fitments; and M60i xDrive with 8-speed Steptronic transmission, full forward ratios 5.501 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, final drive 3.385, standard 285/45 R21 tires, and optional staggered 22/23-inch fitments. The broad row remains verification backlog because the full G07 matrix outside the exact xDrive40i and M60i xDrive mappings is still incomplete.",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X7 (G07, 2019-2026) full EU variant matrix beyond the exact xDrive40i and M60i xDrive mappings",
+        "reason": "This pass resolved exact official xDrive40i and M60i xDrive transmissions, final drives, and tire fitments, but it did not establish the full official matrix for every other G07 variant represented by the broad row, especially xDrive40d.",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ]
+      },
+      {
+        "item": "BMW X7 xDrive40i and M60i xDrive public gearbox naming/subtype consistency",
+        "reason": "Official BMW sources align on the numeric ratio sets, but public wording varies between '8-speed Steptronic transmission', '8-Gang Steptronic Getriebe', and later sport-oriented wording, and no checked official source publishes a subtype code.",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g07-xdrive40d-eu-2019-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "G07",
+    "body_code": "G07",
+    "production_start_year": 2019,
+    "production_end_year": 2026,
+    "model_name": "X7 (G07, 2019-2026)",
+    "variant_name": "xDrive40d",
+    "engine_code": "B57",
+    "engine_name": "B57 3.0L I6 Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:8efb72f0dc5c",
+        "legacy_research_sources:bcbf4df558fb",
+        "legacy_research_sources:de50008b9df2"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.154
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.154
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 21.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8efb72f0dc5c",
+            "legacy_research_sources:936c0c69490c",
+            "legacy_research_sources:943733f37975",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:96cc5a533adb",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:99caa4fa4b54",
+            "legacy_research_sources:a82aa709528b",
+            "legacy_research_sources:bcbf4df558fb",
+            "legacy_research_sources:d0e736bd2502",
+            "legacy_research_sources:de50008b9df2"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 21\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8efb72f0dc5c",
+            "legacy_research_sources:936c0c69490c",
+            "legacy_research_sources:943733f37975",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:96cc5a533adb",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:99caa4fa4b54",
+            "legacy_research_sources:a82aa709528b",
+            "legacy_research_sources:bcbf4df558fb",
+            "legacy_research_sources:d0e736bd2502",
+            "legacy_research_sources:de50008b9df2"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 285.0,
+            "aspect_pct": 35.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 22\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8efb72f0dc5c",
+            "legacy_research_sources:936c0c69490c",
+            "legacy_research_sources:943733f37975",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:96cc5a533adb",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:99caa4fa4b54",
+            "legacy_research_sources:a82aa709528b",
+            "legacy_research_sources:bcbf4df558fb",
+            "legacy_research_sources:d0e736bd2502",
+            "legacy_research_sources:de50008b9df2"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 295.0,
+            "aspect_pct": 30.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 22\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Official BMW exact technical-data documents now confirm two G07 X7 mappings for ACEA/DE markets: xDrive40i with 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.636, standard 275/50 R20 tires, and optional 285/45 R21 or staggered 275/40 R22 + 315/35 R22 / 275/35 R23 + 315/30 R23 fitments; and M60i xDrive with 8-speed Steptronic transmission, full forward ratios 5.501 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, final drive 3.385, standard 285/45 R21 tires, and optional staggered 22/23-inch fitments. The broad row remains verification backlog because the full G07 matrix outside the exact xDrive40i and M60i xDrive mappings is still incomplete.",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X7 (G07, 2019-2026) full EU variant matrix beyond the exact xDrive40i and M60i xDrive mappings",
+        "reason": "This pass resolved exact official xDrive40i and M60i xDrive transmissions, final drives, and tire fitments, but it did not establish the full official matrix for every other G07 variant represented by the broad row, especially xDrive40d.",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ]
+      },
+      {
+        "item": "BMW X7 xDrive40i and M60i xDrive public gearbox naming/subtype consistency",
+        "reason": "Official BMW sources align on the numeric ratio sets, but public wording varies between '8-speed Steptronic transmission', '8-Gang Steptronic Getriebe', and later sport-oriented wording, and no checked official source publishes a subtype code.",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g07-xdrive40i-eu-2019-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "G07",
+    "body_code": "G07",
+    "production_start_year": 2019,
+    "production_end_year": 2026,
+    "model_name": "X7 (G07, 2019-2026)",
+    "variant_name": "xDrive40i",
+    "engine_code": "B58",
+    "engine_name": "B58 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:8efb72f0dc5c",
+        "legacy_research_sources:bcbf4df558fb",
+        "legacy_research_sources:de50008b9df2"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed Steptronic transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.64
+      },
+      "gear_ratios": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": [
+          5.25,
+          3.36,
+          2.172,
+          1.72,
+          1.316,
+          1.0,
+          0.822,
+          0.64
+        ]
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.636
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.636
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 275.0,
+          "aspect_pct": 50.0,
+          "rim_in": 20.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8efb72f0dc5c",
+            "legacy_research_sources:936c0c69490c",
+            "legacy_research_sources:943733f37975",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:96cc5a533adb",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:99caa4fa4b54",
+            "legacy_research_sources:a82aa709528b",
+            "legacy_research_sources:bcbf4df558fb",
+            "legacy_research_sources:d0e736bd2502",
+            "legacy_research_sources:de50008b9df2"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 50.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8efb72f0dc5c",
+            "legacy_research_sources:936c0c69490c",
+            "legacy_research_sources:943733f37975",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:96cc5a533adb",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:99caa4fa4b54",
+            "legacy_research_sources:a82aa709528b",
+            "legacy_research_sources:bcbf4df558fb",
+            "legacy_research_sources:d0e736bd2502",
+            "legacy_research_sources:de50008b9df2"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 285.0,
+            "aspect_pct": 45.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional 21\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8efb72f0dc5c",
+            "legacy_research_sources:936c0c69490c",
+            "legacy_research_sources:943733f37975",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:96cc5a533adb",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:99caa4fa4b54",
+            "legacy_research_sources:a82aa709528b",
+            "legacy_research_sources:bcbf4df558fb",
+            "legacy_research_sources:d0e736bd2502",
+            "legacy_research_sources:de50008b9df2"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 22.0
+          },
+          "rear": {
+            "width_mm": 315.0,
+            "aspect_pct": 35.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 22\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:8efb72f0dc5c",
+            "legacy_research_sources:936c0c69490c",
+            "legacy_research_sources:943733f37975",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:96cc5a533adb",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:99caa4fa4b54",
+            "legacy_research_sources:a82aa709528b",
+            "legacy_research_sources:bcbf4df558fb",
+            "legacy_research_sources:d0e736bd2502",
+            "legacy_research_sources:de50008b9df2"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 23.0
+          },
+          "rear": {
+            "width_mm": 315.0,
+            "aspect_pct": 30.0,
+            "rim_in": 23.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 23\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Official BMW exact technical-data documents now confirm two G07 X7 mappings for ACEA/DE markets: xDrive40i with 8-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.636, standard 275/50 R20 tires, and optional 285/45 R21 or staggered 275/40 R22 + 315/35 R22 / 275/35 R23 + 315/30 R23 fitments; and M60i xDrive with 8-speed Steptronic transmission, full forward ratios 5.501 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, final drive 3.385, standard 285/45 R21 tires, and optional staggered 22/23-inch fitments. The broad row remains verification backlog because the full G07 matrix outside the exact xDrive40i and M60i xDrive mappings is still incomplete.",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X7 (G07, 2019-2026) full EU variant matrix beyond the exact xDrive40i and M60i xDrive mappings",
+        "reason": "This pass resolved exact official xDrive40i and M60i xDrive transmissions, final drives, and tire fitments, but it did not establish the full official matrix for every other G07 variant represented by the broad row, especially xDrive40d.",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ]
+      },
+      {
+        "item": "BMW X7 xDrive40i and M60i xDrive public gearbox naming/subtype consistency",
+        "reason": "Official BMW sources align on the numeric ratio sets, but public wording varies between '8-speed Steptronic transmission', '8-Gang Steptronic Getriebe', and later sport-oriented wording, and no checked official source publishes a subtype code.",
+        "evidence_refs": [
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:8efb72f0dc5c",
+          "legacy_research_sources:936c0c69490c",
+          "legacy_research_sources:943733f37975",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:96cc5a533adb",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:99caa4fa4b54",
+          "legacy_research_sources:a82aa709528b",
+          "legacy_research_sources:bcbf4df558fb",
+          "legacy_research_sources:d0e736bd2502",
+          "legacy_research_sources:de50008b9df2"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

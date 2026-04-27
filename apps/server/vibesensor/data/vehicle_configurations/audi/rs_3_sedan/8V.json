@@ -1,0 +1,123 @@
+[
+  {
+    "id": "audi-8v-rs3-sedan-eu-2017-dct7-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "8V",
+    "body_code": "8V",
+    "production_start_year": 2017,
+    "production_end_year": 2020,
+    "model_name": "RS 3 Sedan (8V, 2017-2020)",
+    "variant_name": "RS 3",
+    "engine_code": "2.5L",
+    "engine_name": "2.5L I5 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:cb8e49d17f26",
+        "legacy_research_sources:cd4f372ab981"
+      ],
+      "notes": "Official Audi MediaCenter launch and archived Audi Germany model-page material confirm the exact 8V RS 3 Sedan uses quattro AWD in the EU launch-era state.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:cd4f372ab981"
+      ],
+      "notes": "The archived official Audi Germany RS 3 Limousine page explicitly says the exact 8V sedan uses a seven-speed S tronic. The repo keeps DCT7 as the canonical transmission-family mapping, but no checked official source publishes a gearbox family code.",
+      "code": "DCT7",
+      "name": "7-speed S tronic"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs": [
+          "secondary_technical_sources:rs3-8v-sedan-carfolio",
+          "secondary_technical_sources:rs3-8v-sedan-carspecs"
+        ],
+        "notes": "Independent secondary exact sedan pages agree on a 0.640 top gear for the 8V RS 3 Sedan, while the checked official Audi launch-era sources do not publish a gear-by-gear ratio table.",
+        "value": 0.64
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs": [
+          "legacy_research_sources:ce71a24f5b83",
+          "secondary_technical_sources:rs3-8v-sedan-brochure-mirror",
+          "secondary_technical_sources:rs3-8v-sedan-carfolio",
+          "secondary_technical_sources:rs3-8v-sedan-carspecs"
+        ],
+        "notes": "Independent secondary exact sedan pages agree on square 235/35 R19 tires for the 8V RS 3 Sedan, and the March 2017 German-market brochure mirror with archived Audi Austria provenance independently lists 235/35 R19 in the brochure tire table. The same brochure also lists 255/30 R19 without a clean axle or package mapping, so production JSON keeps only the cross-checked 235/35 R19 baseline.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "legacy_research_sources:ce71a24f5b83",
+            "secondary_technical_sources:rs3-8v-sedan-brochure-mirror",
+            "secondary_technical_sources:rs3-8v-sedan-carfolio",
+            "secondary_technical_sources:rs3-8v-sedan-carspecs"
+          ],
+          "notes": "Independent secondary exact sedan pages agree on square 235/35 R19 tires for the 8V RS 3 Sedan, and the March 2017 German-market brochure mirror with archived Audi Austria provenance independently lists 235/35 R19 in the brochure tire table.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 8 review replaces the mixed 8V/8Y RS 3 placeholder with an exact 8V sedan row. Official Audi MediaCenter and archived Audi Germany launch-era material confirm the distinct 8V RS 3 Limousine identity, 294 kW / 400 PS, 480 Nm, 4.1-second launch performance state, quattro AWD, and seven-speed S tronic wording for the EU launch-era sedan. An archived Audi Austria brochure index proves provenance for the March 2017 German-market RS 3 brochure mirror, and the checked secondary cross-checks support top gear 0.640 plus a square 235/35 R19 baseline tire while the final-drive story remains unresolved.",
+        "evidence_refs": [
+          "legacy_research_sources:cb8e49d17f26",
+          "legacy_research_sources:cd4f372ab981",
+          "legacy_research_sources:ce71a24f5b83",
+          "secondary_technical_sources:rs3-8v-sedan-brochure-mirror",
+          "secondary_technical_sources:rs3-8v-sedan-carfolio",
+          "secondary_technical_sources:rs3-8v-sedan-carspecs"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi RS 3 Sedan (8V) exact official gear-ratio and final-drive table",
+        "reason": "The checked official Audi launch-era sources prove quattro AWD and seven-speed S tronic wording for the 8V sedan, but they do not publish an exact gear-by-gear or final-drive table. Secondary sources conflict on the final-drive figure and only the weaker source exposes a full gear stack.",
+        "evidence_refs": [
+          "legacy_research_sources:cb8e49d17f26",
+          "legacy_research_sources:cd4f372ab981",
+          "secondary_technical_sources:rs3-8v-sedan-carfolio",
+          "secondary_technical_sources:rs3-8v-sedan-carspecs"
+        ]
+      },
+      {
+        "item": "Audi RS 3 Sedan (8V) exact axle assignment and package mapping for the 255/30 R19 brochure tire size",
+        "reason": "The March 2017 German-market brochure mirror lists both 235/35 R19 and 255/30 R19 tire sizes, but it does not cleanly assign 255/30 R19 to an axle or an exact orderable wheel package for the 8V sedan.",
+        "evidence_refs": [
+          "legacy_research_sources:ce71a24f5b83",
+          "secondary_technical_sources:rs3-8v-sedan-brochure-mirror"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  }
+]

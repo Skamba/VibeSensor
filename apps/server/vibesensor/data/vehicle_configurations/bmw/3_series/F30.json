@@ -1,0 +1,1532 @@
+[
+  {
+    "id": "bmw-f30-320i-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F30",
+    "body_code": "F30",
+    "production_start_year": 2012,
+    "production_end_year": 2019,
+    "model_name": "3 Series (F30, 2012-2019)",
+    "variant_name": "320i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:28b59b0b3030",
+        "legacy_research_sources:ec4f691f5393"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.812
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.231
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f30-320i-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F30",
+    "body_code": "F30",
+    "production_start_year": 2012,
+    "production_end_year": 2019,
+    "model_name": "3 Series (F30, 2012-2019)",
+    "variant_name": "320i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:28b59b0b3030",
+        "legacy_research_sources:ec4f691f5393"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f30-330i-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F30",
+    "body_code": "F30",
+    "production_start_year": 2012,
+    "production_end_year": 2019,
+    "model_name": "3 Series (F30, 2012-2019)",
+    "variant_name": "330i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:28b59b0b3030",
+        "legacy_research_sources:ec4f691f5393"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.812
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.231
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f30-330i-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F30",
+    "body_code": "F30",
+    "production_start_year": 2012,
+    "production_end_year": 2019,
+    "model_name": "3 Series (F30, 2012-2019)",
+    "variant_name": "330i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:28b59b0b3030",
+        "legacy_research_sources:ec4f691f5393"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f30-330i-xdrive-eu-2012-mt6-awd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F30",
+    "body_code": "F30",
+    "production_start_year": 2012,
+    "production_end_year": 2019,
+    "model_name": "3 Series (F30, 2012-2019)",
+    "variant_name": "330i xDrive",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:28b59b0b3030",
+        "legacy_research_sources:ec4f691f5393"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.812
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.231
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.231
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f30-330i-xdrive-eu-2012-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F30",
+    "body_code": "F30",
+    "production_start_year": 2012,
+    "production_end_year": 2019,
+    "model_name": "3 Series (F30, 2012-2019)",
+    "variant_name": "330i xDrive",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:28b59b0b3030",
+        "legacy_research_sources:ec4f691f5393"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.077
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f30-340i-eu-2012-mt6-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F30",
+    "body_code": "F30",
+    "production_start_year": 2012,
+    "production_end_year": 2019,
+    "model_name": "3 Series (F30, 2012-2019)",
+    "variant_name": "340i",
+    "engine_code": "B58",
+    "engine_name": "B58 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:28b59b0b3030",
+        "legacy_research_sources:ec4f691f5393"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.812
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.231
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f30-340i-eu-2012-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "F30",
+    "body_code": "F30",
+    "production_start_year": 2012,
+    "production_end_year": 2019,
+    "model_name": "3 Series (F30, 2012-2019)",
+    "variant_name": "340i",
+    "engine_code": "B58",
+    "engine_name": "B58 3.0L I6 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:28b59b0b3030",
+        "legacy_research_sources:ec4f691f5393"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:1594dc9b0d47",
+            "legacy_research_sources:1c24f5312261",
+            "legacy_research_sources:28b59b0b3030",
+            "legacy_research_sources:32e8742ffbf1",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:ec4f691f5393",
+            "legacy_research_sources:f576994a4890"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
+        "reason": "Accessible official BMW sources in this run provide launch/model-update transmission context and some model-specific ratio tables, but not a complete, unambiguous mapping for this exact variant set.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Exact top-gear ratios for the 6-speed manual across each listed petrol variant",
+        "reason": "Official F30 press-kit tables show model-dependent manual top gear values; no direct official table was found for the precise listed variant subset, so existing value was preserved.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      },
+      {
+        "item": "Variant-specific ratio differences between RWD and xDrive within the listed petrol set",
+        "reason": "xDrive drivetrain-layout difference is clear, but authoritative numeric final-drive/gear-ratio deltas for these exact trims were not confirmed from accessible official EU documents in this session.",
+        "evidence_refs": [
+          "legacy_research_sources:1594dc9b0d47",
+          "legacy_research_sources:1c24f5312261",
+          "legacy_research_sources:28b59b0b3030",
+          "legacy_research_sources:32e8742ffbf1",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:ec4f691f5393",
+          "legacy_research_sources:f576994a4890"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

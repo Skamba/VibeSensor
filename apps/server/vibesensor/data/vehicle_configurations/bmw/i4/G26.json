@@ -1,0 +1,357 @@
+[
+  {
+    "id": "bmw-g26-m50-eu-2022-ss1-awd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G26",
+    "body_code": "G26",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "i4 (G26, 2022-2026)",
+    "variant_name": "M50",
+    "engine_code": "Electric",
+    "engine_name": "Electric Dual Motor",
+    "fuel_type": "EV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:44aa64d36517",
+        "legacy_research_sources:af3332d3612c"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+      "code": "SS1",
+      "name": "Single-speed fixed gear (EV)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+        "value": 1.0
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+        "value": 8.698
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+        "value": 8.698
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:01210c7a71f1",
+          "legacy_research_sources:29a89fc89c3f",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:3cc96631762a",
+          "legacy_research_sources:3d6342c4594f",
+          "legacy_research_sources:44aa64d36517",
+          "legacy_research_sources:51439c900c55",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:af3332d3612c"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 40.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:01210c7a71f1",
+            "legacy_research_sources:29a89fc89c3f",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:3cc96631762a",
+            "legacy_research_sources:3d6342c4594f",
+            "legacy_research_sources:44aa64d36517",
+            "legacy_research_sources:51439c900c55",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:af3332d3612c"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:01210c7a71f1",
+            "legacy_research_sources:29a89fc89c3f",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:3cc96631762a",
+            "legacy_research_sources:3d6342c4594f",
+            "legacy_research_sources:44aa64d36517",
+            "legacy_research_sources:51439c900c55",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:af3332d3612c"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Official BMW launch and 2024 DE technical-data sheets now confirm that the exact i4 M50/M50 xDrive uses dual-motor AWD with axle-specific single-speed reduction ratios and staggered tire packages, but the published values differ between launch-era and later DE documents. The broad 2022-2026 row therefore stays unchanged because one exact M50 ratio/tire set would be unsafe to project across the full represented span, especially after BMW renamed the range-topper to M60 xDrive from July 2025.",
+        "evidence_refs": [
+          "legacy_research_sources:01210c7a71f1",
+          "legacy_research_sources:29a89fc89c3f",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:3cc96631762a",
+          "legacy_research_sources:3d6342c4594f",
+          "legacy_research_sources:44aa64d36517",
+          "legacy_research_sources:51439c900c55",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:af3332d3612c"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW technical data with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW i4 M50 exact axle-ratio applicability across the represented 2022-2026 span",
+        "reason": "Official BMW launch specs show axle ratios 9.053 / 9.053 for the exact i4 M50, while official DE July 2024 technical data shows front 9.744 and rear 8.776 for the exact i4 M50 xDrive, so this pass did not choose one exact ratio set for the broad row.",
+        "evidence_refs": [
+          "legacy_research_sources:01210c7a71f1",
+          "legacy_research_sources:29a89fc89c3f",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:3cc96631762a",
+          "legacy_research_sources:3d6342c4594f",
+          "legacy_research_sources:44aa64d36517",
+          "legacy_research_sources:51439c900c55",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:af3332d3612c"
+        ]
+      },
+      {
+        "item": "BMW i4 M50 broad-row tire mapping and post-2025 naming continuity",
+        "reason": "Official BMW sources prove staggered M50 tire packages and also show that M60 xDrive replaces the predecessor from July 2025, so the current broad 2022-2026 M50 row should not absorb one exact tire or ratio set without a row split.",
+        "evidence_refs": [
+          "legacy_research_sources:01210c7a71f1",
+          "legacy_research_sources:29a89fc89c3f",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:3cc96631762a",
+          "legacy_research_sources:3d6342c4594f",
+          "legacy_research_sources:44aa64d36517",
+          "legacy_research_sources:51439c900c55",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:af3332d3612c"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g26-edrive40-eu-2022-ss1-rwd",
+    "brand": "BMW",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "G26",
+    "body_code": "G26",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "i4 (G26, 2022-2026)",
+    "variant_name": "eDrive40",
+    "engine_code": "Electric",
+    "engine_name": "Electric Single Motor",
+    "fuel_type": "EV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:44aa64d36517",
+        "legacy_research_sources:af3332d3612c"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+      "code": "SS1",
+      "name": "Single-speed fixed gear (EV)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+        "value": 1.0
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+        "value": 8.698
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:01210c7a71f1",
+          "legacy_research_sources:29a89fc89c3f",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:3cc96631762a",
+          "legacy_research_sources:3d6342c4594f",
+          "legacy_research_sources:44aa64d36517",
+          "legacy_research_sources:51439c900c55",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:af3332d3612c"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 40.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:01210c7a71f1",
+            "legacy_research_sources:29a89fc89c3f",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:3cc96631762a",
+            "legacy_research_sources:3d6342c4594f",
+            "legacy_research_sources:44aa64d36517",
+            "legacy_research_sources:51439c900c55",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:af3332d3612c"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:01210c7a71f1",
+            "legacy_research_sources:29a89fc89c3f",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:3cc96631762a",
+            "legacy_research_sources:3d6342c4594f",
+            "legacy_research_sources:44aa64d36517",
+            "legacy_research_sources:51439c900c55",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:af3332d3612c"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Official BMW launch and 2024 DE technical-data sheets now confirm that the exact i4 M50/M50 xDrive uses dual-motor AWD with axle-specific single-speed reduction ratios and staggered tire packages, but the published values differ between launch-era and later DE documents. The broad 2022-2026 row therefore stays unchanged because one exact M50 ratio/tire set would be unsafe to project across the full represented span, especially after BMW renamed the range-topper to M60 xDrive from July 2025.",
+        "evidence_refs": [
+          "legacy_research_sources:01210c7a71f1",
+          "legacy_research_sources:29a89fc89c3f",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:3cc96631762a",
+          "legacy_research_sources:3d6342c4594f",
+          "legacy_research_sources:44aa64d36517",
+          "legacy_research_sources:51439c900c55",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:af3332d3612c"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW technical data with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW i4 M50 exact axle-ratio applicability across the represented 2022-2026 span",
+        "reason": "Official BMW launch specs show axle ratios 9.053 / 9.053 for the exact i4 M50, while official DE July 2024 technical data shows front 9.744 and rear 8.776 for the exact i4 M50 xDrive, so this pass did not choose one exact ratio set for the broad row.",
+        "evidence_refs": [
+          "legacy_research_sources:01210c7a71f1",
+          "legacy_research_sources:29a89fc89c3f",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:3cc96631762a",
+          "legacy_research_sources:3d6342c4594f",
+          "legacy_research_sources:44aa64d36517",
+          "legacy_research_sources:51439c900c55",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:af3332d3612c"
+        ]
+      },
+      {
+        "item": "BMW i4 M50 broad-row tire mapping and post-2025 naming continuity",
+        "reason": "Official BMW sources prove staggered M50 tire packages and also show that M60 xDrive replaces the predecessor from July 2025, so the current broad 2022-2026 M50 row should not absorb one exact tire or ratio set without a row split.",
+        "evidence_refs": [
+          "legacy_research_sources:01210c7a71f1",
+          "legacy_research_sources:29a89fc89c3f",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:3cc96631762a",
+          "legacy_research_sources:3d6342c4594f",
+          "legacy_research_sources:44aa64d36517",
+          "legacy_research_sources:51439c900c55",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1",
+          "legacy_research_sources:af3332d3612c"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

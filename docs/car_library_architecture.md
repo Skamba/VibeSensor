@@ -1,7 +1,13 @@
 # Car library architecture
 
-`apps/server/vibesensor/data/vehicle_configurations.json` is the canonical
+`apps/server/vibesensor/data/vehicle_configurations/**/*.json` is the canonical
 runtime source for car ratio and tire data.
+
+Each shard file is a canonical JSON array of exact vehicle-configuration rows,
+grouped by brand, model family, and generation/body code:
+
+- `vehicle_configurations/<brand>/<model_family>/<generation_or_body_code>.json`
+- example: `vehicle_configurations/bmw/5_series/G30.json`
 
 Each row represents one exact vehicle configuration and keeps the qualified
 order-analysis fields inline with their own metadata:
@@ -61,5 +67,5 @@ Canonical validation lives in:
 - `vibesensor.adapters.persistence.car_library_source_evidence` for
   `evidence_refs` resolution against `car_sources/*.json`
 
-The bundled grouped picker is a projection only. Canonical exact rows remain the
-single source of truth.
+The bundled grouped picker is a projection only. Canonical exact-row shard arrays
+remain the single source of truth.

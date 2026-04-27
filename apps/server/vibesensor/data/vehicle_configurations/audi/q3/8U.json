@@ -1,0 +1,1279 @@
+[
+  {
+    "id": "audi-8u-1-4-tfsi-eu-2012-mt6-fwd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "8U",
+    "body_code": "8U",
+    "production_start_year": 2012,
+    "production_end_year": 2018,
+    "model_name": "Q3 (8U, 2012-2018)",
+    "variant_name": "1.4 TFSI",
+    "engine_code": "1.4L",
+    "engine_name": "1.4L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      },
+      {
+        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8u-1-4-tfsi-eu-2012-dct7-fwd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "8U",
+    "body_code": "8U",
+    "production_start_year": 2012,
+    "production_end_year": 2018,
+    "model_name": "Q3 (8U, 2012-2018)",
+    "variant_name": "1.4 TFSI",
+    "engine_code": "1.4L",
+    "engine_name": "1.4L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DQ500)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 4.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      },
+      {
+        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8u-2-0-tdi-eu-2012-mt6-fwd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "8U",
+    "body_code": "8U",
+    "production_start_year": 2012,
+    "production_end_year": 2018,
+    "model_name": "Q3 (8U, 2012-2018)",
+    "variant_name": "2.0 TDI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      },
+      {
+        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8u-2-0-tdi-eu-2012-dct7-fwd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "8U",
+    "body_code": "8U",
+    "production_start_year": 2012,
+    "production_end_year": 2018,
+    "model_name": "Q3 (8U, 2012-2018)",
+    "variant_name": "2.0 TDI",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DQ500)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 4.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      },
+      {
+        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8u-2-0-tdi-quattro-eu-2012-mt6-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "8U",
+    "body_code": "8U",
+    "production_start_year": 2012,
+    "production_end_year": 2018,
+    "model_name": "Q3 (8U, 2012-2018)",
+    "variant_name": "2.0 TDI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "reputable_secondary_crosschecked",
+      "evidence_refs": [
+        "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
+        "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-car-specs"
+      ],
+      "notes": "Independent exact secondary Q3 manual pages agree on quattro AWD, but the broader 2012-2018 row still lacks exact ratio continuity and official field support.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "reputable_secondary_crosschecked",
+      "evidence_refs": [
+        "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
+        "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-car-specs"
+      ],
+      "notes": "Independent exact secondary Q3 manual pages agree on the 6-speed manual gearbox, but later-year continuity is still missing for the broad 2012-2018 row.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.84
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.462
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs": [
+          "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
+          "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-car-specs"
+        ],
+        "notes": "Independent exact secondary Q3 manual pages agree on 235/55 R17 as the checked baseline tire, but the broader row's optional wheel matrix still lacks exact continuity.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "reputable_secondary_crosschecked",
+          "evidence_refs": [
+            "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
+            "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-car-specs"
+          ],
+          "notes": "Independent exact secondary Q3 manual pages agree on 235/55 R17 as the checked baseline tire, but the broader row's optional wheel matrix still lacks exact continuity.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Exact secondary Q3 manual pages now confirm the checked AWD/manual identity and 235/55 R17 baseline tire. Exact top-gear and axle-final-drive values still were not recovered from a source that maps cleanly into the current schema.",
+        "evidence_refs": [
+          "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
+          "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-car-specs"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
+        "reason": "Exact secondary Q3 manual pages confirm AWD, 6-speed manual transmission, and 235/55 R17 tires, but they still do not recover a trustworthy top-gear or axle-final-drive pair for the broad row.",
+        "evidence_refs": [
+          "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
+          "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-car-specs"
+        ]
+      },
+      {
+        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "No checked exact source in this pass exposed axle-final-drive values or a safe top-gear value for the broad manual row.",
+        "evidence_refs": [
+          "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-autodata",
+          "secondary_technical_sources:q3-8u-2-0-tdi-quattro-mt6-car-specs"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8u-2-0-tdi-quattro-eu-2012-dct7-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "8U",
+    "body_code": "8U",
+    "production_start_year": 2012,
+    "production_end_year": 2018,
+    "model_name": "Q3 (8U, 2012-2018)",
+    "variant_name": "2.0 TDI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TDI Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DQ500)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 0.725
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 4.077
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "value": 4.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 50.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / brochure archive / ETKA Europe with Medium confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      },
+      {
+        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:4b4b833b364a",
+          "legacy_research_sources:4b8ab423f879",
+          "legacy_research_sources:5e252f7f436b",
+          "legacy_research_sources:6a198c9d097d",
+          "legacy_research_sources:f15178e8436e"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8u-2-0-tfsi-quattro-eu-2012-mt6-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "8U",
+    "body_code": "8U",
+    "production_start_year": 2012,
+    "production_end_year": 2018,
+    "model_name": "Q3 (8U, 2012-2018)",
+    "variant_name": "2.0 TFSI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:6c2ebf019f9d"
+      ],
+      "notes": "The exact Audi UK technical-data PDF confirms the quattro AWD state for the checked Q3 2.0 TFSI manual configuration. Applied here as official-derived evidence for the EU row while full 2012-2018 continuity remains unresolved.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:6c2ebf019f9d"
+      ],
+      "notes": "The exact Audi UK technical-data PDF confirms the checked Q3 2.0 TFSI quattro state uses a 6-speed manual gearbox. Applied as official-derived evidence for the EU row while full 2012-2018 continuity remains unresolved.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:6c2ebf019f9d"
+        ],
+        "notes": "The exact Audi UK technical-data PDF lists 0.813 as the checked top-gear ratio for the Q3 2.0 TFSI quattro manual state. Applied as official-derived evidence for the EU row while the official grouped final-drive presentation still does not map cleanly to the current front/rear schema.",
+        "value": 0.813
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+        "value": 3.462
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:6c2ebf019f9d",
+          "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-mt6-autodata"
+        ],
+        "notes": "The exact Audi UK technical-data PDF and an exact Auto-Data corroboration both point to 215/65 R16 as the checked baseline tire. Applied as official-derived evidence for the EU row while the broader option matrix remains unresolved.",
+        "front": {
+          "width_mm": 215.0,
+          "aspect_pct": 65.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "legacy_research_sources:6c2ebf019f9d",
+            "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-mt6-autodata"
+          ],
+          "notes": "The exact Audi UK technical-data PDF and an exact Auto-Data corroboration both point to 215/65 R16 as the checked baseline tire. Applied as official-derived evidence for the EU row while the broader option matrix remains unresolved.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 16\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The exact Audi UK technical-data PDF now confirms the checked Q3 2.0 TFSI quattro manual state: quattro AWD, 6-speed manual transmission, top gear 0.813, and 215/65 R16 baseline tires. The same sheet presents grouped gearbox/final-drive values that do not map cleanly to the current front/rear final-drive schema, so the broad row remains only partially resolved.",
+        "evidence_refs": [
+          "legacy_research_sources:6c2ebf019f9d",
+          "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-mt6-autodata"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
+        "reason": "The checked Audi UK technical-data PDF safely resolves AWD, 6-speed manual transmission, top gear 0.813, and 215/65 R16 for one exact state, but the broad row still lacks full 2012-2018 continuity proof.",
+        "evidence_refs": [
+          "legacy_research_sources:6c2ebf019f9d",
+          "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-mt6-autodata"
+        ]
+      },
+      {
+        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The checked Audi UK technical-data PDF resolves top gear for one exact state, but its grouped gearbox/final-drive presentation does not map cleanly to the current front/rear final-drive fields.",
+        "evidence_refs": [
+          "legacy_research_sources:6c2ebf019f9d"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-8u-2-0-tfsi-quattro-eu-2012-dct7-awd",
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "8U",
+    "body_code": "8U",
+    "production_start_year": 2012,
+    "production_end_year": 2018,
+    "model_name": "Q3 (8U, 2012-2018)",
+    "variant_name": "2.0 TFSI quattro",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 TFSI Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:9d7fc9f138f2"
+      ],
+      "notes": "The exact Audi UK technical-data PDF confirms the quattro AWD state for the checked Q3 2.0 TFSI S tronic configuration. Applied here as official-derived evidence for the EU row while full 2012-2018 continuity remains unresolved.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "legacy_research_sources:9d7fc9f138f2"
+      ],
+      "notes": "The exact Audi UK technical-data PDF confirms the checked Q3 2.0 TFSI quattro state uses a 7-speed S tronic gearbox. The repo's DQ500 family naming remains derived because the official sheet uses the market-facing transmission name only.",
+      "code": "DCT7",
+      "name": "7-speed S tronic (DQ500)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:9d7fc9f138f2"
+        ],
+        "notes": "The exact Audi UK technical-data PDF lists 0.667 as the checked top-gear ratio for the Q3 2.0 TFSI quattro S tronic state. Applied as official-derived evidence for the EU row while full row continuity remains unresolved.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:9d7fc9f138f2"
+        ],
+        "notes": "The exact Audi UK technical-data PDF lists 4.769 for the checked front final-drive field. Applied as official-derived evidence for the EU row while broader continuity remains unresolved.",
+        "value": 4.769
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:9d7fc9f138f2"
+        ],
+        "notes": "The exact Audi UK technical-data PDF lists 3.444 for the checked rear final-drive field. Applied as official-derived evidence for the EU row while broader continuity remains unresolved.",
+        "value": 3.444
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "legacy_research_sources:9d7fc9f138f2",
+          "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-dct7-autodata"
+        ],
+        "notes": "The exact Audi UK technical-data PDF and an exact Auto-Data corroboration both point to 235/55 R17 as the checked baseline tire. Applied as official-derived evidence for the EU row while the broader option matrix remains unresolved.",
+        "front": {
+          "width_mm": 235.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "legacy_research_sources:9d7fc9f138f2",
+            "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-dct7-autodata"
+          ],
+          "notes": "The exact Audi UK technical-data PDF and an exact Auto-Data corroboration both point to 235/55 R17 as the checked baseline tire. Applied as official-derived evidence for the EU row while the broader option matrix remains unresolved.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:4b4b833b364a",
+            "legacy_research_sources:4b8ab423f879",
+            "legacy_research_sources:5e252f7f436b",
+            "legacy_research_sources:6a198c9d097d",
+            "legacy_research_sources:f15178e8436e"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi press release with High confidence.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "S line 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The exact Audi UK technical-data PDF now confirms the checked Q3 2.0 TFSI quattro S tronic state: quattro AWD, 7-speed S tronic, top gear 0.667, final drives 4.769 / 3.444, and 235/55 R17 baseline tires. The broader 2012-2018 row still lacks full year-span and option-matrix continuity.",
+        "evidence_refs": [
+          "legacy_research_sources:9d7fc9f138f2",
+          "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
+        "reason": "The checked Audi UK technical-data PDF safely resolves AWD, 7-speed S tronic, top gear 0.667, final drives 4.769 / 3.444, and 235/55 R17 for one exact state, but the broad row still lacks full 2012-2018 continuity proof.",
+        "evidence_refs": [
+          "legacy_research_sources:9d7fc9f138f2",
+          "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-dct7-autodata"
+        ]
+      },
+      {
+        "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "The checked Audi UK technical-data PDF resolves top gear and both final-drive fields for one exact state, but the broad row still lacks full forward-gear and year-span continuity.",
+        "evidence_refs": [
+          "legacy_research_sources:9d7fc9f138f2"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

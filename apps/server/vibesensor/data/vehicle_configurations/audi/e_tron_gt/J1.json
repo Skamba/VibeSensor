@@ -1,0 +1,340 @@
+[
+  {
+    "id": "audi-j1-rs-e-tron-gt-eu-2022-ss1-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "J1",
+    "body_code": "J1",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "e-tron GT (J1, 2022-2026)",
+    "variant_name": "RS e-tron GT",
+    "engine_code": "Electric",
+    "engine_name": "Electric Dual Motor (Performance)",
+    "fuel_type": "EV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:2a4116fbafbf",
+        "legacy_research_sources:50f644eb8086",
+        "legacy_research_sources:9082383f872a"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) with High confidence.",
+      "code": "SS1",
+      "name": "2-speed automatic (rear) / single-speed (front)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) with High confidence.",
+        "value": 1.0
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) with High confidence.",
+        "value": 8.057
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) with High confidence.",
+        "value": 8.057
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:06e51bca96e0",
+          "legacy_research_sources:2a4116fbafbf",
+          "legacy_research_sources:48491b2f1f4e",
+          "legacy_research_sources:50f644eb8086",
+          "legacy_research_sources:9082383f872a",
+          "legacy_research_sources:ae91c7109615",
+          "legacy_research_sources:af6ef0d8b15a",
+          "legacy_research_sources:e6959b573c42"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) with High confidence.",
+        "front": {
+          "width_mm": 265.0,
+          "aspect_pct": 35.0,
+          "rim_in": 20.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:06e51bca96e0",
+            "legacy_research_sources:2a4116fbafbf",
+            "legacy_research_sources:48491b2f1f4e",
+            "legacy_research_sources:50f644eb8086",
+            "legacy_research_sources:9082383f872a",
+            "legacy_research_sources:ae91c7109615",
+            "legacy_research_sources:af6ef0d8b15a",
+            "legacy_research_sources:e6959b573c42"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:06e51bca96e0",
+            "legacy_research_sources:2a4116fbafbf",
+            "legacy_research_sources:48491b2f1f4e",
+            "legacy_research_sources:50f644eb8086",
+            "legacy_research_sources:9082383f872a",
+            "legacy_research_sources:ae91c7109615",
+            "legacy_research_sources:af6ef0d8b15a",
+            "legacy_research_sources:e6959b573c42"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Issue #975 official-source review confirmed the EU BEV variant mapping for Audi e-tron GT J1: the supported base variant is `e-tron GT quattro`, and the standalone `e-tron GT` alias was removed from the car library. This pass adds exact Germany-market technical-data evidence for both the base e-tron GT quattro and the RS e-tron GT: base-car documents confirm AWD, 2-speed automatic wording, top speed 245 km/h, and basic staggered 225/55 R19 front + 275/45 R19 rear tires; RS documents confirm AWD, rear 2-speed architecture context, top speed 250 km/h, and basic staggered 245/45 R20 front + 285/40 R20 rear tires. The broad row remains unchanged because exact EV ratio mapping is axle-split or year-split and the current schema cannot safely encode those details.",
+        "evidence_refs": [
+          "legacy_research_sources:06e51bca96e0",
+          "legacy_research_sources:2a4116fbafbf",
+          "legacy_research_sources:48491b2f1f4e",
+          "legacy_research_sources:50f644eb8086",
+          "legacy_research_sources:9082383f872a",
+          "legacy_research_sources:ae91c7109615",
+          "legacy_research_sources:af6ef0d8b15a",
+          "legacy_research_sources:e6959b573c42"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data / 2022 drive-event press PDF (exact 2024 + current states) with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi e-tron GT quattro exact axle reduction ratios and schema-safe top-gear mapping",
+        "reason": "Exact Germany-market base-car technical sheets confirm AWD, 2-speed automatic wording, top speed, and staggered tires, but the checked official sources did not publish a schema-safe single reduction-ratio or top-gear value for the base e-tron GT quattro.",
+        "evidence_refs": [
+          "legacy_research_sources:06e51bca96e0",
+          "legacy_research_sources:2a4116fbafbf",
+          "legacy_research_sources:48491b2f1f4e",
+          "legacy_research_sources:50f644eb8086",
+          "legacy_research_sources:9082383f872a",
+          "legacy_research_sources:ae91c7109615",
+          "legacy_research_sources:af6ef0d8b15a",
+          "legacy_research_sources:e6959b573c42"
+        ]
+      },
+      {
+        "item": "Audi RS e-tron GT axle-split ratio continuity and exact optional tire dimensions",
+        "reason": "Official Audi sources show the RS e-tron GT uses axle-split and rear-two-speed hardware, but the checked facelift/current technical sheets do not publish the same reduction-ratio detail as the 2022 launch material, and this pass did not recover exact official 21-inch tire dimensions.",
+        "evidence_refs": [
+          "legacy_research_sources:06e51bca96e0",
+          "legacy_research_sources:2a4116fbafbf",
+          "legacy_research_sources:48491b2f1f4e",
+          "legacy_research_sources:50f644eb8086",
+          "legacy_research_sources:9082383f872a",
+          "legacy_research_sources:ae91c7109615",
+          "legacy_research_sources:af6ef0d8b15a",
+          "legacy_research_sources:e6959b573c42"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "audi-j1-e-tron-gt-quattro-eu-2022-ss1-awd",
+    "brand": "Audi",
+    "type": "Sedan",
+    "market": "EU",
+    "model_code": "J1",
+    "body_code": "J1",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "e-tron GT (J1, 2022-2026)",
+    "variant_name": "e-tron GT quattro",
+    "engine_code": "Electric",
+    "engine_name": "Electric Dual Motor",
+    "fuel_type": "EV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "legacy_research_sources:2a4116fbafbf",
+        "legacy_research_sources:50f644eb8086",
+        "legacy_research_sources:9082383f872a"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2023 + 2026 states) with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2023 + 2026 states) with High confidence.",
+      "code": "SS1",
+      "name": "2-speed automatic (rear) / single-speed (front)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2023 + 2026 states) with High confidence.",
+        "value": 1.0
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2023 + 2026 states) with High confidence.",
+        "value": 8.057
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2023 + 2026 states) with High confidence.",
+        "value": 8.057
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:06e51bca96e0",
+          "legacy_research_sources:2a4116fbafbf",
+          "legacy_research_sources:48491b2f1f4e",
+          "legacy_research_sources:50f644eb8086",
+          "legacy_research_sources:9082383f872a",
+          "legacy_research_sources:ae91c7109615",
+          "legacy_research_sources:af6ef0d8b15a",
+          "legacy_research_sources:e6959b573c42"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2023 + 2026 states) with High confidence.",
+        "front": {
+          "width_mm": 265.0,
+          "aspect_pct": 35.0,
+          "rim_in": 20.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:06e51bca96e0",
+            "legacy_research_sources:2a4116fbafbf",
+            "legacy_research_sources:48491b2f1f4e",
+            "legacy_research_sources:50f644eb8086",
+            "legacy_research_sources:9082383f872a",
+            "legacy_research_sources:ae91c7109615",
+            "legacy_research_sources:af6ef0d8b15a",
+            "legacy_research_sources:e6959b573c42"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2023 + 2026 states) with High confidence.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 20\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:06e51bca96e0",
+            "legacy_research_sources:2a4116fbafbf",
+            "legacy_research_sources:48491b2f1f4e",
+            "legacy_research_sources:50f644eb8086",
+            "legacy_research_sources:9082383f872a",
+            "legacy_research_sources:ae91c7109615",
+            "legacy_research_sources:af6ef0d8b15a",
+            "legacy_research_sources:e6959b573c42"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2023 + 2026 states) with High confidence.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 30.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport 21\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Issue #975 official-source review confirmed the EU BEV variant mapping for Audi e-tron GT J1: the supported base variant is `e-tron GT quattro`, and the standalone `e-tron GT` alias was removed from the car library. This pass adds exact Germany-market technical-data evidence for both the base e-tron GT quattro and the RS e-tron GT: base-car documents confirm AWD, 2-speed automatic wording, top speed 245 km/h, and basic staggered 225/55 R19 front + 275/45 R19 rear tires; RS documents confirm AWD, rear 2-speed architecture context, top speed 250 km/h, and basic staggered 245/45 R20 front + 285/40 R20 rear tires. The broad row remains unchanged because exact EV ratio mapping is axle-split or year-split and the current schema cannot safely encode those details.",
+        "evidence_refs": [
+          "legacy_research_sources:06e51bca96e0",
+          "legacy_research_sources:2a4116fbafbf",
+          "legacy_research_sources:48491b2f1f4e",
+          "legacy_research_sources:50f644eb8086",
+          "legacy_research_sources:9082383f872a",
+          "legacy_research_sources:ae91c7109615",
+          "legacy_research_sources:af6ef0d8b15a",
+          "legacy_research_sources:e6959b573c42"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter Germany technical data (exact 2023 + 2026 states) with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Audi e-tron GT quattro exact axle reduction ratios and schema-safe top-gear mapping",
+        "reason": "Exact Germany-market base-car technical sheets confirm AWD, 2-speed automatic wording, top speed, and staggered tires, but the checked official sources did not publish a schema-safe single reduction-ratio or top-gear value for the base e-tron GT quattro.",
+        "evidence_refs": [
+          "legacy_research_sources:06e51bca96e0",
+          "legacy_research_sources:2a4116fbafbf",
+          "legacy_research_sources:48491b2f1f4e",
+          "legacy_research_sources:50f644eb8086",
+          "legacy_research_sources:9082383f872a",
+          "legacy_research_sources:ae91c7109615",
+          "legacy_research_sources:af6ef0d8b15a",
+          "legacy_research_sources:e6959b573c42"
+        ]
+      },
+      {
+        "item": "Audi RS e-tron GT axle-split ratio continuity and exact optional tire dimensions",
+        "reason": "Official Audi sources show the RS e-tron GT uses axle-split and rear-two-speed hardware, but the checked facelift/current technical sheets do not publish the same reduction-ratio detail as the 2022 launch material, and this pass did not recover exact official 21-inch tire dimensions.",
+        "evidence_refs": [
+          "legacy_research_sources:06e51bca96e0",
+          "legacy_research_sources:2a4116fbafbf",
+          "legacy_research_sources:48491b2f1f4e",
+          "legacy_research_sources:50f644eb8086",
+          "legacy_research_sources:9082383f872a",
+          "legacy_research_sources:ae91c7109615",
+          "legacy_research_sources:af6ef0d8b15a",
+          "legacy_research_sources:e6959b573c42"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

@@ -1,0 +1,2559 @@
+[
+  {
+    "id": "bmw-f48-xdrive25d-eu-2016-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2016,
+    "model_name": "X1 (F48, 2016)",
+    "variant_name": "xDrive25d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-article",
+        "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2015 xDrive25d specifications page and technical-data PDF confirm xDrive all-wheel drive for the exact X1 xDrive25d automatic launch state represented by this narrowed 2016-only row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2015 technical-data PDF confirms 8-speed Steptronic wording for the exact X1 xDrive25d automatic launch state represented by this narrowed 2016-only row. The repo keeps its existing canonical automatic mapping for this row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015 technical-data PDF lists 0.673 as the top-gear ratio for the exact X1 xDrive25d automatic launch state represented by this narrowed 2016-only row.",
+        "value": 0.673
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015 technical-data PDF publishes a single 2.955 final-drive ratio for the exact X1 xDrive25d automatic launch state represented by this narrowed 2016-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.955
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015 technical-data PDF publishes a single 2.955 final-drive ratio for the exact X1 xDrive25d automatic launch state represented by this narrowed 2016-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.955
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015 technical-data PDF lists 225/55 R17 as the baseline tire for the exact X1 xDrive25d automatic launch state represented by this narrowed 2016-only row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2015 technical-data PDF lists 225/55 R17 as the baseline tire for the exact X1 xDrive25d automatic launch state represented by this narrowed 2016-only row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 07/2015 xDrive25d technical-data PDF establishes the exact launch-state mapping for the X1 xDrive25d automatic row: AWD, 8-speed Steptronic, 0.673 top gear, a single published 2.955 final-drive ratio, and 225/55 R17 baseline tires. The official 03/2021 BMW X1 technical-data PDF later shows the same top gear and baseline tire but a different 2.851 final-drive ratio, so the inherited broad row was split into exact 2016 and 2021 states instead of preserving one mixed-era mapping.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 xDrive25d exact optional wheel/tire matrix for the narrowed 2016 row",
+        "reason": "The checked official BMW 07/2015 technical-data PDF closes the baseline 17-inch fitment, but it does not prove one exact optional wheel/tire matrix for the narrowed row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X1 xDrive25d separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25d-2015-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-xdrive20i-eu-2016-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2019,
+    "model_name": "X1 (F48, 2016-2019)",
+    "variant_name": "xDrive20i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-article",
+        "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-pdf",
+        "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-article",
+        "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2015 and 03/2019 xDrive20i specifications pages and technical-data PDFs agree on xDrive all-wheel drive for the exact X1 xDrive20i automatic configuration represented by this narrowed 2016-2019 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-pdf",
+        "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2015 and 03/2019 technical-data PDFs confirm 8-speed Steptronic wording for the exact X1 xDrive20i automatic configuration represented by this narrowed 2016-2019 row. The repo keeps its existing canonical automatic mapping for this row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015 and 03/2019 technical-data PDFs agree on 0.673 as the top-gear ratio for the exact X1 xDrive20i automatic configuration represented by this narrowed 2016-2019 row.",
+        "value": 0.673
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015 and 03/2019 technical-data PDFs publish a single 3.200 final-drive ratio for the exact X1 xDrive20i automatic configuration represented by this narrowed 2016-2019 row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.2
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015 and 03/2019 technical-data PDFs publish a single 3.200 final-drive ratio for the exact X1 xDrive20i automatic configuration represented by this narrowed 2016-2019 row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.2
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015 and 03/2019 technical-data PDFs agree on 225/55 R17 as the baseline tire for the exact X1 xDrive20i automatic configuration represented by this narrowed 2016-2019 row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2015 and 03/2019 technical-data PDFs agree on 225/55 R17 as the baseline tire for the exact X1 xDrive20i automatic configuration represented by this narrowed 2016-2019 row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 07/2015 and 03/2019 xDrive20i specifications pages and technical-data PDFs agree on the exact X1 xDrive20i automatic state: AWD, 8-speed Steptronic automatic only, 0.673 top gear, a single published 3.200 final-drive ratio, and 225/55 R17 baseline tires. Because this pass did not recover a later exact 2020+ technical-data sheet, the row is narrowed to the supported 2016-2019 state, and the unsupported manual sibling row was removed.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 xDrive20i exact optional wheel/tire matrix for the narrowed 2016-2019 row",
+        "reason": "The checked official BMW 07/2015 and 03/2019 technical-data PDFs close the baseline 17-inch fitment, but they do not prove one exact optional wheel/tire matrix for the narrowed row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X1 xDrive20i separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive20i-2019-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-xdrive25i-eu-2016-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2021,
+    "model_name": "X1 (F48, 2016-2021)",
+    "variant_name": "xDrive25i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-article",
+        "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
+        "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-article",
+        "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf",
+        "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+        "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2015, 03/2019, and 03/2021 xDrive25i specifications pages and technical-data PDFs agree on xDrive all-wheel drive for the exact X1 xDrive25i automatic configuration represented by this narrowed 2016-2021 row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
+        "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf",
+        "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 07/2015, 03/2019, and 03/2021 technical-data PDFs confirm 8-speed Steptronic wording for the exact X1 xDrive25i automatic configuration represented by this narrowed 2016-2021 row. The repo keeps its existing canonical automatic mapping for this row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015, 03/2019, and 03/2021 technical-data PDFs agree on 0.673 as the top-gear ratio for the exact X1 xDrive25i automatic configuration represented by this narrowed 2016-2021 row.",
+        "value": 0.673
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015, 03/2019, and 03/2021 technical-data PDFs publish a single 3.200 final-drive ratio for the exact X1 xDrive25i automatic configuration represented by this narrowed 2016-2021 row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.2
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015, 03/2019, and 03/2021 technical-data PDFs publish a single 3.200 final-drive ratio for the exact X1 xDrive25i automatic configuration represented by this narrowed 2016-2021 row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.2
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015, 03/2019, and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the exact X1 xDrive25i automatic configuration represented by this narrowed 2016-2021 row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2015, 03/2019, and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the exact X1 xDrive25i automatic configuration represented by this narrowed 2016-2021 row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 07/2015, 03/2019, and 03/2021 xDrive25i technical-data PDFs agree on the checked exact X1 xDrive25i automatic state: AWD, 8-speed Steptronic, 0.673 top gear, a single published 3.200 final-drive ratio, and 225/55 R17 baseline tires. Because this pass did not recover a later exact 2022 technical-data sheet, the row is narrowed to the supported 2016-2021 state, and the unsupported manual sibling row was removed.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 xDrive25i exact optional wheel/tire matrix for the narrowed 2016-2021 row",
+        "reason": "The checked official BMW 07/2015, 03/2019, and 03/2021 technical-data PDFs close the baseline 17-inch fitment, but they do not prove one exact optional wheel/tire matrix for the narrowed row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X1 xDrive25i separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-xdrive25i-2019-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-sdrive16d-eu-2016-mt6-fwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2022,
+    "model_name": "X1 (F48, 2016-2022)",
+    "variant_name": "sDrive16d",
+    "engine_code": "B37",
+    "engine_name": "B37 1.5L I3 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.812
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-sdrive16d-eu-2016-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2022,
+    "model_name": "X1 (F48, 2016-2022)",
+    "variant_name": "sDrive16d",
+    "engine_code": "B37",
+    "engine_name": "B37 1.5L I3 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.674
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.294
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-sdrive18d-eu-2016-mt6-fwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2022,
+    "model_name": "X1 (F48, 2016-2022)",
+    "variant_name": "sDrive18d",
+    "engine_code": "B47",
+    "engine_name": "B47 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.812
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-sdrive18d-eu-2016-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2022,
+    "model_name": "X1 (F48, 2016-2022)",
+    "variant_name": "sDrive18d",
+    "engine_code": "B47",
+    "engine_name": "B47 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.674
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.294
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-sdrive18i-eu-2016-mt6-fwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2022,
+    "model_name": "X1 (F48, 2016-2022)",
+    "variant_name": "sDrive18i",
+    "engine_code": "B38",
+    "engine_name": "B38 1.5L I3 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.812
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-sdrive18i-eu-2016-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2022,
+    "model_name": "X1 (F48, 2016-2022)",
+    "variant_name": "sDrive18i",
+    "engine_code": "B38",
+    "engine_name": "B38 1.5L I3 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.674
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.294
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-sdrive20d-eu-2016-mt6-fwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2022,
+    "model_name": "X1 (F48, 2016-2022)",
+    "variant_name": "sDrive20d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.812
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-sdrive20d-eu-2016-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2022,
+    "model_name": "X1 (F48, 2016-2022)",
+    "variant_name": "sDrive20d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.674
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.294
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-sdrive20i-eu-2016-mt6-fwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2022,
+    "model_name": "X1 (F48, 2016-2022)",
+    "variant_name": "sDrive20i",
+    "engine_code": "1.5L",
+    "engine_name": "1.5L",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.812
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.385
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-sdrive20i-eu-2016-zf8hp-fwd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2016,
+    "production_end_year": 2022,
+    "model_name": "X1 (F48, 2016-2022)",
+    "variant_name": "sDrive20i",
+    "engine_code": "1.5L",
+    "engine_name": "1.5L",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "value": "FWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 0.674
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "value": 3.294
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
+        "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      },
+      {
+        "item": "BMW X1 (F48, 2016-2022) variant-level final_drive_ratio and top_gear_ratio confirmation",
+        "reason": "Official source links logged, but values not programmatically verified in this pass.",
+        "evidence_refs": [
+          "legacy_research_sources:3643687db38c",
+          "legacy_research_sources:393d7682b19e",
+          "legacy_research_sources:71b4da2d92a2",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:97624cf593b1"
+        ]
+      }
+    ],
+    "configuration_confidence": "low_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-xdrive25e-eu-2020-6-speed-step-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2020,
+    "production_end_year": 2020,
+    "model_name": "X1 (F48, 2020)",
+    "variant_name": "xDrive25e",
+    "engine_code": "B38",
+    "engine_name": "1.5L B38 turbo + electric motor (PHEV)",
+    "fuel_type": "PHEV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-article",
+        "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 01/2020 xDrive25e specifications page and technical-data PDF confirm xDrive all-wheel drive for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2020-only row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 01/2020 technical-data PDF confirms 6-speed Steptronic wording for the exact X1 xDrive25e state represented by this narrowed 2020-only row. The repo keeps 6-SPEED-STEP as the canonical transmission mapping for that official hybrid automatic.",
+      "code": "6-SPEED-STEP",
+      "name": "6-speed Steptronic (xDrive25e)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2020 technical-data PDF lists 0.672 as the top-gear ratio for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2020-only row.",
+        "value": 0.672
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2020 technical-data PDF publishes a single 3.944 final-drive ratio for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.944
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2020 technical-data PDF publishes a single 3.944 final-drive ratio for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.944
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2020 technical-data PDF lists 225/55 R17 as the baseline tire for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2020-only row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2020 technical-data PDF lists 225/55 R17 as the baseline tire for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2020-only row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 01/2020 xDrive25e technical-data PDF establishes the first checked exact X1 xDrive25e plug-in-hybrid state: AWD, 6-speed Steptronic, 0.672 top gear, a single published 3.944 final-drive ratio, and 225/55 R17 baseline tires. This exact PHEV state contradicts the inherited 2016 manual/ZF8HP rows, so the broad row was retimed and split into exact 2020 and 2021 states.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 xDrive25e exact optional wheel/tire matrix for the narrowed 2020 row",
+        "reason": "The checked official BMW 01/2020 technical-data PDF closes the baseline 17-inch fitment, but it does not prove one exact optional wheel/tire matrix for the narrowed row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X1 xDrive25e separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD plug-in-hybrid state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive25e-2020-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-xdrive25d-eu-2021-zf8hp-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2021,
+    "production_end_year": 2021,
+    "model_name": "X1 (F48, 2021)",
+    "variant_name": "xDrive25d",
+    "engine_code": "2.0L",
+    "engine_name": "2.0L I4 Diesel",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+        "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2021 X1 specifications page and technical-data PDF confirm xDrive all-wheel drive for the exact X1 xDrive25d automatic state represented by this narrowed 2021-only row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2021 technical-data PDF confirms 8-speed Steptronic wording for the exact X1 xDrive25d automatic state represented by this narrowed 2021-only row. The repo keeps its existing canonical automatic mapping for this row.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (Aisin)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical-data PDF lists 0.673 as the top-gear ratio for the exact X1 xDrive25d automatic state represented by this narrowed 2021-only row.",
+        "value": 0.673
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical-data PDF publishes a single 2.851 final-drive ratio for the exact X1 xDrive25d automatic state represented by this narrowed 2021-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.851
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical-data PDF publishes a single 2.851 final-drive ratio for the exact X1 xDrive25d automatic state represented by this narrowed 2021-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 2.851
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical-data PDF lists 225/55 R17 as the baseline tire for the exact X1 xDrive25d automatic state represented by this narrowed 2021-only row.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021 technical-data PDF lists 225/55 R17 as the baseline tire for the exact X1 xDrive25d automatic state represented by this narrowed 2021-only row.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 03/2021 X1 technical-data PDF confirms the later exact X1 xDrive25d automatic state with AWD, 8-speed Steptronic, 0.673 top gear, a single published 2.851 final-drive ratio, and 225/55 R17 baseline tires. This row is split from the exact 2016 launch-state row because BMW's checked later sheet does not preserve the launch final-drive value.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 xDrive25d exact optional wheel/tire matrix for the narrowed 2021 row",
+        "reason": "The checked official BMW 03/2021 technical-data PDF closes the baseline 17-inch fitment, but it does not prove one exact optional wheel/tire matrix for the narrowed row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X1 xDrive25d separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-f48-xdrive25e-eu-2021-6-speed-step-awd",
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F48",
+    "body_code": "F48",
+    "production_start_year": 2021,
+    "production_end_year": 2021,
+    "model_name": "X1 (F48, 2021)",
+    "variant_name": "xDrive25e",
+    "engine_code": "B48",
+    "engine_name": "1.5L B38 turbo + electric motor (PHEV)",
+    "fuel_type": "PHEV",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+        "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2021 X1 specifications page and technical-data PDF confirm xDrive all-wheel drive for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2021-only row.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+      ],
+      "notes": "The official BMW 03/2021 technical-data PDF confirms 6-speed Steptronic wording for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2021-only row. The repo keeps 6-SPEED-STEP as the canonical transmission mapping for that official hybrid automatic.",
+      "code": "6-SPEED-STEP",
+      "name": "6-speed Steptronic (xDrive25e)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical-data PDF lists 0.672 as the top-gear ratio for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2021-only row.",
+        "value": 0.672
+      },
+      "final_drive_front": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical-data PDF publishes a single 3.944 final-drive ratio for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2021-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.944
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical-data PDF publishes a single 3.944 final-drive ratio for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2021-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+        "value": 3.944
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical-data PDF lists 205/55 R17 as the baseline tire for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2021-only row.",
+        "front": {
+          "width_mm": 205.0,
+          "aspect_pct": 55.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021 technical-data PDF lists 205/55 R17 as the baseline tire for the exact X1 xDrive25e plug-in-hybrid state represented by this narrowed 2021-only row.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "legacy_research_sources:3643687db38c",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:71b4da2d92a2",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "The official BMW 03/2021 X1 technical-data PDF confirms the later exact X1 xDrive25e plug-in-hybrid state with AWD, 6-speed Steptronic, 0.672 top gear, a single published 3.944 final-drive ratio, and a later 205/55 R17 baseline tire. This row is split from the exact 2020 launch-state row because BMW's checked later sheet changes the baseline tire.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW X1 xDrive25e exact optional wheel/tire matrix for the narrowed 2021 row",
+        "reason": "The checked official BMW 03/2021 technical-data PDF closes the baseline 17-inch fitment, but it does not prove one exact optional wheel/tire matrix for the narrowed row.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      },
+      {
+        "item": "BMW X1 xDrive25e separate front/rear final-drive publication",
+        "reason": "BMW publishes one exact final-drive ratio for this AWD plug-in-hybrid state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "high_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  }
+]

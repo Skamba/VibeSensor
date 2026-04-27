@@ -1,0 +1,932 @@
+[
+  {
+    "id": "bmw-g42-220i-eu-2022-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G42",
+    "body_code": "G42",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "2 Series Coupe (G42, 2022-2026)",
+    "variant_name": "220i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_market_pages:g42-2-series-price-list-2024",
+        "bmw_market_pages:g42-2-series-price-list-current",
+        "bmw_market_pages:g42-2-series-technical-data-de",
+        "legacy_research_sources:d5fc03e7d5f3",
+        "legacy_research_sources:fb0ad8a77215"
+      ],
+      "notes": "The official BMW launch technical-data PDF and linked Germany market sources already used in this row resolve the exact G42 220i as a rear-wheel-drive configuration.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf"
+      ],
+      "notes": "The official BMW technical-data PDF for the exact G42 220i explicitly lists an Eight-speed Steptronic transmission for this launch-state rear-wheel-drive configuration.",
+      "code": "ZF8HP",
+      "name": "8-speed Steptronic transmission"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW technical-data PDF for the exact G42 220i publishes eighth gear as 0.640.",
+        "value": 0.64
+      },
+      "gear_ratios": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW technical-data PDF for the exact G42 220i publishes the full forward-ratio set 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640.",
+        "value": [
+          5.25,
+          3.36,
+          2.172,
+          1.72,
+          1.316,
+          1.0,
+          0.822,
+          0.64
+        ]
+      },
+      "final_drive_rear": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW technical-data PDF for the exact G42 220i publishes a single rear final-drive ratio of 2.813.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW technical-data PDF for the exact G42 220i publishes 225/50 R17 as the launch-standard tire size.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price lists with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Official BMW Germany 2024 and current price lists list 225/45 R18 as the exact standard square wheel/tire package for the current 230i M Sport state.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport standard 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price lists with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price lists with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 19\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price lists with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered sport 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Direct validation of the official BMW G42 220i technical-data PDF confirms the launch-state row values already carried here: rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and 225/50 R17 baseline tires.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Current-market continuity of the launch-state G42 220i mechanical package across the retained 2022-2026 row span",
+        "reason": "This pass directly revalidated the official launch technical-data PDF for the exact 220i row but did not reopen every later market-year continuity source behind the retained 2022-2026 production span.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g42-230i-eu-2022-zf8hp-rwd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G42",
+    "body_code": "G42",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "2 Series Coupe (G42, 2022-2026)",
+    "variant_name": "230i",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_market_pages:g42-2-series-price-list-current",
+        "bmw_market_pages:g42-2-series-technical-data-de",
+        "legacy_research_sources:d5fc03e7d5f3",
+        "legacy_research_sources:fb0ad8a77215"
+      ],
+      "notes": "The official BMW 07/2021 launch press kit says the G42 four-cylinder lineup is rear-wheel drive and that the 230i joins that rear-drive core in summer 2022, while the current BMW Germany technical-data page and price list surface 230i Coupé M Sport separately from M240i xDrive.",
+      "value": "RWD"
+    },
+    "transmission": {
+      "confidence": "official_derived",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+        "bmw_market_pages:g42-2-series-price-list-2024",
+        "bmw_market_pages:g42-2-series-price-list-current",
+        "bmw_market_pages:g42-2-series-technical-data-de",
+        "legacy_research_sources:d5fc03e7d5f3"
+      ],
+      "notes": "Checked official BMW 03/2022 technical-data PDF lists Eight-speed Steptronic transmission for the exact 230i Coupé launch state, while the 2024/current BMW Germany price lists and current technical-data page surface the later 230i M Sport as 8-Gang Steptronic Sport. The repo keeps ZF8HP as the normalized gearbox-family mapping because the checked official BMW sources do not publish a subtype code.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf"
+        ],
+        "notes": "Checked official BMW 03/2022 technical-data PDF for the exact 230i Coupé launch state lists 0.640 as the 8th-gear ratio. Applied as official-derived evidence while full 2022-2026 continuity remains unresolved.",
+        "value": 0.64
+      },
+      "gear_ratios": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf"
+        ],
+        "notes": "Checked official BMW 03/2022 technical-data PDF for the exact 230i Coupé launch state lists the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640. Applied as official-derived evidence while full 2022-2026 continuity remains unresolved.",
+        "value": [
+          5.25,
+          3.36,
+          2.172,
+          1.72,
+          1.316,
+          1.0,
+          0.822,
+          0.64
+        ]
+      },
+      "final_drive_rear": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf"
+        ],
+        "notes": "Checked official BMW 03/2022 technical-data PDF for the exact 230i Coupé launch state lists 2.813 as the final-drive ratio. Applied as official-derived evidence while full 2022-2026 continuity remains unresolved.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de",
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "legacy_research_sources:27089d2ed61a",
+          "legacy_research_sources:69757924a78e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:d5fc03e7d5f3",
+          "legacy_research_sources:f8299c41e459",
+          "legacy_research_sources:fb0ad8a77215"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price lists with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price lists with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 17\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price lists with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport standard 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price lists with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 18\""
+        },
+        {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data / DE price lists with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "rear": {
+            "width_mm": 255.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Optional staggered 19\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Batch 3 validation closes the exact launch-era numeric mapping for the G42 230i row. The official BMW PressClub article and 03/2022 230i Coupé technical-data PDF valid for ACEA markets prove the exact row starts from 03/2022 with rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and a 225/50 R17 launch-standard tire. The checked BMW Germany technical-data page plus the 2024/current price lists confirm that 230i remains a rear-wheel-drive automatic state in later German-market material, but they also show the current 230i M Sport standard tire moved to 225/45 R18 and use Steptronic Sport wording. The row therefore promotes the exact launch ratio package while leaving full-span tire continuity and public gearbox-subtype naming unresolved.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-article",
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW G42 230i production-data applicability across the full 2022-2026 row span",
+        "reason": "The checked official 03/2022 technical-data PDF and the 2024/current BMW Germany material prove exact launch and later 230i rear-wheel-drive automatic states, but this pass did not recover one year-by-year chain proving one unchanged mapping across the full represented row span.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de"
+        ]
+      },
+      {
+        "item": "BMW G42 230i exact default tire across the represented 2022-2026 row span",
+        "reason": "The checked official 03/2022 technical-data PDF shows a launch-standard 225/50 R17 tire, while the checked 2024 and current BMW Germany price lists show later 230i M Sport standard 225/45 R18 tires plus staggered 18-inch and 19-inch options. The current single default-tire field therefore should not be treated as one exact full-span mapping.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de"
+        ]
+      },
+      {
+        "item": "BMW G42 230i exact public gearbox subtype and trim-specific transmission wording",
+        "reason": "The checked official BMW sources prove launch-era Eight-speed Steptronic wording and later 230i M Sport Steptronic Sport wording, but they do not publish a gearbox subtype code such as ZF8HP or one single public transmission label that applies unchanged across the represented row span.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g42-230i-xdrive-eu-2022-mt6-awd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G42",
+    "body_code": "G42",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "2 Series Coupe (G42, 2022-2026)",
+    "variant_name": "230i xDrive",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "official_exact",
+      "evidence_refs": [
+        "bmw_market_pages:g42-2-series-price-list-2024",
+        "bmw_market_pages:g42-2-series-price-list-current",
+        "bmw_market_pages:g42-2-series-technical-data-de",
+        "legacy_research_sources:d5fc03e7d5f3",
+        "legacy_research_sources:fb0ad8a77215"
+      ],
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "MT6",
+      "name": "6-speed manual"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.812
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.077
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 3.077
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de",
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "legacy_research_sources:27089d2ed61a",
+          "legacy_research_sources:69757924a78e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:d5fc03e7d5f3",
+          "legacy_research_sources:f8299c41e459",
+          "legacy_research_sources:fb0ad8a77215"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "Wave 11 validation sharpened the official Germany/EU picture for the G42 230i target: the current BMW Germany technical-data page and the checked 2024/2025 Germany price lists list 230i as rear-wheel drive with 8-Gang automatic/Steptronic Sport wording, while the 07/2021 official launch press kit describes the four-cylinder models as rear-wheel drive and reserves xDrive for M240i xDrive. Wave 12 validation recovered exact 220i Coupé evidence, and Wave 13 now does the same for 230i: the official 03/2022 BMW technical-data PDF valid for ACEA markets provides rear-wheel drive, Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and a 225/50 R17 launch-standard tire, while the checked Germany technical-data page and 2024/current price lists confirm the current automatic-only RWD 230i context plus 18/19-inch wheel options. That is sufficient for a variant-scoped 230i production override and exact-row update. Wave 13 also adds exact launch-ratio evidence for M240i xDrive plus current Germany market/tire context, but that variant remains source-ledger-only because the public current-market material is already a later 48V state and this pass did not recover one current exact ratio table proving one unchanged 2022-2026 package.",
+        "evidence_refs": [
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de",
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "legacy_research_sources:27089d2ed61a",
+          "legacy_research_sources:69757924a78e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:d5fc03e7d5f3",
+          "legacy_research_sources:fb0ad8a77215"
+        ]
+      },
+      {
+        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "Whether BMW 230i xDrive belongs in the G42 row at all",
+        "reason": "Checked official BMW Germany/EU sources now consistently show 230i as rear-wheel drive and reserve xDrive for M240i xDrive, but this pass did not recover enough official non-Germany market evidence to prove whether the existing AWD 230i variant is an intentional non-EU/global carry-over or simply unsupported library data.",
+        "evidence_refs": [
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de",
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "legacy_research_sources:27089d2ed61a",
+          "legacy_research_sources:69757924a78e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:d5fc03e7d5f3",
+          "legacy_research_sources:fb0ad8a77215"
+        ]
+      },
+      {
+        "item": "BMW M240i xDrive production-data applicability across the full G42 row span",
+        "reason": "Wave 13 now proves the exact launch M240i xDrive ratio set, reverse ratio 3.712, final drive 2.813, and standard staggered 225/40 R19 front + 255/35 R19 rear tires, but the checked current Germany market material is already a later 48V mild-hybrid state and this pass did not recover a current exact numeric ratio table proving one unchanged 2022-2026 package.",
+        "evidence_refs": [
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de",
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "legacy_research_sources:27089d2ed61a",
+          "legacy_research_sources:69757924a78e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:d5fc03e7d5f3",
+          "legacy_research_sources:fb0ad8a77215"
+        ]
+      },
+      {
+        "item": "BMW M240i xDrive exact optional wheel/tire matrix and transmission subtype code",
+        "reason": "Official BMW sources now prove the launch standard 19-inch staggered fitment plus current Germany 18/19-inch options and automatic context, but they do not publish a gearbox subtype code beyond Steptronic wording or one current exact numeric table that closes the full represented row.",
+        "evidence_refs": [
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de",
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "legacy_research_sources:27089d2ed61a",
+          "legacy_research_sources:69757924a78e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:d5fc03e7d5f3",
+          "legacy_research_sources:fb0ad8a77215"
+        ]
+      },
+      {
+        "item": "EU applicability of the existing '6-speed manual' gearbox entry across 2022-2026 range",
+        "reason": "Checked official BMW Germany/EU launch and current-market material now resolves the visible 220i and 230i petrol lineup as automatic-only, but this pass still did not recover one official market-by-market transmission matrix proving when, where, or whether the retained broad-row 6-speed manual entry applies.",
+        "evidence_refs": [
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de",
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "legacy_research_sources:27089d2ed61a",
+          "legacy_research_sources:69757924a78e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:d5fc03e7d5f3",
+          "legacy_research_sources:fb0ad8a77215"
+        ]
+      }
+    ],
+    "configuration_confidence": "medium_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": true,
+      "usable_for_wheel_order": true,
+      "requires_manual_confirmation": true
+    }
+  },
+  {
+    "id": "bmw-g42-230i-xdrive-eu-2022-zf8hp-awd",
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "G42",
+    "body_code": "G42",
+    "production_start_year": 2022,
+    "production_end_year": 2026,
+    "model_name": "2 Series Coupe (G42, 2022-2026)",
+    "variant_name": "230i xDrive",
+    "engine_code": "B48",
+    "engine_name": "B48 2.0L I4 Turbo",
+    "fuel_type": "ICE",
+    "drivetrain": {
+      "confidence": "unverified",
+      "evidence_refs": [
+        "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+        "bmw_market_pages:g42-2-series-price-list-current",
+        "bmw_market_pages:g42-2-series-technical-data-de",
+        "legacy_research_sources:d5fc03e7d5f3",
+        "legacy_research_sources:fb0ad8a77215"
+      ],
+      "notes": "Checked official BMW 03/2022 230i technical-data material and current Germany market pages now make this exact EU AWD row unsupported rather than confirmed: BMW presents the G42 230i as a rear-drive four-cylinder model with 8-speed automatic, while current Germany market material reserves xDrive for M240i xDrive, so this inherited AWD value is retained only as an advisory placeholder pending exact non-EU proof or row cleanup.",
+      "value": "AWD"
+    },
+    "transmission": {
+      "confidence": "family_default",
+      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "code": "ZF8HP",
+      "name": "8-speed automatic (ZF 8HP)"
+    },
+    "ratios": {
+      "top_gear_ratio": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 0.667
+      },
+      "final_drive_front": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 2.813
+      },
+      "final_drive_rear": {
+        "confidence": "family_default",
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "value": 2.813
+      }
+    },
+    "tires": {
+      "default": {
+        "confidence": "family_default",
+        "evidence_refs": [
+          "bmw_market_pages:g42-2-series-price-list-2024",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de",
+          "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "legacy_research_sources:27089d2ed61a",
+          "legacy_research_sources:69757924a78e",
+          "legacy_research_sources:95b9bf2bf0cf",
+          "legacy_research_sources:d5fc03e7d5f3",
+          "legacy_research_sources:f8299c41e459",
+          "legacy_research_sources:fb0ad8a77215"
+        ],
+        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "options": [
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Standard 18\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 35.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "Sport Line 19\""
+        },
+        {
+          "confidence": "family_default",
+          "evidence_refs": [
+            "bmw_market_pages:g42-2-series-price-list-2024",
+            "bmw_market_pages:g42-2-series-price-list-current",
+            "bmw_market_pages:g42-2-series-technical-data-de",
+            "bmw_pressclub_sources:g42-220i-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+            "legacy_research_sources:27089d2ed61a",
+            "legacy_research_sources:69757924a78e",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:d5fc03e7d5f3",
+            "legacy_research_sources:f8299c41e459",
+            "legacy_research_sources:fb0ad8a77215"
+          ],
+          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 30.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear",
+          "name": "M Sport 20\""
+        }
+      ]
+    },
+    "verification_notes": [
+      {
+        "note": "This pass directly revalidated that the checked official BMW Europe-facing material does not support an exact EU-market G42 230i xDrive row: the 03/2022 exact 230i technical-data sheet publishes the 230i as a rear-wheel-drive 8-speed automatic state with final drive 2.813, the current BMW Germany technical-data page still separates 230i Coupé M Sport from M240i xDrive, and the current Germany price list lists 230i M Sport apart from M240i xDrive. The current AWD 230i row is therefore retained only as an unsupported advisory reference pending exact market-proof or a row cleanup decision.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de",
+          "legacy_research_sources:d5fc03e7d5f3"
+        ]
+      }
+    ],
+    "unresolved": [
+      {
+        "item": "BMW 230i xDrive exact EU-market existence and production span",
+        "reason": "The checked official BMW 03/2022 230i sheet and current Germany market material support 230i as a rear-drive trim and reserve xDrive for M240i xDrive, so this pass did not recover exact OEM proof that an EU-market 230i xDrive row exists at all.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de",
+          "legacy_research_sources:d5fc03e7d5f3"
+        ]
+      },
+      {
+        "item": "BMW 230i xDrive row cleanup versus likely trim leakage or mis-targeted market mapping",
+        "reason": "Because the checked official BMW sources point to rear-drive 230i with an exact 03/2022 ratio package and separate M240i xDrive instead, this row should not receive guessed AWD drivetrain, transmission, ratio, or wheel promotions without an exact official source proving a true 230i xDrive market variant.",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g42-230i-2022-tech-spec-pdf",
+          "bmw_market_pages:g42-2-series-price-list-current",
+          "bmw_market_pages:g42-2-series-technical-data-de",
+          "legacy_research_sources:d5fc03e7d5f3"
+        ]
+      }
+    ],
+    "configuration_confidence": "no_confidence",
+    "order_analysis_policy": {
+      "usable_for_engine_order": true,
+      "usable_for_driveshaft_order": false,
+      "usable_for_wheel_order": false,
+      "requires_manual_confirmation": true
+    }
+  }
+]

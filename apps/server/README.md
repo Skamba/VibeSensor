@@ -266,7 +266,7 @@ Common runtime files under `apps/server/data/` include:
 - `clients.json`: persisted client metadata.
 
 Bundled static data ships under `apps/server/vibesensor/data/`, including
-`report_i18n.json`, `vehicle_configurations.json`, `car_sources/*.json`, and the
+`report_i18n.json`, `vehicle_configurations/**/*.json`, `car_sources/*.json`, and the
 scripted scenario resources.
 
 ## Pi deployment & service operations
