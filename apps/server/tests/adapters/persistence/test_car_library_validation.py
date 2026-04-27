@@ -103,6 +103,8 @@ def _make_valid_vehicle_configuration() -> VehicleConfiguration:
         final_drive_front_metadata=_metadata("official_exact"),
         final_drive_rear_metadata=_metadata("official_exact"),
     )
+
+
 def test_validate_car_library_rows_flags_major_invariant_breaks() -> None:
     entry = _make_valid_car_library_entry()
     entry["gearboxes"][0]["final_drive_ratio"] = 20.0
