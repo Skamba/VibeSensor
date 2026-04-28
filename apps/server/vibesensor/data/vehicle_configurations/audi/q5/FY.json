@@ -63,6 +63,52 @@
         "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2024-tech-data-pdf",
         "secondary_technical_sources:fy-q5-40-tdi-quattro-adac"
       ]
+    },
+    "tire_setups": {
+      "setup_235_18": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e5",
+        "front": {
+          "aspect_pct": 60.0,
+          "rim_in": 18.0,
+          "width_mm": 235.0
+        },
+        "notes_ref": "n9"
+      },
+      "setup_235_17": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e7",
+        "front": {
+          "aspect_pct": 65.0,
+          "rim_in": 17.0,
+          "width_mm": 235.0
+        },
+        "notes_ref": "n4"
+      },
+      "setup_235_17_2": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e9",
+        "front": {
+          "aspect_pct": 65.0,
+          "rim_in": 17.0,
+          "width_mm": 235.0
+        },
+        "notes_ref": "n13"
+      },
+      "setup_235_19": {
+        "confidence": "unverified",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 19.0,
+          "width_mm": 235.0
+        },
+        "notes_ref": "n1"
+      }
     }
   },
   "defaults": {
@@ -110,28 +156,9 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 50.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 50.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Standard 19\""
           },
           {
@@ -158,7 +185,8 @@
             "default_axle_for_speed": "rear",
             "name": "S line 21\""
           }
-        ]
+        ],
+        "default_ref": "setup_235_19"
       },
       "verification_notes": [
         {
@@ -275,31 +303,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e7",
-          "notes_ref": "n4",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 65.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e7",
-            "notes_ref": "n4",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 65.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_17",
             "name": "Basic 17\""
           }
-        ]
+        ],
+        "default_ref": "setup_235_17"
       },
       "verification_notes": [
         {
@@ -533,28 +543,9 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e5",
-          "notes_ref": "n9",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 60.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e5",
-            "notes_ref": "n9",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 60.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_18",
             "name": "Standard 18\""
           },
           {
@@ -579,7 +570,8 @@
             "default_axle_for_speed": "rear",
             "name": "S line 21\""
           }
-        ]
+        ],
+        "default_ref": "setup_235_18"
       },
       "verification_notes": [
         {
@@ -675,31 +667,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e9",
-          "notes_ref": "n13",
-          "front": {
-            "width_mm": 235.0,
-            "aspect_pct": 65.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e9",
-            "notes_ref": "n13",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 65.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_17_2",
             "name": "Basic 17\""
           }
-        ]
+        ],
+        "default_ref": "setup_235_17_2"
       },
       "verification_notes": [
         {

@@ -165,6 +165,148 @@
         "bmw_pressclub_sources:g20-318i-2021-spec-pdf",
         "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
       ]
+    },
+    "tire_setups": {
+      "setup_245_20": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 30.0,
+          "rim_in": 20.0,
+          "width_mm": 245.0
+        }
+      },
+      "setup_235_19": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 235.0
+        }
+      },
+      "setup_225_18_2": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        }
+      },
+      "setup_245_20_2": {
+        "confidence": "unverified",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 30.0,
+          "rim_in": 20.0,
+          "width_mm": 245.0
+        },
+        "notes_ref": "n1"
+      },
+      "setup_235_19_2": {
+        "confidence": "unverified",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 235.0
+        },
+        "notes_ref": "n1"
+      },
+      "setup_225_18_4": {
+        "confidence": "unverified",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n1"
+      },
+      "setup_245_20_3": {
+        "confidence": "unverified",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e3",
+        "front": {
+          "aspect_pct": 30.0,
+          "rim_in": 20.0,
+          "width_mm": 245.0
+        },
+        "notes_ref": "n2"
+      },
+      "setup_235_19_3": {
+        "confidence": "unverified",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e3",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 235.0
+        },
+        "notes_ref": "n2"
+      },
+      "setup_225_18_5": {
+        "confidence": "unverified",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e3",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n2"
+      },
+      "setup_225_18": {
+        "confidence": "unverified",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e5",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n12"
+      },
+      "setup_225_18_3": {
+        "confidence": "unverified",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e6",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n13"
+      },
+      "setup_225_18_6": {
+        "confidence": "unverified",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e7",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n14"
+      },
+      "setup_225_18_7": {
+        "confidence": "unverified",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e8",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n15"
+      }
     }
   },
   "defaults": {
@@ -212,28 +354,9 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e5",
-          "notes_ref": "n12",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e5",
-            "notes_ref": "n12",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Standard 18\""
           },
           {
@@ -260,7 +383,8 @@
             "default_axle_for_speed": "rear",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18"
       },
       "verification_notes": [
         {
@@ -366,25 +490,11 @@
             "name": "Standard 16\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20",
             "name": "M Sport 20\""
           }
         ]
@@ -484,36 +594,15 @@
         },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_2",
             "name": "Standard 18\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20",
             "name": "M Sport 20\""
           }
         ]
@@ -605,36 +694,15 @@
         },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_2",
             "name": "Standard 18\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20",
             "name": "M Sport 20\""
           }
         ]
@@ -698,28 +766,9 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e6",
-          "notes_ref": "n13",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e6",
-            "notes_ref": "n13",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_3",
             "name": "Standard 18\""
           },
           {
@@ -746,7 +795,8 @@
             "default_axle_for_speed": "rear",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_3"
       },
       "verification_notes": [
         {
@@ -930,55 +980,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_4",
             "name": "Standard 18\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20_2",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_4"
       },
       "verification_notes": [
         {
@@ -1053,55 +1069,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_4",
             "name": "Standard 18\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20_2",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_4"
       },
       "verification_notes": [
         {
@@ -1158,55 +1140,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_4",
             "name": "Standard 18\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20_2",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_4"
       },
       "verification_notes": [
         {
@@ -1263,55 +1211,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_4",
             "name": "Standard 18\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20_2",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_4"
       },
       "verification_notes": [
         {
@@ -1394,36 +1308,15 @@
         },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_2",
             "name": "Standard 18\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20",
             "name": "M Sport 20\""
           }
         ]
@@ -1530,36 +1423,15 @@
         },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_2",
             "name": "Standard 18\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20",
             "name": "M Sport 20\""
           }
         ]
@@ -1638,55 +1510,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e3",
-          "notes_ref": "n2",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_5",
             "name": "Standard 18\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_3",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20_3",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_5"
       },
       "verification_notes": [
         {
@@ -1852,28 +1690,9 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e7",
-          "notes_ref": "n14",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e7",
-            "notes_ref": "n14",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_6",
             "name": "Standard 18\""
           },
           {
@@ -1900,7 +1719,8 @@
             "default_axle_for_speed": "rear",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_6"
       },
       "verification_notes": [
         {
@@ -2066,55 +1886,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_4",
             "name": "Standard 18\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20_2",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_4"
       },
       "verification_notes": [
         {
@@ -2171,55 +1957,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_4",
             "name": "Standard 18\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20_2",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_4"
       },
       "verification_notes": [
         {
@@ -2276,55 +2028,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_4",
             "name": "Standard 18\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20_2",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_4"
       },
       "verification_notes": [
         {
@@ -2381,55 +2099,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_4",
             "name": "Standard 18\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20_2",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_4"
       },
       "verification_notes": [
         {
@@ -2486,55 +2170,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e3",
-          "notes_ref": "n2",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_5",
             "name": "Standard 18\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_3",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e3",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20_3",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_5"
       },
       "verification_notes": [
         {
@@ -2736,28 +2386,9 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e8",
-          "notes_ref": "n15",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e8",
-            "notes_ref": "n15",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_7",
             "name": "Standard 18\""
           },
           {
@@ -2784,7 +2415,8 @@
             "default_axle_for_speed": "rear",
             "name": "M Sport 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_7"
       },
       "verification_notes": [
         {
@@ -3012,36 +2644,15 @@
         },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_2",
             "name": "Standard 18\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Sport Line 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20",
             "name": "M Sport 20\""
           }
         ]

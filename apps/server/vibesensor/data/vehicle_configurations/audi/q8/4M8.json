@@ -53,6 +53,38 @@
         "audi_mediacenter_sources:4m8-q8-2023-upgrade-release",
         "audi_mediacenter_sources:4m8-q8-55-tfsi-2026-tech-data-pdf"
       ]
+    },
+    "tire_setups": {
+      "setup_305_22": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 30.0,
+          "rim_in": 22.0,
+          "width_mm": 305.0
+        }
+      },
+      "setup_295_22": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 22.0,
+          "width_mm": 295.0
+        }
+      },
+      "setup_285_21": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 21.0,
+          "width_mm": 285.0
+        }
+      }
     }
   },
   "defaults": {
@@ -119,36 +151,15 @@
         },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 285.0,
-              "aspect_pct": 40.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_285_21",
             "name": "Standard 21\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 295.0,
-              "aspect_pct": 35.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_295_22",
             "name": "Sport 22\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 305.0,
-              "aspect_pct": 30.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_305_22",
             "name": "S line 22\""
           }
         ]
@@ -227,51 +238,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "family_default",
-          "evidence_refs_ref": "e2",
-          "front": {
-            "width_mm": 285.0,
-            "aspect_pct": 40.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 285.0,
-              "aspect_pct": 40.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_285_21",
             "name": "Standard 21\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 295.0,
-              "aspect_pct": 35.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_295_22",
             "name": "Sport 22\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 305.0,
-              "aspect_pct": 30.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_305_22",
             "name": "S line 22\""
           }
-        ]
+        ],
+        "default_ref": "setup_285_21"
       },
       "verification_notes": [
         {
@@ -359,36 +340,15 @@
         },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 285.0,
-              "aspect_pct": 40.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_285_21",
             "name": "Standard 21\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 295.0,
-              "aspect_pct": 35.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_295_22",
             "name": "Sport 22\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 305.0,
-              "aspect_pct": 30.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_305_22",
             "name": "S line 22\""
           }
         ]
@@ -475,51 +435,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "family_default",
-          "evidence_refs_ref": "e2",
-          "front": {
-            "width_mm": 285.0,
-            "aspect_pct": 40.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 285.0,
-              "aspect_pct": 40.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_285_21",
             "name": "Standard 21\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 295.0,
-              "aspect_pct": 35.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_295_22",
             "name": "Sport 22\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 305.0,
-              "aspect_pct": 30.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_305_22",
             "name": "S line 22\""
           }
-        ]
+        ],
+        "default_ref": "setup_285_21"
       },
       "verification_notes": [
         {

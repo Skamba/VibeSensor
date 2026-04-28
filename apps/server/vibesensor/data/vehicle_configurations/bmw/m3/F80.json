@@ -67,6 +67,92 @@
         "bmw_pressclub_sources:f82-competition-2016-launch-article",
         "bmw_pressclub_sources:f80-m3-competition-2016-tech-spec-pdf"
       ]
+    },
+    "tire_setups": {
+      "setup_265_20": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e3",
+        "front": {
+          "aspect_pct": 30.0,
+          "rim_in": 20.0,
+          "width_mm": 265.0
+        }
+      },
+      "setup_255_19": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e3",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 255.0
+        }
+      },
+      "setup_255_18": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 255.0
+        },
+        "notes_ref": "n4",
+        "rear": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 275.0
+        }
+      },
+      "setup_265_20_2": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 30.0,
+          "rim_in": 20.0,
+          "width_mm": 265.0
+        },
+        "notes_ref": "n7",
+        "rear": {
+          "aspect_pct": 30.0,
+          "rim_in": 20.0,
+          "width_mm": 285.0
+        }
+      },
+      "setup_255_19_2": {
+        "confidence": "reputable_secondary_crosschecked",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 255.0
+        },
+        "notes_ref": "n5",
+        "rear": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 275.0
+        }
+      },
+      "setup_255_19_3": {
+        "confidence": "reputable_secondary_crosschecked",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 255.0
+        },
+        "notes_ref": "n8",
+        "rear": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 275.0
+        }
+      }
     }
   },
   "defaults": {
@@ -127,63 +213,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n4",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          }
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e3",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_255_19",
             "name": "Standard 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e3",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_265_20",
             "name": "Performance 20\""
           },
           {
-            "name": "Optional 19-inch",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "rear": {
-              "width_mm": 275.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "confidence": "reputable_secondary_crosschecked",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n5"
+            "setup_ref": "setup_255_19_2",
+            "name": "Optional 19-inch"
           }
-        ]
+        ],
+        "default_ref": "setup_255_18"
       },
       "verification_notes": [
         {
@@ -271,63 +315,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n4",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          }
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e3",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_255_19",
             "name": "Standard 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e3",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_265_20",
             "name": "Performance 20\""
           },
           {
-            "name": "Optional 19-inch",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "rear": {
-              "width_mm": 275.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "confidence": "reputable_secondary_crosschecked",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n5"
+            "setup_ref": "setup_255_19_2",
+            "name": "Optional 19-inch"
           }
-        ]
+        ],
+        "default_ref": "setup_255_18"
       },
       "verification_notes": [
         {
@@ -416,63 +418,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes_ref": "n7",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 285.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          }
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e3",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_255_19",
             "name": "Standard 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e3",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_265_20",
             "name": "Performance 20\""
           },
           {
-            "name": "Competition forged 19-inch",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "rear": {
-              "width_mm": 275.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "confidence": "reputable_secondary_crosschecked",
-            "evidence_refs_ref": "e2",
-            "notes_ref": "n8"
+            "setup_ref": "setup_255_19_3",
+            "name": "Competition forged 19-inch"
           }
-        ]
+        ],
+        "default_ref": "setup_265_20_2"
       },
       "verification_notes": [
         {
@@ -552,63 +512,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes_ref": "n7",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 285.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          }
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e3",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_255_19",
             "name": "Standard 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e3",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_265_20",
             "name": "Performance 20\""
           },
           {
-            "name": "Competition forged 19-inch",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "rear": {
-              "width_mm": 275.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "confidence": "reputable_secondary_crosschecked",
-            "evidence_refs_ref": "e2",
-            "notes_ref": "n8"
+            "setup_ref": "setup_255_19_3",
+            "name": "Competition forged 19-inch"
           }
-        ]
+        ],
+        "default_ref": "setup_265_20_2"
       },
       "verification_notes": [
         {
