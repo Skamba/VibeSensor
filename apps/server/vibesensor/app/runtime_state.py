@@ -27,7 +27,11 @@ if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
     from vibesensor.adapters.websocket.hub import WebSocketHub
-    from vibesensor.infra.runtime.lifecycle import LifecycleHistoryDb, LifecycleObdRunner
+    from vibesensor.infra.runtime.lifecycle import (
+        LifecycleHistoryDb,
+        LifecycleObdRunner,
+        LifecycleRuntime,
+    )
 
 
 @dataclass(slots=True)
@@ -52,6 +56,36 @@ class RuntimeState:
     run_recorder: RunRecorder
     update_manager: UpdateManager
     esp_flash_manager: EspFlashManager
+
+    def lifecycle_runtime(self) -> LifecycleRuntime:
+        """Project the lifecycle-owned dependency bag for LifecycleManager."""
+
+        from vibesensor.infra.runtime.lifecycle import LifecycleRuntime
+
+        return LifecycleRuntime(
+            health_state=self.health_state,
+            history_db_path=self.config.logging.history_db_path,
+            udp_data_host=self.config.udp.data_host,
+            udp_data_port=self.config.udp.data_port,
+            udp_data_queue_maxsize=self.config.udp.data_queue_maxsize,
+            gpsd_host=self.config.gps.gpsd_host,
+            gpsd_port=self.config.gps.gpsd_port,
+            shutdown_analysis_timeout_s=self.config.logging.shutdown_analysis_timeout_s,
+            registry=self.registry,
+            processor=self.processor,
+            ingest_diagnostics=self.ingest_diagnostics,
+            control_plane=self.control_plane,
+            processing_loop=self.processing_loop,
+            ws_hub=self.ws_hub,
+            ws_broadcast=self.ws_broadcast,
+            run_recorder=self.run_recorder,
+            gps_monitor=self.gps_monitor,
+            obd_runner=self.obd_runner,
+            update_manager=self.update_manager,
+            esp_flash_manager=self.esp_flash_manager,
+            worker_pool=self.worker_pool,
+            history_db=self.history_db,
+        )
 
 
 @dataclass(slots=True)

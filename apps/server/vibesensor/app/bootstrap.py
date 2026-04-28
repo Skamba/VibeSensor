@@ -28,7 +28,7 @@ from vibesensor.adapters.http.middleware import install_request_logging_middlewa
 from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
 from vibesensor.app.config_loader import load_config
 from vibesensor.app.container import build_runtime
-from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
+from vibesensor.infra.runtime.lifecycle import LifecycleManager
 from vibesensor.shared.process_settings import (
     CONFIG_PATH_ENV,
     export_config_path_env,
@@ -64,30 +64,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     configure_tracing(config.tracing)
     runtime = build_runtime(config)
     lifecycle = LifecycleManager(
-        runtime=LifecycleRuntime(
-            health_state=runtime.lifecycle.health_state,
-            history_db_path=config.logging.history_db_path,
-            udp_data_host=config.udp.data_host,
-            udp_data_port=config.udp.data_port,
-            udp_data_queue_maxsize=config.udp.data_queue_maxsize,
-            gpsd_host=config.gps.gpsd_host,
-            gpsd_port=config.gps.gpsd_port,
-            shutdown_analysis_timeout_s=config.logging.shutdown_analysis_timeout_s,
-            registry=runtime.lifecycle.registry,
-            processor=runtime.lifecycle.processor,
-            control_plane=runtime.lifecycle.control_plane,
-            processing_loop=runtime.lifecycle.processing_loop,
-            ws_hub=runtime.lifecycle.ws_hub,
-            ws_broadcast=runtime.lifecycle.ws_broadcast,
-            run_recorder=runtime.lifecycle.run_recorder,
-            gps_monitor=runtime.lifecycle.gps_monitor,
-            obd_runner=runtime.lifecycle.obd_runner,
-            update_manager=runtime.lifecycle.update_manager,
-            esp_flash_manager=runtime.lifecycle.esp_flash_manager,
-            worker_pool=runtime.lifecycle.worker_pool,
-            history_db=runtime.lifecycle.history_db,
-            ingest_diagnostics=runtime.lifecycle.ingest_diagnostics,
-        ),
+        runtime=runtime.lifecycle.lifecycle_runtime(),
         start_udp_receiver=start_udp_data_receiver,
     )
 
