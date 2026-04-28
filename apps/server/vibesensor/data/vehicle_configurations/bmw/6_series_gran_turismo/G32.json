@@ -1,1229 +1,987 @@
-[
-  {
-    "id": "bmw-g32-620d-eu-2018-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G32",
-    "body_code": "G32",
-    "production_start_year": 2018,
-    "production_end_year": 2024,
-    "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
-    "variant_name": "620d",
-    "engine_code": "B47D20",
-    "engine_name": "B47D20 2.0L I4 Turbo Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
+      "n3": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 630d xDrive Gran Turismo.",
+      "n4": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 640d xDrive Gran Turismo.",
+      "n5": "Official BMW 11/2020 technical-data PDF lists 245/50 R18 as the standard tire for the exact 640i Gran Turismo state represented by this narrowed 2020-only row."
+    },
+    "evidence_ref_sets": {
+      "e1": [
         "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
         "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
       ],
-      "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm rear-wheel drive for the exact 620d Gran Turismo across the represented row span.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-        "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-      ],
-      "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm 8-speed Steptronic wording for the exact 620d Gran Turismo. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 620d Gran Turismo.",
-        "value": 0.64
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact 620d Gran Turismo.",
-        "value": [
-          5.25,
-          3.36,
-          2.172,
-          1.72,
-          1.316,
-          1.0,
-          0.822,
-          0.64
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 3.077 final drive for the exact 620d Gran Turismo.",
-        "value": 3.077
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 baseline tires for the exact 620d Gran Turismo.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 60.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-            "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-          ],
-          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 as the standard tire package for the exact 620d Gran Turismo.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 60.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 15 directly revalidated official BMW 09/2018 and 11/2020 technical-data PDFs and confirmed that the G32 620d uses rear-wheel drive, 8-speed Steptronic wording, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.077, and 225/60 R17 baseline tires across the represented row span. Production JSON keeps those stable exact fields while leaving the optional wheel matrix unresolved.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW G32 620d exact optional wheel-package continuity across the represented row span",
-        "reason": "Checked BMW 09/2018 and 11/2020 technical-data PDFs close the 225/60 R17 baseline tire, but this pass did not recover one exact optional wheel matrix spanning the full 2018-2024 row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "G32 source-finding pass status",
-        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
-      }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g32-630d-eu-2018-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G32",
-    "body_code": "G32",
-    "production_start_year": 2018,
-    "production_end_year": 2024,
-    "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
-    "variant_name": "630d",
-    "engine_code": "B57D30",
-    "engine_name": "B57D30 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-        "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-      ],
-      "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm rear-wheel drive for the exact 630d Gran Turismo across the represented row span.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-        "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-      ],
-      "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm 8-speed Steptronic wording for the exact 630d Gran Turismo. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 630d Gran Turismo.",
-        "value": 0.64
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 630d Gran Turismo.",
-        "value": 2.563
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 baseline tires for the exact 630d Gran Turismo.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 60.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-            "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-          ],
-          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 as the standard tire package for the exact 630d Gran Turismo.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 60.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 15 directly revalidated official BMW 09/2018 and 11/2020 technical-data PDFs and confirmed that the G32 630d uses rear-wheel drive, 8-speed Steptronic wording, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires across the represented row span. The row remains a stable-field pass because the checked PDFs publish different forward and reverse ratio sets: 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 with reverse 3.478 in 09/2018 versus 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 with reverse 3.993 in 11/2020.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW G32 630d one exact full-ratio and reverse-ratio set across the represented row span",
-        "reason": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on rear-wheel drive, 8-speed Steptronic wording, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires, but they publish different 1st-6th and reverse ratios.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "BMW G32 630d exact optional wheel-package continuity across the represented row span",
-        "reason": "Checked BMW 09/2018 and 11/2020 technical-data PDFs close the 225/60 R17 baseline tire, but this pass did not recover one exact optional wheel matrix spanning the full 2018-2024 row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "G32 source-finding pass status",
-        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g32-630d-xdrive-eu-2018-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G32",
-    "body_code": "G32",
-    "production_start_year": 2018,
-    "production_end_year": 2024,
-    "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
-    "variant_name": "630d xDrive",
-    "engine_code": "B57D30",
-    "engine_name": "B57D30 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-        "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-      ],
-      "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm xDrive all-wheel drive for the exact 630d xDrive Gran Turismo across the represented row span.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-        "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-      ],
-      "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm 8-speed Steptronic wording for the exact 630d xDrive Gran Turismo. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 630d xDrive Gran Turismo.",
-        "value": 0.64
-      },
-      "final_drive_front": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 630d xDrive Gran Turismo.",
-        "value": 2.563
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 630d xDrive Gran Turismo.",
-        "value": 2.563
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 baseline tires for the exact 630d xDrive Gran Turismo.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 60.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-            "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-          ],
-          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 as the standard tire package for the exact 630d xDrive Gran Turismo.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 60.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 15 directly revalidated official BMW 09/2018 and 11/2020 technical-data PDFs and confirmed that the G32 630d xDrive uses AWD, 8-speed Steptronic wording, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires across the represented row span. The row remains a stable-field pass because the checked PDFs publish different forward and reverse ratio sets: 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 with reverse 3.478 in 09/2018 versus 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 with reverse 3.993 in 11/2020.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW G32 630d xDrive one exact full-ratio and reverse-ratio set across the represented row span",
-        "reason": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on xDrive, 8-speed Steptronic wording, 0.640 top gear, and 2.563 final drive, but they publish different 1st-6th and reverse ratios.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "BMW G32 630d xDrive exact optional wheel-package continuity across the represented row span",
-        "reason": "Checked BMW 09/2018 and 11/2020 technical-data PDFs close the 225/60 R17 baseline tire, but this pass did not recover one exact optional wheel matrix spanning the full 2018-2024 row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "G32 source-finding pass status",
-        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g32-630i-eu-2018-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G32",
-    "body_code": "G32",
-    "production_start_year": 2018,
-    "production_end_year": 2024,
-    "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
-    "variant_name": "630i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-        "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-      ],
-      "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm rear-wheel drive for the exact 630i Gran Turismo across the represented row span.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-        "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-      ],
-      "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm 8-speed Steptronic wording for the exact 630i Gran Turismo. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 630i Gran Turismo.",
-        "value": 0.64
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact 630i Gran Turismo.",
-        "value": [
-          5.25,
-          3.36,
-          2.172,
-          1.72,
-          1.316,
-          1.0,
-          0.822,
-          0.64
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 3.077 final drive for the exact 630i Gran Turismo.",
-        "value": 3.077
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 baseline tires for the exact 630i Gran Turismo.",
-        "front": {
-          "width_mm": 225.0,
-          "aspect_pct": 60.0,
-          "rim_in": 17.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-            "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-          ],
-          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 as the standard tire package for the exact 630i Gran Turismo.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 60.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 17\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 15 directly revalidated official BMW 09/2018 and 11/2020 technical-data PDFs and confirmed that the G32 630i uses rear-wheel drive, 8-speed Steptronic wording, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.077, and 225/60 R17 baseline tires across the represented row span. Production JSON keeps those stable exact fields while leaving the optional wheel matrix unresolved.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW G32 630i exact optional wheel-package continuity across the represented row span",
-        "reason": "Checked BMW 09/2018 and 11/2020 technical-data PDFs close the 225/60 R17 baseline tire, but this pass did not recover one exact optional wheel matrix spanning the full 2018-2024 row.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "G32 source-finding pass status",
-        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
-      }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g32-630i-xdrive-eu-2018-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G32",
-    "body_code": "G32",
-    "production_start_year": 2018,
-    "production_end_year": 2024,
-    "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
-    "variant_name": "630i xDrive",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "evidence_refs": [
-        "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-        "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-      ],
-      "notes": "Checked official BMW 09/2018 and 11/2020 G32 technical-data PDFs. They publish exact rows for 620d, 630d, 630d xDrive, 630i, 640d xDrive, and 640i xDrive, but they do not publish a 630i xDrive row, so this AWD mapping remains an unsupported advisory placeholder.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.667
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.813
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 2.813
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:27e3d1aa1f09",
-          "legacy_research_sources:5c1b0ad4cf7e",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:e2ab2042d8b2"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:27e3d1aa1f09",
-            "legacy_research_sources:5c1b0ad4cf7e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:e2ab2042d8b2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:27e3d1aa1f09",
-            "legacy_research_sources:5c1b0ad4cf7e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:e2ab2042d8b2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:27e3d1aa1f09",
-            "legacy_research_sources:5c1b0ad4cf7e",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:e2ab2042d8b2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 16 extends the contradiction chain for this represented AWD row across launch and facelift lifecycle evidence. Official BMW global and Netherlands 2017 launch material, the 09/2018 ACEA technical-data PDF, official BMW Netherlands and Italy 2020 facelift articles, and the 11/2020 ACEA technical-data PDF consistently separate 630i Gran Turismo from the distinct AWD petrol row 640i xDrive Gran Turismo. None of the checked official EU / ACEA / local-market sources names an exact 630i xDrive row, so this represented AWD configuration remains an unsupported advisory row rather than a validated exact state.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2017-global-launch-article",
-          "bmw_pressclub_sources:g32-2017-netherlands-price-article",
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-netherlands-facelift-article",
-          "bmw_pressclub_sources:g32-2020-italy-facelift-article",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW G32 630i xDrive exact official technical-data row",
-        "reason": "Checked official BMW launch articles, Netherlands launch pricing, 09/2018 and 11/2020 ACEA technical-data PDFs, and Netherlands/Italy facelift articles consistently omit 630i xDrive even while naming adjacent 630i, 640i xDrive, 630d xDrive, and 640d xDrive rows, and this pass did not recover another official EU-market table that contradicts that pattern.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2017-global-launch-article",
-          "bmw_pressclub_sources:g32-2017-netherlands-price-article",
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-netherlands-facelift-article",
-          "bmw_pressclub_sources:g32-2020-italy-facelift-article",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "BMW G32 630i xDrive exact final-drive, top-gear, and default-tire mapping",
-        "reason": "Without any checked official exact 630i xDrive row, this pass cannot promote the inherited gearbox, final-drive, or tire values for the represented 2018-2024 AWD row. The saved official ACEA tables instead close 630i RWD and 640i xDrive as separate neighboring configurations with different default tires.",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
-          "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-        ]
-      },
-      {
-        "item": "G32 source-finding pass status",
-        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g32-640d-xdrive-eu-2018-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G32",
-    "body_code": "G32",
-    "production_start_year": 2018,
-    "production_end_year": 2024,
-    "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
-    "variant_name": "640d xDrive",
-    "engine_code": "B57D30",
-    "engine_name": "B57D30 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:27e3d1aa1f09",
-        "legacy_research_sources:5c1b0ad4cf7e"
-      ],
-      "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm xDrive all-wheel drive for the exact 640d xDrive Gran Turismo across the represented row span.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "legacy_research_sources:27e3d1aa1f09",
-        "legacy_research_sources:5c1b0ad4cf7e"
-      ],
-      "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm 8-speed Steptronic wording for the exact 640d xDrive Gran Turismo. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:27e3d1aa1f09",
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 640d xDrive Gran Turismo.",
-        "value": 0.64
-      },
-      "final_drive_front": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:27e3d1aa1f09",
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 640d xDrive Gran Turismo.",
-        "value": 2.563
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:27e3d1aa1f09",
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 640d xDrive Gran Turismo.",
-        "value": 2.563
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "unverified",
-        "evidence_refs": [
-          "legacy_research_sources:27e3d1aa1f09",
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ],
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs disagree on the exact baseline tire for the represented 640d xDrive row (225/60 R17 vs 245/50 R18), so the inherited placeholder remains unresolved until the row is split or one stable across-span mapping is proven.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:27b263e49b0d",
-            "legacy_research_sources:5b75597267b1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b2d556993748",
-            "legacy_research_sources:ca1480e64c12",
-            "legacy_research_sources:e2ab2042d8b2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:27b263e49b0d",
-            "legacy_research_sources:5b75597267b1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b2d556993748",
-            "legacy_research_sources:ca1480e64c12",
-            "legacy_research_sources:e2ab2042d8b2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:27b263e49b0d",
-            "legacy_research_sources:5b75597267b1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b2d556993748",
-            "legacy_research_sources:ca1480e64c12",
-            "legacy_research_sources:e2ab2042d8b2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Batch 10 adds exact official BMW 09/2018 and 11/2020 technical-data evidence that the G32 640d xDrive uses xDrive AWD, 8-speed Steptronic wording, 0.640 top gear, and 2.563 final drive. Production JSON promotes those stable exact drivetrain and gearbox-ratio fields; the repo keeps ZF8HP as an official-derived gearbox-family mapping, and the inherited default-tire value stays unresolved because the exact BMW baseline tire changes from 225/60 R17 in 09/2018 to 245/50 R18 in 11/2020.",
-        "evidence_refs": [
-          "legacy_research_sources:27e3d1aa1f09",
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW G32 640d xDrive one exact full-ratio and reverse-ratio set across the represented row span",
-        "reason": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on xDrive, 8-speed Steptronic wording, 0.640 top gear, and 2.563 final drive, but they publish different 1st-6th and reverse ratios.",
-        "evidence_refs": [
-          "legacy_research_sources:27e3d1aa1f09",
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ]
-      },
-      {
-        "item": "BMW G32 640d xDrive exact baseline-tire continuity across the represented row span",
-        "reason": "Official BMW 09/2018 technical data lists 225/60 R17 baseline tires, while the exact 11/2020 technical-data PDF lists 245/50 R18, so the current broad row still needs a year split before one default tire can be encoded safely.",
-        "evidence_refs": [
-          "legacy_research_sources:27e3d1aa1f09",
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ]
-      },
-      {
-        "item": "G32 source-finding pass status",
-        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g32-640i-xdrive-eu-2018-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G32",
-    "body_code": "G32",
-    "production_start_year": 2018,
-    "production_end_year": 2024,
-    "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
-    "variant_name": "640i xDrive",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+      "e2": [
         "legacy_research_sources:27b263e49b0d",
         "legacy_research_sources:5b75597267b1",
+        "legacy_research_sources:95b9bf2bf0cf",
         "legacy_research_sources:b2d556993748",
-        "legacy_research_sources:ca1480e64c12"
+        "legacy_research_sources:ca1480e64c12",
+        "legacy_research_sources:e2ab2042d8b2"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic transmission"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
-        "value": 0.64
+      "e3": [
+        "legacy_research_sources:27e3d1aa1f09",
+        "legacy_research_sources:5c1b0ad4cf7e"
+      ],
+      "e4": [
+        "legacy_research_sources:5c1b0ad4cf7e"
+      ],
+      "e5": [
+        "legacy_research_sources:27e3d1aa1f09",
+        "legacy_research_sources:5c1b0ad4cf7e",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:e2ab2042d8b2"
+      ],
+      "e6": [
+        "bmw_pressclub_sources:g32-2017-global-launch-article",
+        "bmw_pressclub_sources:g32-2017-netherlands-price-article",
+        "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
+        "bmw_pressclub_sources:g32-2020-netherlands-facelift-article",
+        "bmw_pressclub_sources:g32-2020-italy-facelift-article",
+        "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
+      ]
+    }
+  },
+  "configurations": [
+    {
+      "id": "bmw-g32-620d-eu-2018-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G32",
+      "body_code": "G32",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
+      "variant_name": "620d",
+      "engine_code": "B47D20",
+      "engine_name": "B47D20 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm rear-wheel drive for the exact 620d Gran Turismo across the represented row span.",
+        "value": "RWD"
       },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
-        "value": 3.077
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e1",
+        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm 8-speed Steptronic wording for the exact 620d Gran Turismo. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
       },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
-        "value": 3.077
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 620d Gran Turismo.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact 620d Gran Turismo.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 3.077 final drive for the exact 620d Gran Turismo.",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 baseline tires for the exact 620d Gran Turismo.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 as the standard tire package for the exact 620d Gran Turismo.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 15 directly revalidated official BMW 09/2018 and 11/2020 technical-data PDFs and confirmed that the G32 620d uses rear-wheel drive, 8-speed Steptronic wording, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.077, and 225/60 R17 baseline tires across the represented row span. Production JSON keeps those stable exact fields while leaving the optional wheel matrix unresolved.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW G32 620d exact optional wheel-package continuity across the represented row span",
+          "reason": "Checked BMW 09/2018 and 11/2020 technical-data PDFs close the 225/60 R17 baseline tire, but this pass did not recover one exact optional wheel matrix spanning the full 2018-2024 row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "G32 source-finding pass status",
+          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:27b263e49b0d",
-          "legacy_research_sources:5b75597267b1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b2d556993748",
-          "legacy_research_sources:ca1480e64c12",
-          "legacy_research_sources:e2ab2042d8b2"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
+    {
+      "id": "bmw-g32-630d-eu-2018-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G32",
+      "body_code": "G32",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
+      "variant_name": "630d",
+      "engine_code": "B57D30",
+      "engine_name": "B57D30 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm rear-wheel drive for the exact 630d Gran Turismo across the represented row span.",
+        "value": "RWD"
       },
-      "options": [
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e1",
+        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm 8-speed Steptronic wording for the exact 630d Gran Turismo. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 630d Gran Turismo.",
+          "value": 0.64
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 630d Gran Turismo.",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 baseline tires for the exact 630d Gran Turismo.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 as the standard tire package for the exact 630d Gran Turismo.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
+        ]
+      },
+      "verification_notes": [
         {
+          "note": "Batch 15 directly revalidated official BMW 09/2018 and 11/2020 technical-data PDFs and confirmed that the G32 630d uses rear-wheel drive, 8-speed Steptronic wording, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires across the represented row span. The row remains a stable-field pass because the checked PDFs publish different forward and reverse ratio sets: 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 with reverse 3.478 in 09/2018 versus 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 with reverse 3.993 in 11/2020.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW G32 630d one exact full-ratio and reverse-ratio set across the represented row span",
+          "reason": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on rear-wheel drive, 8-speed Steptronic wording, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires, but they publish different 1st-6th and reverse ratios.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G32 630d exact optional wheel-package continuity across the represented row span",
+          "reason": "Checked BMW 09/2018 and 11/2020 technical-data PDFs close the 225/60 R17 baseline tire, but this pass did not recover one exact optional wheel matrix spanning the full 2018-2024 row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "G32 source-finding pass status",
+          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g32-630d-xdrive-eu-2018-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G32",
+      "body_code": "G32",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
+      "variant_name": "630d xDrive",
+      "engine_code": "B57D30",
+      "engine_name": "B57D30 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm xDrive all-wheel drive for the exact 630d xDrive Gran Turismo across the represented row span.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e1",
+        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm 8-speed Steptronic wording for the exact 630d xDrive Gran Turismo. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 630d xDrive Gran Turismo.",
+          "value": 0.64
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3",
+          "value": 2.563
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 baseline tires for the exact 630d xDrive Gran Turismo.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 as the standard tire package for the exact 630d xDrive Gran Turismo.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 15 directly revalidated official BMW 09/2018 and 11/2020 technical-data PDFs and confirmed that the G32 630d xDrive uses AWD, 8-speed Steptronic wording, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires across the represented row span. The row remains a stable-field pass because the checked PDFs publish different forward and reverse ratio sets: 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 with reverse 3.478 in 09/2018 versus 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 with reverse 3.993 in 11/2020.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW G32 630d xDrive one exact full-ratio and reverse-ratio set across the represented row span",
+          "reason": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on xDrive, 8-speed Steptronic wording, 0.640 top gear, and 2.563 final drive, but they publish different 1st-6th and reverse ratios.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW G32 630d xDrive exact optional wheel-package continuity across the represented row span",
+          "reason": "Checked BMW 09/2018 and 11/2020 technical-data PDFs close the 225/60 R17 baseline tire, but this pass did not recover one exact optional wheel matrix spanning the full 2018-2024 row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "G32 source-finding pass status",
+          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g32-630i-eu-2018-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G32",
+      "body_code": "G32",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
+      "variant_name": "630i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm rear-wheel drive for the exact 630i Gran Turismo across the represented row span.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e1",
+        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm 8-speed Steptronic wording for the exact 630i Gran Turismo. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 630i Gran Turismo.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact 630i Gran Turismo.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 3.077 final drive for the exact 630i Gran Turismo.",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 baseline tires for the exact 630i Gran Turismo.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 225/60 R17 as the standard tire package for the exact 630i Gran Turismo.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 15 directly revalidated official BMW 09/2018 and 11/2020 technical-data PDFs and confirmed that the G32 630i uses rear-wheel drive, 8-speed Steptronic wording, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.077, and 225/60 R17 baseline tires across the represented row span. Production JSON keeps those stable exact fields while leaving the optional wheel matrix unresolved.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW G32 630i exact optional wheel-package continuity across the represented row span",
+          "reason": "Checked BMW 09/2018 and 11/2020 technical-data PDFs close the 225/60 R17 baseline tire, but this pass did not recover one exact optional wheel matrix spanning the full 2018-2024 row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "G32 source-finding pass status",
+          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g32-630i-xdrive-eu-2018-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G32",
+      "body_code": "G32",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
+      "variant_name": "630i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "evidence_refs_ref": "e1",
+        "notes": "Checked official BMW 09/2018 and 11/2020 G32 technical-data PDFs. They publish exact rows for 620d, 630d, 630d xDrive, 630i, 640d xDrive, and 640i xDrive, but they do not publish a 630i xDrive row, so this AWD mapping remains an unsupported advisory placeholder.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:27b263e49b0d",
-            "legacy_research_sources:5b75597267b1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b2d556993748",
-            "legacy_research_sources:ca1480e64c12",
-            "legacy_research_sources:e2ab2042d8b2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
+          "notes_ref": "n1",
+          "value": 0.667
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.813
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e5",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:27b263e49b0d",
-            "legacy_research_sources:5b75597267b1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b2d556993748",
-            "legacy_research_sources:ca1480e64c12",
-            "legacy_research_sources:e2ab2042d8b2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e5",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:27b263e49b0d",
-            "legacy_research_sources:5b75597267b1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b2d556993748",
-            "legacy_research_sources:ca1480e64c12",
-            "legacy_research_sources:e2ab2042d8b2"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e5",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e5",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 16 extends the contradiction chain for this represented AWD row across launch and facelift lifecycle evidence. Official BMW global and Netherlands 2017 launch material, the 09/2018 ACEA technical-data PDF, official BMW Netherlands and Italy 2020 facelift articles, and the 11/2020 ACEA technical-data PDF consistently separate 630i Gran Turismo from the distinct AWD petrol row 640i xDrive Gran Turismo. None of the checked official EU / ACEA / local-market sources names an exact 630i xDrive row, so this represented AWD configuration remains an unsupported advisory row rather than a validated exact state.",
+          "evidence_refs_ref": "e6"
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Wave 17 now adds exact official BMW technical-data evidence that the G32 640i xDrive uses all-wheel drive, Eight-speed Steptronic transmission wording, final drive 3.077, and top gear 0.640 in checked 11/2020 and later Germany-relevant material. Production JSON promotes only those stable exact gearbox fields because official 2018 and 2020+ documents still disagree on the full forward-ratio and reverse-ratio set, early Germany-market tire continuity is still not closed, and the checked sources do not prove one gearbox-family code across the full 2018-2024 span.",
-        "evidence_refs": [
-          "legacy_research_sources:27b263e49b0d",
-          "legacy_research_sources:5b75597267b1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b2d556993748",
-          "legacy_research_sources:ca1480e64c12",
-          "legacy_research_sources:e2ab2042d8b2"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Per-variant final-drive and top-gear ratios for the remaining unresolved EU G32 lineup",
-        "reason": "Wave 17 closes the exact 640i xDrive stable gearbox fields, but this run still did not recover authoritative BMW technical-data tables for the other G32 variants.",
-        "evidence_refs": [
-          "legacy_research_sources:27b263e49b0d",
-          "legacy_research_sources:5b75597267b1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b2d556993748",
-          "legacy_research_sources:ca1480e64c12",
-          "legacy_research_sources:e2ab2042d8b2"
-        ]
-      },
-      {
-        "item": "BMW G32 640i xDrive one exact full-ratio and reverse-ratio set across the represented row span",
-        "reason": "Official BMW 2018 and 11/2020 technical-data sheets for the exact 640i xDrive agree on AWD, Eight-speed Steptronic wording, final drive 3.077, and top gear 0.640, but they publish different 1st-6th and reverse ratios, so this pass promotes only the stable exact fields.",
-        "evidence_refs": [
-          "legacy_research_sources:27b263e49b0d",
-          "legacy_research_sources:5b75597267b1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b2d556993748",
-          "legacy_research_sources:ca1480e64c12",
-          "legacy_research_sources:e2ab2042d8b2"
-        ]
-      },
-      {
-        "item": "BMW G32 640i xDrive exact Germany-market tire continuity across the represented row span",
-        "reason": "Checked 11/2020 technical data and the 11/2022 BMW Germany price list prove a 245/50 R18 baseline tire with 19- and 20-inch options, but this pass did not recover an early Germany-market wheel matrix proving the same package across the full 2018-2024 row span.",
-        "evidence_refs": [
-          "legacy_research_sources:27b263e49b0d",
-          "legacy_research_sources:5b75597267b1",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:b2d556993748",
-          "legacy_research_sources:ca1480e64c12",
-          "legacy_research_sources:e2ab2042d8b2"
-        ]
-      },
-      {
-        "item": "G32 source-finding pass status",
-        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g32-640i-eu-2020-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "G32",
-    "body_code": "G32",
-    "production_start_year": 2020,
-    "production_end_year": 2020,
-    "model_name": "6 Series Gran Turismo (G32, 2020)",
-    "variant_name": "640i",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:5c1b0ad4cf7e"
       ],
-      "notes": "Official BMW 11/2020 technical-data PDF confirms rear-wheel drive for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "legacy_research_sources:5c1b0ad4cf7e"
-      ],
-      "notes": "Official BMW 11/2020 technical-data PDF confirms 8-speed Steptronic wording for the exact 640i Gran Turismo state represented by this narrowed 2020-only row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ],
-        "notes": "Official BMW 11/2020 technical-data PDF lists 0.640 as the top-gear ratio for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
-        "value": 0.64
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ],
-        "notes": "Official BMW 11/2020 technical-data PDF lists the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
-        "value": [
-          5.25,
-          3.36,
-          2.172,
-          1.72,
-          1.316,
-          1.0,
-          0.822,
-          0.64
-        ]
-      },
-      "final_drive_rear": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ],
-        "notes": "Official BMW 11/2020 technical-data PDF lists 3.077 as the rear final-drive ratio for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
-        "value": 3.077
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ],
-        "notes": "Official BMW 11/2020 technical-data PDF lists 245/50 R18 as the standard tire for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 50.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      "unresolved": [
         {
+          "item": "BMW G32 630i xDrive exact official technical-data row",
+          "reason": "Checked official BMW launch articles, Netherlands launch pricing, 09/2018 and 11/2020 ACEA technical-data PDFs, and Netherlands/Italy facelift articles consistently omit 630i xDrive even while naming adjacent 630i, 640i xDrive, 630d xDrive, and 640d xDrive rows, and this pass did not recover another official EU-market table that contradicts that pattern.",
+          "evidence_refs_ref": "e6"
+        },
+        {
+          "item": "BMW G32 630i xDrive exact final-drive, top-gear, and default-tire mapping",
+          "reason": "Without any checked official exact 630i xDrive row, this pass cannot promote the inherited gearbox, final-drive, or tire values for the represented 2018-2024 AWD row. The saved official ACEA tables instead close 630i RWD and 640i xDrive as separate neighboring configurations with different default tires.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "G32 source-finding pass status",
+          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g32-640d-xdrive-eu-2018-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G32",
+      "body_code": "G32",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
+      "variant_name": "640d xDrive",
+      "engine_code": "B57D30",
+      "engine_name": "B57D30 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm xDrive all-wheel drive for the exact 640d xDrive Gran Turismo across the represented row span.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e3",
+        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm 8-speed Steptronic wording for the exact 640d xDrive Gran Turismo. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:5c1b0ad4cf7e"
-          ],
-          "notes": "Official BMW 11/2020 technical-data PDF lists 245/50 R18 as the standard tire for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
+          "evidence_refs_ref": "e3",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 640d xDrive Gran Turismo.",
+          "value": 0.64
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n4",
+          "value": 2.563
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "n4",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "unverified",
+          "evidence_refs_ref": "e3",
+          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs disagree on the exact baseline tire for the represented 640d xDrive row (225/60 R17 vs 245/50 R18), so the inherited placeholder remains unresolved until the row is split or one stable across-span mapping is proven.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Batch 10 adds exact official BMW 09/2018 and 11/2020 technical-data evidence that the G32 640d xDrive uses xDrive AWD, 8-speed Steptronic wording, 0.640 top gear, and 2.563 final drive. Production JSON promotes those stable exact drivetrain and gearbox-ratio fields; the repo keeps ZF8HP as an official-derived gearbox-family mapping, and the inherited default-tire value stays unresolved because the exact BMW baseline tire changes from 225/60 R17 in 09/2018 to 245/50 R18 in 11/2020.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW G32 640d xDrive one exact full-ratio and reverse-ratio set across the represented row span",
+          "reason": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on xDrive, 8-speed Steptronic wording, 0.640 top gear, and 2.563 final drive, but they publish different 1st-6th and reverse ratios.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "BMW G32 640d xDrive exact baseline-tire continuity across the represented row span",
+          "reason": "Official BMW 09/2018 technical data lists 225/60 R17 baseline tires, while the exact 11/2020 technical-data PDF lists 245/50 R18, so the current broad row still needs a year split before one default tire can be encoded safely.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "G32 source-finding pass status",
+          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g32-640i-xdrive-eu-2018-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G32",
+      "body_code": "G32",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
+      "variant_name": "640i xDrive",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "legacy_research_sources:27b263e49b0d",
+          "legacy_research_sources:5b75597267b1",
+          "legacy_research_sources:b2d556993748",
+          "legacy_research_sources:ca1480e64c12"
+        ],
+        "notes_ref": "n2",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n2",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic transmission"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 0.64
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.077
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "n2",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Wave 17 now adds exact official BMW technical-data evidence that the G32 640i xDrive uses all-wheel drive, Eight-speed Steptronic transmission wording, final drive 3.077, and top gear 0.640 in checked 11/2020 and later Germany-relevant material. Production JSON promotes only those stable exact gearbox fields because official 2018 and 2020+ documents still disagree on the full forward-ratio and reverse-ratio set, early Germany-market tire continuity is still not closed, and the checked sources do not prove one gearbox-family code across the full 2018-2024 span.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "Legacy variant-source research previously recorded this variant as BMW technical data / DE price list with High confidence."
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Per-variant final-drive and top-gear ratios for the remaining unresolved EU G32 lineup",
+          "reason": "Wave 17 closes the exact 640i xDrive stable gearbox fields, but this run still did not recover authoritative BMW technical-data tables for the other G32 variants.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "BMW G32 640i xDrive one exact full-ratio and reverse-ratio set across the represented row span",
+          "reason": "Official BMW 2018 and 11/2020 technical-data sheets for the exact 640i xDrive agree on AWD, Eight-speed Steptronic wording, final drive 3.077, and top gear 0.640, but they publish different 1st-6th and reverse ratios, so this pass promotes only the stable exact fields.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "BMW G32 640i xDrive exact Germany-market tire continuity across the represented row span",
+          "reason": "Checked 11/2020 technical data and the 11/2022 BMW Germany price list prove a 245/50 R18 baseline tire with 19- and 20-inch options, but this pass did not recover an early Germany-market wheel matrix proving the same package across the full 2018-2024 row span.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "G32 source-finding pass status",
+          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g32-640i-eu-2020-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "G32",
+      "body_code": "G32",
+      "production_start_year": 2020,
+      "production_end_year": 2020,
+      "model_name": "6 Series Gran Turismo (G32, 2020)",
+      "variant_name": "640i",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "Official BMW 11/2020 technical-data PDF confirms rear-wheel drive for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e4",
+        "notes": "Official BMW 11/2020 technical-data PDF confirms 8-speed Steptronic wording for the exact 640i Gran Turismo state represented by this narrowed 2020-only row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW 11/2020 technical-data PDF lists 0.640 as the top-gear ratio for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW 11/2020 technical-data PDF lists the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW 11/2020 technical-data PDF lists 3.077 as the rear final-drive ratio for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes_ref": "n5",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 50.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
         },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:27b263e49b0d",
-            "legacy_research_sources:5b75597267b1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b2d556993748",
-            "legacy_research_sources:ca1480e64c12",
-            "legacy_research_sources:e2ab2042d8b2"
-          ],
-          "notes": "Retained conservative inherited placeholder for the non-baseline 20-inch wheel package because this pass only closes the exact 245/50 R18 standard tire for the narrowed 2020-only row.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 20.0
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes_ref": "n5",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 50.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 20\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:27b263e49b0d",
-            "legacy_research_sources:5b75597267b1",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:b2d556993748",
-            "legacy_research_sources:ca1480e64c12",
-            "legacy_research_sources:e2ab2042d8b2"
-          ],
-          "notes": "Retained conservative inherited placeholder for the non-baseline 21-inch wheel package because this pass only closes the exact 245/50 R18 standard tire for the narrowed 2020-only row.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 21.0
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes": "Retained conservative inherited placeholder for the non-baseline 20-inch wheel package because this pass only closes the exact 245/50 R18 standard tire for the narrowed 2020-only row.",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 20\""
           },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 21\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW 09/2018 and 11/2020 technical-data PDFs now confirm that the 640i Gran Turismo rear-wheel-drive package changed between the pre-facelift and facelift states: 2018 used forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 with 225/60 R17 standard tires, while 2020 used forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with 245/50 R18 standard tires, both with rear final drive 3.077. Production JSON therefore narrows this row to the supported 2020-only state instead of overclaiming one exact package across the original broad 2018-2024 span.",
-        "evidence_refs": [
-          "legacy_research_sources:27e3d1aa1f09",
-          "legacy_research_sources:5c1b0ad4cf7e"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW G32 640i exact optional wheel/tire matrix for the 2020 facelift state",
-        "reason": "Official BMW 11/2020 technical-data PDF closes the 245/50 R18 standard tire for the exact 640i Gran Turismo row, but this pass did not recover a full row-specific optional wheel/tire matrix for the narrowed 2020-only state.",
-        "evidence_refs": [
-          "legacy_research_sources:5c1b0ad4cf7e"
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e2",
+            "notes": "Retained conservative inherited placeholder for the non-baseline 21-inch wheel package because this pass only closes the exact 245/50 R18 standard tire for the narrowed 2020-only row.",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 21\""
+          }
         ]
       },
-      {
-        "item": "G32 source-finding pass status",
-        "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
+      "verification_notes": [
+        {
+          "note": "Official BMW 09/2018 and 11/2020 technical-data PDFs now confirm that the 640i Gran Turismo rear-wheel-drive package changed between the pre-facelift and facelift states: 2018 used forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 with 225/60 R17 standard tires, while 2020 used forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with 245/50 R18 standard tires, both with rear final drive 3.077. Production JSON therefore narrows this row to the supported 2020-only state instead of overclaiming one exact package across the original broad 2018-2024 span.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW G32 640i exact optional wheel/tire matrix for the 2020 facelift state",
+          "reason": "Official BMW 11/2020 technical-data PDF closes the 245/50 R18 standard tire for the exact 640i Gran Turismo row, but this pass did not recover a full row-specific optional wheel/tire matrix for the narrowed 2020-only state.",
+          "evidence_refs_ref": "e4"
+        },
+        {
+          "item": "G32 source-finding pass status",
+          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

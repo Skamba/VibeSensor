@@ -1,1791 +1,1166 @@
-[
-  {
-    "id": "audi-b9-30-tdi-eu-2016-mt6-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "B9",
-    "body_code": "B9",
-    "production_start_year": 2016,
-    "production_end_year": 2025,
-    "model_name": "A4 (B9, 2016-2025)",
-    "variant_name": "30 TDI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TDI Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-      "value": "FWD"
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
+      "n3": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
+      "n4": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
+      "n5": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence.",
+      "n6": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+      "n7": "Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence."
     },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-        "value": 0.84
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-        "value": 3.462
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-        "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-        "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-        "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Variant '30 TDI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
-        "reason": "Late-B9 official Audi 2019 launch article states four-cylinder TDI engines are offered exclusively with dual-clutch S tronic for the A4 sedan, and the current Audi MediaCenter A4 (until 2024) page lists 30 TDI only as S tronic. No saved official source supports a 30 TDI manual A4 sedan in any B9 year. Marked no_confidence."
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-b9-30-tdi-eu-2016-dct7-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "B9",
-    "body_code": "B9",
-    "production_start_year": 2016,
-    "production_end_year": 2025,
-    "model_name": "A4 (B9, 2016-2025)",
-    "variant_name": "30 TDI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TDI Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DL382)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-        "value": 0.725
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-        "value": 4.234
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi owner manual / ETKA Europe with Medium confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-        "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-        "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-        "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
-        "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-b9-35-tdi-eu-2016-mt6-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "B9",
-    "body_code": "B9",
-    "production_start_year": 2016,
-    "production_end_year": 2025,
-    "model_name": "A4 (B9, 2016-2025)",
-    "variant_name": "35 TDI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TDI Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "value": 0.84
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "value": 3.462
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-        "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-        "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-        "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Variant '35 TDI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
-        "reason": "Same official late-B9 evidence (2019 launch article + current MediaCenter A4 until-2024 page) supports 35 TDI only as 7-speed S tronic FWD. No saved official source supports a 35 TDI manual A4 sedan in any B9 year. Marked no_confidence."
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-b9-35-tdi-eu-2016-dct7-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "B9",
-    "body_code": "B9",
-    "production_start_year": 2016,
-    "production_end_year": 2025,
-    "model_name": "A4 (B9, 2016-2025)",
-    "variant_name": "35 TDI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TDI Diesel",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DL382)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "value": 0.725
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "value": 4.234
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-        "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-        "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-        "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
-        "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-b9-35-tfsi-eu-2016-dct7-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "B9",
-    "body_code": "B9",
-    "production_start_year": 2016,
-    "production_end_year": 2025,
-    "model_name": "A4 (B9, 2016-2025)",
-    "variant_name": "35 TFSI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-      "code": "DCT7",
-      "name": "7-speed S tronic"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "value": 0.734
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "value": 4.234
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-        "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-        "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-        "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
-        "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-b9-40-tfsi-eu-2016-dct7-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "B9",
-    "body_code": "B9",
-    "production_start_year": 2016,
-    "production_end_year": 2025,
-    "model_name": "A4 (B9, 2016-2025)",
-    "variant_name": "40 TFSI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence.",
-      "code": "DCT7",
-      "name": "7-speed S tronic"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence.",
-        "value": 0.734
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence.",
-        "value": 4.234
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-        "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-        "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-        "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
-        "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
-      }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-b9-45-tfsi-eu-2016-mt6-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "B9",
-    "body_code": "B9",
-    "production_start_year": 2016,
-    "production_end_year": 2025,
-    "model_name": "A4 (B9, 2016-2025)",
-    "variant_name": "45 TFSI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "code": "MT6",
-      "name": "6-speed manual"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.84
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 3.462
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-        "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-        "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-        "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Variant '45 TFSI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
-        "reason": "Official Audi 2019 launch article documents 45 TFSI as quattro drive only and gasoline non-entry variants automatic only; current MediaCenter A4 page lists only 45 TFSI quattro S tronic. No saved official source supports an FWD or manual 45 TFSI A4 sedan. Marked no_confidence."
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-b9-45-tfsi-eu-2016-dct7-fwd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "B9",
-    "body_code": "B9",
-    "production_start_year": 2016,
-    "production_end_year": 2025,
-    "model_name": "A4 (B9, 2016-2025)",
-    "variant_name": "45 TFSI",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "unverified",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "value": "FWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-      "code": "DCT7",
-      "name": "7-speed S tronic (DL382)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 0.725
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "value": 4.234
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
-        }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-        "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-        "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-        "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Variant '45 TFSI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
-        "reason": "Same official late-B9 evidence: 45 TFSI is quattro-only on current Audi MediaCenter pages and 2019 launch article. No saved official source supports an FWD 45 TFSI A4 sedan. Marked no_confidence."
-      }
-    ],
-    "configuration_confidence": "no_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": false,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "audi-b9-45-tfsi-quattro-eu-2016-dct7-awd",
-    "brand": "Audi",
-    "type": "Sedan",
-    "market": "EU",
-    "model_code": "B9",
-    "body_code": "B9",
-    "production_start_year": 2016,
-    "production_end_year": 2025,
-    "model_name": "A4 (B9, 2016-2025)",
-    "variant_name": "45 TFSI quattro",
-    "engine_code": "2.0L",
-    "engine_name": "2.0L I4 TFSI Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:06c8901b4b10",
+        "legacy_research_sources:678bfbe9247b",
+        "legacy_research_sources:7ac3af4db956",
+        "legacy_research_sources:9dbbe8367fa2",
+        "legacy_research_sources:d1c6a5f1d2e6",
+        "legacy_research_sources:e6a149e4a747",
+        "legacy_research_sources:f33bee2d7717",
+        "legacy_research_sources:f3928778422d"
+      ],
+      "e2": [
         "legacy_research_sources:7ac3af4db956",
         "legacy_research_sources:e6a149e4a747"
-      ],
-      "notes": "Exact official Audi MediaCenter A4 Sedan 45 TFSI quattro technical-data PDFs confirm quattro ultra AWD for the checked late-B9 195 kW sedan state, while earlier-year continuity across the inherited row remains unresolved.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:7ac3af4db956",
-        "legacy_research_sources:e6a149e4a747"
-      ],
-      "notes": "Exact official Audi MediaCenter A4 Sedan 45 TFSI quattro technical-data PDFs confirm the 7-speed S tronic gearbox for the checked late-B9 195 kW sedan state, while earlier-year continuity across the inherited row remains unresolved.",
-      "code": "DCT7",
-      "name": "7-speed S tronic"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "value": 0.734
+      ]
+    }
+  },
+  "configurations": [
+    {
+      "id": "audi-b9-30-tdi-eu-2016-mt6-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "B9",
+      "body_code": "B9",
+      "production_start_year": 2016,
+      "production_end_year": 2025,
+      "model_name": "A4 (B9, 2016-2025)",
+      "variant_name": "30 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n2",
+        "value": "FWD"
       },
-      "final_drive_front": {
+      "transmission": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "value": 4.41
+        "notes_ref": "n2",
+        "code": "MT6",
+        "name": "6-speed manual"
       },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "value": 4.41
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
+          "notes_ref": "n2",
+          "value": 0.84
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.462
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:06c8901b4b10",
-            "legacy_research_sources:678bfbe9247b",
-            "legacy_research_sources:7ac3af4db956",
-            "legacy_research_sources:9dbbe8367fa2",
-            "legacy_research_sources:d1c6a5f1d2e6",
-            "legacy_research_sources:e6a149e4a747",
-            "legacy_research_sources:f33bee2d7717",
-            "legacy_research_sources:f3928778422d"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "S line 20\""
+          "note_ref": "n7"
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
+          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
+          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant '30 TDI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
+          "reason": "Late-B9 official Audi 2019 launch article states four-cylinder TDI engines are offered exclusively with dual-clutch S tronic for the A4 sedan, and the current Audi MediaCenter A4 (until 2024) page lists 30 TDI only as S tronic. No saved official source supports a 30 TDI manual A4 sedan in any B9 year. Marked no_confidence."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": false,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
+    {
+      "id": "audi-b9-30-tdi-eu-2016-dct7-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "B9",
+      "body_code": "B9",
+      "production_start_year": 2016,
+      "production_end_year": 2025,
+      "model_name": "A4 (B9, 2016-2025)",
+      "variant_name": "30 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n2",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n2",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DL382)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 0.725
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD technical data with High confidence."
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n7"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
+          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
+          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
+          "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-        "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
+    },
+    {
+      "id": "audi-b9-35-tdi-eu-2016-mt6-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "B9",
+      "body_code": "B9",
+      "production_start_year": 2016,
+      "production_end_year": 2025,
+      "model_name": "A4 (B9, 2016-2025)",
+      "variant_name": "35 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.84
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.462
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
         ]
       },
-      {
-        "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-        "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-        "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-        "evidence_refs": [
-          "legacy_research_sources:06c8901b4b10",
-          "legacy_research_sources:678bfbe9247b",
-          "legacy_research_sources:7ac3af4db956",
-          "legacy_research_sources:9dbbe8367fa2",
-          "legacy_research_sources:d1c6a5f1d2e6",
-          "legacy_research_sources:e6a149e4a747",
-          "legacy_research_sources:f33bee2d7717",
-          "legacy_research_sources:f3928778422d"
-        ]
-      },
-      {
-        "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
-        "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n6"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
+          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
+          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant '35 TDI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
+          "reason": "Same official late-B9 evidence (2019 launch article + current MediaCenter A4 until-2024 page) supports 35 TDI only as 7-speed S tronic FWD. No saved official source supports a 35 TDI manual A4 sedan in any B9 year. Marked no_confidence."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": false,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
       }
-    ],
-    "configuration_confidence": "low_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": false,
-      "usable_for_wheel_order": false,
-      "requires_manual_confirmation": true
+    },
+    {
+      "id": "audi-b9-35-tdi-eu-2016-dct7-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "B9",
+      "body_code": "B9",
+      "production_start_year": 2016,
+      "production_end_year": 2025,
+      "model_name": "A4 (B9, 2016-2025)",
+      "variant_name": "35 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DL382)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.725
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n6"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
+          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
+          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
+          "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-b9-35-tfsi-eu-2016-dct7-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "B9",
+      "body_code": "B9",
+      "production_start_year": 2016,
+      "production_end_year": 2025,
+      "model_name": "A4 (B9, 2016-2025)",
+      "variant_name": "35 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n1",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.734
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n6"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
+          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
+          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
+          "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-b9-40-tfsi-eu-2016-dct7-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "B9",
+      "body_code": "B9",
+      "production_start_year": 2016,
+      "production_end_year": 2025,
+      "model_name": "A4 (B9, 2016-2025)",
+      "variant_name": "40 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n5",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n5",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n5",
+          "value": 0.734
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n5",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n5",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n5",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n5",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n5",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "Legacy variant-source research previously recorded this variant as Audi MediaCenter eTD / Audi UK technical data with High confidence."
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
+          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
+          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
+          "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-b9-45-tfsi-eu-2016-mt6-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "B9",
+      "body_code": "B9",
+      "production_start_year": 2016,
+      "production_end_year": 2025,
+      "model_name": "A4 (B9, 2016-2025)",
+      "variant_name": "45 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n3",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n3",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n3",
+          "value": 0.84
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n3",
+          "value": 3.462
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
+          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
+          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant '45 TFSI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
+          "reason": "Official Audi 2019 launch article documents 45 TFSI as quattro drive only and gasoline non-entry variants automatic only; current MediaCenter A4 page lists only 45 TFSI quattro S tronic. No saved official source supports an FWD or manual 45 TFSI A4 sedan. Marked no_confidence."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": false,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-b9-45-tfsi-eu-2016-dct7-fwd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "B9",
+      "body_code": "B9",
+      "production_start_year": 2016,
+      "production_end_year": 2025,
+      "model_name": "A4 (B9, 2016-2025)",
+      "variant_name": "45 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "unverified",
+        "notes_ref": "n3",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n3",
+        "code": "DCT7",
+        "name": "7-speed S tronic (DL382)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n3",
+          "value": 0.725
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n3",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
+          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
+          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Variant '45 TFSI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
+          "reason": "Same official late-B9 evidence: 45 TFSI is quattro-only on current Audi MediaCenter pages and 2019 launch article. No saved official source supports an FWD 45 TFSI A4 sedan. Marked no_confidence."
+        }
+      ],
+      "configuration_confidence": "no_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": false,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "audi-b9-45-tfsi-quattro-eu-2016-dct7-awd",
+      "brand": "Audi",
+      "type": "Sedan",
+      "market": "EU",
+      "model_code": "B9",
+      "body_code": "B9",
+      "production_start_year": 2016,
+      "production_end_year": 2025,
+      "model_name": "A4 (B9, 2016-2025)",
+      "variant_name": "45 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "Exact official Audi MediaCenter A4 Sedan 45 TFSI quattro technical-data PDFs confirm quattro ultra AWD for the checked late-B9 195 kW sedan state, while earlier-year continuity across the inherited row remains unresolved.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "Exact official Audi MediaCenter A4 Sedan 45 TFSI quattro technical-data PDFs confirm the 7-speed S tronic gearbox for the checked late-B9 195 kW sedan state, while earlier-year continuity across the inherited row remains unresolved.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 0.734
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "S line 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note_ref": "n6"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
+          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
+          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
+          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
+          "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
+        }
+      ],
+      "configuration_confidence": "low_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": false,
+        "usable_for_wheel_order": false,
+        "requires_manual_confirmation": true
+      }
     }
-  }
-]
+  ]
+}

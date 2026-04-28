@@ -1,653 +1,448 @@
-[
-  {
-    "id": "bmw-g05-m50i-eu-2019-zf8hp-awd",
-    "brand": "BMW",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "G05",
-    "body_code": "G05",
-    "production_start_year": 2019,
-    "production_end_year": 2026,
-    "model_name": "X5 (G05, 2019-2026)",
-    "variant_name": "M50i",
-    "engine_code": "N63",
-    "engine_name": "N63 4.4L V8 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence.",
+      "n3": "Official BMW DE and ACEA technical-data sources now confirm two exact G05 mappings: xDrive45e with 8-speed Steptronic, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.636, and standard 265/50 R19 tires; and launch-era xDrive40i with 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, and standard 255/55 R18 tires. The broad G05 row remains verification backlog because later Germany-market xDrive40i material changes gearbox wording and the standard tire baseline, so one undifferentiated 2019-2026 production mapping would be unsafe and the full EU variant matrix is still incomplete."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "legacy_research_sources:016fe2ba6b0f",
+        "legacy_research_sources:0b686d9345fd",
+        "legacy_research_sources:393d7682b19e",
+        "legacy_research_sources:3d68278cff53",
+        "legacy_research_sources:51dc23420162",
+        "legacy_research_sources:672d5c0fbe65",
+        "legacy_research_sources:6e8be3d590d9",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:97624cf593b1",
+        "legacy_research_sources:f1e673d6713e"
+      ],
+      "e2": [
+        "legacy_research_sources:0b686d9345fd",
+        "legacy_research_sources:3d68278cff53"
+      ],
+      "e3": [
         "legacy_research_sources:672d5c0fbe65",
         "legacy_research_sources:6e8be3d590d9"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 0.667
+      "e4": [
+        "legacy_research_sources:0b686d9345fd",
+        "legacy_research_sources:3d68278cff53",
+        "legacy_research_sources:6e8be3d590d9"
+      ]
+    }
+  },
+  "configurations": [
+    {
+      "id": "bmw-g05-m50i-eu-2019-zf8hp-awd",
+      "brand": "BMW",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "G05",
+      "body_code": "G05",
+      "production_start_year": 2019,
+      "production_end_year": 2026,
+      "model_name": "X5 (G05, 2019-2026)",
+      "variant_name": "M50i",
+      "engine_code": "N63",
+      "engine_name": "N63 4.4L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes_ref": "n1",
+        "value": "AWD"
       },
-      "final_drive_front": {
+      "transmission": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.077
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
       },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "value": 3.077
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-        "front": {
-          "width_mm": 275.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:016fe2ba6b0f",
-            "legacy_research_sources:0b686d9345fd",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:3d68278cff53",
-            "legacy_research_sources:51dc23420162",
-            "legacy_research_sources:672d5c0fbe65",
-            "legacy_research_sources:6e8be3d590d9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:f1e673d6713e"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
+          "notes_ref": "n1",
+          "value": 0.667
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.077
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 40.0,
             "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 20\""
+          },
+          {
+            "confidence": "reputable_secondary_crosschecked",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 21.0
+            },
+            "rear": {
+              "width_mm": 315.0,
+              "aspect_pct": 35.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 21\""
+          },
+          {
+            "confidence": "reputable_secondary_crosschecked",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 22.0
+            },
+            "rear": {
+              "width_mm": 315.0,
+              "aspect_pct": 30.0,
+              "rim_in": 22.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 22\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs": [
-            "legacy_research_sources:016fe2ba6b0f",
-            "legacy_research_sources:0b686d9345fd",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:3d68278cff53",
-            "legacy_research_sources:51dc23420162",
-            "legacy_research_sources:672d5c0fbe65",
-            "legacy_research_sources:6e8be3d590d9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:f1e673d6713e"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 21.0
-          },
-          "rear": {
-            "width_mm": 315.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 21\""
-        },
-        {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs": [
-            "legacy_research_sources:016fe2ba6b0f",
-            "legacy_research_sources:0b686d9345fd",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:3d68278cff53",
-            "legacy_research_sources:51dc23420162",
-            "legacy_research_sources:672d5c0fbe65",
-            "legacy_research_sources:6e8be3d590d9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:f1e673d6713e"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW press release with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 22.0
-          },
-          "rear": {
-            "width_mm": 315.0,
-            "aspect_pct": 30.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 22\""
+          "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW DE and ACEA technical-data sources now confirm two exact G05 mappings: xDrive45e with 8-speed Steptronic, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.636, and standard 265/50 R19 tires; and launch-era xDrive40i with 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, and standard 255/55 R18 tires. The broad G05 row remains verification backlog because later Germany-market xDrive40i material changes gearbox wording and the standard tire baseline, so one undifferentiated 2019-2026 production mapping would be unsafe and the full EU variant matrix is still incomplete.",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW press release with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X5 xDrive40i production-data applicability across the full G05 row span",
-        "reason": "Official launch-era xDrive40i specs prove final drive 3.385, top gear 0.640, and a 255/55 R18 standard tire, while later Germany-market material changes the gearbox wording and the standard tire to 265/50 R19, so one undifferentiated 2019-2026 xDrive40i production mapping would be unsafe.",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      },
-      {
-        "item": "BMW X5 (G05, 2019-2026) full EU variant matrix beyond the exact xDrive45e and xDrive40i mappings",
-        "reason": "This pass now resolves exact official xDrive45e and launch-era xDrive40i mappings, but it does not establish the complete official matrix for the other G05 variants represented by the broad row.",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      },
-      {
-        "item": "BMW X5 transmission subtype code and full optional wheel/tire matrix",
-        "reason": "Official BMW sources prove transmission names, ratios, and standard or selected option tires for the checked exact variants, but they do not publish a gearbox subtype code or one complete optional wheel/tire matrix across the represented row.",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g05-xdrive40i-eu-2019-zf8hp-awd",
-    "brand": "BMW",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "G05",
-    "body_code": "G05",
-    "production_start_year": 2019,
-    "production_end_year": 2026,
-    "model_name": "X5 (G05, 2019-2026)",
-    "variant_name": "xDrive40i",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:672d5c0fbe65",
-        "legacy_research_sources:6e8be3d590d9"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence.",
-        "value": 0.667
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence.",
-        "value": 3.077
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence.",
-        "value": 3.077
+      "unresolved": [
+        {
+          "item": "BMW X5 xDrive40i production-data applicability across the full G05 row span",
+          "reason": "Official launch-era xDrive40i specs prove final drive 3.385, top gear 0.640, and a 255/55 R18 standard tire, while later Germany-market material changes the gearbox wording and the standard tire to 265/50 R19, so one undifferentiated 2019-2026 xDrive40i production mapping would be unsafe.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X5 (G05, 2019-2026) full EU variant matrix beyond the exact xDrive45e and xDrive40i mappings",
+          "reason": "This pass now resolves exact official xDrive45e and launch-era xDrive40i mappings, but it does not establish the complete official matrix for the other G05 variants represented by the broad row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X5 transmission subtype code and full optional wheel/tire matrix",
+          "reason": "Official BMW sources prove transmission names, ratios, and standard or selected option tires for the checked exact variants, but they do not publish a gearbox subtype code or one complete optional wheel/tire matrix across the represented row.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence.",
-        "front": {
-          "width_mm": 275.0,
-          "aspect_pct": 40.0,
-          "rim_in": 20.0
-        },
-        "default_axle_for_speed": "rear"
+    {
+      "id": "bmw-g05-xdrive40i-eu-2019-zf8hp-awd",
+      "brand": "BMW",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "G05",
+      "body_code": "G05",
+      "production_start_year": 2019,
+      "production_end_year": 2026,
+      "model_name": "X5 (G05, 2019-2026)",
+      "variant_name": "xDrive40i",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes_ref": "n2",
+        "value": "AWD"
       },
-      "options": [
-        {
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n2",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "legacy_research_sources:016fe2ba6b0f",
-            "legacy_research_sources:0b686d9345fd",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:3d68278cff53",
-            "legacy_research_sources:51dc23420162",
-            "legacy_research_sources:672d5c0fbe65",
-            "legacy_research_sources:6e8be3d590d9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:f1e673d6713e"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence.",
+          "notes_ref": "n2",
+          "value": 0.667
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.077
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2",
           "front": {
             "width_mm": 275.0,
             "aspect_pct": 40.0,
             "rim_in": 20.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 20\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 20\""
+          },
+          {
+            "confidence": "reputable_secondary_crosschecked",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 21.0
+            },
+            "rear": {
+              "width_mm": 315.0,
+              "aspect_pct": 35.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 21\""
+          },
+          {
+            "confidence": "reputable_secondary_crosschecked",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 22.0
+            },
+            "rear": {
+              "width_mm": 315.0,
+              "aspect_pct": 30.0,
+              "rim_in": 22.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 22\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n3",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs": [
-            "legacy_research_sources:016fe2ba6b0f",
-            "legacy_research_sources:0b686d9345fd",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:3d68278cff53",
-            "legacy_research_sources:51dc23420162",
-            "legacy_research_sources:672d5c0fbe65",
-            "legacy_research_sources:6e8be3d590d9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:f1e673d6713e"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 21.0
-          },
-          "rear": {
-            "width_mm": 315.0,
-            "aspect_pct": 35.0,
-            "rim_in": 21.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 21\""
-        },
-        {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs": [
-            "legacy_research_sources:016fe2ba6b0f",
-            "legacy_research_sources:0b686d9345fd",
-            "legacy_research_sources:393d7682b19e",
-            "legacy_research_sources:3d68278cff53",
-            "legacy_research_sources:51dc23420162",
-            "legacy_research_sources:672d5c0fbe65",
-            "legacy_research_sources:6e8be3d590d9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:97624cf593b1",
-            "legacy_research_sources:f1e673d6713e"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence.",
-          "front": {
-            "width_mm": 275.0,
-            "aspect_pct": 35.0,
-            "rim_in": 22.0
-          },
-          "rear": {
-            "width_mm": 315.0,
-            "aspect_pct": 30.0,
-            "rim_in": 22.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 22\""
+          "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence."
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW DE and ACEA technical-data sources now confirm two exact G05 mappings: xDrive45e with 8-speed Steptronic, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.636, and standard 265/50 R19 tires; and launch-era xDrive40i with 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, and standard 255/55 R18 tires. The broad G05 row remains verification backlog because later Germany-market xDrive40i material changes gearbox wording and the standard tire baseline, so one undifferentiated 2019-2026 production mapping would be unsafe and the full EU variant matrix is still incomplete.",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (launch / 03-2021 exact state; broad row still unresolved) with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X5 xDrive40i production-data applicability across the full G05 row span",
-        "reason": "Official launch-era xDrive40i specs prove final drive 3.385, top gear 0.640, and a 255/55 R18 standard tire, while later Germany-market material changes the gearbox wording and the standard tire to 265/50 R19, so one undifferentiated 2019-2026 xDrive40i production mapping would be unsafe.",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      },
-      {
-        "item": "BMW X5 (G05, 2019-2026) full EU variant matrix beyond the exact xDrive45e and xDrive40i mappings",
-        "reason": "This pass now resolves exact official xDrive45e and launch-era xDrive40i mappings, but it does not establish the complete official matrix for the other G05 variants represented by the broad row.",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      },
-      {
-        "item": "BMW X5 transmission subtype code and full optional wheel/tire matrix",
-        "reason": "Official BMW sources prove transmission names, ratios, and standard or selected option tires for the checked exact variants, but they do not publish a gearbox subtype code or one complete optional wheel/tire matrix across the represented row.",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g05-xdrive45e-eu-2019-zf8hp-awd",
-    "brand": "BMW",
-    "type": "SUV",
-    "market": "EU",
-    "model_code": "G05",
-    "body_code": "G05",
-    "production_start_year": 2019,
-    "production_end_year": 2026,
-    "model_name": "X5 (G05, 2019-2026)",
-    "variant_name": "xDrive45e",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo PHEV",
-    "fuel_type": "PHEV",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "legacy_research_sources:0b686d9345fd",
-        "legacy_research_sources:3d68278cff53"
       ],
-      "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs for the exact G05 X5 xDrive45e consistently describe full-hybrid drive with torque routed to all four wheels via BMW xDrive.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "official_derived",
-      "evidence_refs": [
-        "legacy_research_sources:0b686d9345fd",
-        "legacy_research_sources:3d68278cff53"
-      ],
-      "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs for the exact G05 X5 xDrive45e print 8-speed/8-Gang Steptronic wording. The repo keeps ZF8HP as the canonical automatic-family code for that official Steptronic mapping.",
-      "code": "ZF8HP",
-      "name": "8-speed Steptronic transmission"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:3d68278cff53"
-        ],
-        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs consistently list 0.667 as the top-gear ratio for the exact G05 X5 xDrive45e.",
-        "value": 0.667
-      },
-      "gear_ratios": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:3d68278cff53"
-        ],
-        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs consistently list the full forward gear-ratio set for the exact G05 X5 xDrive45e.",
-        "value": [
-          4.714,
-          3.143,
-          2.106,
-          1.667,
-          1.285,
-          1.0,
-          0.839,
-          0.667
-        ]
-      },
-      "final_drive_front": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:3d68278cff53"
-        ],
-        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs publish one axle/final-drive value of 3.636 for the exact G05 X5 xDrive45e. The repo duplicates that single official value into the front field until a source publishes a split front/rear ratio.",
-        "value": 3.636
-      },
-      "final_drive_rear": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:3d68278cff53"
-        ],
-        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs publish one axle/final-drive value of 3.636 for the exact G05 X5 xDrive45e. The repo duplicates that single official value into the rear field until a source publishes a split front/rear ratio.",
-        "value": 3.636
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:6e8be3d590d9"
-        ],
-        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs consistently list 265/50 R19 110W XL as the standard tire for the exact G05 X5 xDrive45e, and the official 08/2020 BMW Germany price list independently confirms the same standard 19-inch setup.",
-        "front": {
-          "width_mm": 265.0,
-          "aspect_pct": 50.0,
-          "rim_in": 19.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
+      "unresolved": [
         {
+          "item": "BMW X5 xDrive40i production-data applicability across the full G05 row span",
+          "reason": "Official launch-era xDrive40i specs prove final drive 3.385, top gear 0.640, and a 255/55 R18 standard tire, while later Germany-market material changes the gearbox wording and the standard tire to 265/50 R19, so one undifferentiated 2019-2026 xDrive40i production mapping would be unsafe.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X5 (G05, 2019-2026) full EU variant matrix beyond the exact xDrive45e and xDrive40i mappings",
+          "reason": "This pass now resolves exact official xDrive45e and launch-era xDrive40i mappings, but it does not establish the complete official matrix for the other G05 variants represented by the broad row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X5 transmission subtype code and full optional wheel/tire matrix",
+          "reason": "Official BMW sources prove transmission names, ratios, and standard or selected option tires for the checked exact variants, but they do not publish a gearbox subtype code or one complete optional wheel/tire matrix across the represented row.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
+    },
+    {
+      "id": "bmw-g05-xdrive45e-eu-2019-zf8hp-awd",
+      "brand": "BMW",
+      "type": "SUV",
+      "market": "EU",
+      "model_code": "G05",
+      "body_code": "G05",
+      "production_start_year": 2019,
+      "production_end_year": 2026,
+      "model_name": "X5 (G05, 2019-2026)",
+      "variant_name": "xDrive45e",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs for the exact G05 X5 xDrive45e consistently describe full-hybrid drive with torque routed to all four wheels via BMW xDrive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e2",
+        "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs for the exact G05 X5 xDrive45e print 8-speed/8-Gang Steptronic wording. The repo keeps ZF8HP as the canonical automatic-family code for that official Steptronic mapping.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic transmission"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs": [
-            "legacy_research_sources:0b686d9345fd",
-            "legacy_research_sources:3d68278cff53",
-            "legacy_research_sources:6e8be3d590d9"
-          ],
-          "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs and the 08/2020 BMW Germany price list confirm this as the standard 19-inch setup for the exact G05 X5 xDrive45e.",
+          "evidence_refs_ref": "e2",
+          "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs consistently list 0.667 as the top-gear ratio for the exact G05 X5 xDrive45e.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs consistently list the full forward gear-ratio set for the exact G05 X5 xDrive45e.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs publish one axle/final-drive value of 3.636 for the exact G05 X5 xDrive45e. The repo duplicates that single official value into the front field until a source publishes a split front/rear ratio.",
+          "value": 3.636
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs publish one axle/final-drive value of 3.636 for the exact G05 X5 xDrive45e. The repo duplicates that single official value into the rear field until a source publishes a split front/rear ratio.",
+          "value": 3.636
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs consistently list 265/50 R19 110W XL as the standard tire for the exact G05 X5 xDrive45e, and the official 08/2020 BMW Germany price list independently confirms the same standard 19-inch setup.",
           "front": {
             "width_mm": 265.0,
             "aspect_pct": 50.0,
             "rim_in": 19.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 19\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes": "Official BMW 08/2019 and 03/2021 technical-data PDFs and the 08/2020 BMW Germany price list confirm this as the standard 19-inch setup for the exact G05 X5 xDrive45e.",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 50.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 19\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Official BMW DE and ACEA technical-data sources now confirm two exact G05 mappings: xDrive45e with 8-speed Steptronic, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, one published axle/final-drive value 3.636, and standard 265/50 R19 tires; and launch-era xDrive40i with 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, and standard 255/55 R18 tires. The official 08/2020 BMW Germany price list independently confirms the exact xDrive45e standard 19-inch setup, but the full optional wheel matrix still needs visual per-column checking before every 20/21/22-inch package can be promoted as xDrive45e-specific production data. The broad G05 row remains verification backlog because later Germany-market xDrive40i material changes gearbox wording and the standard tire baseline, so one undifferentiated 2019-2026 production mapping would be unsafe and the full EU variant matrix is still incomplete.",
+          "evidence_refs": [
+            "legacy_research_sources:0b686d9345fd",
+            "legacy_research_sources:3d68278cff53",
+            "legacy_research_sources:6e8be3d590d9",
+            "legacy_research_sources:016fe2ba6b0f",
+            "legacy_research_sources:393d7682b19e",
+            "legacy_research_sources:51dc23420162",
+            "legacy_research_sources:672d5c0fbe65",
+            "legacy_research_sources:95b9bf2bf0cf",
+            "legacy_research_sources:97624cf593b1",
+            "legacy_research_sources:f1e673d6713e"
+          ]
+        },
+        {
+          "note": "Legacy variant-source research previously recorded this variant as BMW DE technical data (exact 2019 + 2021 states) with High confidence."
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Official BMW DE and ACEA technical-data sources now confirm two exact G05 mappings: xDrive45e with 8-speed Steptronic, full forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, one published axle/final-drive value 3.636, and standard 265/50 R19 tires; and launch-era xDrive40i with 8-speed Steptronic, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, and standard 255/55 R18 tires. The official 08/2020 BMW Germany price list independently confirms the exact xDrive45e standard 19-inch setup, but the full optional wheel matrix still needs visual per-column checking before every 20/21/22-inch package can be promoted as xDrive45e-specific production data. The broad G05 row remains verification backlog because later Germany-market xDrive40i material changes gearbox wording and the standard tire baseline, so one undifferentiated 2019-2026 production mapping would be unsafe and the full EU variant matrix is still incomplete.",
-        "evidence_refs": [
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW DE technical data (exact 2019 + 2021 states) with High confidence."
+      ],
+      "unresolved": [
+        {
+          "item": "BMW X5 xDrive40i production-data applicability across the full G05 row span",
+          "reason": "Official launch-era xDrive40i specs prove final drive 3.385, top gear 0.640, and a 255/55 R18 standard tire, while later Germany-market material changes the gearbox wording and the standard tire to 265/50 R19, so one undifferentiated 2019-2026 xDrive40i production mapping would be unsafe.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X5 (G05, 2019-2026) full EU variant matrix beyond the exact xDrive45e and xDrive40i mappings",
+          "reason": "This pass now resolves exact official xDrive45e and launch-era xDrive40i mappings, but it does not establish the complete official matrix for the other G05 variants represented by the broad row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X5 transmission subtype code and full optional wheel/tire matrix",
+          "reason": "Official BMW sources prove transmission names, ratios, and standard or selected option tires for the checked exact variants, but they do not publish a gearbox subtype code or one complete optional wheel/tire matrix across the represented row.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "BMW X5 xDrive40i production-data applicability across the full G05 row span",
-        "reason": "Official launch-era xDrive40i specs prove final drive 3.385, top gear 0.640, and a 255/55 R18 standard tire, while later Germany-market material changes the gearbox wording and the standard tire to 265/50 R19, so one undifferentiated 2019-2026 xDrive40i production mapping would be unsafe.",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      },
-      {
-        "item": "BMW X5 (G05, 2019-2026) full EU variant matrix beyond the exact xDrive45e and xDrive40i mappings",
-        "reason": "This pass now resolves exact official xDrive45e and launch-era xDrive40i mappings, but it does not establish the complete official matrix for the other G05 variants represented by the broad row.",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      },
-      {
-        "item": "BMW X5 transmission subtype code and full optional wheel/tire matrix",
-        "reason": "Official BMW sources prove transmission names, ratios, and standard or selected option tires for the checked exact variants, but they do not publish a gearbox subtype code or one complete optional wheel/tire matrix across the represented row.",
-        "evidence_refs": [
-          "legacy_research_sources:016fe2ba6b0f",
-          "legacy_research_sources:0b686d9345fd",
-          "legacy_research_sources:393d7682b19e",
-          "legacy_research_sources:3d68278cff53",
-          "legacy_research_sources:51dc23420162",
-          "legacy_research_sources:672d5c0fbe65",
-          "legacy_research_sources:6e8be3d590d9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:97624cf593b1",
-          "legacy_research_sources:f1e673d6713e"
-        ]
-      }
-    ],
-    "configuration_confidence": "high_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}

@@ -1,696 +1,439 @@
-[
-  {
-    "id": "bmw-g22-420i-eu-2021-zf8hp-rwd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "G22",
-    "body_code": "G22",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "4 Series (G22, 2021-2026)",
-    "variant_name": "420i",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
+{
+  "definitions": {
+    "notes": {
+      "n1": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence.",
+      "n2": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence.",
+      "n3": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence.",
+      "n4": "Issue #1034 official-source review corrected the supported EU-facing petrol family to 420i, 430i xDrive, and M440i xDrive, removing the stale RWD-only 430i mapping from the supported row. Official BMW PressClub DE 07/2021 ACEA technical-data now also confirms the exact M440i xDrive launch mapping: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard staggered 225/45 R18 front + 255/40 R18 rear tires. Later Wave 10 validation adds exact 430i xDrive context: the checked 03/2021 launch technical-data PDF does not list 430i xDrive, but the current BMW Germany technical-data page does list 430i xDrive Coupé / 51HB / Allradantrieb / Steptronic Sport Getriebe, and the 2026 Germany price list confirms standard 225/50 R17 tires, optional 225/45 R18 tires, and optional staggered 225/40 R19 front + 255/35 R19 rear tires. Wave 12 validation now adds exact 420i context from checked 03/2021 and 01/2024 official EU-market technical-data PDFs: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 225/50 R17 tires. The broad 2021-2026 row remains unchanged because the checked official material still does not prove one unchanged 420i, 430i xDrive, or M440i xDrive package across the full represented span."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "bmw_market_pages:g22-4-series-technical-data-de",
+        "bmw_market_pages:g22-4-series-technical-data-ie",
+        "legacy_research_sources:03c433610239",
+        "legacy_research_sources:0b510c0af2c9",
+        "legacy_research_sources:95b9bf2bf0cf",
+        "legacy_research_sources:c0c98c38e567",
+        "legacy_research_sources:dbc78803d2a3",
+        "legacy_research_sources:fe5920beed47"
+      ],
+      "e2": [
         "bmw_market_pages:g22-4-series-technical-data-de",
         "bmw_market_pages:g22-4-series-technical-data-ie",
         "legacy_research_sources:c0c98c38e567",
         "legacy_research_sources:dbc78803d2a3"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence.",
-      "value": "RWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence.",
-        "value": 0.667
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence.",
-        "value": 2.813
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_market_pages:g22-4-series-technical-data-de",
-            "bmw_market_pages:g22-4-series-technical-data-ie",
-            "legacy_research_sources:03c433610239",
-            "legacy_research_sources:0b510c0af2c9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:c0c98c38e567",
-            "legacy_research_sources:dbc78803d2a3",
-            "legacy_research_sources:fe5920beed47"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_market_pages:g22-4-series-technical-data-de",
-            "bmw_market_pages:g22-4-series-technical-data-ie",
-            "legacy_research_sources:03c433610239",
-            "legacy_research_sources:0b510c0af2c9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:c0c98c38e567",
-            "legacy_research_sources:dbc78803d2a3",
-            "legacy_research_sources:fe5920beed47"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_market_pages:g22-4-series-technical-data-de",
-            "bmw_market_pages:g22-4-series-technical-data-ie",
-            "legacy_research_sources:03c433610239",
-            "legacy_research_sources:0b510c0af2c9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:c0c98c38e567",
-            "legacy_research_sources:dbc78803d2a3",
-            "legacy_research_sources:fe5920beed47"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
-        }
       ]
-    },
-    "verification_notes": [
-      {
-        "note": "Issue #1034 official-source review corrected the supported EU-facing petrol family to 420i, 430i xDrive, and M440i xDrive, removing the stale RWD-only 430i mapping from the supported row. Official BMW PressClub DE 07/2021 ACEA technical-data now also confirms the exact M440i xDrive launch mapping: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard staggered 225/45 R18 front + 255/40 R18 rear tires. Later Wave 10 validation adds exact 430i xDrive context: the checked 03/2021 launch technical-data PDF does not list 430i xDrive, but the current BMW Germany technical-data page does list 430i xDrive Coupé / 51HB / Allradantrieb / Steptronic Sport Getriebe, and the 2026 Germany price list confirms standard 225/50 R17 tires, optional 225/45 R18 tires, and optional staggered 225/40 R19 front + 255/35 R19 rear tires. Wave 12 validation now adds exact 420i context from checked 03/2021 and 01/2024 official EU-market technical-data PDFs: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 225/50 R17 tires. The broad 2021-2026 row remains unchanged because the checked official material still does not prove one unchanged 420i, 430i xDrive, or M440i xDrive package across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Whether this row should later expand beyond the supported petrol-family slice",
-        "reason": "BMW Germany technical data confirms additional diesel xDrive variants, but issue #1034 stays narrowly focused on the confirmed petrol-family mismatch rather than broadening the supported row to every current market slice.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW 420i production-data applicability across the full G22 row span",
-        "reason": "Checked official 03/2021 and 01/2024 EU-market technical-data PDFs agree on the exact 420i ratio set, reverse ratio 3.712, final drive 2.813, and standard 225/50 R17 tire, but this pass did not recover an official 2025-2026 exact table or one full year-spanning optional wheel matrix proving the same package across the full represented row.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW 430i xDrive exact numeric ratios and production-data applicability across the full G22 row span",
-        "reason": "Official BMW sources now prove the current Germany-market 430i xDrive naming, model code 51HB, drivetrain, transmission wording, and current 17/18/19-inch tire matrix, but the checked 03/2021 launch technical-data PDF does not list 430i xDrive and this pass did not recover any official exact 430i xDrive final-drive, top-gear, forward-ratio, or reverse-ratio table.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW M440i xDrive production-data applicability across the full G22 row span",
-        "reason": "The checked official 07/2021 ACEA sheet resolves the M440i xDrive launch ratios, final drive, top gear, and staggered base tires, but later official Germany-market pages already show a different published output state and this pass did not recover later exact ratio/tire tables proving one unchanged 2021-2026 package.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW M440i xDrive official optional wheel/tire matrix and transmission subtype code",
-        "reason": "Official BMW sources now prove the exact launch ratio set and standard staggered 18-inch fitment, but they do not publish a gearbox subtype code beyond Steptronic wording or one exact optional wheel/tire matrix for the full represented row.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
   },
-  {
-    "id": "bmw-g22-430i-xdrive-eu-2021-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "G22",
-    "body_code": "G22",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "4 Series (G22, 2021-2026)",
-    "variant_name": "430i xDrive",
-    "engine_code": "B48",
-    "engine_name": "B48 2.0L I4 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_market_pages:g22-4-series-technical-data-de",
-        "bmw_market_pages:g22-4-series-technical-data-ie",
-        "legacy_research_sources:c0c98c38e567",
-        "legacy_research_sources:dbc78803d2a3"
-      ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence.",
-        "value": 0.667
+  "configurations": [
+    {
+      "id": "bmw-g22-420i-eu-2021-zf8hp-rwd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "G22",
+      "body_code": "G22",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "4 Series (G22, 2021-2026)",
+      "variant_name": "420i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes_ref": "n3",
+        "value": "RWD"
       },
-      "final_drive_front": {
+      "transmission": {
         "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence.",
-        "value": 2.813
+        "notes_ref": "n3",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
       },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence.",
-        "value": 2.813
-      }
-    },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
-      },
-      "options": [
-        {
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_market_pages:g22-4-series-technical-data-de",
-            "bmw_market_pages:g22-4-series-technical-data-ie",
-            "legacy_research_sources:03c433610239",
-            "legacy_research_sources:0b510c0af2c9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:c0c98c38e567",
-            "legacy_research_sources:dbc78803d2a3",
-            "legacy_research_sources:fe5920beed47"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence.",
+          "notes_ref": "n3",
+          "value": 0.667
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n3",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n3",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n3",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_market_pages:g22-4-series-technical-data-de",
-            "bmw_market_pages:g22-4-series-technical-data-ie",
-            "legacy_research_sources:03c433610239",
-            "legacy_research_sources:0b510c0af2c9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:c0c98c38e567",
-            "legacy_research_sources:dbc78803d2a3",
-            "legacy_research_sources:fe5920beed47"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_market_pages:g22-4-series-technical-data-de",
-            "bmw_market_pages:g22-4-series-technical-data-ie",
-            "legacy_research_sources:03c433610239",
-            "legacy_research_sources:0b510c0af2c9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:c0c98c38e567",
-            "legacy_research_sources:dbc78803d2a3",
-            "legacy_research_sources:fe5920beed47"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 03/2021 + 01/2024 states) with High confidence."
         }
-      ]
-    },
-    "verification_notes": [
-      {
-        "note": "Issue #1034 official-source review corrected the supported EU-facing petrol family to 420i, 430i xDrive, and M440i xDrive, removing the stale RWD-only 430i mapping from the supported row. Official BMW PressClub DE 07/2021 ACEA technical-data now also confirms the exact M440i xDrive launch mapping: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard staggered 225/45 R18 front + 255/40 R18 rear tires. Later Wave 10 validation adds exact 430i xDrive context: the checked 03/2021 launch technical-data PDF does not list 430i xDrive, but the current BMW Germany technical-data page does list 430i xDrive Coupé / 51HB / Allradantrieb / Steptronic Sport Getriebe, and the 2026 Germany price list confirms standard 225/50 R17 tires, optional 225/45 R18 tires, and optional staggered 225/40 R19 front + 255/35 R19 rear tires. Wave 12 validation now adds exact 420i context from checked 03/2021 and 01/2024 official EU-market technical-data PDFs: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 225/50 R17 tires. The broad 2021-2026 row remains unchanged because the checked official material still does not prove one unchanged 420i, 430i xDrive, or M440i xDrive package across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence."
-      }
-    ],
-    "unresolved": [
-      {
-        "item": "Whether this row should later expand beyond the supported petrol-family slice",
-        "reason": "BMW Germany technical data confirms additional diesel xDrive variants, but issue #1034 stays narrowly focused on the confirmed petrol-family mismatch rather than broadening the supported row to every current market slice.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW 420i production-data applicability across the full G22 row span",
-        "reason": "Checked official 03/2021 and 01/2024 EU-market technical-data PDFs agree on the exact 420i ratio set, reverse ratio 3.712, final drive 2.813, and standard 225/50 R17 tire, but this pass did not recover an official 2025-2026 exact table or one full year-spanning optional wheel matrix proving the same package across the full represented row.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW 430i xDrive exact numeric ratios and production-data applicability across the full G22 row span",
-        "reason": "Official BMW sources now prove the current Germany-market 430i xDrive naming, model code 51HB, drivetrain, transmission wording, and current 17/18/19-inch tire matrix, but the checked 03/2021 launch technical-data PDF does not list 430i xDrive and this pass did not recover any official exact 430i xDrive final-drive, top-gear, forward-ratio, or reverse-ratio table.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW M440i xDrive production-data applicability across the full G22 row span",
-        "reason": "The checked official 07/2021 ACEA sheet resolves the M440i xDrive launch ratios, final drive, top gear, and staggered base tires, but later official Germany-market pages already show a different published output state and this pass did not recover later exact ratio/tire tables proving one unchanged 2021-2026 package.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW M440i xDrive official optional wheel/tire matrix and transmission subtype code",
-        "reason": "Official BMW sources now prove the exact launch ratio set and standard staggered 18-inch fitment, but they do not publish a gearbox subtype code beyond Steptronic wording or one exact optional wheel/tire matrix for the full represented row.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
-    }
-  },
-  {
-    "id": "bmw-g22-m440i-xdrive-eu-2021-zf8hp-awd",
-    "brand": "BMW",
-    "type": "Coupe",
-    "market": "EU",
-    "model_code": "G22",
-    "body_code": "G22",
-    "production_start_year": 2021,
-    "production_end_year": 2026,
-    "model_name": "4 Series (G22, 2021-2026)",
-    "variant_name": "M440i xDrive",
-    "engine_code": "B58",
-    "engine_name": "B58 3.0L I6 Turbo",
-    "fuel_type": "ICE",
-    "drivetrain": {
-      "confidence": "official_exact",
-      "evidence_refs": [
-        "bmw_market_pages:g22-4-series-technical-data-de",
-        "bmw_market_pages:g22-4-series-technical-data-ie",
-        "legacy_research_sources:c0c98c38e567",
-        "legacy_research_sources:dbc78803d2a3"
       ],
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence.",
-      "value": "AWD"
-    },
-    "transmission": {
-      "confidence": "family_default",
-      "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence.",
-      "code": "ZF8HP",
-      "name": "8-speed automatic (ZF 8HP)"
-    },
-    "ratios": {
-      "top_gear_ratio": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence.",
-        "value": 0.667
-      },
-      "final_drive_front": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence.",
-        "value": 2.813
-      },
-      "final_drive_rear": {
-        "confidence": "family_default",
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence.",
-        "value": 2.813
+      "unresolved": [
+        {
+          "item": "Whether this row should later expand beyond the supported petrol-family slice",
+          "reason": "BMW Germany technical data confirms additional diesel xDrive variants, but issue #1034 stays narrowly focused on the confirmed petrol-family mismatch rather than broadening the supported row to every current market slice.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW 420i production-data applicability across the full G22 row span",
+          "reason": "Checked official 03/2021 and 01/2024 EU-market technical-data PDFs agree on the exact 420i ratio set, reverse ratio 3.712, final drive 2.813, and standard 225/50 R17 tire, but this pass did not recover an official 2025-2026 exact table or one full year-spanning optional wheel matrix proving the same package across the full represented row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW 430i xDrive exact numeric ratios and production-data applicability across the full G22 row span",
+          "reason": "Official BMW sources now prove the current Germany-market 430i xDrive naming, model code 51HB, drivetrain, transmission wording, and current 17/18/19-inch tire matrix, but the checked 03/2021 launch technical-data PDF does not list 430i xDrive and this pass did not recover any official exact 430i xDrive final-drive, top-gear, forward-ratio, or reverse-ratio table.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW M440i xDrive production-data applicability across the full G22 row span",
+          "reason": "The checked official 07/2021 ACEA sheet resolves the M440i xDrive launch ratios, final drive, top gear, and staggered base tires, but later official Germany-market pages already show a different published output state and this pass did not recover later exact ratio/tire tables proving one unchanged 2021-2026 package.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW M440i xDrive official optional wheel/tire matrix and transmission subtype code",
+          "reason": "Official BMW sources now prove the exact launch ratio set and standard staggered 18-inch fitment, but they do not publish a gearbox subtype code beyond Steptronic wording or one exact optional wheel/tire matrix for the full represented row.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
     },
-    "tires": {
-      "default": {
-        "confidence": "family_default",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ],
-        "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence.",
-        "front": {
-          "width_mm": 245.0,
-          "aspect_pct": 40.0,
-          "rim_in": 18.0
-        },
-        "default_axle_for_speed": "rear"
+    {
+      "id": "bmw-g22-430i-xdrive-eu-2021-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "G22",
+      "body_code": "G22",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "4 Series (G22, 2021-2026)",
+      "variant_name": "430i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes_ref": "n1",
+        "value": "AWD"
       },
-      "options": [
-        {
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n1",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
           "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_market_pages:g22-4-series-technical-data-de",
-            "bmw_market_pages:g22-4-series-technical-data-ie",
-            "legacy_research_sources:03c433610239",
-            "legacy_research_sources:0b510c0af2c9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:c0c98c38e567",
-            "legacy_research_sources:dbc78803d2a3",
-            "legacy_research_sources:fe5920beed47"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence.",
+          "notes_ref": "n1",
+          "value": 0.667
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.813
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n1",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n1",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 40.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "name": "Standard 18\""
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n1",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
         },
         {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_market_pages:g22-4-series-technical-data-de",
-            "bmw_market_pages:g22-4-series-technical-data-ie",
-            "legacy_research_sources:03c433610239",
-            "legacy_research_sources:0b510c0af2c9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:c0c98c38e567",
-            "legacy_research_sources:dbc78803d2a3",
-            "legacy_research_sources:fe5920beed47"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence.",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 35.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "Sport Line 19\""
-        },
-        {
-          "confidence": "family_default",
-          "evidence_refs": [
-            "bmw_market_pages:g22-4-series-technical-data-de",
-            "bmw_market_pages:g22-4-series-technical-data-ie",
-            "legacy_research_sources:03c433610239",
-            "legacy_research_sources:0b510c0af2c9",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:c0c98c38e567",
-            "legacy_research_sources:dbc78803d2a3",
-            "legacy_research_sources:fe5920beed47"
-          ],
-          "notes": "Migrated from legacy grouped car-library data into canonical exact-configuration form. Treat this value as inherited family data until variant-specific evidence is linked. Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence.",
-          "front": {
-            "width_mm": 265.0,
-            "aspect_pct": 30.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear",
-          "name": "M Sport 20\""
+          "note": "Legacy variant-source research previously recorded this variant as BMW DE technical data with High confidence."
         }
-      ]
+      ],
+      "unresolved": [
+        {
+          "item": "Whether this row should later expand beyond the supported petrol-family slice",
+          "reason": "BMW Germany technical data confirms additional diesel xDrive variants, but issue #1034 stays narrowly focused on the confirmed petrol-family mismatch rather than broadening the supported row to every current market slice.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW 420i production-data applicability across the full G22 row span",
+          "reason": "Checked official 03/2021 and 01/2024 EU-market technical-data PDFs agree on the exact 420i ratio set, reverse ratio 3.712, final drive 2.813, and standard 225/50 R17 tire, but this pass did not recover an official 2025-2026 exact table or one full year-spanning optional wheel matrix proving the same package across the full represented row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW 430i xDrive exact numeric ratios and production-data applicability across the full G22 row span",
+          "reason": "Official BMW sources now prove the current Germany-market 430i xDrive naming, model code 51HB, drivetrain, transmission wording, and current 17/18/19-inch tire matrix, but the checked 03/2021 launch technical-data PDF does not list 430i xDrive and this pass did not recover any official exact 430i xDrive final-drive, top-gear, forward-ratio, or reverse-ratio table.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW M440i xDrive production-data applicability across the full G22 row span",
+          "reason": "The checked official 07/2021 ACEA sheet resolves the M440i xDrive launch ratios, final drive, top gear, and staggered base tires, but later official Germany-market pages already show a different published output state and this pass did not recover later exact ratio/tire tables proving one unchanged 2021-2026 package.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW M440i xDrive official optional wheel/tire matrix and transmission subtype code",
+          "reason": "Official BMW sources now prove the exact launch ratio set and standard staggered 18-inch fitment, but they do not publish a gearbox subtype code beyond Steptronic wording or one exact optional wheel/tire matrix for the full represented row.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
+      }
     },
-    "verification_notes": [
-      {
-        "note": "Issue #1034 official-source review corrected the supported EU-facing petrol family to 420i, 430i xDrive, and M440i xDrive, removing the stale RWD-only 430i mapping from the supported row. Official BMW PressClub DE 07/2021 ACEA technical-data now also confirms the exact M440i xDrive launch mapping: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard staggered 225/45 R18 front + 255/40 R18 rear tires. Later Wave 10 validation adds exact 430i xDrive context: the checked 03/2021 launch technical-data PDF does not list 430i xDrive, but the current BMW Germany technical-data page does list 430i xDrive Coupé / 51HB / Allradantrieb / Steptronic Sport Getriebe, and the 2026 Germany price list confirms standard 225/50 R17 tires, optional 225/45 R18 tires, and optional staggered 225/40 R19 front + 255/35 R19 rear tires. Wave 12 validation now adds exact 420i context from checked 03/2021 and 01/2024 official EU-market technical-data PDFs: 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 2.813, and standard 225/50 R17 tires. The broad 2021-2026 row remains unchanged because the checked official material still does not prove one unchanged 420i, 430i xDrive, or M440i xDrive package across the full represented span.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
+    {
+      "id": "bmw-g22-m440i-xdrive-eu-2021-zf8hp-awd",
+      "brand": "BMW",
+      "type": "Coupe",
+      "market": "EU",
+      "model_code": "G22",
+      "body_code": "G22",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "model_name": "4 Series (G22, 2021-2026)",
+      "variant_name": "M440i xDrive",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes_ref": "n2",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "notes_ref": "n2",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 0.667
+        },
+        "final_drive_front": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 2.813
+        },
+        "final_drive_rear": {
+          "confidence": "family_default",
+          "notes_ref": "n2",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "family_default",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "n2",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 35.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Sport Line 19\""
+          },
+          {
+            "confidence": "family_default",
+            "evidence_refs_ref": "e1",
+            "notes_ref": "n2",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 30.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "M Sport 20\""
+          }
         ]
       },
-      {
-        "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence."
+      "verification_notes": [
+        {
+          "note_ref": "n4",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "Legacy variant-source research previously recorded this variant as BMW PressClub technical data (exact 07/2021 launch state) with High confidence."
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Whether this row should later expand beyond the supported petrol-family slice",
+          "reason": "BMW Germany technical data confirms additional diesel xDrive variants, but issue #1034 stays narrowly focused on the confirmed petrol-family mismatch rather than broadening the supported row to every current market slice.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW 420i production-data applicability across the full G22 row span",
+          "reason": "Checked official 03/2021 and 01/2024 EU-market technical-data PDFs agree on the exact 420i ratio set, reverse ratio 3.712, final drive 2.813, and standard 225/50 R17 tire, but this pass did not recover an official 2025-2026 exact table or one full year-spanning optional wheel matrix proving the same package across the full represented row.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW 430i xDrive exact numeric ratios and production-data applicability across the full G22 row span",
+          "reason": "Official BMW sources now prove the current Germany-market 430i xDrive naming, model code 51HB, drivetrain, transmission wording, and current 17/18/19-inch tire matrix, but the checked 03/2021 launch technical-data PDF does not list 430i xDrive and this pass did not recover any official exact 430i xDrive final-drive, top-gear, forward-ratio, or reverse-ratio table.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW M440i xDrive production-data applicability across the full G22 row span",
+          "reason": "The checked official 07/2021 ACEA sheet resolves the M440i xDrive launch ratios, final drive, top gear, and staggered base tires, but later official Germany-market pages already show a different published output state and this pass did not recover later exact ratio/tire tables proving one unchanged 2021-2026 package.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW M440i xDrive official optional wheel/tire matrix and transmission subtype code",
+          "reason": "Official BMW sources now prove the exact launch ratio set and standard staggered 18-inch fitment, but they do not publish a gearbox subtype code beyond Steptronic wording or one exact optional wheel/tire matrix for the full represented row.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "medium_confidence",
+      "order_analysis_policy": {
+        "usable_for_engine_order": true,
+        "usable_for_driveshaft_order": true,
+        "usable_for_wheel_order": true,
+        "requires_manual_confirmation": true
       }
-    ],
-    "unresolved": [
-      {
-        "item": "Whether this row should later expand beyond the supported petrol-family slice",
-        "reason": "BMW Germany technical data confirms additional diesel xDrive variants, but issue #1034 stays narrowly focused on the confirmed petrol-family mismatch rather than broadening the supported row to every current market slice.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW 420i production-data applicability across the full G22 row span",
-        "reason": "Checked official 03/2021 and 01/2024 EU-market technical-data PDFs agree on the exact 420i ratio set, reverse ratio 3.712, final drive 2.813, and standard 225/50 R17 tire, but this pass did not recover an official 2025-2026 exact table or one full year-spanning optional wheel matrix proving the same package across the full represented row.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW 430i xDrive exact numeric ratios and production-data applicability across the full G22 row span",
-        "reason": "Official BMW sources now prove the current Germany-market 430i xDrive naming, model code 51HB, drivetrain, transmission wording, and current 17/18/19-inch tire matrix, but the checked 03/2021 launch technical-data PDF does not list 430i xDrive and this pass did not recover any official exact 430i xDrive final-drive, top-gear, forward-ratio, or reverse-ratio table.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW M440i xDrive production-data applicability across the full G22 row span",
-        "reason": "The checked official 07/2021 ACEA sheet resolves the M440i xDrive launch ratios, final drive, top gear, and staggered base tires, but later official Germany-market pages already show a different published output state and this pass did not recover later exact ratio/tire tables proving one unchanged 2021-2026 package.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      },
-      {
-        "item": "BMW M440i xDrive official optional wheel/tire matrix and transmission subtype code",
-        "reason": "Official BMW sources now prove the exact launch ratio set and standard staggered 18-inch fitment, but they do not publish a gearbox subtype code beyond Steptronic wording or one exact optional wheel/tire matrix for the full represented row.",
-        "evidence_refs": [
-          "bmw_market_pages:g22-4-series-technical-data-de",
-          "bmw_market_pages:g22-4-series-technical-data-ie",
-          "legacy_research_sources:03c433610239",
-          "legacy_research_sources:0b510c0af2c9",
-          "legacy_research_sources:95b9bf2bf0cf",
-          "legacy_research_sources:c0c98c38e567",
-          "legacy_research_sources:dbc78803d2a3",
-          "legacy_research_sources:fe5920beed47"
-        ]
-      }
-    ],
-    "configuration_confidence": "medium_confidence",
-    "order_analysis_policy": {
-      "usable_for_engine_order": true,
-      "usable_for_driveshaft_order": true,
-      "usable_for_wheel_order": true,
-      "requires_manual_confirmation": true
     }
-  }
-]
+  ]
+}
