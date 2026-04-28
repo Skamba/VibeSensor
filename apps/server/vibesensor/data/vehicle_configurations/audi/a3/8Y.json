@@ -91,6 +91,71 @@
         "audi_mediacenter_sources:8y-a3-sedan-35-tdi-stronic-2024-tech-data-pdf",
         "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
       ]
+    },
+    "tire_setups": {
+      "setup_245_20": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 30.0,
+          "rim_in": 20.0,
+          "width_mm": 245.0
+        }
+      },
+      "setup_235_19_2": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 235.0
+        }
+      },
+      "setup_225_18_2": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        }
+      },
+      "setup_235_19": {
+        "confidence": "official_derived",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 235.0
+        },
+        "notes_ref": "n9"
+      },
+      "setup_225_18": {
+        "confidence": "official_derived",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n8"
+      },
+      "setup_225_17": {
+        "confidence": "official_derived",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 45.0,
+          "rim_in": 17.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n7"
+      }
     }
   },
   "defaults": {
@@ -176,39 +241,15 @@
             "name": "Basic 16\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n7",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_17",
             "name": "Trim-linked 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n8",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Trim-linked 18\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n9",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Trim-linked 19\""
           }
         ]
@@ -265,51 +306,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "family_default",
-          "evidence_refs_ref": "e2",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_2",
             "name": "Standard 18\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20",
             "name": "S line 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_2"
       },
       "verification_notes": [
         {
@@ -409,39 +420,15 @@
             "name": "Basic 16\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n7",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_17",
             "name": "Trim-linked 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n8",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Trim-linked 18\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n9",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Trim-linked 19\""
           }
         ]
@@ -498,51 +485,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "family_default",
-          "evidence_refs_ref": "e2",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_2",
             "name": "Standard 18\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20",
             "name": "S line 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_2"
       },
       "verification_notes": [
         {
@@ -596,51 +553,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "family_default",
-          "evidence_refs_ref": "e2",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_2",
             "name": "Standard 18\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20",
             "name": "S line 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_2"
       },
       "verification_notes": [
         {
@@ -735,39 +662,15 @@
             "name": "Basic 16\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n7",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_17",
             "name": "Trim-linked 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n8",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Trim-linked 18\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n9",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Trim-linked 19\""
           }
         ]
@@ -875,39 +778,15 @@
             "name": "Basic 16\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n7",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_17",
             "name": "Trim-linked 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n8",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Trim-linked 18\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n9",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Trim-linked 19\""
           }
         ]
@@ -1008,39 +887,15 @@
             "name": "Basic 16\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n7",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_17",
             "name": "Trim-linked 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n8",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Trim-linked 18\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n9",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Trim-linked 19\""
           }
         ]
@@ -1110,51 +965,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "family_default",
-          "evidence_refs_ref": "e2",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18_2",
             "name": "Standard 18\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19_2",
             "name": "Sport 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_245_20",
             "name": "S line 20\""
           }
-        ]
+        ],
+        "default_ref": "setup_225_18_2"
       },
       "verification_notes": [
         {
@@ -1249,39 +1074,15 @@
             "name": "Basic 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n7",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_17",
             "name": "Trim-linked 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n8",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Trim-linked 18\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n9",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_235_19",
             "name": "Trim-linked 19\""
           }
         ]

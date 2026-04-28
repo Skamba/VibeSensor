@@ -33,6 +33,101 @@
       "e5": [
         "bmw_pressclub_sources:f21-2012-116d-ed-spec-pdf"
       ]
+    },
+    "tire_setups": {
+      "setup_205_17": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 17.0,
+          "width_mm": 205.0
+        },
+        "notes_ref": "n5"
+      },
+      "setup_195_16_2": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 55.0,
+          "rim_in": 16.0,
+          "width_mm": 195.0
+        },
+        "notes_ref": "n2"
+      },
+      "setup_195_16_4": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 55.0,
+          "rim_in": 16.0,
+          "width_mm": 195.0
+        },
+        "notes_ref": "n4"
+      },
+      "setup_195_16_3": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 55.0,
+          "rim_in": 16.0,
+          "width_mm": 195.0
+        },
+        "notes_ref": "n3"
+      },
+      "setup_195_16": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e2",
+        "front": {
+          "aspect_pct": 55.0,
+          "rim_in": 16.0,
+          "width_mm": 195.0
+        },
+        "notes_ref": "n8"
+      },
+      "setup_205_17_2": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e3",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 17.0,
+          "width_mm": 205.0
+        },
+        "notes_ref": "n6"
+      },
+      "setup_225_18": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e4",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n7",
+        "rear": {
+          "aspect_pct": 35.0,
+          "rim_in": 18.0,
+          "width_mm": 245.0
+        }
+      },
+      "setup_205_16": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e5",
+        "front": {
+          "aspect_pct": 55.0,
+          "rim_in": 16.0,
+          "width_mm": 205.0
+        },
+        "notes_ref": "n10"
+      }
     }
   },
   "defaults": {
@@ -80,31 +175,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes_ref": "n8",
-          "front": {
-            "width_mm": 195.0,
-            "aspect_pct": 55.0,
-            "rim_in": 16.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e2",
-            "notes_ref": "n8",
-            "front": {
-              "width_mm": 195.0,
-              "aspect_pct": 55.0,
-              "rim_in": 16.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_195_16",
             "name": "Standard 16\""
           }
-        ]
+        ],
+        "default_ref": "setup_195_16"
       },
       "verification_notes": [
         {
@@ -155,31 +232,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
-          "front": {
-            "width_mm": 195.0,
-            "aspect_pct": 55.0,
-            "rim_in": 16.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 195.0,
-              "aspect_pct": 55.0,
-              "rim_in": 16.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_195_16_2",
             "name": "Standard 16\""
           }
-        ]
+        ],
+        "default_ref": "setup_195_16_2"
       },
       "verification_notes": [
         {
@@ -230,31 +289,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
-          "front": {
-            "width_mm": 195.0,
-            "aspect_pct": 55.0,
-            "rim_in": 16.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 195.0,
-              "aspect_pct": 55.0,
-              "rim_in": 16.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_195_16_2",
             "name": "Standard 16\""
           }
-        ]
+        ],
+        "default_ref": "setup_195_16_2"
       },
       "verification_notes": [
         {
@@ -305,31 +346,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e5",
-          "notes_ref": "n10",
-          "front": {
-            "width_mm": 205.0,
-            "aspect_pct": 55.0,
-            "rim_in": 16.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e5",
-            "notes_ref": "n10",
-            "front": {
-              "width_mm": 205.0,
-              "aspect_pct": 55.0,
-              "rim_in": 16.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_205_16",
             "name": "Standard 16\""
           }
-        ]
+        ],
+        "default_ref": "setup_205_16"
       },
       "verification_notes": [
         {
@@ -380,31 +403,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes_ref": "n3",
-          "front": {
-            "width_mm": 195.0,
-            "aspect_pct": 55.0,
-            "rim_in": 16.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e2",
-            "notes_ref": "n3",
-            "front": {
-              "width_mm": 195.0,
-              "aspect_pct": 55.0,
-              "rim_in": 16.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_195_16_3",
             "name": "Standard 16\""
           }
-        ]
+        ],
+        "default_ref": "setup_195_16_3"
       },
       "verification_notes": [
         {
@@ -455,31 +460,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes_ref": "n3",
-          "front": {
-            "width_mm": 195.0,
-            "aspect_pct": 55.0,
-            "rim_in": 16.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e2",
-            "notes_ref": "n3",
-            "front": {
-              "width_mm": 195.0,
-              "aspect_pct": 55.0,
-              "rim_in": 16.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_195_16_3",
             "name": "Standard 16\""
           }
-        ]
+        ],
+        "default_ref": "setup_195_16_3"
       },
       "verification_notes": [
         {
@@ -530,31 +517,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n4",
-          "front": {
-            "width_mm": 195.0,
-            "aspect_pct": 55.0,
-            "rim_in": 16.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n4",
-            "front": {
-              "width_mm": 195.0,
-              "aspect_pct": 55.0,
-              "rim_in": 16.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_195_16_4",
             "name": "Standard 16\""
           }
-        ]
+        ],
+        "default_ref": "setup_195_16_4"
       },
       "verification_notes": [
         {
@@ -605,31 +574,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n4",
-          "front": {
-            "width_mm": 195.0,
-            "aspect_pct": 55.0,
-            "rim_in": 16.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n4",
-            "front": {
-              "width_mm": 195.0,
-              "aspect_pct": 55.0,
-              "rim_in": 16.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_195_16_4",
             "name": "Standard 16\""
           }
-        ]
+        ],
+        "default_ref": "setup_195_16_4"
       },
       "verification_notes": [
         {
@@ -680,31 +631,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n5",
-          "front": {
-            "width_mm": 205.0,
-            "aspect_pct": 50.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n5",
-            "front": {
-              "width_mm": 205.0,
-              "aspect_pct": 50.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_205_17",
             "name": "Standard 17\""
           }
-        ]
+        ],
+        "default_ref": "setup_205_17"
       },
       "verification_notes": [
         {
@@ -755,31 +688,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n5",
-          "front": {
-            "width_mm": 205.0,
-            "aspect_pct": 50.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n5",
-            "front": {
-              "width_mm": 205.0,
-              "aspect_pct": 50.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_205_17",
             "name": "Standard 17\""
           }
-        ]
+        ],
+        "default_ref": "setup_205_17"
       },
       "verification_notes": [
         {
@@ -830,31 +745,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e3",
-          "notes_ref": "n6",
-          "front": {
-            "width_mm": 205.0,
-            "aspect_pct": 50.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e3",
-            "notes_ref": "n6",
-            "front": {
-              "width_mm": 205.0,
-              "aspect_pct": 50.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_205_17_2",
             "name": "Standard 17\""
           }
-        ]
+        ],
+        "default_ref": "setup_205_17_2"
       },
       "verification_notes": [
         {
@@ -905,31 +802,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e3",
-          "notes_ref": "n6",
-          "front": {
-            "width_mm": 205.0,
-            "aspect_pct": 50.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e3",
-            "notes_ref": "n6",
-            "front": {
-              "width_mm": 205.0,
-              "aspect_pct": 50.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_205_17_2",
             "name": "Standard 17\""
           }
-        ]
+        ],
+        "default_ref": "setup_205_17_2"
       },
       "verification_notes": [
         {
@@ -980,41 +859,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e4",
-          "notes_ref": "n7",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "rear": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e4",
-            "notes_ref": "n7",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "rear": {
-              "width_mm": 245.0,
-              "aspect_pct": 35.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Standard 18\" staggered"
           }
-        ]
+        ],
+        "default_ref": "setup_225_18"
       },
       "verification_notes": [
         {
@@ -1065,41 +916,13 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e4",
-          "notes_ref": "n7",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 40.0,
-            "rim_in": 18.0
-          },
-          "rear": {
-            "width_mm": 245.0,
-            "aspect_pct": 35.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e4",
-            "notes_ref": "n7",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
-            },
-            "rear": {
-              "width_mm": 245.0,
-              "aspect_pct": 35.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Standard 18\" staggered"
           }
-        ]
+        ],
+        "default_ref": "setup_225_18"
       },
       "verification_notes": [
         {

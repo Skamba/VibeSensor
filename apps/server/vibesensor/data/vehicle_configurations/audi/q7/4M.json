@@ -74,6 +74,60 @@
         "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
         "audi_mediacenter_sources:4m-q7-2026-price-list-pdf"
       ]
+    },
+    "tire_setups": {
+      "setup_275_22": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 22.0,
+          "width_mm": 275.0
+        }
+      },
+      "setup_265_21": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 45.0,
+          "rim_in": 21.0,
+          "width_mm": 265.0
+        }
+      },
+      "setup_255_20": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 20.0,
+          "width_mm": 255.0
+        }
+      },
+      "setup_255_19_2": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e5",
+        "front": {
+          "aspect_pct": 55.0,
+          "rim_in": 19.0,
+          "width_mm": 255.0
+        },
+        "notes_ref": "n12"
+      },
+      "setup_255_19": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e9",
+        "front": {
+          "aspect_pct": 55.0,
+          "rim_in": 19.0,
+          "width_mm": 255.0
+        },
+        "notes_ref": "n8"
+      }
     }
   },
   "defaults": {
@@ -121,51 +175,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "family_default",
-          "evidence_refs_ref": "e1",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 50.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 50.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_255_20",
             "name": "Standard 20\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 45.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_265_21",
             "name": "Sport 21\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 275.0,
-              "aspect_pct": 40.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_275_22",
             "name": "S line 22\""
           }
-        ]
+        ],
+        "default_ref": "setup_255_20"
       },
       "verification_notes": [
         {
@@ -253,17 +277,6 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e9",
-          "notes_ref": "n8",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 55.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
             "confidence": "official_exact",
@@ -328,7 +341,8 @@
             "default_axle_for_speed": "rear",
             "name": "Square 22\""
           }
-        ]
+        ],
+        "default_ref": "setup_255_19"
       },
       "verification_notes": [
         {
@@ -411,52 +425,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e5",
-          "notes_ref": "n12",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 55.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 50.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_255_20",
             "name": "Standard 20\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 45.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_265_21",
             "name": "Sport 21\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 275.0,
-              "aspect_pct": 40.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_275_22",
             "name": "S line 22\""
           }
-        ]
+        ],
+        "default_ref": "setup_255_19_2"
       },
       "verification_notes": [
         {
@@ -536,52 +519,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e9",
-          "notes_ref": "n8",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 55.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 50.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_255_20",
             "name": "Standard 20\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 45.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_265_21",
             "name": "Sport 21\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 275.0,
-              "aspect_pct": 40.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_275_22",
             "name": "S line 22\""
           }
-        ]
+        ],
+        "default_ref": "setup_255_19"
       },
       "verification_notes": [
         {
@@ -657,51 +609,21 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "family_default",
-          "evidence_refs_ref": "e1",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 50.0,
-            "rim_in": 20.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 50.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_255_20",
             "name": "Standard 20\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 45.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_265_21",
             "name": "Sport 21\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 275.0,
-              "aspect_pct": 40.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_275_22",
             "name": "S line 22\""
           }
-        ]
+        ],
+        "default_ref": "setup_255_20"
       },
       "verification_notes": [
         {
@@ -807,17 +729,6 @@
         }
       },
       "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e5",
-          "notes_ref": "n12",
-          "front": {
-            "width_mm": 255.0,
-            "aspect_pct": 55.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear"
-        },
         "options": [
           {
             "confidence": "official_exact",
@@ -832,28 +743,15 @@
             "name": "Standard 19\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 45.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_265_21",
             "name": "Sport 21\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 275.0,
-              "aspect_pct": 40.0,
-              "rim_in": 22.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_275_22",
             "name": "S line 22\""
           }
-        ]
+        ],
+        "default_ref": "setup_255_19_2"
       },
       "verification_notes": [
         {

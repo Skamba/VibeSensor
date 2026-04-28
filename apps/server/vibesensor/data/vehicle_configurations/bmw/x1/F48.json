@@ -150,6 +150,40 @@
         "bmw_pressclub_sources:f48-x1-2021-tech-spec-article",
         "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
       ]
+    },
+    "tire_setups": {
+      "setup_225_17": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e17",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 17.0,
+          "width_mm": 225.0
+        }
+      },
+      "setup_225_19": {
+        "confidence": "official_derived",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 45.0,
+          "rim_in": 19.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n2"
+      },
+      "setup_225_18": {
+        "confidence": "official_derived",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e1",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        },
+        "notes_ref": "n1"
+      }
     }
   },
   "defaults": {
@@ -243,27 +277,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -388,27 +406,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -533,27 +535,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -670,27 +656,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -779,38 +749,15 @@
         },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e17",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_17",
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -920,27 +867,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -1061,27 +992,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -1200,27 +1115,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -1312,38 +1211,15 @@
         },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e17",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_17",
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -1453,27 +1329,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -1589,27 +1449,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -1703,38 +1547,15 @@
         },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e17",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_17",
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -1827,38 +1648,15 @@
         },
         "options": [
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e17",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_17",
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -1979,27 +1777,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -2122,27 +1904,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
@@ -2258,27 +2024,11 @@
             "name": "Standard 17\""
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n1",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 18.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_18",
             "name": "Official F48 18\" option"
           },
           {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e1",
-            "notes_ref": "n2",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 45.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
+            "setup_ref": "setup_225_19",
             "name": "Official F48 19\" option"
           }
         ]
