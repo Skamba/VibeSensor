@@ -11,17 +11,11 @@ export default defineConfig({
     environment: "happy-dom",
     include: ["tests/**/*.spec.ts"],
     exclude: [
-      // Playwright-owned browser/visual/smoke specs.
+      // Playwright-owned browser/visual/smoke specs keep the smoke.* / visual
+      // naming contract so Vitest never silently owns browser-fixture tests.
       "tests/visual.spec.ts",
       "tests/smoke.*.spec.ts",
       "tests/msw-browser.smoke.spec.ts",
-      // Orphaned browser-style specs that rely on the Playwright `page`
-      // fixture. They are not currently matched by any Playwright config and
-      // are out of scope for the Vitest unit layer.
-      "tests/realtime_logging_summary.spec.ts",
-      "tests/settings_car_feedback_reset.spec.ts",
-      "tests/settings_obd_scan_timeout.spec.ts",
-      "tests/ui_shell_chrome.spec.ts",
       // Standard Vite/Vitest exclusions.
       "**/node_modules/**",
       "**/dist/**",
