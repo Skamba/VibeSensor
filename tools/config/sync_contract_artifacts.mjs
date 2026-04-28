@@ -44,7 +44,10 @@ async function main() {
 		contractReferenceScript,
 		...checkArgs,
 	]);
-	runCommand('UI contract derivative sync', process.execPath, [uiDerivativeSyncScript]);
+	runCommand('UI contract derivative sync', process.execPath, [
+		uiDerivativeSyncScript,
+		...checkArgs,
+	]);
 
 	if (checkMode) {
 		console.log('All contract artifacts are up to date.');
