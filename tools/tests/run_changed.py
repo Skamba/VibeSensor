@@ -127,6 +127,7 @@ def _mirrored_backend_test_target(path: str) -> str | None:
 def _plan_commands(changed_files: tuple[str, ...]) -> tuple[PlannedCommand, ...]:
     docs_changed = False
     ui_changed = False
+    ui_unit_test_changed = False
     backend_fallback = False
     pytest_targets: set[str] = set()
 
@@ -150,6 +151,8 @@ def _plan_commands(changed_files: tuple[str, ...]) -> tuple[PlannedCommand, ...]
 
         if normalized.startswith("apps/ui/"):
             ui_changed = True
+            if normalized.startswith("apps/ui/src/"):
+                ui_unit_test_changed = True
             continue
 
         if normalized in HYGIENE_TRIGGER_PATHS or normalized.startswith(
@@ -164,6 +167,8 @@ def _plan_commands(changed_files: tuple[str, ...]) -> tuple[PlannedCommand, ...]
     commands: list[PlannedCommand] = []
     if docs_changed:
         commands.append(PlannedCommand("docs-lint", ("make", "docs-lint")))
+    if ui_unit_test_changed:
+        commands.append(PlannedCommand("ui-test", ("make", "ui-test")))
     if ui_changed:
         commands.append(PlannedCommand("ui-typecheck", ("make", "ui-typecheck")))
     if backend_fallback:
