@@ -55,11 +55,11 @@ test("shell chrome connection-state attribute follows live websocket state decla
       onmessage: ((event: MessageEvent<string>) => void) | null = null;
       onclose: ((event: CloseEvent) => void) | null = null;
       onerror: ((event: Event) => void) | null = null;
+      repeatTimer = 0;
 
       constructor() {
         (window as Window & { __lastFakeWebSocket?: FakeWebSocket }).__lastFakeWebSocket = this;
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-        queueMicrotask(() => {
+        const emitPayload = () => {
           this.onmessage?.(
             new MessageEvent("message", {
               data: JSON.stringify({
@@ -73,12 +73,26 @@ test("shell chrome connection-state attribute follows live websocket state decla
               }),
             }),
           );
-        });
+        };
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+        queueMicrotask(emitPayload);
+        this.repeatTimer = window.setInterval(() => {
+          if (this.readyState !== FakeWebSocket.OPEN) {
+            window.clearInterval(this.repeatTimer);
+            this.repeatTimer = 0;
+            return;
+          }
+          emitPayload();
+        }, 250);
       }
 
       send() {}
 
       close() {
+        if (this.repeatTimer) {
+          window.clearInterval(this.repeatTimer);
+          this.repeatTimer = 0;
+        }
         this.readyState = 3;
         this.onclose?.(new CloseEvent("close"));
       }
