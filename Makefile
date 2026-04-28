@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev format lint typecheck-backend typecheck ui-lint ui-typecheck test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts regen-contracts coverage smoke loc docs-lint
+.PHONY: help doctor setup dev format lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-changed test-ci-lite test-all test-full-suite benchmark-backend benchmark-compare-backend sync-contracts regen-contracts coverage smoke loc docs-lint
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -122,3 +122,6 @@ ui-lint: ## Run UI lint checks
 
 ui-typecheck: ## Materialize UI-derived contracts, then run lint and TypeScript type checking
 	cd $(UI_DIR) && npm run sync:generated-contracts && npm run lint && npm run lint:deps && npm run lint:unused && npm run typecheck
+
+ui-test: ## Run UI unit tests
+	cd $(UI_DIR) && npm run test:unit
