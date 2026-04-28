@@ -364,7 +364,7 @@ async function createUpdateFeatureDeps() {
   };
 }
 
-export function installFeatureFetchMock(
+function installFeatureFetchMock(
   handler: (
     url: URL,
     method: string,
@@ -396,7 +396,7 @@ export function installMaintenanceFeatureGlobals(): () => void {
   };
 }
 
-export async function expectPollDelays(
+async function expectPollDelays(
   timers: TimerHarness,
   expected: number[],
 ): Promise<void> {
@@ -413,7 +413,7 @@ export async function expectPollDelays(
   expect(pendingPollDelays(timers)).toEqual(expected);
 }
 
-export async function expectTimerDelays(
+async function expectTimerDelays(
   timers: TimerHarness,
   expected: number[],
 ): Promise<void> {
@@ -430,12 +430,7 @@ export async function expectTimerDelays(
   expect(timers.pendingDelays()).toEqual(expected);
 }
 
-export {
-  createEspFlashPort,
-  createHealthyUpdateStatus,
-  createIdleUpdateStatus,
-  createUsbInternetStatus,
-} from "./maintenance_payload_test_support";
+;
 
 export async function createEspFlashFeatureHarness() {
   const deps = await createEspFlashFeatureDeps();

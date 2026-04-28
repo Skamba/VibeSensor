@@ -76,7 +76,7 @@ export function makeAnalysisSettingsPayload(
   };
 }
 
-export function makeCarRecord(overrides: Partial<CarRecord> = {}): CarRecord {
+function makeCarRecord(overrides: Partial<CarRecord> = {}): CarRecord {
   return {
     id: "car-1",
     name: "Track Demo",
@@ -146,7 +146,7 @@ export function makeCarsPayload(
   };
 }
 
-export function makeSpeedSourcePayload(
+function makeSpeedSourcePayload(
   overrides: Partial<SpeedSourcePayload> = {},
 ): SpeedSourcePayload {
   return {
@@ -159,7 +159,7 @@ export function makeSpeedSourcePayload(
   };
 }
 
-export function makeSpeedSourceStatusPayload(
+function makeSpeedSourceStatusPayload(
   overrides: Partial<SpeedSourceStatusPayload> = {},
 ): SpeedSourceStatusPayload {
   return {
@@ -184,7 +184,7 @@ export function makeSpeedSourceStatusPayload(
   };
 }
 
-export function makeObdDevicePayload(
+function makeObdDevicePayload(
   overrides: Partial<ObdDevicePayload> = {},
 ): ObdDevicePayload {
   return {
@@ -198,7 +198,7 @@ export function makeObdDevicePayload(
   };
 }
 
-export function makeObdScanPayload(
+function makeObdScanPayload(
   overrides: Partial<ObdScanPayload> = {},
 ): ObdScanPayload {
   return {
@@ -207,7 +207,7 @@ export function makeObdScanPayload(
   };
 }
 
-export function makeObdPairPayload(
+function makeObdPairPayload(
   overrides: Partial<ObdPairPayload> = {},
 ): ObdPairPayload {
   return {
@@ -221,7 +221,7 @@ export function makeObdPairPayload(
   };
 }
 
-export function makeCarLibraryBrandsPayload(
+function makeCarLibraryBrandsPayload(
   overrides: Partial<CarLibraryBrandsPayload> = {},
 ): CarLibraryBrandsPayload {
   return {
@@ -230,7 +230,7 @@ export function makeCarLibraryBrandsPayload(
   };
 }
 
-export function makeCarLibraryTypesPayload(
+function makeCarLibraryTypesPayload(
   overrides: Partial<CarLibraryTypesPayload> = {},
 ): CarLibraryTypesPayload {
   return {
@@ -239,7 +239,7 @@ export function makeCarLibraryTypesPayload(
   };
 }
 
-export function makeCarLibraryModel(
+function makeCarLibraryModel(
   overrides: Partial<CarLibraryModel> = {},
 ): CarLibraryModel {
   return {
@@ -256,7 +256,7 @@ export function makeCarLibraryModel(
   };
 }
 
-export function makeCarLibraryModelsPayload(
+function makeCarLibraryModelsPayload(
   overrides: Partial<CarLibraryModelsPayload> = {},
 ): CarLibraryModelsPayload {
   return {

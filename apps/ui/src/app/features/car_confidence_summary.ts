@@ -31,7 +31,7 @@ function buildConfidencePart(
   return t(labelKey, { value: label });
 }
 
-export function describeOrderReferenceConfidence(
+function describeOrderReferenceConfidence(
   status: CarOrderReferenceStatus | null | undefined,
   t: Translate,
 ): string | null {
@@ -66,7 +66,7 @@ export function describeOrderReferenceConfidence(
   return parts.join(" · ");
 }
 
-export function describeGearboxConfidence(
+function describeGearboxConfidence(
   gearbox: CarLibraryGearbox | null | undefined,
   t: Translate,
 ): string | null {

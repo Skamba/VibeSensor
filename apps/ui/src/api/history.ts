@@ -20,7 +20,7 @@ export async function deleteHistoryRun(runId: string): Promise<Local.DeleteHisto
   });
 }
 
-export async function getHistoryRun(runId: string): Promise<Local.HistoryRunPayload> {
+async function getHistoryRun(runId: string): Promise<Local.HistoryRunPayload> {
   return await apiJson<Transport.HistoryRunPayload>(`/api/history/${encodeURIComponent(runId)}`);
 }
 

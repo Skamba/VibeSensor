@@ -36,11 +36,11 @@ export function tireOptionFront(option: CarLibraryTireOption): TireDimensions | 
   return null;
 }
 
-export function tireOptionRear(option: CarLibraryTireOption): TireDimensions | null {
+function tireOptionRear(option: CarLibraryTireOption): TireDimensions | null {
   return option.rear ?? tireOptionFront(option);
 }
 
-export function tireOptionIsStaggered(option: CarLibraryTireOption): boolean {
+function tireOptionIsStaggered(option: CarLibraryTireOption): boolean {
   const front = tireOptionFront(option);
   const rear = tireOptionRear(option);
   if (!front || !rear) {

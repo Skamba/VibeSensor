@@ -60,7 +60,7 @@ export async function addSettingsCar(car: Local.CarUpsertRequest): Promise<Local
   });
 }
 
-export async function updateSettingsCar(
+async function updateSettingsCar(
   carId: string,
   car: Local.CarUpsertRequest,
 ): Promise<Local.CarsPayload> {
