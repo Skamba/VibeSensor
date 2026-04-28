@@ -107,8 +107,13 @@ dedicated sampling task.
 cd firmware/esp
 python3 ../../tools/firmware/generate_protocol_contract_fixtures.py --check
 pio run -e m5stack_atom
+pio run -e esp32-c3-devkitm-1
 pio test -e native
 ```
+
+`esp32-c3-devkitm-1` is an experimental compile-only target. It helps catch
+single-core and board-specific build assumptions, but the runtime pin defaults
+still target the ATOM Lite layout.
 
 ## Runtime counters/status to monitor
 
