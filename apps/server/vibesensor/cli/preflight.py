@@ -76,16 +76,6 @@ def _not_writable(check: _WritablePathCheck, detail: str) -> ValueError:
     return ValueError(f"{check.label} is not writable: {detail}")
 
 
-def _nearest_existing_ancestor(path: Path) -> Path:
-    current = path
-    while not current.exists():
-        parent = current.parent
-        if parent == current:
-            raise ValueError(f"could not find an existing parent for {path}")
-        current = parent
-    return current
-
-
 def _ensure_writable_directory(
     check: _WritablePathCheck,
     directory: Path,
@@ -103,20 +93,16 @@ def _validate_writable_path(check: _WritablePathCheck) -> None:
     if check.expects_directory:
         if path.exists():
             _ensure_writable_directory(check, path, relation="directory")
-            return
-        ancestor = _nearest_existing_ancestor(path)
-        relation = "parent directory" if ancestor == path.parent else "nearest existing parent"
-        _ensure_writable_directory(check, ancestor, relation=relation)
+        elif path.parent.exists():
+            _ensure_writable_directory(check, path.parent, relation="parent directory")
         return
     if path.exists():
         if path.is_dir():
             raise _not_writable(check, f"path {path} exists but is a directory")
         if not os.access(path, os.W_OK):
             raise _not_writable(check, f"file {path} exists but is not writable")
-        return
-    ancestor = _nearest_existing_ancestor(path.parent)
-    relation = "parent directory" if ancestor == path.parent else "nearest existing parent"
-    _ensure_writable_directory(check, ancestor, relation=relation)
+    elif path.parent.exists():
+        _ensure_writable_directory(check, path.parent, relation="parent directory")
 
 
 def _validate_writable_runtime_paths(cfg: AppConfig) -> None:

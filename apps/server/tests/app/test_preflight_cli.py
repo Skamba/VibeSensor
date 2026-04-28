@@ -136,3 +136,24 @@ def test_preflight_cli_reports_unwritable_runtime_path(
     assert captured.out == ""
     assert "logging.history_db_path is not writable" in captured.err
     assert str(blocked_dir) in captured.err
+
+
+def test_missing_parent_path_does_not_probe_higher_ancestors(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    real_access = os.access
+
+    def _mock_access(path: str | os.PathLike[str], mode: int) -> bool:
+        if Path(path) == tmp_path:
+            return False
+        return real_access(path, mode)
+
+    monkeypatch.setattr(preflight.os, "access", _mock_access)
+
+    preflight._validate_writable_path(
+        preflight._WritablePathCheck(
+            "logging.history_db_path",
+            tmp_path / "missing" / "history.db",
+        )
+    )
