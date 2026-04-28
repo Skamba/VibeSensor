@@ -28,9 +28,7 @@ def test_setup_backend_caches_repo_virtualenv_with_explicit_invalidation_inputs(
     assert isinstance(steps, list)
 
     cache_step = next(
-        step
-        for step in steps
-        if isinstance(step, dict) and step.get("id") == "backend-venv-cache"
+        step for step in steps if isinstance(step, dict) and step.get("id") == "backend-venv-cache"
     )
     assert cache_step["uses"] == "actions/cache@v5"
     cache_with = cache_step["with"]
@@ -69,9 +67,9 @@ def test_setup_backend_caches_repo_virtualenv_with_explicit_invalidation_inputs(
     assert install_step["if"] == "${{ steps.backend-venv-cache.outputs.cache-hit != 'true' }}"
     install_run = install_step["run"]
     assert isinstance(install_run, str)
-    assert 'rm -rf .venv' in install_run
+    assert "rm -rf .venv" in install_run
     assert '"${{ steps.setup-python.outputs.python-path }}" -m venv .venv' in install_run
-    assert '.venv/bin/python -m pip install --upgrade pip' in install_run
+    assert ".venv/bin/python -m pip install --upgrade pip" in install_run
     assert '.venv/bin/python -m pip install -e "./apps/server[dev]"' in install_run
 
     backend_python_step = next(
@@ -92,6 +90,5 @@ def test_setup_backend_caches_repo_virtualenv_with_explicit_invalidation_inputs(
     assert isinstance(platformio_run, str)
     assert (
         'retry_command 3 "${{ steps.backend-python.outputs.python-path }}"'
-        ' -m pip install "platformio>=6,<7"'
-        in platformio_run
+        ' -m pip install "platformio>=6,<7"' in platformio_run
     )
