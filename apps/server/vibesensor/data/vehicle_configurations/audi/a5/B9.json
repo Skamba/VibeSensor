@@ -28,16 +28,18 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "B9",
+    "body_code": "B9",
+    "production_end_year": 2024
+  },
   "configurations": [
     {
       "id": "audi-b9-40-tfsi-eu-2017-dct7-fwd",
-      "brand": "Audi",
-      "type": "Coupe",
-      "market": "EU",
-      "model_code": "B9",
-      "body_code": "B9",
       "production_start_year": 2017,
-      "production_end_year": 2024,
       "model_name": "A5 (B9, 2017-2024)",
       "variant_name": "40 TFSI",
       "engine_code": "2.0L",
@@ -163,13 +165,7 @@
     },
     {
       "id": "audi-b9-45-tfsi-quattro-eu-2017-dct7-awd",
-      "brand": "Audi",
-      "type": "Coupe",
-      "market": "EU",
-      "model_code": "B9",
-      "body_code": "B9",
       "production_start_year": 2024,
-      "production_end_year": 2024,
       "model_name": "A5 (B9, 2024)",
       "variant_name": "45 TFSI quattro",
       "engine_code": "2.0L",

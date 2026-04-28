@@ -42,6 +42,7 @@ _NOTES_REF_KEY = "notes_ref"
 _NOTE_REF_KEY = "note_ref"
 _EVIDENCE_REFS_REF_KEY = "evidence_refs_ref"
 _DEFINITIONS_KEY = "definitions"
+_DEFAULTS_KEY = "defaults"
 _CONFIGURATIONS_KEY = "configurations"
 _DEFINITIONS_NOTES_KEY = "notes"
 _DEFINITIONS_EVIDENCE_KEY = "evidence_ref_sets"
@@ -351,24 +352,55 @@ def _validate_definitions(raw_definitions: Any) -> tuple[dict[str, str], dict[st
     return notes_defs, evidence_defs
 
 
+def _apply_shard_defaults(raw_configs: list[Any], defaults: dict[str, Any]) -> list[dict[str, Any]]:
+    if not defaults:
+        merged_rows: list[dict[str, Any]] = []
+        for row in raw_configs:
+            if not isinstance(row, dict):
+                raise _ShardRefError("each configuration row must be an object")
+            merged_rows.append(dict(row))
+        return merged_rows
+
+    merged: list[dict[str, Any]] = []
+    for row in raw_configs:
+        if not isinstance(row, dict):
+            raise _ShardRefError("each configuration row must be an object")
+        combined: dict[str, Any] = dict(defaults)
+        combined.update(row)
+        merged.append(combined)
+    return merged
+
+
+def _validate_defaults(raw_defaults: Any) -> dict[str, Any]:
+    if not isinstance(raw_defaults, dict):
+        raise _ShardRefError("defaults must be an object")
+    for key in raw_defaults:
+        if not isinstance(key, str) or not key:
+            raise _ShardRefError(f"invalid defaults key {key!r}")
+    return dict(raw_defaults)
+
+
 def _expand_shard_payload(data: Any) -> list[dict[str, Any]]:
     """Expand a shard payload into a plain list of vehicle configuration row dicts."""
 
     if not isinstance(data, dict):
         raise _ShardRefError(
-            "shard root must be an object with 'configurations' (and optional 'definitions')"
+            "shard root must be an object with 'configurations'"
+            " (and optional 'definitions', 'defaults')"
         )
-    extra_keys = set(data.keys()) - {_DEFINITIONS_KEY, _CONFIGURATIONS_KEY}
+    extra_keys = set(data.keys()) - {_DEFINITIONS_KEY, _DEFAULTS_KEY, _CONFIGURATIONS_KEY}
     if extra_keys:
         raise _ShardRefError(f"unsupported shard keys: {sorted(extra_keys)}")
 
     notes_defs, evidence_defs = _validate_definitions(data.get(_DEFINITIONS_KEY, {}))
+    defaults = _validate_defaults(data.get(_DEFAULTS_KEY, {}))
 
     raw_configs = data.get(_CONFIGURATIONS_KEY)
     if not isinstance(raw_configs, list):
         raise _ShardRefError("shard 'configurations' must be a list")
 
-    expanded = _resolve_shard_refs(raw_configs, notes_defs, evidence_defs)
+    merged_rows = _apply_shard_defaults(raw_configs, defaults)
+    expanded = _resolve_shard_refs(merged_rows, notes_defs, evidence_defs)
     return cast(list[dict[str, Any]], expanded)
 
 

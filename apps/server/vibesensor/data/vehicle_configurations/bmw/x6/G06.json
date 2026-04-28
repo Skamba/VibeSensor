@@ -24,17 +24,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "BMW",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "G06",
+    "body_code": "G06",
+    "model_name": "X6 (G06, 2020)",
+    "production_start_year": 2020,
+    "production_end_year": 2020
+  },
   "configurations": [
     {
       "id": "bmw-g06-m50i-eu-2020-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "G06",
-      "body_code": "G06",
-      "production_start_year": 2020,
-      "production_end_year": 2020,
-      "model_name": "X6 (G06, 2020)",
       "variant_name": "M50i",
       "engine_code": "N63",
       "engine_name": "N63 4.4L V8 Turbo",
@@ -171,14 +173,6 @@
     },
     {
       "id": "bmw-g06-xdrive40i-eu-2020-zf8hp-awd",
-      "brand": "BMW",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "G06",
-      "body_code": "G06",
-      "production_start_year": 2020,
-      "production_end_year": 2020,
-      "model_name": "X6 (G06, 2020)",
       "variant_name": "xDrive40i",
       "engine_code": "B58",
       "engine_name": "B58 3.0L I6 Turbo",

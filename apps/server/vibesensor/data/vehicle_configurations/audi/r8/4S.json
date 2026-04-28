@@ -20,17 +20,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "4S",
+    "body_code": "4S",
+    "model_name": "R8 (4S, 2015-2024)",
+    "production_start_year": 2015,
+    "production_end_year": 2024
+  },
   "configurations": [
     {
       "id": "audi-4s-v10-rwd-eu-2015-dct7-rwd",
-      "brand": "Audi",
-      "type": "Coupe",
-      "market": "EU",
-      "model_code": "4S",
-      "body_code": "4S",
-      "production_start_year": 2015,
-      "production_end_year": 2024,
-      "model_name": "R8 (4S, 2015-2024)",
       "variant_name": "V10 RWD",
       "engine_code": "5.2L",
       "engine_name": "5.2L V10 NA",
@@ -128,14 +130,6 @@
     },
     {
       "id": "audi-4s-v10-quattro-eu-2015-dct7-awd",
-      "brand": "Audi",
-      "type": "Coupe",
-      "market": "EU",
-      "model_code": "4S",
-      "body_code": "4S",
-      "production_start_year": 2015,
-      "production_end_year": 2024,
-      "model_name": "R8 (4S, 2015-2024)",
       "variant_name": "V10 quattro",
       "engine_code": "5.2L",
       "engine_name": "5.2L V10 NA",

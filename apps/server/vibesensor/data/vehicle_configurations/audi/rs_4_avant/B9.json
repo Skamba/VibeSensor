@@ -15,17 +15,19 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Wagon",
+    "market": "EU",
+    "model_code": "B9",
+    "body_code": "B9",
+    "model_name": "RS 4 Avant (B9, 2018-2024)",
+    "production_start_year": 2018,
+    "production_end_year": 2024
+  },
   "configurations": [
     {
       "id": "audi-b9-rs-4-eu-2018-zf8hp-awd",
-      "brand": "Audi",
-      "type": "Wagon",
-      "market": "EU",
-      "model_code": "B9",
-      "body_code": "B9",
-      "production_start_year": 2018,
-      "production_end_year": 2024,
-      "model_name": "RS 4 Avant (B9, 2018-2024)",
       "variant_name": "RS 4",
       "engine_code": "2.9L",
       "engine_name": "2.9L V6 TFSI Turbo",

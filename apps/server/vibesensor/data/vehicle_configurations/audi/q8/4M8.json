@@ -63,16 +63,18 @@
       ]
     }
   },
+  "defaults": {
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "4M8",
+    "body_code": "4M8",
+    "production_end_year": 2026
+  },
   "configurations": [
     {
       "id": "audi-4m8-55-tfsi-eu-2019-zf8hp-awd",
-      "brand": "Audi",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "4M8",
-      "body_code": "4M8",
       "production_start_year": 2019,
-      "production_end_year": 2026,
       "model_name": "Q8 (4M8, 2019-2026)",
       "variant_name": "55 TFSI",
       "engine_code": "3.0L",
@@ -219,13 +221,7 @@
     },
     {
       "id": "audi-4m8-55-tfsi-quattro-eu-2019-zf8hp-awd",
-      "brand": "Audi",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "4M8",
-      "body_code": "4M8",
       "production_start_year": 2019,
-      "production_end_year": 2026,
       "model_name": "Q8 (4M8, 2019-2026)",
       "variant_name": "55 TFSI quattro",
       "engine_code": "3.0L",
@@ -358,13 +354,7 @@
     },
     {
       "id": "audi-4m8-60-tfsi-e-eu-2019-zf8hp-awd",
-      "brand": "Audi",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "4M8",
-      "body_code": "4M8",
       "production_start_year": 2019,
-      "production_end_year": 2026,
       "model_name": "Q8 (4M8, 2019-2026)",
       "variant_name": "60 TFSI e",
       "engine_code": "3.0L",
@@ -515,13 +505,7 @@
     },
     {
       "id": "audi-4m8-60-tfsi-e-quattro-eu-2020-zf8hp-awd",
-      "brand": "Audi",
-      "type": "SUV",
-      "market": "EU",
-      "model_code": "4M8",
-      "body_code": "4M8",
       "production_start_year": 2020,
-      "production_end_year": 2026,
       "model_name": "Q8 (4M8, 2020-2026)",
       "variant_name": "60 TFSI e quattro",
       "engine_code": "3.0L",
