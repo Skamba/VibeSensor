@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """File-length advisory for maintainability.
 
-This script intentionally does not enforce LoC limits.
-It reports the longest tracked source files as a refactoring signal only.
+This script reports the longest tracked source files as a refactoring signal.
+Callers can optionally fail when files exceed a given LoC threshold.
 
 Guidance:
 - Keep files short where practical.
 - Do not split files mechanically when doing so hurts readability,
   discoverability, or long-term maintainability.
 
-Exit code is always 0.
+Exit code is 0 by default, or non-zero when ``--fail-over`` is provided and
+one or more files exceed that threshold.
 """
 
 from __future__ import annotations
 
+import argparse
 import os
 import subprocess
 import sys
@@ -40,6 +42,25 @@ EXCLUDE_DIRS = {
 
 # Data files that are intentionally large (JSON extracted from code)
 EXCLUDE_FILES: set[str] = set()
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Report the longest source files and optionally fail when files "
+            "exceed a line-count threshold."
+        )
+    )
+    parser.add_argument(
+        "--fail-over",
+        type=int,
+        default=None,
+        help="Exit non-zero when one or more checked files exceed this line count.",
+    )
+    args = parser.parse_args(argv)
+    if args.fail_over is not None and args.fail_over < 0:
+        parser.error("--fail-over must be zero or greater")
+    return args
 
 
 def _walk_files(repo_root: Path) -> list[str]:
@@ -83,7 +104,8 @@ def _should_check(path: str) -> bool:
     return True
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
     repo_root = Path(__file__).resolve().parents[2]
     files = [f for f in _tracked_files(repo_root) if _should_check(f)]
     measured: list[tuple[str, int]] = []
@@ -105,6 +127,20 @@ def main() -> int:
     print(f"Showing top {min(TOP_N, len(measured))} longest source files:")
     for path, loc in measured[:TOP_N]:
         print(f"   {loc:5d}  {path}")
+
+    if args.fail_over is not None:
+        offenders = [(path, loc) for path, loc in measured if loc > args.fail_over]
+        if offenders:
+            print(
+                f"\nFAIL: {len(offenders)} source file(s) exceed {args.fail_over} lines:"
+            )
+            for path, loc in offenders:
+                print(f"   {loc:5d}  {path}")
+            print(
+                "\nSuggestion: refactor or split these files only when it "
+                "improves clarity and maintainability."
+            )
+            return 1
 
     print(
         "\nSuggestion: refactor large files when it improves clarity; "
