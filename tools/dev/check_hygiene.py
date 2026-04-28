@@ -1505,9 +1505,9 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
             if not isinstance(run, str) or any(
                 needle not in run
                 for needle in (
-                    'rm -rf .venv',
+                    "rm -rf .venv",
                     '"${{ steps.setup-python.outputs.python-path }}" -m venv .venv',
-                    '.venv/bin/python -m pip install --upgrade pip',
+                    ".venv/bin/python -m pip install --upgrade pip",
                     '.venv/bin/python -m pip install -e "./apps/server[dev]"',
                 )
             ):
@@ -1532,7 +1532,7 @@ def check_docker_ci_dependency_hygiene() -> list[str]:
             if not isinstance(run, str) or any(
                 needle not in run
                 for needle in (
-                    '${GITHUB_WORKSPACE}/.venv/bin/python',
+                    "${GITHUB_WORKSPACE}/.venv/bin/python",
                     'echo "${GITHUB_WORKSPACE}/.venv/bin" >> "${GITHUB_PATH}"',
                     'echo "VIRTUAL_ENV=${GITHUB_WORKSPACE}/.venv" >> "${GITHUB_ENV}"',
                     'echo "python-path=${backend_python}" >> "${GITHUB_OUTPUT}"',
